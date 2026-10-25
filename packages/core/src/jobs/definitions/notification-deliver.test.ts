@@ -17,6 +17,7 @@ import {
   type WebPushClient,
 } from '@causedeck/notifications/push';
 import { Secret } from '@causedeck/config/env';
+import { createWhatsAppSender, type WhatsAppFetch } from '@causedeck/notifications/whatsapp';
 import { createLogger } from '@causedeck/observability';
 import { and, eq } from 'drizzle-orm';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -505,6 +506,175 @@ describe('notification.deliver: push', () => {
         .where(eq(schema.pushSubscription.userId, f.userId));
       expect(sub?.revokedAt).not.toBeNull();
       expect(pushes).toHaveLength(2);
+    });
+  });
+});
+
+function whatsapper(deps: NotificationJobDeps, status = 200) {
+  const sent: { to: string; template: string }[] = [];
+  const state = { status };
+  const fetch: WhatsAppFetch = (_url, init) => {
+    const body = JSON.parse(init.body) as { to: string; template: { name: string } };
+    sent.push({ to: body.to, template: body.template.name });
+    return Promise.resolve({
+      ok: state.status < 400,
+      status: state.status,
+      json: () => Promise.resolve({}),
+    });
+  };
+  const env = { WHATSAPP_PHONE_NUMBER_ID: '1', WHATSAPP_ACCESS_TOKEN: new Secret('tok') };
+  return { sent, state, deps: { ...deps, whatsapp: createWhatsAppSender({ env, fetch }) } };
+}
+
+/** Link `userId` to `e164` (verified, consented) for `categories`, and turn the pref on. */
+async function linkWhatsApp(
+  f: Fixture,
+  userId: string,
+  e164: string,
+  categories: string[] = ['court.board'],
+) {
+  await f.inWs(async (s) => {
+    await s.insert(schema.whatsappLink).values({
+      workspaceId: f.workspaceId,
+      userId,
+      e164,
+      verifiedAt: new Date(),
+      consentAt: new Date(),
+      categories,
+    });
+    for (const category of categories) {
+      await s
+        .insert(schema.notificationPref)
+        .values({ workspaceId: f.workspaceId, userId, category, channel: 'whatsapp' });
+    }
+  });
+}
+
+async function addMember(f: Fixture): Promise<string> {
+  const [u] = await f.tx
+    .insert(schema.user)
+    .values({ name: 'Other', email: `o-${randomUUID()}@example.test` })
+    .returning({ id: schema.user.id });
+  if (!u) throw new Error('user insert failed');
+  await f.inWs((s) =>
+    s.insert(schema.member).values({ organizationId: f.workspaceId, userId: u.id, role: 'clerk' }),
+  );
+  return u.id;
+}
+
+describe('notification.deliver: whatsapp (#679)', () => {
+  const channel = 'whatsapp' as const;
+  const payloadFor = (f: Fixture, notificationId: string) => ({
+    workspaceId: f.workspaceId,
+    notificationId,
+    channel,
+  });
+
+  it('is skipped while no provider is configured, and for a category without a template', async () => {
+    await run(async (f) => {
+      await linkWhatsApp(f, f.userId, '+919800000001', ['court.board', 'security.alert']);
+      const id = await f.addNotification({ category: 'court.board' });
+      expect(await deliver(f, payloadFor(f, id), transport().deps)).toBe('skipped');
+      expect((await deliveryOf(f, id))?.whatsapp).toMatchObject({ reason: 'whatsapp_disabled' });
+      const { sent, deps } = whatsapper(transport().deps);
+      const other = await f.addNotification({ category: 'security.alert' });
+      expect(await deliver(f, payloadFor(f, other), deps)).toBe('skipped');
+      expect((await deliveryOf(f, other))?.whatsapp).toMatchObject({ reason: 'no_template' });
+      expect(sent).toHaveLength(0);
+    });
+  });
+
+  it('sends only to the verified number of the notification owner, once', async () => {
+    await run(async (f) => {
+      const { sent, deps } = whatsapper(transport().deps);
+      const bystander = await addMember(f);
+      await linkWhatsApp(f, bystander, '+919800000002');
+      const id = await f.addNotification({ category: 'court.board' });
+      // The owner has no link: nothing is sent, and certainly not to the bystander's number.
+      await f.inWs((s) =>
+        s.insert(schema.notificationPref).values({
+          workspaceId: f.workspaceId,
+          userId: f.userId,
+          category: 'court.board',
+          channel,
+        }),
+      );
+      expect(await deliver(f, payloadFor(f, id), deps)).toBe('skipped');
+      expect((await deliveryOf(f, id))?.whatsapp).toMatchObject({ reason: 'not_linked' });
+      expect(sent).toHaveLength(0);
+
+      await linkWhatsApp(f, f.userId, '+919800000001', []);
+      await f.inWs((s) =>
+        s
+          .update(schema.whatsappLink)
+          .set({ categories: ['court.board'] })
+          .where(eq(schema.whatsappLink.userId, f.userId)),
+      );
+      const second = await f.addNotification({ category: 'court.board' });
+      expect(await deliver(f, payloadFor(f, second), deps)).toBe('sent');
+      expect(await deliver(f, payloadFor(f, second), deps)).toBe('already_delivered');
+      expect(sent).toEqual([{ to: '919800000001', template: 'causedeck_court_board' }]);
+    });
+  });
+
+  it('skips a category the member did not choose, a preference that is off and court hours', async () => {
+    await run(async (f) => {
+      const { sent, deps } = whatsapper(transport().deps);
+      await linkWhatsApp(f, f.userId, '+919800000001', ['court.board']);
+      const unchosen = await f.addNotification({ category: 'status.order' });
+      await f.inWs((s) =>
+        s.insert(schema.notificationPref).values({
+          workspaceId: f.workspaceId,
+          userId: f.userId,
+          category: 'status.order',
+          channel,
+        }),
+      );
+      expect(await deliver(f, payloadFor(f, unchosen), deps)).toBe('skipped');
+      expect((await deliveryOf(f, unchosen))?.whatsapp).toMatchObject({ reason: 'not_linked' });
+
+      await f.inWs((s) =>
+        s
+          .update(schema.notificationPref)
+          .set({ enabled: false })
+          .where(eq(schema.notificationPref.category, 'court.board')),
+      );
+      const off = await f.addNotification({ category: 'court.board' });
+      expect(await deliver(f, payloadFor(f, off), deps)).toBe('skipped');
+      expect((await deliveryOf(f, off))?.whatsapp).toMatchObject({ reason: 'disabled' });
+
+      await f.inWs(async (s) => {
+        await s
+          .update(schema.notificationPref)
+          .set({ enabled: true })
+          .where(eq(schema.notificationPref.category, 'court.board'));
+        await s
+          .insert(schema.notificationSetting)
+          .values({ workspaceId: f.workspaceId, userId: f.userId, courtHoursQuiet: true });
+      });
+      const inCourt = { ...deps, now: () => new Date('2026-10-19T06:30:00Z') }; // 12:00 IST
+      const quiet = await f.addNotification({ category: 'court.board' });
+      expect(await deliver(f, payloadFor(f, quiet), inCourt)).toBe('skipped');
+      expect((await deliveryOf(f, quiet))?.whatsapp).toMatchObject({ reason: 'quiet_hours' });
+      expect(sent).toHaveLength(0);
+    });
+  });
+
+  it('retries a transient provider failure and records a rejection as failed', async () => {
+    await run(async (f) => {
+      const { sent, state, deps } = whatsapper(transport().deps);
+      await linkWhatsApp(f, f.userId, '+919800000001');
+      const id = await f.addNotification({ category: 'court.board' });
+      const payload = payloadFor(f, id);
+      state.status = 503;
+      expect(await deliverJob(f, payload, deps)).toEqual({
+        status: 'failed',
+        error: { name: 'RetryableError', code: 'NOTIFICATION_DELIVERY_RETRY' },
+      });
+      state.status = 400;
+      expect(await deliverJob(f, payload, deps)).toEqual({ status: 'completed' });
+      expect((await deliveryOf(f, id))?.whatsapp).toMatchObject({ status: 'failed' });
+      expect(sent).toHaveLength(2);
     });
   });
 });

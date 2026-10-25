@@ -80,6 +80,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'notice',
   'review_item',
   'bench_sitting_fact',
+  'activation_event',
 ];
 
 /**

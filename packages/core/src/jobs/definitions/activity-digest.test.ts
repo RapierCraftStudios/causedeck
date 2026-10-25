@@ -6,10 +6,12 @@
 import { randomUUID } from 'node:crypto';
 import { Writable } from 'node:stream';
 
+import { Secret } from '@causedeck/config/env';
 import { schema, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { setEndOfDayPreference } from '@causedeck/notifications';
 import { recordSuppression, type EmailMessage } from '@causedeck/notifications/email';
+import { createWhatsAppSender, type WhatsAppFetch } from '@causedeck/notifications/whatsapp';
 import { createLogger } from '@causedeck/observability';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -402,5 +404,79 @@ describe('end-of-day digest: the generic delivery job', () => {
       );
       expect(outcome).toBe('skipped');
       expect(sent).toEqual([]);
+    }));
+});
+
+describe('end-of-day digest: WhatsApp (#679)', () => {
+  function withWhatsApp(deps: NotificationJobDeps) {
+    const sent: string[] = [];
+    const fetch: WhatsAppFetch = (_url, init) => {
+      sent.push((JSON.parse(init.body) as { to: string }).to);
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) });
+    };
+    const env = { WHATSAPP_PHONE_NUMBER_ID: '1', WHATSAPP_ACCESS_TOKEN: new Secret('tok') };
+    return { sent, deps: { ...deps, whatsapp: createWhatsAppSender({ env, fetch }) } };
+  }
+
+  async function optIn(f: Fixture, link = true) {
+    await f.inWs(async (s) => {
+      await s.insert(schema.notificationPref).values({
+        workspaceId: f.workspaceId,
+        userId: f.userId,
+        category: 'digest.end_of_day',
+        channel: 'whatsapp',
+      });
+      if (link) {
+        await s.insert(schema.whatsappLink).values({
+          workspaceId: f.workspaceId,
+          userId: f.userId,
+          e164: '+919800000003',
+          verifiedAt: new Date(),
+          consentAt: new Date(),
+          categories: ['digest.end_of_day'],
+        });
+      }
+    });
+  }
+
+  it("sends the summary to the member's verified number only, once", () =>
+    run(async (f) => {
+      const { sent: emails, deps: base } = transport();
+      const { sent, deps } = withWhatsApp(base);
+      await f.activity('an applied change');
+      await optIn(f);
+      expect(await f.member(deps)).toBe('sent');
+      expect(await f.member(deps)).toBe('alreadySent');
+      expect(sent).toEqual(['919800000003']);
+      expect(emails).toHaveLength(1);
+    }));
+
+  it('sends nothing on WhatsApp when the member has no verified link', () =>
+    run(async (f) => {
+      const { sent, deps } = withWhatsApp(transport().deps);
+      await f.activity('an applied change');
+      await optIn(f, false);
+      expect(await f.member(deps)).toBe('sent');
+      expect(sent).toHaveLength(0);
+    }));
+
+  it('sends nothing on WhatsApp when the preference is off', () =>
+    run(async (f) => {
+      const { sent, deps } = withWhatsApp(transport().deps);
+      await f.activity('an applied change');
+      await optIn(f);
+      await f.inWs((s) => s.update(schema.notificationPref).set({ enabled: false }));
+      expect(await f.member(deps)).toBe('sent');
+      expect(sent).toHaveLength(0);
+    }));
+
+  it('never sends the summary inside court hours', () =>
+    run(async (f) => {
+      const { sent, deps } = withWhatsApp(transport().deps);
+      await f.activity('an applied change');
+      await optIn(f);
+      const inCourt = { ...deps, now: () => new Date('2026-10-19T06:30:00Z') }; // 12:00 IST
+      expect(await f.member(inCourt)).toBe('sent');
+      expect(sent).toHaveLength(0);
     }));
 });

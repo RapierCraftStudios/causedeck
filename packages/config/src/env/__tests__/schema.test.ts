@@ -138,6 +138,12 @@ describe('production', () => {
 
     expect((error as EnvValidationError).keys).toEqual(['VAPID_PRIVATE_KEY']);
   });
+
+  it('requires the WhatsApp phone number id and access token together', () => {
+    const error = envError({ ...productionEnv, WHATSAPP_PHONE_NUMBER_ID: '123' });
+
+    expect((error as EnvValidationError).keys).toEqual(['WHATSAPP_ACCESS_TOKEN']);
+  });
 });
 
 describe('India-only AI guardrail', () => {

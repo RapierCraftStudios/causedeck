@@ -15,7 +15,9 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
-import { isDev } from '../../../lib/env.ts';
+import { isPhoneTempEmail } from '@causedeck/auth/server';
+
+import { isDev, serverEnv } from '../../../lib/env.ts';
 import { getAuth } from '../../../lib/auth.ts';
 import { logger } from '../../../src/health.ts';
 
@@ -29,6 +31,7 @@ import { AccountError } from './error.tsx';
 import { AccountProfileForm, AccountSkeleton } from './profile/profile-form.tsx';
 import { ConnectedAccountsSection, loadConnectedAccounts } from './security/connected-accounts.tsx';
 import { loadPasskeys, PasskeysSection } from './security/passkeys.tsx';
+import { AddEmailSection, LinkGoogleSection } from './security/link-methods.tsx';
 import { loadSessions, SessionsSection } from './security/sessions.tsx';
 import { TwoFactorSection } from './security/two-factor.tsx';
 
@@ -94,6 +97,11 @@ async function AccountSections({ state }: { state: string | undefined }) {
         <TwoFactorSection enabled={user.twoFactorEnabled} />
         <SessionsSection sessions={data.sessions} />
         <ConnectedAccountsSection accounts={data.accounts} />
+        {isPhoneTempEmail(user.email) ? <AddEmailSection /> : null}
+        {serverEnv().AUTH_GOOGLE_ENABLED &&
+        !data.accounts.some((a) => a.providerId === 'google') ? (
+          <LinkGoogleSection />
+        ) : null}
       </div>
       <div id="danger" className="scroll-mt-4">
         <DeleteAccount

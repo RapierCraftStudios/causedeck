@@ -4,6 +4,8 @@ import {
   AI_BUDGET_PAISE_PER_SEAT,
   checkPlanConfig,
   CLERK_SEAT_PRICE_PAISE,
+  ENTERPRISE_MIN_SEATS,
+  ENTERPRISE_SEAT_PRICE_PAISE,
   exceedsUpiMandateCap,
   getPlan,
   JUNIOR_AI_BUDGET_PAISE,
@@ -165,6 +167,16 @@ describe('plan catalogue', () => {
           1,
           false,
         ],
+        [
+          "enterprise-firm-seat-monthly",
+          "dedicated",
+          "month",
+          99900,
+          true,
+          19900,
+          10,
+          false,
+        ],
       ]
     `);
   });
@@ -263,6 +275,7 @@ describe('checkPlanConfig', () => {
       ['chamber-seat-1', 30],
       ['chamber-seat-2', 23],
       ['chamber-seat-3', 16],
+      ['enterprise-firm-seat-monthly', 15],
     ]);
     // 17 seats at Rs 899 is above Rs 15,000.
     expect(exceedsUpiMandateCap(17 * 89_900)).toBe(true);
@@ -395,5 +408,43 @@ describe('per-tracked-case plan (#664)', () => {
       3 * chamber.pricePaise + CLERK_SEAT_PRICE_PAISE,
     );
     expect(cycleChargePaise(advocate, { seats: 1, clerkSeats: 0 })).toBe(advocate.pricePaise);
+  });
+});
+
+describe('enterprise firm seat plan (#686)', () => {
+  const plan = getPlan('enterprise-firm-seat-monthly');
+
+  it('is an inactive, frozen per-seat row, not per tracked case', () => {
+    expect(plan).toMatchObject({
+      kind: 'dedicated',
+      interval: 'month',
+      perSeat: true,
+      pricePaise: ENTERPRISE_SEAT_PRICE_PAISE,
+      clerkSeatPricePaise: CLERK_SEAT_PRICE_PAISE,
+      minSeats: ENTERPRISE_MIN_SEATS,
+      active: false,
+    });
+    expect(plan?.perTrackedCase).toBeFalsy();
+    expect(ENTERPRISE_MIN_SEATS).toBeGreaterThanOrEqual(MIN_CHAMBER_SEATS);
+    expect(Object.isFrozen(plan)).toBe(true);
+    expect(PLAN_CATALOGUE.filter((p) => p.active).map((p) => p.id)).not.toContain(plan?.id);
+  });
+
+  it('passes the catalogue check without an invalid or over-cap finding', () => {
+    const findings = checkPlanConfig().filter((f) => f.planId === plan?.id);
+    expect(findings.map((f) => f.code)).not.toContain('invalid');
+    expect(findings.map((f) => f.code)).not.toContain('upi-mandate-cap-exceeded');
+  });
+
+  it('charges seats plus clerk seats', () => {
+    if (!plan) throw new Error('missing plan');
+    expect(mandateChargeNotice(plan, { seats: 10, clerkSeats: 2 }).chargePaise).toBe(
+      10 * ENTERPRISE_SEAT_PRICE_PAISE + 2 * CLERK_SEAT_PRICE_PAISE,
+    );
+  });
+
+  it('flags an enterprise row below the per-seat minimum', () => {
+    if (!plan) throw new Error('missing plan');
+    expect(checkPlanConfig([{ ...plan, minSeats: 1 }]).map((f) => f.code)).toContain('invalid');
   });
 });

@@ -29,6 +29,7 @@ const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-pr
 const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
+const CORE_WHATSAPP_LINK_TEST = 'packages/core/src/__tests__/cross-tenant/whatsapp-link.test.ts';
 const CORE_PORTFOLIO_TEST = 'packages/core/src/__tests__/cross-tenant/portfolio.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
@@ -146,6 +147,17 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   portfolio_case: DB_TABLES_TEST,
   portfolio_panel_advocate: DB_TABLES_TEST,
 
+  // WhatsApp number link and OTP challenge (#678).
+  whatsapp_link: DB_TABLES_TEST,
+  whatsapp_otp_challenge: DB_TABLES_TEST,
+  whatsapp_inbound_message: DB_TABLES_TEST,
+  // Enterprise onboarding (#682).
+  sso_provider: DB_TABLES_TEST,
+  scim_token: DB_TABLES_TEST,
+  provisioning_run: DB_TABLES_TEST,
+  migration_run: DB_TABLES_TEST,
+  migration_run_row: DB_TABLES_TEST,
+
   // Karnataka HC cause-list watches (#482).
   cause_list_watch: DB_TABLES_TEST,
   // Judgment alerts (#497).
@@ -210,12 +222,26 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   countOpenWork: empty,
   offboardMember: denies,
   inviteMember: denies,
+  addProvisionedMember: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'trusts its caller (a SCIM token or a member holding member.invite); a B-scoped call for workspace A fails on RLS and adds no member',
+  },
+  deactivateProvisionedMember: {
+    test: CORE_SERVICES_TEST,
+    kind: 'caller-checked',
+    note: 'trusts its caller (a SCIM token); a B-scoped call for workspace A finds no member row and changes nothing',
+  },
   reissueInvitation: denies,
   revokeInvitation: denies,
   listPendingInvitations: empty,
   // workspace profile (#284)
   getWorkspaceProfile: empty,
   updateWorkspaceProfile: denies,
+  // clerk setup approval (#505)
+  getClerkSetup: empty,
+  requestClerkSetupApproval: denies,
+  approveClerkSetup: denies,
   // role settings (#285)
   getRoleSettings: empty,
   updateRoleSettings: denies,
@@ -276,6 +302,16 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // Portfolio list and create (#666): B cannot list or create in A's workspace; B's list has no A row.
   listPortfolios: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
   createPortfolio: { test: CORE_PORTFOLIO_TEST, kind: 'denies' },
+  // WhatsApp link (#678): B cannot request, verify, unlink or read A's link, challenge or target.
+  requestWhatsAppOtp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  verifyWhatsAppOtp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  unlinkWhatsApp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  setWhatsAppCategories: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  getWhatsAppLink: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  getWhatsAppSendTarget: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  // Inbound WhatsApp (#680): the workspace comes only from the sender's verified link.
+  receiveInboundWhatsApp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  runWhatsAppIntake: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
   // Exception alerts (#665): the scan opens withWorkspace on the given workspace id only.
   scanPortfolioAlerts: {
     test: CORE_PORTFOLIO_TEST,
@@ -835,6 +871,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   packageName: 'constant',
+  // whatsapp-link (#678): constants
+  WHATSAPP_OTP_TTL_MS: 'constant',
+  WHATSAPP_OTP_RESEND_COOLDOWN_MS: 'constant',
+  WHATSAPP_OTP_MAX_ATTEMPTS: 'constant',
+  whatsappInboundProviderFromProcess: 'env factory, no tenant data',
   // portfolio (#663): pure CSV reader and constants
   parsePortfolioCsv: 'pure',
   MAX_PORTFOLIO_IMPORT_ROWS: 'constant',

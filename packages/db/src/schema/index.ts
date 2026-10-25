@@ -1,5 +1,12 @@
 // Every table and enum drizzle-kit migrates. Later issues add their tables here.
 export * from './enums.ts';
+export {
+  ACTIVATION_CHANNELS,
+  ACTIVATION_STEPS,
+  activationEvent,
+  type ActivationChannel,
+  type ActivationStep,
+} from './activation.ts';
 export { adapterHealthSummary, adapterParseRun, adapterVersion } from './adapters.ts';
 export {
   aiCall,
@@ -20,6 +27,21 @@ export {
   type WebhookEventType,
 } from './webhooks.ts';
 export { portfolio, portfolioCase, portfolioPanelAdvocate } from './portfolio.ts';
+export {
+  migrationRun,
+  migrationRunRow,
+  provisioningRun,
+  scimToken,
+  ssoProvider,
+} from './enterprise.ts';
+export {
+  WHATSAPP_E164_PATTERN,
+  WHATSAPP_OTP_MAX_ATTEMPTS,
+  WHATSAPP_INBOUND_STATUSES,
+  whatsappInboundMessage,
+  whatsappLink,
+  whatsappOtpChallenge,
+} from './whatsapp-link.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export {
   CAPTURE_CHANNELS,

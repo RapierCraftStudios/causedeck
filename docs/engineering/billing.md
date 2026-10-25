@@ -183,6 +183,7 @@ Placeholder prices to validate pricing, kept as data in `packages/billing/src/pl
 | `advocate-monthly-1` / `-2` / `-3` | Advocate (monthly) | 499 / 799 / 1,199 per month | 49,900 / 79,900 / 119,900 | |
 | `advocate-annual-1` / `-2` / `-3` | Advocate (annual) | 4,990 / 7,990 / 11,990 per year | 499,000 / 799,000 / 1,199,000 | 10 × monthly |
 | `chamber-seat-1` / `-2` / `-3` | Chamber | 499 / 649 / 899 per seat per month | 49,900 / 64,900 / 89,900 | Minimum 3 seats |
+| `enterprise-firm-seat-monthly` | Enterprise firm (inactive, provisioned) | 999 per seat per month | 99,900 | Minimum 10 seats; clerk seat as chamber |
 | clerk seat (chamber) | Clerk seat | 199 per seat per month | 19,900 | `CLERK_SEAT_PRICE_PAISE` |
 
 ## UPI Autopay mandate cap

@@ -1,44 +1,39 @@
 **Verdict**: CONFIRMED
-**Confidence**: medium
-**Severity**: medium (greenfield feature, part 6 of #498; last UI slice)
+**Confidence**: high
+**Severity**: medium (feature; no live defect, no UI for the shipped WhatsApp link service)
 **Task Type**: feature
 
 ### What Was Claimed
-Add `apps/web/app/(app)/w/[slug]/portfolio/`: CSV import, dashboard (next dates, stage, adverse orders), exception alert settings, exports; an i18n namespace with catalog test; cross-tenant-actions test entries for every `'use server'` action. Depends on #663 (service), #664 (billing), #665 (alerts).
+Part 4 of #502: a settings UI to link a WhatsApp number (OTP), choose message categories and unlink, with one server action per operation, an i18n namespace in en/kn/ta with its catalog test, and cross-tenant-actions test entries. Depends on #678 and #679 (both merged).
 
 ### What We Found
-- No portfolio route exists: `apps/web/app/(app)/w/[slug]/` has no `portfolio/` (listing checked at origin/milestone/court-data-network, 5906e366).
-- Core service is done and exported from the root: `packages/core/src/index.ts:22` -> `packages/core/src/portfolio/index.ts:5-27` (`importPortfolioCases`, `listPortfolioCases`, `portfolioSummary`, `exportPortfolioCsv`, `parsePortfolioCsv`, `scanPortfolioAlerts`). Import is owner-only, reads for any active member (`access.ts:16-24`). `packages/core/package.json` has no `./portfolio` subpath (only root and per-domain subpaths, lines 25-45).
-- There is NO core function to create or list portfolios: `schema.portfolio` is only inserted by tests/seeders (`packages/db/src/testing/two-tenants.ts`, `portfolio.test.ts`). The UI cannot get a `portfolioId` without one -> small core addition needed (see Recommendation).
-- Dashboard data shape: `dashboard.ts:20-36` (filters stage, nextFrom/nextTo, adverseOnly, limit<=500), `:72-81` (`PortfolioSummary`: total, byStage, withAdverseOrder, upcoming, overdue). Import report shape: `import.ts:39-51`. Export returns a CSV string: `export.ts:22-27`.
-- Alert categories exist: `packages/notifications/src/categories.ts:47-58` (`portfolio.adverse_order`, `portfolio.missed_date`); the notification preferences form already maps them (`settings/notifications/preferences-form.tsx:89-90`), so "alert settings" can reuse `setNotificationPreferenceAction` (`settings/notifications/actions.ts:97`) rather than a new action.
-- Billing #664 closed `needs-human conformance.unimplemented`, but `packages/billing/src/plans.ts:23,56-61` already has `TRACKED_CASE_PRICE_PAISE`/`trackedCaseChargePaise`; the UI does not need it.
-- Precedent for the page/action pattern: `courts/rosters/{page,actions,loading,error}.tsx` and `workspaceAction` (`apps/web/lib/workspace-action.ts`), actions wrapped as async exports (`rosters/actions.ts:120-135`).
-- Workspace kind `institution` exists (`packages/db/src/schema/auth.ts:44`); nav routes are the `WORKSPACE_ROUTES` list in `apps/web/lib/nav.ts:26-45` with `nav.test.ts` guarding it.
-- i18n: namespaces in `packages/i18n/src/catalog.ts:7-38` (e.g. `courts-rosters` at :20), JSON per locale in `packages/i18n/src/messages/{en,kn,ta}/`, expected list in `packages/i18n/src/__tests__/catalog.test.ts:~95-100` (camelCase names).
-- Cross-tenant actions guard: `apps/web/__tests__/cross-tenant-actions.test.ts` `ACTIONS` (:123) and probe inputs (:565-), final check that exported == ACTIONS (:798).
+- Core service exists (#678), verified on base `origin/milestone/instant-gtm-adoption` (c44d5405): `packages/core/src/whatsapp-link/link.ts:90` `requestWhatsAppOtp` (needs `consent`, 60s cooldown), `:166` `verifyWhatsAppOtp`, `:242` `getWhatsAppLink` (masked number), `:254` `setWhatsAppCategories`, `:275` `unlinkWhatsApp`; exported via `@causedeck/core/whatsapp-link` (`packages/core/package.json:37`). `WhatsAppDeps.sendOtp` is optional (`link.ts:32`): without it no code is delivered.
+- Outbound sender exists (#679): `packages/notifications/src/channels/whatsapp.ts:18` has templates only for `court.board`, `status.order`, `digest.end_of_day` (`WHATSAPP_CATEGORIES`, `:25`, exported as `@causedeck/notifications/whatsapp`). No OTP template exists.
+- No web UI or action references WhatsApp link: `grep whatsapp-link apps/web` finds nothing. Closest pattern: `apps/web/app/(app)/w/[slug]/settings/notifications/{actions.ts,page.tsx,preferences-form.tsx}` (`workspaceAction` + `WorkspaceScoped`, `ctx.tx`, `ctx.userId`; actions are thin async wrappers because a `'use server'` module can only export async functions).
+- Errors: core throws domain errors (`NOT_FOUND`, `CONFLICT`, `VALIDATION`, rate-limited); `apps/web/lib/matters/graph-deps.ts:30` `domainErrorCode` + the `guarded` pattern in `settings/case-watch/actions.ts:~64` map them to `ActionError`.
+- Page reads under a workspace tx via `inWorkspace` from `@causedeck/core/runtime` (`apps/web/lib/workspace-action.ts:105`).
+- Registry guard: `apps/web/__tests__/cross-tenant-actions.test.ts:93-` imports each actions module, `ACTIONS` (`:~118`) maps name to module, probe inputs in `inputs()` (`:~475`), and a per-feature "under B's own workspace" test (`:~937`) checks A's snapshot is unchanged. A new actions file without entries fails that test.
+- i18n: `packages/i18n/src/catalog.ts:7` `NAMESPACES` (one file per locale per namespace, asserted by `catalog.test.ts` "exactly one file per namespace"), top-level key list asserted at `catalog.test.ts:~92`; generated catalogs are committed (`packages/i18n/src/generated/`, regenerated with `pnpm --filter @causedeck/i18n i18n:types`, checked by the test "committed generated files match").
+- Nav: `apps/web/lib/settings-nav.ts` has fixed section lists; the push card is already placed as a card on the notifications page (`page.tsx` `PushPermissionCard`), so a WhatsApp card there needs no nav change.
 
 ### Root Cause
-Part 6 of a staged build: the data model (#661), adapters (#662), service (#663) and alerts (#665) landed, but nothing in `apps/web` surfaces them, and the service lacks a way to create/list a workspace's portfolio.
+Missing feature: #678 and #679 shipped the service and sender without a user-facing surface, so no member can opt in, verify, choose categories or unlink.
 
 ### Affected Files
-- New: `apps/web/app/(app)/w/[slug]/portfolio/{page.tsx,loading.tsx,error.tsx,actions.ts}`, components under `apps/web/components/portfolio/`.
-- `packages/core/src/portfolio/{portfolio.ts (new),index.ts}`, registry `packages/db/src/testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts` (or `portfolio.test.ts` the registry points to).
-- `packages/i18n/src/{catalog.ts,messages/{en,kn,ta}/portfolio.json,__tests__/catalog.test.ts}` (+ generated types if checked in: `generated/messages.d.ts`).
-- `apps/web/lib/nav.ts` (+ nav test), `apps/web/__tests__/cross-tenant-actions.test.ts`.
+- new `apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts` (actions)
+- new `apps/web/components/notifications/whatsapp-link-card.tsx` (client card)
+- `apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx` (load link, render card)
+- `packages/i18n/src/messages/{en,kn,ta}/whatsapp-link.json`, `packages/i18n/src/catalog.ts`, `packages/i18n/src/__tests__/catalog.test.ts`, regenerated `packages/i18n/src/generated/**`
+- `apps/web/__tests__/cross-tenant-actions.test.ts`; new `apps/web/__tests__/whatsapp-link-actions.test.ts`, `whatsapp-link-card.test.tsx`
 
 ### Sibling Sweep
-Every new core runtime export and every `'use server'` action needs a registry entry (CLAUDE.md table). Other pages' `loading/error` files and `__state` dev previews follow rosters; mirror them. No existing code path creates portfolios, so the same gap applies to any API surface (out of scope).
+Same defect class (service without UI) not present elsewhere in the lane. Other actions modules are all registered in `cross-tenant-actions.test.ts`; the new module must be too. The nested `settings/integrations/*` modules show per-feature action files are accepted.
 
 ### History
-Parent #498 (closed not_planned umbrella). Siblings #661-#665 merged on milestone/court-data-network. This is the first web slice.
+Service added in 15574312 (#678); sender in #679 (merged, PR #709). No prior UI attempt. Earlier `.forge-lean/*` files in the tree belong to #679 and are overwritten.
 
 ### Recommendation
-1. Core: add `listPortfolios` (any member) and `createPortfolio` (owner-only, name 1-200 chars, unique per workspace -> CONFLICT) in `packages/core/src/portfolio/portfolio.ts`, exported via index; register both as `denies` in the cross-tenant registry with real cases.
-2. Actions (`workspaceAction`, zod, `WorkspaceScoped`): `createPortfolioAction`, `importPortfolioAction` (owner; CSV text up to a size cap, optional sourceId), `exportPortfolioCsvAction` (members; returns CSV string for a client download). Core functions take `{db}` deps; use the actor's `ctx.tx`-compatible db like other actions. Alert settings reuse the existing preference action (no new action), linking/embedding the two categories.
-3. Page: server component with summary cards, filters (stage, next-date window, adverse only via search params), table of cases, import form (owner only), export button, alerts card; loading/error states; read-only for non-owners; empty state when no portfolio.
-4. i18n namespace `portfolio` in en/kn/ta + catalog tests; nav item `portfolio` shown for `institution` kind workspaces.
-5. Cross-tenant: ACTIONS + probes for each new action.
+Add five actions (request OTP, verify, set categories, unlink, get link) via `workspaceAction`; the input never names a user (`ctx.userId`). Add a WhatsApp card to the notifications settings page, a new `whatsappLink` i18n namespace, tests and registry entries. Outbound OTP delivery needs a provider-approved OTP template (an external provider action) and is deferred; until then the request action works without a sender and the code is not delivered.
 
 ### Related Issues
-#498 (parent), #663, #664, #665, #661, #662.
+#502 (parent), #678, #679 (done), #680 (inbound webhook sibling), #488 (provider residency review).

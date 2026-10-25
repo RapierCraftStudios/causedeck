@@ -37,7 +37,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346), the docket tables (#347), the people tables (#348), the catalogue version table (#34) the adapter tables (#372), the bench roster tables (#384) and the automation tables (#47)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346), the docket tables (#347), the people tables (#348), the catalogue version table (#34) the adapter tables (#372), the bench roster tables (#384) the automation tables (#47) the activation table (#509) and the enterprise onboarding tables (#682)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -46,6 +46,7 @@ describe('@causedeck/db root entry point', () => {
     ).toEqual([
       'access_mode_registry',
       'account',
+      'activation_event',
       'activity',
       'adapter_parse_run',
       'adapter_version',
@@ -113,6 +114,8 @@ describe('@causedeck/db root entry point', () => {
       'matter_issue_tag',
       'matter_restriction',
       'member',
+      'migration_run',
+      'migration_run_row',
       'news_item',
       'news_pref',
       'notice',
@@ -134,6 +137,7 @@ describe('@causedeck/db root entry point', () => {
       'proceeding_link',
       'proceeding_state_change',
       'proposal',
+      'provisioning_run',
       'push_subscription',
       'rate_limit',
       'review_correction',
@@ -142,10 +146,12 @@ describe('@causedeck/db root entry point', () => {
       'saas_invoice',
       'saas_invoice_line',
       'schema_info',
+      'scim_token',
       'session',
       'source',
       'source_health',
       'source_parse_run',
+      'sso_provider',
       'staff_user',
       'subscription',
       'support_session',
@@ -159,6 +165,9 @@ describe('@causedeck/db root entry point', () => {
       'verification',
       'webhook_delivery',
       'webhook_endpoint',
+      'whatsapp_inbound_message',
+      'whatsapp_link',
+      'whatsapp_otp_challenge',
       'workspace_capture_channel',
       'workspace_feature_flag',
       'workspace_integration',

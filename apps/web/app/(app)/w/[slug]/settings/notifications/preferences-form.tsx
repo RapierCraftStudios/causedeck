@@ -96,9 +96,14 @@ const CATEGORY_MESSAGE = {
 } as const satisfies Record<CategoryKey, string>;
 
 const CHANNEL_MESSAGE = { in_app: 'inApp', email: 'email', push: 'push' } as const satisfies Record<
-  Channel,
+  Exclude<Channel, 'whatsapp'>,
   string
 >;
+
+// WhatsApp (#678) is opted in by linking a number and choosing categories there, not in this matrix.
+const MATRIX_CHANNELS = CHANNELS.filter(
+  (channel): channel is Exclude<Channel, 'whatsapp'> => channel !== 'whatsapp',
+);
 
 const cellKey = (category: CategoryKey, channel: Channel) => `${category}:${channel}`;
 
@@ -187,9 +192,10 @@ export function PreferencesForm({
 
   const categoryLabel = (category: CategoryKey) =>
     t(`categories.${CATEGORY_MESSAGE[category]}.label`);
-  const channelLabel = (channel: Channel) => t(`channels.${CHANNEL_MESSAGE[channel]}`);
+  const channelLabel = (channel: Exclude<Channel, 'whatsapp'>) =>
+    t(`channels.${CHANNEL_MESSAGE[channel]}`);
 
-  const cellSwitch = (category: CategoryKey, channel: Channel) => {
+  const cellSwitch = (category: CategoryKey, channel: Exclude<Channel, 'whatsapp'>) => {
     const cell = cells[cellKey(category, channel)];
     if (cell === undefined) return null;
     return (
@@ -216,7 +222,7 @@ export function PreferencesForm({
   };
 
   const isMandatory = (category: CategoryKey) =>
-    CHANNELS.some((channel) => cells[cellKey(category, channel)]?.locked === true);
+    MATRIX_CHANNELS.some((channel) => cells[cellKey(category, channel)]?.locked === true);
 
   const categoryText = (category: CategoryKey, withExplanationId: boolean) => (
     <div className="flex flex-col gap-0.5">
@@ -257,7 +263,7 @@ export function PreferencesForm({
           <TableHeader>
             <TableRow>
               <TableHead scope="col">{t('categoryHeader')}</TableHead>
-              {CHANNELS.map((channel) => (
+              {MATRIX_CHANNELS.map((channel) => (
                 <TableHead key={channel} scope="col" className="w-24 text-center">
                   {channelLabel(channel)}
                 </TableHead>
@@ -268,7 +274,7 @@ export function PreferencesForm({
             {ROWS.map((category) => (
               <TableRow key={category} data-category={category}>
                 <TableCell>{categoryText(category, true)}</TableCell>
-                {CHANNELS.map((channel) => (
+                {MATRIX_CHANNELS.map((channel) => (
                   <TableCell key={channel} className="text-center">
                     {cellSwitch(category, channel)}
                   </TableCell>
@@ -291,7 +297,7 @@ export function PreferencesForm({
           >
             {categoryText(category, false)}
             <div className="flex flex-col gap-2">
-              {CHANNELS.map((channel) => (
+              {MATRIX_CHANNELS.map((channel) => (
                 <div key={channel} className="flex items-center justify-between gap-3 text-sm">
                   <span aria-hidden>{channelLabel(channel)}</span>
                   {cellSwitch(category, channel)}

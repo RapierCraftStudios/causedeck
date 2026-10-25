@@ -7,6 +7,7 @@ import type { Database } from '@causedeck/db';
 import { testAppDb } from '@causedeck/db/testing';
 
 import type { AuthEmail, AuthLogger, Mailer } from '../mailer';
+import type { AuthSms, SmsSender } from '../sms';
 import { createAuth, type AuthEnv, type SecurityEventRecorder } from '../server';
 
 export const APP_URL = 'http://localhost:3000';
@@ -49,10 +50,31 @@ export function capturingLogger(): CapturingLogger {
   return { lines, debug: write, info: write, warn: write, error: write };
 }
 
+export interface RecordingSms extends SmsSender {
+  sent: AuthSms[];
+}
+
+export function recordingSms(): RecordingSms {
+  const sent: AuthSms[] = [];
+  return {
+    sent,
+    send(message) {
+      sent.push(message);
+      return Promise.resolve();
+    },
+  };
+}
+
+/** A fresh E.164 Indian mobile number. */
+export function uniquePhone(): string {
+  return `+91${String(randomInt(6, 10))}${String(randomInt(0, 1_000_000_000)).padStart(9, '0')}`;
+}
+
 export function makeAuth(
   options: {
     env?: Partial<AuthEnv>;
     mailer?: RecordingMailer;
+    sms?: SmsSender;
     logger?: AuthLogger;
     /** Defaults to the shared app-role client. */
     db?: Database;
@@ -67,6 +89,7 @@ export function makeAuth(
     db,
     env: testEnv(options.env),
     mailer,
+    ...(options.sms ? { sms: options.sms } : {}),
     logger,
     ...(options.securityEvents ? { securityEvents: options.securityEvents } : {}),
   });

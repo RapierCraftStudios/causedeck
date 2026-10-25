@@ -24,7 +24,7 @@ import { tenantTable } from '../schema-helpers/tenant-table.ts';
 
 import { inList, organization, user } from './auth.ts';
 
-export const NOTIFICATION_CHANNELS = ['in_app', 'email', 'push'] as const;
+export const NOTIFICATION_CHANNELS = ['in_app', 'email', 'push', 'whatsapp'] as const;
 export const NOTIFICATION_DIGESTS = ['instant', 'daily', 'off'] as const;
 export const EMAIL_SUPPRESSION_REASONS = ['bounce', 'complaint', 'manual'] as const;
 

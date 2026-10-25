@@ -10,6 +10,7 @@ import { publicV1Router } from '../../public/v1/index.ts';
 import { createRouter, type AppEnv, type AppRouter } from '../../lib/openapi.ts';
 
 import { inboundEmailRouter, type InboundEmailDeps } from '../inbound-email.ts';
+import { inboundWhatsAppRouter, type InboundWhatsAppDeps } from '../inbound-whatsapp.ts';
 import { razorpayWebhookRouter, type RazorpayWebhookDeps } from '../webhooks/razorpay.ts';
 
 import { benchCardRouter } from './bench-card.ts';
@@ -26,13 +27,22 @@ export interface V1Options {
   billing?: Omit<RazorpayWebhookDeps, 'db'>;
   /** Inbound email deps (#530); without a provider the route rejects every call with 400. */
   inboundEmail?: Omit<InboundEmailDeps, 'db'>;
+  /** Inbound WhatsApp deps (#680); without a provider the route rejects every call with 400. */
+  inboundWhatsapp?: Omit<InboundWhatsAppDeps, 'db'>;
   /** Extra routes (tests, and later webhook groups) registered after the built-in ones. */
   routes?: (v1: AppRouter) => void;
 }
 
 const noop = () => undefined;
 
-export function v1Router({ db, middleware, billing, inboundEmail, routes }: V1Options): AppRouter {
+export function v1Router({
+  db,
+  middleware,
+  billing,
+  inboundEmail,
+  inboundWhatsapp,
+  routes,
+}: V1Options): AppRouter {
   const v1 = createRouter();
   for (const handler of middleware) v1.use('*', handler);
   v1.route('/', meRouter(db));
@@ -53,6 +63,13 @@ export function v1Router({ db, middleware, billing, inboundEmail, routes }: V1Op
     inboundEmailRouter({
       db,
       ...(inboundEmail ?? { provider: null, logger: { info: noop, warn: noop } }),
+    }),
+  );
+  v1.route(
+    '/',
+    inboundWhatsAppRouter({
+      db,
+      ...(inboundWhatsapp ?? { provider: null, logger: { info: noop, warn: noop } }),
     }),
   );
   routes?.(v1);

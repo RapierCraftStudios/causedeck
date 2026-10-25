@@ -198,6 +198,17 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A member changed the sensitive-matter default or the raw audio retention window',
   },
+  // Fail-closed: it decides whether grid corrections may enter eval sets (#558). Owner-only; ids only,
+  // so the target is the workspace and no metadata is kept.
+  'workspace.eval_reuse_enabled': {
+    security: true,
+    description: 'An owner allowed corrections to be reused in evaluation sets (opt-in)',
+  },
+  'workspace.eval_reuse_disabled': {
+    security: true,
+    description:
+      'An owner stopped corrections being reused in evaluation sets; item consents withdrawn',
+  },
   // Fail-closed: it creates or replaces the intake address or ICS feed token, so the old one stops
   // working (#287). Metadata names the kind only, never the token or its hash.
   'workspace.integration_token_rotated': {

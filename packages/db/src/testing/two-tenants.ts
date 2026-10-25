@@ -12,6 +12,7 @@ import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rl
 import { withWorkspace } from '../rls.ts';
 import { adapterParseRun } from '../schema/adapters.ts';
 import { aiCall, aiCallResult } from '../schema/audit.ts';
+import { correction } from '../schema/correction.ts';
 import {
   activity,
   automationPreference,
@@ -1458,6 +1459,24 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: outwardShareLog.id });
     return { draftId, shareId: first(rows, 'outward_share_log').id };
+  },
+  correction: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, `${tag}k`);
+    const rows = await tx
+      .insert(correction)
+      .values({
+        workspaceId,
+        documentId,
+        forumCode: 'generic.a0',
+        rowKey: `row-${tag}`,
+        columnName: 'stageText',
+        before: 'FOR ADMISSION',
+        after: 'FOR ORDERS',
+        page: 1,
+        quote: 'FOR ADMISSION',
+      })
+      .returning({ id: correction.id });
+    return { documentId, correctionId: first(rows, 'correction').id };
   },
   task: async (tx, { workspaceId, tag }) => {
     const obligationId = await seedObligation(tx, workspaceId, tag);

@@ -35,6 +35,7 @@ const workspaces = vi.hoisted(() => ({
           contributePublicCourtDocuments: false,
         }),
   ),
+  getAllowEvalReuse: vi.fn(() => Promise.resolve(false)),
 }));
 const logger = vi.hoisted(() => ({ error: vi.fn() }));
 

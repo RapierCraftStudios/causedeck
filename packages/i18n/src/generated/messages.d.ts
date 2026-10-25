@@ -1493,6 +1493,11 @@ export type Messages = {
           label: string;
           description: string;
         };
+        allowEvalReuse: {
+          label: string;
+          description: string;
+          ownerOnly: string;
+        };
         retentionAudioDays: {
           label: string;
           description: string;

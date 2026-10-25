@@ -135,6 +135,7 @@ describe('row-level security catalog', () => {
         'certified_copy',
         // Outward update drafts (#735).
         'outward_draft',
+        'correction',
         'outward_draft_version',
         'outward_share_log',
         'task',

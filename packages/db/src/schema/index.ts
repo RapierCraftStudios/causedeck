@@ -51,6 +51,7 @@ export {
   type CertifiedCopyStatus,
   type ObligationEventKind,
 } from './obligation-tracking.ts';
+export { correction, CORRECTION_COLUMNS, type CorrectionColumn } from './correction.ts';
 export {
   OUTWARD_AUDIENCES,
   OUTWARD_DRAFT_STATUSES,

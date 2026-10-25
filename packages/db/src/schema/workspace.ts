@@ -47,6 +47,8 @@ export const workspaceSettings = pgTable(
       .default(false),
     /** Days raw audio is kept before deletion: 7, 14 or 30 (the PRD maximum, and the default). */
     retentionAudioDays: integer('retention_audio_days').notNull().default(30),
+    /** Corrections may enter eval sets, with per-item consent (#558). Opt-in; only an owner sets it. */
+    allowEvalReuse: boolean('allow_eval_reuse').notNull().default(false),
     ...timestamps(),
   },
   (t) => [

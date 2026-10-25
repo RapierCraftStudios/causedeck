@@ -237,6 +237,8 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('case_status_snapshot'),
   // Corrections CauseDeck review fanned out to this workspace's watched proceedings (#518).
   ws('review_correction'),
+  // A0 grid corrections (#558): customer content, exported with the workspace.
+  ws('correction'),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [

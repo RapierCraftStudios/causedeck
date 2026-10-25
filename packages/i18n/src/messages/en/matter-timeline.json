@@ -1,0 +1,164 @@
+{
+  "matterTimeline": {
+    "title": "Timeline",
+    "loading": "Loading the timeline",
+    "error": {
+      "title": "Couldn't load the timeline of this matter.",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "offline": "Showing saved timeline from {time}",
+    "count": "{shown} of {total} events",
+    "empty": {
+      "title": "Nothing has happened on this matter yet.",
+      "body": "Hearings, orders and obligations will appear here."
+    },
+    "filteredEmpty": {
+      "title": "No events match these filters.",
+      "body": "Clear the filters to see everything on this matter."
+    },
+    "announce": {
+      "shown": "{count, plural, one {# event shown} other {# events shown}}"
+    },
+    "today": {
+      "label": "Today · {date}",
+      "jump": "Jump to today"
+    },
+    "mode": {
+      "label": "Timeline layout",
+      "combined": "Combined",
+      "lanes": "Lanes"
+    },
+    "pane": {
+      "label": "View",
+      "timeline": "Timeline",
+      "tree": "Tree",
+      "openTree": "Open tree"
+    },
+    "list": {
+      "label": "Events across all proceedings"
+    },
+    "event": {
+      "toConfirm": "To confirm",
+      "openSource": "Open source"
+    },
+    "filters": {
+      "title": "Filters",
+      "description": "Narrow the timeline by kind, proceeding, date or text.",
+      "open": "Filter events",
+      "search": "Search events",
+      "kinds": "Kinds",
+      "proceedings": "Proceedings",
+      "removeProceeding": "Remove {label} from the filter",
+      "dates": "Dates",
+      "from": "From",
+      "to": "To",
+      "showProposed": "Show proposed",
+      "clear": "Clear filters"
+    },
+    "kinds": {
+      "listing": "Listings",
+      "hearing": "Hearings",
+      "order": "Orders",
+      "obligation_due": "Obligations due",
+      "obligation_closed": "Obligations closed",
+      "state_change": "State changes",
+      "document_added": "Documents added",
+      "bench_change": "Bench changes"
+    },
+    "states": {
+      "filed": "Filed",
+      "sr_fr": "SR/FR stage",
+      "defects": "Defects",
+      "re_presented": "Re-presented",
+      "numbered": "Numbered",
+      "disposed": "Disposed"
+    },
+    "sources": {
+      "manual": "Entered by you",
+      "document": "Document",
+      "capture": "Capture",
+      "adapter": "Court website",
+      "ai": "AI reading",
+      "import": "Import",
+      "system": "System"
+    },
+    "qualifier": {
+      "daily": "Daily list",
+      "advance": "Advance list",
+      "supplementary": "Supplementary list",
+      "special": "Special list",
+      "interim": "Interim",
+      "final": "Final",
+      "procedural": "Procedural",
+      "pleading": "Pleading",
+      "ia": "Interim application",
+      "annexure": "Annexure",
+      "order": "Order",
+      "judgment": "Judgment",
+      "cause_list": "Cause list",
+      "correspondence": "Correspondence",
+      "note": "Note",
+      "draft": "Draft",
+      "registry_memo": "Registry memo",
+      "other": "Document"
+    },
+    "summary": {
+      "listing": "{tense, select, future {Listed for {subject}} other {Was listed: {subject}}}",
+      "hearing": "{hasSubject, select, yes {Heard: {subject}} other {Hearing held}}",
+      "order": "{qualifier} order passed",
+      "obligationDue": "{tense, select, future {Due: {subject}} other {Was due: {subject}}}",
+      "obligationClosed": "Closed: {subject}",
+      "stateChange": "Moved from {from} to {to}",
+      "documentAdded": "{qualifier} added",
+      "benchChange": "Bench composition changed"
+    },
+    "graph": {
+      "title": "Proceedings",
+      "treeLabel": "Proceedings of this matter",
+      "chipsLabel": "Choose proceedings",
+      "allProceedings": "All proceedings",
+      "showAll": "Show all",
+      "appeal": "appeal",
+      "unnumbered": "Unnumbered",
+      "srFrNo": "SR/FR no. {number}",
+      "group": "{caseType} × {count}",
+      "groupLabel": "{count} miscellaneous proceedings ({caseType})",
+      "relations": {
+        "appealFrom": "appeal from {label}",
+        "appealedIn": "appealed in {label}",
+        "connected": "connected to {label}",
+        "lowerCourt": "lower court: {label}",
+        "lowerCourtOf": "lower court of {label}"
+      }
+    },
+    "legend": {
+      "title": "Line styles",
+      "parentOf": "Child proceeding (indented)",
+      "appeal": "Appeal, from lower court to higher",
+      "connected": "Connected matter",
+      "lowerCourt": "Lower-court link"
+    },
+    "lanes": {
+      "label": "Proceedings side by side on one time axis",
+      "date": "Date",
+      "matter": "Matter",
+      "menu": "More lanes ({count})",
+      "menuHint": "Show up to {max} lanes."
+    },
+    "keys": {
+      "title": "Keyboard shortcuts",
+      "description": "Shortcuts for the timeline and the proceedings tree.",
+      "open": "Shortcuts",
+      "month": "Previous or next month",
+      "today": "Jump to today",
+      "rows": "Move between events",
+      "ends": "First or last event",
+      "help": "Show this list",
+      "tree": "Move in the proceedings tree",
+      "expandAll": "Expand all groups",
+      "select": "Select a proceeding or open a group",
+      "selectMore": "Add to the selection"
+    }
+  }
+}

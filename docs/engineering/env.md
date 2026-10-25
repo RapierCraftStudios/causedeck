@@ -23,6 +23,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | Switch | Default | Real providers |
 |---|---|---|
 | `EMAIL_PROVIDER` | `console` | `ses`, `smtp` |
+| `SMS_PROVIDER` | `console` | `msg91` |
 | `AI_PROVIDER` | `mock` | `bedrock`, `sarvam` |
 | `STORAGE_PROVIDER` | `minio` | `minio`, `s3` |
 | `BILLING_PROVIDER` | `mock` | `razorpay` |
@@ -38,7 +39,8 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
   It rejects the mock providers (`console` email, `mock` AI, `mock` billing) unless
   `ALLOW_MOCK_PROVIDERS=true`.
 - **India-only AI**: `AI_INDIA_ONLY` defaults to `true`. Turning it off in production needs
-  `AI_INDIA_ONLY_OVERRIDE_ACK=I_UNDERSTAND`. While it is on, `BEDROCK_REGION` must be an India region.
+  `AI_INDIA_ONLY_OVERRIDE_ACK=I_UNDERSTAND`. While it is on, `BEDROCK_REGION` must be an India region. Production refuses to boot with a real
+  `SARVAM_API_KEY` unless `SARVAM_NO_TRAINING_CONFIRMED=true` (the contract's no-training term).
 - **Data residency**: `AWS_REGION` defaults to `ap-south-1` and `DATA_REGION` to `in`. A non-India
   value (anything except `ap-south-1`/`ap-south-2`, or a `DATA_REGION` other than `in`) is rejected
   unless `AWS_REGION_OVERRIDE_ACK=I_UNDERSTAND`.
@@ -83,25 +85,57 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `KEK_BASE64` | secret base64 (32 bytes) | dev placeholder (non-prod only) | NODE_ENV=production | #21 | #116 |
 | `VAPID_PUBLIC_KEY` | string | — | VAPID_PRIVATE_KEY is set | #23 | #116 |
 | `VAPID_PRIVATE_KEY` | secret | — | VAPID_PUBLIC_KEY is set | #23 | #116 |
+| `VAPID_SUBJECT` | mailto: or https url | — | never | #197 | — |
+| `WHATSAPP_PHONE_NUMBER_ID` | string | — | WHATSAPP_ACCESS_TOKEN is set | #679 | #488 |
+| `WHATSAPP_ACCESS_TOKEN` | secret | — | WHATSAPP_PHONE_NUMBER_ID is set | #679 | #488 |
+| `WHATSAPP_API_VERSION` | string (vNN.N) | — | never | #679 | — |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | url | — | never | #13 | — |
 | `API_PORT` | port | `3001` | never (defaults to 3001) | #14 | — |
 | `WORKER_PORT` | port | `3003` | never (defaults to 3003) | #15 | — |
 | `GIT_SHA` | string | — | never | #13 | — |
+| `ADMIN_URL` | url | `http://localhost:3200` (non-prod only) | NODE_ENV=production, for apps/admin only | #309 | — |
+| `ADMIN_IP_ALLOWLIST` | list (comma-separated IPs/CIDRs) | — | never (set per deployment) | #309 | — |
+| `CF_ACCESS_AUD` | string | — | never (set per deployment) | #309 | — |
+| `CF_ACCESS_TEAM_DOMAIN` | host | — | CF_ACCESS_AUD is set | #309 | — |
+| `ADMIN_ENV_LABEL` | enum(development\|staging\|production) | — | never | #309 | — |
+| `BILLING_SUPPLIER_LEGAL_NAME` | string | — | never (issuing an invoice in production refuses while unset) | #253 | — |
+| `BILLING_SUPPLIER_ADDRESS` | string | — | never | #253 | — |
+| `BILLING_SUPPLIER_GSTIN` | GSTIN | — | never (issuing an invoice in production refuses while unset) | #253 | — |
+| `BILLING_INVOICE_SERIES` | string (1-3 capitals) | `CD` | never (defaults to CD) | #253 | — |
+| `BILLING_SAC` | string (99xxxx) | `998314` | never (defaults to 998314) | #253 | — |
+| `ADAPTER_PRIVATE_FIXTURES_DIR` | path | — | never | #371 | — |
+| `ALTERLAB_API_KEY` | secret | — | never (the mock provider is used when unset) | #479 | — |
+| `DATA_OPS_SLACK_WEBHOOK_URL` | secret | — | never (alerts are logged when unset) | #515 | — |
+| `DATA_OPS_ALERT_EMAIL` | email | — | never (alerts are logged when unset) | #515 | — |
+| `FETCH_DELEGATED_CAPTCHA_PER_HOUR` | integer (1-1000) | `10` | never (defaults to 10) | #479 | — |
+| `BUSINESS_FOUNDER_EMAILS` | list (comma-separated emails) | — | never (set per deployment) | #519 | — |
+| `BUSINESS_INFRA_COST_PAISE_MONTHLY` | integer (paise) | `0` | never (defaults to 0) | #519 | — |
+| `BUSINESS_COST_PER_USER_ALERT_PAISE` | integer (paise) | `4000` | never (defaults to 4000) | #519 | — |
+| `BUSINESS_USD_INR` | number (INR per USD) | `85` | never (defaults to 85) | #519 | — |
 | `EMAIL_PROVIDER` | enum(console\|ses\|smtp) | `console` | never (defaults to console) | #23 | — |
 | `SES_REGION` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |
 | `SES_ACCESS_KEY_ID` | string | — | EMAIL_PROVIDER=ses | #23 | #110 |
 | `SES_SECRET_ACCESS_KEY` | secret | — | EMAIL_PROVIDER=ses | #23 | #110 |
 | `SMTP_URL` | secret url | dev placeholder (non-prod only) | EMAIL_PROVIDER=smtp | #23 | #110 |
+| `SMS_PROVIDER` | enum(console\|msg91) | `console` | never (defaults to console) | #503 | — |
+| `SMS_AUTH_KEY` | secret | — | SMS_PROVIDER=msg91 | #503 | — |
+| `SMS_SENDER_ID` | string | — | SMS_PROVIDER=msg91 | #503 | — |
+| `SMS_DLT_ENTITY_ID` | string | — | SMS_PROVIDER=msg91 | #503 | — |
+| `SMS_OTP_TEMPLATE_ID` | string | — | SMS_PROVIDER=msg91 | #503 | — |
 | `AI_PROVIDER` | enum(mock\|bedrock\|sarvam) | `mock` | never (defaults to mock) | #44 | — |
 | `BEDROCK_REGION` | string | `ap-south-1` | AI_PROVIDER=bedrock | #44 | #112 |
 | `BEDROCK_ACCESS_KEY_ID` | string | — | AI_PROVIDER=bedrock | #44 | #112 |
 | `BEDROCK_SECRET_ACCESS_KEY` | secret | — | AI_PROVIDER=bedrock | #44 | #112 |
 | `BEDROCK_MODEL_ID` | string | — | AI_PROVIDER=bedrock | #44 | #112 |
+| `BEDROCK_DRAFTING_MODEL_ID` | string | — | never (optional with AI_PROVIDER=bedrock) | #44 | #112 |
+| `AI_MAX_CONCURRENCY_PER_WORKSPACE` | integer (1-32) | `4` | never (defaults to 4) | #44 | — |
+| `SARVAM_NO_TRAINING_CONFIRMED` | literal(true) | — | NODE_ENV=production and AI_PROVIDER=sarvam | #44 | #113 |
 | `SARVAM_API_KEY` | secret | — | AI_PROVIDER=sarvam | #44 | #113 |
 | `STORAGE_PROVIDER` | enum(minio\|s3) | `minio` | never (defaults to minio) | #21 | — |
 | `S3_ENDPOINT` | url | `http://localhost:9000` (non-prod only) | STORAGE_PROVIDER=minio | #21 | — |
-| `S3_BUCKET` | string | `causedeck` (non-prod only) | always (dev default outside production) | #21 | — |
-| `S3_ACCESS_KEY` | string | `causedeck` (non-prod only) | always (dev default outside production) | #21 | #116 |
+| `S3_REGION` | string | `ap-south-1` | never (defaults to ap-south-1); India only unless `AWS_REGION_OVERRIDE_ACK` | #21 | — |
+| `S3_BUCKET` | string | `causedeck-dev` (non-prod only) | always (dev default outside production) | #21 | — |
+| `S3_ACCESS_KEY` | secret | dev placeholder (non-prod only) | always (dev default outside production) | #21 | #116 |
 | `S3_SECRET_KEY` | secret | dev placeholder (non-prod only) | always (dev default outside production) | #21 | #116 |
 | `BILLING_PROVIDER` | enum(mock\|razorpay) | `mock` | never (defaults to mock) | #28 | — |
 | `RAZORPAY_KEY_ID` | string | — | BILLING_PROVIDER=razorpay | #28 | #111 |

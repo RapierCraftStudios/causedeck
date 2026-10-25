@@ -1,0 +1,32 @@
+{
+  "header": {
+    "caseTypeRaw": "WRIT APPEAL",
+    "caseType": "WA",
+    "caseNumber": "500",
+    "caseYear": 2026,
+    "orderDate": "2026-10-21",
+    "neutralCitation": "2026:KHC:89-DB",
+    "anchor": {
+      "page": 1,
+      "quote": "WRIT APPEAL NO. 500 OF 2026 (GM-RES)",
+      "rowIndex": 6
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WA",
+        "caseTypeRaw": "WRIT APPEAL",
+        "number": "500",
+        "year": 2026,
+        "matchKey": "WA/500/2026",
+        "subCategory": "GM-RES"
+      }
+    ],
+    "bench": "THE HON'BLE THE CHIEF JUSTICE (FICTIONAL) AND THE HON'BLE MRS JUSTICE B. EXAMPLE",
+    "judges": ["THE HON'BLE THE CHIEF JUSTICE (FICTIONAL)", "THE HON'BLE MRS JUSTICE B. EXAMPLE"],
+    "neutralCitationRaw": "2026:KHC:89-DB",
+    "orderType": "judgment",
+    "authenticityFlag": null
+  },
+  "cues": []
+}

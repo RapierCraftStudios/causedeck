@@ -127,7 +127,7 @@ export function SelectContent({
         position={position}
         sideOffset={position === 'popper' ? sideOffset : undefined}
         className={cn(
-          'z-dropdown relative max-h-(--radix-select-content-available-height) min-w-32 overflow-x-hidden overflow-y-auto',
+          'z-popover relative max-h-(--radix-select-content-available-height) min-w-32 overflow-x-hidden overflow-y-auto',
           'border-line bg-surface-overlay text-ink shadow-3 rounded-md border p-1',
           'motion-safe:data-[state=open]:animate-fade-in',
           position === 'popper' && 'w-full min-w-(--radix-select-trigger-width)',

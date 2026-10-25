@@ -1,0 +1,14 @@
+{
+  "events": [
+    {
+      "kind": "fr_assigned",
+      "anchor": {
+        "page": 1,
+        "quote": "FR No. 4521/2026",
+        "rowIndex": 4
+      },
+      "confidence": 0.95,
+      "frNo": "4521/2026"
+    }
+  ]
+}

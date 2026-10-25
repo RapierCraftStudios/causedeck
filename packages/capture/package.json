@@ -5,12 +5,22 @@
   "description": "Capture inbox ingestion: files, ICS, email, WhatsApp export parser.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./whatsapp": "./src/whatsapp/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "@causedeck/adapters": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "@causedeck/storage": "workspace:*",
+    "@causedeck/validators": "workspace:*",
+    "fflate": "catalog:",
+    "ical.js": "catalog:",
+    "postal-mime": "catalog:"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",

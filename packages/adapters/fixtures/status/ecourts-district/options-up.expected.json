@@ -1,0 +1,26 @@
+{
+  "state": [
+    {
+      "code": "9",
+      "label": "Uttar Pradesh"
+    }
+  ],
+  "district": [
+    {
+      "code": "7",
+      "label": "Lucknow"
+    }
+  ],
+  "establishment": [
+    {
+      "code": "UPLK01",
+      "label": "District Court, Lucknow (FICTIONAL)"
+    }
+  ],
+  "caseType": [
+    {
+      "code": "2",
+      "label": "Original Suit - OS"
+    }
+  ]
+}

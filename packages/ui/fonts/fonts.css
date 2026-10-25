@@ -50,7 +50,8 @@
     U+2000-206F, U+20AC, U+20B9, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Indic: loaded only when Tamil or Kannada glyphs appear */
+/* Indic: loaded only when Tamil or Kannada glyphs appear. `size-adjust` puts the letter body on the
+ * Geist x-height (tokens/typography.css). */
 
 @font-face {
   font-family: 'Noto Sans Tamil';
@@ -58,6 +59,7 @@
   font-weight: 400 500;
   font-display: swap;
   src: url('./noto-sans-tamil-wght.woff2') format('woff2');
+  size-adjust: 96%;
   unicode-range: U+0B82-0BFA, U+200C-200D, U+25CC;
 }
 
@@ -67,6 +69,7 @@
   font-weight: 400 500;
   font-display: swap;
   src: url('./noto-sans-kannada-wght.woff2') format('woff2');
+  size-adjust: 96%;
   unicode-range: U+0C80-0CF3, U+1CD0, U+1CD2-1CD3, U+1CDA, U+1CF2, U+1CF4, U+200C-200D, U+25CC;
 }
 

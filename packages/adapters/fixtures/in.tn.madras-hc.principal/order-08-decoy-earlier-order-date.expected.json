@@ -1,0 +1,43 @@
+{
+  "header": {
+    "caseTypeRaw": "W.P.",
+    "caseType": "WP",
+    "caseNumber": "12777",
+    "caseYear": 2026,
+    "orderDate": "2026-10-21",
+    "neutralCitation": null,
+    "neutralCitationRaw": null,
+    "anchor": {
+      "page": 1,
+      "quote": "W.P.No.12777 of 2026",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "W.P.",
+        "number": "12777",
+        "year": 2026,
+        "matchKey": "WP/12777/2026"
+      }
+    ],
+    "bench": "THE HONOURABLE MR.JUSTICE A. FICTIONAL",
+    "judges": ["THE HONOURABLE MR.JUSTICE A. FICTIONAL"],
+    "orderType": "daily"
+  },
+  "cues": [
+    {
+      "kind": "next_date",
+      "text": "List on the date fixed in the order dated 03.03.2019.",
+      "phrase": "List on",
+      "anchor": {
+        "page": 1,
+        "quote": "List on the date fixed in the order dated 03.03.2019.",
+        "rowIndex": 15
+      },
+      "confidence": 0.6,
+      "date": null
+    }
+  ]
+}

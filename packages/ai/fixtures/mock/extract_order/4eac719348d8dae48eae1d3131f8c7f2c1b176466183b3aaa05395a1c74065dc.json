@@ -1,0 +1,12 @@
+{
+  "output": {
+    "orderDate": "2026-01-12",
+    "nextHearingDate": "2026-02-09",
+    "directions": [],
+    "confidence": 0.9
+  },
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0
+  }
+}

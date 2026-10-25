@@ -102,6 +102,7 @@ valid session. `SessionUser` is `{ id, email, name: string | null, image: string
 | Cookie | `better-auth.session_token`, or `__Secure-better-auth.session_token` in production |
 | Attributes | `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` only when `NODE_ENV=production` |
 | Lifetime | 30 days (`Max-Age=2592000`), sliding: a session used more than 1 day after its last refresh is extended to a full 30 days again |
+| Admin console | `createAuth({ sessionExpiresInSeconds })` shortens the lifetime; the refresh age becomes a quarter of it (at most 1 day). apps/admin passes 8 hours and `disableSignUp: true`, so its magic links never create users (#309, [admin-console.md](admin-console.md)) |
 | Sign-out | `POST /api/auth/sign-out` deletes the session row and expires the cookie (`Max-Age=0`) |
 | CSRF | Better Auth origin checks against `trustedOrigins` (the origin of `APP_URL`), plus `SameSite=Lax` |
 | IDs | `advanced.database.generateId: 'uuid'`, matching the uuid primary keys |
@@ -143,6 +144,32 @@ RP ID.
 
 Auth emails carry i18n keys (`auth.email.magicLink.subject`, `auth.email.magicLink.body`) and the
 recipient's locale, never English prose. The templated transport in #23 resolves the keys.
+
+## Phone OTP (#503)
+
+Phone-first sign-in: a +91 mobile number and a six-digit code by SMS (Better Auth `phoneNumber`
+plugin, mounted only when `createAuth` gets an `sms` sender). Codes expire after 5 minutes and allow
+3 wrong attempts. The first verification creates the account (never when `disableSignUp`, as in the
+admin console) with the placeholder email `<digits>@phone.causedeck.invalid`; `user.email` stays
+required and unique.
+
+`createSmsSender(env)` (`@causedeck/auth/sms`) picks the transport from `SMS_PROVIDER`:
+
+- `console` (default): logs the message; the code is logged only outside production, and the number
+  is masked to its last four digits in production.
+- `msg91`: MSG91 Flow API with the DLT-registered OTP template. Needs `SMS_AUTH_KEY`,
+  `SMS_SENDER_ID`, `SMS_DLT_ENTITY_ID` and `SMS_OTP_TEMPLATE_ID` (DLT template registration is a
+  human step with the operator).
+
+| Limit | Where |
+|---|---|
+| OTP send: 5 per phone number per 15 minutes | `hooks.before` counter under `phone-otp:phone:<sha256(number)>` |
+| OTP send: 20 per IP per hour; verify: 30 per IP per hour | Better Auth `customRules` |
+| Wrong codes: 3 per code | plugin `allowedAttempts` |
+
+Linking: a phone-only account can add an email on `/account` (`/change-email`: the address changes only after the emailed link is opened; refused for accounts
+that already have a real email) and link Google (`account.accountLinking`, Google trusted). Security
+events record the method `phone_otp`.
 
 ## Rate limits
 

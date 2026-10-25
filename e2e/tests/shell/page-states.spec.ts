@@ -20,9 +20,12 @@ interface Messages {
   shell: { pages: Record<string, { description: string; empty: string }> };
 }
 
-/** The design copy the pages render (apps/web/messages/en.json). */
+/** The design copy the pages render (the merged en catalog in @causedeck/i18n). */
 const messages = JSON.parse(
-  readFileSync(new URL('../../../apps/web/messages/en.json', import.meta.url), 'utf8'),
+  readFileSync(
+    new URL('../../../packages/i18n/src/generated/messages/en.json', import.meta.url),
+    'utf8',
+  ),
 ) as Messages;
 
 const url = (route: string, state?: string, workspace = SHELL_WORKSPACE) =>
@@ -97,17 +100,24 @@ test.describe('placeholder page states', () => {
       await expect(main.getByRole('heading', { level: 1 })).toHaveText('No access');
     }
     // The same pages render normally for the owner.
+    // Scoped to `main`: a hidden copy of the page can sit outside it while the route settles, and
+    // an unscoped locator then matches two elements.
     for (const route of CLERK_DENIED_ROUTES) {
       await page.goto(url(route));
-      await expect(page.locator(`[data-route="${route}"]`)).toBeVisible();
+      await expect(page.locator(`main [data-route="${route}"]`)).toBeVisible();
     }
     // And the clerk still gets every other placeholder.
     await page.goto(url('matters', undefined, CLERK_WORKSPACE));
-    await expect(page.locator('[data-route="matters"]')).toBeVisible();
+    await expect(page.locator('main [data-route="matters"]')).toBeVisible();
   });
 
   test('flag-gated routes are not found while their flag is off', async ({ page, asUser }) => {
     await openShell(page, asUser, { wait: false });
+    // The shell nav is built from the server-evaluated flags (#22): no link to a dark route.
+    await expect(page.locator('a[href$="/matters"]').first()).toBeAttached();
+    for (const route of FLAG_GATED_ROUTES) {
+      await expect(page.locator(`a[href$="/${route}"]`), route).toHaveCount(0);
+    }
     for (const route of FLAG_GATED_ROUTES) {
       // Status is 200: the page streams behind the workspace loading boundary before notFound().
       await page.goto(url(route));

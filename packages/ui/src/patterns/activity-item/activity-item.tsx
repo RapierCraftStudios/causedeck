@@ -1,5 +1,5 @@
 import { CircleAlert, History, Inbox, type LucideIcon } from 'lucide-react';
-import { useState, type ComponentProps } from 'react';
+import { useState, type ComponentProps, type ReactNode } from 'react';
 
 import { EmptyState } from '../../components/empty-state';
 import { Skeleton, SkeletonGroup } from '../../components/skeleton';
@@ -43,9 +43,11 @@ export interface ActivityItemProps extends Omit<ComponentProps<'div'>, 'children
   actor: Person;
   /** What happened, as one sentence: `Attached order dated 12 Mar to W.P. 1234/2026`. */
   sentence: string;
-  source: ProvenanceSource;
+  /** Where the change came from. Leave out for events with no provenance (security audit). */
+  source?: ProvenanceSource | undefined;
   anchor?: Anchor | undefined;
-  level: Level;
+  /** Automation level. Leave out for events that are not automation (security audit). */
+  level?: Level | undefined;
   /** When it happened (ISO string or Date). */
   at: Date | string;
   /** Current time, for the relative time and the undo window. Fixed in stories and tests. */
@@ -54,6 +56,8 @@ export interface ActivityItemProps extends Omit<ComponentProps<'div'>, 'children
   /** Controlled undone state; leave out to let the row track Undo and Redo itself. */
   undone?: boolean | undefined;
   defaultUndone?: boolean | undefined;
+  /** Shown at the end of the row when there is no Undo, e.g. an outcome badge. */
+  trailing?: ReactNode | undefined;
   /** Leave out to show no Undo (changes that cannot be undone). */
   onUndo?: (() => void) | undefined;
   onRedo?: (() => void) | undefined;
@@ -84,6 +88,7 @@ export function ActivityItem({
   icon: Icon = History,
   undone: undoneProp,
   defaultUndone = false,
+  trailing,
   onUndo,
   onRedo,
   onOpenSource,
@@ -143,14 +148,16 @@ export function ActivityItem({
         </p>
         <div className="text-ink-muted flex flex-wrap items-center gap-2 text-xs">
           <span data-slot="activity-actor">{actor.name}</span>
-          <ProvenanceChip
-            source={source}
-            anchor={anchor}
-            onOpenSource={onOpenSource}
-            offline={offline}
-            viewOnly={viewOnly}
-          />
-          <LevelBadge level={level} />
+          {source ? (
+            <ProvenanceChip
+              source={source}
+              anchor={anchor}
+              onOpenSource={onOpenSource}
+              offline={offline}
+              viewOnly={viewOnly}
+            />
+          ) : null}
+          {level ? <LevelBadge level={level} /> : null}
           <Tooltip>
             <TooltipTrigger asChild>
               <time
@@ -210,6 +217,10 @@ export function ActivityItem({
             onRedo?.();
           }}
         />
+      ) : trailing !== undefined ? (
+        <div data-slot="activity-trailing" className="flex shrink-0 items-start gap-2 self-start">
+          {trailing}
+        </div>
       ) : null}
     </div>
   );

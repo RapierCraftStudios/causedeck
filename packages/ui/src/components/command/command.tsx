@@ -86,6 +86,10 @@ export function CommandList({ className, ...props }: ComponentProps<typeof Comma
       data-slot="command-list"
       className={cn(
         'max-h-80 scroll-py-1 overflow-x-hidden overflow-y-auto p-1 max-md:max-h-none max-md:flex-1',
+        // Items are not tabbable, so browsers make the scroller focusable. Its ring is drawn inside
+        // the box: an outer offset would be clipped by the overflow-hidden palette. Important, to
+        // beat the unlayered global `:focus-visible` offset (tokens/base.css).
+        'focus-visible:outline-ring focus-visible:outline-2 focus-visible:-outline-offset-2!',
         className,
       )}
       {...props}

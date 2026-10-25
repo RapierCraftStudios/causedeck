@@ -1,0 +1,154 @@
+{
+  "adapterId": "in.tn.madras-hc.principal",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.madras-hc.principal.original",
+  "listDate": "2026-10-23",
+  "listType": null,
+  "source": "email",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "9",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2. Crl.R.C.No.88 of 2026",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "9",
+              "itemNo": "2",
+              "caseTypeRaw": "Crl.R.C.",
+              "caseType": "CRLRC",
+              "caseNumber": "88",
+              "caseYear": 2026,
+              "matchKey": "CRLRC/88/2026",
+              "parties": "M. Kalpitha Devi vs The Inspector of Police, Imaginary Nagar",
+              "stageRaw": "FRESH CASES",
+              "stageNorm": "fresh",
+              "advocates": [
+                {
+                  "raw": "Tmt. S. Imaginary",
+                  "aliases": ["S IMAGINARY", "IMAGINARY S"]
+                },
+                {
+                  "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+                  "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+                }
+              ],
+              "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+    },
+    {
+      "hallNo": "2",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. W.A.No.77 of 2025",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "2",
+              "itemNo": "1",
+              "caseTypeRaw": "W.A.",
+              "caseType": "WA",
+              "caseNumber": "77",
+              "caseYear": 2025,
+              "matchKey": "WA/77/2025",
+              "parties": "The Registrar, Fictional University vs S. Fictional Lakshmi",
+              "stageRaw": "PART HEARD",
+              "stageNorm": "part_heard",
+              "advocates": [
+                {
+                  "raw": "Tmt. S. Imaginary",
+                  "aliases": ["S IMAGINARY", "IMAGINARY S"]
+                }
+              ],
+              "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE AND THE HONOURABLE MS. JUSTICE D. PRETEND"
+            }
+          ]
+        }
+      ],
+      "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE AND THE HONOURABLE MS. JUSTICE D. PRETEND"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. Crl.R.C.No.88 of 2026",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "9",
+      "itemNo": "2",
+      "caseTypeRaw": "Crl.R.C.",
+      "caseType": "CRLRC",
+      "caseNumber": "88",
+      "caseYear": 2026,
+      "matchKey": "CRLRC/88/2026",
+      "parties": "M. Kalpitha Devi vs The Inspector of Police, Imaginary Nagar",
+      "stageRaw": "FRESH CASES",
+      "stageNorm": "fresh",
+      "advocates": [
+        {
+          "raw": "Tmt. S. Imaginary",
+          "aliases": ["S IMAGINARY", "IMAGINARY S"]
+        },
+        {
+          "raw": "Mr. V. Madeup, Addl. Public Prosecutor",
+          "aliases": ["V MADEUP ADDL PUBLIC PROSECUTOR", "MADEUP ADDL PUBLIC PROSECUTOR V"]
+        }
+      ],
+      "bench": "THE HONOURABLE MS. JUSTICE D. PRETEND"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. W.A.No.77 of 2025",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "2",
+      "itemNo": "1",
+      "caseTypeRaw": "W.A.",
+      "caseType": "WA",
+      "caseNumber": "77",
+      "caseYear": 2025,
+      "matchKey": "WA/77/2025",
+      "parties": "The Registrar, Fictional University vs S. Fictional Lakshmi",
+      "stageRaw": "PART HEARD",
+      "stageNorm": "part_heard",
+      "advocates": [
+        {
+          "raw": "Tmt. S. Imaginary",
+          "aliases": ["S IMAGINARY", "IMAGINARY S"]
+        }
+      ],
+      "bench": "THE HONOURABLE MRS. JUSTICE B. EXAMPLE AND THE HONOURABLE MS. JUSTICE D. PRETEND"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["9", "2"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "for 23.10.2026",
+    "rowIndex": 0
+  }
+}

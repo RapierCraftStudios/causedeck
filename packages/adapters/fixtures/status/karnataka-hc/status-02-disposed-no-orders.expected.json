@@ -1,0 +1,20 @@
+{
+  "template": "karnataka-hc",
+  "status": "ok",
+  "cnr": "KAHC010099992020",
+  "caseNumber": "WP 999/2020",
+  "nextHearingDate": null,
+  "lastHearingDate": null,
+  "stage": {
+    "raw": "Disposed of",
+    "norm": "disposed"
+  },
+  "bench": "Court Hall 5 (FICTIONAL)",
+  "orders": [],
+  "quotes": {
+    "cnr": "KAHC010099992020",
+    "caseNumber": "WP 999/2020",
+    "stage": "Disposed of",
+    "bench": "Court Hall 5 (FICTIONAL)"
+  }
+}

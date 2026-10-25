@@ -4,6 +4,7 @@ node_modules/
 out/
 dist/
 .turbo/
+.cache/
 coverage/
 playwright-report/
 test-results/
@@ -19,6 +20,13 @@ research/
 DECISIONS.md
 ASSUMPTIONS.md
 
+# A court-adapter fixture of malformed HTML (#408): its bytes are the test input.
+packages/adapters/fixtures/in.ka.karnataka-hc.bengaluru/list-10-broken-html.input.html
+
+# drizzle-kit writes the migration snapshots and journal; they are generated, never hand-edited, and
+# formatting them only churns diffs (lanes kept failing "Prettier (changed files)" on them: #58, #678).
+packages/db/migrations/meta/
+
 # Local tooling
 .claude/
 .forge/
@@ -26,3 +34,7 @@ ASSUMPTIONS.md
 
 # Kept byte-for-byte (its document index is maintained by hand).
 README.md
+
+# Golden eCourts page fixtures (#634): saved-page markup and parser output kept as written.
+packages/adapters/fixtures/status/ecourts-district/*.input.html
+packages/adapters/fixtures/status/ecourts-district/cause-list-*.expected.json

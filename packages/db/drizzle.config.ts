@@ -10,6 +10,9 @@ if (ownerUrl === undefined) {
 export default defineConfig({
   schema: './src/schema/index.ts',
   out: './migrations',
+  // D-051: new migrations are named by timestamp, not the next index, so parallel lanes can't collide.
+  // Files up to 0082 keep their numbers; the journal, not the file name, orders what runs.
+  migrations: { prefix: 'timestamp' },
   dialect: 'postgresql',
   casing: 'snake_case',
   dbCredentials: { url: ownerUrl.reveal() },

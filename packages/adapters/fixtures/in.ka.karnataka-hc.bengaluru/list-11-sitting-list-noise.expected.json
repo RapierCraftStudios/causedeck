@@ -1,0 +1,21 @@
+{
+  "adapterId": "in.ka.karnataka-hc.bengaluru",
+  "adapterVersion": "1.1.0",
+  "forumCode": "in.ka.karnataka-hc.bengaluru",
+  "listDate": null,
+  "rows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": [],
+    "hallsUnreadable": []
+  },
+  "halls": [],
+  "unparsedRows": [],
+  "status": "not_a_cause_list",
+  "listType": null,
+  "source": "html",
+  "publishedAt": null,
+  "listDateAnchor": null
+}

@@ -8,8 +8,9 @@ import { signInPathFor } from '../../lib/safe-next.ts';
 /**
  * Signed-in routes (`/w/**`, `/account`). The proxy only checks that a session cookie exists; this
  * layout validates the session itself and sends anyone without one to `/sign-in?next=`.
- * TODO(#18): once memberships exist, send users with no workspace to onboarding (Launch) and
- * users on a bare `/w` to their last workspace.
+ * Workspace landing (#179) happens closer to the data: `/` (lib/home-route.ts) sends a user to their
+ * last workspace (`cd_last_ws`) or to `/onboarding` when they have none, `proxy.ts` sends a bare
+ * `/w` to `/`, and the workspace layout sends a user with no workspace to `/onboarding`.
  */
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await getSession();

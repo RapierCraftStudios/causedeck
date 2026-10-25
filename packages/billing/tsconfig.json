@@ -1,4 +1,7 @@
 {
   "extends": "@causedeck/config/tsconfig/node.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true
+  },
   "include": ["src", "*.ts"]
 }

@@ -72,6 +72,9 @@ function Matters({ columns = COLUMNS, label = 'Matters', ...props }: MattersProp
   );
 }
 
+/** Comfortable rows: 40 px with a fine pointer (mouse, trackpad), 44 px on touch. */
+const comfortablePx = () => (window.matchMedia('(pointer: fine)').matches ? 40 : 44);
+
 const meta = {
   title: 'Components/DataTable',
   component: Matters,
@@ -102,7 +105,7 @@ export const Default: Story = {
     await userEvent.click(within(header).getByRole('button'));
     await expect(header).not.toHaveAttribute('aria-sort', 'none');
     await expect(args.onSortingChange).toHaveBeenCalled();
-    await expect(bodyRows(canvas)[0]?.getBoundingClientRect().height).toBe(44);
+    await expect(bodyRows(canvas)[0]?.getBoundingClientRect().height).toBe(comfortablePx());
   },
 };
 

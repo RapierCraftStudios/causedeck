@@ -62,13 +62,14 @@
     "./hooks": "./src/hooks/index.ts",
     "./motion": "./src/lib/motion.ts",
     "./patterns": "./src/patterns/index.ts",
+    "./patterns/skeletons": "./src/patterns/states/loading-skeletons.tsx",
     "./tokens.css": "./tokens/index.css",
     "./tokens/*": "./tokens/*",
     "./fonts.css": "./fonts/fonts.css",
     "./fonts/*": "./fonts/*"
   },
   "scripts": {
-    "lint": "eslint .",
+    "lint": "NODE_OPTIONS=--max-old-space-size=4096 eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit",
     "test:storybook": "vitest run --project storybook --project storybook-dark --project browser",

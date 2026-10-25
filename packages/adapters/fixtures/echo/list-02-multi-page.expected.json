@@ -1,0 +1,87 @@
+{
+  "adapterId": "echo",
+  "adapterVersion": "1.0.0",
+  "forumCode": "test.echo.principal",
+  "listDate": "2026-10-22",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. Arb.O.P. 12/2025  Kaveri Make-Believe Traders vs Example Builders",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "2",
+      "itemNo": "1",
+      "caseTypeRaw": "Arb.O.P.",
+      "caseType": "ARBOP",
+      "caseNumber": "12",
+      "caseYear": 2025,
+      "matchKey": "ARBOP/12/2025",
+      "parties": "Kaveri Make-Believe Traders vs Example Builders",
+      "stageRaw": "FOR FINAL HEARING",
+      "stageNorm": "final_hearing"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. W.A. 300/2026  Fictional Board vs Selvi Kanavu",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "2",
+      "itemNo": "2",
+      "caseTypeRaw": "W.A.",
+      "caseType": "WA",
+      "caseNumber": "300",
+      "caseYear": 2026,
+      "matchKey": "WA/300/2026",
+      "parties": "Fictional Board vs Selvi Kanavu",
+      "stageRaw": "FOR FINAL HEARING",
+      "stageNorm": "final_hearing"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "1. C.M.A. 9 of 2024  Anbu Kalpanai vs Dream Insurance Co",
+        "rowIndex": 2
+      },
+      "confidence": 0.9,
+      "hallNo": "3",
+      "itemNo": "1",
+      "caseTypeRaw": "C.M.A.",
+      "caseType": "CMA",
+      "caseNumber": "9",
+      "caseYear": 2024,
+      "matchKey": "CMA/9/2024",
+      "parties": "Anbu Kalpanai vs Dream Insurance Co",
+      "stageRaw": "AFTER LUNCH SPECIAL SITTING",
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "2. Z.Q.R. 5/2026  Unknown Typer vs Nobody",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "3",
+      "itemNo": "2",
+      "caseTypeRaw": "Z.Q.R.",
+      "caseType": "ZQR",
+      "caseNumber": "5",
+      "caseYear": 2026,
+      "matchKey": "ZQR/5/2026",
+      "parties": "Unknown Typer vs Nobody",
+      "stageRaw": "AFTER LUNCH SPECIAL SITTING",
+      "stageNorm": null
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": ["AFTER LUNCH SPECIAL SITTING"],
+    "unknownCaseTypes": ["Z.Q.R."],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["2", "3", "4"],
+    "hallsUnreadable": ["4"]
+  }
+}

@@ -12,6 +12,7 @@ export {
 export {
   DEFAULT_PROVENANCE_LABELS,
   HighlightedQuote,
+  ImageRegion,
   ProvenancePopoverBody,
   confidencePercent,
   showsConfidence,

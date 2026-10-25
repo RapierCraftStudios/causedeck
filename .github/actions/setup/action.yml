@@ -1,7 +1,16 @@
 name: Setup
 description: >-
   Shared CI bootstrap: pnpm (version from packageManager), Node from .nvmrc with the pnpm store
-  cache, a frozen-lockfile install and the local Turborepo cache. Reused by every workflow job.
+  cache, a frozen-lockfile install and a Turborepo cache. Reused by every workflow job.
+
+inputs:
+  turbo-cache:
+    description: >-
+      Turborepo cache backend. `local` (default): `.turbo` restored with actions/cache.
+      `github`: turbo's remote cache served from the GitHub Actions cache by
+      rharkor/caching-for-turbo (no paid service; used by ci.yml). `none`: no turbo cache.
+    required: false
+    default: local
 
 runs:
   using: composite
@@ -16,14 +25,24 @@ runs:
         node-version-file: .nvmrc
         cache: pnpm
 
-    # Remote cache is optional (TURBO_TOKEN/TURBO_TEAM); this local cache is the fallback.
+    # Local cache: `.turbo` restored by prefix. Only the latest entry of each run is reused.
     - name: Restore Turborepo cache
+      if: inputs.turbo-cache == 'local'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: .turbo
         key: ${{ runner.os }}-turbo-${{ github.sha }}
         restore-keys: |
           ${{ runner.os }}-turbo-
+
+    # Remote-cache server on localhost backed by the GitHub Actions cache; exports TURBO_API,
+    # TURBO_TOKEN and TURBO_TEAM for the steps that follow. Entries are scoped by GitHub to the
+    # branch, its base branch and the default branch. Must run before any `turbo run`.
+    - name: Turborepo cache (GitHub Actions cache)
+      if: inputs.turbo-cache == 'github'
+      uses: rharkor/caching-for-turbo@760158c05c47e7a764f78e9a22ca3b5a6ed8c52e # v2.5.2
+      with:
+        use-relative-cache-path: 'true'
 
     # LEFTHOOK=0: git hooks are a local-only concern; skip installing them in CI.
     - name: Install dependencies

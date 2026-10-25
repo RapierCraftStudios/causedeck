@@ -43,12 +43,7 @@ export const REDUCED_FADE_MS = 100;
 
 /** What an obligation is, as the queue draws it: the icon of its kind. */
 export type ObligationKind =
-  | 'order_direction'
-  | 'rule'
-  | 'registry_defect'
-  | 'client'
-  | 'internal'
-  | 'certified_copy';
+  'order_direction' | 'rule' | 'registry_defect' | 'client' | 'internal' | 'certified_copy';
 
 const KIND_ICONS = {
   order_direction: Gavel,
@@ -157,6 +152,7 @@ export function ObligationRow({
   done = false,
   onDone,
   onReschedule,
+  // eslint-disable-next-line @typescript-eslint/no-deprecated -- kept working for existing callers (P3)
   onSnooze,
   kind,
   kindLabel,
@@ -188,12 +184,14 @@ export function ObligationRow({
   const date = undated
     ? ''
     : new Intl.DateTimeFormat(locale, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    ...(due.slice(0, 4) === calendarDay(current, timeZone).slice(0, 4) ? {} : { year: 'numeric' }),
-    timeZone: 'UTC',
-  }).format(new Date(`${due.slice(0, 10)}T00:00:00Z`));
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        ...(due.slice(0, 4) === calendarDay(current, timeZone).slice(0, 4)
+          ? {}
+          : { year: 'numeric' }),
+        timeZone: 'UTC',
+      }).format(new Date(`${due.slice(0, 10)}T00:00:00Z`));
   const actionable = !viewOnly && !done;
   const swipeable = touch && actionable && !offline;
 
@@ -401,7 +399,10 @@ export function ObligationRow({
                 <ClipboardCheck aria-hidden="true" />
                 {text.markDone}
               </DropdownMenuItem>
-              <DropdownMenuItem data-slot="obligation-menu-reschedule" onSelect={() => reschedule?.()}>
+              <DropdownMenuItem
+                data-slot="obligation-menu-reschedule"
+                onSelect={() => reschedule?.()}
+              >
                 <AlarmClock aria-hidden="true" />
                 {text.reschedule}
               </DropdownMenuItem>
@@ -463,7 +464,7 @@ export function GroupHeader({
       data-slot="obligation-group-header"
       aria-expanded={!collapsed}
       className={cn(
-        'bg-surface text-ink focus-visible:ring-focus sticky top-0 z-10 flex min-h-11 w-full items-center gap-2 px-1 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none',
+        'bg-surface text-ink focus-visible:ring-focus z-sticky sticky top-0 flex min-h-11 w-full items-center gap-2 px-1 text-sm font-medium focus-visible:ring-2 focus-visible:outline-none',
         className,
       )}
       {...props}

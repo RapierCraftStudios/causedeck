@@ -12,7 +12,7 @@ import {
 } from '@causedeck/ui/dialog';
 import { Textarea } from '@causedeck/ui/textarea';
 import { useTranslations } from 'next-intl';
-import { useState, type FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 
 export const OBLIGATION_CLOSE_REASONS = [
   'task_completed',
@@ -29,13 +29,19 @@ export interface CloseDialogProps {
   onSubmit: (input: { reason: CloseReason; note?: string }) => void;
 }
 
-export function CloseDialog({ open, onOpenChange, title, pending = false, onSubmit }: CloseDialogProps) {
+export function CloseDialog({
+  open,
+  onOpenChange,
+  title,
+  pending = false,
+  onSubmit,
+}: CloseDialogProps) {
   const t = useTranslations('obligations.close');
   const [reason, setReason] = useState<CloseReason | null>(null);
   const [note, setNote] = useState('');
   const [touched, setTouched] = useState(false);
   const needsNote = reason === 'not_applicable' && note.trim() === '';
-  const submit = (event: FormEvent) => {
+  const submit = (event: SyntheticEvent) => {
     event.preventDefault();
     setTouched(true);
     if (reason === null || needsNote) return;
@@ -70,7 +76,9 @@ export function CloseDialog({ open, onOpenChange, title, pending = false, onSubm
                   name="reason"
                   value={value}
                   checked={reason === value}
-                  onChange={() => setReason(value)}
+                  onChange={() => {
+                    setReason(value);
+                  }}
                 />
                 {t(`reasons.${value}`)}
               </label>
@@ -85,7 +93,9 @@ export function CloseDialog({ open, onOpenChange, title, pending = false, onSubm
             {t('note')}
             <Textarea
               value={note}
-              onChange={(event) => setNote(event.target.value)}
+              onChange={(event) => {
+                setNote(event.target.value);
+              }}
               aria-invalid={touched && needsNote ? true : undefined}
             />
             {touched && needsNote ? (
@@ -95,7 +105,13 @@ export function CloseDialog({ open, onOpenChange, title, pending = false, onSubm
             ) : null}
           </label>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                onOpenChange(false);
+              }}
+            >
               {t('cancel')}
             </Button>
             <Button type="submit" disabled={pending}>

@@ -56,7 +56,13 @@ export function QueueRow({
     ...(item.sourceQuote === null ? {} : { quote: item.sourceQuote }),
   };
   return (
-    <SwipeRow disabled={!canAct || offline} onAction={(a) => (a === 'done' ? onDone() : onReschedule())}>
+    <SwipeRow
+      disabled={!canAct || offline}
+      onAction={(a) => {
+        if (a === 'done') onDone();
+        else onReschedule();
+      }}
+    >
       <div className="flex items-start gap-2">
         <input
           type="checkbox"
@@ -96,14 +102,14 @@ export function QueueRow({
               item.dueDate === null
                 ? t('row.undated')
                 : state === 'overdue'
-                ? t('row.overdueDays', { days: Math.abs(days) })
-                : state === 'due-today'
-                  ? t('row.dueToday')
-                  : state === 'done'
-                    ? t('status.done')
-                    : days === 1
-                      ? t('row.dueTomorrow')
-                      : t('row.dueInDays', { days }),
+                  ? t('row.overdueDays', { days: Math.abs(days) })
+                  : state === 'due-today'
+                    ? t('row.dueToday')
+                    : state === 'done'
+                      ? t('status.done')
+                      : days === 1
+                        ? t('row.dueTomorrow')
+                        : t('row.dueInDays', { days }),
           }}
         />
       </div>

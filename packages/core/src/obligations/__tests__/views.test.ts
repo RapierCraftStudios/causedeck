@@ -2,7 +2,11 @@
 // lists and the filter options, on the test database.
 import { schema, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
-import { buildForum, buildMatter, buildProceeding } from '@causedeck/db/testing/matter-graph-fixtures';
+import {
+  buildForum,
+  buildMatter,
+  buildProceeding,
+} from '@causedeck/db/testing/matter-graph-fixtures';
 import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 

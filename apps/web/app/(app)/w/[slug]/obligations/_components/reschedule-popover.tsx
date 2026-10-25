@@ -13,7 +13,7 @@ import {
 } from '@causedeck/ui/dialog';
 import { Textarea } from '@causedeck/ui/textarea';
 import { useTranslations } from 'next-intl';
-import { useState, type FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 
 export interface RescheduleProps {
   open: boolean;
@@ -40,7 +40,7 @@ export function ReschedulePopover({
   const [date, setDate] = useState<Date | null>(null);
   const [reason, setReason] = useState('');
   const [touched, setTouched] = useState(false);
-  const submit = (event: FormEvent) => {
+  const submit = (event: SyntheticEvent) => {
     event.preventDefault();
     setTouched(true);
     if (date === null || reason.trim() === '') return;
@@ -78,7 +78,9 @@ export function ReschedulePopover({
             {t('reason')}
             <Textarea
               value={reason}
-              onChange={(event) => setReason(event.target.value)}
+              onChange={(event) => {
+                setReason(event.target.value);
+              }}
               aria-invalid={touched && reason.trim() === '' ? true : undefined}
             />
             {touched && reason.trim() === '' ? (
@@ -88,7 +90,13 @@ export function ReschedulePopover({
             ) : null}
           </label>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                onOpenChange(false);
+              }}
+            >
               {t('cancel')}
             </Button>
             <Button type="submit" disabled={pending}>

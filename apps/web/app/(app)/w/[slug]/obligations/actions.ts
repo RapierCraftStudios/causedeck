@@ -54,7 +54,9 @@ const view = (row: { id: string; status: string; dueDate: string | null }): Obli
   status: row.status,
   dueDate: row.dueDate,
 });
-const refresh = () => revalidatePath('/w/[slug]/obligations', 'page');
+const refresh = () => {
+  revalidatePath('/w/[slug]/obligations', 'page');
+};
 
 const close = workspaceAction(
   Close,
@@ -111,9 +113,9 @@ async function addTask(
 
 const add = workspaceAction(
   Add,
-  async ({ workspaceId: _workspaceId, ...input }, ctx) => {
+  async ({ matterId, description, dueDate, ownerMemberId }, ctx) => {
     assertCan(ctx.actor, 'obligation.track');
-    return addTask(ctx, input);
+    return addTask(ctx, { matterId, description, dueDate, ownerMemberId });
   },
   { action: 'obligation.track' },
 );
@@ -122,13 +124,18 @@ const add = workspaceAction(
  * "Use" on a next step: a task or an internal reminder is created at once; a client letter is kept
  * as an internal task (a draft) until the letter drafts of #69 land. Nothing is sent.
  */
-const useStep = workspaceAction(
+const nextStep = workspaceAction(
   UseStep,
-  async ({ workspaceId: _workspaceId, type, text: body, ...rest }, ctx) => {
+  async ({ type, text: body, matterId, dueDate, ownerMemberId }, ctx) => {
     assertCan(ctx.actor, 'obligation.track');
     const prefix =
       type === 'letter' ? 'Draft letter to client: ' : type === 'reminder' ? 'Remind clerk: ' : '';
-    return addTask(ctx, { ...rest, description: `${prefix}${body}`.slice(0, 300) });
+    return addTask(ctx, {
+      matterId,
+      dueDate,
+      ownerMemberId,
+      description: `${prefix}${body}`.slice(0, 300),
+    });
   },
   { action: 'obligation.track' },
 );
@@ -146,5 +153,5 @@ export async function addObligationAction(raw: unknown): Promise<Result<Obligati
   return add(raw);
 }
 export async function useNextStepAction(raw: unknown): Promise<Result<ObligationResult>> {
-  return useStep(raw);
+  return nextStep(raw);
 }

@@ -192,10 +192,7 @@ export async function listDefects(
       .from(defect)
       .innerJoin(
         proceeding,
-        and(
-          eq(proceeding.workspaceId, defect.workspaceId),
-          eq(proceeding.id, defect.proceedingId),
-        ),
+        and(eq(proceeding.workspaceId, defect.workspaceId), eq(proceeding.id, defect.proceedingId)),
       )
       .innerJoin(
         matter,

@@ -5,7 +5,11 @@ import { Button } from '@causedeck/ui/button';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import { suggestNextStep, type NextStep, type QueueItem } from '../../../../../../lib/obligations/queue-state.ts';
+import {
+  suggestNextStep,
+  type NextStep,
+  type QueueItem,
+} from '../../../../../../lib/obligations/queue-state.ts';
 
 export interface NextStepCardProps {
   item: Pick<QueueItem, 'id' | 'source' | 'description'>;
@@ -27,7 +31,9 @@ export function NextStepCard({ item, disabled = false, onUse }: NextStepCardProp
         type="button"
         aria-expanded={open}
         aria-controls={panel}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          setOpen((value) => !value);
+        }}
         className="text-ink-muted min-h-8 text-xs font-medium"
       >
         {open ? t('hide') : t('show')}
@@ -39,7 +45,14 @@ export function NextStepCard({ item, disabled = false, onUse }: NextStepCardProp
             <p className="text-ink-muted text-xs">{t('draftOnly')}</p>
           ) : null}
           <div>
-            <Button size="sm" variant="secondary" disabled={disabled} onClick={() => onUse(step)}>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={disabled}
+              onClick={() => {
+                onUse(step);
+              }}
+            >
               {t('use')}
             </Button>
           </div>

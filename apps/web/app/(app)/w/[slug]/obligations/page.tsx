@@ -62,24 +62,22 @@ export default async function ObligationsPage({ params, searchParams }: Obligati
     ? []
     : (Object.entries(queue) as [QueueItem['group'], (typeof queue)['overdue']][]).flatMap(
         ([group, rows]) =>
-          rows.map(
-            (row): QueueItem => ({
-              id: row.id,
-              group,
-              matterId: row.matterId,
-              matterTitle: row.matterTitle,
-              caseNumber: row.caseNumber,
-              description: row.description,
-              dueDate: row.dueDate,
-              source: row.source,
-              sourceType: row.sourceType,
-              status: row.status,
-              ownerMemberId: row.ownerMemberId,
-              ownerName: row.ownerName,
-              sourceQuote: row.sourceQuote,
-              basis: row.basis,
-            }),
-          ),
+          rows.map((row): QueueItem => ({
+            id: row.id,
+            group,
+            matterId: row.matterId,
+            matterTitle: row.matterTitle,
+            caseNumber: row.caseNumber,
+            description: row.description,
+            dueDate: row.dueDate,
+            source: row.source,
+            sourceType: row.sourceType,
+            status: row.status,
+            ownerMemberId: row.ownerMemberId,
+            ownerName: row.ownerName,
+            sourceQuote: row.sourceQuote,
+            basis: row.basis,
+          })),
       );
   const initial = parseQueueParams(query);
   return (

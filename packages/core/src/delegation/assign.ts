@@ -23,17 +23,25 @@ import { registerReassignProvider, type ReassignProvider } from '../workspaces/i
 
 import {
   inDelegationScope,
-  istDay,
+  delegationDay,
   parseDelegationInput,
-  requireAction,
+  requireDelegationAction,
   type DelegationActor,
   type DelegationDeps,
   type DelegationScope,
   type MemberRow,
 } from './scope.ts';
 
-const { appearance, hearing, listing, matter, matterRestriction, member, organization, proceeding } =
-  schema;
+const {
+  appearance,
+  hearing,
+  listing,
+  matter,
+  matterRestriction,
+  member,
+  organization,
+  proceeding,
+} = schema;
 
 interface ListingRow {
   listingId: string;
@@ -54,7 +62,11 @@ interface Notice {
   key: string;
 }
 
-function caseLabel(p: { caseTypeCode: string; number: string | null; year: number | null }): string {
+function caseLabel(p: {
+  caseTypeCode: string;
+  number: string | null;
+  year: number | null;
+}): string {
   const no = p.number === null ? '' : ` ${p.number}`;
   return `${p.caseTypeCode}${no}${p.year === null ? '' : `/${String(p.year)}`}`;
 }
@@ -136,7 +148,12 @@ async function loadListing(scope: DelegationScope, listingId: string): Promise<L
 
 /** FORBIDDEN without `appearance.assign`; NOT_FOUND for a matter the actor may not see. */
 function requireAssign(scope: DelegationScope, settings: PolicySettings, l: ListingRow): void {
-  const decision = can(scope.actor, 'appearance.assign', resourceOf(scope.actor.workspaceId, l), settings);
+  const decision = can(
+    scope.actor,
+    'appearance.assign',
+    resourceOf(scope.actor.workspaceId, l),
+    settings,
+  );
   if (decision.allow) return;
   if (decision.reason === 'ROLE_DENIED') throw forbidden('You cannot assign appearances');
   throw notFound('Listing not found');
@@ -194,12 +211,18 @@ async function ensureAccess(
       'This member cannot see this restricted matter. An owner can grant access explicitly.',
     );
   }
-  if (scope.actor.role !== 'owner') throw forbidden('Only an owner can grant access to a restricted matter');
+  if (scope.actor.role !== 'owner')
+    throw forbidden('Only an owner can grant access to a restricted matter');
   await scope.tx
     .update(matterRestriction)
-    .set({ allowedUserIds: sql`array_append(${matterRestriction.allowedUserIds}, ${assignee.userId}::uuid)` })
+    .set({
+      allowedUserIds: sql`array_append(${matterRestriction.allowedUserIds}, ${assignee.userId}::uuid)`,
+    })
     .where(
-      and(eq(matterRestriction.workspaceId, workspaceId), eq(matterRestriction.matterId, l.matterId)),
+      and(
+        eq(matterRestriction.workspaceId, workspaceId),
+        eq(matterRestriction.matterId, l.matterId),
+      ),
     );
   await record(
     { db: scope.tx, workspaceId, actor: { userId: scope.actor.userId, kind: 'user' } },
@@ -260,7 +283,11 @@ async function noticeFor(
 async function send(deps: DelegationDeps, workspaceId: string, notice: Notice): Promise<void> {
   try {
     await notify(
-      { db: deps.db, workspaceId, enqueueDelivery: deps.enqueueDelivery ?? (() => Promise.resolve()) },
+      {
+        db: deps.db,
+        workspaceId,
+        enqueueDelivery: deps.enqueueDelivery ?? (() => Promise.resolve()),
+      },
       {
         userId: notice.userId,
         category: 'system.notice',
@@ -329,7 +356,12 @@ export async function assignAppearance(
         },
       },
     );
-    const notice = await noticeFor(scope, assignee, l, `appearance:${row.id}:${assignee.id}:${String(Date.now())}`);
+    const notice = await noticeFor(
+      scope,
+      assignee,
+      l,
+      `appearance:${row.id}:${assignee.id}:${String(Date.now())}`,
+    );
     const result: AssignedAppearance = {
       appearanceId: row.id,
       listingId: l.listingId,
@@ -353,7 +385,10 @@ interface HeldAppearance {
   listing: ListingRow;
 }
 
-async function loadAppearance(scope: DelegationScope, appearanceId: string): Promise<HeldAppearance> {
+async function loadAppearance(
+  scope: DelegationScope,
+  appearanceId: string,
+): Promise<HeldAppearance> {
   const [row] = await scope.tx
     .select({
       id: appearance.id,
@@ -386,7 +421,9 @@ async function loadAppearance(scope: DelegationScope, appearanceId: string): Pro
         eq(matterRestriction.matterId, matter.id),
       ),
     )
-    .where(and(eq(appearance.workspaceId, scope.actor.workspaceId), eq(appearance.id, appearanceId)))
+    .where(
+      and(eq(appearance.workspaceId, scope.actor.workspaceId), eq(appearance.id, appearanceId)),
+    )
     .limit(1);
   if (row === undefined) throw notFound('Appearance not found');
   return {
@@ -399,7 +436,12 @@ async function loadAppearance(scope: DelegationScope, appearanceId: string): Pro
 }
 
 /** The appearance ids of a member on or after a day, with their matters (the actor's view). */
-async function futureAppearances(tx: Queryable, workspaceId: string, memberId: string, from: string) {
+async function futureAppearances(
+  tx: Queryable,
+  workspaceId: string,
+  memberId: string,
+  from: string,
+) {
   return tx
     .select({
       id: appearance.id,
@@ -453,7 +495,13 @@ async function reassignOne(
     if (held.memberId === null) throw invalid('This appearance is not held by a member');
     if (held.memberId === data.toMemberId) throw invalid('Choose a different member');
     const assignee = await activeAssignee(scope, data.toMemberId);
-    const accessGranted = await ensureAccess(scope, settings, held.listing, assignee, data.grantAccess);
+    const accessGranted = await ensureAccess(
+      scope,
+      settings,
+      held.listing,
+      assignee,
+      data.grantAccess,
+    );
     const by = await actorMember(scope);
     const capacity = data.capacity ?? held.capacity;
     const note = data.note === undefined ? held.note : data.note === '' ? null : data.note;
@@ -505,18 +553,21 @@ async function reassignMany(
   const out = await inDelegationScope(deps, actor, async (scope) => {
     const { workspaceId, userId } = scope.actor;
     const settings = await scope.settings();
-    requireAction(scope, 'appearance.assign', settings, 'You cannot assign appearances');
+    requireDelegationAction(scope, 'appearance.assign', settings, 'You cannot assign appearances');
     if (data.fromMemberId === data.toMemberId) throw invalid('Choose a different member');
-    const from = data.fromDate ?? istDay(now);
+    const from = data.fromDate ?? delegationDay(now);
     const target = await activeAssignee(scope, data.toMemberId);
-    const rows = (await futureAppearances(scope.tx, workspaceId, data.fromMemberId, from)).map((r) => ({
-      id: r.id,
-      capacity: r.capacity,
-      listing: toListingRow(r),
-    }));
+    const rows = (await futureAppearances(scope.tx, workspaceId, data.fromMemberId, from)).map(
+      (r) => ({
+        id: r.id,
+        capacity: r.capacity,
+        listing: toListingRow(r),
+      }),
+    );
     // Appearances on matters the actor may not see stay where they are.
-    const mine = rows.filter((r) =>
-      can(scope.actor, 'appearance.assign', resourceOf(workspaceId, r.listing), settings).allow,
+    const mine = rows.filter(
+      (r) =>
+        can(scope.actor, 'appearance.assign', resourceOf(workspaceId, r.listing), settings).allow,
     );
     if (mine.length === 0) return undefined;
     const by = await actorMember(scope);
@@ -619,7 +670,11 @@ export async function unassign(
   });
 }
 
-async function memberOfUser(tx: Queryable, workspaceId: string, userId: string): Promise<string | null> {
+async function memberOfUser(
+  tx: Queryable,
+  workspaceId: string,
+  userId: string,
+): Promise<string | null> {
   const [row] = await tx
     .select({ id: member.id })
     .from(member)
@@ -638,13 +693,13 @@ export const appearanceReassignProvider: ReassignProvider = {
   async countOpen(tx, workspaceId, userId) {
     const memberId = await memberOfUser(tx, workspaceId, userId);
     if (memberId === null) return 0;
-    return (await futureAppearances(tx, workspaceId, memberId, istDay(new Date()))).length;
+    return (await futureAppearances(tx, workspaceId, memberId, delegationDay(new Date()))).length;
   },
   async reassign(tx, workspaceId, fromUserId, toUserId) {
     const from = await memberOfUser(tx, workspaceId, fromUserId);
     const to = await memberOfUser(tx, workspaceId, toUserId);
     if (from === null || to === null) return;
-    const rows = await futureAppearances(tx, workspaceId, from, istDay(new Date()));
+    const rows = await futureAppearances(tx, workspaceId, from, delegationDay(new Date()));
     if (rows.length === 0) return;
     await tx
       .update(appearance)

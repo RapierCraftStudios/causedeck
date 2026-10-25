@@ -7,7 +7,7 @@ import { can, type Actor, type PolicySettings } from '@causedeck/auth/policy';
 import {
   currentScope,
   isUuid,
-  schema,
+  type schema,
   withWorkspace,
   type Database,
   type Transaction,
@@ -46,11 +46,14 @@ export interface DelegationScope {
 const IST_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' });
 
 /** The calendar day in India (`yyyy-mm-dd`) of `at`. */
-export function istDay(at: Date): string {
+export function delegationDay(at: Date): string {
   return IST_DAY.format(at);
 }
 
-export function parseDelegationInput<S extends z.ZodType>(schemaOf: S, input: unknown): z.output<S> {
+export function parseDelegationInput<S extends z.ZodType>(
+  schemaOf: S,
+  input: unknown,
+): z.output<S> {
   const parsed = schemaOf.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -88,7 +91,7 @@ export async function inDelegationScope<T>(
 }
 
 /** FORBIDDEN unless the actor's role may `action` (no resource). */
-export function requireAction(
+export function requireDelegationAction(
   scope: DelegationScope,
   action: Parameters<typeof can>[1],
   settings: PolicySettings,

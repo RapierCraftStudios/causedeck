@@ -19,7 +19,7 @@ import { detectClashes, getCourtDay, type ClashCandidate } from '../court-day/in
 import {
   inDelegationScope,
   parseDelegationInput,
-  requireAction,
+  requireDelegationAction,
   type DelegationActor,
   type DelegationDeps,
 } from './scope.ts';
@@ -59,7 +59,7 @@ export async function suggestAssignments(
   return inDelegationScope(deps, actor, async (scope) => {
     const { workspaceId } = scope.actor;
     const settings = await scope.settings();
-    requireAction(scope, 'appearance.assign', settings, 'You cannot assign appearances');
+    requireDelegationAction(scope, 'appearance.assign', settings, 'You cannot assign appearances');
     const day = await getCourtDay(
       { db: scope.tx, settings },
       { workspaceId, userId: scope.actor.userId },
@@ -136,9 +136,13 @@ export async function suggestAssignments(
     const history = new Map<string, Map<string, { count: number; capacity: Capacity }>>();
     for (const p of past) {
       if (p.memberId === null) continue;
-      const byMember = history.get(p.matterId) ?? new Map();
+      const byMember =
+        history.get(p.matterId) ?? new Map<string, { count: number; capacity: Capacity }>();
       const seen = byMember.get(p.memberId);
-      byMember.set(p.memberId, { count: (seen?.count ?? 0) + 1, capacity: seen?.capacity ?? p.capacity });
+      byMember.set(p.memberId, {
+        count: (seen?.count ?? 0) + 1,
+        capacity: seen?.capacity ?? p.capacity,
+      });
       history.set(p.matterId, byMember);
     }
 
@@ -226,7 +230,8 @@ export async function suggestAssignments(
       const [, second] = clash.items;
       const target = byListing.get(second.listingId);
       const first = byListing.get(clash.items[0].listingId);
-      if (target === undefined || first === undefined || proposed.has(target.item.listingId)) continue;
+      if (target === undefined || first === undefined || proposed.has(target.item.listingId))
+        continue;
       // Move the item that is not the member's earlier one; the clashing member leaves it.
       const to = pick(target, new Set([clash.memberId]));
       if (to === undefined) continue;
@@ -238,7 +243,8 @@ export async function suggestAssignments(
       propose(target, to, clash.kind === 'hall' ? 'hall_clash' : 'complex_clash', reason);
     }
     for (const target of placed) {
-      if (target.item.appearingMemberIds.length > 0 || proposed.has(target.item.listingId)) continue;
+      if (target.item.appearingMemberIds.length > 0 || proposed.has(target.item.listingId))
+        continue;
       const to = pick(target, new Set());
       if (to === undefined) continue;
       const before = history.get(target.item.matterId)?.get(to.memberId)?.count ?? 0;

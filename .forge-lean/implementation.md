@@ -37,3 +37,6 @@ No env vars. The tomorrow page replaces the placeholder. ta/kn strings are draft
 
 ## Stale-list follow-up
 The 10 flagged tests do not enumerate i18n namespaces (nav routes, settings sections, chords, api dirs, helpers); recorded as not_members in result.json.
+
+## Duplicate-export follow-up
+Renamed delegation's internal `istDay` -> `delegationDay` and `requireAction` -> `requireDelegationAction` (scope.ts, assign.ts, suggest.ts) so they no longer collide with import/bootstrap.ts and court-day/scope.ts. No registry keyed by those names. Also fixed two lint errors (type import in scope.ts, typed Map in suggest.ts). core tsc clean, delegation vitest 13/13, eslint clean on changed files.

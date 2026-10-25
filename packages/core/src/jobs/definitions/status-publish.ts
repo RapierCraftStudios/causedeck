@@ -8,7 +8,11 @@ import { createObjectStoreFromEnv, type ObjectStore } from '@causedeck/storage';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { publishStatus, type PublishStatusDeps, type PublishStatusResult } from '../../status/index.ts';
+import {
+  publishStatus,
+  type PublishStatusDeps,
+  type PublishStatusResult,
+} from '../../status/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 
@@ -30,7 +34,12 @@ export async function runStatusPublish(
     store,
     signingKey: deps.signingKey ?? env?.STATUS_SIGNING_KEY.reveal() ?? '',
     checks: deps.checks ?? [
-      { id: 'database', check: async () => void (await ctx.db.execute(sql`select 1`)) },
+      {
+        id: 'database',
+        check: async () => {
+          await ctx.db.execute(sql`select 1`);
+        },
+      },
       { id: 'storage', check: () => store.ping() },
     ],
     ...(deps.now === undefined ? {} : { now: deps.now }),

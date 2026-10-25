@@ -22,3 +22,6 @@ New env STATUS_SIGNING_KEY (dev default). Job name is system.status.publish.
 
 ### Stale-list follow-up
 The flagged symbols are not members of any list in the named tests (mocks or the runJob probe). The core ones are already in NOT_A_SERVICE. Recorded in result.json not_members; no code change.
+
+## Lint fix
+- status-publish.ts: replaced `async () => void (await ...)` with a block body (no-meaningless-void-operator).

@@ -453,3 +453,99 @@ describe('import batch', () => {
     });
   });
 });
+
+describe('spreadsheet files', () => {
+  async function seedSheet(w: World, text: string) {
+    const captureId = randomUUID();
+    await inWorkspace(w.tx, w.workspaceId, async (s) => {
+      await s.insert(schema.capture).values({
+        id: captureId,
+        workspaceId: w.workspaceId,
+        channel: 'bulk_import',
+        status: 'ready',
+        mime: 'text/csv',
+        sizeBytes: text.length,
+        originalFilename: 'diary.csv',
+        createdBy: w.ownerId,
+      });
+      const documentId = randomUUID();
+      await s.insert(schema.document).values({
+        id: documentId,
+        workspaceId: w.workspaceId,
+        kind: 'other',
+        storageKey: `ws/${w.workspaceId}/document/${documentId}`,
+        sha256: documentId.replaceAll('-', '').repeat(2),
+        sourceCaptureId: captureId,
+        textStatus: 'layer',
+      });
+      await s.insert(schema.documentPage).values({
+        workspaceId: w.workspaceId,
+        documentId,
+        pageNo: 1,
+        text,
+        textSource: 'layer',
+      });
+    });
+    await addImportFiles(w.deps, w.actor, { batchId: w.batchId, captureIds: [captureId] });
+    return captureId;
+  }
+
+  const csv = 'Case Number,Court\nWP 11/2026,madras-hc\nWP 22/2026,madras-hc\n';
+
+  it('stages each row and skips a case the workspace already tracks', async () => {
+    await withTestDb(async (tx) => {
+      const w = await world(tx);
+      await inWorkspace(tx, w.workspaceId, async (s) => {
+        const [forum] = await s
+          .insert(schema.forum)
+          .values({
+            workspaceId: w.workspaceId,
+            code: `madras-hc.xt-${randomUUID().slice(0, 8)}`,
+            court: 'Sheet Test Court',
+            jurisdictionKind: 'high_court',
+          })
+          .returning({ id: schema.forum.id });
+        const [m] = await s
+          .insert(schema.matter)
+          .values({ workspaceId: w.workspaceId, title: 'Known', practiceArea: 'civil' })
+          .returning({ id: schema.matter.id });
+        await s.insert(schema.proceeding).values({
+          workspaceId: w.workspaceId,
+          matterId: m?.id ?? '',
+          forumId: forum?.id ?? '',
+          caseTypeCode: 'WP',
+          caseTypeRaw: 'W.P.',
+          number: '11',
+          year: 2026,
+          sourceType: 'manual',
+        });
+      });
+      const captureId = await seedSheet(w, csv);
+      const result = await processImportFile(w.deps, {
+        workspaceId: w.workspaceId,
+        batchId: w.batchId,
+        captureId,
+      });
+      expect(result).toEqual({ outcome: 'parsed', adapterId: 'sheet', rows: 1 });
+      const staged = await proposalsOf(w);
+      expect(staged).toHaveLength(1);
+      expect(JSON.stringify(staged[0])).toContain('"22"');
+    });
+  });
+
+  it("stages nothing for another workspace's cases", async () => {
+    await withTestDb(async (tx) => {
+      const other = await world(tx);
+      const w = await world(tx);
+      const captureId = await seedSheet(w, csv);
+      expect(other.workspaceId).not.toBe(w.workspaceId);
+      const result = await processImportFile(w.deps, {
+        workspaceId: w.workspaceId,
+        batchId: w.batchId,
+        captureId,
+      });
+      expect(result).toMatchObject({ outcome: 'parsed', rows: 2 });
+      expect(await proposalsOf(other)).toHaveLength(0);
+    });
+  });
+});

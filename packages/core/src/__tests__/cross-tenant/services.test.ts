@@ -655,9 +655,18 @@ const CASES: Record<string, Case> = {
         reason: 'forum',
       }),
     );
+    // A second date read out of the same notice's holiday-list document (#628).
+    await f.tx.insert(schema.noticeHoliday).values({
+      noticeId: noticeRow?.id ?? '',
+      holidayOn: '2026-12-26',
+      name: 'XT listed holiday',
+    });
     const range = { forumCode, from: '2026-12-01', to: '2026-12-31' };
     const own = await core.loadCourtCalendar(f.tx, f.b.id, range);
-    expect([...own.holidays]).toEqual([['2026-12-25', 'XT calendar holiday']]);
+    expect([...own.holidays]).toEqual([
+      ['2026-12-25', 'XT calendar holiday'],
+      ['2026-12-26', 'XT listed holiday'],
+    ]);
     const other = await core.loadCourtCalendar(f.tx, f.a.id, range);
     expect([...other.holidays]).toEqual([]);
   },

@@ -1326,6 +1326,111 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getRoleSettings(f.tx, f.a.id)).toEqual(before);
   },
+  listSsoProviders: async (f) => {
+    await inWorkspace(f.tx, f.a.id, (s) =>
+      s.insert(schema.ssoProvider).values({
+        workspaceId: f.a.id,
+        protocol: 'oidc',
+        issuer: 'https://idp.a.example',
+        domain: 'a-sso.example.com',
+        config: { clientSecret: 'secret' },
+        enabled: true,
+        createdBy: f.ua,
+      }),
+    );
+    // B is an owner of its own workspace but is denied A's providers.
+    await expectDenied(
+      f.asB((s) => core.listSsoProviders(s, { workspaceId: f.a.id, actorUserId: f.ub })),
+    );
+  },
+  saveSsoProvider: async (f) => {
+    await expectDenied(
+      f.asB((s) =>
+        core.saveSsoProvider(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          protocol: 'oidc',
+          issuer: 'https://idp.b.example',
+          domain: 'b-sso.example.com',
+          settings: { clientId: 'id', clientSecret: 'secret' },
+          enabled: true,
+          baseUrl: 'https://app.example.com',
+          sealingSecret: 'x'.repeat(32),
+        }),
+      ),
+    );
+    const rows = await f.tx
+      .select({ id: schema.ssoProvider.id })
+      .from(schema.ssoProvider)
+      .where(eq(schema.ssoProvider.domain, 'b-sso.example.com'));
+    expect(rows).toEqual([]);
+  },
+  deleteSsoProvider: async (f) => {
+    const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .insert(schema.ssoProvider)
+        .values({
+          workspaceId: f.a.id,
+          protocol: 'oidc',
+          issuer: 'https://idp.a.example',
+          domain: 'a-del.example.com',
+          config: {},
+          enabled: true,
+          createdBy: f.ua,
+        })
+        .returning({ id: schema.ssoProvider.id }),
+    );
+    await expectDenied(
+      f.asB((s) =>
+        core.deleteSsoProvider(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          providerId: row?.id ?? '',
+        }),
+      ),
+    );
+    const left = await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .select({ id: schema.ssoProvider.id })
+        .from(schema.ssoProvider)
+        .where(eq(schema.ssoProvider.id, row?.id ?? '')),
+    );
+    expect(left).toHaveLength(1);
+  },
+  verifySsoDomain: async (f) => {
+    const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .insert(schema.ssoProvider)
+        .values({
+          workspaceId: f.a.id,
+          protocol: 'oidc',
+          issuer: 'https://idp.a.example',
+          domain: 'a-verify.example.com',
+          domainVerificationToken: 'token',
+          config: {},
+          createdBy: f.ua,
+        })
+        .returning({ id: schema.ssoProvider.id }),
+    );
+    // B cannot verify (and so bind) A's provider domain, even if the DNS record is there.
+    await expectDenied(
+      f.asB((s) =>
+        core.verifySsoDomain(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          providerId: row?.id ?? '',
+          resolver: () => Promise.resolve([[`_better-auth-token-${row?.id ?? ''}=token`]]),
+        }),
+      ),
+    );
+    const left = await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .select({ at: schema.ssoProvider.domainVerifiedAt })
+        .from(schema.ssoProvider)
+        .where(eq(schema.ssoProvider.id, row?.id ?? '')),
+    );
+    expect(left).toEqual([{ at: null }]);
+  },
   getPrivacySettings: async (f) => {
     await f.tx
       .update(schema.workspaceSettings)

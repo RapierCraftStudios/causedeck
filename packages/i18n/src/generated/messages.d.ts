@@ -303,6 +303,13 @@ export type Messages = {
         offline: string;
         accessDenied: string;
       };
+      sso: {
+        open: string;
+        emailLabel: string;
+        emailPlaceholder: string;
+        submit: string;
+        failed: string;
+      };
       phone: {
         label: string;
         placeholder: string;
@@ -1180,6 +1187,7 @@ export type Messages = {
       support: string;
       more: string;
       'court-watch': string;
+      sso: string;
     };
     placeholder: {
       export: string;
@@ -1746,6 +1754,48 @@ export type Messages = {
       removed: string;
       failed: string;
       loading: string;
+    };
+    sso: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      empty: string;
+      error: {
+        title: string;
+        retry: string;
+      };
+      form: {
+        protocol: string;
+        issuer: string;
+        domain: string;
+        enabled: string;
+        clientId: string;
+        clientSecret: string;
+        entryPoint: string;
+        cert: string;
+        save: string;
+        delete: string;
+      };
+      toast: {
+        saved: string;
+        removed: string;
+        failed: string;
+        forbidden: string;
+        verified: string;
+        verifyFailed: string;
+      };
+      status: {
+        enabled: string;
+        disabled: string;
+        unverified: string;
+      };
+      verify: {
+        title: string;
+        instructions: string;
+        name: string;
+        value: string;
+        button: string;
+      };
     };
   };
   lifecycle: {

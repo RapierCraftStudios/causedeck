@@ -52,7 +52,11 @@ vi.mock('../lib/auth.ts', () => ({
 }));
 vi.mock('../lib/env.ts', () => ({
   isProd: () => false,
-  serverEnv: () => ({ APP_URL: 'http://localhost:3000', EMAIL_PROVIDER: 'console' }),
+  serverEnv: () => ({
+    APP_URL: 'http://localhost:3000',
+    EMAIL_PROVIDER: 'console',
+    BETTER_AUTH_SECRET: { reveal: () => 'cross-tenant-test-secret-0123456789' },
+  }),
 }));
 vi.mock('../src/health.ts', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -98,6 +102,7 @@ const reminders = await import('../app/(app)/w/[slug]/settings/notifications/rem
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
+const sso = await import('../app/(app)/w/[slug]/settings/sso/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
 const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
@@ -162,6 +167,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   saveNewsPreferencesAction: news,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
+  saveSsoProviderAction: sso,
+  deleteSsoProviderAction: sso,
+  verifySsoDomainAction: sso,
   requestClerkSetupApprovalAction: welcome,
   approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
@@ -539,6 +547,16 @@ function inputs(workspaceId: string): Record<string, unknown> {
       advocatesCanInvite: false,
       ownersSeeRestrictedMatters: false,
     },
+    saveSsoProviderAction: {
+      workspaceId,
+      protocol: 'oidc',
+      issuer: 'https://idp.example.com',
+      domain: `xt-${workspaceId.slice(0, 8)}.example.com`,
+      enabled: false,
+      settings: { clientId: 'probe', clientSecret: 'probe-secret' },
+    },
+    deleteSsoProviderAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
+    verifySsoDomainAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
     updateWorkspacePrivacyAction: {
       workspaceId,
       sensitiveDefaultRestricted: false,
@@ -1095,6 +1113,26 @@ describe('cross-tenant server actions', () => {
       advocatesCanInvite: true,
       ownersSeeRestrictedMatters: true,
     });
+  });
+
+  it('saveSsoProviderAction and deleteSsoProviderAction under B’s own workspace change only B', async () => {
+    const before = await snapshotA();
+    const saved = await action('saveSsoProviderAction')(inputs(t.b.id).saveSsoProviderAction);
+    expect(saved).toMatchObject({
+      ok: true,
+      data: { protocol: 'oidc', enabled: false, domainVerified: false },
+    });
+    // The result never carries the provider's settings.
+    expect(JSON.stringify(saved)).not.toContain('probe-secret');
+    expect(await snapshotA()).toEqual(before);
+    const { id } = (saved as { data: { id: string } }).data;
+    expect(
+      await action('deleteSsoProviderAction')({ workspaceId: t.b.id, providerId: id }),
+    ).toEqual({
+      ok: true,
+      data: { id },
+    });
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('updateWorkspacePrivacyAction under B’s own workspace changes only B', async () => {

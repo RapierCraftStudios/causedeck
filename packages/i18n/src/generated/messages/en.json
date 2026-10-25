@@ -302,6 +302,13 @@
         "offline": "You are offline. Connect to sign in.",
         "accessDenied": "Access was not granted."
       },
+      "sso": {
+        "open": "Sign in with SSO",
+        "emailLabel": "Work email",
+        "emailPlaceholder": "name@firm.example.com",
+        "submit": "Continue with SSO",
+        "failed": "We could not start SSO sign-in for that address. Check it and try again."
+      },
       "phone": {
         "label": "Mobile number",
         "placeholder": "98765 43210",
@@ -1178,7 +1185,8 @@
       "audit": "Audit log",
       "support": "Support access",
       "more": "More",
-      "court-watch": "Court watch"
+      "court-watch": "Court watch",
+      "sso": "Single sign-on"
     },
     "placeholder": {
       "export": "Download a copy of everything in this workspace.",
@@ -1745,6 +1753,48 @@
       "removed": "Watch removed.",
       "failed": "Could not save. Try again.",
       "loading": "Loading court watch"
+    },
+    "sso": {
+      "metaTitle": "Single sign-on",
+      "title": "Single sign-on",
+      "description": "Let your organisation sign in with its own identity provider (SAML or OIDC). People who sign in this way join as viewers.",
+      "empty": "No identity provider yet.",
+      "error": {
+        "title": "Could not load the SSO settings.",
+        "retry": "Try again"
+      },
+      "form": {
+        "protocol": "Protocol",
+        "issuer": "Issuer",
+        "domain": "Email domain",
+        "enabled": "Enabled",
+        "clientId": "Client ID",
+        "clientSecret": "Client secret",
+        "entryPoint": "Sign-in URL",
+        "cert": "Signing certificate",
+        "save": "Save provider",
+        "delete": "Remove"
+      },
+      "toast": {
+        "saved": "Provider saved.",
+        "removed": "Provider removed.",
+        "failed": "Could not save the provider.",
+        "forbidden": "Only owners can change SSO.",
+        "verified": "Domain verified.",
+        "verifyFailed": "We could not find the DNS record yet."
+      },
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "unverified": "Domain not verified"
+      },
+      "verify": {
+        "title": "Verify your domain",
+        "instructions": "Add this DNS TXT record to {domain}, then check it. SSO cannot be turned on until the domain is verified.",
+        "name": "Record name",
+        "value": "Record value",
+        "button": "Check record"
+      }
     }
   },
   "lifecycle": {

@@ -159,6 +159,11 @@
    "kind": "defer",
    "requirement": "R17",
    "why": "Baselines need Playwright; CI generates them."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/translation-status.json",
+   "why": "hotspot-exempt: per-key registry that scripts/check-catalogs.ts requires (one draft entry per ta and kn key plus allowUntranslated for stubbed copies); the 93 new brief.* keys add 279 lines and cannot be shortened without changing the check script."
   }
  ]
 }

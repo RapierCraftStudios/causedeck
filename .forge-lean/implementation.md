@@ -44,3 +44,5 @@ Continued from the checkpointed branch: the sheet UI, actions, i18n and ui patte
 
 ### Fix: export name collision
 - Renamed `useProvenanceLabels` in `_sheet/use-provenance-labels.ts` to `useBriefProvenanceLabels` (clashed with `components/matters/next-date-card.tsx`); updated `_sheet/lines.tsx`. No registry keyed by the name.
+- packages/i18n/translation-status.json grows by 279 lines: check-catalogs requires a status entry per ta/kn key and an allowUntranslated entry per stubbed key for the 93 brief.* keys. Declared by add-deliverable amendment (hotspot-exempt).
+- Branch is already up to date with origin/milestone/prepare-execute (no new commits to merge). V1 re-run: still exit 1 only for the missing Chromium of the storybook project; `--project unit` passes.

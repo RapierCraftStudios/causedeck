@@ -228,7 +228,8 @@
       "audit": "Audit log",
       "support": "Support access",
       "more": "More",
-      "court-watch": "Court watch"
+      "court-watch": "Court watch",
+      "research": "Research"
     },
     "placeholder": {
       "export": "Download a copy of everything in this workspace.",

@@ -1,34 +1,45 @@
 ### Approach
-Settings card on the existing notifications page with one server action per operation, calling `@causedeck/core/whatsapp-link` on the workspace transaction for the signed-in member only. A wrong code is returned as a value so core's attempt count commits.
+Continued the interrupted lane: core/db/validators were already committed. This session added the web layer (Research tab link-out menu, notes, settings page), i18n namespaces, action registrations and tests.
 
 ### Changes
-- apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts: request/verify/setCategories/unlink/get actions (masked number only, domain errors mapped, RATE_LIMITED -> CONFLICT).
-- apps/web/components/notifications/whatsapp-link-card.tsx: client card (opt-in, code, categories from WHATSAPP_CATEGORIES, unlink).
-- .../settings/notifications/page.tsx: loads the link via inWorkspace + getWhatsAppLink, renders the card below the push card; a load error shows a message only.
-- packages/i18n: whatsapp-link namespace (en/ta/kn), catalog.ts, catalog test, regenerated generated files and translation-status.json.
-- Tests: whatsapp-link-actions, whatsapp-link-card, cross-tenant-actions entries.
+- apps/web/app/(app)/w/[slug]/matters/[id]/research/{page,actions}.ts(x): link-out menu from getResearchFacts, notes list/editor, denied state without memory.read; six note/authority actions (memory.write).
+- apps/web/app/(app)/w/[slug]/settings/research/{page,actions,provider-form}: provider templates (workspace.manage); lib/settings-nav.ts entry.
+- apps/web/components/research/*: link-out-menu, notes-list, note-editor and stories.
+- packages/i18n: research.json (en/ta/kn), catalog NAMESPACES, settings.nav.research, translation-status, generated types.
+- Tests: apps/web/__tests__/research/no-ai-no-iframe.test.ts, cross-tenant-actions, settings-shell, i18n catalog; e2e/tests/matters/research.spec.ts (CI only).
 
 ### Acceptance Criteria Status
-- R1 ✅ whatsapp-link-card.tsx, page.tsx (WhatsAppSection)
-- R2 ✅ whatsapp-actions.ts
-- R3 ✅ packages/i18n/src/messages/*/whatsapp-link.json, catalog.ts, catalog.test.ts
-- R4 ✅ cross-tenant-actions.test.ts (ACTIONS, inputs, snapshotA, B-workspace test)
-- R5 deferred (OTP template needs provider approval; amendment)
+- R1 ✅ packages/core/src/research/links.ts
+- R2 ✅ links.ts, providers.ts, apps/web/__tests__/research/no-ai-no-iframe.test.ts
+- R3 ✅ notes-service.ts researchFactsFromTags
+- R4 ✅ providers.ts validateProviderTemplate; settings/research
+- R5 ✅ notes-service.ts, cross-tenant services and actions tests
+- R6 ✅ page.tsx notesDenied; notes-service memory.read/write
+- R7 deferred (contract disposition)
+- R8 ✅ notes-list.tsx states (verified out of band in CI e2e)
+- R9 ✅ no-ai-no-iframe.test.ts
+- R10, R11 ✅ instrumented in e2e/tests/matters/research.spec.ts (CI)
+- R12 ✅ packages/i18n/src/messages/*/research.json
 
 ### Verification
-- V1 web vitest (4 files): pass, 42 tests. New tests fail without the fix (modules absent).
-- V2 i18n vitest: pass, 37 tests.
-- V3 cross-tenant-actions (tenancy config): pass, 26 tests.
-- V4 checks.mjs: ran; `tsc --noEmit` in apps/web clean, prettier and eslint (changed files) clean.
+V1–V5 pass (forgedock check PASS). Web tsc --noEmit clean. ESLint could not run locally (heap OOM on the type-aware config); CI lints. The new guard test fails without the components (files absent).
 
 ### Notes
-No env vars. The code is not delivered over WhatsApp yet (no sendOtp, R5 deferred).
+- Link-out menu uses a DropdownMenu at all widths (no separate bottom Sheet at 360).
+- e2e spec is at e2e/tests/matters/research.spec.ts (Playwright testDir is ./tests); amended as a deliverable.
+- Settings nav gains a "research" entry (advocate+).
 
-### Stale-list follow-up
-The 30 flagged sibling lists (nav, routes, shortcuts, API dirs, e2e) are not i18n namespace lists; recorded as not_members in result.json. No code change.
+## Stale-list follow-up
+Core research exports are registered in NOT_A_SERVICE; the other flagged lists do not enumerate them. Recorded in result.json not_members.
 
-### Post-merge verification
-The merge failure (`turbo: command not found`, exit 127) was environmental: `turbo` was not on PATH. No code conflict. Reran via `pnpm exec turbo run typecheck --filter='...[722c3900]'` (23 tasks passed), plus V1 (42 tests) and V2 (37 tests): all pass. No source change.
+## Story export collision
+Renamed notes-list story exports to NotesEmpty/NotesLoading/NotesErrorState/NotesDenied and link-out-menu Empty to NoLinks so they no longer collide with whatsapp-import stories. Nothing else references them.
 
-### Post-merge typecheck
-Bare `turbo` is not on PATH (exit 127, environment). `pnpm turbo run typecheck --filter=...[722c3900]` on the merged tree: 23/23 tasks successful, no code change needed.
+## Lint fix
+CI lint failed on two `@typescript-eslint/no-base-to-string` errors (`String(FormData.get(..) ?? "")`) in settings/research/provider-form.tsx and components/research/note-editor.tsx. Narrowed with `typeof value === "string"`. ESLint on all changed files is now clean (core/db/validators/i18n had no errors).
+
+## CI lint fix
+CI lint failed with no log. Removed committed .eslintcache files (apps/web, core, db, i18n, validators) and applied prettier to 4 files (core cross-tenant services.test.ts, db schema/index.ts, validators research.ts + test). eslint on changed files passes.
+
+## CI tenancy fix
+The `tenancy` job also runs `test:export-coverage`. The new tenant tables `research_note` and `research_provider` had no exporter and were not in the erase order. Added `ws('research_note')` and `ws('research_provider')` to the workspace exporter in `lifecycle/export/exporters.ts`, and both tables ahead of `matter` in `lifecycle/deletion/erase.ts`. The export-coverage test passes locally. The Testcontainers cross-tenant suite was not run (no log, no Docker here).

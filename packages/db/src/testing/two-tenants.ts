@@ -5,7 +5,7 @@
 // committed data (the api and web suites, whose users come from Better Auth).
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
-import { and, eq, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 import type { Database, Transaction } from '../client.ts';
 import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
@@ -1339,12 +1339,14 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .returning({ id: briefState.id });
     return { listingId, id: first(rows, 'brief_state').id };
   },
-  reminder_dispatch: async (tx, { workspaceId, ownerId }) => {
-    const [owner] = await tx
-      .select({ id: member.id })
-      .from(member)
-      .where(and(eq(member.organizationId, workspaceId), eq(member.userId, ownerId)));
-    const memberId = first(owner === undefined ? [] : [owner], 'member').id;
+  reminder_dispatch: async (tx, { workspaceId, tag }) => {
+    // A member of its own (the FK is composite), inserted in the target workspace like the row.
+    const userId = await newUser(tx, `reminder-${tag}`);
+    const members = await tx
+      .insert(member)
+      .values({ organizationId: workspaceId, userId, role: 'viewer' })
+      .returning({ id: member.id });
+    const memberId = first(members, 'member').id;
     const rows = await tx
       .insert(reminderDispatch)
       .values({ workspaceId, memberId, kind: 'evening', forDate: '2026-10-26', channel: 'push' })

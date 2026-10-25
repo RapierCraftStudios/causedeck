@@ -1,0 +1,89 @@
+name: Deploy staging
+
+# Merge to `staging` (#100): build, scan and sign the images (images.yml), deploy to the staging VPS,
+# smoke it, and record a GitHub deployment. Staging is not subject to the court-day freeze, but the
+# same freeze check runs and is recorded. A successful staging deployment status is what production
+# promotion (deploy-prod.yml) requires for the same sha. Secrets come from the `staging` GitHub
+# environment (#116): DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS (pinned host
+# key), GHCR_USER, GHCR_PULL_TOKEN (read-only registry token).
+
+on:
+  push:
+    branches: [staging]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and publish images
+    uses: ./.github/workflows/images.yml
+    with:
+      publish: true
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+  deploy:
+    name: Deploy to staging
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging
+    permissions:
+      contents: read
+      deployments: write
+    env:
+      SHA: ${{ github.sha }}
+      GH_TOKEN: ${{ github.token }}
+      DEPLOY_ENVIRONMENT: staging
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      GHCR_USER: ${{ secrets.GHCR_USER }}
+      GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+      ACTOR: ${{ github.actor }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Freeze check (recorded, not enforced on staging)
+        id: freeze
+        uses: ./.github/actions/freeze-guard
+        with:
+          allow_override: 'true'
+      - name: Record checks
+        env:
+          FROZEN: ${{ steps.freeze.outputs.frozen }}
+          WINDOW: ${{ steps.freeze.outputs.window_name }}
+        run: |
+          {
+            echo "### Staging deploy of \`$SHA\`"
+            echo "- Court-day freeze: $FROZEN ${WINDOW:+($WINDOW)} (staging is exempt)"
+          } >>"$GITHUB_STEP_SUMMARY"
+      - name: Create deployment record
+        run: |
+          set -euo pipefail
+          id="$(gh api "repos/$GITHUB_REPOSITORY/deployments" -X POST -f ref="$SHA" -f environment=staging \
+            -F auto_merge=false -F 'required_contexts[]' -f description="staging deploy of $SHA" --jq .id)"
+          echo "DEPLOYMENT_ID=$id" >>"$GITHUB_ENV"
+          gh api "repos/$GITHUB_REPOSITORY/deployments/$id/statuses" -X POST -f state=in_progress >/dev/null
+      - name: Deploy
+        run: bash infra/scripts/remote-deploy.sh deploy
+      - name: Smoke
+        run: bash infra/scripts/remote-deploy.sh smoke
+      - name: Mark deployment successful
+        run: gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses" -X POST -f state=success >/dev/null
+      - name: Failure summary
+        if: ${{ failure() }}
+        run: |
+          bash infra/scripts/remote-deploy.sh summary >>"$GITHUB_STEP_SUMMARY" || true
+          if [ -n "${DEPLOYMENT_ID:-}" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses" -X POST -f state=failure >/dev/null || true
+          fi

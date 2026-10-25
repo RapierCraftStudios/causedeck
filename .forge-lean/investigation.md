@@ -1,39 +1,45 @@
 **Verdict**: CONFIRMED
-**Confidence**: high
-**Severity**: medium (feature; no live defect, no UI for the shipped WhatsApp link service)
+**Confidence**: medium
+**Severity**: medium (greenfield feature; /today and /tomorrow are placeholders, hero surface missing)
 **Task Type**: feature
 
+Note: the earlier FORGE:INVESTIGATION comment on #59 describes a WhatsApp-link settings UI (a different issue). It is stale and was ignored; this plan follows the issue body (Court-Day Board).
+
 ### What Was Claimed
-Part 4 of #502: a settings UI to link a WhatsApp number (OTP), choose message categories and unlink, with one server action per operation, an i18n namespace in en/kn/ta with its catalog test, and cross-tenant-actions test entries. Depends on #678 and #679 (both merged).
+Build the Court-Day Board on `/today` and `/tomorrow`, rendering the `getCourtDay` read model (#58) as complex -> hall -> item with stage badges, clash cards, list-diff banner/sheet, manual court-is-at marker, readiness rings, carry lists, delegation chips, an adapter-failure banner keeping last-known data (UJ-9), keyboard, a11y, i18n, stories and e2e/visual specs.
 
 ### What We Found
-- Core service exists (#678), verified on base `origin/milestone/instant-gtm-adoption` (c44d5405): `packages/core/src/whatsapp-link/link.ts:90` `requestWhatsAppOtp` (needs `consent`, 60s cooldown), `:166` `verifyWhatsAppOtp`, `:242` `getWhatsAppLink` (masked number), `:254` `setWhatsAppCategories`, `:275` `unlinkWhatsApp`; exported via `@causedeck/core/whatsapp-link` (`packages/core/package.json:37`). `WhatsAppDeps.sendOtp` is optional (`link.ts:32`): without it no code is delivered.
-- Outbound sender exists (#679): `packages/notifications/src/channels/whatsapp.ts:18` has templates only for `court.board`, `status.order`, `digest.end_of_day` (`WHATSAPP_CATEGORIES`, `:25`, exported as `@causedeck/notifications/whatsapp`). No OTP template exists.
-- No web UI or action references WhatsApp link: `grep whatsapp-link apps/web` finds nothing. Closest pattern: `apps/web/app/(app)/w/[slug]/settings/notifications/{actions.ts,page.tsx,preferences-form.tsx}` (`workspaceAction` + `WorkspaceScoped`, `ctx.tx`, `ctx.userId`; actions are thin async wrappers because a `'use server'` module can only export async functions).
-- Errors: core throws domain errors (`NOT_FOUND`, `CONFLICT`, `VALIDATION`, rate-limited); `apps/web/lib/matters/graph-deps.ts:30` `domainErrorCode` + the `guarded` pattern in `settings/case-watch/actions.ts:~64` map them to `ActionError`.
-- Page reads under a workspace tx via `inWorkspace` from `@causedeck/core/runtime` (`apps/web/lib/workspace-action.ts:105`).
-- Registry guard: `apps/web/__tests__/cross-tenant-actions.test.ts:93-` imports each actions module, `ACTIONS` (`:~118`) maps name to module, probe inputs in `inputs()` (`:~475`), and a per-feature "under B's own workspace" test (`:~937`) checks A's snapshot is unchanged. A new actions file without entries fails that test.
-- i18n: `packages/i18n/src/catalog.ts:7` `NAMESPACES` (one file per locale per namespace, asserted by `catalog.test.ts` "exactly one file per namespace"), top-level key list asserted at `catalog.test.ts:~92`; generated catalogs are committed (`packages/i18n/src/generated/`, regenerated with `pnpm --filter @causedeck/i18n i18n:types`, checked by the test "committed generated files match").
-- Nav: `apps/web/lib/settings-nav.ts` has fixed section lists; the push card is already placed as a card on the notifications page (`page.tsx` `PushPermissionCard`), so a WhatsApp card there needs no nav change.
+- `apps/web/app/(app)/w/[slug]/today/page.tsx:1-72` is the placeholder (`placeholderPage('today')`) plus `LiveHalls` and `BenchNoticeAlerts` sections; `tomorrow/page.tsx:1-3` is only `placeholderPage('tomorrow')`. No `loading.tsx` or `error.tsx` in either; no `_court-day/` dir.
+- Read model exists: `packages/core/src/court-day/query.ts:81` `getCourtDay(deps, actor, {date, scope})`, exported via `@causedeck/core/court-day` (`packages/core/package.json:18`). Items carry `carryCount` (`query.ts:110,293`). Scope `workspace` needs `court_day.view_all` (`query.ts:96-101`).
+- Marker service exists: `packages/core/src/court-day/markers.ts` exports `setCurrentItem`/`clearCurrentItem` (`index.ts:12`). Clash detection `clashes.ts`, list diff `diff.ts` (`index.ts:10-11`), live halls `board.ts:362`.
+- No service or column for "carried" toggling (`grep carried` in db schema/core finds nothing relevant), so `toggleCarriedAction` has no backing store.
+- No web consumer of `setCurrentItem`/`getCourtDay` in `apps/web`.
+- i18n: `packages/i18n/src/messages/en/court-day.json` holds only `courtDay.liveHalls`; `court-day` already in `NAMESPACES` (`catalog.ts`) and `catalog.test.ts:96` lists top-level key `courtDay`. Issue path `packages/i18n/messages/...` is wrong; real path is `packages/i18n/src/messages/{en,ta,kn}/court-day.json`. Generated catalogs in `packages/i18n/src/generated/` are regenerated with `pnpm --filter @causedeck/i18n i18n:types`.
+- UI patterns: `packages/ui/src/patterns/{court-item-chip,stage-badge,states,...}`, barrel `patterns/index.ts`; `packages/ui` exports `./patterns`.
+- e2e specs live in `e2e/tests/<area>/` (e.g. `e2e/tests/product/`), not `e2e/product/`. ADR dir `docs/adr` ends at 0038 (+README index row).
+- Cross-tenant guards: any new `'use server'` file must be added to `ACTIONS`/inputs in `apps/web/__tests__/cross-tenant-actions.test.ts:128`; core is not changed so `cross-tenant-registry.ts` is untouched. `packages/validators/src` is not touched, so `packages/db/src/index.test.ts` is not affected.
 
 ### Root Cause
-Missing feature: #678 and #679 shipped the service and sender without a user-facing surface, so no member can opt in, verify, choose categories or unlink.
+Missing feature: #58 shipped the read model and #493 left a placeholder, so the board UI was never built.
 
 ### Affected Files
-- new `apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts` (actions)
-- new `apps/web/components/notifications/whatsapp-link-card.tsx` (client card)
-- `apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx` (load link, render card)
-- `packages/i18n/src/messages/{en,kn,ta}/whatsapp-link.json`, `packages/i18n/src/catalog.ts`, `packages/i18n/src/__tests__/catalog.test.ts`, regenerated `packages/i18n/src/generated/**`
-- `apps/web/__tests__/cross-tenant-actions.test.ts`; new `apps/web/__tests__/whatsapp-link-actions.test.ts`, `whatsapp-link-card.test.tsx`
+- `apps/web/app/(app)/w/[slug]/today/{page,loading,error}.tsx`, `tomorrow/{page,loading,error}.tsx`
+- new `apps/web/app/(app)/w/[slug]/_court-day/*` (board, header, ribbon, attention strip, hall column/rail, marker, item card, clash card, readiness ring, list-diff sheet, quick-actions sheet, day rail, `use-court-day-data.ts`, `keyboard.ts`, `actions.ts`)
+- new `packages/ui/src/patterns/court-day/*` (+ stories, barrel export in `patterns/index.ts`)
+- `packages/i18n/src/messages/{en,ta,kn}/court-day.json`, regenerated `packages/i18n/src/generated/**`; `packages/i18n/src/__tests__/catalog.test.ts` only if top-level keys change
+- `apps/web/__tests__/cross-tenant-actions.test.ts` (register new actions module)
+- new `e2e/tests/product/court-day-board.spec.ts`, `e2e/tests/visual/court-day-board.spec.ts` (CI-only)
+- new `docs/adr/0039-court-day-board-interaction-model.md` + index row in `docs/adr/README.md`
+- Enumerating tests to run: `apps/web/__tests__/cross-tenant-actions.test.ts`, `packages/i18n/src/__tests__/catalog.test.ts`, `packages/ui/src/patterns/boundaries.test.ts`.
 
 ### Sibling Sweep
-Same defect class (service without UI) not present elsewhere in the lane. Other actions modules are all registered in `cross-tenant-actions.test.ts`; the new module must be too. The nested `settings/integrations/*` modules show per-feature action files are accepted.
+`/today` and `/tomorrow` are the only court-day placeholders. Other `placeholderPage` routes (calendar, etc.) belong to other issues (#66). `components/court-day/live-halls.tsx` and `components/courts/bench-notice-alerts.tsx` must be preserved on `/today`.
 
 ### History
-Service added in 15574312 (#678); sender in #679 (merged, PR #709). No prior UI attempt. Earlier `.forge-lean/*` files in the tree belong to #679 and are overwritten.
+`today` placeholder from the shell scaffold; live halls added in #493, bench alerts in #496; read model in PR #697 (#58). No prior board UI attempt. Siblings #60/#61 (brief) are open/needs-human.
 
 ### Recommendation
-Add five actions (request OTP, verify, set categories, unlink, get link) via `workspaceAction`; the input never names a user (`ctx.userId`). Add a WhatsApp card to the notifications settings page, a new `whatsappLink` i18n namespace, tests and registry entries. Outbound OTP delivery needs a provider-approved OTP template (an external provider action) and is deferred; until then the request action works without a sender and the code is not delivered.
+One lane: server-rendered board over `getCourtDay` under `workspaceAction`-style loaders, `?hall=` URL state, client islands only for rail, sheets, keyboard and marker. Deliver `setCurrentItemAction` (calls `setCurrentItem`/`clearCurrentItem`). Defer `toggleCarriedAction` and persisted carry toggling (no service/table; needs core+db work); show the derived carry list (`carryCount`) read-only. Defer the `/design` pipeline and design label (process outside code). Lighthouse/bundle/p95/visual/e2e are CI-measured (`out_of_band`). ta/kn keys stubbed per issue.
 
 ### Related Issues
-#502 (parent), #678, #679 (done), #680 (inbound webhook sibling), #488 (provider residency review).
+#1 (parent), #58 (read model, closed), #65 (offline seam `useCourtDayData`), #61, #62, #63, #64, #66, #145.

@@ -1,43 +1,41 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (no outage today; the scale path is undocumented and uncodified, so a trigger firing would force an unplanned migration)
+**Severity**: medium (partial baseline exists; security gates, custom SAST, ZAP, CSP reporting and exception handling are missing)
 **Task Type**: feature
 
 ### What Was Claimed
-Issue #106 asks for the Stage B/C scale-out runbooks, plan-able (never applied) Terraform modules (RDS, S3, ALB, optional Cloudflare LB, ECS/ElastiCache skeletons, `envs/stage-b`), migration scripts (Postgres to RDS, MinIO to S3), S3 provider conformance tests proving env-only provider swap, `scale-readiness-check.ts`, an ADR, and a CI extension of `terraform.yml`. 13 acceptance criteria. The migration itself, Stage A backups (#101), base Terraform (#99) and load tests (#105) are out of scope.
+Add security automation: dependency, secret, SAST and container scanning, a ZAP baseline against a staging-like stack, CSP violation reporting (`POST /v1/csp-report`, `csp_violations_total`), a weekly report, SBOMs, an exceptions process and a vuln-triage runbook. 13 acceptance criteria.
 
 ### What We Found
-- #99 and #101 are merged on the base (`origin/milestone/production-infra-scale` = `15297f35`, same as HEAD). Terraform layout exists: `infra/terraform/modules/{cloudflare-access,cloudflare-pages,cloudflare-static-cdn,cloudflare-waf,cloudflare-zone,vps-do-blr1,vps-lightsail-mumbai}`, `envs/{prod,staging}`, `backend.tf.example`, `infra/terraform/README.md:1-30`.
-- None of the issue's deliverables exist: no `aws-*`, `cloudflare-lb`, `envs/stage-b`, `infra/scripts/stage-b/`, `scale-readiness-check.ts`, `stage-b-scale-out.md`, `stage-c-orchestration.md`. Last ADR is `docs/adr/0036-bench-facts.md`; next free number 0037.
-- `.github/workflows/terraform.yml:41-67` (static job: policy node test, fmt, validate and `terraform test` for staging/prod only, tflint, checkov) and `:69-117` (plan matrix `[staging, prod]`, dummy AWS creds) must be extended with `stage-b`. Apply is `workflow_dispatch` gated by `environment: terraform-<env>` (`:155-190`); Stage B must reuse that gate (apply inputs `options: [staging, prod]` at `:15-20`).
-- Policy lint precedent: `infra/terraform/test/policy.test.mjs` (text-based HCL block parser, `blocks()` at `:21-39`, ENVS list `:15`) plus `residency.tftest.hcl`; run in CI and by `pnpm test:ci-scripts` (`package.json:31` globs `infra/terraform/test/*.test.mjs`). New module policy tests fit here (or a sibling file in that dir).
-- Residency precedent to mirror for the Cloudflare LB: #99 K3, `app_proxied` false unless `residency_decision_ref` non-empty (`infra/terraform/README.md` variables table, `envs/prod/variables.tf`).
-- Storage: the provider is `packages/storage/src/s3-provider.ts` (not `providers/s3.ts` as the issue says). `createObjectStoreFromEnv` and `StorageEnv` exist (`__tests__/s3-provider.test.ts:11-20`). The shared contract `objectStoreContract(name, harness)` is in `__tests__/object-store.contract.ts:23`, already run against MinIO via Testcontainers (`__tests__/minio.test.ts:24-40`) and the memory provider. No S3-compatible mock target runs the same suite, and no test proves the swap needs only env changes.
-- Envelope encryption: `packages/storage/src/crypto/kek.ts` has the `KeyProvider` seam (KEK from `KEK_BASE64`, rotation list), `docs/engineering/storage.md:14-50` states "Stage B: AWS KMS". No dedicated key-rotation runbook file exists; rotation text is in `storage.md` and `infra/runbooks/restore.md:34`.
-- Health endpoints exist: web `apps/web/app/readyz/route.ts:9`, API `apps/api/src/app.ts:92-98` (health handlers). Needed for ALB health checks and the readiness check.
-- Script tooling precedent: TS scripts run via Node type stripping (`package.json:14`, `infra/scripts/doctor.ts:1-2`, `infra/scripts/tsconfig.json`), tests in `infra/scripts/*.test.ts` (picked up by `test:ci-scripts`). Shell precedent: `infra/scripts/backup/*.sh`, `infra/scripts/restore/*.sh`, `infra/scripts/backup/lib/india-guard.sh`, tests `infra/scripts/backup/test/backup.test.mjs`.
-- Existing runbooks to cross-link: `infra/runbooks/{restore.md,dr-hyderabad.md,on-call.md,workspace-deletion.md}`; verification SQL reusable from `infra/scripts/restore/verify.sql`.
-- PRD cost target: `docs/product/03-prd.md:335` (≤ ₹175 variable cost per active seat per month at launch, ≤ ₹110 by month 6).
-- Day-one rules source: `docs/engineering/13-technical-architecture-spike.md:125`.
+- `.github/workflows/security.yml:21-99`: jobs `audit` (`pnpm audit:prod`, no exceptions file), `gitleaks` (digest-pinned docker, full history), `codeql` and `dependency-review` (both opt-in via `ENABLE_GHAS`, D-043), weekly cron Mon 02:30 UTC (`security.yml:16`). No Semgrep, no Trivy fs scan, no weekly report, no no-l5 step.
+- `package.json:43` `audit:prod` is `pnpm audit --prod --audit-level high`: fails on any high/critical, with no fix-available filter and no exception mechanism. `infra/security/` does not exist.
+- `.github/dependabot.yml`: weekly, one `catalog` group for npm plus github-actions; no `applies-to: security-updates` group and no documented policy.
+- `.gitleaks.toml:6-12`: default rules plus a case-number allowlist; no allowlist for `.env.example` / `infra/docker/env/*.env.example`. `lefthook.yml` pre-commit has only prettier and eslint (no gitleaks). No seeded-secret test.
+- `.github/workflows/images.yml:33-34,166-187`: Trivy (`--severity CRITICAL --ignore-unfixed`), CycloneDX SBOM and cosign sign/attest already run for main builds. No `infra/security/trivy/` config or ignore file with expiry; SBOM is attested, not attached to a release; no deploy workflow verifies the signature.
+- `scripts/check-no-l5.ts` and `pnpm check:no-l5` (`package.json:32`) exist and run in `.github/workflows/ci.yml:70`; the test is `packages/core/src/automation/no-l5.test.ts`. Not run in security.yml; `packages/config/test/no-l5.test.ts` does not exist.
+- No `/v1/csp-report`: `apps/api/src/routes/` has `inbound-email.ts`, `inbound-whatsapp.ts`, `v1/`, `webhooks/`; routers mount in `apps/api/src/routes/v1/index.ts:44-75`; rate-limit and body-limit groups are path-prefix maps (`apps/api/src/app.ts:126-133`, `middleware/rate-limit.ts:55`, `middleware/body-limit.ts:19`). `csrf` only blocks cookie principals (`middleware/cors.ts:43`), so an anonymous report POST passes.
+- `packages/observability/src/otel.ts:162` exports `meter()`; no `csp_violations_total` exists.
+- CSP: web builds a nonce CSP with no `report-uri`/`report-to` (`apps/web/lib/csp.ts:14-30`, used by `apps/web/proxy.ts:50`); Caddy `strict_csp` (`infra/caddy/snippets/security-headers.caddy:17`) has none and no `Reporting-Endpoints` header; `infra/caddy/README.md:35` says "CSP report collection is #104". `infra/caddy/test/caddyfile.test.mjs:77-81` asserts app/admin carry no Caddy CSP (must stay true).
+- No ZAP config or workflow; no Semgrep rules. `infra/docker/compose.prod.yml` and `infra/docker/test/compose-smoke.sh` exist (CI-launched stack precedent). `infra/runbooks/` has no `vuln-triage.md`.
+- E2E tests live under `e2e/tests/<area>/` (`e2e/playwright.config.ts:91` `testDir: './tests'`), so the issue's `e2e/security/csp.spec.ts` must be `e2e/tests/security/csp.spec.ts`.
+- API OpenAPI is checked in (`apps/api/package.json:14-15` `openapi:check`; `apps/api/src/__tests__/openapi-file.test.ts`): a documented new route requires regenerating it.
 
 ### Root Cause
-Greenfield. The spike (#1 §3.2, §3.3, §6, §11) specified Stage B/C but only Stage A infra (#97, #99, #101) was built; there is no runbook, IaC, migration tooling or automated guard that the day-one rules still hold.
+Greenfield beyond the #3/#98 baseline: scanners that were cheap to add exist (audit, gitleaks, Trivy, cosign); the policy layer (exceptions with expiry, custom rules, ZAP, CSP reporting, reporting, runbook) was never built.
 
 ### Affected Files
-New: `infra/runbooks/stage-b-scale-out.md`, `infra/runbooks/stage-c-orchestration.md`, `infra/terraform/modules/{aws-rds-postgres,aws-s3-documents,aws-alb-multinode,cloudflare-lb,aws-ecs-fargate,aws-elasticache}/`, `infra/terraform/envs/stage-b/`, `infra/scripts/stage-b/{migrate-postgres-to-rds.sh,migrate-minio-to-s3.sh}`, `infra/scripts/scale-readiness-check.ts` (+test), `docs/adr/0037-stage-b-c-scale-path.md`, storage conformance test(s). Changed: `.github/workflows/terraform.yml`, `infra/terraform/README.md`, `infra/terraform/test/policy.test.mjs` (or new sibling test), `packages/storage/src/__tests__/*`, `docs/engineering/storage.md` (KMS note), `package.json` (script entry).
+`.github/workflows/security.yml`, new `semgrep.yml`, `zap-baseline.yml`; `.github/dependabot.yml`, `.gitleaks.toml`, `lefthook.yml`; new `infra/security/{exceptions.yml,semgrep/,zap/,trivy/,sbom/}`; new gate scripts under `scripts/`; `apps/api/src/routes/csp-report.ts` + `routes/v1/index.ts`/`app.ts` wiring + OpenAPI file; `apps/web/lib/csp.ts`/`proxy.ts`; `infra/caddy/snippets/security-headers.caddy` (+ caddy test, README); `infra/runbooks/vuln-triage.md`; `docs/engineering/ci.md`; `e2e/tests/security/csp.spec.ts`; `packages/config/test/no-l5.test.ts`.
 
 ### Sibling Sweep
-- Every Terraform region variable must validate to `ap-south-1`/`ap-south-2` (policy test covering all new modules, as `policy.test.ts` does for #99 modules).
-- `workspace-deletion.md` and `restore.md` crypto-erase and key claims must stay consistent with the KMS DEK re-wrap description.
-- `infra/docker/README.md` and `docs/engineering/13-technical-architecture-spike.md` link the scale path: add backlinks only if trivial.
-- `terraform.yml` drift and apply jobs enumerate `[staging, prod]`; do not add `stage-b` to apply or drift (nothing applied automatically).
-- Core exports: no new `@causedeck/core` runtime exports are planned, so the cross-tenant registry is untouched.
+- Every workflow pins actions by SHA and docker images by digest (actionlint in `lint-workflows.yml`); new workflows must follow.
+- Other public ingress routes (`inbound-email.ts`, `webhooks/razorpay.ts`) set the pattern for anonymous routers, size caps and per-prefix limits; reuse it.
+- Gitleaks allowlists and `.gitleaksignore` are history-based: the new fixture secret must live outside scanned paths or be allow-listed explicitly.
 
 ### History
-`terraform.yml` and base modules from #99 (PR #790); backups and drill tooling from #101 (PR #793); storage provider and envelope crypto from earlier storage issues. No prior attempt at Stage B/C. Linked context shows #99/#101 lanes had conformance regressions on scope creep and omission, so every acceptance item must be mapped explicitly.
+Security workflow from #3 (PR #146 touched `.github/workflows/security.yml`); Caddy and the nonce-CSP decision from #98 (PR #789); images/Trivy/cosign from #97 (PR #784). No prior CSP-report attempt.
 
 ### Recommendation
-One lane, ordered: (1) ADR + runbooks; (2) modules with variable validation and policy tests; (3) `envs/stage-b` + example tfvars + workflow plan job; (4) scale-readiness script with tests; (5) storage conformance against an S3-compatible in-process mock; (6) migration scripts with dry-run/guard shell tests. Terraform cannot run locally (docker/tools unavailable on host): verify with node policy tests only; CI runs fmt/validate/plan. The two rehearsals need real staging data and are post-deploy; ship scripts plus a rehearsal results section in the runbook that is filled after the run.
+One lane, roughly 35 files (under the split threshold). Keep pure logic in testable scripts (audit gate, exception expiry, ZAP host allowlist, trivy ignore expiry, semgrep fixture completeness) with node tests, and wire them into workflows. Actual ZAP, Semgrep, Trivy, CodeQL and cosign runs are CI-only. Do not weaken the existing opt-in GHAS jobs (D-043).
 
 ### Related Issues
-#1 parent, #99 and #101 (dependencies, done), #105 (load tests/triggers), #108 (VPS), #112 (AWS access), #116 (gated apply environments), #102/#103 (alerts, incident runbooks).
+#1 (parent), #3 and #98 (done), #97 (images), #100 (deploy, owns cosign verify wiring), #102 (monitoring consumes `csp_violations_total`), #103 (incident runbooks), #116 (environment secrets).

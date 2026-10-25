@@ -1,0 +1,8 @@
+# Trivy settings shared by the images workflow and the filesystem scan in security.yml (#104).
+# Critical findings that have a fix fail the build; the ignore file lists reviewed exceptions, each with
+# an expiry date (see .trivyignore.yaml).
+severity:
+  - CRITICAL
+ignore-unfixed: true
+exit-code: 1
+ignorefile: .trivyignore.yaml

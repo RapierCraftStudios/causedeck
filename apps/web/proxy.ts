@@ -6,7 +6,13 @@ import { getSessionCookie } from 'better-auth/cookies';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { LOCALE_COOKIE } from './i18n/routing.ts';
-import { buildCsp, createNonce, negotiateLocale, uploadOriginOf } from './lib/csp.ts';
+import {
+  buildCsp,
+  createNonce,
+  cspReportUrlOf,
+  negotiateLocale,
+  uploadOriginOf,
+} from './lib/csp.ts';
 import { isDev, serverEnv } from './lib/env.ts';
 import { signInPathFor } from './lib/safe-next.ts';
 import { LAST_WORKSPACE_COOKIE } from './lib/workspace-context.ts';
@@ -40,6 +46,15 @@ function uploadOrigin(): string | undefined {
   }
 }
 
+/** The API's CSP report route; `undefined` when the server env is unavailable. */
+function cspReportUrl(): string | undefined {
+  try {
+    return cspReportUrlOf(serverEnv());
+  } catch {
+    return undefined;
+  }
+}
+
 export function proxy(request: NextRequest): NextResponse {
   // A share that reached the server (no service worker yet) has no page to POST to: the files were
   // never read, so send the person to the share screen's "share from another app" empty state.
@@ -47,7 +62,11 @@ export function proxy(request: NextRequest): NextResponse {
     return NextResponse.redirect(new URL('/share-target', request.url), 303);
   }
   const nonce = createNonce();
-  const csp = buildCsp(nonce, { dev: isDev(), uploadOrigin: uploadOrigin() });
+  const csp = buildCsp(nonce, {
+    dev: isDev(),
+    uploadOrigin: uploadOrigin(),
+    reportUrl: cspReportUrl(),
+  });
 
   let response: NextResponse;
   if (isProtectedPath(request.nextUrl.pathname) && !getSessionCookie(request)) {

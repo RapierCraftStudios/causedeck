@@ -1,0 +1,82 @@
+# Custom Semgrep rules for CauseDeck (#104; spike §6, PRD TR-1). Run by .github/workflows/semgrep.yml
+# on apps/ and packages/; `semgrep --test` checks them against fixtures/rules.ts and fixtures/rules.tsx
+# (rules.test.mjs requires a passing and a failing case per rule). Paths exclude tests and the few
+# reviewed baseline sites named in each rule; a new site needs a reviewed exclusion or a code change.
+rules:
+  - id: causedeck.raw-sql-bypasses-with-workspace
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      Raw SQL through `db.execute(...)` runs outside `withWorkspace`, so row-level security has no
+      workspace to enforce. Use `withWorkspace(db, workspaceId, (tx) => ...)` and the repositories.
+    patterns:
+      - pattern: $DB.execute(...)
+      - metavariable-regex:
+          metavariable: $DB
+          regex: ^(db|database|pool|client)$
+      - pattern-not: $DB.execute(sql`select 1`)
+    paths:
+      exclude:
+        - packages/db/**
+        - '**/*.test.*'
+        - '**/__tests__/**'
+        - '**/testing/**'
+        # Reviewed baseline: audit writer (set_config plus insert in one statement) and public bench facts.
+        - packages/core/src/audit/writer.ts
+        - packages/intelligence/src/bench-facts/index.ts
+
+  - id: causedeck.unsafe-html-injection
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      `dangerouslySetInnerHTML` injects unescaped HTML. Render text as children; sanitise any
+      unavoidable HTML with a reviewed sanitiser and a nonce-safe pattern, and exclude the site here.
+    pattern: <$EL dangerouslySetInnerHTML={...} />
+    paths:
+      exclude:
+        - '**/*.test.*'
+        - '**/__tests__/**'
+
+  - id: causedeck.fetch-to-unlisted-host
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      Server-side `fetch` to a URL that is not a relative path or an allow-listed host. Outbound
+      requests go through `@causedeck/fetch` (provider allow-list, no unauthorised court scraping);
+      add the host to the allow-list in this rule only after review.
+    patterns:
+      - pattern: fetch($URL, ...)
+      - pattern-not: fetch("=~/^\/[^\/]/", ...)
+      - pattern-not: fetch("=~/^https:\/\/(api\.razorpay\.com|api\.alterlab\.io)\//", ...)
+      # Presigned upload URLs minted by our own storage layer (apps/web/app/api/captures/route.ts).
+      - pattern-not: fetch($CREATED.uploadUrl, ...)
+    paths:
+      exclude:
+        - '**/*.test.*'
+        - '**/__tests__/**'
+        - packages/fetch/**
+        - packages/ui/**
+        # Browser code: it can only reach what the page CSP (connect-src) allows.
+        - apps/web/components/**
+        - apps/web/lib/**
+        - apps/web/app/**/*.tsx
+        - apps/admin/**
+        - apps/site/**
+
+  - id: causedeck.l5-automation-action
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      An automation level above L4 (L5..L9) must not exist: nothing auto-sends, files or pays
+      (PRD TR-1, `pnpm check:no-l5`).
+    pattern-either:
+      - pattern: '=~/^L[5-9]$/'
+      - patterns:
+          - pattern: '{ ..., automationLevel: $N, ... }'
+          - metavariable-comparison:
+              metavariable: $N
+              comparison: $N > 4
+    paths:
+      exclude:
+        - '**/*.test.*'
+        - '**/__tests__/**'

@@ -1,0 +1,45 @@
+# ZAP automation plan for the weekly baseline (#104; .github/workflows/zap-baseline.yml).
+# Environment variables are filled in by the workflow: ZAP_TARGET (checked by check-target.mjs before
+# ZAP starts), ZAP_USER and ZAP_PASSWORD (a test user created in the job, never a real account).
+# The context is limited to ZAP_TARGET, so spidering cannot leave the stack; passive scan only, no
+# active attacks. The workflow then fails on medium or higher alerts missing from suppressions.tsv.
+env:
+  contexts:
+    - name: causedeck
+      urls:
+        - ${ZAP_TARGET}
+      includePaths:
+        - ${ZAP_TARGET}/.*
+      authentication:
+        method: json
+        parameters:
+          loginPageUrl: ${ZAP_TARGET}/sign-in
+          loginRequestUrl: ${ZAP_TARGET}/api/auth/sign-in/email
+          loginRequestBody: '{"email":"{%username%}","password":"{%password%}"}'
+        verification:
+          method: response
+          loggedInRegex: '"user"'
+      sessionManagement:
+        method: cookie
+      users:
+        - name: test-user
+          credentials:
+            username: ${ZAP_USER}
+            password: ${ZAP_PASSWORD}
+  parameters:
+    failOnError: true
+    progressToStdout: true
+jobs:
+  - type: spider
+    parameters:
+      context: causedeck
+      user: test-user
+      maxDuration: 5
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: /zap/wrk
+      reportFile: zap-report

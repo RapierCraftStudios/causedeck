@@ -53,6 +53,8 @@ const ROUTES: Record<string, string> = {
     'provider-verified; the workspace comes only from the resolved intake address (inbound-email.test.ts)',
   'POST /v1/inbound/whatsapp':
     'signature-verified; the workspace comes only from the verified link of the sender number (inbound-whatsapp.test.ts)',
+  'POST /v1/csp-report':
+    'public and unauthenticated; logs a sanitised report and a counter, reads and writes no tenant data (csp-report.test.ts)',
   'GET /v1/inbound/whatsapp':
     'handshake only: echoes the challenge for the verify token, touches no tenant data (inbound-whatsapp.test.ts)',
 };

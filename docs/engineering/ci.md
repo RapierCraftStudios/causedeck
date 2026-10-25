@@ -96,12 +96,23 @@ Unit tests for the CI scripts: `pnpm test:ci-scripts` (`node --test` over `infra
 
 ## Security workflow
 
-- `audit`: `pnpm audit:prod` (`pnpm audit --prod --audit-level high`). Fails on a high or critical advisory in production dependencies.
-- `gitleaks`: scans the full git history with the gitleaks CLI image, pinned by digest. It does not use `gitleaks/gitleaks-action`, which requires a `GITLEAKS_LICENSE` secret for organisation repositories.
+Policy and triage times: `infra/runbooks/vuln-triage.md`.
+
+- `audit`: `pnpm audit:prod` runs `scripts/audit-gate.mjs` (`pnpm audit --prod --json`). It fails on a high or critical advisory that has a patched version, unless an unexpired entry in `infra/security/exceptions.yml` matches (fields `id`, `package`, `reason`, `owner`, `expires`; at most 90 days ahead). An expired or malformed entry fails the build on its own. `pnpm audit:prod:raw` is the plain `pnpm audit`.
+- `gitleaks`: scans the full git history with the gitleaks CLI image, pinned by digest, then proves the scanner works: a fake token is generated in a scratch directory and the scan must fail on it. It does not use `gitleaks/gitleaks-action`, which requires a `GITLEAKS_LICENSE` secret for organisation repositories. `.gitleaks.toml` allow-lists by explicit path only `.env.example`, `.env.ci`, `infra/docker/env/*.env.example` and the seeded-secret template; a real `.env` is never allow-listed. The same scan runs as a lefthook pre-commit hook on staged changes (the binary, else the pinned image, else a notice).
+- `trivy fs`: Trivy filesystem scan with `infra/security/trivy/trivy.yaml` (critical with a fix fails). Ignore entries live in `infra/security/trivy/.trivyignore.yaml` and each needs an `expired_at` date.
+- `no L5`: `pnpm check:no-l5` (no fifth automation level, nothing auto-sends, files or pays).
+- `weekly report` (Mondays, and on demand): writes open advisories and exceptions to the run summary and to one open issue titled "Weekly security report". It is the only job with `issues: write`, and fails on an expired exception.
 - `codeql`: `javascript-typescript`, `build-mode: none`. The only job with `security-events: write`.
 - `dependency-review`: PRs only, `fail-on-severity: high`.
 
-CodeQL result upload and dependency review require GitHub Advanced Security (Code Security) on a private repository. Both jobs are therefore **opt-in**: they run only when the repository variable `ENABLE_GHAS` is `true` (D-043). Until then they are skipped, and `audit` (pnpm audit, high/critical) and `gitleaks` (secret scan of full history) are the always-on free alternatives.
+Other workflows: `semgrep.yml` (PRs and weekly; the custom rules in `infra/security/semgrep/rules.yml` flag raw SQL outside `withWorkspace`, `dangerouslySetInnerHTML`, `fetch` to hosts that are not allow-listed and any L5 action; `semgrep --test` checks a passing and a failing fixture per rule), `zap-baseline.yml` (weekly and on demand: ZAP baseline against the compose stack built on the runner with an authenticated test user created per run; `infra/security/zap/check-target.mjs` refuses every host but the allow-listed origins, and the run fails on medium or higher alerts missing from `infra/security/zap/suppressions.tsv`) and `images.yml` (Trivy on published images with the shared config, CycloneDX SBOM attested with cosign and attached to the GitHub release on `v*` tags). Deploy workflows verify an image with `infra/security/sbom/verify-cosign.sh`.
+
+CodeQL result upload and dependency review require GitHub Advanced Security (Code Security) on a private repository. Both jobs are therefore **opt-in**: they run only when the repository variable `ENABLE_GHAS` is `true` (D-043). Until then they are skipped, and `audit`, `gitleaks` and Semgrep are the always-on free alternatives.
+
+## Dependency updates
+
+Dependabot (`.github/dependabot.yml`) opens one grouped version-update PR per ecosystem every week (npm: the pnpm catalog; github-actions: workflows and composite actions). Security updates are not scheduled: they open immediately, in their own group, so a fix never waits for the weekly batch.
 
 ## Security rules for workflows
 

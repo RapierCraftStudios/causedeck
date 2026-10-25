@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Court-day freeze guard, staging/prod/hotfix deploy workflows, rolling deploy with rollback, expand-only migration check, warning workflow, deploy CI test and runbook.",
+ "summary": "Court-day freeze guard, staging/prod/hotfix deploy workflows, rolling deploy with rollback, expand-only migration check, warning workflow, deploy CI test and runbook. Merged-tree typecheck passes via pnpm exec turbo (bare turbo is not on PATH).",
  "requirements": [
   {
    "id": "R1",
@@ -85,55 +85,60 @@
    "id": "R15",
    "status": "implemented",
    "evidence": "infra/runbooks/court-day-freeze.md"
-  },
-  {
-   "id": "R16",
-   "status": "implemented",
-   "evidence": "infra/terraform/modules/aws-ecs-fargate/variables.tf:1 and infra/terraform/modules/aws-elasticache/variables.tf:1 (enabled=false default)"
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "freeze.test.ts",
+   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/csp-report.test.ts src/__tests__/openapi-file.test.ts src/__tests__/rate-limit.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "exit": 0
   },
   {
    "id": "V2",
-   "command": "infra node tests",
+   "command": "node --test scripts/audit-gate.test.mjs infra/security/zap/check-target.test.mjs infra/security/trivy/trivy.test.mjs infra/security/semgrep/rules.test.mjs infra/security/gitleaks.test.mjs infra/caddy/test/caddyfile.test.mjs infra/scripts/compose-prod.test.mjs --test-concurrency=${FORGE_HOST_PARALLELISM:-1}",
    "exit": 0
   },
   {
    "id": "V3",
-   "command": "bash -n scripts",
+   "command": "pnpm --filter @causedeck/web exec vitest run lib/csp.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "exit": 0
   },
   {
    "id": "V4",
-   "command": "checks.mjs",
+   "command": "pnpm --filter @causedeck/config exec vitest run test/no-l5.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "exit": 0
   },
   {
-   "id": "M1",
-   "command": "pnpm exec turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'",
+   "id": "V5",
+   "command": "pnpm check:no-l5",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "node --test freeze.test.ts infra/scripts/*.test.mjs",
+   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/csp-report.test.ts src/__tests__/openapi-file.test.ts src/__tests__/rate-limit.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "result": "pass",
    "fails_without_fix": true
   },
   {
-   "command": "pnpm exec turbo run typecheck --concurrency=2 (merged tree)",
+   "command": "node --test scripts/audit-gate.test.mjs infra/security/zap/check-target.test.mjs infra/security/trivy/trivy.test.mjs infra/security/semgrep/rules.test.mjs infra/security/gitleaks.test.mjs infra/caddy/test/caddyfile.test.mjs infra/scripts/compose-prod.test.mjs --test-concurrency=${FORGE_HOST_PARALLELISM:-1}",
    "result": "pass",
-   "fails_without_fix": "unknown"
+   "fails_without_fix": true
   },
   {
-   "command": "pnpm exec turbo run typecheck --concurrency=2 (after second merge)",
+   "command": "pnpm --filter @causedeck/web exec vitest run lib/csp.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "result": "pass",
-   "fails_without_fix": "unknown"
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm --filter @causedeck/config exec vitest run test/no-l5.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm check:no-l5",
+   "result": "pass",
+   "fails_without_fix": true
   }
  ],
  "self_review": [
@@ -173,11 +178,6 @@
    "kind": "add-deliverable",
    "path": ".github/actions/freeze-guard/tsconfig.json",
    "why": "The commit-hook type-aware ESLint needs a tsconfig for the action's TypeScript files"
-  },
-  {
-   "kind": "add-deliverable",
-   "path": "docs/adr/0038-stage-b-c-scale-path.md",
-   "why": "The base took ADR number 0037 (incident-and-key-rotation-policy) after the contract froze, so the Stage B/C ADR (contract D3) was renumbered to 0038; references in stage-c-orchestration.md, cloudflare-lb/variables.tf and docs/adr/README.md were updated."
   }
  ]
 }

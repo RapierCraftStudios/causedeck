@@ -1,0 +1,49 @@
+# Semgrep with the repository's custom rules (#104): queries outside withWorkspace, unsafe HTML
+# injection, outbound fetches to unlisted hosts and any L5 action. Runs the rule fixtures first
+# (`semgrep --test`), then scans apps/ and packages/. CLI from a digest-pinned image: no marketplace
+# action and no token, so it works on forks and needs no repository secrets.
+name: Semgrep
+
+on:
+  pull_request:
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'infra/security/semgrep/**'
+      - '.github/workflows/semgrep.yml'
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * 1' # Mondays 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: semgrep-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  SEMGREP_IMAGE: semgrep/semgrep:1.99.0@sha256:ae27024c16f7848cdbfd49c24ed0b78b13f13b85fcd7b87c679aaa8b0c0dce98
+
+jobs:
+  semgrep:
+    name: semgrep
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Rule fixtures (every rule has a passing and a failing case)
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src -e SEMGREP_ENABLE_VERSION_CHECK=0
+          -e SEMGREP_SEND_METRICS=off "$SEMGREP_IMAGE"
+          semgrep --test --config infra/security/semgrep/rules.yml infra/security/semgrep/fixtures
+      - name: Scan apps and packages
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src -e SEMGREP_ENABLE_VERSION_CHECK=0
+          -e SEMGREP_SEND_METRICS=off "$SEMGREP_IMAGE"
+          semgrep scan --config infra/security/semgrep/rules.yml --error --metrics=off
+          --exclude node_modules --exclude .next --exclude dist apps packages

@@ -1,0 +1,10 @@
+# Reviewed Trivy exceptions (infra/runbooks/vuln-triage.md). Every entry needs `expired_at` (a date no
+# more than 90 days ahead) and a `statement` with the reason and owner; trivy.test.mjs fails otherwise,
+# and Trivy itself stops ignoring an entry once it expires.
+#
+#   vulnerabilities:
+#     - id: CVE-2025-0000
+#       paths: ['usr/lib/example']
+#       statement: not reachable, fixed by base image bump in #123 (owner: login)
+#       expired_at: 2026-12-31
+vulnerabilities: []

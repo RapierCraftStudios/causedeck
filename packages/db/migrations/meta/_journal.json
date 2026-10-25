@@ -638,6 +638,13 @@
       "when": 1792861200000,
       "tag": "20261024170000_court_day",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1792864800000,
+      "tag": "20261025000000_brief_state",
+      "breakpoints": true
     }
   ]
 }

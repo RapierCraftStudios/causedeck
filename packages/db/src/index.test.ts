@@ -68,6 +68,7 @@ describe('@causedeck/db root entry point', () => {
       'billing_event',
       'blob',
       'board_observation',
+      'brief_state',
       'budget_override',
       'capture',
       'case_status_snapshot',

@@ -176,6 +176,9 @@ describe('row-level security catalog', () => {
         'court_day_marker',
         'list_snapshot',
 
+        // Brief state (#60).
+        'brief_state',
+
         // Review and correction queue (#518).
         'review_correction',
 

@@ -21,6 +21,7 @@ import {
 import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
+import { briefState } from '../schema/brief.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
@@ -1221,6 +1222,14 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: proceedingStateChange.id });
     return { proceedingId, stateChangeId: first(rows, 'proceeding_state_change').id };
+  },
+  brief_state: async (tx, { workspaceId, ownerId, tag }) => {
+    const listingId = await seedListing(tx, workspaceId, `${tag}-brief`);
+    const rows = await tx
+      .insert(briefState)
+      .values({ workspaceId, listingId, note: `Seed note ${tag}`, updatedBy: ownerId })
+      .returning({ id: briefState.id });
+    return { listingId, id: first(rows, 'brief_state').id };
   },
   listing: async (tx, { workspaceId, tag }) => ({
     listingId: await seedListing(tx, workspaceId, tag),

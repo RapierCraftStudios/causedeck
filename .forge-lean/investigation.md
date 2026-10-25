@@ -1,34 +1,38 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: high (no backups or DR exist for client data; PRD §8 RPO/RTO unmet)
+**Severity**: medium (greenfield release-engineering feature; images and compose exist, no deploy path or freeze guard)
 **Task Type**: feature
 
 ### What Was Claimed
-Issue #101 asks for Stage A backup and DR: continuous WAL archiving and nightly base backups with WAL-G to India object storage (14 daily + 8 weekly, 14 days PITR), client-side encryption with off-host key custody, nightly MinIO replication to a second India location (versioning, delete protection), an automated restore drill (isolated container, amcheck, row-count manifest, RLS and cross-tenant checks, JSON report with RPO/RTO), a guarded PITR restore script, a `ops.backup.health` job with four metrics, a weekly drill workflow, runbooks, crypto-erase documentation and tests. 12 acceptance criteria.
+Add staging and production deploy pipelines (GHCR images, SSH to the VPS, pull, expand-only migrate, rolling `up -d`, `/readyz` gates, automatic rollback), production promotion from a green staging deploy of the same SHA, a court-day change freeze (18:00-23:00 and 07:00-10:30 IST) with an audited `hotfix` override, release records, a PR freeze warning, a runbook, and CI tests (12 acceptance criteria).
 
 ### What We Found
-- #97 is merged on the base: the Postgres image already bundles WAL-G (`infra/docker/postgres/Dockerfile:7-28`) and `postgresql.conf:19-25` already sets `archive_mode = on`, `archive_timeout = 60`, `archive_command = 'wal-g wal-push %p'`. Missing: encryption env, base backup, retention, restore, replication, metrics.
-- `infra/docker/compose.prod.yml:244-247` passes only `WALG_S3_PREFIX` and `AWS_ENDPOINT` to postgres; `minio-init` (`:305-323`) creates only `causedeck-wal`; no versioning, no replication, no backup runner. `env/prod.env.example:36-38` has the WAL-G target only; no `infra/docker/postgres/wal-g.env.example`.
-- No `infra/scripts/backup/`, `infra/scripts/restore/`, `infra/runbooks/restore.md`, `dr-hyderabad.md`, `drills/` or `.github/workflows/restore-drill.yml` exist (`git ls-tree HEAD`). Runbooks present: `infra/runbooks/workspace-deletion.md:65-69` (already promises backups hold no recoverable DEK of a deleted workspace; nothing implements or tests it), `infra/runbooks/data-ops/`.
-- Job convention: definitions live in `packages/core/src/jobs/definitions/*.ts`, registered in `packages/core/src/jobs/registry.ts`, run by the worker (no `apps/worker/src/jobs/` dir). A non-`system.` job must require `workspaceId` (`packages/core/src/jobs/define.ts:104-106`), so the issue's `ops.backup.health` must be `system.backup.health` (precedent `system.audit.retention`, `audit-retention.ts:78`). Registry lists to update: `apps/worker/src/__tests__/registry.test.ts:144-165`, `schedules.test.ts:19-40`, `docs/engineering/jobs.md:124`.
-- Metrics API: `meter()` in `packages/observability/src/otel.ts:162`. Core already depends on `@causedeck/observability` and `@causedeck/storage` (`packages/core/package.json:69-70`), so no new workspace dependency.
-- Cross-tenant guard: new core runtime exports need `SERVICE_TESTS` or `NOT_A_SERVICE` in `packages/db/src/testing/cross-tenant-registry.ts` (jobs section ~`:1189-1236`).
-- Static-lint precedent for infra: `infra/scripts/compose-prod.test.mjs`, `compose-dev.test.mjs`; CI-only runtime precedent: `infra/docker/test/compose-smoke.sh`, `.github/workflows/images.yml` (actions pinned by SHA).
+Verified against `origin/milestone/production-infra-scale` (b29b1e35; HEAD merge-base 9a89ccd2 is 3 merges behind, none touch these paths).
+- No deploy workflows: `.github/workflows/` has only ci, e2e, images, lint-workflows, security, storybook, terraform, visual-update. No `.github/actions/freeze-guard`, `infra/scripts/{deploy,rollback,smoke}.sh`, `deploy.test.sh`, or `infra/runbooks/court-day-freeze.md`.
+- `.github/workflows/images.yml:20-27` publishes multi-arch images only on push to `main` (`publish` job gated on `refs/heads/main`), tagged `sha-<gitsha>`; nothing builds on `staging` pushes. `ci.yml:10` already triggers on `staging`.
+- `infra/docker/compose.prod.yml:82,121,160,200`: images are `ghcr.io/${IMAGE_ORG}/causedeck-<svc>:sha-${GIT_SHA}`; `web` and `worker` use `deploy.replicas: 2` (`:101,:180`); healthchecks hit `/readyz` (`:106-118`).
+- `infra/scripts/migrate.sh:1-50`: starts postgres/minio, sets role passwords, runs `compose --profile migrate run --rm migrate` as `causedeck_owner`. `infra/scripts/healthcheck.sh:20-45` polls every service at once (no per-service ordering or 60 s gate).
+- `/readyz` already returns `version` = `GIT_SHA` (`packages/observability/src/health.ts:83,91`), so the "exposes the running sha" criterion needs only a test/assertion in smoke.
+- Migrations live in `packages/db/migrations/*.sql` (e.g. `0000_baseline.sql`, `20261025040000_whatsapp_inbound.sql`); no expand-only static check exists.
+- Test precedent: root `test:ci-scripts` (`package.json:31`) runs `node --experimental-strip-types --test 'infra/scripts/*.test.mjs' 'infra/scripts/*.test.ts' 'infra/terraform/test/*.test.mjs'`; `infra/scripts/tsconfig.json` includes `*.ts` only; `compose-prod.test.mjs` is the static-lint model. `lint-workflows.yml` runs actionlint on `.github/**`.
 
 ### Root Cause
-Greenfield. #97 shipped the archiving hook only; nothing takes base backups, enforces retention or encryption, replicates MinIO, restores, or reports freshness.
+Greenfield: #97 (images, compose), #98 (Caddy) and #3 (CI) are merged, but the release path (deploy orchestration, rollback, freeze policy) was deliberately left to #100.
 
 ### Affected Files
-`infra/docker/{compose.prod.yml,postgres/postgresql.conf,postgres/wal-g.env.example,minio/replication.json,env/*.env.example}`, new `infra/scripts/backup/*`, `infra/scripts/restore/*`, `packages/core/src/jobs/definitions/backup-health.ts` (+registry), `.github/workflows/restore-drill.yml`, `infra/runbooks/{restore,dr-hyderabad}.md`, `infra/runbooks/drills/`, docs and registry tests (see contract.json).
+Issue list: `.github/workflows/{deploy-staging,deploy-prod,hotfix-prod}.yml`, `.github/actions/freeze-guard/{action.yml,index.ts,test/freeze.test.ts}`, `infra/scripts/{deploy,rollback,smoke}.sh`, `infra/scripts/deploy.test.sh`, `infra/runbooks/court-day-freeze.md`.
+Additional (needed by acceptance criteria): `.github/workflows/freeze-warning.yml` (scheduled PR warning), `.github/workflows/deploy-test.yml` (runs deploy.test.sh in CI), `infra/scripts/check-migrations.mjs` + `.test.mjs` (expand-only check), `package.json` (extend `test:ci-scripts` globs to include the freeze test), `.github/workflows/images.yml` (make the build reusable for staging via `workflow_call`).
 
 ### Sibling Sweep
-Other places that must stay consistent: `workspace-deletion.md` Backups section (crypto-erase claim), `infra/docker/README.md` production section, `docs/engineering/jobs.md` schedule list, worker registry/schedules tests, cross-tenant registry. Caddy/monitoring alert routing belong to #98/#102 (open), incident runbooks to #103.
+- `healthcheck.sh` polls all services together; deploy needs a per-service variant (add `--service`/replica loop in `deploy.sh`, keep `healthcheck.sh` behaviour unchanged since `compose-smoke.sh` uses it).
+- `images.yml` publish is main-only; `staging` needs the same signed-image path so prod promotion deploys the identical SHA.
+- `infra/caddy` and `infra/terraform` are unaffected. No other deploy/freeze code to sweep.
 
 ### History
-WAL archiving hook and WAL-G binary landed in #97 (PR #784, "Restore drills and retention are #101" in `postgresql.conf:22`). No prior backup attempt.
+No introducing commit (greenfield). Prior related work: #97 (`c4a31bcd`, compose.prod), #98 (`2d6f7bad`, Caddy; PR flagged `conformance.omission`, so list every requirement explicitly here), #3 (CI).
 
 ### Recommendation
-One lane. Ship scripts with shell-level unit tests (guards, India endpoint validation, retention arithmetic, report schema) and a job with vitest unit tests; the full backup-PITR-restore integration test and the weekly drill run in CI against local MinIO only (never locally on this host). Alert routing is #102: deliver the metrics, thresholds and failing job/log signal, defer wiring.
+Implement in one lane (about 17 files, well under split thresholds). Keep timezone logic in a pure, unit-tested `freeze.ts` with a thin `index.ts` (Intl with `Asia/Kolkata`, no client input); reuse it from `freeze-warning.yml`. `deploy.sh` runs on the VPS over pinned-host-key SSH, records `/opt/causedeck/releases/<sha>/release.json` and the previous tags, rolls api and worker then web replicas one at a time with a 60 s `/readyz` gate, and calls `rollback.sh` on failure. Prod promotion verifies a successful staging deployment record for the same SHA within 24 h via the GitHub deployments API. Real SSH/secrets are #116/#108; CI uses docker-in-docker.
 
 ### Related Issues
-#97 (done, dependency), #1 parent, #102 monitoring/alerts, #103 incident runbooks, #106 Stage B/C, #108 VPS, #116 secrets.
+#1 (parent), #97, #98, #3 (dependencies, all closed), #101 (backups), #108 (VPS, human), #116 (GitHub environments and secrets, human).

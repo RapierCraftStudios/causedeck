@@ -1,0 +1,27 @@
+name: freeze-guard
+description: >-
+  Court-day change freeze (#100). Evaluates the runner clock in Asia/Kolkata and fails the job
+  between 07:00-10:30 and 18:00-23:00 IST unless allow_override is true (hotfix workflow only).
+inputs:
+  allow_override:
+    description: 'Do not fail inside a freeze; still report it (hotfix-prod.yml only).'
+    required: false
+    default: 'false'
+outputs:
+  frozen:
+    description: 'true inside a freeze window'
+    value: ${{ steps.guard.outputs.frozen }}
+  window_name:
+    description: 'morning-court, evening-prepare or empty'
+    value: ${{ steps.guard.outputs.window_name }}
+  next_open_at_ist:
+    description: 'When production deploys may resume (IST)'
+    value: ${{ steps.guard.outputs.next_open_at_ist }}
+runs:
+  using: composite
+  steps:
+    - id: guard
+      shell: bash
+      env:
+        INPUT_ALLOW_OVERRIDE: ${{ inputs.allow_override }}
+      run: node --experimental-strip-types --no-warnings "$GITHUB_ACTION_PATH/index.ts"

@@ -2,88 +2,100 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Postgres archives WAL continuously through WAL-G; the time since the last archived WAL is below 5 minutes in steady state and is exposed as a metric [type:api]",
+   "quote": "freeze-guard returns frozen for 18:00:00 to 22:59:59 and 07:00:00 to 10:29:59 IST inclusive of the start and exclusive of the end, and unfrozen otherwise, verified by boundary unit tests [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "A nightly base backup runs, is verified with `wal-g backup-list`, and the retention policy keeps 14 daily base backups plus WAL for 14 days of PITR, and 8 weekly backups, configurable [type:api]",
+   "quote": "Production deploy workflow fails at its first job with a message naming the next open window when run inside a freeze, and does not reach the SSH step [type:e2e]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "deploy-prod.yml first job (freeze-guard) in GitHub Actions; in lane covered by static workflow test and freeze unit tests"
   },
   {
    "id": "R3",
-   "quote": "Backups are encrypted client-side; restoring without the key fails; the key is not stored on the database host disk unprotected and its custody is documented [type:manual]",
+   "quote": "The staging deploy is not subject to the freeze but records the same checks and runs automatically on merge to the staging branch [type:e2e]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "deploy-staging.yml run on push to staging"
   },
   {
    "id": "R4",
-   "quote": "Backup storage and the second MinIO or bucket location are in India regions only; Terraform or config validation rejects non-India endpoints [type:unit]",
+   "quote": "Production promotion requires: the same image SHA deployed to staging, staging smoke green within the last 24 hours, and required reviewers on the `production` environment [type:manual]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "deploy-prod.yml promotion job and the GitHub `production` environment (#116)"
   },
   {
    "id": "R5",
-   "quote": "MinIO replication copies new objects to the second India location within 24 hours (nightly replicate) with object versioning and delete protection, verified by a test object [type:api]",
+   "quote": "Deploy order is: pull images, run expand-only migrations as the owner role, roll `api` and `worker`, then `web` containers one at a time, each gated by `/readyz` for 60 s before moving on [type:api]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "deploy-test.yml job running infra/scripts/deploy.test.sh with docker"
   },
   {
    "id": "R6",
-   "quote": "The restore drill restores the latest backup plus WAL to a specified timestamp into an isolated container, completes verification (`amcheck`, row-count manifest, RLS enabled on every tenant table, cross-tenant query returns zero rows) and writes a JSON report [type:api]",
+   "quote": "A failed readiness gate triggers automatic rollback to the previously recorded image tags and posts a failure summary; the rollback path is tested in CI by deploying a deliberately unhealthy image [type:api]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "deploy-test.yml job running infra/scripts/deploy.test.sh with docker"
   },
   {
    "id": "R7",
-   "quote": "Measured RPO is at most 15 minutes and measured RTO for the seeded dataset is recorded each drill and compared with the 4-hour target; a breach opens an alert [type:api]",
+   "quote": "The deploy never drops traffic: with two web containers, at least one is always ready (verified by a continuous probe during the deploy test) [type:api]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "deploy-test.yml job running infra/scripts/deploy.test.sh with docker"
   },
   {
    "id": "R8",
-   "quote": "The weekly drill runs automatically against staging and the monthly drill is signed off by a human recorded in `infra/runbooks/drills/` with date, duration and findings [type:manual]",
+   "quote": "The hotfix workflow bypasses the freeze only when run in the `hotfix` environment with a non-empty reason; each use writes an audit comment and a Slack-compatible notification payload to a configured webhook [type:manual]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": ".github/workflows/restore-drill.yml (weekly schedule); monthly sign-off files in infra/runbooks/drills/ (human)"
+   "evidence": "hotfix-prod.yml run in the `hotfix` environment"
   },
   {
    "id": "R9",
-   "quote": "A failed backup, stale WAL or failed drill triggers an alert through the monitoring stack in #102 within 10 minutes [type:api]",
-   "disposition": "defer",
-   "why": "Alert routing and the monitoring stack are #102 (open, listed out of scope in #101). This change delivers the signals: the four metrics, a system.backup.health job that runs every minute and logs/errors on failed backup, stale WAL (>5 min) or failed/RTO-breaching drill, and documents the alert thresholds in the runbook for #102 to wire."
-  },
-  {
-   "id": "R10",
-   "quote": "Restoring never overwrites production in place without the explicit `--i-understand` flag and a fresh target volume; the script refuses otherwise [type:unit]",
+   "quote": "Migrations are restricted to expand-compatible operations in deploy (a static check rejects `DROP COLUMN` or `ALTER ... NOT NULL` without a prior expand release unless tagged `contract`) [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
+   "id": "R10",
+   "quote": "Deploy records `release.json` (sha, time IST, deployer, migration list) on the VPS and in a GitHub deployment record; `/readyz` exposes the running sha [type:api]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "deploy-test.yml asserts release.json and /readyz version; GitHub deployment record is written by deploy-*.yml"
+  },
+  {
    "id": "R11",
-   "quote": "Crypto-erase interplay is documented and tested: after a workspace deletion job plus the key-backup retention window, the workspace DEK cannot be recovered from backups [type:manual]",
+   "quote": "Secrets used by workflows (SSH key, GHCR token, host fingerprints) come from GitHub environments; host key is pinned and verified (no `StrictHostKeyChecking=no`) [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "The runbook describes the DR scenario of losing the VPS: provision from Terraform, restore from WAL-G, point DNS, expected duration, and has been rehearsed at least once before launch [type:manual]",
+   "quote": "Deploy and freeze behaviour is documented in the court-day freeze runbook including override etiquette and the expected communications to users [type:manual]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "Runbook is delivered here; the rehearsal needs the real VPS (#108) and storage credentials (#116) and is recorded in infra/runbooks/drills/ before launch"
+   "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "A backup that has never been restored is not a backup, so the drill runs weekly in CI-like automation and monthly with a human sign-off.",
+   "quote": "A scheduled workflow comments a warning on any PR labelled `deploy:prod` if its merge would land inside the freeze, so planning is visible [type:unit]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": ".github/workflows/restore-drill.yml weekly job; monthly sign-off by a human"
+   "verify": "in_lane"
   },
   {
    "id": "R14",
-   "quote": "backups contain privileged client data: encryption in transit and at rest, least-privilege storage credentials (write-only for the archiver, separate read credentials for restore), no public buckets, access logged.",
+   "quote": "Production deploys are promoted from a green staging deploy of the same image SHA.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "deploy-prod.yml promotion check"
+  },
+  {
+   "id": "R15",
+   "quote": "Adapters and flags may be changed through their own safe paths during freeze only where designed to be hot-deployable.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -91,353 +103,246 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "infra/docker/postgres/postgresql.conf",
-   "change": "Keep archive_mode/archive_timeout=60; add archive_timeout comment tie to 5-minute SLO; add restore_command comment for recovery; no statement logging changes",
+   "path": ".github/actions/freeze-guard/freeze.ts",
+   "change": "Pure function evaluating the IST freeze windows (07:00-10:30, 18:00-23:00, start inclusive, end exclusive) from an injected Date using Intl Asia/Kolkata; returns frozen, window_name, next_open_at_ist",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D2",
+   "path": ".github/actions/freeze-guard/index.ts",
+   "change": "Thin entrypoint: reads server clock (optional test override only via env FREEZE_NOW in tests), writes frozen/window_name/next_open_at_ist outputs, fails with message naming the next open window",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": ".github/actions/freeze-guard/action.yml",
+   "change": "Composite action running index.ts with node --experimental-strip-types; inputs allow_override for the hotfix path",
+   "requirements": [
+    "R1",
+    "R2",
+    "R8"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": ".github/actions/freeze-guard/test/freeze.test.ts",
+   "change": "node:test boundary tests at 07:00, 10:30, 18:00, 23:00, 22:59:59, 10:29:59, week boundaries, UTC-to-IST conversion",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D2",
-   "path": "infra/docker/postgres/wal-g.env.example",
-   "change": "New: WALG_S3_PREFIX, AWS_ENDPOINT, separate write-only archiver vs read restore credential variables, WALG_LIBSODIUM_KEY_PATH (key file mounted from a root-owned 0600 secret/tmpfs, never in the image or pgdata), WALG_COMPRESSION_METHOD, retention vars (BACKUP_RETAIN_DAILY=14, BACKUP_RETAIN_WEEKLY=8, WAL days=14)",
-   "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R14"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "infra/docker/compose.prod.yml",
-   "change": "postgres: mount libsodium key as a compose secret/tmpfs file and pass WALG_* env; minio-init: create causedeck-wal bucket with versioning and a separate causedeck-ops bucket for reports; add `backup` profile service (one-shot, same postgres image, runs the backup scripts via docker compose run); keep read_only/non-root/limits intact",
-   "requirements": [
-    "R1",
-    "R3",
-    "R5",
-    "R14"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "infra/docker/env/prod.env.example",
-   "change": "Add backup/replication/second-location endpoint, key-path and retention variables (no secrets)",
-   "requirements": [
-    "R2",
-    "R4",
-    "R5"
-   ]
-  },
-  {
    "id": "D5",
-   "path": "infra/docker/env/staging.env.example",
-   "change": "Same additions as prod example, CI/staging defaults to local MinIO",
+   "path": "package.json",
+   "change": "Extend test:ci-scripts globs with .github/actions/*/test/*.test.ts (and any new infra/scripts tests already covered)",
    "requirements": [
-    "R2",
-    "R4",
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "infra/scripts/backup/lib/india-guard.sh",
-   "change": "New: sourceable function `assert_india_endpoint \u003curl>` that accepts only an allow-list of India endpoints/regions (ap-south-1, ap-south-2, in-*, local MinIO host names for CI/dev when ALLOW_LOCAL_ENDPOINTS=1) and exits non-zero otherwise; used by every backup/restore/replicate script",
+   "path": ".github/workflows/images.yml",
+   "change": "Add workflow_call (inputs: publish) so deploy-staging reuses the build, scan, SBOM and cosign path for the staging SHA; main behaviour unchanged",
    "requirements": [
+    "R3",
     "R4"
    ]
   },
   {
    "id": "D7",
-   "path": "infra/scripts/backup/walg-basebackup.sh",
-   "change": "New: guard endpoint, `wal-g backup-push`, verify with `wal-g backup-list` (fail if new backup missing), mark Sunday backup permanent (weekly), `wal-g delete retain FULL $BACKUP_RETAIN_DAILY` and expire weekly permanent backups older than $BACKUP_RETAIN_WEEKLY weeks, write status JSON {lastBackupAt,ok} to the ops bucket; exits non-zero on failure",
+   "path": ".github/workflows/deploy-staging.yml",
+   "change": "On push to staging: build/push via images.yml, deploy over pinned-host-key SSH using the staging environment, run smoke.sh, create GitHub deployment record, record freeze-guard output as informational (not blocking)",
    "requirements": [
-    "R2",
-    "R3"
+    "R3",
+    "R10",
+    "R11"
    ]
   },
   {
    "id": "D8",
-   "path": "infra/scripts/backup/walg-wal-push-check.sh",
-   "change": "New: read pg_stat_archiver.last_archived_time, compute walg_last_archive_age_seconds, write status JSON to the ops bucket, exit non-zero and print ALERT if age > 300 s",
+   "path": ".github/workflows/deploy-prod.yml",
+   "change": "workflow_dispatch (image_sha) and release tag; first job is freeze-guard; then verify staging deployment of same SHA with successful smoke within 24 h via deployments API; then production environment deploy via SSH; deployment record",
    "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "infra/scripts/backup/minio-replicate.sh",
-   "change": "New: guard both endpoints, `mc mirror`/replicate wal+object buckets to the second India location with versioning, object lock/delete protection, put and verify a canary test object, write status JSON; intended nightly",
-   "requirements": [
+    "R2",
     "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "infra/docker/minio/replication.json",
-   "change": "New: bucket versioning + replication rule + object-lock/retention config consumed by minio-replicate.sh and minio-init",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "infra/scripts/restore/restore-drill.sh",
-   "change": "New: fetch latest base backup + WAL to --target-time (default now minus 1 min) into an isolated throwaway container/network on a fresh volume using read credentials; run verify.sql; seed manifest compare; compute rpoSeconds (target minus last restorable WAL time) and rtoSeconds; write JSON report {startedAt,target,rtoSeconds,rpoSeconds,checks[],ok} to the ops bucket; ok=false if RPO>900 or RTO>14400 or any check fails; tear down always (trap)",
-   "requirements": [
-    "R6",
-    "R7",
-    "R3"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "infra/scripts/restore/verify.sql",
-   "change": "New: amcheck (bt_index_check on all btree indexes), row counts vs manifest (read from a psql variable/table), RLS enabled and forced on every table with workspace_id, canned cross-tenant query as app role under workspace A returns zero rows for workspace B, and a check that a deleted workspace has no wrapped DEK row",
-   "requirements": [
-    "R6",
-    "R11"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "infra/scripts/restore/restore-prod.sh",
-   "change": "New: documented PITR to --target-time; refuses unless --i-understand and a fresh, empty target data directory/volume (never the live pgdata), prints plan and asks for typed confirmation, never stops or edits the running stack",
-   "requirements": [
     "R10",
-    "R3"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/core/src/jobs/definitions/backup-health.ts",
-   "change": "New job `system.backup.health` (cron `* * * * *`, concurrency 1, stately singleton): reads status JSON from the ops bucket via @causedeck/storage, records gauges walg_last_archive_age_seconds, walg_last_backup_age_seconds, restore_drill_last_success_timestamp, restore_drill_rto_seconds via meter(); logs error when archive age >300 s, last backup >26 h, drill older than 8 d, drill failed, or RPO/RTO over target. Reader injected for tests",
-   "requirements": [
-    "R1",
-    "R7",
-    "R9"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Register backupHealth",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "packages/core/src/jobs/definitions/backup-health.test.ts",
-   "change": "New unit tests with a fake report reader: metrics values, each alert condition, missing report counts as stale",
-   "requirements": [
-    "R1",
-    "R7",
-    "R9"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add 'system.backup.health' to the expected definition list",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "Add 'system.backup.health' to the expected scheduled list",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register the new core exports from backup-health.ts as NOT_A_SERVICE (system job over ops-bucket reports, touches no tenant data)",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "docs/engineering/jobs.md",
-   "change": "Add system.backup.health to the schedule list and a short section",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": ".github/workflows/restore-drill.yml",
-   "change": "New: weekly cron + workflow_dispatch; SHA-pinned actions; runs restore-drill.sh against staging backups (secrets from the staging environment, #116); CI default path drills against local MinIO with a seeded dataset; uploads report artifact; fails the job on ok=false",
-   "requirements": [
-    "R6",
-    "R7",
-    "R8",
-    "R13"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": "infra/scripts/backup/test/backup.test.mjs",
-   "change": "New node:test unit tests: india-guard accepts/rejects endpoints, restore-prod refuses without --i-understand and with an existing/live target, retention arithmetic, drill report schema/RPO-RTO verdict, compose/postgres config contains encryption and archive settings, verify.sql covers amcheck/RLS/cross-tenant",
-   "requirements": [
-    "R2",
-    "R3",
-    "R4",
-    "R6",
-    "R7",
-    "R10",
-    "R11"
-   ]
-  },
-  {
-   "id": "D23",
-   "path": "infra/scripts/backup/test/pitr-integration.sh",
-   "change": "New CI-only (never run locally) compose test against local MinIO: take base backup, write rows, PITR to a timestamp, assert rows; restore without the key must fail; replicate canary object",
-   "requirements": [
-    "R2",
-    "R3",
-    "R5",
-    "R6"
-   ]
-  },
-  {
-   "id": "D24",
-   "path": "infra/scripts/compose-prod.test.mjs",
-   "change": "Extend static checks: postgres has WALG key/env, minio-init versions the wal bucket, backup service is non-root with limits",
-   "requirements": [
-    "R3",
-    "R5",
-    "R14"
-   ]
-  },
-  {
-   "id": "D25",
-   "path": "infra/runbooks/restore.md",
-   "change": "New: PITR procedure with restore-prod.sh, drill procedure and report reading, key custody (key sealed off-host, escrow copies, rotation, never on the DB host disk unprotected), retention policy, credentials split, alert thresholds for #102, crypto-erase interplay (DEK removed from key backups after retention window); links #103",
-   "requirements": [
-    "R2",
-    "R3",
-    "R9",
     "R11",
     "R14"
    ]
   },
   {
-   "id": "D26",
-   "path": "infra/runbooks/dr-hyderabad.md",
-   "change": "New: VPS loss scenario: Terraform provision (#99), restore from WAL-G in second India region, DNS cutover, expected duration vs RTO 4 h, rehearsal log requirement; links #103",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D27",
-   "path": "infra/runbooks/drills/README.md",
-   "change": "New: monthly sign-off template (date, duration, findings, signer) and rehearsal record format; first entries added by the human",
+   "id": "D9",
+   "path": ".github/workflows/hotfix-prod.yml",
+   "change": "Runs in the `hotfix` environment, requires non-empty reason input, skips freeze, audit comment on incident issue and Slack-compatible payload POST to webhook secret; secrets never echoed",
    "requirements": [
     "R8",
-    "R12"
-   ]
-  },
-  {
-   "id": "D28",
-   "path": "infra/runbooks/workspace-deletion.md",
-   "change": "Update Backups section to point to restore.md crypto-erase section with the retention window",
-   "requirements": [
     "R11"
    ]
   },
   {
-   "id": "D29",
-   "path": "infra/docker/README.md",
-   "change": "Add backup, replication and restore drill section",
+   "id": "D10",
+   "path": ".github/workflows/freeze-warning.yml",
+   "change": "Scheduled workflow commenting a warning (idempotent marker) on open PRs labelled deploy:prod if now or the next scheduled merge window falls in the freeze, using freeze.ts",
    "requirements": [
-    "R1",
+    "R13"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": ".github/workflows/deploy-test.yml",
+   "change": "CI job running infra/scripts/deploy.test.sh against docker compose (docker-in-docker); also runs check-migrations and bash -n/shellcheck on scripts",
+   "requirements": [
+    "R5",
+    "R6",
+    "R7",
+    "R10"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "infra/scripts/deploy.sh",
+   "change": "On VPS: record previous tags, pull, migrate.sh (expand-only check first), roll api+worker then web replicas one at a time with 60 s /readyz gate, write /opt/causedeck/releases/\u003csha>/release.json (sha, IST time, deployer, migrations), call rollback.sh on failure and print failure summary",
+   "requirements": [
+    "R5",
+    "R6",
+    "R7",
+    "R10"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "infra/scripts/rollback.sh",
+   "change": "Restore previous image tags from /opt/causedeck/releases and re-up services with the same one-at-a-time gate",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "infra/scripts/smoke.sh",
+   "change": "Health (/readyz sha equals expected), sign-in page, API /v1/health, Caddy security headers, synthetic RLS check",
+   "requirements": [
+    "R3",
+    "R10"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "infra/scripts/deploy.test.sh",
+   "change": "Deploy happy path, deliberately unhealthy image triggers rollback, continuous probe proves at least one web replica always ready, release.json and /readyz sha asserted",
+   "requirements": [
+    "R5",
+    "R6",
+    "R7",
+    "R10"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "infra/scripts/check-migrations.mjs",
+   "change": "Static check over packages/db/migrations rejecting DROP COLUMN and ALTER ... SET NOT NULL unless the file carries a `-- contract` tag; called by deploy.sh and CI",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "infra/scripts/check-migrations.test.mjs",
+   "change": "node:test cases for accepted and rejected statements plus the contract tag; run on the real migrations dir",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "infra/scripts/deploy-workflows.test.mjs",
+   "change": "Static node:test lint of the workflows and scripts: no StrictHostKeyChecking=no, host key pinned (known_hosts), freeze-guard is the first job of deploy-prod and precedes any ssh step, hotfix requires environment hotfix and reason, secrets come from environments",
+   "requirements": [
     "R2",
-    "R5"
+    "R3",
+    "R8",
+    "R11"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "infra/runbooks/court-day-freeze.md",
+   "change": "Windows, override procedure and etiquette, what may still ship (flags, hot-deployable adapters with approval), user communications template, deploy and rollback steps",
+   "requirements": [
+    "R12",
+    "R15"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing compose.prod.yml hardening (non-root, read_only, limits, healthchecks, networks) and infra/scripts/compose-prod.test.mjs assertions"
+   "what": "infra/scripts/healthcheck.sh and infra/scripts/migrate.sh behaviour and CLI (used by infra/docker/test/compose-smoke.sh)"
   },
   {
    "id": "P2",
-   "what": "Postgres archive_mode=on, archive_command='wal-g wal-push %p', wal_level=replica, no statement logging in infra/docker/postgres/postgresql.conf; image build args in infra/docker/postgres/Dockerfile unchanged"
+   "what": "infra/docker/compose.prod.yml service names, image tag format ghcr.io/${IMAGE_ORG}/causedeck-\u003csvc>:sha-${GIT_SHA} and replicas; infra/scripts/compose-prod.test.mjs must still pass"
   },
   {
    "id": "P3",
-   "what": "Existing job names, schedules and registry order in packages/core/src/jobs/registry.ts (only append the new job); migrate.sh / minio-init existing bucket behaviour"
+   "what": ".github/workflows/images.yml existing pull_request and push-to-main behaviour (verify, publish, cosign, Trivy)"
   },
   {
    "id": "P4",
-   "what": "Workspace deletion semantics in infra/runbooks/workspace-deletion.md: DEK zeroed before purge, deleted workspaces never restored from backup"
+   "what": "infra/caddy/** and infra/terraform/** unchanged"
+  },
+  {
+   "id": "P5",
+   "what": "Workflows pin actions by commit SHA with persist-credentials: false and minimal permissions, matching ci.yml and images.yml; actionlint (lint-workflows.yml) must pass"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node --test infra/scripts/backup/test/backup.test.mjs infra/scripts/compose-prod.test.mjs infra/scripts/compose-dev.test.mjs"
+   "command": "node --experimental-strip-types --no-warnings --test .github/actions/freeze-guard/test/freeze.test.ts"
   },
   {
    "id": "V2",
-   "command": "bash -n infra/scripts/backup/walg-basebackup.sh infra/scripts/backup/walg-wal-push-check.sh infra/scripts/backup/minio-replicate.sh infra/scripts/backup/lib/india-guard.sh infra/scripts/restore/restore-drill.sh infra/scripts/restore/restore-prod.sh infra/scripts/backup/test/pitr-integration.sh"
+   "command": "node --experimental-strip-types --no-warnings --test infra/scripts/check-migrations.test.mjs infra/scripts/deploy-workflows.test.mjs infra/scripts/compose-prod.test.mjs infra/scripts/compose-dev.test.mjs"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/backup-health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "bash -n infra/scripts/deploy.sh && bash -n infra/scripts/rollback.sh && bash -n infra/scripts/smoke.sh && bash -n infra/scripts/deploy.test.sh"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/production-infra-scale"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Job is `system.backup.health` in packages/core/src/jobs/definitions/, not `ops.backup.health` in apps/worker/src/jobs/",
-   "justification": "Non-system job names must require workspaceId (packages/core/src/jobs/define.ts:104-106); every definition lives in core and is registered in registry.ts (precedent audit-retention.ts:78)",
+   "choice": "Freeze logic lives in a pure freeze.ts imported by index.ts and freeze-warning.yml; tests are node:test run through the existing test:ci-scripts runner, not a new vitest package",
+   "justification": "package.json:31 already runs node --experimental-strip-types --test for CI scripts; no vitest config exists under .github",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "No new workspace dependency: core already depends on @causedeck/storage and @causedeck/observability",
-   "justification": "packages/core/package.json:69-70",
+   "choice": "Reuse images.yml through workflow_call for the staging build rather than duplicating the multi-arch/Trivy/cosign steps",
+   "justification": "images.yml header documents the pinned-tool publish path; staging and prod must deploy the identical signed sha tag",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Scripts publish status JSON to an ops bucket in MinIO; the worker job reads it, so the worker needs no docker or Postgres-archiver access",
-   "justification": "Worker has storage access already; keeps the health job testable with an injected reader",
-   "source": "precedent"
-  },
-  {
-   "id": "K4",
-   "choice": "Weekly retention via `wal-g backup-mark` permanent on Sunday backups, expired after 8 weeks, plus `wal-g delete retain FULL 14`",
-   "justification": "WAL-G has no native daily/weekly tiers; permanent marking keeps a base backup and its WAL until unmarked",
-   "source": "spec"
-  },
-  {
-   "id": "K5",
-   "choice": "Full backup→PITR integration test runs only in CI against local MinIO; local validate uses static/unit tests",
-   "justification": "CLAUDE.md: never run Docker-heavy/e2e locally on the shared host; precedent infra/docker/test/compose-smoke.sh",
+   "choice": "Add deploy-test.yml (not in the issue file list) to run deploy.test.sh and docker-dependent checks in CI, since docker is never run locally",
+   "justification": "CLAUDE.md: Playwright/docker-heavy checks run in CI only; acceptance criteria R5-R7 require a CI-run deploy test",
    "source": "doc"
   },
   {
-   "id": "K6",
-   "choice": "Encryption uses WAL-G libsodium with the key file on a root-owned 0600 tmpfs/secret path, custody copies off host",
-   "justification": "Issue requirement R3 allows libsodium or GPG; key not stored unprotected on the DB host disk",
+   "id": "K4",
+   "choice": "Host key verification uses a pinned known_hosts value from the GitHub environment secret and ssh -o StrictHostKeyChecking=yes",
+   "justification": "Issue acceptance criterion on pinned host key; credentials come from #116/#108",
    "source": "spec"
   }
  ]

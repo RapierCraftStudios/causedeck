@@ -28,7 +28,7 @@
     "db:check-rls": "turbo run db:check-rls --filter=@causedeck/db",
     "i18n:check": "pnpm --filter @causedeck/i18n i18n:check",
     "i18n:types": "pnpm --filter @causedeck/i18n i18n:types",
-    "test:ci-scripts": "node --experimental-strip-types --no-warnings --test 'infra/scripts/*.test.mjs' 'infra/scripts/*.test.ts' 'infra/terraform/test/*.test.mjs' 'infra/monitoring/test/*.test.ts'",
+    "test:ci-scripts": "node --experimental-strip-types --no-warnings --test 'infra/scripts/*.test.mjs' 'infra/scripts/*.test.ts' 'infra/terraform/test/*.test.mjs' 'infra/monitoring/test/*.test.ts' '.github/actions/*/test/*.test.ts'",
     "test:monitoring": "node --experimental-strip-types --no-warnings --test infra/monitoring/test/",
     "check:no-l5": "node --experimental-strip-types --no-warnings scripts/check-no-l5.ts",
     "adr:lint": "node docs/adr/scripts/lint-adr.mjs",

@@ -42,6 +42,15 @@ export {
   whatsappLink,
   whatsappOtpChallenge,
 } from './whatsapp-link.ts';
+export {
+  CERTIFIED_COPY_STATUSES,
+  OBLIGATION_EVENT_KINDS,
+  certifiedCopy,
+  defect,
+  obligationEvent,
+  type CertifiedCopyStatus,
+  type ObligationEventKind,
+} from './obligation-tracking.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export {
   CAPTURE_CHANNELS,

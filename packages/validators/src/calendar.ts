@@ -33,7 +33,7 @@ export const CalendarRange = z
   })
   .refine((r) => r.to >= r.from, { message: 'to must not be before from', path: ['to'] })
   .refine((r) => calendarSpanDays(r.from, r.to) <= CALENDAR_MAX_DAYS, {
-    message: `a range is at most ${CALENDAR_MAX_DAYS} days`,
+    message: `a range is at most ${String(CALENDAR_MAX_DAYS)} days`,
     path: ['to'],
   });
 

@@ -5,7 +5,7 @@
 // committed data (the api and web suites, whose users come from Better Auth).
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
-import { sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import type { Database, Transaction } from '../client.ts';
 import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
@@ -55,6 +55,7 @@ import { organisation, person, roleEdge } from '../schema/people.ts';
 import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
 import { certifiedCopy, defect, obligationEvent } from '../schema/obligation-tracking.ts';
+import { outwardDraft, outwardDraftVersion, outwardShareLog } from '../schema/outward-draft.ts';
 import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { newsPref } from '../schema/news.ts';
@@ -338,6 +339,49 @@ function seededTables(): string[] {
  * One seeder per tenant table. A table registered for RLS without a seeder here fails the
  * cross-tenant registry test, so a new tenant table cannot skip the suite.
  */
+export async function ownerMemberId(tx: Transaction, workspaceId: string, ownerId: string) {
+  const rows = await tx
+    .select({ id: member.id })
+    .from(member)
+    .where(and(eq(member.organizationId, workspaceId), eq(member.userId, ownerId)));
+  return first(rows, 'member').id;
+}
+
+async function seedOutwardDraft(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  tag: string,
+): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const proceedingId = await seedProceeding(tx, workspaceId, `${tag}o`);
+  const documentId = await seedDocument(tx, workspaceId, `${tag}o`);
+  const orders = await tx
+    .insert(order)
+    .values({
+      workspaceId,
+      proceedingId,
+      documentId,
+      orderDate: '2026-11-02',
+      orderType: 'procedural',
+      sourceType: 'manual',
+    })
+    .returning({ id: order.id });
+  const rows = await tx
+    .insert(outwardDraft)
+    .values({
+      workspaceId,
+      matterId,
+      orderId: first(orders, 'order').id,
+      audience: 'senior_counsel',
+      language: 'en',
+      tone: 'formal',
+      createdBy: await ownerMemberId(tx, workspaceId, ownerId),
+    })
+    .returning({ id: outwardDraft.id });
+  return first(rows, 'outward_draft').id;
+}
+
 export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
   member: async (tx, { workspaceId, tag }) => {
     const userId = await newUser(tx, `viewer-${tag}`);
@@ -1373,6 +1417,35 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: certifiedCopy.id });
     return { obligationId, certifiedCopyId: first(rows, 'certified_copy').id };
+  },
+  outward_draft: async (tx, { workspaceId, ownerId, tag }) => ({
+    draftId: await seedOutwardDraft(tx, workspaceId, ownerId, tag),
+  }),
+  outward_draft_version: async (tx, { workspaceId, ownerId, tag }) => {
+    const draftId = await seedOutwardDraft(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(outwardDraftVersion)
+      .values({ workspaceId, draftId, author: 'system', body: 'Update', facts: [] })
+      .returning({ id: outwardDraftVersion.id });
+    return { draftId, versionId: first(rows, 'outward_draft_version').id };
+  },
+  outward_share_log: async (tx, { workspaceId, ownerId, tag }) => {
+    const draftId = await seedOutwardDraft(tx, workspaceId, ownerId, tag);
+    const versions = await tx
+      .insert(outwardDraftVersion)
+      .values({ workspaceId, draftId, author: 'system', body: 'Update', facts: [] })
+      .returning({ id: outwardDraftVersion.id });
+    const rows = await tx
+      .insert(outwardShareLog)
+      .values({
+        workspaceId,
+        draftId,
+        memberId: await ownerMemberId(tx, workspaceId, ownerId),
+        channel: 'clipboard',
+        finalVersionId: first(versions, 'outward_draft_version').id,
+      })
+      .returning({ id: outwardShareLog.id });
+    return { draftId, shareId: first(rows, 'outward_share_log').id };
   },
   task: async (tx, { workspaceId, tag }) => {
     const obligationId = await seedObligation(tx, workspaceId, tag);

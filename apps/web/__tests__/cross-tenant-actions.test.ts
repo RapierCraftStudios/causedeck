@@ -52,7 +52,11 @@ vi.mock('../lib/auth.ts', () => ({
 }));
 vi.mock('../lib/env.ts', () => ({
   isProd: () => false,
-  serverEnv: () => ({ APP_URL: 'http://localhost:3000', EMAIL_PROVIDER: 'console' }),
+  serverEnv: () => ({
+    APP_URL: 'http://localhost:3000',
+    EMAIL_PROVIDER: 'console',
+    BETTER_AUTH_SECRET: { reveal: () => 'cross-tenant-test-secret-0123456789' },
+  }),
 }));
 vi.mock('../src/health.ts', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -98,6 +102,7 @@ const reminders = await import('../app/(app)/w/[slug]/settings/notifications/rem
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
+const sso = await import('../app/(app)/w/[slug]/settings/sso/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
 const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
@@ -116,6 +121,7 @@ const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedi
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
+const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
@@ -164,6 +170,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   saveNewsPreferencesAction: news,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
+  saveSsoProviderAction: sso,
+  deleteSsoProviderAction: sso,
+  verifySsoDomainAction: sso,
   requestClerkSetupApprovalAction: welcome,
   approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
@@ -256,6 +265,10 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   undoActivityAction: inbox,
   reassignCaptureAction: inbox,
   keepAsAttachmentAction: inbox,
+  assignAppearanceAction: planActions,
+  acceptSuggestionAction: planActions,
+  acceptAllSuggestionsAction: planActions,
+  outcomesLiveAction: planActions,
   typeKeyLineAction: inbox,
   markSentAction: inbox,
   setCurrentItemAction: courtDay,
@@ -546,6 +559,16 @@ function inputs(workspaceId: string): Record<string, unknown> {
       advocatesCanInvite: false,
       ownersSeeRestrictedMatters: false,
     },
+    saveSsoProviderAction: {
+      workspaceId,
+      protocol: 'oidc',
+      issuer: 'https://idp.example.com',
+      domain: `xt-${workspaceId.slice(0, 8)}.example.com`,
+      enabled: false,
+      settings: { clientId: 'probe', clientSecret: 'probe-secret' },
+    },
+    deleteSsoProviderAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
+    verifySsoDomainAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
     updateWorkspacePrivacyAction: {
       workspaceId,
       sensitiveDefaultRestricted: false,
@@ -729,6 +752,32 @@ function inputs(workspaceId: string): Record<string, unknown> {
     keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
     typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
     markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
+    // Delegation (#63): ub, owner of B, may not assign appearances in A.
+    assignAppearanceAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      memberId: t.a.rows.listing?.listingId,
+      capacity: 'arguing',
+    },
+    acceptSuggestionAction: {
+      workspaceId,
+      suggestion: {
+        listingId: t.a.rows.listing?.listingId,
+        memberId: t.a.rows.listing?.listingId,
+        capacity: 'arguing',
+      },
+    },
+    acceptAllSuggestionsAction: {
+      workspaceId,
+      suggestions: [
+        {
+          listingId: t.a.rows.listing?.listingId,
+          memberId: t.a.rows.listing?.listingId,
+          capacity: 'arguing',
+        },
+      ],
+    },
+    outcomesLiveAction: { workspaceId, date: '2026-10-26' },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
@@ -1090,6 +1139,26 @@ describe('cross-tenant server actions', () => {
       advocatesCanInvite: true,
       ownersSeeRestrictedMatters: true,
     });
+  });
+
+  it('saveSsoProviderAction and deleteSsoProviderAction under B’s own workspace change only B', async () => {
+    const before = await snapshotA();
+    const saved = await action('saveSsoProviderAction')(inputs(t.b.id).saveSsoProviderAction);
+    expect(saved).toMatchObject({
+      ok: true,
+      data: { protocol: 'oidc', enabled: false, domainVerified: false },
+    });
+    // The result never carries the provider's settings.
+    expect(JSON.stringify(saved)).not.toContain('probe-secret');
+    expect(await snapshotA()).toEqual(before);
+    const { id } = (saved as { data: { id: string } }).data;
+    expect(
+      await action('deleteSsoProviderAction')({ workspaceId: t.b.id, providerId: id }),
+    ).toEqual({
+      ok: true,
+      data: { id },
+    });
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('updateWorkspacePrivacyAction under B’s own workspace changes only B', async () => {

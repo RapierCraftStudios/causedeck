@@ -102,6 +102,19 @@ describe('role rules', () => {
     expect(can(actor('advocate'), 'member.invite', undefined, off)).toEqual({ allow: true });
   });
 
+  it('owner and advocate assign appearances; the owner setting can switch advocates off (#63)', () => {
+    expect(can(actor('owner'), 'appearance.assign')).toEqual({ allow: true });
+    expect(can(actor('advocate'), 'appearance.assign')).toEqual({ allow: true });
+    const off = { advocatesCanAssign: false };
+    expect(reasonOf(can(actor('advocate'), 'appearance.assign', undefined, off))).toBe(
+      'ROLE_DENIED',
+    );
+    expect(can(actor('owner'), 'appearance.assign', undefined, off)).toEqual({ allow: true });
+    for (const role of ['junior', 'clerk', 'viewer'] as const) {
+      expect(reasonOf(can(actor(role), 'appearance.assign')), role).toBe('ROLE_DENIED');
+    }
+  });
+
   it('advocate views the whole court day by default, not when the workspace turns it off (#58)', () => {
     expect(can(actor('advocate'), 'court_day.view_all')).toEqual({ allow: true });
     const off = { advocatesCanViewAllCourtDay: false };

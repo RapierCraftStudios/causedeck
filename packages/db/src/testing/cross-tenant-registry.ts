@@ -255,6 +255,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // role settings (#285)
   getRoleSettings: empty,
   updateRoleSettings: denies,
+  // SSO providers (#683)
+  listSsoProviders: empty,
+  saveSsoProvider: denies,
+  deleteSsoProvider: denies,
+  verifySsoDomain: denies,
   // privacy settings (#286)
   getPrivacySettings: empty,
   updateWorkspacePrivacy: denies,
@@ -503,6 +508,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getBenchCard: denies,
   // court day (#58): B acting on A's workspace is denied, A's rows are unchanged
   getCourtDay: denies,
+  // calendar range (#66): B acting on A's workspace is denied, A's rows are unchanged
+  getCalendarRange: denies,
   setCurrentItem: denies,
   clearCurrentItem: denies,
   snapshotList: denies,
@@ -517,6 +524,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   setCarryItem: denies,
   setBriefNote: denies,
   refreshBrief: denies,
+  // delegation (#63): B acting on A's listing or appearances is denied, A's appearances are unchanged
+  assignAppearance: denies,
+  reassignAppearance: denies,
+  unassign: denies,
+  suggestAssignments: denies,
+  myAppearances: denies,
+  chamberOutcomesLive: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -904,6 +918,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     "trigger consumer: lists the changed list's listings inside the event's own workspace scope and enqueues a refresh each; covered by briefs/__tests__/state.test.ts",
   refreshBriefTargets:
     'system job body: no workspace; lists targets only through the owner-defined app_brief_refresh_targets and refreshes each in its own workspace scope; covered by briefs/__tests__/state.test.ts',
+  // delegation (#63): the offboarding provider runs only inside removeMember's workspace scope, and
+  // the registrar is a no-op wiring call; both covered by delegation/__tests__/assign.test.ts
+  appearanceReassignProvider:
+    "offboarding provider: runs on removeMember's workspace-scoped transaction; covered by delegation/__tests__/assign.test.ts",
+  registerAppearanceReassignProvider: 'wiring: registers the provider once, touches no data',
   // whatsapp-link (#678): constants
   WHATSAPP_OTP_TTL_MS: 'constant',
   WHATSAPP_OTP_RESEND_COOLDOWN_MS: 'constant',

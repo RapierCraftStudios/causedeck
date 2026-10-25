@@ -16,6 +16,7 @@
     "./calendar": "./src/calendar/index.ts",
     "./court": "./src/court/index.ts",
     "./court-day": "./src/court-day/index.ts",
+    "./delegation": "./src/delegation/index.ts",
     "./email-intake": "./src/email-intake/index.ts",
     "./import": "./src/import/index.ts",
     "./migration": "./src/migration/index.ts",

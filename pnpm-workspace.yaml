@@ -53,6 +53,7 @@ catalog:
   '@aws-sdk/s3-request-presigner': 3.1152.0
   '@axe-core/playwright': 4.13.0
   '@better-auth/passkey': 1.7.10
+  '@better-auth/sso': 1.7.10
   '@commitlint/cli': 21.2.3
   '@commitlint/config-conventional': 21.2.3
   '@date-fns/tz': 1.5.0

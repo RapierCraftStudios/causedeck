@@ -123,3 +123,4 @@ export {
   type HallHeaderProps,
   type ItemNumeralProps,
 } from './court-day';
+export * from './delegation';

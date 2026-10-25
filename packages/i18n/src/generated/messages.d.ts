@@ -303,6 +303,13 @@ export type Messages = {
         offline: string;
         accessDenied: string;
       };
+      sso: {
+        open: string;
+        emailLabel: string;
+        emailPlaceholder: string;
+        submit: string;
+        failed: string;
+      };
       phone: {
         label: string;
         placeholder: string;
@@ -1180,6 +1187,7 @@ export type Messages = {
       support: string;
       more: string;
       'court-watch': string;
+      sso: string;
     };
     placeholder: {
       export: string;
@@ -1317,6 +1325,7 @@ export type Messages = {
         export: string;
         support: string;
         shell: string;
+        appearance: string;
       };
       actions: {
         workspace: {
@@ -1382,6 +1391,9 @@ export type Messages = {
         };
         invoices: {
           read: string;
+        };
+        appearance: {
+          assign: string;
         };
       };
       settings: {
@@ -1742,6 +1754,48 @@ export type Messages = {
       removed: string;
       failed: string;
       loading: string;
+    };
+    sso: {
+      metaTitle: string;
+      title: string;
+      description: string;
+      empty: string;
+      error: {
+        title: string;
+        retry: string;
+      };
+      form: {
+        protocol: string;
+        issuer: string;
+        domain: string;
+        enabled: string;
+        clientId: string;
+        clientSecret: string;
+        entryPoint: string;
+        cert: string;
+        save: string;
+        delete: string;
+      };
+      toast: {
+        saved: string;
+        removed: string;
+        failed: string;
+        forbidden: string;
+        verified: string;
+        verifyFailed: string;
+      };
+      status: {
+        enabled: string;
+        disabled: string;
+        unverified: string;
+      };
+      verify: {
+        title: string;
+        instructions: string;
+        name: string;
+        value: string;
+        button: string;
+      };
     };
   };
   lifecycle: {
@@ -2781,6 +2835,38 @@ export type Messages = {
       offlineAt: string;
     };
   };
+  delegation: {
+    title: string;
+    metaTitle: string;
+    description: string;
+    empty: string;
+    loading: string;
+    error: string;
+    retry: string;
+    denied: string;
+    offline: string;
+    willSync: string;
+    conflictNotice: string;
+    assignee: string;
+    assign: string;
+    choose: string;
+    unassigned: string;
+    clash: string;
+    suggested: string;
+    acceptAll: string;
+    acceptAllTitle: string;
+    acceptAllBody: string;
+    confirm: string;
+    cancel: string;
+    assigned: string;
+    restricted: string;
+    grantAccess: string;
+    outcomes: {
+      label: string;
+      member: string;
+      toast: string;
+    };
+  };
   reminders: {
     settings: {
       title: string;
@@ -3717,6 +3803,98 @@ export type Messages = {
         error: string;
         forbidden: string;
       };
+    };
+  };
+  calendarView: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    views: {
+      label: string;
+      week: string;
+      month: string;
+    };
+    scope: {
+      label: string;
+      mine: string;
+      workspace: string;
+    };
+    toolbar: {
+      label: string;
+      previous: string;
+      next: string;
+      today: string;
+      range: string;
+      shortcuts: string;
+    };
+    kind: {
+      listing: string;
+      next_date: string;
+      obligation_due: string;
+      holiday: string;
+      vacation: string;
+    };
+    legend: {
+      title: string;
+      proposed: string;
+      clash: string;
+    };
+    proposed: string;
+    restricted: string;
+    clash: string;
+    closed: string;
+    summary: string;
+    dayLabel: string;
+    grid: {
+      week: string;
+      month: string;
+      weekday: string;
+    };
+    week: {
+      noHall: string;
+      hall: string;
+      other: string;
+    };
+    day: {
+      openDay: string;
+      close: string;
+      listings: string;
+      deadlines: string;
+      nothing: string;
+      clash: string;
+      hall: string;
+      item: string;
+    };
+    empty: string;
+    offline: string;
+    denied: {
+      title: string;
+      description: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+    };
+    loading: string;
+    subscribe: {
+      title: string;
+      explanation: string;
+      active: string;
+      inactive: string;
+      manage: string;
+      disclosure: string;
+      ack: string;
+      generate: string;
+      regenerate: string;
+      working: string;
+      urlLabel: string;
+      copy: string;
+      copied: string;
+      shownOnce: string;
+      revokesOld: string;
+      error: string;
+      forbidden: string;
+      copyFailed: string;
     };
   };
   inbox: {

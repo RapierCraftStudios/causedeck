@@ -208,6 +208,10 @@ jobs:
           restore-keys: |
             nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
       - name: Build
+        # CI builds are checks, never deployed: draft legal pages (awaiting counsel, #117) may build here.
+        # Production builds keep the guard (apps/site/scripts/legal-status.ts; site.yml sets it only off main).
+        env:
+          ALLOW_DRAFT_LEGAL: '1'
         run: bash infra/scripts/ci-affected.sh build
       # Spike §10: home route initial JS <= 180 KB gzip. Runs when the build above included web.
       - name: Web bundle budget

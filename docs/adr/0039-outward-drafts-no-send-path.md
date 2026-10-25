@@ -21,11 +21,11 @@ Lawyers owe clients and senior or briefing counsel short updates after a hearing
 
 ## Considered options
 
-| Option                                                          | Verdict  | Reason                                                           |
-| --------------------------------------------------------------- | -------- | ---------------------------------------------------------------- |
-| Prepare a draft; the lawyer shares it from their own channel    | Chosen   | Keeps the lawyer as the sender; nothing to authorise or revoke   |
-| Send through WhatsApp or email on the lawyer's approval         | Rejected | Needs a transport, consent and delivery handling; not L4 minimum |
-| Auto-send routine updates                                       | Rejected | Removes the person from the loop                                 |
+| Option                                                       | Verdict  | Reason                                                           |
+| ------------------------------------------------------------ | -------- | ---------------------------------------------------------------- |
+| Prepare a draft; the lawyer shares it from their own channel | Chosen   | Keeps the lawyer as the sender; nothing to authorise or revoke   |
+| Send through WhatsApp or email on the lawyer's approval      | Rejected | Needs a transport, consent and delivery handling; not L4 minimum |
+| Auto-send routine updates                                    | Rejected | Removes the person from the loop                                 |
 
 ## Decision
 

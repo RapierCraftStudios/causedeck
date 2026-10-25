@@ -4,7 +4,16 @@
 // records a transmission by the system. Tenant tables under FORCE RLS via `tenantTable()`. Members
 // are bare ids because the log outlives the member (no FK to clear on account deletion).
 import { sql } from 'drizzle-orm';
-import { boolean, check, foreignKey, jsonb, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  foreignKey,
+  jsonb,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { id, timestamps } from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';
@@ -92,14 +101,8 @@ export const outwardDraft = tenantTable(
     check('outward_draft_tone_chk', sql`tone in ${inList(OUTWARD_TONES)}`),
     check('outward_draft_status_chk', sql`status in ${inList(OUTWARD_DRAFT_STATUSES)}`),
     // A client draft names its client; no other audience does.
-    check(
-      'outward_draft_client_chk',
-      sql`(audience = 'client') = (client_person_id is not null)`,
-    ),
-    check(
-      'outward_draft_source_chk',
-      sql`hearing_id is not null or order_id is not null`,
-    ),
+    check('outward_draft_client_chk', sql`(audience = 'client') = (client_person_id is not null)`),
+    check('outward_draft_source_chk', sql`hearing_id is not null or order_id is not null`),
   ],
 );
 

@@ -50,7 +50,9 @@ describe('help articles', () => {
   it('the bundled sources match content/help', () => {
     expect(Object.keys(HELP_SOURCES).length).toBe(articles.length);
     expect(renderSources()).toBe(
-      `// Generated from content/help/*.mdx by lib/help/generate.ts. Do not edit.\nexport const HELP_SOURCES: Readonly<Record<string, string>> = {\n${Object.entries(HELP_SOURCES)
+      `// Generated from content/help/*.mdx by lib/help/generate.ts. Do not edit.\nexport const HELP_SOURCES: Readonly<Record<string, string>> = {\n${Object.entries(
+        HELP_SOURCES,
+      )
         .map(([slug, raw]) => `  ${JSON.stringify(slug)}: ${JSON.stringify(raw)},`)
         .join('\n')}\n};\n`,
     );

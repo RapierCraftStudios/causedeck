@@ -57,6 +57,8 @@ export const PURGE_ORDER = [
   // WhatsApp number link (#678): the pending challenge and the verified link cite only the user.
   'whatsapp_otp_challenge',
   'whatsapp_link',
+  // In-app help state (#94): the member's dismissed tips cite only the workspace and the user.
+  'help_state',
   // Inbound WhatsApp ledger (#680): provider message ids of the member's forwarded media.
   'whatsapp_inbound_message',
   // News digest (#481): the member's followed areas and digest time (news_item is global).

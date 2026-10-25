@@ -59,6 +59,7 @@ function session(overrides: Partial<SupportSession> = {}): SupportSession {
     id: SESSION,
     workspaceId: WORKSPACE,
     requestedByStaff: STAFF.userId,
+    requestedByUser: null,
     grantedByUser: null,
     scope: 'view',
     reason: 'Hearing dates stopped syncing',

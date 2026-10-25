@@ -320,6 +320,11 @@ const whatsappLinkExporter = tablesExporter('whatsapp-link', [
   ws('whatsapp_link', { userColumn: 'user_id' }),
 ]);
 
+// In-app help state (#94): the member's own dismissed tips and coachmarks (key and time).
+const helpStateExporter = tablesExporter('help-state', [
+  ws('help_state', { userColumn: 'user_id' }),
+]);
+
 // Enterprise onboarding (#682): SSO providers without their config (client secrets), SCIM tokens
 // without the hash, and the provisioning and migration runs with their per-row state.
 const enterpriseExporter = tablesExporter('enterprise', [
@@ -346,6 +351,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   webhooksExporter,
   portfoliosExporter,
   whatsappLinkExporter,
+  helpStateExporter,
   enterpriseExporter,
 ];
 

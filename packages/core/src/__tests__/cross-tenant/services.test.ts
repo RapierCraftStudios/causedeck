@@ -2676,17 +2676,15 @@ const CASES: Record<string, Case> = {
   dismissCoachmark: async (f) => {
     const before = await aHelpState(f);
     const input = { key: 'coachmark.probe' };
-    await expectDenied(
-      core.dismissCoachmark(f.tx, { userId: f.ub, workspaceId: f.a.id }, input),
-    );
+    await expectDenied(core.dismissCoachmark(f.tx, { userId: f.ub, workspaceId: f.a.id }, input));
     expect(await aHelpState(f)).toEqual(before);
   },
   listDismissedCoachmarks: async (f) => {
     await expectDenied(core.listDismissedCoachmarks(f.tx, { userId: f.ub, workspaceId: f.a.id }));
     // B's own list holds B's keys only, never A's seeded one.
-    expect(
-      await core.listDismissedCoachmarks(f.tx, { userId: f.ub, workspaceId: f.b.id }),
-    ).toEqual(['coachmark.today']);
+    expect(await core.listDismissedCoachmarks(f.tx, { userId: f.ub, workspaceId: f.b.id })).toEqual(
+      ['coachmark.today'],
+    );
   },
   grantSession: async (f) => {
     const before = await aSupportSessions(f);

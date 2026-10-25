@@ -30,9 +30,9 @@ describe('help state', () => {
         'coachmark.today',
       ]);
       // Another member's own list is theirs alone.
-      expect(
-        await listDismissedCoachmarks(tx, { userId: t.ub, workspaceId: t.b.id }),
-      ).toEqual(['coachmark.today']);
+      expect(await listDismissedCoachmarks(tx, { userId: t.ub, workspaceId: t.b.id })).toEqual([
+        'coachmark.today',
+      ]);
     });
   });
 

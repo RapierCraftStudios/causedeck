@@ -503,6 +503,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   setCurrentItem: denies,
   clearCurrentItem: denies,
   snapshotList: denies,
+  // court-day board (#59): B reading A's list diffs is denied
+  getListDiffs: denies,
   proposeCourtDayNextDate: denies,
   listConflictCards: denies,
   // briefs (#60): B acting on A's listing is denied (NOT_FOUND), A's brief state is unchanged

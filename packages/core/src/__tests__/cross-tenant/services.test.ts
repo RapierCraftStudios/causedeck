@@ -1982,6 +1982,15 @@ const CASES: Record<string, Case> = {
       before,
     );
   },
+  getListDiffs: async (f) => {
+    await expect(
+      core.getListDiffs(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { date: '2026-11-02' },
+      ),
+    ).rejects.toBeDefined();
+  },
   proposeCourtDayNextDate: async (f) => {
     const { deps, events } = graphDeps(f.tx);
     const { proceedingId } = await aListing(f);

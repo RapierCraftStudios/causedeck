@@ -202,7 +202,13 @@ export function OutcomeForm({
           {hint}
         </p>
       )}
-      {done ? <p className="text-sm">{t('confirmedHint')}</p> : null}
+      {done ? (
+        // The confirm bar (and its live region) goes away once the outcome is confirmed, so the result
+        // is announced and shown here: this stays mounted.
+        <p role="status" aria-live="polite" className="text-sm font-medium">
+          {confirmedHere ? status : t('confirmedHint')}
+        </p>
+      ) : null}
       <div className="grid gap-2">
         <label htmlFor="outcome-summary" className="text-sm font-medium">
           {t('summary.label')}

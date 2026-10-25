@@ -160,6 +160,12 @@ test.describe('offline court day', () => {
         await tx`
           insert into matter_restriction (workspace_id, matter_id, allowed_user_ids)
           values (${row.workspace_id}, ${row.matter_id}, '{}'::uuid[])`;
+        // The member here is an owner, and owners see restricted matters they are not listed on by
+        // default (`can()`), so the restriction alone revokes nothing: turn that role setting off too.
+        await tx`
+          insert into workspace_settings (workspace_id, owners_see_restricted)
+          values (${row.workspace_id}, false)
+          on conflict (workspace_id) do update set owners_see_restricted = false`;
       });
     } finally {
       await sql.end();

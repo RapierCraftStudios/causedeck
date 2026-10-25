@@ -570,8 +570,9 @@ test.describe('court-day board', () => {
     await page.keyboard.press('?');
     const help = page.getByRole('dialog');
     await expect(help).toBeVisible();
+    // The sheet shows each key as a key cap in display case (`J`, `G then T`).
     for (const keys of ['j', 'k', 'h', 'l', 'g then t']) {
-      await expect(help).toContainText(keys);
+      await expect(help).toContainText(keys, { ignoreCase: true });
     }
     await page.keyboard.press('Escape');
   });

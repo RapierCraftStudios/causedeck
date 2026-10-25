@@ -1,0 +1,136 @@
+{
+ "status": "fixed",
+ "summary": "Static CauseDeck marketing site (apps/site) with MDX, SEO, Rule 36 lint, CSP headers, CI workflow and e2e specs; README and regression test added",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "apps/site/next.config.ts:11"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "apps/site/lib/frontmatter.ts:11"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "apps/site/lib/seo.ts:25"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "apps/site/src/site-scaffold.test.ts"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "apps/site/scripts/rule36-lint.ts:10"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "apps/site/lib/env.ts:15"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "apps/site/app/fonts.ts:7"
+  },
+  {
+   "id": "R8",
+   "status": "implemented",
+   "evidence": "apps/site/app/layout.tsx:33"
+  },
+  {
+   "id": "R9",
+   "status": "implemented",
+   "evidence": "apps/site/lighthouserc.json",
+   "instrumented": true
+  },
+  {
+   "id": "R10",
+   "status": "implemented",
+   "evidence": "e2e/site/smoke.spec.ts",
+   "instrumented": true
+  },
+  {
+   "id": "R11",
+   "status": "implemented",
+   "evidence": ".github/workflows/site.yml deploy job",
+   "instrumented": true
+  },
+  {
+   "id": "R12",
+   "status": "implemented",
+   "evidence": "apps/site/public/_headers"
+  },
+  {
+   "id": "R13",
+   "status": "implemented",
+   "evidence": "e2e/site/chrome.visual.spec.ts",
+   "instrumented": true
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/site exec vitest run",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/site exec tsc --noEmit",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/site exec tsx scripts/rule36-lint.ts",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/site exec eslint app lib components scripts src vitest.config.ts next.config.ts",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/site build && artifact checks",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "pnpm --filter @causedeck/site exec vitest run",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "all deliver requirements mapped above; out-of-band ones instrumented"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "existing src tests pass (28 total)"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "forgedock check PASS V1-V5"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "changes limited to apps/site, e2e/site, workflow, turbo.json, workspace files"
+  }
+ ],
+ "amendments": [
+  {
+   "note": "Duplicate export names metadata/dynamic are Next.js route-file conventions; kept by design, documented in implementation.md"
+  }
+ ]
+}

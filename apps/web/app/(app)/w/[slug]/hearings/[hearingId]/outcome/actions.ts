@@ -45,6 +45,7 @@ function toActionError(error: unknown): never {
 
 const confirm = workspaceAction(
   WorkspaceScoped.extend(OutcomeConfirmation.shape),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the scope comes from ctx
   async ({ workspaceId: _workspaceId, ...input }, ctx) => {
     const { confirmOutcome } = await import('@causedeck/core/hearings');
     try {
@@ -68,6 +69,7 @@ export async function confirmOutcomeAction(raw: unknown): Promise<Result<Confirm
 
 const manual = workspaceAction(
   WorkspaceScoped.extend(ManualOutcomeInput.shape),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- the scope comes from ctx
   async ({ workspaceId: _workspaceId, ...input }, ctx) => {
     const { recordManualOutcome } = await import('@causedeck/core/hearings');
     try {

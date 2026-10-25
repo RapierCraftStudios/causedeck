@@ -66,7 +66,11 @@ describe('confirmOutcomeAction (#62)', () => {
   it('confirms for the session user on the workspace transaction and revalidates', async () => {
     const result = await actions.confirmOutcomeAction(input);
     expect(result).toEqual({ ok: true, data: done });
-    const [deps, actor, body] = hearings.confirmOutcome.mock.calls[0] ?? [];
+    const [deps, actor, body] = (hearings.confirmOutcome.mock.calls[0] ?? []) as [
+      { db: unknown },
+      unknown,
+      unknown,
+    ];
     expect(deps.db).toEqual({ scoped: true });
     expect(actor).toEqual({ workspaceId: WS, userId: USER });
     expect(body).not.toHaveProperty('workspaceId');
@@ -81,7 +85,8 @@ describe('confirmOutcomeAction (#62)', () => {
   });
 
   it('rejects an input without a next date resolution', async () => {
-    const { nextDate: _omit, ...rest } = input;
+    const rest: Record<string, unknown> = { ...input };
+    delete rest['nextDate'];
     const result = await actions.confirmOutcomeAction(rest);
     expect(result).toMatchObject({ ok: false, error: { code: 'VALIDATION' } });
     expect(hearings.confirmOutcome).not.toHaveBeenCalled();

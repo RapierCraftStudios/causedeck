@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/filename-case -- the route segment `[hearingId]` is fixed by the issue's path */
 import type { OutcomeProposal } from '@causedeck/validators/hearing-outcome';
 import { describe, expect, it } from 'vitest';
 

@@ -35,3 +35,9 @@ The failing check was `turbo: command not found` (environment, not code). No sou
 
 ### Post-merge typecheck (second merge)
 The merged tree typechecks; the reported `turbo: command not found` (exit 127) is a PATH problem, not a code conflict. `pnpm exec turbo run typecheck` for db, core, notifications, i18n and web exits 0 (19 tasks, 9 cached). No code change was needed.
+
+### Post-merge typecheck (third report)
+Still `turbo: command not found` (exit 127): turbo lives in `node_modules/.bin`, not on PATH. With that on PATH, `turbo run typecheck` for db, core, notifications and web exits 0 (19 tasks). No code change. V1 (with `--maxWorkers=2`, one account-deletion deadlock pair that passes alone), V2 and V3 pass.
+
+### Post-merge typecheck (third)
+Still a PATH problem: bare `turbo` is not installed on PATH (exit 127). `pnpm exec turbo run typecheck` for db, core, notifications, i18n and web exits 0 with the base merged. No code change needed.

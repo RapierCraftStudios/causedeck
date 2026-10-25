@@ -42,3 +42,6 @@ Legal bodies are placeholder MDX (structure and `TODO(counsel)` markers only) lo
 
 ### Recovery pass: CI `build` job failure (no log available)
 Could not reproduce locally. Every step of the `site build` job that can run here passes: legal-status (with ALLOW_DRAFT_LEGAL=1), rule36 lint, `tsc --noEmit`, `eslint .` in apps/site, vitest (46 tests), and a react-dom/server render of all five legal pages with correct `noindex` metadata. Only `next build` and `write-headers` (CI only per CLAUDE.md) remain unverified. No speculative code change made; the CI log is needed to identify the failing step.
+
+### Recovery pass 2
+Re-ran tsc, vitest (46 pass), eslint on all of apps/site, prettier on changed files, legal-status, rule36 lint and an MDX compile of every content page: all clean. Still no CI log, so the failing step is unidentified; no speculative change. Needs the log of job 121303516579.

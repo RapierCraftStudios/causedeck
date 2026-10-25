@@ -38,7 +38,7 @@ export const ReminderPrefs = z.strictObject({
   }),
 });
 
-/** The payload of `reminder.evening`, `reminder.morning` and `reminder.outcome_missing`. */
+/** The payload of `reminder.evening`, `reminder.morning` and `reminder.outcome-missing`. */
 export const ReminderPayload = z.strictObject({
   workspaceId: z.uuid(),
   memberId: z.uuid(),

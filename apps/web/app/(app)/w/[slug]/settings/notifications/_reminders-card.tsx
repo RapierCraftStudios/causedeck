@@ -107,7 +107,11 @@ export function RemindersCard({ workspaceId, prefs: initial, actions }: Reminder
       {KINDS.map((kind) => {
         const name = t(`${KIND_MESSAGE[kind]}.label`);
         return (
-          <div key={kind} data-kind={kind} className="border-line flex flex-col gap-2 border-t pt-3">
+          <div
+            key={kind}
+            data-kind={kind}
+            className="border-line flex flex-col gap-2 border-t pt-3"
+          >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-col">
                 <span className="font-medium">{name}</span>
@@ -182,7 +186,7 @@ export function RemindersCard({ workspaceId, prefs: initial, actions }: Reminder
       })}
       <p role="status" aria-live="polite" className="min-h-5 text-sm">
         {status === 'saved' ? (
-          <span className="text-ink-muted inline-flex items-center gap-1 duration-180 motion-safe:animate-in motion-safe:fade-in motion-reduce:duration-100">
+          <span className="text-ink-muted motion-safe:animate-in motion-safe:fade-in inline-flex items-center gap-1 duration-180 motion-reduce:duration-100">
             <Check aria-hidden className="size-4" />
             {t('saved')}
           </span>

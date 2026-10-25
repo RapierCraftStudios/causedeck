@@ -177,7 +177,7 @@ describe('enqueue', () => {
       'system.reminder.schedule',
       'reminder.evening',
       'reminder.morning',
-      'reminder.outcome_missing',
+      'reminder.outcome-missing',
     ]);
   });
 });

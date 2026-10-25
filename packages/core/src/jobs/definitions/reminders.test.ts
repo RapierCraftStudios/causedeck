@@ -16,8 +16,9 @@ import {
   buildMatter,
   buildProceeding,
 } from '@causedeck/db/testing/matter-graph-fixtures';
-import { setReminderPreferences, type PushSender } from '@causedeck/notifications';
+import { setReminderPreferences } from '@causedeck/notifications';
 import type { EmailMessage } from '@causedeck/notifications/email';
+import type { PushSender } from '@causedeck/notifications/push';
 import { createLogger } from '@causedeck/observability';
 import type { SnapshotRow } from '@causedeck/validators';
 import { eq } from 'drizzle-orm';
@@ -109,9 +110,8 @@ async function setup(tx: Transaction) {
     idempotencyKey: 'k',
   });
   const send = (kind: ReminderKind, deps: NotificationJobDeps, date = TODAY) =>
-    inWs((s) =>
-      runReminder(s === tx ? ctx(s) : ctx(s), kind, { workspaceId, memberId: m.id, date }, deps),
-    );
+    // The worker runs a handler inside the workspace transaction; so does the test.
+    inWs((s) => runReminder(ctx(s), kind, { workspaceId, memberId: m.id, date }, deps));
   const listTomorrow = (title: string) =>
     inWs(async (s) => {
       const hall = await buildCourtHall(s, workspaceId, { forumId: forum.id, hallNo: '3' });
@@ -172,7 +172,7 @@ describe('reminders: registration and schedule', () => {
     expect(registry.get('system.reminder.schedule')).toBe(reminderSchedule);
     expect(registry.get('reminder.evening')).toBe(reminderEvening);
     expect(registry.get('reminder.morning')).toBe(reminderMorning);
-    expect(registry.get('reminder.outcome_missing')).toBe(reminderOutcomeMissing);
+    expect(registry.get('reminder.outcome-missing')).toBe(reminderOutcomeMissing);
     expect(reminderSchedule.schedule?.cron).toBe('0,30 7-23 * * *');
     expect(reminderEvening.retry).toMatchObject({ limit: 3, backoff: true });
     const payload = { workspaceId: 'w', memberId: 'm', date: TOMORROW };
@@ -194,9 +194,9 @@ describe('reminders: registration and schedule', () => {
     expect(dueReminders(prefs, 20 * 60 + 10)).toEqual(['evening']);
     expect(dueReminders(prefs, 7 * 60)).toEqual(['morning']);
     expect(dueReminders(prefs, 8 * 60)).toEqual([]);
-    expect(dueReminders({ ...prefs, evening: { ...prefs.evening, enabled: false } }, 20 * 60)).toEqual(
-      [],
-    );
+    expect(
+      dueReminders({ ...prefs, evening: { ...prefs.evening, enabled: false } }, 20 * 60),
+    ).toEqual([]);
   });
 
   it('enqueues the evening job for tomorrow at 20:00 IST and the morning job for today at 07:00', () =>
@@ -218,7 +218,9 @@ describe('reminders: registration and schedule', () => {
       targets.length = 0;
       await runReminderSchedule({ db: f.tx, log: logger }, { now: () => AT_0700_IST, enqueue });
       expect(
-        targets.filter((t) => t.payload.workspaceId === f.workspaceId).map((t) => [t.kind, t.payload.date]),
+        targets
+          .filter((t) => t.payload.workspaceId === f.workspaceId)
+          .map((t) => [t.kind, t.payload.date]),
       ).toEqual([['morning', TODAY]]);
     }));
 });
@@ -250,7 +252,11 @@ describe('reminders: evening brief', () => {
         s.select({ body: schema.notification.body }).from(schema.notification),
       );
       expect(notes.map((n) => n.body).join(' ')).toContain('Rao v State of Kerala');
-      expect((await f.dispatches()).map((d) => d.channel).sort()).toEqual(['email', 'in_app', 'push']);
+      expect((await f.dispatches()).map((d) => d.channel).sort()).toEqual([
+        'email',
+        'in_app',
+        'push',
+      ]);
     }));
 
   it('is idempotent: a retried job sends nothing twice', () =>
@@ -264,16 +270,19 @@ describe('reminders: evening brief', () => {
       expect(await f.dispatches()).toHaveLength(3);
     }));
 
-  it('releases a failed channel and retries only that one', () =>
+  it('rolls a failed send back whole, so the retry sends each channel once', () =>
     run(async (f) => {
       await f.listTomorrow('Rao v State');
       const bad = transports(AT_2000_IST, new Error('smtp down'));
       await expect(f.send('evening', bad.deps, TOMORROW)).rejects.toBeInstanceOf(RetryableError);
-      expect((await f.dispatches()).map((d) => d.channel)).toEqual(['in_app', 'push']);
+      // Email goes first, so nothing else went out before it failed.
+      expect(bad.pushes).toHaveLength(0);
+      expect(await f.dispatches()).toEqual([]);
       const good = transports(AT_2000_IST);
       expect(await f.send('evening', good.deps, TOMORROW)).toBe('sent');
       expect(good.emails).toHaveLength(1);
-      expect(good.pushes).toHaveLength(0);
+      expect(good.pushes).toHaveLength(1);
+      expect(await f.dispatches()).toHaveLength(3);
     }));
 });
 
@@ -296,7 +305,10 @@ describe('reminders: opt-outs', () => {
       await f.inWs((s) =>
         setReminderPreferences(
           { db: s, workspaceId: f.workspaceId },
-          { userId: f.ownerId, morning: { channels: { in_app: false, push: false, email: false } } },
+          {
+            userId: f.ownerId,
+            morning: { channels: { in_app: false, push: false, email: false } },
+          },
         ),
       );
       const second = transports(AT_0700_IST);

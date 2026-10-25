@@ -27,7 +27,10 @@ const service = () => import('@causedeck/notifications');
 
 const get = workspaceAction(WorkspaceScoped, async (_input, ctx) => {
   const { getReminderPreferences } = await service();
-  return getReminderPreferences({ db: ctx.tx, workspaceId: ctx.workspaceId }, { userId: ctx.userId });
+  return getReminderPreferences(
+    { db: ctx.tx, workspaceId: ctx.workspaceId },
+    { userId: ctx.userId },
+  );
 });
 
 const set = workspaceAction(SetInput, async (input, ctx) => {
@@ -58,10 +61,14 @@ const set = workspaceAction(SetInput, async (input, ctx) => {
 
 // A `'use server'` module may only export async functions, so each action is wrapped.
 
-export async function getReminderPreferencesAction(raw: unknown): Promise<Result<ReminderPrefsView>> {
+export async function getReminderPreferencesAction(
+  raw: unknown,
+): Promise<Result<ReminderPrefsView>> {
   return get(raw);
 }
 
-export async function setReminderPreferencesAction(raw: unknown): Promise<Result<ReminderPrefsView>> {
+export async function setReminderPreferencesAction(
+  raw: unknown,
+): Promise<Result<ReminderPrefsView>> {
   return set(raw);
 }

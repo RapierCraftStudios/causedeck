@@ -15701,14 +15701,16 @@
         }
       },
       "foreignKeys": {
-        "reminder_dispatch_member_id_member_id_fk": {
-          "name": "reminder_dispatch_member_id_member_id_fk",
+        "reminder_dispatch_member_fk": {
+          "name": "reminder_dispatch_member_fk",
           "tableFrom": "reminder_dispatch",
           "tableTo": "member",
           "columnsFrom": [
+            "workspace_id",
             "member_id"
           ],
           "columnsTo": [
+            "workspace_id",
             "id"
           ],
           "onDelete": "cascade",

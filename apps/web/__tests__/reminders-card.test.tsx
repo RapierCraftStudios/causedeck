@@ -47,7 +47,7 @@ describe('RemindersCard', () => {
     for (const label of [en.evening.label, en.morning.label, en.outcomeMissing.label]) {
       expect(screen.getByText(label)).toBeTruthy();
     }
-    expect((screen.getByLabelText(en.time) as HTMLSelectElement).value).toBe('20:00');
+    expect(screen.getByLabelText<HTMLSelectElement>(en.time).value).toBe('20:00');
     expect(screen.getAllByRole('switch')).toHaveLength(9);
   });
 
@@ -62,8 +62,9 @@ describe('RemindersCard', () => {
     // Keyboard operable: the switch takes focus and Space toggles it.
     toggle.focus();
     expect(document.activeElement).toBe(toggle);
-    await act(async () => {
+    await act(() => {
       fireEvent.click(toggle);
+      return Promise.resolve();
     });
     expect(set).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -80,14 +81,16 @@ describe('RemindersCard', () => {
   it('changes the evening time and the outcome delay from the selects', async () => {
     const set = vi.fn(() => Promise.resolve({ ok: true as const, data: prefs }));
     ui(<RemindersCard workspaceId={WS} prefs={prefs} actions={{ set }} />);
-    await act(async () => {
+    await act(() => {
       fireEvent.change(screen.getByLabelText(en.time), { target: { value: '21:30' } });
+      return Promise.resolve();
     });
     expect(set).toHaveBeenLastCalledWith(
       expect.objectContaining({ evening: { time: '21:30', channels } }),
     );
-    await act(async () => {
+    await act(() => {
       fireEvent.change(screen.getByLabelText(en.delay), { target: { value: '60' } });
+      return Promise.resolve();
     });
     expect(set).toHaveBeenLastCalledWith(
       expect.objectContaining({ outcome_missing: { delayMinutes: 60, channels } }),
@@ -101,13 +104,15 @@ describe('RemindersCard', () => {
       .mockResolvedValueOnce({ ok: false, error: { code: 'FORBIDDEN', message: 'x' } });
     ui(<RemindersCard workspaceId={WS} prefs={prefs} actions={{ set }} />);
     const toggle = screen.getByLabelText(`${en.morning.label}: ${en.channels.email}`);
-    await act(async () => {
+    await act(() => {
       fireEvent.click(toggle);
+      return Promise.resolve();
     });
     expect(screen.getByText(en.error)).toBeTruthy();
     expect(toggle.getAttribute('aria-checked')).toBe('true');
-    await act(async () => {
+    await act(() => {
       fireEvent.click(toggle);
+      return Promise.resolve();
     });
     expect(screen.getByText(en.denied)).toBeTruthy();
     expect(toggle.getAttribute('aria-checked')).toBe('true');

@@ -8,7 +8,11 @@ import type { PreferenceView } from '../app/(app)/w/[slug]/settings/notification
 import type { PreferencesActions } from '../app/(app)/w/[slug]/settings/notifications/preferences-form.tsx';
 import type { WorkspaceContext } from '../lib/workspace-context.ts';
 
-import { CATEGORY_KEYS as ALL_CATEGORY_KEYS, CHANNELS, isLockedChannel } from '@causedeck/notifications/categories';
+import {
+  CATEGORY_KEYS as ALL_CATEGORY_KEYS,
+  CHANNELS,
+  isLockedChannel,
+} from '@causedeck/notifications/categories';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement, ReactNode } from 'react';
@@ -17,7 +21,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { catalogs, fakeGetTranslations, type TestLocale } from './helpers/intl.ts';
 
 /** The court-day reminders (#64) have their own card, not a matrix row. */
-const CATEGORY_KEYS = ALL_CATEGORY_KEYS.filter((key) => !key.startsWith('reminder.') || key === 'reminder.hearing');
+const CATEGORY_KEYS = ALL_CATEGORY_KEYS.filter(
+  (key) => !key.startsWith('reminder.') || key === 'reminder.hearing',
+);
 
 const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn() }));
 const page = vi.hoisted(() => ({

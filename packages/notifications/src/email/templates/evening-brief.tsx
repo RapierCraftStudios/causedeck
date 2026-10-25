@@ -34,7 +34,10 @@ export function EveningBriefEmail({
       preview={t('reminders.email.evening.preview')}
       preferencesUrl={preferencesUrl}
     >
-      <Heading as="h1" style={{ ...styles.heading, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+      <Heading
+        as="h1"
+        style={{ ...styles.heading, fontFamily: 'Georgia, "Times New Roman", serif' }}
+      >
         {t('reminders.email.evening.heading')}
       </Heading>
       <Text style={styles.text}>{t('reminders.email.evening.body', counts)}</Text>

@@ -94,8 +94,7 @@ const notifications = await import('../app/(app)/w/[slug]/notifications/actions.
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
 const whatsappLink =
   await import('../app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts');
-const reminders =
-  await import('../app/(app)/w/[slug]/settings/notifications/reminders-actions.ts');
+const reminders = await import('../app/(app)/w/[slug]/settings/notifications/reminders-actions.ts');
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
@@ -990,9 +989,9 @@ describe('cross-tenant server actions', () => {
     expect(
       await action('setReminderPreferencesAction')(all.setReminderPreferencesAction),
     ).toMatchObject({ ok: true, data: { evening: { time: '21:00', channels: { push: false } } } });
-    expect(await action('getReminderPreferencesAction')(all.getReminderPreferencesAction)).toMatchObject(
-      { ok: true, data: { outcome_missing: { delayMinutes: 60 } } },
-    );
+    expect(
+      await action('getReminderPreferencesAction')(all.getReminderPreferencesAction),
+    ).toMatchObject({ ok: true, data: { outcome_missing: { delayMinutes: 60 } } });
     expect(await snapshotA()).toEqual(before);
   });
 

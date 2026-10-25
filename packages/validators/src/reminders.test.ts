@@ -53,6 +53,8 @@ describe('reminder schemas', () => {
     expect(ReminderPayload.safeParse({ workspaceId: id, memberId: id, date: 'x' }).success).toBe(
       false,
     );
-    expect(ReminderPayload.safeParse({ workspaceId: id, memberId: 'x', date: '2026-10-26' }).success).toBe(false);
+    expect(
+      ReminderPayload.safeParse({ workspaceId: id, memberId: 'x', date: '2026-10-26' }).success,
+    ).toBe(false);
   });
 });

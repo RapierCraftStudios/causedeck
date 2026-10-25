@@ -8,7 +8,10 @@ const WS = '00000000-0000-4000-8000-00000000a001';
 const USER = '00000000-0000-4000-8000-0000000b0101';
 const OTHER = '00000000-0000-4000-8000-0000000b0102';
 const TX = { scoped: true };
-const state = vi.hoisted(() => ({ session: null as AppSession | null, role: 'junior' as string | null }));
+const state = vi.hoisted((): { session: AppSession | null; role: string | null } => ({
+  session: null,
+  role: 'junior',
+}));
 
 class NotificationError extends Error {
   constructor(
@@ -18,11 +21,13 @@ class NotificationError extends Error {
     super(message);
   }
 }
-const service = vi.hoisted(() => ({
-  getReminderPreferences: vi.fn(),
-  setReminderPreferences: vi.fn(),
-  NotificationError: undefined as unknown,
-}));
+const service = vi.hoisted(
+  (): {
+    getReminderPreferences: ReturnType<typeof vi.fn>;
+    setReminderPreferences: ReturnType<typeof vi.fn>;
+    NotificationError?: unknown;
+  } => ({ getReminderPreferences: vi.fn(), setReminderPreferences: vi.fn() }),
+);
 service.NotificationError = NotificationError;
 const withWorkspace = vi.hoisted(() =>
   vi.fn((_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) => fn(TX)),
@@ -51,7 +56,10 @@ const view = {
 };
 
 beforeEach(() => {
-  state.session = { session: {}, user: { id: USER, name: 'Asha', email: 'a@x.test' } } as AppSession;
+  state.session = {
+    session: {},
+    user: { id: USER, name: 'Asha', email: 'a@x.test' },
+  } as AppSession;
   state.role = 'junior';
 });
 afterEach(() => {

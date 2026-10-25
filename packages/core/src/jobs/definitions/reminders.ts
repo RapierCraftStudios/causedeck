@@ -4,7 +4,7 @@
 //   function, enqueues one member job per due reminder: the evening brief at the member's own
 //   slot (18:00-23:00, default 20:00) for tomorrow, the morning diff at 07:00 for today and the
 //   outcome-missing nudge each slot from 12:00 for today (the member job decides if it is due).
-// - `reminder.evening`, `reminder.morning` and `reminder.outcome_missing` build one member's
+// - `reminder.evening`, `reminder.morning` and `reminder.outcome-missing` build one member's
 //   reminder from the pure builders in `court-day/reminders.ts`, and send it on each channel the
 //   member left on (`notification_pref` of the `reminder.*` category). Each channel first inserts a
 //   `reminder_dispatch` row with ON CONFLICT DO NOTHING and sends only when a row was inserted, so a
@@ -77,12 +77,12 @@ const {
 } = schema;
 
 export type ReminderKind = 'evening' | 'morning' | 'outcome_missing';
-export type ReminderJobName = 'reminder.evening' | 'reminder.morning' | 'reminder.outcome_missing';
+export type ReminderJobName = 'reminder.evening' | 'reminder.morning' | 'reminder.outcome-missing';
 
 const KINDS = {
   evening: { job: 'reminder.evening', template: 'evening-brief', page: 'tomorrow' },
   morning: { job: 'reminder.morning', template: 'morning-diff', page: 'today?diff=1' },
-  outcome_missing: { job: 'reminder.outcome_missing', template: 'outcome-missing', page: 'today' },
+  outcome_missing: { job: 'reminder.outcome-missing', template: 'outcome-missing', page: 'today' },
 } as const satisfies Record<ReminderKind, { job: ReminderJobName; template: string; page: string }>;
 
 export const reminderSchema = ReminderPayload;
@@ -152,21 +152,28 @@ export async function runReminderSchedule(
     const workspaceId = row.workspace_id;
     const today = localDateOf(now, row.timezone);
     const minutes = localMinutes(now, row.timezone);
-    const members = await ctx.db
-      .select({ id: member.id, userId: member.userId })
-      .from(member)
-      .innerJoin(organization, eq(organization.id, member.organizationId))
-      .where(
-        and(
-          eq(member.organizationId, workspaceId),
-          eq(member.status, 'active'),
-          isNull(organization.deletedAt),
-        ),
+    // Tenant tables are FORCE RLS: read the members and their preferences inside the workspace scope.
+    const members = await withWorkspace(ctx.db, { workspaceId }, async (tx) => {
+      const rows = await tx
+        .select({ id: member.id, userId: member.userId })
+        .from(member)
+        .innerJoin(organization, eq(organization.id, member.organizationId))
+        .where(
+          and(
+            eq(member.organizationId, workspaceId),
+            eq(member.status, 'active'),
+            isNull(organization.deletedAt),
+          ),
+        );
+      return Promise.all(
+        rows.map(async (m) => ({
+          ...m,
+          prefs: await getReminderPreferences({ db: tx, workspaceId }, { userId: m.userId }),
+        })),
       );
+    });
     for (const m of members) {
-      const prefs = await ctx.db.transaction((tx) =>
-        getReminderPreferences({ db: tx, workspaceId }, { userId: m.userId }),
-      );
+      const { prefs } = m;
       for (const kind of dueReminders(prefs, minutes)) {
         const date = kind === 'evening' ? addDays(today, 1) : today;
         const target = { kind, payload: { workspaceId, memberId: m.id, date } };
@@ -406,7 +413,9 @@ export async function runReminder(
   const prefs = await getReminderPreferences(notificationCtx, { userId: who.userId });
   const kindPrefs = prefs[kind];
   if (!kindPrefs.enabled) return 'skippedDisabled';
-  const channels = (['in_app', 'push', 'email'] as const).filter((c) => kindPrefs.channels[c]);
+  // Email goes first: the handler runs in one workspace transaction, so a failure rolls back every
+  // claim; failing before anything else went out means the retry cannot send a channel twice.
+  const channels = (['email', 'push', 'in_app'] as const).filter((c) => kindPrefs.channels[c]);
 
   const now = deps.now?.() ?? new Date();
   const timeZone = await workspaceTimezone(ctx, workspaceId);
@@ -473,7 +482,7 @@ export async function runReminder(
       if (await isSuppressed(ctx.db, who.email)) return;
       const email = await renderEmail(
         template,
-        { ...content.counts, url, preferencesUrl: preferencesUrl(deps.appUrl) } as never,
+        { ...content.counts, url, preferencesUrl: preferencesUrl(deps.appUrl) },
         locale,
       );
       try {
@@ -518,7 +527,7 @@ export async function runReminder(
   return sent === 0 ? 'alreadySent' : 'sent';
 }
 
-function reminderJob<K extends ReminderKind>(kind: K) {
+function reminderJob(kind: ReminderKind) {
   return defineJob({
     name: KINDS[kind].job,
     schema: reminderSchema,

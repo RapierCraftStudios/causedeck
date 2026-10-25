@@ -85,8 +85,14 @@ export function buildEveningBrief(input: EveningBriefInput): EveningBrief | null
 export type EveningPushPayload = Omit<EveningBrief, 'names'> & { href: '/tomorrow' };
 
 export function eveningPushPayload(brief: EveningBrief): EveningPushPayload {
-  const { names: _names, ...counts } = brief;
-  return { ...counts, href: '/tomorrow' };
+  return {
+    listings: brief.listings,
+    halls: brief.halls,
+    clashes: brief.clashes,
+    lowReadiness: brief.lowReadiness,
+    obligations: brief.obligations,
+    href: '/tomorrow',
+  };
 }
 
 export interface MorningDiff {

@@ -135,7 +135,9 @@ describe('findMissingOutcomes', () => {
 
   it('fires 90 minutes after the last item in the hall, not before', () => {
     expect(run(at('13:29'), {}, at('12:00'))).toEqual([]);
-    expect(run(at('13:30'), {}, at('12:00'))).toMatchObject([{ hearingId: 'hr-1', memberIds: [M1] }]);
+    expect(run(at('13:30'), {}, at('12:00'))).toMatchObject([
+      { hearingId: 'hr-1', memberIds: [M1] },
+    ]);
   });
 
   it('falls back to 16:30 when the hall has no marker', () => {

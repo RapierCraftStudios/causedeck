@@ -30,7 +30,10 @@ export function OutcomeMissingEmail({
       preview={t('reminders.email.outcomeMissing.preview')}
       preferencesUrl={preferencesUrl}
     >
-      <Heading as="h1" style={{ ...styles.heading, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+      <Heading
+        as="h1"
+        style={{ ...styles.heading, fontFamily: 'Georgia, "Times New Roman", serif' }}
+      >
         {t('reminders.email.outcomeMissing.heading')}
       </Heading>
       <Text style={styles.text}>{t('reminders.email.outcomeMissing.body', counts)}</Text>

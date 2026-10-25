@@ -32,7 +32,10 @@ export function MorningDiffEmail({
       preview={t('reminders.email.morning.preview')}
       preferencesUrl={preferencesUrl}
     >
-      <Heading as="h1" style={{ ...styles.heading, fontFamily: 'Georgia, "Times New Roman", serif' }}>
+      <Heading
+        as="h1"
+        style={{ ...styles.heading, fontFamily: 'Georgia, "Times New Roman", serif' }}
+      >
         {t('reminders.email.morning.heading')}
       </Heading>
       <Text style={styles.text}>{t('reminders.email.morning.body', counts)}</Text>

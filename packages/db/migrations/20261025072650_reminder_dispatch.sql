@@ -16,7 +16,7 @@ CREATE TABLE "reminder_dispatch" (
 --> statement-breakpoint
 ALTER TABLE "notification_setting" ADD COLUMN "reminder_evening_time" text DEFAULT '20:00' NOT NULL;--> statement-breakpoint
 ALTER TABLE "notification_setting" ADD COLUMN "reminder_outcome_delay_min" integer DEFAULT 90 NOT NULL;--> statement-breakpoint
-ALTER TABLE "reminder_dispatch" ADD CONSTRAINT "reminder_dispatch_member_id_member_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."member"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "reminder_dispatch" ADD CONSTRAINT "reminder_dispatch_member_fk" FOREIGN KEY ("workspace_id","member_id") REFERENCES "public"."member"("workspace_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "reminder_dispatch" ADD CONSTRAINT "reminder_dispatch_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "reminder_dispatch_workspace_id_idx" ON "reminder_dispatch" USING btree ("workspace_id");
 

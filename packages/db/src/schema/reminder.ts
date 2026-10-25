@@ -17,9 +17,7 @@ export const reminderDispatch = tenantTable(
   'reminder_dispatch',
   {
     id: id(),
-    memberId: uuid('member_id')
-      .notNull()
-      .references(() => member.id, { onDelete: 'cascade' }),
+    memberId: uuid('member_id').notNull(),
     kind: text('kind').notNull().$type<ReminderKind>(),
     forDate: date('for_date', { mode: 'string' }).notNull(),
     channel: text('channel').notNull(),
@@ -36,6 +34,11 @@ export const reminderDispatch = tenantTable(
       name: 'reminder_dispatch_workspace_id_fk',
       columns: [t.workspaceId],
       foreignColumns: [organization.id],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'reminder_dispatch_member_fk',
+      columns: [t.workspaceId, t.memberId],
+      foreignColumns: [member.organizationId, member.id],
     }).onDelete('cascade'),
     check(
       'reminder_dispatch_kind_chk',

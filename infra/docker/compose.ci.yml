@@ -3,8 +3,16 @@
 # schema at ~140 tables those clones stalled Postgres on GitHub runners and new connections timed
 # out (CONNECT_TIMEOUT, ship PR #759). A throwaway CI database needs no crash safety, so skip the
 # fsync work, allow more connections, and log slow statements and lock waits for diagnosis.
+#
+# Postgres also skips the Docker userland proxy: the Playwright container and the web servers reach
+# it on 127.0.0.1:5432, and through the published-port proxy a burst of reconnects (the pool of a
+# worker server after its database is dropped and re-cloned) left some connections accepted by the
+# proxy but never answered, so postgres-js failed them with CONNECT_TIMEOUT after 30 s (#556).
+# Host networking connects straight to the server.
 services:
   postgres:
+    network_mode: host
+    ports: !reset []
     command:
       - postgres
       - -c

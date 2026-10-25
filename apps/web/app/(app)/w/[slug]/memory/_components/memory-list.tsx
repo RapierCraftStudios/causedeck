@@ -85,7 +85,11 @@ export function MemoryScreen(props: MemoryScreenProps) {
         ) : null}
       </header>
       {online ? null : (
-        <p role="status" data-pattern-state="offline" className="border-line bg-surface-sunken rounded-lg border p-3 text-sm">
+        <p
+          role="status"
+          data-pattern-state="offline"
+          className="border-line bg-surface-sunken rounded-lg border p-3 text-sm"
+        >
           {t('offline')}
         </p>
       )}
@@ -118,8 +122,18 @@ export function MemoryScreen(props: MemoryScreenProps) {
           id: p.id,
           title: p.title,
           statement: t('tray.statement', { title: p.title, value: p.value }),
-          evidence: p.seen === null ? t('tray.evidenceNone') : t('tray.evidence', { count: p.seen }),
-          scopeChip: <ScopeChip scope={p.scope} labels={{ user: t('scope.user'), workspace: t('scope.workspace'), matter: t('scope.matter') }} />,
+          evidence:
+            p.seen === null ? t('tray.evidenceNone') : t('tray.evidence', { count: p.seen }),
+          scopeChip: (
+            <ScopeChip
+              scope={p.scope}
+              labels={{
+                user: t('scope.user'),
+                workspace: t('scope.workspace'),
+                matter: t('scope.matter'),
+              }}
+            />
+          ),
         }))}
         offline={!online}
         viewOnly={!canWrite}
@@ -207,7 +221,9 @@ export function MemoryScreen(props: MemoryScreenProps) {
               offline={!online}
             />
           )}
-          {tab === 'M4' && canWrite ? <AddNote workspaceId={workspaceId} offline={!online} /> : null}
+          {tab === 'M4' && canWrite ? (
+            <AddNote workspaceId={workspaceId} offline={!online} />
+          ) : null}
         </section>
       )}
     </div>

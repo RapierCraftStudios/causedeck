@@ -3,9 +3,11 @@ import { expect, within } from 'storybook/test';
 
 import { ScopeChip } from './scope-chip';
 
-const meta = { title: 'Patterns/ScopeChip', component: ScopeChip, args: { scope: 'user' } } satisfies Meta<
-  typeof ScopeChip
->;
+const meta = {
+  title: 'Patterns/ScopeChip',
+  component: ScopeChip,
+  args: { scope: 'user' },
+} satisfies Meta<typeof ScopeChip>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

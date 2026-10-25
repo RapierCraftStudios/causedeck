@@ -202,10 +202,7 @@ export async function getLastMemoryReview(
   await requireRole(deps, actor);
   const open = await opener(deps, actor.workspaceId);
   const [row] = await inScope(deps, actor, (tx) =>
-    tx
-      .select({ value: memoryItem.valueCiphertext })
-      .from(memoryItem)
-      .where(reviewRow(actor)),
+    tx.select({ value: memoryItem.valueCiphertext }).from(memoryItem).where(reviewRow(actor)),
   );
   if (row?.value == null) return null;
   const value = open(row.value);
@@ -226,7 +223,10 @@ export async function completeMemoryReview(
   const now = nowOf(deps);
   const sealed = await sealValue(deps, actor.workspaceId, now.toISOString());
   return inScope(deps, actor, async (tx) => {
-    const [existing] = await tx.select({ id: memoryItem.id }).from(memoryItem).where(reviewRow(actor));
+    const [existing] = await tx
+      .select({ id: memoryItem.id })
+      .from(memoryItem)
+      .where(reviewRow(actor));
     if (existing) {
       await tx
         .update(memoryItem)

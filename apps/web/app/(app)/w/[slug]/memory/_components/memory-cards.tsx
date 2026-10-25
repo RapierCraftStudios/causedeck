@@ -50,7 +50,14 @@ export function useMemoryRun() {
   return { run, busy };
 }
 
-export function MemoryCards({ workspaceId, slug, cards, canWrite, isOwner, offline }: MemoryCardsProps) {
+export function MemoryCards({
+  workspaceId,
+  slug,
+  cards,
+  canWrite,
+  isOwner,
+  offline,
+}: MemoryCardsProps) {
   const t = useTranslations('memory');
   const format = useFormatter();
   const { run, busy } = useMemoryRun();
@@ -71,9 +78,23 @@ export function MemoryCards({ workspaceId, slug, cards, canWrite, isOwner, offli
               title={card.title}
               value={card.value}
               scopeLabel={t(`layers.${card.layer}`)}
-              scopeChip={<ScopeChip scope={card.sharedWithChamber ? 'workspace' : card.scope} labels={{ user: t('scope.user'), workspace: t('scope.workspace'), matter: t('scope.matter') }} />}
+              scopeChip={
+                <ScopeChip
+                  scope={card.sharedWithChamber ? 'workspace' : card.scope}
+                  labels={{
+                    user: t('scope.user'),
+                    workspace: t('scope.workspace'),
+                    matter: t('scope.matter'),
+                  }}
+                />
+              }
               source={{
-                kind: card.sourceType === 'manual' ? 'manual' : card.sourceType === 'ai' ? 'ai' : 'system',
+                kind:
+                  card.sourceType === 'manual'
+                    ? 'manual'
+                    : card.sourceType === 'ai'
+                      ? 'ai'
+                      : 'system',
                 label: t(`source.${card.sourceType}`),
                 state: card.confirmationState === 'corrected' ? 'edited' : 'confirmed',
               }}
@@ -107,8 +128,20 @@ export function MemoryCards({ workspaceId, slug, cards, canWrite, isOwner, offli
                     }
                   : undefined
               }
-              onEdit={canWrite ? () => { setEditing(card); } : undefined}
-              onDelete={canWrite ? () => { setDeleting(card); } : undefined}
+              onEdit={
+                canWrite
+                  ? () => {
+                      setEditing(card);
+                    }
+                  : undefined
+              }
+              onDelete={
+                canWrite
+                  ? () => {
+                      setDeleting(card);
+                    }
+                  : undefined
+              }
               labels={{
                 action: (action, title) => t('actions.cardAction', { action, title }),
                 paused: t('actions.paused'),
@@ -128,18 +161,24 @@ export function MemoryCards({ workspaceId, slug, cards, canWrite, isOwner, offli
         card={editing}
         isOwner={isOwner}
         pending={busy}
-        onClose={() => { setEditing(null); }}
+        onClose={() => {
+          setEditing(null);
+        }}
         onSave={(input) => {
           if (editing === null) return;
-          void run(() => editAction({ ...target(editing), ...input }), t('edit.saved')).then((ok) => {
-            if (ok) setEditing(null);
-          });
+          void run(() => editAction({ ...target(editing), ...input }), t('edit.saved')).then(
+            (ok) => {
+              if (ok) setEditing(null);
+            },
+          );
         }}
       />
       <DeleteDialog
         card={deleting}
         pending={busy}
-        onClose={() => { setDeleting(null); }}
+        onClose={() => {
+          setDeleting(null);
+        }}
         onConfirm={() => {
           if (deleting === null) return;
           void run(() => deleteAction(target(deleting)), t('delete.done')).then((ok) => {

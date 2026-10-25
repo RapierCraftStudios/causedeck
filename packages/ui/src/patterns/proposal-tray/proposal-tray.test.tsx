@@ -12,7 +12,12 @@ const PROPOSALS: TrayProposal[] = [
     statement: 'You usually carry the vakalat copy. Remember this?',
     evidence: 'Seen in 3 briefs',
   },
-  { id: 'p2', title: 'Brief format', statement: 'One page, headnote first.', evidence: 'Edited 3 times' },
+  {
+    id: 'p2',
+    title: 'Brief format',
+    statement: 'One page, headnote first.',
+    evidence: 'Edited 3 times',
+  },
 ];
 
 function setup(props: Partial<React.ComponentProps<typeof ProposalTray>> = {}) {

@@ -4,8 +4,14 @@
 import type { MemoryItem, MemoryLayer, MemoryValue } from '@causedeck/validators';
 
 /** The tabs in screen order: Profile, Preferences, Matters, Court notes, Clients, Recognition. */
-export const MEMORY_TABS = ['M1', 'M2', 'M3', 'M4', 'M6', 'M7'] as const satisfies
-  readonly MemoryLayer[];
+export const MEMORY_TABS = [
+  'M1',
+  'M2',
+  'M3',
+  'M4',
+  'M6',
+  'M7',
+] as const satisfies readonly MemoryLayer[];
 export type MemoryTab = (typeof MEMORY_TABS)[number];
 
 /** A month has passed once the last review is this many days old. */

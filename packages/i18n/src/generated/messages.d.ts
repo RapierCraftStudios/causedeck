@@ -4629,6 +4629,7 @@ export type Messages = {
       delete: string;
       pause: string;
       resume: string;
+      paused: string;
       cardAction: string;
     };
     pauseAll: {

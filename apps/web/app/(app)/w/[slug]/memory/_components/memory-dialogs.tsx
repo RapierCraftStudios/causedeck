@@ -45,7 +45,14 @@ export function EditSheet({ card, isOwner, pending, onClose, onSave }: EditSheet
     >
       <SheetContent data-slot="memory-edit-sheet">
         {card === null ? null : (
-          <EditForm key={card.id} card={card} isOwner={isOwner} pending={pending} onSave={onSave} onClose={onClose} />
+          <EditForm
+            key={card.id}
+            card={card}
+            isOwner={isOwner}
+            pending={pending}
+            onSave={onSave}
+            onClose={onClose}
+          />
         )}
       </SheetContent>
     </Sheet>
@@ -101,12 +108,27 @@ function EditForm({
       <fieldset className="flex flex-col gap-2">
         <legend className="text-ink mb-1 text-sm font-medium">{t('scope')}</legend>
         <label className="flex min-h-11 items-center gap-2 text-sm">
-          <input type="radio" name="scope" checked={!shared} disabled={!canShare} onChange={() => { setShared(false); }} />
+          <input
+            type="radio"
+            name="scope"
+            checked={!shared}
+            disabled={!canShare}
+            onChange={() => {
+              setShared(false);
+            }}
+          />
           {t('scopeUser')}
         </label>
         {canShare ? (
           <label className="flex min-h-11 items-center gap-2 text-sm">
-            <input type="radio" name="scope" checked={shared} onChange={() => { setShared(true); }} />
+            <input
+              type="radio"
+              name="scope"
+              checked={shared}
+              onChange={() => {
+                setShared(true);
+              }}
+            />
             {t('scopeWorkspace')}
           </label>
         ) : (
@@ -144,7 +166,9 @@ export function DeleteDialog({ card, pending, onClose, onConfirm }: DeleteDialog
       <AlertDialogContent data-slot="memory-delete-dialog">
         <AlertDialogHeader>
           <AlertDialogTitle>{t('title')}</AlertDialogTitle>
-          <AlertDialogDescription>{t('description', { title: card?.title ?? '' })}</AlertDialogDescription>
+          <AlertDialogDescription>
+            {t('description', { title: card?.title ?? '' })}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>

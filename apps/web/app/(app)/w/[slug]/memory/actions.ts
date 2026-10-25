@@ -17,9 +17,15 @@ import {
 } from '../../../../../lib/workspace-action.ts';
 
 const Item = WorkspaceScoped.extend({ itemId: z.uuid(), matterId: z.uuid().nullish() }).strict();
-const Confirm = WorkspaceScoped.extend({ proposalId: z.uuid(), value: MemoryValue.optional() }).strict();
+const Confirm = WorkspaceScoped.extend({
+  proposalId: z.uuid(),
+  value: MemoryValue.optional(),
+}).strict();
 const Dismiss = WorkspaceScoped.extend({ proposalId: z.uuid() }).strict();
-const Edit = Item.extend({ value: MemoryValue, sharedWithChamber: z.boolean().optional() }).strict();
+const Edit = Item.extend({
+  value: MemoryValue,
+  sharedWithChamber: z.boolean().optional(),
+}).strict();
 const Pause = Item.extend({ paused: z.boolean() }).strict();
 const PauseAll = WorkspaceScoped.extend({ paused: z.boolean() }).strict();
 const Review = WorkspaceScoped.strict();
@@ -33,7 +39,12 @@ export interface MemoryActionResult {
   id: string;
 }
 export interface UsageResult {
-  entries: { id: string; usedIn: 'brief' | 'draft' | 'matching'; outputRef: string | null; usedAt: string }[];
+  entries: {
+    id: string;
+    usedIn: 'brief' | 'draft' | 'matching';
+    outputRef: string | null;
+    usedAt: string;
+  }[];
 }
 export interface ReviewResult {
   completedAt: string;

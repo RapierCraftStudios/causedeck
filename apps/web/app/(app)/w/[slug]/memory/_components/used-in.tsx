@@ -25,7 +25,11 @@ export function UsedIn({ workspaceId, slug, itemId, matterId, title, offline }: 
   const [state, setState] = useState<'idle' | 'loading' | 'failed' | UsageResult>('idle');
   const load = async () => {
     setState('loading');
-    const result = await usageAction({ workspaceId, itemId, ...(matterId === null ? {} : { matterId }) });
+    const result = await usageAction({
+      workspaceId,
+      itemId,
+      ...(matterId === null ? {} : { matterId }),
+    });
     setState(result.ok ? result.data : 'failed');
   };
   return (
@@ -37,7 +41,7 @@ export function UsedIn({ workspaceId, slug, itemId, matterId, title, offline }: 
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="text-ink underline underline-offset-2 min-h-6"
+          className="text-ink min-h-6 underline underline-offset-2"
           aria-label={`${t('title')}: ${title}`}
         >
           {t('title')}
@@ -51,7 +55,10 @@ export function UsedIn({ workspaceId, slug, itemId, matterId, title, offline }: 
           <ul className="flex flex-col gap-1">
             {state.entries.map((entry) => (
               <li key={entry.id}>
-                <Link href={`/w/${slug}/${HREF[entry.usedIn]}`} className="underline underline-offset-2">
+                <Link
+                  href={`/w/${slug}/${HREF[entry.usedIn]}`}
+                  className="underline underline-offset-2"
+                >
                   {t('open', { kind: t(entry.usedIn) })}
                 </Link>{' '}
                 <time dateTime={entry.usedAt} className="text-ink-muted text-xs">

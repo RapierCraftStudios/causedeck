@@ -4628,6 +4628,7 @@
       "delete": "Delete",
       "pause": "Pause",
       "resume": "Resume",
+      "paused": "Paused",
       "cardAction": "{action} memory: {title}"
     },
     "pauseAll": {

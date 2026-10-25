@@ -13,7 +13,7 @@ import {
   audit,
   addEvent,
   inObligationScope,
-  parseInput,
+  parseObligationInput,
   requireMatterFor,
   type ObligationActor,
   type ObligationDeps,
@@ -98,7 +98,7 @@ export async function reconcileOrder(
   actor: ObligationActor,
   input: ReconcileInput,
 ): Promise<OrderReconciliation> {
-  const { orderId } = parseInput(ReconcileInput, input);
+  const { orderId } = parseObligationInput(ReconcileInput, input);
   return inObligationScope(deps, actor, async (scope) => {
     const found = await loadOrder(scope, orderId);
     return reconcileIn(scope.tx, scope.actor.workspaceId, found.order, found.matterId);
@@ -138,7 +138,7 @@ export async function markDirectionNotApplicable(
   actor: ObligationActor,
   input: DirectionNotApplicableInput,
 ): Promise<OrderReconciliation> {
-  const data = parseInput(DirectionNotApplicableInput, input);
+  const data = parseObligationInput(DirectionNotApplicableInput, input);
   return inObligationScope(deps, actor, async (scope) => {
     const found = await loadOrder(scope, data.orderId);
     await requireMatterFor(scope, found.matterId, 'obligation.write');

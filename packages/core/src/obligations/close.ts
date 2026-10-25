@@ -13,7 +13,7 @@ import {
   audit,
   inObligationScope,
   loadObligation,
-  parseInput,
+  parseObligationInput,
   writeActionFor,
   type ObligationActor,
   type ObligationDeps,
@@ -29,7 +29,7 @@ export async function closeInScope(
   current: ObligationRow,
   input: CloseInput,
 ): Promise<ObligationRow> {
-  const data = parseInput(CloseInput, input);
+  const data = parseObligationInput(CloseInput, input);
   if (current.status !== 'open') throw conflict('The obligation is already closed');
   const [row] = await scope.tx
     .update(obligation)
@@ -64,7 +64,7 @@ export async function closeObligation(
   obligationId: string,
   input: CloseInput,
 ): Promise<ObligationRow> {
-  const data = parseInput(CloseInput, input);
+  const data = parseObligationInput(CloseInput, input);
   return inObligationScope(deps, actor, async (scope) => {
     const current = await loadObligation(scope, obligationId, 'obligation.read');
     await loadObligation(scope, obligationId, writeActionFor(current.source));
@@ -78,7 +78,7 @@ export async function reopenObligation(
   obligationId: string,
   input: ReopenInput,
 ): Promise<ObligationRow> {
-  const data = parseInput(ReopenInput, input);
+  const data = parseObligationInput(ReopenInput, input);
   return inObligationScope(deps, actor, async (scope) => {
     const current = await loadObligation(scope, obligationId, 'obligation.read');
     await loadObligation(scope, obligationId, writeActionFor(current.source));

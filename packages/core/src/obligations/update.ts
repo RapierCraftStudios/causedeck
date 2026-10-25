@@ -12,7 +12,7 @@ import {
   audit,
   inObligationScope,
   loadObligation,
-  parseInput,
+  parseObligationInput,
   requireOwnerMember,
   writeActionFor,
   type ObligationActor,
@@ -28,7 +28,7 @@ export async function updateObligation(
   obligationId: string,
   input: ObligationPatch,
 ): Promise<ObligationRow> {
-  const patch = parseInput(ObligationPatch, input);
+  const patch = parseObligationInput(ObligationPatch, input);
   return inObligationScope(deps, actor, async (scope) => {
     const current = await loadObligation(scope, obligationId, 'obligation.read');
     await loadObligation(scope, obligationId, writeActionFor(current.source));

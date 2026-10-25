@@ -16,7 +16,7 @@ import {
   audit,
   inObligationScope,
   loadObligation,
-  parseInput,
+  parseObligationInput,
   requireMatterFor,
   type ObligationActor,
   type ObligationDeps,
@@ -36,7 +36,7 @@ export async function applyForCertifiedCopy(
   input: CertifiedCopyInput,
   isWorkingDay?: WorkingDayHook,
 ): Promise<CertifiedCopyRow> {
-  const data = parseInput(CertifiedCopyInput, input);
+  const data = parseObligationInput(CertifiedCopyInput, input);
   return inObligationScope(deps, actor, async (scope) => {
     await requireMatterFor(scope, data.matterId, 'obligation.track');
     const [owning] = await scope.tx
@@ -92,7 +92,7 @@ export async function transitionCertifiedCopy(
   actor: ObligationActor,
   input: CopyTransitionInput,
 ): Promise<CertifiedCopyRow> {
-  const data = parseInput(CopyTransitionInput, input);
+  const data = parseObligationInput(CopyTransitionInput, input);
   return inObligationScope(deps, actor, async (scope) => {
     const [found] = await scope.tx
       .select()

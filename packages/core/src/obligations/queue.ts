@@ -17,7 +17,7 @@ import { and, asc, count, eq, gt, gte, isNull, lt, lte, ne, or, sql, type SQL } 
 import { localDay, weekEnd } from './due.ts';
 import {
   inObligationScope,
-  parseInput,
+  parseObligationInput,
   visibleMatters,
   type ObligationActor,
   type ObligationDeps,
@@ -34,7 +34,7 @@ export async function queryQueue(
   actor: ObligationActor,
   input: QueueQuery = {},
 ): Promise<QueueResult> {
-  const q = parseInput(QueueQuery, input);
+  const q = parseObligationInput(QueueQuery, input);
   return inObligationScope(deps, actor, async (scope) => {
     if (!roleCanRead(scope)) return emptyQueue();
     const today = localDay(scope.now);
@@ -107,7 +107,7 @@ export async function missedObligations(
   actor: ObligationActor,
   input: MissedQuery,
 ): Promise<MissedReport> {
-  const q = parseInput(MissedQuery, input);
+  const q = parseObligationInput(MissedQuery, input);
   return inObligationScope(deps, actor, async (scope) => {
     if (!roleCanRead(scope)) return { missed: 0, rescheduled: 0 };
     const today = localDay(scope.now);

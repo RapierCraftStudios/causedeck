@@ -56,7 +56,10 @@ export interface ObligationScope {
 
 export const notFoundObligation = () => notFound('Obligation not found');
 
-export function parseInput<S extends z.ZodType>(schemaOf: S, input: unknown): z.output<S> {
+export function parseObligationInput<S extends z.ZodType>(
+  schemaOf: S,
+  input: unknown,
+): z.output<S> {
   const parsed = schemaOf.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];

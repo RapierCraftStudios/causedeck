@@ -24,7 +24,7 @@ import {
   audit,
   inObligationScope,
   loadObligation,
-  parseInput,
+  parseObligationInput,
   requireMatterFor,
   type ObligationActor,
   type ObligationDeps,
@@ -54,7 +54,7 @@ export async function raiseDefect(
   actor: ObligationActor,
   input: DefectInput,
 ): Promise<DefectRow> {
-  const data = parseInput(DefectInput, input);
+  const data = parseObligationInput(DefectInput, input);
   if (data.cureBy < data.raisedOn) throw invalid('cureBy: before the day the defect was raised');
   return inObligationScope(deps, actor, async (scope) => {
     const matterId = await matterOf(scope, data.proceedingId);
@@ -113,7 +113,7 @@ export async function cureDefect(
   actor: ObligationActor,
   input: CureDefectInput,
 ): Promise<DefectRow> {
-  const data = parseInput(CureDefectInput, input);
+  const data = parseObligationInput(CureDefectInput, input);
   return inObligationScope(deps, actor, async (scope) => {
     const [found] = await scope.tx
       .select()
@@ -166,7 +166,7 @@ export async function representFiling(
   actor: ObligationActor,
   input: RepresentFilingInput,
 ): Promise<{ proceedingId: string; state: 're_presented' }> {
-  const data = parseInput(RepresentFilingInput, input);
+  const data = parseObligationInput(RepresentFilingInput, input);
   return inObligationScope(deps, actor, async (scope) => {
     const matterId = await matterOf(scope, data.proceedingId);
     await requireMatterFor(scope, matterId, 'obligation.track');
@@ -190,7 +190,7 @@ export async function allocateRegistryNumber(
   actor: ObligationActor,
   input: AllocateRegistryNumberInput,
 ): Promise<void> {
-  const data = parseInput(AllocateRegistryNumberInput, input);
+  const data = parseObligationInput(AllocateRegistryNumberInput, input);
   return inObligationScope(deps, actor, async (scope) => {
     const matterId = await matterOf(scope, data.proceedingId);
     await requireMatterFor(scope, matterId, 'obligation.track');

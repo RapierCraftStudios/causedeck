@@ -13,7 +13,7 @@ import {
   addEvent,
   audit,
   inObligationScope,
-  parseInput,
+  parseObligationInput,
   requireMatterFor,
   requireOwnerMember,
   writeActionFor,
@@ -97,7 +97,7 @@ export async function createObligation(
   actor: ObligationActor,
   input: ObligationInput,
 ): Promise<ObligationRow> {
-  const data = parseInput(ObligationInput, input);
+  const data = parseObligationInput(ObligationInput, input);
   return inObligationScope(deps, actor, async (scope) => {
     await requireMatterFor(scope, data.matterId, writeActionFor(data.source));
     return insertObligation(scope, data);
@@ -122,7 +122,7 @@ export async function createObligationFromProposal(
     .where(and(eq(member.organizationId, actor.workspaceId), eq(member.userId, actor.userId)))
     .limit(1);
   if (self === undefined) throw invalid('confirmer is not a member of this workspace');
-  const data = parseInput(ObligationInput, {
+  const data = parseObligationInput(ObligationInput, {
     ...input,
     ownerMemberId: input.ownerMemberId ?? self.id,
   });

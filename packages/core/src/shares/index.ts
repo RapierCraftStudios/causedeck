@@ -5,9 +5,12 @@ export {
   SHARE_TTL_MS,
   createBriefShare,
   generateShareToken,
+  listBriefShares,
   hashShareToken,
   revokeBriefShare,
+  shareableListingId,
   toSnapshot,
+  type BriefShareRow,
   type CreatedShare,
   type SharedBriefSnapshot,
 } from './share.ts';

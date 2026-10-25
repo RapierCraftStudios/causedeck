@@ -11,7 +11,9 @@ import {
   claimBriefShare,
   createBriefShare,
   importSharedMatter,
+  listBriefShares,
   revokeBriefShare,
+  shareableListingId,
   viewBriefShare,
 } from '../index.ts';
 
@@ -114,6 +116,29 @@ describe('brief sharing (#507)', () => {
           share.token,
         ),
       );
+    });
+  });
+
+  it('lists only active links of the workspace, without the token, and finds the matter listing', async () => {
+    await withTestDb(async (tx) => {
+      const { actor, fixture, workspaceId } = await seedBrief(tx);
+      const live = await createBriefShare({ db: tx }, actor, fixture.listingId);
+      const gone = await createBriefShare({ db: tx }, actor, fixture.listingId);
+      await revokeBriefShare({ db: tx }, actor, gone.id);
+      const short = await createBriefShare({ db: tx }, actor, fixture.listingId, { ttlMs: 1 });
+      const listed = await listBriefShares({ db: tx }, actor);
+      expect(listed.map((row) => row.id)).toContain(live.id);
+      expect(listed.map((row) => row.id)).not.toContain(gone.id);
+      expect(JSON.stringify(listed)).not.toContain(live.token);
+      expect(listed.find((row) => row.id === live.id)?.mine).toBe(true);
+      const later = await listBriefShares(
+        { db: tx, now: () => new Date(short.expiresAt.getTime() + 1000) },
+        actor,
+      );
+      expect(later.map((row) => row.id)).not.toContain(short.id);
+      const other = await newWorkspace(tx);
+      await failure(listBriefShares({ db: tx }, { userId: other.ownerId, workspaceId }));
+      expect(await shareableListingId({ db: tx }, actor, 'not-a-uuid')).toBeNull();
     });
   });
 });

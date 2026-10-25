@@ -4656,6 +4656,33 @@
       "noWorkspace": "Create a workspace first, then open this link again.",
       "gone": "This link can no longer be imported.",
       "failed": "Something went wrong. Try again."
+    },
+    "manage": {
+      "title": "Share this brief",
+      "description": "Create an expiring link to a text-only copy of the brief. Anyone with the link can read it. You can revoke it at any time.",
+      "expiry": "Link expires after",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "create": "Create link",
+      "creating": "Creating link",
+      "createdOnce": "Link created. Copy it now: it is shown only once. It expires {date}.",
+      "linkLabel": "Share link",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "copyFailed": "Could not copy. Select the link and copy it by hand.",
+      "activeTitle": "Active links",
+      "empty": "No active links.",
+      "createdOn": "Created {date}",
+      "expiresOn": "Expires {date}",
+      "revoke": "Revoke",
+      "revokeLabel": "Revoke the link for {title}",
+      "revoked": "Link revoked",
+      "noListing": "This matter has no listing date yet, so there is no brief to share.",
+      "errors": {
+        "rateLimited": "You have shared too many briefs in the last hour. Try again later.",
+        "forbidden": "You cannot share this brief. Only an owner can, and not a sensitive matter.",
+        "notFound": "This brief or link no longer exists.",
+        "generic": "Something went wrong. Try again."
+      }
     }
   },
   "error": {

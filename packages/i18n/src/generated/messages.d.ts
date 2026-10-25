@@ -4658,6 +4658,33 @@ export type Messages = {
       gone: string;
       failed: string;
     };
+    manage: {
+      title: string;
+      description: string;
+      expiry: string;
+      days: string;
+      create: string;
+      creating: string;
+      createdOnce: string;
+      linkLabel: string;
+      copy: string;
+      copied: string;
+      copyFailed: string;
+      activeTitle: string;
+      empty: string;
+      createdOn: string;
+      expiresOn: string;
+      revoke: string;
+      revokeLabel: string;
+      revoked: string;
+      noListing: string;
+      errors: {
+        rateLimited: string;
+        forbidden: string;
+        notFound: string;
+        generic: string;
+      };
+    };
   };
   error: {
     title: string;

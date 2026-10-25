@@ -126,6 +126,7 @@ const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
 const shareActions = await import('../app/(public)/share/[token]/actions.ts');
+const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
@@ -145,6 +146,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   confirmTransferAction: members,
   acceptInvitationAction: invite,
   importSharedBriefAction: shareActions,
+  createBriefShareAction: briefShareActions,
+  revokeBriefShareAction: briefShareActions,
   createWorkspaceAction: onboarding,
   setLocaleAction: account,
   updateAccountProfileAction: account,
@@ -768,6 +771,13 @@ function inputs(workspaceId: string): Record<string, unknown> {
       ],
     },
     outcomesLiveAction: { workspaceId, date: '2026-10-26' },
+    // Brief sharing (#507): ub, owner of B, may not share A's brief or revoke A's link.
+    createBriefShareAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      expiresInDays: 7,
+    },
+    revokeBriefShareAction: { workspaceId, shareId: crypto.randomUUID() },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
@@ -1472,6 +1482,50 @@ describe('cross-tenant server actions', () => {
     const result = await action('importSharedBriefAction')({ token: 'not-a-real-token-at-all' });
     expect(result).toEqual({ ok: true, data: { status: 'rejected', reason: 'INVALID' } });
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('brief share actions under B’s workspace cannot share A’s listing or revoke A’s link (#507)', async () => {
+    const aShare = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => {
+      const [row] = await tx
+        .insert(schema.briefShare)
+        .values({
+          workspaceId: t.a.id,
+          tokenHash: `xt-${crypto.randomUUID()}`,
+          snapshot: {
+            matterTitle: 'XT',
+            synopsis: null,
+            stage: null,
+            lastOrder: [],
+            lastHearing: null,
+            openObligations: [],
+            assembledAt: new Date().toISOString(),
+          },
+          createdBy: t.ua,
+          expiresAt: new Date(Date.now() + 86_400_000),
+        })
+        .returning({ id: schema.briefShare.id });
+      if (row === undefined) throw new Error('seed share');
+      return row.id;
+    });
+    const sharesOfA = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.briefShare),
+      );
+    const before = await sharesOfA();
+    const created = await action('createBriefShareAction')({
+      workspaceId: t.b.id,
+      listingId: t.a.rows.listing?.listingId,
+      expiresInDays: 7,
+    });
+    expect(code(created)).toBe('NOT_FOUND');
+    const revoked = await action('revokeBriefShareAction')({
+      workspaceId: t.b.id,
+      shareId: aShare,
+    });
+    expect(code(revoked)).toBe('NOT_FOUND');
+    const after = await sharesOfA();
+    expect(after).toEqual(before);
+    expect(after.find((row) => row.id === aShare)?.revokedAt).toBeNull();
   });
 
   it('createWorkspaceAction and setLocaleAction touch only the caller’s own data', async () => {

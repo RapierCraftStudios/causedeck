@@ -7,7 +7,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { consumeRateLimit } from '@causedeck/auth/rate-limit';
 import { isUuid, schema, withWorkspace, type Database, type Queryable } from '@causedeck/db';
 import type { Brief } from '@causedeck/validators';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull } from 'drizzle-orm';
 
 import { recordActivation } from '../activation/index.ts';
 import { assembleBrief, type BriefActor, type BriefDeps } from '../briefs/index.ts';
@@ -137,5 +137,85 @@ export async function revokeBriefShare(
           isNull(schema.briefShare.revokedAt),
         ),
       );
+  });
+}
+
+/** An active share as the owner sees it: never the token (only its hash is stored) or the snapshot. */
+export interface BriefShareRow {
+  id: string;
+  matterTitle: string;
+  /** The actor created this link (so may revoke it even without being an owner). */
+  mine: boolean;
+  createdAt: Date;
+  expiresAt: Date;
+}
+
+/** The workspace's links that are neither revoked nor expired, newest first (members only). */
+export async function listBriefShares(
+  deps: { db: Queryable; now?: () => Date },
+  actor: BriefActor,
+): Promise<BriefShareRow[]> {
+  if (!isUuid(actor.userId)) throw forbidden('Not a member of this workspace');
+  const now = (deps.now ?? (() => new Date()))();
+  return withWorkspace(deps.db, actor, async (tx) => {
+    if ((await memberRole(tx, actor.userId, actor.workspaceId)) === null) {
+      throw forbidden('Not a member of this workspace');
+    }
+    const rows = await tx
+      .select({
+        id: schema.briefShare.id,
+        snapshot: schema.briefShare.snapshot,
+        createdBy: schema.briefShare.createdBy,
+        createdAt: schema.briefShare.createdAt,
+        expiresAt: schema.briefShare.expiresAt,
+      })
+      .from(schema.briefShare)
+      .where(
+        and(
+          eq(schema.briefShare.workspaceId, actor.workspaceId),
+          isNull(schema.briefShare.revokedAt),
+          gt(schema.briefShare.expiresAt, now),
+        ),
+      )
+      .orderBy(desc(schema.briefShare.createdAt))
+      .limit(50);
+    return rows.map((row) => ({
+      id: row.id,
+      matterTitle: row.snapshot.matterTitle,
+      mine: row.createdBy === actor.userId,
+      createdAt: row.createdAt,
+      expiresAt: row.expiresAt,
+    }));
+  });
+}
+
+/** The listing a matter's brief is shared from: its earliest canonical (next-date) listing. */
+export async function shareableListingId(
+  deps: { db: Queryable },
+  actor: BriefActor,
+  matterId: string,
+): Promise<string | null> {
+  if (!isUuid(matterId) || !isUuid(actor.userId)) return null;
+  return withWorkspace(deps.db, actor, async (tx) => {
+    const [row] = await tx
+      .select({ id: schema.listing.id })
+      .from(schema.listing)
+      .innerJoin(
+        schema.proceeding,
+        and(
+          eq(schema.proceeding.workspaceId, schema.listing.workspaceId),
+          eq(schema.proceeding.id, schema.listing.proceedingId),
+        ),
+      )
+      .where(
+        and(
+          eq(schema.listing.workspaceId, actor.workspaceId),
+          eq(schema.proceeding.matterId, matterId),
+          eq(schema.listing.canonical, true),
+        ),
+      )
+      .orderBy(asc(schema.listing.listDate))
+      .limit(1);
+    return row?.id ?? null;
   });
 }

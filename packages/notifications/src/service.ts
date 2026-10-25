@@ -514,6 +514,9 @@ const DIGEST_CATEGORIES = CATEGORY_KEYS.filter(
     key !== 'digest.daily' &&
     key !== 'digest.end_of_day' &&
     key !== 'digest.news' &&
+    !key.startsWith('reminder.e') &&
+    !key.startsWith('reminder.m') &&
+    key !== 'reminder.outcome_missing' &&
     !isLockedChannel(key, 'email'),
 );
 

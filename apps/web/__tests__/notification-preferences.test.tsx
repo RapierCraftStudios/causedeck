@@ -8,13 +8,16 @@ import type { PreferenceView } from '../app/(app)/w/[slug]/settings/notification
 import type { PreferencesActions } from '../app/(app)/w/[slug]/settings/notifications/preferences-form.tsx';
 import type { WorkspaceContext } from '../lib/workspace-context.ts';
 
-import { CATEGORY_KEYS, CHANNELS, isLockedChannel } from '@causedeck/notifications/categories';
+import { CATEGORY_KEYS as ALL_CATEGORY_KEYS, CHANNELS, isLockedChannel } from '@causedeck/notifications/categories';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { catalogs, fakeGetTranslations, type TestLocale } from './helpers/intl.ts';
+
+/** The court-day reminders (#64) have their own card, not a matrix row. */
+const CATEGORY_KEYS = ALL_CATEGORY_KEYS.filter((key) => !key.startsWith('reminder.') || key === 'reminder.hearing');
 
 const router = vi.hoisted(() => ({ push: vi.fn(), refresh: vi.fn() }));
 const page = vi.hoisted(() => ({
@@ -103,9 +106,12 @@ function defaults(): PreferenceView[] {
     'digest.daily': ['email'],
     'digest.end_of_day': ['in_app', 'email'],
     'digest.news': ['in_app', 'email', 'push'],
+    'reminder.evening': ['in_app', 'email', 'push'],
+    'reminder.morning': ['in_app', 'email', 'push'],
+    'reminder.outcome_missing': ['in_app', 'email', 'push'],
     'system.notice': ['in_app'],
   };
-  return CATEGORY_KEYS.flatMap((category) =>
+  return ALL_CATEGORY_KEYS.flatMap((category) =>
     CHANNELS.map((channel) => ({
       category,
       channel,
@@ -203,9 +209,10 @@ async function renderPage(search: Record<string, string> = {}) {
     params: Promise.resolve({ slug: WORKSPACE.slug }),
     searchParams: Promise.resolve(search),
   })) as ReactElement<{
-    children: [ReactElement, ReactElement<{ children?: unknown }>, ReactElement];
+    children: [ReactElement, ReactElement<{ children?: unknown }>, ReactElement, ReactElement];
   }>;
-  const [header, body, push] = tree.props.children;
+  // children: header, preferences, reminders card (#64), push card, WhatsApp.
+  const [header, body, , push] = tree.props.children;
   const section = (body.props as { children?: ReactElement }).children;
   let content: ReactNode = body;
   if (section && typeof section.type === 'function') {

@@ -174,6 +174,10 @@ describe('enqueue', () => {
       'system.orders.poll',
       'brief.refresh',
       'system.brief.refresh-sweep',
+      'system.reminder.schedule',
+      'reminder.evening',
+      'reminder.morning',
+      'reminder.outcome_missing',
     ]);
   });
 });

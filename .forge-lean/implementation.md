@@ -36,3 +36,6 @@ Drafting domain in `@causedeck/core` over the pure `@causedeck/drafting` engine:
 
 ## Sibling-list follow-up
 The 20 flagged (symbol, test) pairs for DRAFT_EXPORT_FORMATS and draftExport are unrelated mocks or fixtures at the cited lines, not lists of db schema exports. They are recorded in result.json not_members; no test edits.
+
+## Name-collision follow-up
+Renamed drafting's `exportFilename` to `draftExportFilename` (export.ts) and `canonicalJson` to `canonicalDraftJson` (service.ts); neither is exported from the drafting index or core index, so the existing lifecycle registry entries stay unchanged. Core typecheck clean; domains test run.

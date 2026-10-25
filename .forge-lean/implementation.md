@@ -115,3 +115,6 @@ Exit 127: bare `turbo` is not on PATH (environment). With `node_modules/.bin` on
 
 ### Merge re-check (9)
 Exit 127: bare `turbo` is not on PATH (environment). With `node_modules/.bin` on PATH, typecheck passes 24/24; V1-V5 re-run and pass. No source change.
+
+## Merge re-check
+The `turbo: command not found` (exit 127) is a host PATH issue, not a code conflict. `pnpm exec turbo run typecheck` passes on the merged tree (24/24). No source change needed.

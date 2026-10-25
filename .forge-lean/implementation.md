@@ -41,3 +41,6 @@ CI lint log was unavailable. Local eslint on all changed ts/tsx files (web, core
 
 ### Merge verification (base b39e8276)
 The base merged without a code conflict. The reported `turbo: command not found` (exit 127) was `turbo` missing from PATH, not a code fault: `pnpm exec turbo run typecheck --filter='...[b39e8276]'` passes (23/23 tasks). No code change was needed; V1-V5 re-run below.
+
+### Re-verification
+Same exit 127 reported again. `pnpm exec turbo run typecheck --filter='...[b39e8276]' --concurrency=2` passes (23/23, cached). No code change.

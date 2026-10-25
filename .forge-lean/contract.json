@@ -2,88 +2,100 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Each Dockerfile builds with BuildKit, runs as a non-root UID, has no package manager caches in the final layer, and the final image size is under budget (web under 350 MB, api and worker under 250 MB) [type:unit]",
+   "quote": "freeze-guard returns frozen for 18:00:00 to 22:59:59 and 07:00:00 to 10:29:59 IST inclusive of the start and exclusive of the end, and unfrozen otherwise, verified by boundary unit tests [type:unit]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml size-gate step measures size; non-root and cache rules statically asserted in compose-prod.test.mjs"
+   "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "`compose.prod.yml` starts caddy, web x2, api, worker x2, admin, postgres and minio with healthchecks; `docker compose up -d` reaches healthy for all services within 120 s in CI [type:api]",
+   "quote": "Production deploy workflow fails at its first job with a message naming the next open window when run inside a freeze, and does not reach the SSH step [type:e2e]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job"
+   "evidence": "deploy-prod.yml first job (freeze-guard) in GitHub Actions; in lane covered by static workflow test and freeze unit tests"
   },
   {
    "id": "R3",
-   "quote": "No container runs privileged; `cap_drop: [ALL]`, `no-new-privileges`, read-only root filesystem with tmpfs where needed, asserted by a compose lint script [type:unit]",
+   "quote": "The staging deploy is not subject to the freeze but records the same checks and runs automatically on merge to the staging branch [type:e2e]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "deploy-staging.yml run on push to staging"
   },
   {
    "id": "R4",
-   "quote": "Only Caddy publishes ports 80 and 443 (and 443/udp for HTTP/3); Postgres, MinIO, admin and internal services are on a private network and unreachable from outside, verified by a port scan in the smoke test [type:api]",
+   "quote": "Production promotion requires: the same image SHA deployed to staging, staging smoke green within the last 24 hours, and required reviewers on the `production` environment [type:manual]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job port scan; static port check in compose-prod.test.mjs is in-lane"
+   "evidence": "deploy-prod.yml promotion job and the GitHub `production` environment (#116)"
   },
   {
    "id": "R5",
-   "quote": "Postgres image bundles pgvector and the WAL-G binary; `archive_mode=on` and `archive_command` point at WAL-G with env-provided storage, defaulting to a local MinIO bucket in CI [type:api]",
+   "quote": "Deploy order is: pull images, run expand-only migrations as the owner role, roll `api` and `worker`, then `web` containers one at a time, each gated by `/readyz` for 60 s before moving on [type:api]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job"
+   "evidence": "deploy-test.yml job running infra/scripts/deploy.test.sh with docker"
   },
   {
    "id": "R6",
-   "quote": "The app database role is not the owner so RLS is enforced; migrations run through the owner role in a one-off container; the smoke test asserts RLS-forced tables reject cross-workspace reads [type:api]",
+   "quote": "A failed readiness gate triggers automatic rollback to the previously recorded image tags and posts a failure summary; the rollback path is tested in CI by deploying a deliberately unhealthy image [type:api]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job"
+   "evidence": "deploy-test.yml job running infra/scripts/deploy.test.sh with docker"
   },
   {
    "id": "R7",
-   "quote": "All services read configuration only from env validated by the shared env schema; booting with a missing required variable fails fast with a clear message [type:unit]",
+   "quote": "The deploy never drops traffic: with two web containers, at least one is always ready (verified by a continuous probe during the deploy test) [type:api]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "compose-smoke.sh boots a service with a missing variable and asserts non-zero exit; packages/config already validates"
+   "evidence": "deploy-test.yml job running infra/scripts/deploy.test.sh with docker"
   },
   {
    "id": "R8",
-   "quote": "No service writes outside declared volumes or tmpfs; verified with a read-only filesystem run of the smoke test [type:api]",
+   "quote": "The hotfix workflow bypasses the freeze only when run in the `hotfix` environment with a non-empty reason; each use writes an audit comment and a Slack-compatible notification payload to a configured webhook [type:manual]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "images.yml compose-smoke job runs with read_only: true"
+   "evidence": "hotfix-prod.yml run in the `hotfix` environment"
   },
   {
    "id": "R9",
-   "quote": "Images are multi-arch, tagged `sha-\u003cgitsha>` and `main`, pushed to GHCR, scanned by Trivy (fail on critical with fix available), and signed with cosign; SBOM attached [type:manual]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "images.yml on push to main"
-  },
-  {
-   "id": "R10",
-   "quote": "Resource limits (memory and CPU) are set for every service and documented, sized for a 4 vCPU and 8 GB VPS within the cost target of about ₹6 to 12k per month for staging and prod combined [type:manual]",
+   "quote": "Migrations are restricted to expand-compatible operations in deploy (a static check rejects `DROP COLUMN` or `ALTER ... NOT NULL` without a prior expand release unless tagged `contract`) [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R11",
-   "quote": "`bootstrap-vps.sh` is idempotent: running twice makes no changes the second time; it configures firewall (only 22 limited by allowlist, 80, 443), fail2ban, unattended security upgrades and time sync (chrony) [type:manual]",
+   "id": "R10",
+   "quote": "Deploy records `release.json` (sha, time IST, deployer, migration list) on the VPS and in a GitHub deployment record; `/readyz` exposes the running sha [type:api]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "needs a real VPS (#108); in-lane is bash -n and guard-pattern review"
+   "evidence": "deploy-test.yml asserts release.json and /readyz version; GitHub deployment record is written by deploy-*.yml"
+  },
+  {
+   "id": "R11",
+   "quote": "Secrets used by workflows (SSH key, GHCR token, host fingerprints) come from GitHub environments; host key is pinned and verified (no `StrictHostKeyChecking=no`) [type:manual]",
+   "disposition": "deliver",
+   "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "Timezone and clocks: containers log in UTC, host NTP is verified by a startup check that fails readiness if drift exceeds 1 s [type:api]",
+   "quote": "Deploy and freeze behaviour is documented in the court-day freeze runbook including override etiquette and the expected communications to users [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "Staging runs the same compose with `staging.env.example` overrides and smaller limits, using preview data only [type:manual]",
+   "quote": "A scheduled workflow comments a warning on any PR labelled `deploy:prod` if its merge would land inside the freeze, so planning is visible [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "Production deploys are promoted from a green staging deploy of the same image SHA.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "deploy-prod.yml promotion check"
+  },
+  {
+   "id": "R15",
+   "quote": "Adapters and flags may be changed through their own safe paths during freeze only where designed to be hot-deployable.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -91,277 +103,246 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "infra/docker/web.Dockerfile",
-   "change": "Harden: digest-pinned base via ARG, tini, no apt/pnpm caches in final layer, numeric non-root USER, writes only to /tmp and .next/cache (tmpfs), TZ=UTC, healthcheck /healthz, exec-form CMD",
+   "path": ".github/actions/freeze-guard/freeze.ts",
+   "change": "Pure function evaluating the IST freeze windows (07:00-10:30, 18:00-23:00, start inclusive, end exclusive) from an injected Date using Intl Asia/Kolkata; returns frozen, window_name, next_open_at_ist",
    "requirements": [
     "R1",
-    "R8",
-    "R12"
+    "R2"
    ]
   },
   {
    "id": "D2",
-   "path": "infra/docker/api.Dockerfile",
-   "change": "Same hardening; pnpm deploy --prod to prune; tini; numeric UID; exec-form CMD so 10s SIGTERM drain works",
+   "path": ".github/actions/freeze-guard/index.ts",
+   "change": "Thin entrypoint: reads server clock (optional test override only via env FREEZE_NOW in tests), writes frozen/window_name/next_open_at_ist outputs, fails with message naming the next open window",
    "requirements": [
     "R1",
-    "R8",
-    "R12"
+    "R2"
    ]
   },
   {
    "id": "D3",
-   "path": "infra/docker/worker.Dockerfile",
-   "change": "Same as api; include owner-role migrate entry (packages/db/scripts/migrate.ts via tsx) usable by migrate.sh; exec-form CMD keeps 30s drain",
+   "path": ".github/actions/freeze-guard/action.yml",
+   "change": "Composite action running index.ts with node --experimental-strip-types; inputs allow_override for the hotfix path",
    "requirements": [
     "R1",
-    "R6",
+    "R2",
     "R8"
    ]
   },
   {
    "id": "D4",
-   "path": "infra/docker/admin.Dockerfile",
-   "change": "Same hardening as web; healthcheck /healthz (admin has no /readyz)",
+   "path": ".github/actions/freeze-guard/test/freeze.test.ts",
+   "change": "node:test boundary tests at 07:00, 10:30, 18:00, 23:00, 22:59:59, 10:29:59, week boundaries, UTC-to-IST conversion",
    "requirements": [
-    "R1",
-    "R8",
-    "R12"
+    "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "infra/docker/.dockerignore",
-   "change": "Exclude node_modules, .next, .git, .forge-lean, tests, docs from build context",
+   "path": "package.json",
+   "change": "Extend test:ci-scripts globs with .github/actions/*/test/*.test.ts (and any new infra/scripts tests already covered)",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D6",
-   "path": "infra/docker/base/README.md",
-   "change": "Document pinned base image digests and how to refresh them",
+   "path": ".github/workflows/images.yml",
+   "change": "Add workflow_call (inputs: publish) so deploy-staging reuses the build, scan, SBOM and cosign path for the staging SHA; main behaviour unchanged",
    "requirements": [
-    "R1"
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D7",
-   "path": "infra/docker/postgres/Dockerfile",
-   "change": "pgvector pg17 pinned by digest + checksum-verified per-arch WAL-G binary + init scripts + postgresql.conf",
+   "path": ".github/workflows/deploy-staging.yml",
+   "change": "On push to staging: build/push via images.yml, deploy over pinned-host-key SSH using the staging environment, run smoke.sh, create GitHub deployment record, record freeze-guard output as informational (not blocking)",
    "requirements": [
-    "R5"
+    "R3",
+    "R10",
+    "R11"
    ]
   },
   {
    "id": "D8",
-   "path": "infra/docker/postgres/postgresql.conf",
-   "change": "archive_mode=on, archive_command wal-g wal-push with env storage, ssl, log_statement policy, timezone UTC",
+   "path": ".github/workflows/deploy-prod.yml",
+   "change": "workflow_dispatch (image_sha) and release tag; first job is freeze-guard; then verify staging deployment of same SHA with successful smoke within 24 h via deployments API; then production environment deploy via SSH; deployment record",
    "requirements": [
-    "R5",
-    "R12"
+    "R2",
+    "R4",
+    "R10",
+    "R11",
+    "R14"
    ]
   },
   {
    "id": "D9",
-   "path": "infra/docker/compose.prod.yml",
-   "change": "Services caddy, web x2, api, worker x2, admin, postgres, minio; private network, only caddy publishes 80/443/443udp; cap_drop ALL, no-new-privileges, read_only+tmpfs, mem/cpu limits (documented for 4 vCPU/8 GB, overridable via env for staging), restart policy, named volumes, healthchecks, depends_on service_healthy; images ghcr.io/\u003corg>/causedeck-\u003csvc>:sha-\u003cgitsha>; mount infra/caddy/Caddyfile",
+   "path": ".github/workflows/hotfix-prod.yml",
+   "change": "Runs in the `hotfix` environment, requires non-empty reason input, skips freeze, audit comment on incident issue and Slack-compatible payload POST to webhook secret; secrets never echoed",
    "requirements": [
-    "R2",
-    "R3",
-    "R4",
-    "R5",
-    "R6",
     "R8",
-    "R10",
-    "R13"
+    "R11"
    ]
   },
   {
    "id": "D10",
-   "path": "infra/docker/env/prod.env.example",
-   "change": "Variables only, no secrets, matching packages/config env schema",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "infra/docker/env/staging.env.example",
-   "change": "Staging overrides: smaller limit variables, preview data only",
+   "path": ".github/workflows/freeze-warning.yml",
+   "change": "Scheduled workflow commenting a warning (idempotent marker) on open PRs labelled deploy:prod if now or the next scheduled merge window falls in the freeze, using freeze.ts",
    "requirements": [
     "R13"
    ]
   },
   {
+   "id": "D11",
+   "path": ".github/workflows/deploy-test.yml",
+   "change": "CI job running infra/scripts/deploy.test.sh against docker compose (docker-in-docker); also runs check-migrations and bash -n/shellcheck on scripts",
+   "requirements": [
+    "R5",
+    "R6",
+    "R7",
+    "R10"
+   ]
+  },
+  {
    "id": "D12",
-   "path": "infra/scripts/migrate.sh",
-   "change": "Run owner-role migration in a one-off container before up -d; fail on error",
+   "path": "infra/scripts/deploy.sh",
+   "change": "On VPS: record previous tags, pull, migrate.sh (expand-only check first), roll api+worker then web replicas one at a time with 60 s /readyz gate, write /opt/causedeck/releases/\u003csha>/release.json (sha, IST time, deployer, migrations), call rollback.sh on failure and print failure summary",
+   "requirements": [
+    "R5",
+    "R6",
+    "R7",
+    "R10"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "infra/scripts/rollback.sh",
+   "change": "Restore previous image tags from /opt/causedeck/releases and re-up services with the same one-at-a-time gate",
    "requirements": [
     "R6"
    ]
   },
   {
-   "id": "D13",
-   "path": "infra/scripts/healthcheck.sh",
-   "change": "Aggregate /readyz of web, api, worker plus admin /healthz for deploys",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
    "id": "D14",
-   "path": "infra/scripts/bootstrap-vps.sh",
-   "change": "Idempotent ufw (22 limited + allowlist, 80, 443), fail2ban, unattended-upgrades, chrony, Docker, deploy user, dirs; set -euo pipefail, guard before each change",
+   "path": "infra/scripts/smoke.sh",
+   "change": "Health (/readyz sha equals expected), sign-in page, API /v1/health, Caddy security headers, synthetic RLS check",
    "requirements": [
-    "R11"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "infra/docker/test/compose-smoke.sh",
-   "change": "Boot stack with mock providers, wait healthy \u003c=120s, port scan, RLS cross-workspace read assertion, missing-env fail-fast, read-only run",
-   "requirements": [
-    "R2",
-    "R4",
-    "R6",
-    "R7",
-    "R8"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "infra/scripts/compose-prod.test.mjs",
-   "change": "Node test modelled on compose-dev.test.mjs: no privileged, cap_drop ALL, no-new-privileges, read_only, mem/cpu limits on every service, only caddy publishes 80/443/443udp, replica counts, pinned images, Dockerfiles non-root numeric USER",
-   "requirements": [
-    "R1",
     "R3",
-    "R4",
     "R10"
    ]
   },
   {
-   "id": "D17",
-   "path": "packages/observability/src/health.ts",
-   "change": "Add exported clock-drift HealthCheck factory (reference time source injectable, 1 s threshold)",
+   "id": "D15",
+   "path": "infra/scripts/deploy.test.sh",
+   "change": "Deploy happy path, deliberately unhealthy image triggers rollback, continuous probe proves at least one web replica always ready, release.json and /readyz sha asserted",
    "requirements": [
-    "R12"
+    "R5",
+    "R6",
+    "R7",
+    "R10"
    ]
   },
   {
-   "id": "D18",
-   "path": "packages/observability/src/__tests__/health.test.ts",
-   "change": "Unit tests for clock-drift check (ok under 1 s, fails over 1 s, source error)",
+   "id": "D16",
+   "path": "infra/scripts/check-migrations.mjs",
+   "change": "Static check over packages/db/migrations rejecting DROP COLUMN and ALTER ... SET NOT NULL unless the file carries a `-- contract` tag; called by deploy.sh and CI",
    "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "apps/web/src/health.ts",
-   "change": "Register clock-drift readiness check",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "apps/api/src/app.ts",
-   "change": "Register clock-drift readiness check alongside db check",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "apps/worker/src/health.ts",
-   "change": "Register clock-drift readiness check",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": ".github/workflows/images.yml",
-   "change": "buildx multi-arch, tags sha-\u003cgitsha> and main, GHCR push on main, Trivy (fail critical with fix), SBOM, cosign keyless, size gate, compose-smoke job; actions pinned by SHA; passes lint-workflows",
-   "requirements": [
-    "R1",
-    "R2",
     "R9"
    ]
   },
   {
-   "id": "D23",
-   "path": "infra/docker/README.md",
-   "change": "Document prod stack, bootstrap, resource limit table and cost sizing, staging override usage",
+   "id": "D17",
+   "path": "infra/scripts/check-migrations.test.mjs",
+   "change": "node:test cases for accepted and rejected statements plus the contract tag; run on the real migrations dir",
    "requirements": [
-    "R10",
-    "R11",
-    "R13"
+    "R9"
    ]
   },
   {
-   "id": "D24",
-   "path": "infra/caddy/Caddyfile",
-   "change": "Minimal placeholder only if absent; real config owned by #98",
+   "id": "D18",
+   "path": "infra/scripts/deploy-workflows.test.mjs",
+   "change": "Static node:test lint of the workflows and scripts: no StrictHostKeyChecking=no, host key pinned (known_hosts), freeze-guard is the first job of deploy-prod and precedes any ssh step, hotfix requires environment hotfix and reason, secrets come from environments",
    "requirements": [
-    "R2"
+    "R2",
+    "R3",
+    "R8",
+    "R11"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "infra/runbooks/court-day-freeze.md",
+   "change": "Windows, override procedure and etiquette, what may still ship (flags, hot-deployable adapters with approval), user communications template, deploy and rollback steps",
+   "requirements": [
+    "R12",
+    "R15"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Build context stays the repo root and CMDs stay exec-form so SIGTERM drains (api 10s, worker 30s): infra/docker/{api,worker}.Dockerfile"
+   "what": "infra/scripts/healthcheck.sh and infra/scripts/migrate.sh behaviour and CLI (used by infra/docker/test/compose-smoke.sh)"
   },
   {
    "id": "P2",
-   "what": "infra/docker/compose.dev.yml, infra/scripts/compose-dev.test.mjs, dev-up/down scripts unchanged"
+   "what": "infra/docker/compose.prod.yml service names, image tag format ghcr.io/${IMAGE_ORG}/causedeck-\u003csvc>:sha-${GIT_SHA} and replicas; infra/scripts/compose-prod.test.mjs must still pass"
   },
   {
    "id": "P3",
-   "what": "/healthz stays dependency-free liveness; /readyz contracts in apps/web/app, apps/api/src/app.ts, apps/worker/src/health.ts; drift check only added to readiness"
+   "what": ".github/workflows/images.yml existing pull_request and push-to-main behaviour (verify, publish, cosign, Trivy)"
   },
   {
    "id": "P4",
-   "what": "Role split in infra/docker/postgres/init/02-roles.sql (app role non-owner, NOBYPASSRLS) unchanged"
+   "what": "infra/caddy/** and infra/terraform/** unchanged"
+  },
+  {
+   "id": "P5",
+   "what": "Workflows pin actions by commit SHA with persist-credentials: false and minimal permissions, matching ci.yml and images.yml; actionlint (lint-workflows.yml) must pass"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node --experimental-strip-types --no-warnings --test infra/scripts/compose-prod.test.mjs infra/scripts/compose-dev.test.mjs"
+   "command": "node --experimental-strip-types --no-warnings --test .github/actions/freeze-guard/test/freeze.test.ts"
   },
   {
    "id": "V2",
-   "command": "bash -n infra/scripts/migrate.sh && bash -n infra/scripts/healthcheck.sh && bash -n infra/scripts/bootstrap-vps.sh && bash -n infra/docker/test/compose-smoke.sh"
+   "command": "node --experimental-strip-types --no-warnings --test infra/scripts/check-migrations.test.mjs infra/scripts/deploy-workflows.test.mjs infra/scripts/compose-prod.test.mjs infra/scripts/compose-dev.test.mjs"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/observability exec vitest run src/__tests__/health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "bash -n infra/scripts/deploy.sh && bash -n infra/scripts/rollback.sh && bash -n infra/scripts/smoke.sh && bash -n infra/scripts/deploy.test.sh"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1} && pnpm --filter @causedeck/web exec vitest run app/__tests__/health-routes.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/production-infra-scale"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Docker builds, size budgets, multi-arch, Trivy/cosign and compose smoke run only in CI (images.yml)",
-   "justification": "CLAUDE.md forbids heavy local runs (Playwright, builds); in-lane coverage is static compose lint mirroring infra/scripts/compose-dev.test.mjs",
-   "source": "doc"
+   "choice": "Freeze logic lives in a pure freeze.ts imported by index.ts and freeze-warning.yml; tests are node:test run through the existing test:ci-scripts runner, not a new vitest package",
+   "justification": "package.json:31 already runs node --experimental-strip-types --test for CI scripts; no vitest config exists under .github",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Clock-drift check lives in packages/observability, no new workspace dependency",
-   "justification": "apps/worker/src/health.ts:5 and apps/api/src/app.ts:13 already import from @causedeck/observability",
+   "choice": "Reuse images.yml through workflow_call for the staging build rather than duplicating the multi-arch/Trivy/cosign steps",
+   "justification": "images.yml header documents the pinned-tool publish path; staging and prod must deploy the identical signed sha tag",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Caddyfile content belongs to #98; only a placeholder is shipped if absent",
-   "justification": "#98 is the open Caddy config issue; infra/caddy does not exist on base",
+   "choice": "Add deploy-test.yml (not in the issue file list) to run deploy.test.sh and docker-dependent checks in CI, since docker is never run locally",
+   "justification": "CLAUDE.md: Playwright/docker-heavy checks run in CI only; acceptance criteria R5-R7 require a CI-run deploy test",
+   "source": "doc"
+  },
+  {
+   "id": "K4",
+   "choice": "Host key verification uses a pinned known_hosts value from the GitHub environment secret and ssh -o StrictHostKeyChecking=yes",
+   "justification": "Issue acceptance criterion on pinned host key; credentials come from #116/#108",
    "source": "spec"
   }
  ]

@@ -1,34 +1,38 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield infra feature; dev-grade Dockerfiles exist, no prod stack)
+**Severity**: medium (greenfield release-engineering feature; images and compose exist, no deploy path or freeze guard)
 **Task Type**: feature
 
 ### What Was Claimed
-Production-grade images for web/api/worker/admin and `infra/docker/compose.prod.yml` for a single India VPS (Caddy, web x2, api, worker x2, admin, Postgres 17 + pgvector + WAL-G, MinIO), plus migrate/healthcheck/bootstrap scripts, an images workflow (multi-arch, GHCR, Trivy, SBOM, cosign), a compose smoke test, env examples and docs. 13 acceptance criteria (R1-R13).
+Add staging and production deploy pipelines (GHCR images, SSH to the VPS, pull, expand-only migrate, rolling `up -d`, `/readyz` gates, automatic rollback), production promotion from a green staging deploy of the same SHA, a court-day change freeze (18:00-23:00 and 07:00-10:30 IST) with an audited `hotfix` override, release records, a PR freeze warning, a runbook, and CI tests (12 acceptance criteria).
 
 ### What We Found
-- Base `origin/milestone/production-infra-scale` has only dev-grade Dockerfiles: `infra/docker/{web,api,worker,admin}.Dockerfile` (e.g. `api.Dockerfile:3` says "Production hardening ... arrives with #97"), `infra/docker/compose.dev.yml`, and `infra/docker/postgres/init/{01-extensions,02-roles}.sql`.
-- Base images are tag-pinned (`node:22.23.0-bookworm-slim`, `api.Dockerfile:5`), not digest-pinned; no `tini`; `USER node` (non-root, named not numeric); no TZ/UTC; no `.dockerignore` in `infra/docker`.
-- No `compose.prod.yml`, `postgres/Dockerfile`, `postgresql.conf`, `env/*.env.example`, `infra/scripts/{migrate,healthcheck,bootstrap-vps}.sh`, `infra/docker/test/`, `infra/caddy/` (owned by #98), or `.github/workflows/images.yml`.
-- Existing static-lint precedent: `infra/scripts/compose-dev.test.mjs` (node test over compose YAML).
-- Health: `packages/observability/src/health.ts:80` `createHealthHandlers` (checks registry, 2 s timeout `:36`); web `apps/web/src/health.ts:7` registers no checks; worker `apps/worker/src/health.ts:29`; api `apps/api/src/app.ts:90`; admin has `apps/admin/app/healthz` only (no /readyz).
-- Owner-role migrations: `packages/db/scripts/migrate.ts`; role split in `infra/docker/postgres/init/02-roles.sql`.
-- The issue already carries a frozen builder contract (FORGE:CONTRACT, sha e600d311805c) with 13 requirements; its D11 references a nonexistent R14 (should be R13) and D17 omits the exact app health files, corrected here. Stale `.forge-lean/*` files in the tree belong to another issue (WhatsApp link) and are overwritten.
+Verified against `origin/milestone/production-infra-scale` (b29b1e35; HEAD merge-base 9a89ccd2 is 3 merges behind, none touch these paths).
+- No deploy workflows: `.github/workflows/` has only ci, e2e, images, lint-workflows, security, storybook, terraform, visual-update. No `.github/actions/freeze-guard`, `infra/scripts/{deploy,rollback,smoke}.sh`, `deploy.test.sh`, or `infra/runbooks/court-day-freeze.md`.
+- `.github/workflows/images.yml:20-27` publishes multi-arch images only on push to `main` (`publish` job gated on `refs/heads/main`), tagged `sha-<gitsha>`; nothing builds on `staging` pushes. `ci.yml:10` already triggers on `staging`.
+- `infra/docker/compose.prod.yml:82,121,160,200`: images are `ghcr.io/${IMAGE_ORG}/causedeck-<svc>:sha-${GIT_SHA}`; `web` and `worker` use `deploy.replicas: 2` (`:101,:180`); healthchecks hit `/readyz` (`:106-118`).
+- `infra/scripts/migrate.sh:1-50`: starts postgres/minio, sets role passwords, runs `compose --profile migrate run --rm migrate` as `causedeck_owner`. `infra/scripts/healthcheck.sh:20-45` polls every service at once (no per-service ordering or 60 s gate).
+- `/readyz` already returns `version` = `GIT_SHA` (`packages/observability/src/health.ts:83,91`), so the "exposes the running sha" criterion needs only a test/assertion in smoke.
+- Migrations live in `packages/db/migrations/*.sql` (e.g. `0000_baseline.sql`, `20261025040000_whatsapp_inbound.sql`); no expand-only static check exists.
+- Test precedent: root `test:ci-scripts` (`package.json:31`) runs `node --experimental-strip-types --test 'infra/scripts/*.test.mjs' 'infra/scripts/*.test.ts' 'infra/terraform/test/*.test.mjs'`; `infra/scripts/tsconfig.json` includes `*.ts` only; `compose-prod.test.mjs` is the static-lint model. `lint-workflows.yml` runs actionlint on `.github/**`.
 
 ### Root Cause
-Greenfield: Stage A production packaging was never built; only dev Dockerfiles/compose exist.
+Greenfield: #97 (images, compose), #98 (Caddy) and #3 (CI) are merged, but the release path (deploy orchestration, rollback, freeze policy) was deliberately left to #100.
 
 ### Affected Files
-All new or hardened under `infra/docker/**`, `infra/scripts/**`, `.github/workflows/images.yml`, plus a clock-drift readiness check in `packages/observability/src/health.ts` wired into `apps/{web,api,worker}` health modules. See contract.json deliverables.
+Issue list: `.github/workflows/{deploy-staging,deploy-prod,hotfix-prod}.yml`, `.github/actions/freeze-guard/{action.yml,index.ts,test/freeze.test.ts}`, `infra/scripts/{deploy,rollback,smoke}.sh`, `infra/scripts/deploy.test.sh`, `infra/runbooks/court-day-freeze.md`.
+Additional (needed by acceptance criteria): `.github/workflows/freeze-warning.yml` (scheduled PR warning), `.github/workflows/deploy-test.yml` (runs deploy.test.sh in CI), `infra/scripts/check-migrations.mjs` + `.test.mjs` (expand-only check), `package.json` (extend `test:ci-scripts` globs to include the freeze test), `.github/workflows/images.yml` (make the build reusable for staging via `workflow_call`).
 
 ### Sibling Sweep
-`.github/workflows/*` all pin actions by SHA and are checked by lint-workflows; images.yml must follow. Caddyfile is #98's (no `infra/caddy` yet), so compose mounts a path with a minimal placeholder. Admin lacks `/readyz`; drift check is not wired there (healthz only).
+- `healthcheck.sh` polls all services together; deploy needs a per-service variant (add `--service`/replica loop in `deploy.sh`, keep `healthcheck.sh` behaviour unchanged since `compose-smoke.sh` uses it).
+- `images.yml` publish is main-only; `staging` needs the same signed-image path so prod promotion deploys the identical SHA.
+- `infra/caddy` and `infra/terraform` are unaffected. No other deploy/freeze code to sweep.
 
 ### History
-Dev Dockerfiles from #10/#14/#15; dev compose from ad0a831 (#5). No prior prod attempt merged.
+No introducing commit (greenfield). Prior related work: #97 (`c4a31bcd`, compose.prod), #98 (`2d6f7bad`, Caddy; PR flagged `conformance.omission`, so list every requirement explicitly here), #3 (CI).
 
 ### Recommendation
-Implement per contract.json in one lane (infra files mostly independent, ~25 files, well under split threshold). Static compose lint test and observability unit test are the in-lane checks; image size, smoke, Trivy/cosign, bootstrap idempotence are CI/out-of-band.
+Implement in one lane (about 17 files, well under split thresholds). Keep timezone logic in a pure, unit-tested `freeze.ts` with a thin `index.ts` (Intl with `Asia/Kolkata`, no client input); reuse it from `freeze-warning.yml`. `deploy.sh` runs on the VPS over pinned-host-key SSH, records `/opt/causedeck/releases/<sha>/release.json` and the previous tags, rolls api and worker then web replicas one at a time with a 60 s `/readyz` gate, and calls `rollback.sh` on failure. Prod promotion verifies a successful staging deployment record for the same SHA within 24 h via the GitHub deployments API. Real SSH/secrets are #116/#108; CI uses docker-in-docker.
 
 ### Related Issues
-#1 (parent), #10, #14, #15 (done); #98 Caddy, #99 Terraform, #100 deploy, #101 backups, #102 monitoring, #108 VPS, #116 secrets (out of scope / external).
+#1 (parent), #97, #98, #3 (dependencies, all closed), #101 (backups), #108 (VPS, human), #116 (GitHub environments and secrets, human).

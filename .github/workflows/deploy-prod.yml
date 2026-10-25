@@ -1,0 +1,110 @@
+name: Deploy production
+
+# Promote an image sha to production (#100). Manual dispatch or a release tag. The FIRST job is the
+# court-day freeze guard (07:00-10:30 and 18:00-23:00 IST, evaluated server-side); nothing else runs
+# inside a freeze, so the SSH step is never reached. Then promotion is checked (same sha deployed to
+# staging with a green smoke in the last 24 h) and the deploy runs in the `production` environment,
+# which requires reviewers (#116). P0 incidents use hotfix-prod.yml.
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_sha:
+        description: 'Full 40-character commit sha to promote (must be green on staging)'
+        required: true
+        type: string
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  freeze:
+    name: Court-day freeze guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Freeze guard
+        uses: ./.github/actions/freeze-guard
+
+  promote:
+    name: Promotion check
+    needs: freeze
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Resolve sha
+        id: sha
+        env:
+          INPUT_SHA: ${{ inputs.image_sha }}
+        run: |
+          set -euo pipefail
+          sha="${INPUT_SHA:-$GITHUB_SHA}"
+          [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::image_sha must be a full 40-character sha"; exit 1; }
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+      - name: Same sha green on staging within 24 h
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.sha.outputs.sha }}
+        run: bash infra/scripts/check-promotion.sh
+
+  deploy:
+    name: Deploy to production
+    needs: promote
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: read
+      deployments: write
+    env:
+      SHA: ${{ needs.promote.outputs.sha }}
+      GH_TOKEN: ${{ github.token }}
+      DEPLOY_ENVIRONMENT: production
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      GHCR_USER: ${{ secrets.GHCR_USER }}
+      GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+      ACTOR: ${{ github.actor }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.promote.outputs.sha }}
+          persist-credentials: false
+      - name: Freeze guard (re-checked: approval may have waited into a window)
+        uses: ./.github/actions/freeze-guard
+      - name: Create deployment record
+        run: |
+          set -euo pipefail
+          id="$(gh api "repos/$GITHUB_REPOSITORY/deployments" -X POST -f ref="$SHA" -f environment=production \
+            -F auto_merge=false -F 'required_contexts[]' -f description="production deploy of $SHA" --jq .id)"
+          echo "DEPLOYMENT_ID=$id" >>"$GITHUB_ENV"
+          gh api "repos/$GITHUB_REPOSITORY/deployments/$id/statuses" -X POST -f state=in_progress >/dev/null
+      - name: Deploy
+        run: bash infra/scripts/remote-deploy.sh deploy
+      - name: Smoke
+        run: bash infra/scripts/remote-deploy.sh smoke
+      - name: Mark deployment successful
+        run: gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses" -X POST -f state=success >/dev/null
+      - name: Failure summary
+        if: ${{ failure() }}
+        run: |
+          bash infra/scripts/remote-deploy.sh summary >>"$GITHUB_STEP_SUMMARY" || true
+          if [ -n "${DEPLOYMENT_ID:-}" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/deployments/$DEPLOYMENT_ID/statuses" -X POST -f state=failure >/dev/null || true
+          fi

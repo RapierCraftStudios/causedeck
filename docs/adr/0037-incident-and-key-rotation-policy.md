@@ -22,6 +22,14 @@ an emergency path. #103 turns this into runbooks in `infra/runbooks`.
 - The no auto-send guardrail applies to every notice.
 - Procedures only count when exercised and the evidence is stored.
 
+## Considered options
+
+| Option                                     | Verdict  | Reason                                                   |
+| ------------------------------------------ | -------- | -------------------------------------------------------- |
+| Start the clock at detection, report early | Chosen   | A withdrawn report can be recovered, a missed one cannot |
+| Report only after confirmation             | Rejected | Risks missing the 6-hour window                          |
+| Automate customer notices                  | Rejected | Violates the no auto-send guardrail                      |
+
 ## Decision
 
 - The clock starts at **detection** (first awareness by a person or alert), is written in UTC in the incident
@@ -46,7 +54,8 @@ an emergency path. #103 turns this into runbooks in `infra/runbooks`.
 - Until the first drills happen, `Last drilled` reads `not yet drilled` and launch is gated on the records.
 - Stage A KEK rotation is limited by `EnvKeyProvider.fromEnv` naming the env KEK `kek-1`; the runbook states the gap.
 
-## Alternatives considered
+## Revisit when
 
-- Report only after confirmation: rejected, it risks missing the 6-hour window.
-- Automate customer notices: rejected by the no auto-send guardrail.
+- Counsel completes #117 and the `Counsel to confirm` markers are resolved.
+- `EnvKeyProvider.fromEnv` can name the env KEK, lifting the Stage A rotation limit.
+- The first drills (tabletop and technical) produce findings.

@@ -59,3 +59,6 @@ The post-merge typecheck failure was `turbo: command not found` (exit 127): `tur
 
 ### Merge follow-up
 Merged origin/milestone/production-infra-scale (c8c7b0aa); court-day-freeze.md now carries the base's #100 content under the required headings. The reported `turbo: command not found` was an environment problem (turbo is not on PATH; `pnpm exec turbo` works), not a code defect. `pnpm exec turbo run typecheck --concurrency=1` on the merged tree passes (24/24 tasks). V1-V4 and `forgedock check` pass. No code change was needed.
+
+### Lint fix
+CI `lint` also runs `pnpm adr:lint`; ADR 0037 lacked the required `## Considered options` and `## Revisit when` sections. Added both (alternatives folded into the options table). `adr:lint`, `adr:test`, `docs:links`, `check:no-l5`, prettier and ESLint on changed TS files pass. No amendment needed.

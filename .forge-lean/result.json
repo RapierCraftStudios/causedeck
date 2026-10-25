@@ -1,28 +1,163 @@
-{"status":"fixed","summary":"Court-day freeze guard, staging/prod/hotfix deploy workflows, rolling deploy with rollback, expand-only migration check, warning workflow, deploy CI test and runbook.",
-"requirements":[
-{"id":"R1","status":"implemented","evidence":".github/actions/freeze-guard/freeze.ts:28"},
-{"id":"R2","status":"implemented","evidence":".github/workflows/deploy-prod.yml:27","instrumented":"true"},
-{"id":"R3","status":"implemented","evidence":".github/workflows/deploy-staging.yml:14","instrumented":"true"},
-{"id":"R4","status":"implemented","evidence":".github/workflows/deploy-prod.yml:40","instrumented":"true"},
-{"id":"R5","status":"implemented","evidence":"infra/scripts/deploy.sh; deploy-test.yml","instrumented":"true"},
-{"id":"R6","status":"implemented","evidence":"infra/scripts/rollback.sh","instrumented":"true"},
-{"id":"R7","status":"implemented","evidence":"infra/scripts/deploy.test.sh","instrumented":"true"},
-{"id":"R8","status":"implemented","evidence":".github/workflows/hotfix-prod.yml:36","instrumented":"true"},
-{"id":"R9","status":"implemented","evidence":"infra/scripts/check-migrations.mjs:30"},
-{"id":"R10","status":"implemented","evidence":"infra/scripts/deploy.sh write_release","instrumented":"true"},
-{"id":"R11","status":"implemented","evidence":"infra/scripts/remote-deploy.sh"},
-{"id":"R12","status":"implemented","evidence":"infra/runbooks/court-day-freeze.md"},
-{"id":"R13","status":"implemented","evidence":".github/workflows/freeze-warning.yml"},
-{"id":"R14","status":"implemented","evidence":".github/workflows/deploy-prod.yml:40","instrumented":"true"},
-{"id":"R15","status":"implemented","evidence":"infra/runbooks/court-day-freeze.md"}],
-"validation":[{"id":"V1","command":"freeze.test.ts","exit":0},{"id":"V2","command":"infra node tests","exit":0},{"id":"V3","command":"bash -n scripts","exit":0},{"id":"V4","command":"checks.mjs","exit":0}],
-"tests":[{"command":"node --test freeze.test.ts infra/scripts/*.test.mjs","result":"pass","fails_without_fix":true}],
-"self_review":[
-{"question":"1","answer":"yes","evidence":"requirements table in implementation.md; out-of-band ones instrumented by workflows and deploy.test.sh"},
-{"question":"2","answer":"yes","evidence":"images.yml main push path unchanged apart from branch tag (still main); compose-prod tests pass"},
-{"question":"3","answer":"yes","evidence":"forgedock check PASS; V1-V4 pass; infra/caddy and infra/terraform untouched"},
-{"question":"4","answer":"yes","evidence":"only deliverable paths and three amended files"}],
-"amendments":[
-{"kind":"add-deliverable","path":"infra/scripts/remote-deploy.sh","why":"SSH wrapper with pinned host key shared by the three deploy workflows (R11)"},
-{"kind":"add-deliverable","path":"infra/scripts/check-promotion.sh","why":"Staging-green-within-24h gate used by deploy-prod and hotfix (R4, R14)"},
-{"kind":"add-deliverable","path":".github/actions/freeze-guard/tsconfig.json","why":"The commit-hook type-aware ESLint needs a tsconfig for the action's TypeScript files"}]}
+{
+ "status": "fixed",
+ "summary": "Court-day freeze guard, staging/prod/hotfix deploy workflows, rolling deploy with rollback, expand-only migration check, warning workflow, deploy CI test and runbook.",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": ".github/actions/freeze-guard/freeze.ts:28"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": ".github/workflows/deploy-prod.yml:27",
+   "instrumented": "true"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": ".github/workflows/deploy-staging.yml:14",
+   "instrumented": "true"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": ".github/workflows/deploy-prod.yml:40",
+   "instrumented": "true"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "infra/scripts/deploy.sh; deploy-test.yml",
+   "instrumented": "true"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "infra/scripts/rollback.sh",
+   "instrumented": "true"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "infra/scripts/deploy.test.sh",
+   "instrumented": "true"
+  },
+  {
+   "id": "R8",
+   "status": "implemented",
+   "evidence": ".github/workflows/hotfix-prod.yml:36",
+   "instrumented": "true"
+  },
+  {
+   "id": "R9",
+   "status": "implemented",
+   "evidence": "infra/scripts/check-migrations.mjs:30"
+  },
+  {
+   "id": "R10",
+   "status": "implemented",
+   "evidence": "infra/scripts/deploy.sh write_release",
+   "instrumented": "true"
+  },
+  {
+   "id": "R11",
+   "status": "implemented",
+   "evidence": "infra/scripts/remote-deploy.sh"
+  },
+  {
+   "id": "R12",
+   "status": "implemented",
+   "evidence": "infra/runbooks/court-day-freeze.md"
+  },
+  {
+   "id": "R13",
+   "status": "implemented",
+   "evidence": ".github/workflows/freeze-warning.yml"
+  },
+  {
+   "id": "R14",
+   "status": "implemented",
+   "evidence": ".github/workflows/deploy-prod.yml:40",
+   "instrumented": "true"
+  },
+  {
+   "id": "R15",
+   "status": "implemented",
+   "evidence": "infra/runbooks/court-day-freeze.md"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "freeze.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "infra node tests",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "bash -n scripts",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "checks.mjs",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "node --test freeze.test.ts infra/scripts/*.test.mjs",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm exec turbo run typecheck --concurrency=2 (merged tree)",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "requirements table in implementation.md; out-of-band ones instrumented by workflows and deploy.test.sh"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "images.yml main push path unchanged apart from branch tag (still main); compose-prod tests pass"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "forgedock check PASS; V1-V4 pass; infra/caddy and infra/terraform untouched"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "only deliverable paths and three amended files"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "infra/scripts/remote-deploy.sh",
+   "why": "SSH wrapper with pinned host key shared by the three deploy workflows (R11)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "infra/scripts/check-promotion.sh",
+   "why": "Staging-green-within-24h gate used by deploy-prod and hotfix (R4, R14)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": ".github/actions/freeze-guard/tsconfig.json",
+   "why": "The commit-hook type-aware ESLint needs a tsconfig for the action's TypeScript files"
+  }
+ ]
+}

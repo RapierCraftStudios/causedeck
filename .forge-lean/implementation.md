@@ -37,3 +37,10 @@ Pure IST freeze logic (`freeze.ts`) shared by the composite action and the warni
 - Secrets needed in GitHub environments: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS, GHCR_USER, GHCR_PULL_TOKEN; SLACK_WEBHOOK_URL in `hotfix`.
 - Freeze clock is never an input (no FREEZE_NOW override); tests inject a Date.
 - Fixed an invalid-YAML step name in deploy-prod.yml found by prettier.
+
+### Merge-fix note
+- The post-merge `turbo run typecheck` failure was exit 127 (`turbo: command not found`): a PATH problem on the checker, not a source conflict. The branch touches no `apps/` or `packages/` files, so no symbol or key collision is possible there.
+- Verified instead: `node_modules/.bin/tsc -p .github/actions/freeze-guard/tsconfig.json --noEmit` passes; freeze and infra node tests pass (46/46). `lane-check.sh` is not present on this host. No source change needed.
+
+### Post-merge check
+`turbo: command not found` was a PATH problem in the check shell, not a code conflict. `pnpm exec turbo run typecheck --concurrency=2` on the merged tree: 24/24 tasks pass, so no rename was needed. V1–V4 and `forgedock check` pass again.

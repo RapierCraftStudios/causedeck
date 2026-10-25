@@ -126,3 +126,97 @@ export const Outcomes: Story = {
     await expect(within(canvasElement).getByRole('status')).toHaveTextContent('2 of 5');
   },
 };
+
+/** Pressing Assign commits the chosen member. */
+export const Active: Story = {
+  args: { suggestion: { memberId: 'm2', reason: 'Vikram is free all morning.' } },
+  play: async ({ canvasElement, args }) => {
+    await userEvent.click(within(canvasElement).getByRole('button', { name: 'Assign' }));
+    await expect(args.onAssign).toHaveBeenCalledWith('m2');
+  },
+};
+
+/** The plan could not be saved: what happened, Try again and support, in place of the rows. */
+export const Invalid: Story = {
+  render: () => (
+    <ErrorState
+      title="Could not save the assignment."
+      description="Your choice is kept on this device and will sync when the connection returns."
+      onRetry={fn()}
+      supportHref="mailto:support@lawyer-os.in"
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getByRole('button', { name: 'Try again' })).toBeVisible();
+  },
+};
+
+/** Status cues: unassigned, clash and queued each carry an icon with their label. */
+export const WithIcon: Story = {
+  render: (args) => (
+    <ul className="flex list-none flex-col gap-2 p-0">
+      <AssignmentRow {...args} flag="unassigned" />
+      <AssignmentRow {...args} flag="clash" assigneeId="m1" />
+      <AssignmentRow {...args} flag={undefined} assigneeId="m2" sync="queued" />
+    </ul>
+  ),
+};
+
+export const LongText: Story = {
+  args: {
+    title: '112 · Hon’ble Division Bench Writ Appeals and connected matters v. State of Karnataka',
+    detail: 'WA 1204/2026 and 31 connected appeals · Court Hall 12, Main Building, first floor',
+    members: [{ id: 'm1', name: 'Venkatasubramanian Ramachandran-Iyer Associates' }, ...MEMBERS],
+  },
+  decorators: [
+    (Story) => (
+      <div className="max-w-80">
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+export const RtlNeutral: Story = {
+  decorators: [
+    (Story) => (
+      <div dir="rtl">
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+export const Tamil: Story = {
+  args: {
+    title: '12 · ராவ் எதிர் மாநிலம்',
+    detail: 'நீதிமன்ற அறை 4',
+    members: [
+      { id: 'm1', name: 'ஆஷா ராவ்' },
+      { id: 'm2', name: 'விக்ரம் ஷா' },
+    ],
+    labels: {
+      assignee: 'ஒதுக்கீடு பெறுபவர்',
+      assign: 'ஒதுக்கு',
+      choose: 'உறுப்பினரைத் தேர்ந்தெடுக்கவும்',
+      unassigned: 'ஒதுக்கப்படவில்லை',
+    },
+  },
+};
+
+export const Kannada: Story = {
+  args: {
+    title: '12 · ರಾವ್ ವಿರುದ್ಧ ರಾಜ್ಯ',
+    detail: 'ನ್ಯಾಯಾಲಯ ಸಭಾಂಗಣ 4',
+    members: [
+      { id: 'm1', name: 'ಆಶಾ ರಾವ್' },
+      { id: 'm2', name: 'ವಿಕ್ರಮ್ ಶಾ' },
+    ],
+    labels: {
+      assignee: 'ನಿಯೋಜಿತರು',
+      assign: 'ನಿಯೋಜಿಸಿ',
+      choose: 'ಸದಸ್ಯರನ್ನು ಆರಿಸಿ',
+      unassigned: 'ನಿಯೋಜಿಸಿಲ್ಲ',
+    },
+  },
+};

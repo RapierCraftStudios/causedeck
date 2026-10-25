@@ -1,4 +1,4 @@
-**Verdict**: BLOCKED
+**Verdict**: CONFIRMED
 **Confidence**: medium
 **Severity**: medium (growth feature; core shareable item does not exist yet)
 **Task Type**: feature
@@ -8,26 +8,26 @@ Share a brief or handover as a secure, expiring link viewable by a non-user, who
 
 ### What We Found
 - The issue's existing FORGE:INVESTIGATION comment is about the portfolio UI (a different issue) and is not applicable; ignore it.
-- No brief entity exists: `apps/web/app/(app)/w/[slug]/briefs/page.tsx:1-3` is `placeholderPage('briefs')`; no brief code in `packages/core/src` (only mentions in `matter-graph/matters.ts:134`, `email-intake/allowlist.ts`). Brief assembly #60 and Brief Sheet UI #61 are open.
+- UPDATE (rerun, base origin/milestone/prepare-execute c18c312d): brief assembly #60 is merged (PR #706): `packages/core/src/briefs/index.ts` exports `assembleBrief(deps, actor, listingId)` (assemble.ts:39). Brief Sheet UI #61 is still open (`briefs/page.tsx` is a placeholder) but is not needed: a share link renders its own read-only snapshot.
 - No handover entity exists: no `handover_note` in `packages/db/src/schema`; #71 is open and its AC says handover is workspace-internal with "no share link, email or export-to-third-party" on those surfaces, which conflicts with sharing a handover externally.
 - Invitations exist (`packages/core/src/workspaces/invitations.ts:25-48`: hashed 32-byte token, 7-day TTL, rate limits), but they are workspace-scoped, not cross-workspace shares.
 - No referral/credit tables in billing: `packages/db/src/schema/billing.ts` has plan, subscription, entitlement, usage_counter, billing_event only.
 - Funnel scaffolding exists: `activation_event` with channel `referral`/`invite` and step `invite_sent` (`packages/db/src/schema/activation.ts:28-50`), `recordActivation` (`packages/core/src/activation/record.ts`), `funnelByCohort` (`funnel.ts`), admin Growth page (`apps/admin/app/(console)/growth/page.tsx`).
 
 ### Root Cause
-Greenfield. The item to share (brief #60/#61, handover #71) has not been built, so a secure share link has no payload or access-controlled projection to expose.
+No cross-workspace share or referral exists. The earlier block (brief #60 missing) is cleared; only handover (#71, open, internal-only AC) stays out of scope.
 
 ### Affected Files
-Would be: new share schema + migration, `packages/core` share domain, public `apps/web/app/(public)/share/[token]`, `packages/billing` referral credit, `packages/core/src/activation`, admin Growth page, i18n, registries (cross-tenant, core domains).
+New migration + `packages/db/src/schema/share.ts` (brief_share, referral_credit); `packages/core/src/shares/*`; `packages/billing/src/referral.ts`; public `apps/web/app/(public)/share/[token]`; owner actions in `apps/web`; activation/funnel; admin Growth page; i18n; registries.
 
 ### Sibling Sweep
-`apps/web/app/(public)/invite/[token]` is the closest token-page precedent. #506 (free alerts tier) is a sibling growth item.
+`(public)/invite/[token]` and `workspaces/invitations.ts:25-48` (hashed token, TTL, rate limits) are the pattern to copy. #506 is a sibling growth item.
 
 ### History
-Founder request 2026-10-23. No prior implementation.
+Founder request 2026-10-23. Earlier runs ended dependency-open on #60; #60 closed since.
 
 ### Recommendation
-Land #60 (brief assembly) and #61 (Brief Sheet) first; then implement brief sharing only. Handover sharing needs a product decision reconciling #71's "internal only" criterion. Requeue behind #60 and #61.
+One lane, brief sharing only. Snapshot the assembled brief at share time (no live matter access from the public page), hashed token, expiry, revoke, rate limits, referral credit granted on first activation of the invitee, funnel steps. Defer handover share to a follow-up (conflicts with #71).
 
 ### Related Issues
-#60, #61, #71, #506, #509 (activation funnel), #502.
+#60 (closed), #61, #71, #506, #509, #502.

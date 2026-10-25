@@ -20,3 +20,9 @@ No env vars. No messages are sent (P1). No devdocs freshness script in repo.
 
 ## Stale-list follow-up
 Checked the 8 flagged tests: none enumerates @causedeck/db schema exports (they mock other modules or the db wholesale). Recorded all as not_members in result.json; no code change.
+
+## Merge-check follow-up
+The reported `turbo run typecheck` failure (exit 127, `turbo: command not found`) was an environment problem (turbo not on PATH), not a code conflict. No code change. Via `pnpm exec turbo run typecheck` for core, db, notifications and web: 19/19 tasks pass. V2 and V3 pass. V1 had two deadlock flakes seeding the shared DB at high worker count (export.test.ts, memory-erasure.test.ts); both pass at --maxWorkers=1.
+
+### Post-merge typecheck
+The merged tree typechecks. The reported `turbo: command not found` (exit 127) came from `turbo` not being on PATH, not from a code conflict. `pnpm exec turbo run typecheck` for db, core, notifications, i18n and web exits 0, and `tsc --noEmit` is clean in each of those packages. No code change was needed.

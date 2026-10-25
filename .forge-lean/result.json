@@ -53,6 +53,11 @@
    "id": "V3",
    "command": "notifications vitest",
    "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "pnpm exec turbo run typecheck (db, core, notifications, i18n, web)",
+   "exit": 0
   }
  ],
  "tests": [

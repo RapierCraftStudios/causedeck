@@ -175,6 +175,24 @@ async function load(
     .where(and(eq(hearing.workspaceId, actor.workspaceId), eq(hearing.id, hearingId)))
     .limit(1);
   if (row === undefined) throw notFound('Hearing not found');
+  // A member who appeared at this hearing is assigned to its matter for this screen.
+  const [appeared] = await tx
+    .select({ id: appearance.id })
+    .from(appearance)
+    .innerJoin(
+      member,
+      and(eq(member.organizationId, appearance.workspaceId), eq(member.id, appearance.memberId)),
+    )
+    .where(
+      and(
+        eq(appearance.workspaceId, actor.workspaceId),
+        eq(appearance.hearingId, hearingId),
+        eq(member.userId, actor.userId),
+      ),
+    )
+    .limit(1);
+  const policyActor =
+    appeared === undefined ? actor : { ...actor, assignedMatterIds: new Set([row.matterId]) };
   const resource = {
     kind: 'matter' as const,
     workspaceId: actor.workspaceId,
@@ -182,8 +200,8 @@ async function load(
     ...(row.allowUserIds === null ? {} : { restricted: { allowUserIds: row.allowUserIds } }),
     ...(row.ownerUserId === null ? {} : { ownerUserId: row.ownerUserId }),
   };
-  if (!can(actor, 'matter.read', resource, settings).allow) throw notFound('Hearing not found');
-  if (action === 'matter.write' && !can(actor, action, resource, settings).allow) {
+  if (!can(policyActor, 'matter.read', resource, settings).allow) throw notFound('Hearing not found');
+  if (action === 'matter.write' && !can(policyActor, action, resource, settings).allow) {
     throw forbidden('You cannot confirm this outcome');
   }
   return {

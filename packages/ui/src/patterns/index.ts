@@ -115,3 +115,17 @@ export {
   type MemoryScopeMeta,
 } from './memory-card/memory-card';
 export * from './states';
+export {
+  DEFAULT_RESOLUTION_FIELD_LABELS,
+  ResolutionField,
+  type Resolution,
+  type ResolutionFieldLabels,
+  type ResolutionFieldProps,
+} from './outcome/resolution-field';
+export {
+  SourceCompare,
+  type CompareSide,
+  type SourceCompareProps,
+} from './outcome/source-compare';
+export { SourceText, type SourceSpan, type SourceTextProps } from './outcome/source-text';
+export { ConfirmBar, type ConfirmBarProps } from './outcome/confirm-bar';

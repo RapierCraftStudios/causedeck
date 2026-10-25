@@ -854,6 +854,15 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmTag: denies,
   dismissTag: denies,
   listRelevantJudgments: denies,
+  // drafts (#768): B on A's draft, version or export is denied; A's rows are unchanged.
+  createDraft: denies,
+  renderDraft: denies,
+  saveVersion: denies,
+  listVersions: denies,
+  restoreVersion: denies,
+  exportDraft: denies,
+  runDraftingExport: denies,
+  createDraftExportDownload: denies,
   // research notes, facts and provider templates (#80)
   listNotes: denies,
   createNote: denies,

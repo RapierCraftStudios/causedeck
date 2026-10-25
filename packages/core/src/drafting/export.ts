@@ -13,7 +13,13 @@ import {
   type CourtFormatPreset,
   type NarrativePort,
 } from '@causedeck/drafting';
-import { schema, withWorkspace, type Database, type Queryable, type Transaction } from '@causedeck/db';
+import {
+  schema,
+  withWorkspace,
+  type Database,
+  type Queryable,
+  type Transaction,
+} from '@causedeck/db';
 import type { Logger } from '@causedeck/observability';
 import {
   createDownloadUrl,
@@ -232,7 +238,9 @@ export async function createDraftExportDownload(
     const [file] = await tx
       .select({ id: blob.id, filename: blob.filename })
       .from(blob)
-      .where(and(eq(blob.workspaceId, reader.workspaceId), eq(blob.key, row.storageKey as ObjectKey)))
+      .where(
+        and(eq(blob.workspaceId, reader.workspaceId), eq(blob.key, row.storageKey as ObjectKey)),
+      )
       .limit(1);
     if (file === undefined) throw notFound('Export not found');
     return file;
@@ -251,5 +259,3 @@ export async function createDraftExportDownload(
   );
   return { ...url, filename: found.filename };
 }
-
-

@@ -54,7 +54,9 @@ export function canonicalJson(value: unknown): string {
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
     return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalJson(v)}`).join(',')}}`;
   }
-  return JSON.stringify(value) ?? 'null';
+  if (value === undefined || typeof value === 'function' || typeof value === 'symbol')
+    return 'null';
+  return JSON.stringify(value);
 }
 
 export const contentHash = (blocks: readonly Block[]): string =>
@@ -148,7 +150,8 @@ export async function createDraft(
   input: CreateDraftInput,
 ): Promise<{ draft: DraftSummary; version: DraftVersionSummary }> {
   const title = input.title.trim();
-  if (title === '' || title.length > 200) throw invalid('A draft needs a title of up to 200 characters');
+  if (title === '' || title.length > 200)
+    throw invalid('A draft needs a title of up to 200 characters');
   if (!isUuid(input.templateId)) throw notFound('Template not found');
   const matterId = input.matterId ?? null;
   if (matterId !== null && !isUuid(matterId)) throw draftNotFound();
@@ -213,7 +216,10 @@ export async function listVersions(
       .select(versionColumns)
       .from(draftVersion)
       .where(
-        and(eq(draftVersion.workspaceId, reader.workspaceId), eq(draftVersion.draftId, input.draftId)),
+        and(
+          eq(draftVersion.workspaceId, reader.workspaceId),
+          eq(draftVersion.draftId, input.draftId),
+        ),
       )
       .orderBy(desc(draftVersion.versionNo));
   });
@@ -308,7 +314,9 @@ export async function draftNarratives(
     out[key] = await draftNarrative(port, block, facts, {
       ...ctx,
       purpose: 'drafting.narrative',
-      ...(ctx.idempotencyKey === undefined ? {} : { idempotencyKey: `${ctx.idempotencyKey}:${key}` }),
+      ...(ctx.idempotencyKey === undefined
+        ? {}
+        : { idempotencyKey: `${ctx.idempotencyKey}:${key}` }),
     });
   }
   return out;
@@ -381,7 +389,8 @@ export async function renderDraft(
     slots: Object.fromEntries(resolveBlocks(blocks, facts)),
     blockers: exportBlockers(blocks, facts),
     narratives,
-    presetKey: loaded.courtPreset && getPreset(loaded.courtPreset as never) ? loaded.courtPreset : null,
+    presetKey:
+      loaded.courtPreset && getPreset(loaded.courtPreset as never) ? loaded.courtPreset : null,
   };
 }
 
@@ -398,8 +407,7 @@ export interface ExportDraftDeps extends DraftingDeps {
 }
 
 export type ExportDraftResult =
-  | { status: 'ready'; export: DraftExportRow }
-  | { status: 'queued'; draftVersionId: string };
+  { status: 'ready'; export: DraftExportRow } | { status: 'queued'; draftVersionId: string };
 
 /** Check `draft.export` on the draft and enqueue the export of a version (the latest by default). */
 export async function exportDraft(

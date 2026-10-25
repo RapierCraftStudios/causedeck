@@ -75,7 +75,11 @@ test.describe('offline court day', () => {
     await page.goto(`/w/${SHELL_WORKSPACE}/today`);
     await expectOfflineBoard(page);
     await page.goto(await briefHref(page, COURT_DAY.sharedTitle));
-    await expect(page.locator('[data-brief-sheet]')).toBeVisible();
+    // The shell can still hold the streamed server copy of the sheet in a hidden node beside the
+    // client-rendered one, so count the visible sheets: exactly one, and it is the device copy.
+    const sheet = page.locator('[data-brief-sheet]:visible');
+    await expect(sheet).toHaveCount(1);
+    await expect(sheet).toContainText(/offline/i);
   });
 
   test('an uncached route falls back to the branded offline page', async ({ page, context }) => {
@@ -163,7 +167,17 @@ test.describe('offline court day', () => {
     const before = await savedRows(page, 'briefs');
     await page.goto(`/w/${SHELL_WORKSPACE}/today`);
     await contentReady(page);
-    await expect.poll(() => savedRows(page, 'briefs'), { timeout: 30_000 }).toBeLessThan(before);
+    // The page-load prefetch waits 10 s and is skipped while the last sync is under 30 min old
+    // (#556), so ask for the run the way a reconnect does.
+    await expect
+      .poll(
+        async () => {
+          await page.evaluate(() => window.dispatchEvent(new Event('online')));
+          return savedRows(page, 'briefs');
+        },
+        { timeout: 30_000 },
+      )
+      .toBeLessThan(before);
   });
 
   // Not reachable from the UI yet: `enqueueEdit` and `drainOutbox` (apps/web/lib/offline/sync.ts)

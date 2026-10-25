@@ -1,7 +1,14 @@
+import { FORUM_CATALOGUE } from '@causedeck/db/seed/forum-catalogue';
 import { NextRequest } from 'next/server';
 import { describe, expect, it } from 'vitest';
 
-import { buildCsp, createNonce, localeFromAcceptLanguage, negotiateLocale } from '../lib/csp.ts';
+import {
+  buildCsp,
+  createNonce,
+  localeFromAcceptLanguage,
+  negotiateLocale,
+  uploadOriginOf,
+} from '../lib/csp.ts';
 import { config, proxy } from '../proxy.ts';
 
 const request = (headers: Record<string, string> = {}) =>
@@ -17,6 +24,7 @@ describe('buildCsp', () => {
     "base-uri 'self'",
     "default-src 'self'",
     "font-src 'self'",
+    "worker-src 'self'",
   ])('contains %s', (directive) => {
     expect(csp.split('; ')).toContain(directive);
   });
@@ -28,8 +36,71 @@ describe('buildCsp', () => {
     );
   });
 
+  it("keeps connect-src to 'self' unless an upload origin is given (#459)", () => {
+    expect(csp.split('; ')).toContain("connect-src 'self'");
+    expect(buildCsp('n', { uploadOrigin: 'http://127.0.0.1:9000' }).split('; ')).toContain(
+      "connect-src 'self' http://127.0.0.1:9000",
+    );
+  });
+
+  it('derives the upload origin from the storage env (#459)', () => {
+    expect(uploadOriginOf({ S3_ENDPOINT: 'http://127.0.0.1:9000/', S3_BUCKET: 'b' })).toBe(
+      'http://127.0.0.1:9000',
+    );
+    expect(uploadOriginOf({ S3_BUCKET: 'docs', S3_REGION: 'ap-south-1' })).toBe(
+      'https://docs.s3.ap-south-1.amazonaws.com',
+    );
+    expect(uploadOriginOf({ S3_ENDPOINT: 'not a url' })).toBeUndefined();
+    expect(uploadOriginOf({})).toBeUndefined();
+  });
+
   it('never allows Google Fonts or other origins for fonts and styles', () => {
     expect(csp).not.toMatch(/googleapis|gstatic|https:/);
+  });
+});
+
+describe('court hosts are never framed (#399)', () => {
+  // Madras HC forbids framing its pages, and the courts area only links out to them (#42).
+  const courtHosts = [...new Set(FORUM_CATALOGUE.flatMap((forum) => forum.config.hosts))];
+
+  /** The sources that govern frames: `frame-src`, else `child-src`, else `default-src`. */
+  function frameSources(csp: string): string[] {
+    const directives = new Map(
+      csp.split('; ').map((directive) => {
+        const [name = '', ...sources] = directive.trim().split(/\s+/);
+        return [name, sources] as const;
+      }),
+    );
+    return (
+      directives.get('frame-src') ??
+      directives.get('child-src') ??
+      directives.get('default-src') ??
+      []
+    );
+  }
+
+  it('checks a real host list', () => {
+    expect(courtHosts.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ['production', buildCsp('n')],
+    ['development', buildCsp('n', { dev: true })],
+  ])('allows frames from this origin only in %s', (_mode, csp) => {
+    const sources = frameSources(csp);
+    expect(sources.length).toBeGreaterThan(0);
+    for (const source of sources) expect(["'self'", "'none'"]).toContain(source);
+    for (const host of courtHosts) {
+      const labels = host.split('.');
+      const wildcards = labels.slice(1).map((_, i) => `*.${labels.slice(i + 1).join('.')}`);
+      for (const source of sources) {
+        expect(source).not.toContain(host);
+        expect(wildcards).not.toContain(source.replace(/^https?:\/\//, ''));
+      }
+    }
+    expect(sources).not.toContain('*');
+    expect(sources.some((source) => /^(?:https?|data|blob):$/.test(source))).toBe(false);
+    expect(csp.split('; ')).toContain("object-src 'none'");
   });
 });
 
@@ -90,8 +161,27 @@ describe('proxy', () => {
     const source = new RegExp(`^${config.matcher[0]?.source ?? ''}$`);
     expect(source.test('/sign-in')).toBe(true);
     expect(source.test('/')).toBe(true);
-    for (const path of ['/_next/static/chunks/a.js', '/_next/image', '/healthz', '/readyz']) {
+    for (const path of [
+      '/_next/static/chunks/a.js',
+      '/_next/image',
+      '/healthz',
+      '/readyz',
+      '/sw.js',
+      '/manifest.webmanifest',
+      '/icons/icon-192.png',
+    ]) {
       expect(source.test(path)).toBe(false);
     }
+    // The share screen is a page: it still gets a nonce and a locale.
+    expect(source.test('/share-target')).toBe(true);
+    expect(source.test('/offline')).toBe(true);
+  });
+
+  it('sends a share that reached the server (no service worker yet) back to the share screen (#50)', () => {
+    const response = proxy(
+      new NextRequest('https://app.example.test/share-target', { method: 'POST' }),
+    );
+    expect(response.status).toBe(303);
+    expect(new URL(response.headers.get('location') ?? '').pathname).toBe('/share-target');
   });
 });

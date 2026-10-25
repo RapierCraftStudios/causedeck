@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createEnv, EnvValidationError } from '../index.ts';
-import { envError } from './helpers.ts';
+import { envError, productionEnv } from './helpers.ts';
 
 describe('provider switches', () => {
   it('EMAIL_PROVIDER=ses without SES keys fails once, naming every missing key', () => {
@@ -14,6 +14,20 @@ describe('provider switches', () => {
       'SES_SECRET_ACCESS_KEY',
     ]);
     expect(error.message.split('\n')[0]).toBe('Invalid environment variables:');
+  });
+
+  it('EMAIL_PROVIDER=ses rejects a SES_REGION outside India (#195)', () => {
+    const ses = {
+      NODE_ENV: 'test',
+      EMAIL_PROVIDER: 'ses',
+      SES_ACCESS_KEY_ID: 'id',
+      SES_SECRET_ACCESS_KEY: 'secret',
+    };
+    const error = envError({ ...ses, SES_REGION: 'us-east-1' });
+    expect((error as EnvValidationError).keys).toEqual(['SES_REGION']);
+    expect(error.message).toContain('SES_REGION: must be an India region');
+    expect(createEnv({ ...ses, SES_REGION: 'ap-south-1' }).EMAIL_PROVIDER).toBe('ses');
+    expect(createEnv({ ...ses, SES_REGION: 'ap-south-2' }).EMAIL_PROVIDER).toBe('ses');
   });
 
   it('never prints supplied values in the error', () => {
@@ -115,5 +129,45 @@ describe('provider switches', () => {
 
     expect(env.AI_PROVIDER === 'sarvam' && String(env.SARVAM_API_KEY)).toBe('[REDACTED]');
     expect(env.AI_PROVIDER === 'sarvam' && env.SARVAM_API_KEY.reveal()).toBe('sarvam-key');
+  });
+
+  it('STORAGE_PROVIDER=s3 selects ap-south-1 with no endpoint and Secret credentials (#21)', () => {
+    const env = createEnv(productionEnv);
+
+    expect(env.STORAGE_PROVIDER).toBe('s3');
+    expect(env.S3_REGION).toBe('ap-south-1');
+    expect(env.S3_ENDPOINT).toBeUndefined();
+    expect(String(env.S3_ACCESS_KEY)).toBe('[REDACTED]');
+    expect(env.S3_ACCESS_KEY.reveal()).toBe(productionEnv.S3_ACCESS_KEY);
+  });
+
+  it('AI gateway env (#44): boots in dev and CI without secrets and caps concurrency', () => {
+    const env = createEnv({ NODE_ENV: 'test' });
+
+    expect(env.AI_PROVIDER).toBe('mock');
+    expect(env.AI_MAX_CONCURRENCY_PER_WORKSPACE).toBe(4);
+    expect(envError({ NODE_ENV: 'test', AI_MAX_CONCURRENCY_PER_WORKSPACE: '0' }).message).toContain(
+      'AI_MAX_CONCURRENCY_PER_WORKSPACE',
+    );
+  });
+
+  it('a real Sarvam key in production needs SARVAM_NO_TRAINING_CONFIRMED=true (#44)', () => {
+    const without = { ...productionEnv, SARVAM_NO_TRAINING_CONFIRMED: undefined };
+
+    expect(envError(without).message).toContain('SARVAM_NO_TRAINING_CONFIRMED');
+    expect(() => createEnv(productionEnv)).not.toThrow();
+    expect(() => createEnv({ ...without, NODE_ENV: 'test' })).not.toThrow();
+  });
+
+  it('the Sarvam key and Bedrock secret never appear in the serialised env (#44)', () => {
+    const env = createEnv({
+      NODE_ENV: 'test',
+      AI_PROVIDER: 'bedrock',
+      BEDROCK_ACCESS_KEY_ID: 'AKIABEDROCKVISIBLE',
+      BEDROCK_SECRET_ACCESS_KEY: 'bedrock-secret-value',
+      BEDROCK_MODEL_ID: 'apac.anthropic.claude-haiku',
+    });
+
+    expect(JSON.stringify(env)).not.toContain('bedrock-secret-value');
   });
 });

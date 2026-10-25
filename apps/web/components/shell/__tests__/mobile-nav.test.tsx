@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, renderHook, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { mockMatchMedia, renderWithIntl, stubResizeObserver } from './helpers.tsx';
@@ -12,6 +12,7 @@ vi.mock('next/navigation', () => ({
 
 const { MobileNav } = await import('../mobile-nav.tsx');
 const { loadShellOverlays } = await import('../use-shell-overlays.ts');
+const notifications = await import('../../notifications/use-notifications.ts');
 
 const bar = () => screen.getByRole('navigation', { name: 'Bottom navigation' });
 const slots = () => [...bar().querySelectorAll<HTMLElement>(':scope > ul > li')];
@@ -89,6 +90,8 @@ describe('mobile bottom navigation', () => {
       'activity',
       'people',
       'courts',
+      'notices',
+      'portfolio',
       'billing',
       'insights',
       'settings',
@@ -96,6 +99,19 @@ describe('mobile bottom navigation', () => {
     for (const link of within(sheet).getAllByRole('link')) {
       expect(link.className).toMatch(/\bmin-h-11\b/);
     }
+  });
+
+  it('offers the language switcher in the More sheet, each option in its own script (#175)', () => {
+    renderWithIntl(<MobileNav slug="demo" role="owner" />);
+    const sheet = openMore();
+    const group = within(sheet).getByRole('group', { name: 'Language' });
+    const radios = within(group).getAllByRole<HTMLInputElement>('radio');
+    expect(radios.map((radio) => radio.closest('label')?.textContent)).toEqual([
+      'English',
+      'தமிழ்',
+      'ಕನ್ನಡ',
+    ]);
+    expect(radios.map((radio) => radio.checked)).toEqual([true, false, false]);
   });
 
   it('hides destinations the role cannot see and shows flagged ones when enabled', () => {
@@ -116,6 +132,19 @@ describe('mobile bottom navigation', () => {
     const sheet = openMore();
     fireEvent.click(within(sheet).getByRole('link', { name: 'Courts' }));
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('opens the notification panel from the Notifications entry at the top of the sheet', () => {
+    notifications.resetNotificationStores();
+    const open = renderHook(() => notifications.useNotificationsOpen());
+    renderWithIntl(<MobileNav slug="demo" role="owner" />);
+    const sheet = openMore();
+    const entry = within(sheet).getByRole('button', { name: 'Notifications' });
+    expect(entry.dataset.moreItem).toBe('notifications');
+    fireEvent.click(entry);
+    expect(screen.queryByRole('dialog', { name: 'More destinations' })).toBeNull();
+    expect(open.result.current).toBe(true);
+    notifications.resetNotificationStores();
   });
 
   it('marks More current when the active route lives in the sheet', () => {

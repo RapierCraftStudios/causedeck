@@ -1,0 +1,29 @@
+{
+  "template": "madras-hc",
+  "status": "ok",
+  "cnr": "HCMA010045212026",
+  "caseNumber": "WP/4521/2026",
+  "nextHearingDate": "2026-12-03",
+  "lastHearingDate": "2026-10-12",
+  "stage": {
+    "raw": "Admitted - Final Hearing",
+    "norm": "hearing"
+  },
+  "bench": "Court Hall 14 / Hon FICTIONAL J.",
+  "orders": [
+    {
+      "date": "2026-10-12",
+      "number": "1",
+      "summary": "Interim Order",
+      "href": "/mhc/fict-a.pdf"
+    }
+  ],
+  "quotes": {
+    "cnr": "HCMA010045212026",
+    "caseNumber": "WP/4521/2026",
+    "stage": "Admitted - Final Hearing",
+    "bench": "Court Hall 14 / Hon FICTIONAL J.",
+    "nextHearingDate": "03.12.2026",
+    "lastHearingDate": "12.10.2026"
+  }
+}

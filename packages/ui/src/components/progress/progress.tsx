@@ -13,7 +13,12 @@ const indicatorVariants = cva(
   ],
   {
     variants: {
-      tone: { accent: 'bg-accent', success: 'bg-success', danger: 'bg-danger' },
+      tone: {
+        accent: 'bg-accent',
+        success: 'bg-success',
+        warning: 'bg-warning',
+        danger: 'bg-danger',
+      },
     },
     defaultVariants: { tone: 'accent' },
   },
@@ -22,7 +27,10 @@ const indicatorVariants = cva(
 export type ProgressTone = NonNullable<VariantProps<typeof indicatorVariants>['tone']>;
 
 export interface ProgressProps extends ComponentProps<typeof ProgressPrimitive.Root> {
-  /** `danger` for a failed upload or job; pair it with visible text. */
+  /**
+   * `warning` for a level nearing its limit, `danger` for a failed upload or job or a reached limit;
+   * pair either with an icon or visible text.
+   */
   tone?: ProgressTone;
 }
 

@@ -1,0 +1,19 @@
+{
+  "id": "en-07",
+  "language": "en",
+  "hearingDate": "2025-10-31",
+  "text": "In case 52527 of 2020 today. The matter was adjourned. Next hearing on 24/11. The court directed both sides to exchange written submissions by 12/12. Remind me to collect the certified copy.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-11-24",
+      "phrase": "24/11"
+    },
+    "directions": [
+      {
+        "text": "The court directed both sides to exchange written submissions by 12/12.",
+        "dueDate": "2025-12-12"
+      }
+    ],
+    "tasks": ["collect the certified copy"]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "en-27",
+  "language": "en",
+  "hearingDate": "2026-06-04",
+  "text": "In case 4997 of 2020 today. The court heard both sides and the matter was adjourned again. The opposite counsel sought time. Next hearing after six weeks. The court directed the State to produce the original records by 27/6.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-07-16",
+      "phrase": "after six weeks"
+    },
+    "directions": [
+      {
+        "text": "The court directed the State to produce the original records by 27/6.",
+        "dueDate": "2026-06-27"
+      }
+    ],
+    "tasks": []
+  }
+}

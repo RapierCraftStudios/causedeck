@@ -1,0 +1,90 @@
+{
+  "adapterId": "generic.a0",
+  "adapterVersion": "1.0.0",
+  "forumCode": "generic.a0",
+  "listDate": "2026-07-10",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. CCCA No. 7534/2019    Pretend Housing Society vs Invented Motors",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "20",
+      "itemNo": "1",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "7534",
+      "caseYear": 2019,
+      "matchKey": "CCCA/7534/2019",
+      "parties": "Pretend Housing Society vs Invented Motors",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. M.V.C. No. 7550/2020    Fictional Traders Pvt Ltd vs Sample Bank Ltd",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "20",
+      "itemNo": "2",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "7550",
+      "caseYear": 2020,
+      "matchKey": "MVC/7550/2020",
+      "parties": "Fictional Traders Pvt Ltd vs Sample Bank Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. M.V.C. No. 4905/2024    Pretend Housing Society vs Made-up Farmer",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "20",
+      "itemNo": "3",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "4905",
+      "caseYear": 2024,
+      "matchKey": "MVC/4905/2024",
+      "parties": "Pretend Housing Society vs Made-up Farmer",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. CCCA No. 8716/2022    Invented Motors vs Sample Bank Ltd",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "20",
+      "itemNo": "4",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "8716",
+      "caseYear": 2022,
+      "matchKey": "CCCA/8716/2022",
+      "parties": "Invented Motors vs Sample Bank Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "10.07.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["20"],
+    "hallsUnreadable": []
+  }
+}

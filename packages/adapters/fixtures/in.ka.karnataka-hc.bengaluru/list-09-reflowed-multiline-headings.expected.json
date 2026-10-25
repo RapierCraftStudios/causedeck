@@ -1,0 +1,166 @@
+{
+  "adapterId": "in.ka.karnataka-hc.bengaluru",
+  "adapterVersion": "1.1.0",
+  "forumCode": "in.ka.karnataka-hc.bengaluru",
+  "listDate": "2026-10-28",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "WP No. 8100/2026 (GM-RES)",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "6",
+      "itemNo": "1",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "8100",
+      "caseYear": 2026,
+      "matchKey": "WP/8100/2026",
+      "parties": "Example Coffee Estates vs State of Fictionland",
+      "stageRaw": "PRELIMINARY HEARING",
+      "stageNorm": "preliminary_hearing",
+      "advocates": [
+        {
+          "raw": "Sri. R. Madeup",
+          "aliases": ["R MADEUP", "MADEUP R"]
+        },
+        {
+          "raw": "AGA (FICTIONAL)",
+          "aliases": ["AGA FICTIONAL"]
+        }
+      ],
+      "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "WA No. 310 of 2025",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "6",
+      "itemNo": "2",
+      "caseTypeRaw": "WA",
+      "caseType": "WA",
+      "caseNumber": "310",
+      "caseYear": 2025,
+      "matchKey": "WA/310/2025",
+      "parties": "K. Kalpita Gowda vs Imaginary Panchayat",
+      "stageRaw": "FOR BEING SPOKEN TO",
+      "stageNorm": "being_spoken_to",
+      "advocates": [
+        {
+          "raw": "Smt. B. Example",
+          "aliases": ["B EXAMPLE", "EXAMPLE B"]
+        },
+        {
+          "raw": "Sri. D. Imaginary",
+          "aliases": ["D IMAGINARY", "IMAGINARY D"]
+        }
+      ],
+      "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+      "listNo": "1",
+      "listType": "daily",
+      "registryObjection": null
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["6"],
+    "hallsUnreadable": []
+  },
+  "halls": [
+    {
+      "hallNo": "6",
+      "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+      "lists": [
+        {
+          "listNo": "1",
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "WP No. 8100/2026 (GM-RES)",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "6",
+              "itemNo": "1",
+              "caseTypeRaw": "WP",
+              "caseType": "WP",
+              "caseNumber": "8100",
+              "caseYear": 2026,
+              "matchKey": "WP/8100/2026",
+              "parties": "Example Coffee Estates vs State of Fictionland",
+              "stageRaw": "PRELIMINARY HEARING",
+              "stageNorm": "preliminary_hearing",
+              "advocates": [
+                {
+                  "raw": "Sri. R. Madeup",
+                  "aliases": ["R MADEUP", "MADEUP R"]
+                },
+                {
+                  "raw": "AGA (FICTIONAL)",
+                  "aliases": ["AGA FICTIONAL"]
+                }
+              ],
+              "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "WA No. 310 of 2025",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "6",
+              "itemNo": "2",
+              "caseTypeRaw": "WA",
+              "caseType": "WA",
+              "caseNumber": "310",
+              "caseYear": 2025,
+              "matchKey": "WA/310/2025",
+              "parties": "K. Kalpita Gowda vs Imaginary Panchayat",
+              "stageRaw": "FOR BEING SPOKEN TO",
+              "stageNorm": "being_spoken_to",
+              "advocates": [
+                {
+                  "raw": "Smt. B. Example",
+                  "aliases": ["B EXAMPLE", "EXAMPLE B"]
+                },
+                {
+                  "raw": "Sri. D. Imaginary",
+                  "aliases": ["D IMAGINARY", "IMAGINARY D"]
+                }
+              ],
+              "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+              "listNo": "1",
+              "listType": "daily",
+              "registryObjection": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [],
+  "status": "ok",
+  "listType": "daily",
+  "source": "html",
+  "publishedAt": "2026-10-27T18:30:00+05:30",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 28-10-2026",
+    "rowIndex": 0
+  }
+}

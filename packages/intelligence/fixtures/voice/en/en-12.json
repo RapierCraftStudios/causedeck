@@ -1,0 +1,19 @@
+{
+  "id": "en-12",
+  "language": "en",
+  "hearingDate": "2025-05-20",
+  "text": "In case 29530 of 2019 today. The court heard both sides and the matter was adjourned again. Next hearing after three weeks. The court directed the respondent to file a counter affidavit next thursday. Remind me to collect the certified copy.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-06-10",
+      "phrase": "after three weeks"
+    },
+    "directions": [
+      {
+        "text": "The court directed the respondent to file a counter affidavit next thursday.",
+        "dueDate": "2025-05-22"
+      }
+    ],
+    "tasks": ["collect the certified copy"]
+  }
+}

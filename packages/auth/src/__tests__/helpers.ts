@@ -1,12 +1,14 @@
 // Shared fixtures for the API tests: a real `createAuth` on the #6 Testcontainers database.
 // Better Auth commits its own writes, so tests isolate by unique emails and client IPs.
-import { randomInt, randomUUID } from 'node:crypto';
+import { createHmac, randomInt, randomUUID } from 'node:crypto';
 
 import { Secret } from '@causedeck/config/env';
+import type { Database } from '@causedeck/db';
 import { testAppDb } from '@causedeck/db/testing';
 
 import type { AuthEmail, AuthLogger, Mailer } from '../mailer';
-import { createAuth, type AuthEnv } from '../server';
+import type { AuthSms, SmsSender } from '../sms';
+import { createAuth, type AuthEnv, type SecurityEventRecorder } from '../server';
 
 export const APP_URL = 'http://localhost:3000';
 export const TEST_SECRET = 'test-only-better-auth-secret-0123456789abcdef';
@@ -48,12 +50,49 @@ export function capturingLogger(): CapturingLogger {
   return { lines, debug: write, info: write, warn: write, error: write };
 }
 
+export interface RecordingSms extends SmsSender {
+  sent: AuthSms[];
+}
+
+export function recordingSms(): RecordingSms {
+  const sent: AuthSms[] = [];
+  return {
+    sent,
+    send(message) {
+      sent.push(message);
+      return Promise.resolve();
+    },
+  };
+}
+
+/** A fresh E.164 Indian mobile number. */
+export function uniquePhone(): string {
+  return `+91${String(randomInt(6, 10))}${String(randomInt(0, 1_000_000_000)).padStart(9, '0')}`;
+}
+
 export function makeAuth(
-  options: { env?: Partial<AuthEnv>; mailer?: RecordingMailer; logger?: AuthLogger } = {},
+  options: {
+    env?: Partial<AuthEnv>;
+    mailer?: RecordingMailer;
+    sms?: SmsSender;
+    logger?: AuthLogger;
+    /** Defaults to the shared app-role client. */
+    db?: Database;
+    /** Defaults to the no-op recorder. */
+    securityEvents?: SecurityEventRecorder;
+  } = {},
 ) {
   const mailer = options.mailer ?? recordingMailer();
   const logger = options.logger ?? capturingLogger();
-  const auth = createAuth({ db: testAppDb(), env: testEnv(options.env), mailer, logger });
+  const db = options.db ?? testAppDb();
+  const auth = createAuth({
+    db,
+    env: testEnv(options.env),
+    mailer,
+    ...(options.sms ? { sms: options.sms } : {}),
+    logger,
+    ...(options.securityEvents ? { securityEvents: options.securityEvents } : {}),
+  });
   return { auth, mailer, logger };
 }
 
@@ -106,4 +145,21 @@ export async function devSignInAs(auth: TestAuth, email = uniqueEmail()) {
   if (response.status !== 200) throw new Error(`dev sign-in failed: ${String(response.status)}`);
   const { user } = (await response.json()) as { user: { id: string; email: string } };
   return { user, cookie: cookieHeader(response), response };
+}
+
+/** RFC 6238 TOTP (SHA-1, 30 s, 6 digits) from a base32 secret. */
+export function totp(secret: string): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = '';
+  for (const char of secret.replace(/=+$/, '').toUpperCase()) {
+    bits += alphabet.indexOf(char).toString(2).padStart(5, '0');
+  }
+  const bytes: number[] = [];
+  for (let i = 0; i + 8 <= bits.length; i += 8) bytes.push(parseInt(bits.slice(i, i + 8), 2));
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 1000 / 30)));
+  const hmac = createHmac('sha1', Buffer.from(bytes)).update(counter).digest();
+  const offset = (hmac[hmac.length - 1] ?? 0) & 0xf;
+  const code = (hmac.readUInt32BE(offset) & 0x7fffffff) % 1_000_000;
+  return String(code).padStart(6, '0');
 }

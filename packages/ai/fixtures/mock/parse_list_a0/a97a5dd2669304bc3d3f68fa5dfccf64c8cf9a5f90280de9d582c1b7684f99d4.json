@@ -1,0 +1,125 @@
+{
+  "output": {
+    "listDate": {
+      "date": "2026-07-19",
+      "page": 1,
+      "quote": "வழக்குப் பட்டியல் ௧௯.௦௭.௨௦௨௬",
+      "lineRef": 2
+    },
+    "rows": [
+      {
+        "page": 1,
+        "quote": "1. O.S. No. 5988/2025    கற்பனை மோட்டார்ஸ் எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+        "caseNumber": "O.S. No. 5988/2025",
+        "cnr": null,
+        "serial": null,
+        "parties": null,
+        "stageText": null,
+        "hall": null,
+        "dates": [],
+        "lineRef": 5
+      },
+      {
+        "page": 1,
+        "quote": "2. S.C. No. 1071/2023    மாதிரி வங்கி எதிர் கற்பனை மோட்டார்ஸ்",
+        "caseNumber": "S.C. No. 1071/2023",
+        "cnr": null,
+        "serial": null,
+        "parties": null,
+        "stageText": null,
+        "hall": null,
+        "dates": [],
+        "lineRef": 6
+      },
+      {
+        "page": 1,
+        "quote": "3. S.C. No. 1970/2022    கற்பனை வணிகர்கள் நிறுவனம் எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+        "caseNumber": "S.C. No. 1970/2022",
+        "cnr": null,
+        "serial": null,
+        "parties": null,
+        "stageText": null,
+        "hall": null,
+        "dates": [],
+        "lineRef": 7
+      },
+      {
+        "page": 1,
+        "quote": "4. Crl.Misc. No. 5728/2021    கற்பனை மோட்டார்ஸ் எதிர் புனைவு ஜவுளி",
+        "caseNumber": "Crl.Misc. No. 5728/2021",
+        "cnr": null,
+        "serial": null,
+        "parties": null,
+        "stageText": null,
+        "hall": null,
+        "dates": [],
+        "lineRef": 8
+      },
+      {
+        "page": 1,
+        "quote": "5. M.V.C. No. 5495/2024    புனைவு ஜவுளி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+        "caseNumber": "M.V.C. No. 5495/2024",
+        "cnr": null,
+        "serial": null,
+        "parties": null,
+        "stageText": null,
+        "hall": null,
+        "dates": [],
+        "lineRef": 9
+      },
+      {
+        "page": 2,
+        "quote": "6. M.V.C. No. 5650/2026    மாதிரி வங்கி எதிர் போலி விவசாயி",
+        "caseNumber": "M.V.C. No. 5650/2026",
+        "cnr": null,
+        "serial": null,
+        "parties": null,
+        "stageText": null,
+        "hall": null,
+        "dates": [],
+        "lineRef": 3
+      },
+      {
+        "page": 2,
+        "quote": "7. Ex.P. No. 918/2019    கற்பனை வணிகர்கள் நிறுவனம் எதிர் போலி விவசாயி",
+        "caseNumber": "Ex.P. No. 918/2019",
+        "cnr": null,
+        "serial": null,
+        "parties": null,
+        "stageText": null,
+        "hall": null,
+        "dates": [],
+        "lineRef": 4
+      },
+      {
+        "page": 2,
+        "quote": "8. M.V.C. No. 9733/2019    புனைவு ஜவுளி எதிர் கற்பனை மோட்டார்ஸ்",
+        "caseNumber": "M.V.C. No. 9733/2019",
+        "cnr": null,
+        "serial": null,
+        "parties": null,
+        "stageText": null,
+        "hall": null,
+        "dates": [],
+        "lineRef": 5
+      },
+      {
+        "page": 2,
+        "quote": "9. S.C. No. 2583/2021    கற்பனை குடியிருப்போர் சங்கம் எதிர் போலி விவசாயி",
+        "caseNumber": "S.C. No. 2583/2021",
+        "cnr": null,
+        "serial": null,
+        "parties": null,
+        "stageText": null,
+        "hall": null,
+        "dates": [],
+        "lineRef": 6
+      }
+    ],
+    "confidence": 0.9
+  },
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0
+  }
+}

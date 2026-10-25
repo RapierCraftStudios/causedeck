@@ -1,4 +1,19 @@
 {
   "extends": "@causedeck/config/tsconfig/nextjs.json",
-  "include": ["src", "*.ts"]
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "plugins": [{ "name": "next" }]
+  },
+  "include": [
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    "src",
+    "app",
+    "components",
+    "lib",
+    "__tests__",
+    "*.ts",
+    "*.tsx"
+  ],
+  "exclude": ["node_modules", ".next", ".next-e2e"]
 }

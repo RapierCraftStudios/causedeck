@@ -1,0 +1,166 @@
+{
+  "adapterId": "in.ka.karnataka-hc.bengaluru",
+  "adapterVersion": "1.1.0",
+  "forumCode": "in.ka.karnataka-hc.bengaluru",
+  "listDate": "2026-10-22",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1\tWP No. 20011/2026 (GM-RES)\tExample Coffee Estates vs Pretend Revenue Dept.\tSri. A. Fictional\tAGA (FICTIONAL)",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "8",
+      "itemNo": "1",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "20011",
+      "caseYear": 2026,
+      "matchKey": "WP/20011/2026",
+      "parties": "Example Coffee Estates vs Pretend Revenue Dept.",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Sri. A. Fictional",
+          "aliases": ["A FICTIONAL", "FICTIONAL A"]
+        },
+        {
+          "raw": "AGA (FICTIONAL)",
+          "aliases": ["AGA FICTIONAL"]
+        }
+      ],
+      "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+      "listNo": "1",
+      "listType": "supplementary",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2\tWP No. 20012/2026 (T-RES)\tMade-up Traders vs Pretend Revenue Dept.\tSmt. B. Example\tAGA (FICTIONAL)",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "8",
+      "itemNo": "2",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "20012",
+      "caseYear": 2026,
+      "matchKey": "WP/20012/2026",
+      "parties": "Made-up Traders vs Pretend Revenue Dept.",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [
+        {
+          "raw": "Smt. B. Example",
+          "aliases": ["B EXAMPLE", "EXAMPLE B"]
+        },
+        {
+          "raw": "AGA (FICTIONAL)",
+          "aliases": ["AGA FICTIONAL"]
+        }
+      ],
+      "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+      "listNo": "1",
+      "listType": "supplementary",
+      "registryObjection": null
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["8"],
+    "hallsUnreadable": []
+  },
+  "halls": [
+    {
+      "hallNo": "8",
+      "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+      "lists": [
+        {
+          "listNo": "1",
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1\tWP No. 20011/2026 (GM-RES)\tExample Coffee Estates vs Pretend Revenue Dept.\tSri. A. Fictional\tAGA (FICTIONAL)",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "8",
+              "itemNo": "1",
+              "caseTypeRaw": "WP",
+              "caseType": "WP",
+              "caseNumber": "20011",
+              "caseYear": 2026,
+              "matchKey": "WP/20011/2026",
+              "parties": "Example Coffee Estates vs Pretend Revenue Dept.",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Sri. A. Fictional",
+                  "aliases": ["A FICTIONAL", "FICTIONAL A"]
+                },
+                {
+                  "raw": "AGA (FICTIONAL)",
+                  "aliases": ["AGA FICTIONAL"]
+                }
+              ],
+              "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+              "listNo": "1",
+              "listType": "supplementary",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2\tWP No. 20012/2026 (T-RES)\tMade-up Traders vs Pretend Revenue Dept.\tSmt. B. Example\tAGA (FICTIONAL)",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "8",
+              "itemNo": "2",
+              "caseTypeRaw": "WP",
+              "caseType": "WP",
+              "caseNumber": "20012",
+              "caseYear": 2026,
+              "matchKey": "WP/20012/2026",
+              "parties": "Made-up Traders vs Pretend Revenue Dept.",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [
+                {
+                  "raw": "Smt. B. Example",
+                  "aliases": ["B EXAMPLE", "EXAMPLE B"]
+                },
+                {
+                  "raw": "AGA (FICTIONAL)",
+                  "aliases": ["AGA FICTIONAL"]
+                }
+              ],
+              "bench": "HON'BLE MR. JUSTICE E. IMAGINARY",
+              "listNo": "1",
+              "listType": "supplementary",
+              "registryObjection": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [],
+  "status": "ok",
+  "listType": "supplementary",
+  "source": "html",
+  "publishedAt": "2026-10-22T09:05:00+05:30",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "SUPPLEMENTARY CAUSE LIST FOR 22-10-2026",
+    "rowIndex": 0
+  }
+}

@@ -2,11 +2,8 @@
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  getWorkspaceContext,
-  type Membership,
-  type WorkspaceContext,
-} from '../../../lib/workspace-context.ts';
+import type { Membership } from '../../../lib/workspace-context.ts';
+import { testWorkspaceContext } from '../../../__tests__/helpers/workspace.ts';
 
 import { mockMatchMedia, renderWithIntl, stubResizeObserver } from './helpers.tsx';
 
@@ -26,7 +23,7 @@ const {
 const { SidebarProvider } = await import('../sidebar-collapse.tsx');
 const { loadShellOverlays } = await import('../use-shell-overlays.ts');
 
-const context = (await getWorkspaceContext('demo')) as WorkspaceContext;
+const context = testWorkspaceContext();
 
 const renderSwitcher = (variant: 'sidebar' | 'topbar' = 'sidebar') =>
   renderWithIntl(
@@ -133,15 +130,17 @@ describe('workspace switcher', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
-  it('offers create and join as disabled stubs', () => {
+  it('links Create workspace to /onboarding and closes; join stays disabled (#180)', () => {
     renderSwitcher();
     open();
-    expect(screen.getByRole('button', { name: 'Create workspace' }).hasAttribute('disabled')).toBe(
-      true,
-    );
+    const create = screen.getByRole('link', { name: 'Create workspace' });
+    expect(create.getAttribute('href')).toBe('/onboarding');
+    expect(screen.queryByRole('button', { name: 'Create workspace' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Join with invite' }).hasAttribute('disabled')).toBe(
       true,
     );
+    fireEvent.click(create);
+    expect(screen.queryByRole('listbox')).toBeNull();
   });
 
   it('shows the workspace name in the topbar variant', () => {

@@ -4,7 +4,9 @@
 import { createMailer } from '@causedeck/auth/mailer';
 import { createAuth, type Auth } from '@causedeck/auth/server';
 import { createSessionHelpers } from '@causedeck/auth/session';
-import { db } from '@causedeck/db';
+import { createSmsSender } from '@causedeck/auth/sms';
+import { createSecurityEventRecorder } from '@causedeck/core/audit';
+import { db } from '@causedeck/core/runtime';
 import { headers } from 'next/headers';
 
 import { logger } from '../src/health.ts';
@@ -17,7 +19,14 @@ let instance: Auth | undefined;
 export function getAuth(): Auth {
   if (!instance) {
     const env = serverEnv();
-    instance = createAuth({ db, env, mailer: createMailer(env, logger), logger });
+    instance = createAuth({
+      db,
+      env,
+      mailer: createMailer(env, logger),
+      sms: createSmsSender(env, logger),
+      logger,
+      securityEvents: createSecurityEventRecorder(db),
+    });
   }
   return instance;
 }
@@ -25,6 +34,8 @@ export function getAuth(): Auth {
 export const { getSession, requireSession, requireUser } = createSessionHelpers({
   auth: { api: { getSession: (args) => getAuth().api.getSession(args) } },
   headers,
+  // The owner 2FA policy (#290) reads `twoFactorEnabled` from the session user.
+  withTwoFactor: true,
 });
 
 export type AppSession = NonNullable<Awaited<ReturnType<typeof getSession>>>;

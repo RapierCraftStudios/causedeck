@@ -114,11 +114,23 @@ label,
 }
 
 /* Tamil and Kannada: line-height +0.15, never negative tracking, never uppercase, 400-500 only.
- * Body 22/14 (1.57) becomes 1.72 and prose 26/16 (1.625) becomes 1.775, both >= 1.7. */
+ * Body 22/14 (1.57) becomes 1.72 and prose 26/16 (1.625) becomes 1.775, both >= 1.7. The size-paired
+ * line-heights that Tailwind `text-*` utilities read are raised to >= 1.7 as well, so the ratio holds
+ * wherever a utility sets line-height (lg at its 18 px maximum).
+ * Per-script sizing is on the faces, not here: the Noto Sans Tamil/Kannada @font-face rules carry
+ * `size-adjust: 96%` (apps/web/app/fonts.ts, ../fonts/fonts.css), which puts the Indic letter body
+ * (0.565 em) on the Geist x-height (0.545 em). `font-size-adjust` would also shrink the Latin face,
+ * and with it the tabular digits of dates, case numbers and INR. */
 :lang(ta),
 :lang(kn) {
   --leading-body: calc(1.5714 + var(--leading-indic-delta));
   --leading-prose: calc(1.625 + var(--leading-indic-delta));
+  --text-xs--line-height: 1.3rem; /* 20.8 / 12 = 1.73 */
+  --text-sm--line-height: 1.4rem; /* 22.4 / 13 = 1.72 */
+  --text-base--line-height: 1.5rem; /* 24 / 14 = 1.71 */
+  --text-md--line-height: 1.75rem; /* 28 / 16 = 1.75 */
+  --text-lg--line-height: 1.9375rem; /* 31 / 18 = 1.72 */
+  --text-eyebrow--line-height: 1.1875rem; /* 19 / 11 = 1.73 */
 
   line-height: var(--leading-body);
   letter-spacing: var(--tracking-normal);

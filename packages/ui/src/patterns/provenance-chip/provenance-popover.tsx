@@ -3,7 +3,7 @@ import type { ComponentProps, ReactNode } from 'react';
 
 import { Button } from '../../components/button';
 import { cn } from '../../lib/cn';
-import type { Anchor, ProvenanceKind, ProvenanceSource } from '../types';
+import type { Anchor, AnchorImageRegion, ProvenanceKind, ProvenanceSource } from '../types';
 
 export interface ProvenanceLabels {
   confirmed: string;
@@ -108,6 +108,52 @@ export function HighlightedQuote({
   );
 }
 
+/** Context kept around the line, as a fraction of the page. */
+const REGION_MARGIN_X = 0.03;
+const REGION_MARGIN_Y = 0.02;
+const A4_ASPECT = 210 / 297;
+
+/** The photographed line, cropped out of the page image with the line itself outlined (#52). */
+export function ImageRegion({ region }: { region: AnchorImageRegion }) {
+  const [x0, y0, x1, y1] = region.bbox;
+  const aspect = region.aspect ?? A4_ASPECT;
+  const cx0 = Math.max(0, x0 - REGION_MARGIN_X);
+  const cy0 = Math.max(0, y0 - REGION_MARGIN_Y);
+  const cx1 = Math.min(1, x1 + REGION_MARGIN_X);
+  const cy1 = Math.min(1, y1 + REGION_MARGIN_Y);
+  const cw = cx1 - cx0;
+  const ch = cy1 - cy0;
+  const pct = (value: number) => `${String(value * 100)}%`;
+  return (
+    <div
+      data-slot="provenance-image-region"
+      role="img"
+      aria-label={region.alt ?? ''}
+      className="border-line bg-surface-sunken relative w-full overflow-hidden rounded-md border"
+      style={{ aspectRatio: String((cw * aspect) / ch) }}
+    >
+      <img
+        src={region.src}
+        alt=""
+        draggable={false}
+        className="absolute max-w-none select-none"
+        style={{ width: pct(1 / cw), left: pct(-cx0 / cw), top: pct(-cy0 / ch) }}
+      />
+      <div
+        data-slot="provenance-image-highlight"
+        aria-hidden="true"
+        className="border-seal absolute rounded-sm border-2 forced-colors:border-[Highlight]"
+        style={{
+          left: pct((x0 - cx0) / cw),
+          top: pct((y0 - cy0) / ch),
+          width: pct((x1 - x0) / cw),
+          height: pct((y1 - y0) / ch),
+        }}
+      />
+    </div>
+  );
+}
+
 export interface ProvenancePopoverBodyProps extends Omit<ComponentProps<'div'>, 'title'> {
   source: ProvenanceSource;
   anchor?: Anchor | undefined;
@@ -166,6 +212,7 @@ export function ProvenancePopoverBody({
           <span className="min-w-0 wrap-break-word">{title}</span>
         )}
       </div>
+      {anchor?.imageRegion ? <ImageRegion region={anchor.imageRegion} /> : null}
       {quote ? <HighlightedQuote quote={quote} highlight={anchor?.highlight} /> : null}
       <p data-slot="provenance-meta" className="text-ink-muted text-xs">
         {meta.join(' · ')}

@@ -1,0 +1,54 @@
+{
+  "header": {
+    "caseTypeRaw": "W.P.",
+    "caseType": "WP",
+    "caseNumber": "12345",
+    "caseYear": 2026,
+    "orderDate": "2026-10-21",
+    "neutralCitation": null,
+    "neutralCitationRaw": null,
+    "anchor": {
+      "page": 1,
+      "quote": "W.P.No.12345 of 2026",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "W.P.",
+        "number": "12345",
+        "year": 2026,
+        "matchKey": "WP/12345/2026",
+        "children": [
+          {
+            "caseTypeCode": "WMP",
+            "caseTypeRaw": "W.M.P.",
+            "number": "13001",
+            "year": 2026,
+            "isMisc": true,
+            "matchKey": "WMP/13001/2026",
+            "parentProceedingKey": "WP/12345/2026"
+          }
+        ]
+      }
+    ],
+    "bench": "THE HONOURABLE MR.JUSTICE A. FICTIONAL",
+    "judges": ["THE HONOURABLE MR.JUSTICE A. FICTIONAL"],
+    "orderType": "interim"
+  },
+  "cues": [
+    {
+      "kind": "next_date_relative",
+      "text": "List after four weeks.",
+      "phrase": "List after",
+      "anchor": {
+        "page": 1,
+        "quote": "List after four weeks.",
+        "rowIndex": 16
+      },
+      "confidence": 0.85,
+      "date": null
+    }
+  ]
+}

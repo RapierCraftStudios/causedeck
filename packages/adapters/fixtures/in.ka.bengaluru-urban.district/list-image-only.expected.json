@@ -1,0 +1,16 @@
+{
+  "adapterId": "in.ka.bengaluru-urban.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.ka.bengaluru-urban.city-civil-sessions",
+  "listDate": null,
+  "status": "needs_ocr",
+  "rows": [],
+  "source": "pdf",
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": [],
+    "hallsUnreadable": []
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "pages": [
+    {
+      "page": 1,
+      "width": 595,
+      "height": 842,
+      "text": "CAUSE LIST FOR 16.12.2026\nCOURT HALL 7\nSl. No. Case No. Parties Stage\n1 Com.A.A. No. 6797/2024 Sample Bank Ltd vs Pretend Housing Society FOR ORDERS\n2 Com.FDP No. 4963/2022 Imaginary Textiles vs Made-up Farmer FOR EVIDENCE\n3 Com.Misc. No. 1244/2023 Sample Bank Ltd vs Pretend Housing Society FOR EVIDENCE\n4 Com.Misc. No. 1833/2021 Made-up Farmer vs Sample Bank Ltd FOR EVIDENCE\n5 Com.A.P. No. 295/2019 Invented Motors vs Made-up Farmer FOR ORDERS\n6 Com.A.A. No. 5044/2019 Imaginary Textiles vs Pretend Housing Society FOR ORDERS\n7 Com.FDP No. 4924/2021 Fictional Traders Pvt Ltd vs Sample Bank Ltd FOR ORDERS\n8 Com.Misc. No. 1004/2025 Sample Bank Ltd vs Sample Bank Ltd FOR EVIDENCE",
+      "items": [
+        {
+          "text": "CAUSE LIST FOR 16.12.2026",
+          "bbox": { "x": 40, "y": 40, "width": 125, "height": 10 }
+        },
+        { "text": "COURT HALL 7", "bbox": { "x": 40, "y": 56, "width": 60, "height": 10 } },
+        { "text": "Sl. No.", "bbox": { "x": 40, "y": 72, "width": 35, "height": 10 } },
+        { "text": "Case No.", "bbox": { "x": 90, "y": 72, "width": 40, "height": 10 } },
+        { "text": "Parties", "bbox": { "x": 260, "y": 72, "width": 35, "height": 10 } },
+        { "text": "Stage", "bbox": { "x": 480, "y": 72, "width": 25, "height": 10 } },
+        { "text": "1", "bbox": { "x": 40, "y": 88, "width": 8, "height": 10 } },
+        {
+          "text": "Com.A.A. No. 6797/2024",
+          "bbox": { "x": 90, "y": 88, "width": 110, "height": 10 }
+        },
+        {
+          "text": "Sample Bank Ltd vs Pretend Housing Society",
+          "bbox": { "x": 260, "y": 88, "width": 210, "height": 10 }
+        },
+        { "text": "FOR ORDERS", "bbox": { "x": 480, "y": 88, "width": 50, "height": 10 } },
+        { "text": "2", "bbox": { "x": 40, "y": 104, "width": 8, "height": 10 } },
+        {
+          "text": "Com.FDP No. 4963/2022",
+          "bbox": { "x": 90, "y": 104, "width": 105, "height": 10 }
+        },
+        {
+          "text": "Imaginary Textiles vs Made-up Farmer",
+          "bbox": { "x": 260, "y": 104, "width": 180, "height": 10 }
+        },
+        { "text": "FOR EVIDENCE", "bbox": { "x": 480, "y": 104, "width": 60, "height": 10 } },
+        { "text": "3", "bbox": { "x": 40, "y": 120, "width": 8, "height": 10 } },
+        {
+          "text": "Com.Misc. No. 1244/2023",
+          "bbox": { "x": 90, "y": 120, "width": 115, "height": 10 }
+        },
+        {
+          "text": "Sample Bank Ltd vs Pretend Housing Society",
+          "bbox": { "x": 260, "y": 120, "width": 210, "height": 10 }
+        },
+        { "text": "FOR EVIDENCE", "bbox": { "x": 480, "y": 120, "width": 60, "height": 10 } },
+        { "text": "4", "bbox": { "x": 40, "y": 136, "width": 8, "height": 10 } },
+        {
+          "text": "Com.Misc. No. 1833/2021",
+          "bbox": { "x": 90, "y": 136, "width": 115, "height": 10 }
+        },
+        {
+          "text": "Made-up Farmer vs Sample Bank Ltd",
+          "bbox": { "x": 260, "y": 136, "width": 165, "height": 10 }
+        },
+        { "text": "FOR EVIDENCE", "bbox": { "x": 480, "y": 136, "width": 60, "height": 10 } },
+        { "text": "5", "bbox": { "x": 40, "y": 152, "width": 8, "height": 10 } },
+        {
+          "text": "Com.A.P. No. 295/2019",
+          "bbox": { "x": 90, "y": 152, "width": 105, "height": 10 }
+        },
+        {
+          "text": "Invented Motors vs Made-up Farmer",
+          "bbox": { "x": 260, "y": 152, "width": 165, "height": 10 }
+        },
+        { "text": "FOR ORDERS", "bbox": { "x": 480, "y": 152, "width": 50, "height": 10 } },
+        { "text": "6", "bbox": { "x": 40, "y": 168, "width": 8, "height": 10 } },
+        {
+          "text": "Com.A.A. No. 5044/2019",
+          "bbox": { "x": 90, "y": 168, "width": 110, "height": 10 }
+        },
+        {
+          "text": "Imaginary Textiles vs Pretend Housing Society",
+          "bbox": { "x": 260, "y": 168, "width": 225, "height": 10 }
+        },
+        { "text": "FOR ORDERS", "bbox": { "x": 480, "y": 168, "width": 50, "height": 10 } },
+        { "text": "7", "bbox": { "x": 40, "y": 184, "width": 8, "height": 10 } },
+        {
+          "text": "Com.FDP No. 4924/2021",
+          "bbox": { "x": 90, "y": 184, "width": 105, "height": 10 }
+        },
+        {
+          "text": "Fictional Traders Pvt Ltd vs Sample Bank Ltd",
+          "bbox": { "x": 260, "y": 184, "width": 220, "height": 10 }
+        },
+        { "text": "FOR ORDERS", "bbox": { "x": 480, "y": 184, "width": 50, "height": 10 } },
+        { "text": "8", "bbox": { "x": 40, "y": 200, "width": 8, "height": 10 } },
+        {
+          "text": "Com.Misc. No. 1004/2025",
+          "bbox": { "x": 90, "y": 200, "width": 115, "height": 10 }
+        },
+        {
+          "text": "Sample Bank Ltd vs Sample Bank Ltd",
+          "bbox": { "x": 260, "y": 200, "width": 170, "height": 10 }
+        },
+        { "text": "FOR EVIDENCE", "bbox": { "x": 480, "y": 200, "width": 60, "height": 10 } }
+      ],
+      "textCoverage": 0.4
+    }
+  ]
+}

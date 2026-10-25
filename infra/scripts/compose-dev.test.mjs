@@ -43,6 +43,7 @@ describe('compose.dev.yml', () => {
   it('creates the versioned dev bucket and mounts the Postgres init scripts', () => {
     assert.match(compose, /mc mb --ignore-existing local\/causedeck-dev/);
     assert.match(compose, /mc version enable local\/causedeck-dev/);
+    assert.match(compose, /mc anonymous set none local\/causedeck-dev/);
     assert.match(compose, /\.\/postgres\/init:\/docker-entrypoint-initdb\.d/);
     assert.match(compose, /shm_size: 256mb/);
     assert.match(compose, /\/minio\/health\/live/);

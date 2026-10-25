@@ -1,0 +1,180 @@
+{
+  "adapterId": "in.tn.chennai.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.chennai.city-civil-court",
+  "listDate": "2026-11-09",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. Crl.Misc. No. 2796/2022    Made-up Farmer vs Invented Motors",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "32",
+      "itemNo": "1",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "2796",
+      "caseYear": 2022,
+      "matchKey": "CRLMISC/2796/2022",
+      "parties": "Made-up Farmer vs Invented Motors",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. C.C. No. 2737/2026    Invented Motors vs Sample Bank Ltd",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "32",
+      "itemNo": "2",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "2737",
+      "caseYear": 2026,
+      "matchKey": "CC/2737/2026",
+      "parties": "Invented Motors vs Sample Bank Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. M.V.C. No. 1821/2024    Made-up Farmer vs Invented Motors",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "32",
+      "itemNo": "3",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "1821",
+      "caseYear": 2024,
+      "matchKey": "MVC/1821/2024",
+      "parties": "Made-up Farmer vs Invented Motors",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. CCCA No. 872/2024    Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "32",
+      "itemNo": "4",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "872",
+      "caseYear": 2024,
+      "matchKey": "CCCA/872/2024",
+      "parties": "Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. CCCA No. 8568/2022    Made-up Farmer vs Imaginary Textiles",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "32",
+      "itemNo": "5",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "8568",
+      "caseYear": 2022,
+      "matchKey": "CCCA/8568/2022",
+      "parties": "Made-up Farmer vs Imaginary Textiles",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. O.S. No. 5270/2023    Made-up Farmer vs Invented Motors",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "35",
+      "itemNo": "6",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "5270",
+      "caseYear": 2023,
+      "matchKey": "OS/5270/2023",
+      "parties": "Made-up Farmer vs Invented Motors",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. CCCA No. 8958/2023    Pretend Housing Society vs Invented Motors",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "35",
+      "itemNo": "7",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "8958",
+      "caseYear": 2023,
+      "matchKey": "CCCA/8958/2023",
+      "parties": "Pretend Housing Society vs Invented Motors",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. CCCA No. 8613/2023    Imaginary Textiles vs Fictional Traders Pvt Ltd",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "35",
+      "itemNo": "8",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "8613",
+      "caseYear": 2023,
+      "matchKey": "CCCA/8613/2023",
+      "parties": "Imaginary Textiles vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. C.C. No. 1418/2026    Sample Bank Ltd vs Made-up Farmer",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "35",
+      "itemNo": "9",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "1418",
+      "caseYear": 2026,
+      "matchKey": "CC/1418/2026",
+      "parties": "Sample Bank Ltd vs Made-up Farmer",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "09.11.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["32", "35"],
+    "hallsUnreadable": []
+  }
+}

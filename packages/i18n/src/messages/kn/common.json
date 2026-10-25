@@ -1,0 +1,22 @@
+{
+  "common": {
+    "skipToContent": "ವಿಷಯಕ್ಕೆ ಹೋಗಿ",
+    "goToToday": "ಇಂದಿಗೆ ಹೋಗಿ",
+    "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ"
+  },
+  "theme": {
+    "label": "ಥೀಮ್",
+    "light": "ಬೆಳಕು",
+    "dark": "ಗಾಢ",
+    "system": "ಸಿಸ್ಟಮ್"
+  },
+  "home": {
+    "title": "CauseDeck",
+    "tagline": "ನಿಮ್ಮ ನ್ಯಾಯಾಲಯ ದಿನ, ಸಿದ್ಧ.",
+    "signIn": "ಸೈನ್ ಇನ್"
+  },
+  "locale": {
+    "label": "ಭಾಷೆ",
+    "updated": "ಭಾಷೆ ನವೀಕರಿಸಲಾಗಿದೆ"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "entity": "event",
+  "account_id": "acc_FIXTURE0000001",
+  "event": "subscription.charged",
+  "contains": ["subscription", "payment"],
+  "payload": {
+    "subscription": {
+      "entity": {
+        "id": "sub_FIXTURE0000001",
+        "entity": "subscription",
+        "plan_id": "plan_FIXTURE0000001",
+        "customer_id": "cust_FIXTURE0000001",
+        "status": "active",
+        "current_start": 1769904000,
+        "current_end": 1772323200,
+        "ended_at": null,
+        "quantity": 3,
+        "notes": {
+          "workspace_ref": "ws_FIXTURE0000001"
+        },
+        "charge_at": 1772323200,
+        "start_at": 1767225600,
+        "end_at": 1830297600,
+        "auth_attempts": 0,
+        "total_count": 24,
+        "paid_count": 2,
+        "customer_notify": true,
+        "created_at": 1767225000,
+        "expire_by": null,
+        "short_url": "https://rzp.io/i/FIXTURE01",
+        "has_scheduled_changes": false,
+        "change_scheduled_at": null,
+        "source": "api",
+        "payment_method": "upi",
+        "offer_id": null,
+        "remaining_count": 22
+      }
+    },
+    "payment": {
+      "entity": {
+        "id": "pay_FIXTURE0000001",
+        "entity": "payment",
+        "amount": 149700,
+        "currency": "INR",
+        "status": "captured",
+        "order_id": "order_FIXTURE0000001",
+        "invoice_id": "inv_FIXTURE0000001",
+        "method": "upi",
+        "description": "Subscription sub_FIXTURE0000001",
+        "customer_id": "cust_FIXTURE0000001",
+        "email": "advocate@example.com",
+        "contact": "+919000000001",
+        "error_code": null,
+        "error_description": null,
+        "created_at": 1769904000
+      }
+    }
+  },
+  "created_at": 1769904000
+}

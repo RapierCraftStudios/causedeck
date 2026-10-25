@@ -23,3 +23,8 @@ Build the #73 memory surface on the #72 core domain. Core gains read models (`vi
 
 ### Notes
 No env vars. Behaviour change: the matter tab list gains Memory for roles with `memory.read` (junior and above).
+
+### Follow-up: stale sibling lists
+- packages/ui/src/index.test.ts: added DEFAULT_SCOPE_CHIP_LABELS and DEFAULT_PROPOSAL_TRAY_LABELS to the pattern export list.
+- scope-chip and proposal-tray stories now carry the shared states (real Default/LongText/RtlNeutral/Tamil/Kannada/Disabled, n/a declared for static ones); this fixed the pattern story check.
+- Not members (recorded in result.json): MEMORY_REVIEW_AFTER_DAYS (constant, in NOT_A_SERVICE), the new ui exports in activity-item/proposal-card tests, Paused story in check-stories.test.ts.

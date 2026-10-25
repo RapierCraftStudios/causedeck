@@ -83,8 +83,13 @@ export function courtState(rows: readonly AdapterHealthSummaryRow[]): ComponentS
 /** Strip control characters and collapse whitespace; public text is one trimmed line or paragraph. */
 function cleanText(value: unknown, max: number): string {
   const text = typeof value === 'string' ? value : '';
-  // eslint-disable-next-line no-control-regex
-  return text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim().slice(0, max);
+  return (
+    text
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '')
+      .trim()
+      .slice(0, max)
+  );
 }
 
 const iso = (value: unknown): string | null => {
@@ -96,7 +101,10 @@ const iso = (value: unknown): string | null => {
  * Project a raw incident row (with its update rows) to the public shape. Unknown fields (author,
  * workspace ids, anything a caller attaches) are dropped; a row that is not publishable returns null.
  */
-export function sanitiseIncident(raw: unknown, rawUpdates: readonly unknown[] = []): Incident | null {
+export function sanitiseIncident(
+  raw: unknown,
+  rawUpdates: readonly unknown[] = [],
+): Incident | null {
   const row = (raw ?? {}) as Record<string, unknown>;
   const startedAt = iso(row.startedAt);
   const title = cleanText(row.title, 200);
@@ -149,7 +157,9 @@ async function runCheck(check: StatusCheck, timeoutMs: number): Promise<Componen
     await Promise.race([
       check.check(),
       new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(new Error('timeout')), timeoutMs);
+        timer = setTimeout(() => {
+          reject(new Error('timeout'));
+        }, timeoutMs);
       }),
     ]);
     return { id: check.id, name: COMPONENT_NAMES[check.id], status: 'operational' };
@@ -267,7 +277,9 @@ async function readPublished(
 ): Promise<StatusSnapshot | null> {
   try {
     const stored = await store.get(publicObjectKey(STATUS_OBJECT_PATH));
-    const parsed = statusSnapshotSchema.safeParse(JSON.parse(new TextDecoder().decode(stored.body)));
+    const parsed = statusSnapshotSchema.safeParse(
+      JSON.parse(new TextDecoder().decode(stored.body)),
+    );
     return parsed.success && verifySnapshot(parsed.data, key) ? parsed.data : null;
   } catch (error) {
     if (error instanceof ObjectNotFoundError || error instanceof SyntaxError) return null;
@@ -278,6 +290,14 @@ async function readPublished(
 const contentOf = (snapshot: UnsignedStatusSnapshot): string =>
   canonicalStatusJson({ ...snapshot, generatedAt: null });
 
+const withoutSignature = (s: StatusSnapshot): UnsignedStatusSnapshot => ({
+  version: s.version,
+  generatedAt: s.generatedAt,
+  overall: s.overall,
+  components: s.components,
+  incidents: s.incidents,
+});
+
 /** Build, sign and write `status/status.json` unless the published one is still current. */
 export async function publishStatus(deps: PublishStatusDeps): Promise<PublishStatusResult> {
   const now = (deps.now ?? (() => new Date()))();
@@ -285,8 +305,8 @@ export async function publishStatus(deps: PublishStatusDeps): Promise<PublishSta
   const current = await readPublished(deps.store, deps.signingKey);
   let reason: PublishStatusResult['reason'] = 'first';
   if (current !== null) {
-    const { signature: _signature, ...unsigned } = current;
-    if (contentOf(unsigned) !== contentOf(snapshot)) reason = 'changed';
+    if (contentOf(withoutSignature(current)) !== contentOf(withoutSignature(snapshot)))
+      reason = 'changed';
     else if (isStale(current, now, REPUBLISH_AFTER_SEC)) reason = 'refresh';
     else return { published: false, reason: 'unchanged', snapshot: current };
   }

@@ -4403,5 +4403,17 @@
   "offline": {
     "title": "Offline",
     "body": "You are offline. Saved court days and briefs remain available once synced."
+  },
+  "status": {
+    "components": {
+      "database": "Sign-in and matters",
+      "storage": "Document storage",
+      "court": "Parsing of documents you share"
+    },
+    "states": {
+      "operational": "Operational",
+      "degraded": "Degraded",
+      "down": "Down"
+    }
   }
 }

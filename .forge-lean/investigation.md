@@ -1,39 +1,53 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (feature; no live defect, no UI for the shipped WhatsApp link service)
+**Severity**: medium (greenfield P1 feature; no live defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 4 of #502: a settings UI to link a WhatsApp number (OTP), choose message categories and unlink, with one server action per operation, an i18n namespace in en/kn/ta with its catalog test, and cross-tenant-actions test entries. Depends on #678 and #679 (both merged).
+Build the lawyer memory engine in `packages/core` (PRD ME-1..ME-4): layers M1, M2, M3, M4, M6, M7 with confirm-before-save, scope enforced in SQL (RLS plus predicates, clerk column-scoped view), usage citations, per-item edit/delete/pause, a per-member pause-all switch, a judge/bench denylist, envelope-encrypted values, tenure metrics, matter-scoped embeddings with 24 h purge, and cross-tenant coverage. Spec is in the spike §5 and PRD ME-1..ME-4.
 
 ### What We Found
-- Core service exists (#678), verified on base `origin/milestone/instant-gtm-adoption` (c44d5405): `packages/core/src/whatsapp-link/link.ts:90` `requestWhatsAppOtp` (needs `consent`, 60s cooldown), `:166` `verifyWhatsAppOtp`, `:242` `getWhatsAppLink` (masked number), `:254` `setWhatsAppCategories`, `:275` `unlinkWhatsApp`; exported via `@causedeck/core/whatsapp-link` (`packages/core/package.json:37`). `WhatsAppDeps.sendOtp` is optional (`link.ts:32`): without it no code is delivered.
-- Outbound sender exists (#679): `packages/notifications/src/channels/whatsapp.ts:18` has templates only for `court.board`, `status.order`, `digest.end_of_day` (`WHATSAPP_CATEGORIES`, `:25`, exported as `@causedeck/notifications/whatsapp`). No OTP template exists.
-- No web UI or action references WhatsApp link: `grep whatsapp-link apps/web` finds nothing. Closest pattern: `apps/web/app/(app)/w/[slug]/settings/notifications/{actions.ts,page.tsx,preferences-form.tsx}` (`workspaceAction` + `WorkspaceScoped`, `ctx.tx`, `ctx.userId`; actions are thin async wrappers because a `'use server'` module can only export async functions).
-- Errors: core throws domain errors (`NOT_FOUND`, `CONFLICT`, `VALIDATION`, rate-limited); `apps/web/lib/matters/graph-deps.ts:30` `domainErrorCode` + the `guarded` pattern in `settings/case-watch/actions.ts:~64` map them to `ActionError`.
-- Page reads under a workspace tx via `inWorkspace` from `@causedeck/core/runtime` (`apps/web/lib/workspace-action.ts:105`).
-- Registry guard: `apps/web/__tests__/cross-tenant-actions.test.ts:93-` imports each actions module, `ACTIONS` (`:~118`) maps name to module, probe inputs in `inputs()` (`:~475`), and a per-feature "under B's own workspace" test (`:~937`) checks A's snapshot is unchanged. A new actions file without entries fails that test.
-- i18n: `packages/i18n/src/catalog.ts:7` `NAMESPACES` (one file per locale per namespace, asserted by `catalog.test.ts` "exactly one file per namespace"), top-level key list asserted at `catalog.test.ts:~92`; generated catalogs are committed (`packages/i18n/src/generated/`, regenerated with `pnpm --filter @causedeck/i18n i18n:types`, checked by the test "committed generated files match").
-- Nav: `apps/web/lib/settings-nav.ts` has fixed section lists; the push card is already placed as a card on the notifications page (`page.tsx` `PushPermissionCard`), so a WhatsApp card there needs no nav change.
+Verified against `origin/milestone/follow-up-continuity-memory` (216c5d7b).
+- Nothing exists yet: no `packages/core/src/memory/`, no `packages/validators/src/memory.ts`, no `packages/db/src/schema/memory.ts`, no memory migration. `apps/web/app/(app)/w/[slug]/memory/page.tsx:3` is a placeholder (UI is #73, out of scope).
+- Dependencies are in place: the automation engine exists (`packages/core/src/automation/`), and `memory_item` is a registered proposal kind at L2 (`packages/core/src/automation/matrix.ts:89`). Its handler is disabled: `packages/core/src/automation/handlers/disabled.ts:17`. The matter-graph domain exists (`packages/core/src/matter-graph/`). The issue text calls #33 and #47 closed "not_planned" or "invalid", but the code is on the base, so neither blocks.
+- Erasure already assumes these tables. `packages/core/src/lifecycle/deletion/memory.ts` has `MEMORY_TABLES = ['memory_embedding','memory_item']` (deleted by `workspace_id`, skipped if missing), and the job `packages/core/src/jobs/definitions/memory-erase.ts` exists. The real tables must keep `workspace_id` and be deletable children-first.
+- Fixture collision: `packages/core/src/lifecycle/__tests__/memory-erasure.test.ts:62-71` and `packages/db/src/__tests__/rls/vector.test.ts:47-57` run `create table memory_item` and `create table memory_embedding`. They will fail once the real migration creates those tables. Both must be changed to use the real tables or to drop the fixtures first.
+- Field encryption exists: `packages/storage/src/field-crypto.ts` `encryptField(dek, workspaceId, plaintext)` and `decryptField` (AAD = workspace id), described there as being for "memory values". It is the "storage package crypto helper" fallback the issue names.
+- Table conventions: `tenantTable()` from `packages/db/src/schema-helpers/tenant-table.ts` (FORCE RLS, `workspace_id`). Example: `packages/db/src/schema/whatsapp-link.ts`. The vector helper is `packages/db/src/vector.ts`. The clerk-view precedent is `packages/db/src/__tests__/rls/clerk-view.test.ts`, `packages/db/src/rls.ts` and migration `0022_matter_restriction.sql`.
+- Migrations are in `packages/db/migrations/` (not `drizzle/`). The newest is `20261025040000_whatsapp_inbound.sql`, and recent ones are timestamp-named.
+- `packages/core/src/automation/read-models.ts:155` already hides `memory_item` proposals from non-strategy viewers (clerks).
+- Domain registry: a new `memory` folder under `packages/core/src` needs an `index.ts`, an entry in `CORE_DOMAIN_DEPENDENCIES` (`packages/config/eslint/core-domains.js`), and a row in `docs/engineering/core-domains.md`, all asserted by `packages/core/src/domains.test.ts`.
 
 ### Root Cause
-Missing feature: #678 and #679 shipped the service and sender without a user-facing surface, so no member can opt in, verify, choose categories or unlink.
+Greenfield: the memory engine was never built. Automation, erasure and the UI were all written against its future tables.
 
 ### Affected Files
-- new `apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts` (actions)
-- new `apps/web/components/notifications/whatsapp-link-card.tsx` (client card)
-- `apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx` (load link, render card)
-- `packages/i18n/src/messages/{en,kn,ta}/whatsapp-link.json`, `packages/i18n/src/catalog.ts`, `packages/i18n/src/__tests__/catalog.test.ts`, regenerated `packages/i18n/src/generated/**`
-- `apps/web/__tests__/cross-tenant-actions.test.ts`; new `apps/web/__tests__/whatsapp-link-actions.test.ts`, `whatsapp-link-card.test.tsx`
+Listed as deliverables in `contract.json`:
+- `packages/validators/src/memory.ts`
+- `packages/db/src/schema/memory.ts`, `packages/db/src/schema/index.ts`, and a new migration
+- `packages/core/src/memory/*`
+- the memory handler in `packages/core/src/automation/handlers/`
+- the job, the registries and the guard tests
+- an ADR and the docs
 
 ### Sibling Sweep
-Same defect class (service without UI) not present elsewhere in the lane. Other actions modules are all registered in `cross-tenant-actions.test.ts`; the new module must be too. The nested `settings/integrations/*` modules show per-feature action files are accepted.
+- Other tenant tables follow the registry rules in CLAUDE.md: the root table list in `packages/db/src/index.test.ts`, the RLS catalog in `rls/sql.test.ts`, and the cross-tenant registry `packages/db/src/testing/cross-tenant-registry.ts`.
+- Core exports need `SERVICE_TESTS` cases (`packages/core/src/__tests__/cross-tenant/services.test.ts`).
+- The fixture-table collision (above) is the same pattern in two tests.
 
 ### History
-Service added in 15574312 (#678); sender in #679 (merged, PR #709). No prior UI attempt. Earlier `.forge-lean/*` files in the tree belong to #679 and are overwritten.
+`memory_item` was registered as a disabled L2 kind in #47. The erasure job (#303) and the `encryptField` helper (#216) anticipate this work. No prior attempt at #72.
 
 ### Recommendation
-Add five actions (request OTP, verify, set categories, unlink, get link) via `workspaceAction`; the input never names a user (`ctx.userId`). Add a WhatsApp card to the notifications settings page, a new `whatsappLink` i18n namespace, tests and registry entries. Outbound OTP delivery needs a provider-approved OTP template (an external provider action) and is deferred; until then the request action works without a sender and the code is not delivered.
+Implement in order:
+1. Validators.
+2. Schema and migration (RLS, clerk view, scope checks).
+3. Core `memory` domain: scope, propose, confirm, read, review, embedding.
+4. Enable the `memory_item` handler so accepting a proposal calls `confirmMemory`.
+5. Add a memory-purge job for embeddings.
+6. Register everything and add tests, an ADR and docs.
+
+Confirm-before-save is the invariant: only `confirmMemory` and lawyer-authored notes insert `memory_item`. The embedding generator should use the mock provider in CI. Scope the cross-tenant, clerk and cross-matter tests at the SQL level. If `packages/ai` has no embedding entry point, call the existing AI gateway only through its public interface. Do not add one beyond the gateway.
 
 ### Related Issues
-#502 (parent), #678, #679 (done), #680 (inbound webhook sibling), #488 (provider residency review).
+#1 (parent), #33, #47 (deps), #21, #73, #74, #81, #112.

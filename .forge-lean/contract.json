@@ -2,227 +2,462 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
+   "quote": "`proposeMemory` writes only `memory_proposal` rows (status `proposed`); no `memory_item` row exists until `confirmMemory` runs; a test asserts that no code path inserts a `memory_item` without a confirmed proposal or a lawyer-authored note. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "with a server action per operation",
+   "quote": "Each memory item has layer (M1, M2, M3, M4, M6, M7), key, value, scope (user, workspace, matter), source anchor or `manual`, status (`active`, `paused`, `deleted`), confidence and confirmation state; layers outside that set are rejected. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "an i18n namespace in en/kn/ta with catalog test",
+   "quote": "Scope in SQL: a matter-scoped item is returned only for its own matter; reading it with another matter's id returns nothing at the query level (RLS plus predicate), proven by tests that attempt cross-matter reads. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "and cross-tenant-actions test entries",
+   "quote": "M4 court notes are private to the author by default; marking one chamber-shared requires owner role and is audited; non-owners cannot flip it. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Settings UI to link a WhatsApp number (OTP)",
-   "disposition": "defer",
-   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
+   "quote": "Clerk reads of M3, M4 and strategy-typed M1/M2 values return nothing via the column-scoped view and the policy function; an e2e API test covers each layer. [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "M6 relationship memory accepts only a person linked as an existing client or professional contact; creating M6 for a non-client is rejected. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "`proposeFromEdit` turns a repeated edit pattern (same edit made 3 times across 3 briefs or drafts) into a single rule proposal with evidence ('You added carry vakalat copy to the last 3 first hearings. Save?'); dismissed proposals are not re-proposed for 60 days. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "`proposeFromCorrection` creates M7 alias proposals from user corrections to party or matter matching (for example 'Rajan' = 'M. Rajan s/o Murugan') and dedupes with existing aliases. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "Edit, pause and delete work per item; delete removes the value immediately and queues embedding purge so embeddings are gone within 24 h, verified by a time-travel test; export includes active items. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "`recordUsage` logs each time memory influences an output (brief, draft, matching) with the item id; `getMemory` for output includes citations so the UI can render 'because of your note on \u003cdate>'. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "Memory values are envelope-encrypted with the workspace key (via #21 utilities when available, else the storage package's crypto helper) and never sent to a provider outside India-only mode; no memory content is used for training. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "`tenureMetrics` returns correction rate and confirmation rate by tenure week and brief-accepted-unedited rate, aggregate within the workspace only. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R13",
+   "quote": "No memory item or proposal can describe a judge or bench (denylist check on keys and a content guard); attempts are rejected with a clear error. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "Per-member 'pause all memory' switch stops proposals and use immediately. [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both. [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R16",
+   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R17",
+   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
-   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
+   "path": "packages/validators/src/memory.ts",
+   "change": "zod: MemoryLayer (M1,M2,M3,M4,M6,M7 only), MemoryScope, MemoryStatus, MemoryItem, MemoryProposal, MemoryKey registry per layer (examples M1.courts, M2.brief_format, M2.always_carry, M2.reminder.evening_time, M2.client_update_tone, M3.synopsis, M4.hall_note, M6.client_language, M7.party_alias), judge/bench key denylist and content guard patterns, strategy-typed key flags. Export it from packages/validators/src/index.ts and add memory.test.ts.",
    "requirements": [
-    "R1",
-    "R2"
+    "R2",
+    "R13",
+    "R17"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
-   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
+   "path": "packages/validators/src/index.ts",
+   "change": "Re-export ./memory",
    "requirements": [
-    "R1"
+    "R17"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
-   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
+   "path": "packages/db/src/schema/memory.ts",
+   "change": "tenantTable definitions memory_item, memory_proposal, memory_embedding (vector via packages/db/src/vector.ts, matter_id column), memory_usage, plus a per-member memory-pause table or column (pause-all switch). Columns per the issue's data contract. Keep workspace_id on each so lifecycle MEMORY_TABLES erasure still works.",
+   "requirements": [
+    "R2",
+    "R14",
+    "R16"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export the memory schema",
+   "requirements": [
+    "R16"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/db/migrations/20261025050000_memory.sql",
+   "change": "New migration (name must sort after 20261025040000_whatsapp_inbound; renumber if the base took it) with the tables, RLS policies on app.workspace_id, matter-scope and owner/shared predicates, a policy function for clerk denial, column-scoped view memory_item_clerk_v, and the matching meta/_journal.json entry and snapshot as the repo's migration tooling requires.",
+   "requirements": [
+    "R3",
+    "R4",
+    "R5",
+    "R16"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/core/src/memory/scope.ts",
+   "change": "canReadMemory and SQL scope predicates (matter scope, M4 private-by-default, chamber-shared, clerk strategy denial).",
+   "requirements": [
+    "R3",
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/core/src/memory/propose.ts",
+   "change": "proposeMemory (writes memory_proposal only, honours pause-all, denylist, M6 person check), proposeFromEdit (3 edits across 3 outputs becomes one proposal with evidence; 60-day dismissed suppression), proposeFromCorrection (M7 alias proposals, deduped against existing aliases).",
+   "requirements": [
+    "R1",
+    "R6",
+    "R7",
+    "R8",
+    "R13",
+    "R14"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/core/src/memory/confirm.ts",
+   "change": "confirmMemory (only path that inserts memory_item from a proposal, encrypting the value with encryptField), lawyer-authored note creation, editMemory, deleteMemory (immediate value removal, queue embedding purge), pauseMemory, set chamber-shared (owner only, audited), per-member pause-all.",
+   "requirements": [
+    "R1",
+    "R4",
+    "R9",
+    "R11",
+    "R14"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/core/src/memory/read.ts",
+   "change": "getMemory (with citations), memoryFor({matterId?, layers, purpose}), recordUsage, export of active items; decrypts values; returns nothing when the member has paused all memory.",
+   "requirements": [
+    "R3",
+    "R5",
+    "R9",
+    "R10",
+    "R11",
+    "R14"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/core/src/memory/review.ts",
+   "change": "monthlyReview and tenureMetrics (correction rate and confirmation rate by tenure week, brief-accepted-unedited rate; workspace-only aggregates).",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/core/src/memory/embedding.ts",
+   "change": "Matter-scoped embeddings through the existing AI gateway (mock provider in CI, India-only mode respected, no memory content to providers outside it), and purge of embeddings of deleted items.",
+   "requirements": [
+    "R9",
+    "R11"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/core/src/memory/index.ts",
+   "change": "Public domain entry point exporting the services above and their types; no `any`.",
+   "requirements": [
+    "R17"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/core/package.json",
+   "change": "Add the ./memory subpath export alongside the other domains; only if the other domains have one there. Match the existing pattern.",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/core/src/automation/handlers/disabled.ts",
+   "change": "Remove memoryItemHandler from the disabled list; add an enabled handler (new file packages/core/src/automation/handlers/memory-item.ts, wired in handlers/index.ts) that validates the draft and lets acceptance call the memory confirm path through the memory index.ts. Update the automation tests that assert memory_item is disabled (handlers.test.ts:276, engine.test.ts:112).",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D4",
-   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
-   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
-   "change": "same keys, Kannada",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
-   "change": "same keys, Tamil",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'whatsapp-link' to NAMESPACES",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
-   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
    "id": "D15",
-   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
-   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
+   "path": "packages/core/src/automation/handlers/memory-item.ts",
+   "change": "Enabled memory_item proposal handler (see D14).",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
+   "path": "packages/core/src/automation/handlers/index.ts",
+   "change": "Register the enabled memoryItemHandler.",
    "requirements": [
     "R1"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/core/src/jobs/definitions/memory-purge.ts",
+   "change": "Job memory.purge: purge embeddings of deleted items within 24 h. Plus memory-review-prepare.ts (monthly review prepare). Register in packages/core/src/jobs/registry.ts and add schedules in apps/worker/src/schedules.ts. (The issue's apps/worker/src/jobs path does not exist; jobs live in core/src/jobs/definitions.)",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/core/src/jobs/definitions/memory-review-prepare.ts",
+   "change": "Job memory.review-prepare calling monthlyReview.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Register the two new jobs.",
+   "requirements": [
+    "R9",
+    "R12"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/worker/src/schedules.ts",
+   "change": "Schedule the purge sweep and the monthly review prepare.",
+   "requirements": [
+    "R9",
+    "R12"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add the new job names to the expected list; update schedules.test.ts in the same folder.",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add the `memory` domain to CORE_DOMAIN_DEPENDENCIES with only the domains it imports (expected: audit, workspaces, matter-graph/matters, ai); add a row and edge lines in docs/engineering/core-domains.md. If memory is imported by automation, check that no cycle forms (domains.test.ts cycle check); the handler may need to live in memory with the automation registration inverted if so.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document the memory domain and its edges.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Add SERVICE_TESTS entries for each new runtime export of @causedeck/core/memory (or NOT_A_SERVICE with a reason), with real cases in packages/core/src/__tests__/cross-tenant/services.test.ts (B on A is denied or sees nothing; A unchanged).",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Cross-tenant memory cases, including a user belonging to both workspaces.",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add the new tables to the root table list; add RLS catalog entries in packages/db/src/__tests__/rls/sql.test.ts and the TABLE_TESTS/registry plus two-tenant seeders. Replace the memory_embedding fixture table in packages/db/src/__tests__/rls/vector.test.ts with the real table, or drop the fixture first.",
+   "requirements": [
+    "R16"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "packages/core/src/lifecycle/__tests__/memory-erasure.test.ts",
+   "change": "Stop creating fixture tables memory_item and memory_embedding (they now exist); seed real rows. Check packages/core/src/lifecycle/__tests__/export.memory.test.ts the same way.",
+   "requirements": [
+    "R9",
+    "R16"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "packages/core/src/memory/__tests__/memory.test.ts",
+   "change": "Tests (split into files as needed under packages/core/src/memory/__tests__/): propose-confirm invariant, layer and field validation, scope matrix and cross-matter reads, M4 privacy and owner-only sharing, clerk denial per layer, M6 check, edit-pattern proposals and 60-day suppression, correction aliases, delete/pause/export, 24 h purge time-travel, usage citations, encryption at rest, tenureMetrics, denylist, pause-all, cross-tenant.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R9",
+    "R10",
+    "R11",
+    "R12",
+    "R13",
+    "R14",
+    "R15"
+   ]
+  },
+  {
+   "id": "D29",
+   "path": "packages/db/src/seed/memory-fixtures.ts",
+   "change": "Seed fixtures for memory items (two-tenant) used by tests; export through packages/db/src/seed/index if the seed folder has one. The issue lists packages/db/src/seeds, but the repo's folder is seed.",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D30",
+   "path": "docs/adr/0037-memory-scopes-and-confirmation.md",
+   "change": "ADR: memory scopes, confirm-before-save, clerk view, encryption, no-judge rule. Use the next free ADR number on the branch (last seen 0036).",
+   "requirements": [
+    "R1",
+    "R4",
+    "R5",
+    "R13"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
+   "what": "The automation ladder: L2 default for memory_item (packages/core/src/automation/matrix.ts:89), no L5 path (scripts/check-no-l5.ts), and the clerk filter on memory_item proposals (packages/core/src/automation/read-models.ts:155)."
   },
   {
    "id": "P2",
-   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
+   "what": "Memory erasure (#303): MEMORY_TABLES, requestMemoryErasure, runMemoryErasure and the memory.erase job in packages/core/src/lifecycle/deletion/memory.ts and packages/core/src/jobs/definitions/memory-erase.ts keep working on the real tables (workspace_id deletion, embeddings before items)."
   },
   {
    "id": "P3",
-   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
+   "what": "Core domain boundaries: other domains are imported only via index.ts along declared edges, with no cycles (packages/core/src/domains.test.ts)."
+  },
+  {
+   "id": "P4",
+   "what": "The storage field-crypto format and AAD (packages/storage/src/field-crypto.ts) is used unchanged."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/memory src/domains.test.ts src/automation src/lifecycle/__tests__/memory-erasure.test.ts src/lifecycle/__tests__/export.memory.test.ts src/jobs/registry.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/memory.test.ts src/index.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+  },
+  {
+   "id": "V5",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/follow-up-continuity-memory  # then run the scoped typecheck, lint and test commands it prints"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
-   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
+   "choice": "Encrypt memory values with encryptField/decryptField from @causedeck/storage (workspace DEK, AAD = workspace id).",
+   "justification": "packages/storage/src/field-crypto.ts:1-2 names core memory values as its use; #21 is closed and the helper is on the base.",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
-   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
-   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
-   "source": "spec"
-  },
-  {
-   "id": "K4",
-   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
-   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
+   "choice": "New migration goes in packages/db/migrations with a timestamp name, not packages/db/drizzle as the issue says.",
+   "justification": "packages/db/migrations holds all migrations, newest 20261025040000_whatsapp_inbound.sql; CLAUDE.md: use the next free number and renumber if the base took it.",
    "source": "doc"
   },
   {
+   "id": "K3",
+   "choice": "Jobs are defined in packages/core/src/jobs/definitions and registered in the registry, not apps/worker/src/jobs.",
+   "justification": "packages/core/src/jobs/definitions/memory-erase.ts is the precedent; apps/worker has no jobs folder.",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "The enabled memory_item handler may need the dependency edge automation to memory or memory to automation; pick the one that keeps CORE_DOMAIN_DEPENDENCIES acyclic.",
+   "justification": "packages/config/eslint/core-domains.js:29 lists the automation edges; domains.test.ts checks cycles. The new edge must be recorded there and in docs/engineering/core-domains.md (CLAUDE.md registry table).",
+   "source": "lint"
+  },
+  {
    "id": "K5",
-   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
-   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
+   "choice": "The existing fixture-table tests for memory_item and memory_embedding are changed to use the real tables.",
+   "justification": "packages/core/src/lifecycle/__tests__/memory-erasure.test.ts:62-71 and packages/db/src/__tests__/rls/vector.test.ts:47-57 would fail on `create table` once the migration lands.",
    "source": "precedent"
   }
  ]

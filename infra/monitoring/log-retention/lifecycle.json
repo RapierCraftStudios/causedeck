@@ -1,0 +1,53 @@
+{
+  "_comment": "Applied to the log bucket (mc ilm import, mc retention set). Objects are locked 180 days in COMPLIANCE mode, so nobody, including the Loki compactor and the root user, can delete earlier; they expire after 200 days, the documented Loki default.",
+  "bucket": "causedeck-logs",
+  "region": "ap-south-1",
+  "minimumRetentionDays": 180,
+  "objectLock": {
+    "mode": "COMPLIANCE",
+    "days": 180
+  },
+  "lifecycle": {
+    "Rules": [
+      {
+        "ID": "expire-logs-after-200-days",
+        "Status": "Enabled",
+        "Filter": {
+          "Prefix": ""
+        },
+        "Expiration": {
+          "Days": 200
+        }
+      }
+    ]
+  },
+  "writerPolicy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:DeleteObject"
+        ],
+        "Resource": [
+          "arn:aws:s3:::causedeck-logs",
+          "arn:aws:s3:::causedeck-logs/*"
+        ]
+      },
+      {
+        "Effect": "Deny",
+        "Action": [
+          "s3:PutLifecycleConfiguration",
+          "s3:PutBucketObjectLockConfiguration",
+          "s3:BypassGovernanceRetention"
+        ],
+        "Resource": [
+          "arn:aws:s3:::causedeck-logs"
+        ]
+      }
+    ]
+  }
+}

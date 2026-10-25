@@ -40,3 +40,6 @@ CI lint failed on two `@typescript-eslint/no-base-to-string` errors (`String(For
 
 ## CI lint fix
 CI lint failed with no log. Removed committed .eslintcache files (apps/web, core, db, i18n, validators) and applied prettier to 4 files (core cross-tenant services.test.ts, db schema/index.ts, validators research.ts + test). eslint on changed files passes.
+
+## CI tenancy fix
+The `tenancy` job also runs `test:export-coverage`. The new tenant tables `research_note` and `research_provider` had no exporter and were not in the erase order. Added `ws('research_note')` and `ws('research_provider')` to the workspace exporter in `lifecycle/export/exporters.ts`, and both tables ahead of `matter` in `lifecycle/deletion/erase.ts`. The export-coverage test passes locally. The Testcontainers cross-tenant suite was not run (no log, no Docker here).

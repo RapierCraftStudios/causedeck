@@ -102,11 +102,13 @@ jobs:
       # No database or Compose stack: the specs serve apps/site/out (e2e/site/static-server.mjs).
       - name: Playwright (smoke, axe, visual)
         env:
-          UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots && '--update-snapshots' || '' }}
-        run: >-
-          docker run --rm --network host --ipc host -e CI=true
-          -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
-          node_modules/.bin/playwright test -c playwright.site.config.ts $UPDATE_SNAPSHOTS
+          UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots }}
+        run: |
+          extra=()
+          if [ "$UPDATE_SNAPSHOTS" = "true" ]; then extra+=(--update-snapshots); fi
+          docker run --rm --network host --ipc host -e CI=true \
+            -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE" \
+            node_modules/.bin/playwright test -c playwright.site.config.ts "${extra[@]}"
       - name: Upload the report and test artifacts
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

@@ -55,3 +55,9 @@ The reported `turbo: command not found` (exit 127) was an environment/PATH failu
 
 ## Merge-fix note (#106, third merge)
 `turbo: command not found` (exit 127) was `turbo` missing from the check shell's PATH, not a code conflict. `pnpm exec turbo run typecheck --concurrency=2` passes 24/24 on the merged tree. No source changes.
+
+## Merge-fix note (#106, fourth)
+`turbo: command not found` (exit 127) is a PATH problem in the check shell, not a code conflict. `pnpm exec turbo run typecheck` passes 24/24. No source changes.
+
+### Post-merge check
+After merging the base, `turbo` was not on PATH (exit 127), which is an environment problem rather than a code conflict. `pnpm exec turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` exits 0 (22/22 tasks). V1-V3 re-ran green on the merged tree. The `runChecks` rename in 063c99c3 already removed the same-name collision with doctor.ts. No code change was needed.

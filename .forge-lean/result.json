@@ -107,6 +107,11 @@
    "id": "V4",
    "command": "checks.mjs",
    "exit": 0
+  },
+  {
+   "id": "M1",
+   "command": "pnpm exec turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'",
+   "exit": 0
   }
  ],
  "tests": [

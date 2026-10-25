@@ -24,7 +24,9 @@ const ANCHORED: SourcedLine = {
 describe('brief patterns (#61)', () => {
   it('rejects a line that has no anchor, no source reference and is not manual', () => {
     const bare = { source_type: 'document' as const, source_ref: null, anchor_id: null };
-    expect(() => assertProvenance(bare)).toThrow(/anchor or a source reference/);
+    expect(() => {
+      assertProvenance(bare);
+    }).toThrow(/anchor or a source reference/);
     expect(() =>
       render(
         <ProvenanceLink
@@ -36,13 +38,15 @@ describe('brief patterns (#61)', () => {
   });
 
   it('accepts an anchored, a referenced and a manual line', () => {
-    expect(() => assertProvenance(ANCHORED)).not.toThrow();
-    expect(() =>
-      assertProvenance({ ...ANCHORED, anchor_id: null, source_ref: 'doc:1' }),
-    ).not.toThrow();
-    expect(() =>
-      assertProvenance({ source_type: 'manual', source_ref: null, anchor_id: null }),
-    ).not.toThrow();
+    expect(() => {
+      assertProvenance(ANCHORED);
+    }).not.toThrow();
+    expect(() => {
+      assertProvenance({ ...ANCHORED, anchor_id: null, source_ref: 'doc:1' });
+    }).not.toThrow();
+    expect(() => {
+      assertProvenance({ source_type: 'manual', source_ref: null, anchor_id: null });
+    }).not.toThrow();
   });
 
   it('shows the chip on screen and a short footnote for print', () => {

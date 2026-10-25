@@ -10,6 +10,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { type Result } from '../../../../../lib/safe-action.ts';
+import { memoryDeps } from '../../../../../lib/memory/deps.ts';
 import {
   WorkspaceScoped,
   workspaceAction,
@@ -52,7 +53,7 @@ export interface ReviewResult {
   pausedItems: number;
 }
 
-const deps = (ctx: WorkspaceActionCtx) => ({ db: ctx.tx });
+const deps = (ctx: WorkspaceActionCtx) => memoryDeps(ctx.tx);
 const actor = (ctx: WorkspaceActionCtx) => ({ workspaceId: ctx.workspaceId, userId: ctx.userId });
 const options = (matterId: string | null | undefined) =>
   matterId === undefined ? {} : { matterId };

@@ -5,6 +5,7 @@ import { PermissionDenied } from '@causedeck/ui/patterns';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { memoryDeps } from '../../../../../../lib/memory/deps.ts';
 
 import { toCardView } from '../../../../../../lib/memory/memory-state.ts';
 import { can } from '../../../../../../lib/workspace-context.ts';
@@ -32,7 +33,7 @@ export default async function MemoryReviewPage({ params }: ReviewPageProps) {
   const runtime = await import('@causedeck/core/runtime');
   const memory = await import('@causedeck/core/memory');
   const candidates = await runtime.inWorkspace(scope, (tx) =>
-    memory.listReviewCandidates({ db: tx }, scope),
+    memory.listReviewCandidates(memoryDeps(tx), scope),
   );
   return (
     <ReviewStepper

@@ -79,7 +79,9 @@ export function ProposalTray({
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
     if (isTypingTarget(event.target)) return;
-    const action = KEYS[event.key.toLowerCase() as keyof typeof KEYS];
+    const action = (KEYS as Record<string, (typeof KEYS)[keyof typeof KEYS] | undefined>)[
+      event.key.toLowerCase()
+    ];
     const card = (event.target as Element).closest<HTMLElement>('[data-proposal-id]');
     if (action === undefined || card === null || locked || viewOnly) return;
     const id = card.dataset.proposalId ?? '';
@@ -96,7 +98,7 @@ export function ProposalTray({
       aria-labelledby={headingId}
       aria-describedby={viewOnly ? undefined : hintId}
       className={cn(
-        'border-line bg-surface-raised sticky top-0 z-10 flex flex-col gap-3 rounded-xl border p-4',
+        'border-line bg-surface-raised z-sticky sticky top-0 flex flex-col gap-3 rounded-xl border p-4',
         'font-sans xl:static',
         className,
       )}

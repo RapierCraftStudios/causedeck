@@ -4,6 +4,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { memoryDeps } from '../../../../../../../lib/memory/deps.ts';
 
 import { MemoryCards } from '../../../memory/_components/memory-cards.tsx';
 import { toCardView } from '../../../../../../../lib/memory/memory-state.ts';
@@ -32,7 +33,7 @@ export default async function MatterMemoryPage({ params }: MatterMemoryPageProps
   let items;
   try {
     items = await inWorkspace(scope, (tx) =>
-      listMemoryWithUsage({ db: tx }, scope, { matterId: id }),
+      listMemoryWithUsage(memoryDeps(tx), scope, { matterId: id }),
     );
   } catch {
     notFound();

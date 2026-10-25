@@ -4644,6 +4644,7 @@ export type Messages = {
       statement: string;
       shortcuts: string;
       offline: string;
+      dismiss: string;
       dismissed: string;
       saved: string;
     };

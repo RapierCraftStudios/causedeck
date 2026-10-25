@@ -37,6 +37,7 @@ vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(page.context),
 }));
 vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
+vi.mock('../lib/memory/deps.ts', () => ({ memoryDeps: (db: unknown) => ({ db }) }));
 vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/memory', () => core);
 vi.mock('../app/(app)/w/[slug]/memory/_components/memory-list.tsx', () => ({

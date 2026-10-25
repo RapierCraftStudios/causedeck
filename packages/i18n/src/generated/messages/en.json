@@ -4643,6 +4643,7 @@
       "statement": "Remember {title}: {value}?",
       "shortcuts": "S saves, E edits, X dismisses the focused suggestion.",
       "offline": "You are offline. Suggestions can be decided when you are back online.",
+      "dismiss": "Dismiss",
       "dismissed": "Suggestion dismissed",
       "saved": "Saved to memory"
     },

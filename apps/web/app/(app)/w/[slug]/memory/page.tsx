@@ -9,6 +9,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { isDev } from '../../../../../lib/env.ts';
+import { memoryDeps } from '../../../../../lib/memory/deps.ts';
 import {
   parseMemoryTab,
   reviewDue,
@@ -54,7 +55,7 @@ export default async function MemoryPage({ params, searchParams }: MemoryPagePro
   const { items, proposals, lastReview, tenure, pausedAll } = await runtime.inWorkspace(
     scope,
     async (tx) => {
-      const deps = { db: tx };
+      const deps = memoryDeps(tx);
       // One after the other: they share the workspace transaction.
       const i = await memory.listMemoryWithUsage(deps, scope);
       const p = await memory.listMemoryProposals(deps, scope);

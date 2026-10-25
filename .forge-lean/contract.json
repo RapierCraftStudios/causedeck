@@ -2,104 +2,107 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "An obligation requires `source_type`, `source_ref` and an anchor (or `manual`), description, owner, due date (nullable only for undated tasks) and status; creation without provenance is rejected.",
+   "quote": "The queue groups obligations as Overdue, Today, This week, Later, Undated, each group collapsible with a count, overdue first and sorted by age; group state persists per member.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "A DB check plus service guard enforce that status `closed` requires a `closed_reason` in (`completed_task`, `lawyer_action`, `not_applicable`) and, for `not_applicable`, non-empty reason text; a direct SQL update violating this fails.",
+   "quote": "Each row shows description, matter and case number, owner avatar, due label with relative text ('due Fri 23 Oct, 3 days'), kind icon, status and a Provenance Chip to the source line; overdue uses an icon plus text, not colour alone.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`reconcileOrder(orderId)` returns the order's directions each marked `obligation`, `not_applicable` (with reason) or `unresolved`; an order is `reconciled` only when no direction is unresolved, and the unresolved count feeds brief readiness (#60).",
+   "quote": "Closing an obligation always opens the close dialog requiring a reason (completed task, lawyer action, not applicable plus text); there is no one-tap silent close, including via swipe or keyboard.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Proposed obligations from extraction (#46) arrive as L2 proposals; confirming creates the obligation with the original anchor and records the confirmer.",
+   "quote": "On touch devices, swipe right opens 'Done' (which opens the close dialog) and swipe left opens 'Reschedule' (date picker plus mandatory reason); a visible button and keyboard shortcut provide the same actions.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Defects: `raiseDefect` creates a defect obligation with a cure deadline and moves the proceeding to `defects`; `representFiling` moves to `re_presented`; allocation of SR (Madras) or FR (Karnataka) numbers is stored on the proceeding without implying court status.",
+   "quote": "Each item shows one drafted next step (task, reminder to the clerk, or letter to the client) as a collapsed card; 'Use' creates a task or an internal reminder immediately and a client letter as a draft that is never sent.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Certified copies move through applied -> ready -> collected, each transition dated and sourced, and surface in the queue as obligations with a follow-up reminder.",
+   "quote": "Filters (matter, owner, kind, source, group) and a text search narrow the queue within 100 ms client-side and are reflected in the URL.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "`queryQueue` groups obligations as `overdue`, `today`, `this_week`, `later`, `undated`, filterable by matter, owner, kind and source; overdue sort first by age; p95 \u003c 150 ms on the seeded dataset and one query per group.",
+   "quote": "Defects tab lists registry defects with cure-by dates and proceeding state; Certified copies tab shows applied, ready and collected with next action.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "Rescheduling an obligation requires a reason, preserves history in `obligation_event`, and is distinguished from a miss in the missed-obligation metric (deliberate reschedule is not a miss).",
+   "quote": "Reorder and group changes animate with layout animation (220 ms) and reduced motion disables them.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Reminders: a job emits in-app reminders for obligations due within the member's lead time and overdue obligations once per day; idempotent; delivery via #23.",
+   "quote": "States: empty ('Nothing outstanding. Orders you confirm will add obligations here'), skeleton, error with retry, offline (read from cache; mutations queue and show 'Will sync'), permission-denied (viewer read-only, clerk without strategy text).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "Roles: owner and advocate manage all; junior manages assigned matters; clerk can manage tasks, defects and copies but not strategy notes; viewer read-only. All checked by `can()` and covered by tests.",
+   "quote": "Keyboard: `j`/`k` move, `x` select, `d` done (dialog), `r` reschedule, `a` add, `o` open detail, `/` search, `g o` go to queue, `?` help; all are listed in the shortcut sheet.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Every mutation writes an `audit_event`; undo of an L3 task creation cascades correctly (#47 contract).",
+   "quote": "Light and dark themes meet AA; visual baselines at 360, 768, 1280 px.",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "e2e workflow update_snapshots and visual job generate and compare baselines in CI"
   },
   {
    "id": "R12",
-   "quote": "Obligation due dates are never computed from a generated legal rule; rule-driven limitation dates live in #84 behind a flag.",
+   "quote": "Initial JS \u003c= 180 KB gzip, Lighthouse performance and accessibility >= 95, p95 server action \u003c 300 ms.",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "Lighthouse CI (e2e/lighthouserc.json, add an obligations config) and next build bundle check run only in CI"
   },
   {
    "id": "R13",
-   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both.",
+   "quote": "The surface never auto-sends anything; letter and reminder next steps only create drafts or internal tasks.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R14",
-   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite.",
+   "quote": "Storybook stories exist for every new component with all states (default, empty, loading, error, offline, denied) and interaction tests.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R15",
-   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types.",
+   "quote": "Playwright visual baselines exist for light and dark themes at 360, 768 and 1280 px.",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "Baselines are generated only by the e2e workflow update_snapshots (CLAUDE.md: no Playwright locally); the visual spec is delivered here"
   },
   {
    "id": "R16",
-   "quote": "Strategy-bearing descriptions are hidden from clerks via column-scoped views.",
-   "disposition": "defer",
-   "why": "The obligation table has no strategy-note column or flag to scope on; defining one (and the clerk view) is a product/schema decision separate from the service. Clerk role rules in R10 are still delivered.",
-   "verify": "in_lane"
+   "quote": "axe reports zero serious or critical violations on every state of the surface, and the full flow is operable by keyboard alone.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "e2e a11y job (e2e/tests/a11y) runs axe in CI; the spec is delivered here"
   },
   {
    "id": "R17",
-   "quote": "Jobs: `obligation.reminders` (daily 07:00 IST per workspace).",
+   "quote": "All user-facing strings come from `next-intl` catalogs (`en` complete, `ta`/`kn` keys stubbed); no hard-coded copy.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -107,245 +110,363 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/validators/src/obligation.ts",
-   "change": "zod ObligationInput, ObligationPatch, CloseInput, DefectInput, CertifiedCopyInput, QueueQuery, ReconcileInput; provenance required; reschedule needs reason; add package export and index test entry if the package lists subpaths",
+   "path": "packages/core/src/obligations/views.ts",
+   "change": "New read models: listDefects, listCertifiedCopies and a queue hydration (matter title and case number, owner name, source quote anchor) scoped by inObligationScope and visibleMatters; export from index.ts",
    "requirements": [
-    "R1",
     "R2",
-    "R8",
-    "R15"
+    "R7"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/obligation-tracking.ts",
-   "change": "new tenant tables obligation_event, defect, certified_copy (workspace_id, composite FKs, RLS via tenantTable), export from schema/index.ts; extend obligation only with columns truly missing (keep existing enum names)",
-   "requirements": [
-    "R5",
-    "R6",
-    "R8",
-    "R14"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/db/migrations",
-   "change": "one new timestamp-named migration + regenerated snapshot/journal for the three tables with RLS; closure check already exists (docket.ts obligation_closure_chk)",
-   "requirements": [
-    "R2",
-    "R14"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/auth/src/policy/actions.ts",
-   "change": "add obligation.read/write (and matrix.ts entries, can() snapshot) with owner/advocate all, junior assigned matters, clerk tasks/defects/copies, viewer read",
-   "requirements": [
-    "R10"
-   ]
-  },
-  {
-   "id": "D5",
    "path": "packages/core/src/obligations/index.ts",
-   "change": "domain barrel plus create.ts, update.ts, close.ts, reopen.ts, due.ts (IST arithmetic, working-day hook, no rule-derived dates), audit_event on every mutation; export from core package.json",
-   "requirements": [
-    "R1",
-    "R2",
-    "R8",
-    "R11",
-    "R12"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/core/src/obligations/reconcile.ts",
-   "change": "reconcileOrder over order.operativeDirections linked by source_order_id + anchor_id; unresolved count exposed for #60",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/core/src/obligations/defects.ts",
-   "change": "raiseDefect, cureDefect, representFiling via transitionProceeding (never write proceeding.state directly); SR/FR stored on proceeding",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/core/src/obligations/certified-copies.ts",
-   "change": "applied->ready->collected transitions, dated and sourced, backed by an obligation with follow-up",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/core/src/obligations/queue.ts",
-   "change": "queryQueue: one query per group, filters, overdue by age",
+   "change": "Export the views",
    "requirements": [
     "R7"
    ]
   },
   {
-   "id": "D10",
-   "path": "packages/core/src/obligations/reminders.ts",
-   "change": "reminder selection + notify via @causedeck/notifications, once per day per member",
+   "id": "D3",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register new core runtime exports under SERVICE_TESTS (cases in packages/core/src/__tests__/cross-tenant/services.test.ts)",
    "requirements": [
-    "R9"
+    "R7"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Cases: tenant B listing defects/copies/hydrated queue sees nothing of A; A unchanged",
+   "requirements": [
+    "R7"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/ui/src/patterns/obligation-row/obligation-row.tsx",
+   "change": "Swipe right=Done (opens dialog), left=Reschedule, threshold 72 px; labels reschedule not snooze; kind icon, status; 220 ms layout animation with reduced-motion fade; keep existing props working",
+   "requirements": [
+    "R2",
+    "R4",
+    "R8"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/ui/src/patterns/obligation-row/obligation-row.stories.tsx",
+   "change": "Stories for default, empty, loading, error, offline, denied with play tests",
+   "requirements": [
+    "R14"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/ui/src/patterns/obligation-row/obligation-row.test.tsx",
+   "change": "Update tests for swipe directions and labels",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/ui/src/patterns/index.ts",
+   "change": "Export any new pattern parts (DueLabel, GroupHeader)",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/i18n/src/messages/en/obligations.json",
+   "change": "Complete en catalog for the surface",
+   "requirements": [
+    "R17",
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/i18n/src/messages/ta/obligations.json",
+   "change": "Stub keys",
+   "requirements": [
+    "R17"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/core/src/jobs/definitions/obligation-reminders.ts",
-   "change": "defineJob obligation.reminders (+ per-workspace fan-out), register in jobs/registry.ts; schedule 07:00 Asia/Kolkata in apps/worker/src/schedules.ts",
+   "path": "packages/i18n/src/messages/kn/obligations.json",
+   "change": "Stub keys",
    "requirements": [
-    "R9",
     "R17"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/core/src/automation/handlers/obligation-from-direction.ts",
-   "change": "route confirm through createObligation guards (original anchor, confirmer recorded) keeping undo payload shape",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "Add 'obligations' to NAMESPACES",
    "requirements": [
-    "R4",
-    "R11"
+    "R17"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/core/src/obligations/__tests__/obligations.test.ts",
-   "change": "lifecycle, reconcile, defects, copies, queue (+perf), permissions, direct-SQL closure violation, audit, undo cascade; sibling test files per area allowed",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Add obligations to the expected namespace list",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R5",
-    "R6",
-    "R7",
-    "R8",
-    "R10",
-    "R11",
-    "R12"
+    "R17"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/core/src/__tests__/cross-tenant/obligations.test.ts",
-   "change": "B on A denied or sees nothing, A unchanged, incl. two-workspace user; register in packages/db/src/testing/cross-tenant-registry.ts (SERVICE_TESTS / NOT_A_SERVICE)",
+   "path": "apps/web/lib/obligations/queue-state.ts",
+   "change": "URL param parse/serialise for filters, search, tab; client-side filter and next-step suggestion (deterministic, no send)",
    "requirements": [
-    "R13",
-    "R14"
+    "R5",
+    "R6"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/db/src/seed/obligation-fixtures.ts",
-   "change": "seeded dataset used by the queue p95 test",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/page.tsx",
+   "change": "Server page: load queue/defects/copies via core, permission-denied and dev __state previews",
+   "requirements": [
+    "R1",
+    "R9"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/loading.tsx",
+   "change": "Skeleton",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/error.tsx",
+   "change": "Error with Retry",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/actions.ts",
+   "change": "closeObligationAction, rescheduleAction, reassignAction, addObligationAction (+ use-next-step) via workspaceAction, strict zod, can() checked, revalidatePath; no send path",
+   "requirements": [
+    "R3",
+    "R4",
+    "R5",
+    "R13"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Add the new actions to ACTIONS with probe inputs",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-view.tsx",
+   "change": "Client queue: groups, selection, shortcuts (j k x d r a o / g o ?), shortcut sheet, offline queue 'Will sync', group collapse persisted per member",
+   "requirements": [
+    "R1",
+    "R6",
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-group.tsx",
+   "change": "Collapsible group with count and sticky header",
+   "requirements": [
+    "R1",
+    "R8"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/close-dialog.tsx",
+   "change": "Reason-required close dialog",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/reschedule-popover.tsx",
+   "change": "Date picker plus mandatory reason",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/next-step-card.tsx",
+   "change": "Collapsed drafted next step with Use",
+   "requirements": [
+    "R5",
+    "R13"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-filters.tsx",
+   "change": "Matter, owner, kind, source, group filters and search",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/defects-tab.tsx",
+   "change": "Defects list",
    "requirements": [
     "R7"
    ]
   },
   {
-   "id": "D16",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "add obligations domain edges (workspaces, audit, matter-graph, automation as needed) and document in docs/engineering/core-domains.md",
+   "id": "D27",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/copies-tab.tsx",
+   "change": "Certified copies list",
    "requirements": [
+    "R7"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/detail-sheet.tsx",
+   "change": "Detail with source quote, history, next step",
+   "requirements": [
+    "R2",
     "R5"
    ]
   },
   {
-   "id": "D17",
-   "path": "docs/adr/0037-obligation-model.md",
-   "change": "ADR (next free number): model, enum-name mapping to the issue's terms, reschedule vs miss, no rule-derived dates",
+   "id": "D29",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/use-swipe.ts",
+   "change": "Pointer swipe hook with keyboard parity",
    "requirements": [
-    "R8",
-    "R12"
+    "R4"
    ]
   },
   {
-   "id": "D18",
-   "path": "packages/db/src/index.test.ts",
-   "change": "root table list + RLS catalog (packages/db/src/__tests__/rls/sql.test.ts) and two-tenant seeders for the new tables; apps/worker registry.test.ts and schedules.test.ts entries",
+   "id": "D30",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/swipe-row.tsx",
+   "change": "Swipe wrapper using use-swipe",
    "requirements": [
-    "R14",
-    "R17"
+    "R4"
+   ]
+  },
+  {
+   "id": "D31",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/obligation-row.tsx",
+   "change": "Row adapter over the ui pattern",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D32",
+   "path": "e2e/tests/obligations/obligation-queue.spec.ts",
+   "change": "Product e2e journeys (CI only)",
+   "requirements": [
+    "R1",
+    "R3",
+    "R4",
+    "R6",
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D33",
+   "path": "e2e/tests/obligations/obligation-queue.visual.spec.ts",
+   "change": "Visual and axe spec for light/dark at 360, 768, 1280",
+   "requirements": [
+    "R11",
+    "R15",
+    "R16"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing obligation enum values and column names (docket.ts, enums.ts): timeline.ts, merge-split.ts and their tests read them"
+   "what": "@causedeck/core/obligations service behaviour and signatures (queryQueue, closeObligation, updateObligation, createObligation) in packages/core/src/obligations/*; the UI only calls them"
   },
   {
    "id": "P2",
-   "what": "transitionProceeding in packages/core/src/matter-graph/state-machine.ts stays the only writer of proceeding.state; import matter-graph only via its index.ts"
+   "what": "The DB closure check obligation_closure_chk and enum names (done, task_completed, source) in packages/db/src/schema/docket.ts; no schema or migration change"
   },
   {
    "id": "P3",
-   "what": "automation obligation_from_direction undo payload shape (obligationId) and undo cascade in packages/core/src/automation/undo.ts"
+   "what": "Other consumers of the ui patterns index (packages/ui/src/patterns/index.ts) and the ObligationRow public props"
   },
   {
    "id": "P4",
-   "what": "No auto-closure, no auto-filing, no court fetching; deadlines are never derived from generated legal rules"
+   "what": "No outward send path: nothing on the page may call a mail, WhatsApp or filing provider"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/obligations src/__tests__/cross-tenant/obligations.test.ts src/matter-graph/__tests__/merge-split.test.ts src/matter-graph/__tests__/timeline.test.ts src/automation/__tests__/handlers.test.ts src/jobs/registry.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/obligations"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/index.test.ts && pnpm --filter @causedeck/auth exec vitest run src/policy"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+   "command": "pnpm --filter @causedeck/ui exec vitest run src/patterns/obligation-row src/patterns/boundaries.test.ts src/patterns/motion.test.ts"
   },
   {
    "id": "V5",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/follow-up-continuity-memory"
+   "command": "pnpm --filter @causedeck/web exec vitest run lib/obligations"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Keep existing obligation names (status done, closedReasonType task_completed, column source) and map the issue's closed/completed_task/kind terms in the ADR",
-   "justification": "packages/db/src/schema/docket.ts:227-297 already has the closure check, and timeline/merge-split depend on these names",
-   "source": "precedent"
-  },
-  {
-   "id": "K2",
-   "choice": "Defect cure and re-presentation go through transitionProceeding",
-   "justification": "matter-graph/state-machine.ts:1-10 states it is the only writer of proceeding.state; events.ts:112-125 passes cureDeadline for #67",
+   "choice": "Keep existing enum and column names (source as kind, done as closed) in the UI and map to issue wording in i18n",
+   "justification": "packages/db/src/schema/enums.ts:66-77 and docket.ts:227; ADR docs/adr/0037-obligation-model.md",
    "source": "doc"
   },
   {
+   "id": "K2",
+   "choice": "Client letter next step creates an internal task via createObligation(source 'internal') until #69 lands",
+   "justification": "Issue 'Data and API contracts' says so; #69 is open; core/obligations/create.ts:95",
+   "source": "spec"
+  },
+  {
    "id": "K3",
-   "choice": "Reminders job modelled on activity-digest (per-workspace, Asia/Kolkata, once())",
-   "justification": "core/jobs/definitions/activity-digest.ts header; the issue's apps/worker/src/jobs path does not exist, jobs live in core/jobs/definitions",
+   "choice": "New core read models for defects and copies instead of querying the db from apps/web",
+   "justification": "core/obligations has only writers (defects.ts:52, certified-copies.ts:33); apps/web reaches data through core services (inbox/actions.ts pattern); new core exports need cross-tenant registry entries (CLAUDE.md)",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Order directions are reconciled by source_order_id + anchor_id",
-   "justification": "order.operativeDirections is jsonb {text, anchorId} with no id (docket.ts:175-191)",
-   "source": "spec"
+   "choice": "Reuse and adapt packages/ui/src/patterns/obligation-row rather than create patterns/obligation/",
+   "justification": "obligation-row.tsx already has swipe, due state, ProvenanceChip; the issue path is outdated",
+   "source": "precedent"
   },
   {
    "id": "K5",
-   "choice": "New workspace dependency edges are limited to core-domains.js obligations entry; no package.json dependency between workspace packages is added",
-   "justification": "packages/config/eslint/core-domains.js:26-29 pattern; core already depends on validators, auth, db, notifications",
-   "source": "lint"
+   "choice": "Group-collapse persistence per member via client storage keyed by member id, no new table",
+   "justification": "No member-preferences store found; a table would need RLS catalog and migration registries",
+   "source": "precedent"
   }
  ]
 }

@@ -47,3 +47,6 @@ Same exit 127 reported again. `pnpm exec turbo run typecheck --filter='...[b39e8
 
 ### Final verification
 forgedock check: PASS (V1-V5 exit 0). An earlier check run hit 300 s timeouts on V2/V3 from host load (exit 124, no test output); V2/V3 pass on rerun. No code change.
+
+## CI fix: i18n server.test
+Native language names (தமிழ், ಕನ್ನಡ) were in the en catalog, tripping 'returns only the requested locale'. Moved them to LANGUAGE_LABELS in language-switcher.tsx; dropped outward.language.en/ta/kn keys and their translation-status entries; regenerated types.

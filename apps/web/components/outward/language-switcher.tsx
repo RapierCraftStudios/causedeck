@@ -5,6 +5,9 @@ import { LANGUAGES, type Language } from '@causedeck/validators/outward-draft';
 import { ToggleGroup, ToggleGroupItem } from '@causedeck/ui/toggle-group';
 import { useTranslations } from 'next-intl';
 
+/** Each language's own name: fixed text in its own script, not a translatable string. */
+export const LANGUAGE_LABELS: Record<Language, string> = { en: 'EN', ta: 'தமிழ்', kn: 'ಕನ್ನಡ' };
+
 export interface LanguageSwitcherProps {
   value: Language;
   onChange: (language: Language) => void;
@@ -31,7 +34,7 @@ export function LanguageSwitcher({ value, onChange, disabled = false }: Language
           aria-label={t(`language.${language}Name`)}
           className="pointer-coarse:min-h-11"
         >
-          {t(`language.${language}`)}
+          {LANGUAGE_LABELS[language]}
         </ToggleGroupItem>
       ))}
     </ToggleGroup>

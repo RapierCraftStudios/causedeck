@@ -8,6 +8,7 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { DraftEditor, type DraftView } from './draft-editor.tsx';
+import { LANGUAGE_LABELS } from './language-switcher.tsx';
 
 export interface DraftCardView {
   id: string;
@@ -50,7 +51,7 @@ export function DraftList({
                 {t(`audience.${draft.audience}`)}
               </span>
               <span className="bg-surface-sunken rounded-full px-2 py-0.5" lang={draft.language}>
-                {t(`language.${draft.language}`)}
+                {LANGUAGE_LABELS[draft.language]}
               </span>
               {draft.templateOnly ? (
                 <span className="text-ink-muted">{t('list.templateOnly')}</span>

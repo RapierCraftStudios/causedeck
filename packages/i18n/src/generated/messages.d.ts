@@ -4776,9 +4776,6 @@ export type Messages = {
     };
     language: {
       label: string;
-      en: string;
-      ta: string;
-      kn: string;
       enName: string;
       taName: string;
       knName: string;

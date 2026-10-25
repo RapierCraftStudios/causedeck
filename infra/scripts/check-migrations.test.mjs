@@ -21,7 +21,10 @@ describe('checkMigration', () => {
     assert.equal(checkMigration('a.sql', 'drop table "t";').length, 1);
   });
   it('rejects ALTER COLUMN ... SET NOT NULL', () => {
-    assert.equal(checkMigration('a.sql', 'ALTER TABLE "t" ALTER COLUMN "x" SET NOT NULL;').length, 1);
+    assert.equal(
+      checkMigration('a.sql', 'ALTER TABLE "t" ALTER COLUMN "x" SET NOT NULL;').length,
+      1,
+    );
   });
   it('allows a destructive change tagged contract', () => {
     assert.deepEqual(checkMigration('a.sql', '-- contract\nALTER TABLE "t" DROP COLUMN "x";'), []);

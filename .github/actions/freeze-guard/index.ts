@@ -17,7 +17,11 @@ export function run(now: Date, allowOverride: boolean): RunResult {
     next_open_at_ist: result.nextOpenAtIst,
   };
   if (!result.frozen) {
-    return { exitCode: 0, outputs, message: `No court-day freeze (next freeze ${result.nextFreezeAtIst}).` };
+    return {
+      exitCode: 0,
+      outputs,
+      message: `No court-day freeze (next freeze ${result.nextFreezeAtIst}).`,
+    };
   }
   if (allowOverride) {
     return {
@@ -33,12 +37,16 @@ export function run(now: Date, allowOverride: boolean): RunResult {
   };
 }
 
+/* eslint-disable no-process-env -- action entrypoint: inputs and GITHUB_OUTPUT arrive via the environment */
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
   const outcome = run(new Date(), process.env.INPUT_ALLOW_OVERRIDE === 'true');
   const outputFile = process.env.GITHUB_OUTPUT;
   if (outputFile) {
-    for (const [key, value] of Object.entries(outcome.outputs)) appendFileSync(outputFile, `${key}=${value}\n`);
+    for (const [key, value] of Object.entries(outcome.outputs))
+      appendFileSync(outputFile, `${key}=${value}\n`);
   }
-  console.log(outcome.exitCode === 0 ? outcome.message : `::error title=Court-day freeze::${outcome.message}`);
+  console.log(
+    outcome.exitCode === 0 ? outcome.message : `::error title=Court-day freeze::${outcome.message}`,
+  );
   process.exit(outcome.exitCode);
 }

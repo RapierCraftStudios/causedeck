@@ -86,7 +86,7 @@ jobs:
         with:
           ref: ${{ needs.promote.outputs.sha }}
           persist-credentials: false
-      - name: Freeze guard (re-checked: approval may have waited into a window)
+      - name: Freeze guard again (approval may have waited into a window)
         uses: ./.github/actions/freeze-guard
       - name: Create deployment record
         run: |

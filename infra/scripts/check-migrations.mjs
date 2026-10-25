@@ -14,7 +14,10 @@ import { fileURLToPath } from 'node:url';
 const RULES = [
   { re: /\bDROP\s+COLUMN\b/i, what: 'DROP COLUMN' },
   { re: /\bDROP\s+TABLE\b/i, what: 'DROP TABLE' },
-  { re: /\bALTER\s+(?:COLUMN\s+)?"?[\w.]+"?\s+SET\s+NOT\s+NULL\b/i, what: 'ALTER ... SET NOT NULL' },
+  {
+    re: /\bALTER\s+(?:COLUMN\s+)?"?[\w.]+"?\s+SET\s+NOT\s+NULL\b/i,
+    what: 'ALTER ... SET NOT NULL',
+  },
   { re: /\bALTER\s+TABLE\b[^;]*\bSET\s+NOT\s+NULL\b/i, what: 'ALTER ... SET NOT NULL' },
 ];
 const CONTRACT_TAG = /^\s*--\s*contract\b/im;
@@ -34,14 +37,17 @@ export function checkMigration(name, sql) {
   const found = new Set();
   for (const { re, what } of RULES) if (re.test(body)) found.add(what);
   return [...found].map(
-    (what) => `${name}: ${what} is not expand-compatible; ship an expand release first, then tag this file "-- contract"`,
+    (what) =>
+      `${name}: ${what} is not expand-compatible; ship an expand release first, then tag this file "-- contract"`,
   );
 }
 
 export function checkDirectory(dir, applied = []) {
   const skip = new Set(applied);
   const violations = [];
-  for (const file of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
+  for (const file of readdirSync(dir)
+    .filter((f) => f.endsWith('.sql'))
+    .sort()) {
     if (skip.has(file)) continue;
     violations.push(...checkMigration(file, readFileSync(path.join(dir, file), 'utf8')));
   }

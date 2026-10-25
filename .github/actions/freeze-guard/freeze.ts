@@ -48,7 +48,8 @@ function istParts(at: Date): Record<string, string> {
 /** `2026-10-25 18:00 IST` */
 export function formatIst(at: Date): string {
   const p = istParts(at);
-  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute} IST`;
+  const f = (key: string): string => p[key] ?? '';
+  return `${f('year')}-${f('month')}-${f('day')} ${f('hour')}:${f('minute')} IST`;
 }
 
 function secondOfDay(at: Date): number {

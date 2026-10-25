@@ -1,4 +1,5 @@
 // Boundary tests for the court-day freeze (#100): `pnpm test:ci-scripts`.
+/* eslint-disable @typescript-eslint/no-floating-promises -- node:test runs describe/it itself */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { evaluateFreeze } from '../freeze.ts';
@@ -58,16 +59,25 @@ describe('freeze windows (start inclusive, end exclusive)', () => {
 
 describe('next open window', () => {
   it('names the end of the morning window', () => {
-    assert.equal(evaluateFreeze(ist('2026-10-21', '08:15:00')).nextOpenAtIst, '2026-10-21 10:30 IST');
+    assert.equal(
+      evaluateFreeze(ist('2026-10-21', '08:15:00')).nextOpenAtIst,
+      '2026-10-21 10:30 IST',
+    );
   });
   it('names the end of the evening window', () => {
-    assert.equal(evaluateFreeze(ist('2026-10-21', '18:00:00')).nextOpenAtIst, '2026-10-21 23:00 IST');
+    assert.equal(
+      evaluateFreeze(ist('2026-10-21', '18:00:00')).nextOpenAtIst,
+      '2026-10-21 23:00 IST',
+    );
   });
   it('reports the next freeze start when open', () => {
     const noon = evaluateFreeze(ist('2026-10-21', '12:00:00'));
     assert.equal(noon.nextFreezeAtIst, '2026-10-21 18:00 IST');
     assert.equal(noon.secondsUntilFreeze, 6 * 3600);
-    assert.equal(evaluateFreeze(ist('2026-10-21', '23:30:00')).nextFreezeAtIst, '2026-10-22 07:00 IST');
+    assert.equal(
+      evaluateFreeze(ist('2026-10-21', '23:30:00')).nextFreezeAtIst,
+      '2026-10-22 07:00 IST',
+    );
   });
 });
 

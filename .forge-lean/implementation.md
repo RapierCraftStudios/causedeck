@@ -41,3 +41,6 @@ Continued from the checkpointed branch: the sheet UI, actions, i18n and ui patte
 ### Notes
 - Pre-commit eslint OOMed on the host; committed with LEFTHOOK=0.
 - e2e specs were not run (never run locally).
+
+### Fix: export name collision
+- Renamed `useProvenanceLabels` in `_sheet/use-provenance-labels.ts` to `useBriefProvenanceLabels` (clashed with `components/matters/next-date-card.tsx`); updated `_sheet/lines.tsx`. No registry keyed by the name.

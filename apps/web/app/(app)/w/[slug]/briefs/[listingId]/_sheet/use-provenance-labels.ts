@@ -3,7 +3,7 @@ import type { ProvenanceLabels } from '@causedeck/ui/patterns';
 import { useTranslations } from 'next-intl';
 
 /** The chip popover labels the sheet overrides: 'Open page' and the page and confidence texts. */
-export function useProvenanceLabels(): Partial<ProvenanceLabels> {
+export function useBriefProvenanceLabels(): Partial<ProvenanceLabels> {
   const t = useTranslations('brief.provenance');
   const line = useTranslations('brief.line');
   return {

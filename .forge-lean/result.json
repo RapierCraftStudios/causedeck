@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Brief sheet delivered with tests, e2e specs, Lighthouse budget and ADR 0041; V1 storybook project cannot launch Chromium on this host (unit project passes)",
+ "summary": "Brief sheet delivered (export collision fixed: useBriefProvenanceLabels) with tests, e2e specs, Lighthouse budget and ADR 0041; V1 storybook project cannot launch Chromium on this host (unit project passes)",
  "requirements": [
   {
    "id": "R1",

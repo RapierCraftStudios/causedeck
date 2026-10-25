@@ -6,7 +6,7 @@ import type { BriefLine, ObligationLine } from '@causedeck/validators';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
-import { useProvenanceLabels } from './use-provenance-labels.ts';
+import { useBriefProvenanceLabels } from './use-provenance-labels.ts';
 
 /** Where a line's chip points: a page-anchored document link, when the line has an anchor. */
 export function sourceLabelOf(
@@ -30,7 +30,7 @@ export function StatementLine({
   children?: ReactNode;
 }) {
   const t = useTranslations('brief.line');
-  const labels = useProvenanceLabels();
+  const labels = useBriefProvenanceLabels();
   const lang = /[஀-௿]/.test(line.text) ? 'ta' : /[ಀ-೿]/.test(line.text) ? 'kn' : undefined;
   return (
     <p data-statement className="break-inside-avoid">
@@ -64,7 +64,7 @@ export function ObligationRow({
   viewOnly: boolean;
 }) {
   const t = useTranslations('brief.line');
-  const labels = useProvenanceLabels();
+  const labels = useBriefProvenanceLabels();
   return (
     <li data-obligation className="break-inside-avoid">
       <span>{line.text}</span>

@@ -33,6 +33,7 @@ describe('staff role matrix', () => {
         'audit',
         'growth',
         'migrations',
+        'status',
       ],
       admin: STAFF_CAPABILITIES,
     });
@@ -51,6 +52,9 @@ describe('staff role matrix', () => {
     expect(canStaff('support', 'growth')).toBe(false);
     expect(canStaff('ops', 'migrations')).toBe(true);
     expect(canStaff('support', 'migrations')).toBe(false);
+    expect(canStaff('ops', 'status')).toBe(true);
+    expect(canStaff('support', 'status')).toBe(false);
+    expect(canStaff('admin', 'status')).toBe(true);
     for (const capability of STAFF_CAPABILITIES) expect(canStaff('admin', capability)).toBe(true);
     expect(canStaff('owner' as never, 'overview')).toBe(false);
   });

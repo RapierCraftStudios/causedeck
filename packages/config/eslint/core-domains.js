@@ -46,8 +46,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same
   // read as `listHolidayListings`) and the day arithmetic is the extraction's own, from intelligence.
   deadlines: Object.freeze([]),
-  // The public status snapshot (#769): the court component reads the adapter health summary through court.
-  status: Object.freeze(['court']),
+  // The public status snapshot (#769): the court component reads the adapter health summary through court;
+  // incident writes (#770) record audit events through audit.
+  status: Object.freeze(['court', 'audit']),
   // Official notices (#586, D-048): polling needs a cleared source through sources; matching reads
   // tables and the owner-defined match function only.
   notices: Object.freeze(['workspaces', 'sources']),

@@ -110,6 +110,24 @@ vi.mock('@causedeck/core/sources', () => {
     setSourceKillSwitch: audited,
   };
 });
+// Incident changes audit `incident.changed` in their own transaction with the staff actor (#770).
+vi.mock('@causedeck/core/status', () => {
+  const audited = (_db: unknown, actor: { userId: string }) =>
+    mocks.record(
+      { actor: { userId: actor.userId, kind: 'staff' } },
+      { action: 'incident.changed' },
+    );
+  return {
+    COMPONENT_IDS: ['database', 'storage', 'court'],
+    INCIDENT_SEVERITIES: ['degraded', 'down'],
+    INCIDENT_TEMPLATES: { investigating: {}, identified: {}, monitoring: {}, resolved: {} },
+    IncidentAdminError: class IncidentAdminError extends Error {},
+    asIncidentStaff: (userId: string) => ({ userId }),
+    listIncidents: () => Promise.resolve([]),
+    createIncident: audited,
+    addIncidentUpdate: audited,
+  };
+});
 vi.mock('@causedeck/core/business', async (importOriginal) => ({
   ...(await importOriginal<typeof Business>()),
   staffBusinessSnapshot: () =>
@@ -335,6 +353,24 @@ const ACTIONS: Record<string, () => Promise<unknown>> = {
     const { endSupportSessionAction } = await import('../app/(console)/support/actions.ts');
     return endSupportSessionAction(form({ sessionId: SUPPORT_SESSION_ID }));
   },
+  'app/(console)/status/actions.ts#createIncidentAction': async () => {
+    const { createIncidentAction } = await import('../app/(console)/status/actions.ts');
+    return createIncidentAction(
+      form({
+        title: 'Court lookups are slow',
+        severity: 'degraded',
+        component: 'court',
+        template: 'investigating',
+        note: '',
+      }),
+    );
+  },
+  'app/(console)/status/actions.ts#updateIncidentAction': async () => {
+    const { updateIncidentAction } = await import('../app/(console)/status/actions.ts');
+    return updateIncidentAction(
+      form({ id: '3f9c1c1e-6a49-4d0e-8a77-0c5f0d6a1b11', template: 'resolved', note: '' }),
+    );
+  },
   'app/(console)/sources/actions.ts#saveSourceAction': async () => {
     const { saveSourceAction } = await import('../app/(console)/sources/actions.ts');
     return saveSourceAction(
@@ -466,6 +502,7 @@ describe('admin data layer reads', () => {
     activeStaffCount: (d) => d.activeStaffCount(staff),
     adapterRegistry: (d) => d.adapterRegistry(staff),
     sourceRegistry: (d) => d.sourceRegistry(staff),
+    incidentConsole: (d) => d.incidentConsole(staff),
     searchWorkspaces: (d) => d.searchWorkspaces(staff, 'chambers'),
     workspaceMetadata: (d) => d.workspaceMetadata(staff, STAFF_ID),
     staffAuditLog: (d) => d.staffAuditLog(staff),

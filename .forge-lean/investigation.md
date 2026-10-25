@@ -1,43 +1,43 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (feature; the public status page does not exist)
+**Severity**: medium (feature; no live defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 3 of #96: in `apps/site` (static Next app, Cloudflare Pages) add `app/status/page.tsx` (static shell, client fetch of `status.json` with HMAC verification, "Status data could not be verified", stale >5 min warning, "Status unavailable, retry", skeleton, empty "All systems operational", offline), components overall-banner, component-row, uptime-strip, incident-list, subscribe-links (+ stories), `app/status/history/page.tsx`, `app/status/feed.xml/route.ts` (RSS and Atom, sanitised like the JSON). Text+icon status, live region, IST and UTC timestamps, light and dark. Depends on #769.
-
-Note: the pre-existing `.forge-lean/*` files (investigation, result "fixed") described #769; they were replaced.
+Part 2 of #96: a staff incident console at `apps/admin/app/(console)/status/page.tsx` with actions to create, update and resolve incidents from a message template, writing incident rows and an `audit_event` per change. Incidents appear in the next `status.publish` cycle. States: loading skeleton, empty, error, offline, and permission-denied for non-staff. Register in the admin tests (server-actions-audit, no-content-fields) and the console nav. Depends on #769.
 
 ### What We Found
-(verified on `origin/milestone/site-onboarding-launch` = d03a2bc4, which contains merged #769)
-- `apps/site` already exists (scaffold, `output: 'export'`, `apps/site/next.config.ts:10`), so "scaffold if absent" is already satisfied. No `app/status`, no status components, no Storybook config in the site (`apps/site/.storybook` absent; stories live only in `packages/ui` and `apps/web`).
-- Snapshot contract: `packages/core/src/status/model.ts:8-62` (`version:1`, `generatedAt`, `overall`, `components[{id,name,status}]` ids `database|storage|court`, `incidents[{id,title,severity,state,component,startedAt,resolvedAt,updates[{state,body,at}]}]`, `signature{alg:'HS256',value:hex64}`).
-- Signing: `packages/core/src/status/publish.ts:224-250` HMAC-SHA256 over `canonicalStatusJson` (sorted keys, undefined dropped) of the snapshot minus signature; `STALE_AFTER_SEC = 300` (`publish.ts:41`), `COURT_COMPONENT_NAME = 'Parsing of documents you share'` (`publish.ts:46`), `STATUS_OBJECT_PATH = 'status/status.json'` (`publish.ts:44`). Dev key `DEV_STATUS_SIGNING_KEY` at `packages/config/src/env/schema.ts:23`.
-- `@causedeck/core/status` cannot be imported by the static site: `publish.ts` uses `node:crypto` and the core package drags db/storage; `apps/site/package.json` depends only on `@causedeck/ui`, next, zod etc. The page must carry its own browser (WebCrypto) schema and verifier mirroring core's canonical JSON.
-- Site env boundary: `apps/site/lib/env.ts:11-17` (zod, all `NEXT_PUBLIC_*`); needs status URL and verify key entries.
-- CSP: `apps/site/scripts/write-headers.ts:32-44` `connect-src 'self'` plus analytics origin only; a cross-origin status URL needs its origin added. Tests: `apps/site/src/site-scaffold.test.ts` (headers, env, static export, rule36), vitest includes `src/**`, `lib/**`, `scripts/**` only (`apps/site/vitest.config.ts:7`), node env, jsdom opt-in per file (`jsdom` is not a site devDependency).
-- Navigation/SEO: `apps/site/components/site-footer.tsx:4-8` link columns; `apps/site/app/sitemap.ts` enumerates only MDX pages (status pages would need adding); `apps/site/lib/seo.ts` `pageMetadata`.
-- UI primitives available from `@causedeck/ui` subpath exports: `badge`, `alert`, `skeleton`, `card` (`packages/ui/package.json` exports).
-- Static feed route: `app/robots.ts:5` shows the `export const dynamic = 'force-static'` pattern for route handlers under export.
+(verified on HEAD d03a2bc4, which already contains the merged #769)
+- No status page, actions or `status` capability exist: `apps/admin/app/(console)/` has no `status/`; `apps/admin/lib/roles.ts:14-27` has no `status` capability; `apps/admin/components/console-nav.tsx:29-56` has no `/status` entry.
+- Tables exist: `packages/db/src/schema/status.ts:18` (`incident`) and `:46` (`incidentUpdate`), checks make `state='resolved'` iff `resolved_at` is set (`:42`). The app role has SELECT/INSERT/UPDATE (`packages/db/migrations/20261025050000_status_incident.sql:36-37`). The schema header (`status.ts:6`) says #770 writes them.
+- `packages/core/src/status/` has only the read/publish side (`index.ts`, `model.ts`, `publish.ts`: `sanitiseIncident` at `publish.ts:104`, `buildSnapshot` at `:202`). There is NO incident write service, so "the core status service" the issue relies on must gain one. The job `system.status.publish` is in `packages/core/src/jobs/definitions/status-publish.ts`; incidents reach the page on its next run.
+- Write-service precedent: `packages/core/src/sources/registry.ts:268` (`assertSourceStaff` against `staffUser`), `:341` (`createSource`: `withUser` transaction, staff check, write, `record()` with actor kind `staff` and `workspaceId: null` in the same tx, `:325-331`). Console action precedent: `apps/admin/app/(console)/sources/actions.ts` (`'use server'`, `requireStaff('sources')`, zod, `redirect('?done=/?error=')`, the `// authz:` comment).
+- Audit actions must be registered in `packages/core/src/audit/events.ts` (`AUDIT_ACTIONS`; `source.changed` at `:37`); `security-events.test.ts:87,362` assert registry properties.
+- Reads: `apps/admin/lib/data/index.ts:217` (`sourceRegistry` via `staffQuery`, which records `staff.read` and runs in `withoutWorkspace` with a table allowlist, `lib/data/scope.ts:70`).
+- Page states: only `apps/admin/app/error.tsx` and `not-found.tsx` exist; no `loading.tsx` anywhere. `requireStaff(cap)` calls `notFound()` for a non-staff or a role lacking the capability (`apps/admin/lib/staff.ts:36-40`), which is the permission-denied behaviour.
+- Tests to extend: `apps/admin/__tests__/server-actions-audit.test.ts` (ACTIONS map `:300-385`, enumerates every `'use server'` export `:398+`, mocks `@causedeck/core/sources` at `:89`), `roles.test.ts:23-54` (matrix), `console-layout.test.tsx:60-100` (nav labels per role), `no-content-fields.test.ts:116+` (renders pages against seeded tenants).
+- Registries from CLAUDE.md: new runtime exports of `@causedeck/core` need `NOT_A_SERVICE`/`SERVICE_TESTS` in `packages/db/src/testing/cross-tenant-registry.ts` (status block `:1149-1178`, `createSource` precedent `:918`). `status` currently depends only on `court` (`packages/config/eslint/core-domains.js:50`); importing `audit` needs a `CORE_DOMAIN_DEPENDENCIES` edit and `docs/engineering/core-domains.md` (row `:31`, mermaid, dependency table).
 
 ### Root Cause
-Missing feature: #769 supplies the signed snapshot, but no public consumer exists.
+Missing feature: #769 delivered the incident tables and publisher but no staff write path or console UI, so incidents cannot be created.
 
 ### Affected Files
-- new `apps/site/lib/status/{model,verify,state,format,feed}.ts` (+ tests)
-- new `apps/site/components/status/{overall-banner,component-row,uptime-strip,incident-list,subscribe-links,status-view}.tsx` + `*.stories.tsx`
-- new `apps/site/app/status/page.tsx`, `app/status/history/page.tsx`, `app/status/feed.xml/route.ts`, `app/status/atom.xml/route.ts`
-- `apps/site/lib/env.ts`, `apps/site/scripts/write-headers.ts`, `apps/site/components/site-footer.tsx`, `apps/site/app/sitemap.ts`, `apps/site/README.md`
-- `apps/site/package.json` (+ lockfile) and `.storybook/` only if stories get a runner (see contract K3)
+- `packages/core/src/status/incidents.ts` (new) + `index.ts` export + test
+- `packages/core/src/audit/events.ts`
+- `packages/core/package.json` only if exports need no change (`./status` already exported by #769; no edit expected)
+- `packages/db/src/testing/cross-tenant-registry.ts`, `packages/config/eslint/core-domains.js`, `docs/engineering/core-domains.md`, `docs/engineering/admin-console.md`
+- `apps/admin/lib/roles.ts`, `components/console-nav.tsx`, `lib/data/index.ts`
+- `apps/admin/app/(console)/status/{page.tsx,actions.ts,loading.tsx,error.tsx,incident-forms.tsx,offline-banner.tsx}` (new)
+- admin tests: `roles.test.ts`, `console-layout.test.tsx`, `server-actions-audit.test.ts`, `no-content-fields.test.ts`, new `status-page.test.tsx`
 
 ### Sibling Sweep
-`apps/web` has its own adapter status card (`apps/web/components/courts/adapter-status-card.tsx`), authenticated and unrelated. No other public page fetches signed data. #770 (admin console) and #772 (e2e/visual/Lighthouse) are siblings, not touched here.
+Same pattern (audited staff write to a global table) is `sources` (`#478`) and flags; follow `sources/actions.ts`. The `no-content-fields` and `server-actions-audit` guards are the registries any new admin page/action must join. #771 (public page) reads only the published snapshot, so it is unaffected. Do not confuse with `system.status.poll` (case-watch).
 
 ### History
-Snapshot and publisher introduced by #769 (merge d03a2bc4 lineage, PR #787). No earlier status page; #96 closed not_planned.
+Tables and publisher: #769 (merged, PR #787). No prior console. `source.changed` (#478) is the template for the audit shape.
 
 ### Recommendation
-Implement as in contract.json. Keep all logic in pure, node-testable modules under `apps/site/lib/status` (zod parse, WebCrypto HMAC verify, state derivation: verified/unverified/stale/unavailable/empty, IST+UTC formatting, feed builders) and keep components thin. Note the inherent limit: HS256 verification in a browser needs the key in public JS, so it detects corruption and accidental/partial tampering, not a determined forger; the issue prescribes it and the key is a public build-time value.
+Add `createIncident`, `addIncidentUpdate` (state change or resolve) and `listIncidents` plus the pure `INCIDENT_TEMPLATES` to core `status`, audited in-tx as `incident.changed`; a new `status` capability for ops and admin; the page with `loading.tsx`, `error.tsx`, empty state, an offline banner (client, `navigator.onLine`) and notFound for others; register everything in the guards listed above.
 
 ### Related Issues
-#96 (parent), #769 (dependency, merged), #770, #772 (siblings).
+#96 (parent), #769 (dependency, merged), #771, #772 (siblings).

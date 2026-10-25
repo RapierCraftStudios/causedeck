@@ -50,3 +50,6 @@ forgedock check: PASS (V1-V5 exit 0). An earlier check run hit 300 s timeouts on
 
 ## CI fix: i18n server.test
 Native language names (தமிழ், ಕನ್ನಡ) were in the en catalog, tripping 'returns only the requested locale'. Moved them to LANGUAGE_LABELS in language-switcher.tsx; dropped outward.language.en/ta/kn keys and their translation-status entries; regenerated types.
+
+## CI fix: workspace-shell placeholder tests
+`drafts` is now a real page, so `apps/web/__tests__/workspace-shell.test.tsx` lists it in REAL_PAGES (no longer a placeholder route); targeted run passes (76 tests).

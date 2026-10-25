@@ -311,6 +311,11 @@ export {
   type IssueTagStatus,
 } from './matter-issue.ts';
 export {
+  researchNote,
+  researchProvider,
+  type ResearchAuthority,
+} from './research-note.ts';
+export {
   REVIEW_FIELDS,
   REVIEW_KINDS,
   REVIEW_STATUSES,

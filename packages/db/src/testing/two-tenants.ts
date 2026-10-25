@@ -51,6 +51,7 @@ import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { judgment } from '../schema/corpus.ts';
 import { matter } from '../schema/matter-graph.ts';
 import { judgmentAlert, matterIssueTag } from '../schema/matter-issue.ts';
+import { researchNote, researchProvider } from '../schema/research-note.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
 import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
@@ -1219,6 +1220,26 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: judgmentAlert.id });
     return { matterId, tagId, id: first(rows, 'judgment_alert').id };
+  },
+  research_note: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(researchNote)
+      .values({ workspaceId, matterId, title: 'xt note', createdBy: ownerId })
+      .returning({ id: researchNote.id });
+    return { matterId, id: first(rows, 'research_note').id };
+  },
+  research_provider: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(researchProvider)
+      .values({
+        workspaceId,
+        key: 'xt-provider',
+        label: 'XT provider',
+        urlTemplate: 'https://xt.example.test/search?q={q}',
+      })
+      .returning({ id: researchProvider.id });
+    return { id: first(rows, 'research_provider').id };
   },
   import_plan: async (tx, { workspaceId, ownerId }) => {
     const batchId = await seedImportBatch(tx, workspaceId, ownerId);

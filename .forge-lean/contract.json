@@ -2,227 +2,287 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
+   "quote": "`buildResearchLinks` returns provider links with query strings URL-encoded from statute, section, issue keywords and court; Tamil and Kannada text is encoded correctly [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "with a server action per operation",
+   "quote": "Only hosts in the provider allow-list are produced; all links use `https`, `target=\"_blank\"` and `rel=\"noopener noreferrer\"`; no iframe is used anywhere [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "an i18n namespace in en/kn/ta with catalog test",
+   "quote": "Query building uses only matter facts the user can see; clerk without strategy access does not get issue keywords from restricted memory [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "and cross-tenant-actions test entries",
+   "quote": "A lawyer can configure additional provider URL templates per workspace in settings; templates are validated and unsafe schemes (`javascript:`, `data:`) are rejected [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Settings UI to link a WhatsApp number (OTP)",
+   "quote": "Research notes CRUD works with RLS; a note in workspace A is invisible to workspace B (cross-tenant suite) [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "Clerk role cannot read or write research notes; the UI shows a permission-denied state [type:e2e]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "Pinning an authority from a note inserts the citation string into a chosen draft block, and D03 later labels it; the note itself never auto-adds citations [type:e2e]",
    "disposition": "defer",
-   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
+   "why": "No draft model, drafting studio or D03 exists on this lane (drafts page is a placeholder; #77 and #81 open), so there is no draft block to insert into. This change stores a `pinned` flag on note authorities and never auto-adds citations; the insertion and research-menu-slot follow the drafting studio."
+  },
+  {
+   "id": "R8",
+   "quote": "Empty, loading skeleton, error, offline (notes cached read-only) and permission-denied states render [type:e2e]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/e2e.yml (E2E workflow, Playwright e2e/product/research.spec.ts)"
+  },
+  {
+   "id": "R9",
+   "quote": "The page contains no AI summary, answer or suggested authority; a content test asserts no AI call is made on this route [type:e2e]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "a11y: link-out menu is keyboard operable (arrow keys, Enter, Esc), axe has zero serious violations in light and dark [type:e2e]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/e2e.yml (E2E workflow, Playwright keyboard and axe checks in e2e/product/research.spec.ts)"
+  },
+  {
+   "id": "R11",
+   "quote": "Responsive layout verified at 360, 768 and 1280 with visual baselines in light and dark [type:e2e]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": ".github/workflows/e2e.yml (E2E workflow visual baselines) and .github/workflows/storybook.yml (Storybook visual tests)"
+  },
+  {
+   "id": "R12",
+   "quote": "i18n keys exist in `en` with `ta`/`kn` stubs [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
-   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
+   "path": "packages/core/src/research/providers.ts",
+   "change": "Built-in provider registry (Indian Kanoon, SC judgments, HC judgments; SCC Online and Manupatra only when a workspace template is configured): key, label, https URL template with {q} placeholder, allowed host. Export `validateProviderTemplate` (https only, no userinfo, host must equal template host, rejects javascript:/data: and other schemes).",
+   "requirements": [
+    "R2",
+    "R4"
+   ]
+  },
+  {
+   "id": "D2",
+   "path": "packages/core/src/research/links.ts",
+   "change": "Pure `buildResearchLinks(facts, providers)` returning ResearchLink[] {providerKey,label,url,host,target:'_blank',rel:'noopener noreferrer'}; facts are {statute, section, keywords[], court}; encodeURIComponent on every part (Tamil/Kannada); no matter id, CNR or party names; drops any link whose host is not in the allow-list.",
    "requirements": [
     "R1",
     "R2"
    ]
   },
   {
-   "id": "D2",
-   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
-   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
-   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
+   "path": "packages/core/src/research/notes-service.ts",
+   "change": "CRUD for research notes (list/create/update/delete, authority add/remove/pin flag) modelled on asMatterMember in alerts.ts: NOT_FOUND for unreadable matters, requires memory.read/memory.write so clerk is denied, writes inside the actor workspace scope; plus `getResearchFacts` returning issue keywords only when the actor has strategy.read and only from confirmed tags; and workspace provider template list/save requiring workspace.manage.",
    "requirements": [
-    "R1"
+    "R3",
+    "R4",
+    "R5",
+    "R6"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
-   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
+   "path": "packages/core/src/research/index.ts",
+   "change": "Export the new services, `buildResearchLinks`, providers and types.",
    "requirements": [
-    "R3"
+    "R1",
+    "R5"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
-   "change": "same keys, Kannada",
+   "path": "packages/db/src/schema/research-note.ts",
+   "change": "Tenant tables `research_note` (id, workspace_id, matter_id, title, body, authorities jsonb, created_by, updated_at, composite FK to matter, RLS via tenantTable) and `research_provider` (workspace_id, key, label, url_template, enabled); register in schema/index.ts.",
    "requirements": [
-    "R3"
+    "R4",
+    "R5"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
-   "change": "same keys, Tamil",
+   "path": "packages/db/migrations/20261025050000_research_notes.sql",
+   "change": "Generate with drizzle-kit (plus meta/20261025050000_snapshot.json and _journal.json entry): both tables, FKs, checks (url_template starts with https://), FORCE RLS policies written like 20261025030000_whatsapp_link.sql. Use the next free number if the lane moved.",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'whatsapp-link' to NAMESPACES",
+   "path": "packages/validators/src/research.ts",
+   "change": "zod schemas for note input, authority {label, citation?, url? (https only), pinned}, provider template input; export from packages/validators/src/index.ts.",
    "requirements": [
-    "R3"
+    "R4",
+    "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
+   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/research/page.tsx",
+   "change": "Add link-out menu (facts from getResearchFacts), the notes list and editor; permission-denied state for notes when the role lacks memory.read; no AI import on the route.",
    "requirements": [
-    "R3"
+    "R3",
+    "R6",
+    "R8",
+    "R9"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
+   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/research/actions.ts",
+   "change": "Add note create/update/delete and authority actions via workspaceAction (memory.write); keep existing tag actions unchanged.",
    "requirements": [
-    "R3"
+    "R5",
+    "R6"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "regenerated output",
+   "path": "apps/web/components/research/link-out-menu.tsx",
+   "change": "Keyboard-operable DropdownMenu (bottom Sheet at 360) of quiet text links, each showing the exact URL preview and 'Opens in a new window on a site we do not control.'; anchors use target=_blank rel='noopener noreferrer'; no iframe. Add notes-list.tsx, note-editor.tsx and *.stories.tsx for each (all states, Tamil and Kannada samples); notes UI read-only while offline via useOfflineSince from components/matters/matters-offline-banner.tsx.",
    "requirements": [
-    "R3"
+    "R2",
+    "R8",
+    "R10",
+    "R11"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "regenerated output",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
+   "path": "apps/web/app/(app)/w/[slug]/settings/research/page.tsx",
+   "change": "Settings page (advocate+) listing built-in providers and workspace templates; add settings/research/actions.ts (save/remove provider template via workspaceAction, workspace.manage) and an entry in apps/web/lib/settings-nav.ts.",
    "requirements": [
     "R4"
    ]
   },
   {
-   "id": "D14",
-   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
-   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
+   "id": "D12",
+   "path": "packages/i18n/src/messages/en/research.json",
+   "change": "New namespace `research` with en, plus kn/ta stubs (messages/kn/research.json, messages/ta/research.json); add to NAMESPACES in packages/i18n/src/catalog.ts and the top-level key list in packages/i18n/src/__tests__/catalog.test.ts; regenerate with `pnpm --filter @causedeck/i18n i18n:types` (generated/**).",
    "requirements": [
-    "R2"
+    "R12"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register the new core runtime exports in SERVICE_TESTS (note CRUD and provider templates, with real cases in packages/core/src/__tests__/cross-tenant/services.test.ts: B on A denied or empty, A unchanged) and the pure exports (buildResearchLinks, providers, validateProviderTemplate) in NOT_A_SERVICE with a reason. Also update packages/db/src/index.test.ts (root table list), packages/db/src/__tests__/rls/sql.test.ts (RLS catalog), packages/db/src/testing/two-tenants.ts (seeders), apps/web/__tests__/cross-tenant-actions.test.ts (ACTIONS and probe inputs for the new note and provider actions), docs/engineering/core-domains.md (research row).",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/core/src/research/links.test.ts",
+   "change": "Unit tests: encoding incl. Tamil and Kannada, https-only, host allow-list, rel/target, clerk gets no keywords, unsafe template schemes rejected (also providers.test.ts); apps/web test asserting no iframe in components/research and no @causedeck/ai import in the research route.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R3",
+    "R4",
+    "R9"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
-   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
+   "path": "e2e/product/research.spec.ts",
+   "change": "Playwright journeys (CI only): link-out menu keyboard, clerk permission-denied, empty/error/offline states, axe, 360/768/1280 light and dark baselines.",
    "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
-   "requirements": [
-    "R1"
+    "R6",
+    "R8",
+    "R10",
+    "R11"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
+   "what": "Existing tag actions and exports in apps/web/app/(app)/w/[slug]/matters/[id]/research/actions.ts and packages/core/src/research/index.ts (addTag, confirmTag, dismissTag, listTags, proposeTags, scanJudgments, listRelevantJudgments) keep their signatures and behaviour."
   },
   {
    "id": "P2",
-   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
+   "what": "Research tab registration in apps/web/lib/matters/tabs.ts (id research, order 40, matter.read) and apps/web/__tests__/matter-tab-registry.test.ts stay valid."
   },
   {
    "id": "P3",
-   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
+   "what": "No outbound link carries matter id, CNR or party names; no framing, proxying or scraping of provider sites; no AI call, summary or suggested authority on the route."
+  },
+  {
+   "id": "P4",
+   "what": "Existing matters.workspace.research i18n keys in packages/i18n/src/messages/*/matters.json remain unchanged."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/research src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts __tests__/matter-tab-registry.test.ts __tests__/research --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/index.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
-   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
-   "source": "precedent"
+   "choice": "Gate research notes on memory.read/memory.write (junior and up) rather than matter.read, and issue keywords on strategy.read.",
+   "justification": "Issue says notes are memory-adjacent and clerk is denied; packages/auth/src/policy/matrix.ts:19-24 puts memory.* and strategy.read at junior, clerk below.",
+   "source": "spec"
   },
   {
    "id": "K2",
-   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
-   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
+   "choice": "Store per-workspace provider templates in a new tenant table `research_provider` instead of a workspace_settings column.",
+   "justification": "workspace_settings is a non-tenant table (packages/db/src/schema/workspace.ts:22); tenantTable() gives FORCE RLS like matter_issue_tag (matter-issue.ts:33).",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
-   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
-   "source": "spec"
+   "choice": "Reuse the existing Research tab and page for link-outs and notes; no new route or tab.",
+   "justification": "Tab already registered at apps/web/lib/matters/tabs.ts:34 and the page at research/page.tsx:25.",
+   "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
-   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
-   "source": "doc"
-  },
-  {
-   "id": "K5",
-   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
-   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
+   "choice": "Copy the asMatterMember access pattern for notes and the workspaceAction pattern for actions; no new workspace package dependency (validators already a dependency of core and web).",
+   "justification": "packages/core/src/research/alerts.ts:101; packages/core/package.json:71; apps/web/package.json:65.",
    "source": "precedent"
   }
  ]

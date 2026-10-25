@@ -21,3 +21,9 @@ No behavior or env changes in this pass.
 
 ## Stale-list follow-up
 Checked the flagged tests: none enumerate whatsapp siblings (whatsappLink/whatsappOtpChallenge absent), so all symbols are recorded as not_members in result.json. The core cross-tenant factory is already in NOT_A_SERVICE.
+
+## Merge check fix
+The merge failure was `turbo: command not found` (exit 127), a PATH problem. The merged tree has no symbol clash. Ran `pnpm exec turbo run typecheck --filter=...[c44d5405]` (24/24 pass) and capture vitest V1 (12 pass). No source changes.
+
+### Merge verification
+After merging the base, `pnpm turbo run typecheck --filter='...[c44d5405]'` passes on the merged tree (24/24 tasks). The earlier exit 127 came from invoking bare `turbo`, which is not on PATH; there are no duplicate-key or symbol clashes, so no code change was needed.

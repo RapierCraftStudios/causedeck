@@ -1173,7 +1173,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   verifySnapshot: 'pure',
   isStale: 'pure',
   sanitiseIncident: 'pure (allowlist projection of a supplied row)',
-  buildSnapshot: 'system code: reads only the platform incident tables (GLOBAL_TABLES) and the content-free adapter_health_summary view; no workspace, no tenant data',
+  buildSnapshot:
+    'system code: reads only the platform incident tables (GLOBAL_TABLES) and the content-free adapter_health_summary view; no workspace, no tenant data',
   publishStatus: 'system job body: see buildSnapshot; writes only the public status object',
   runStatusPublish: 'system job body: see publishStatus',
   statusPublish: 'job definition (handler is runStatusPublish)',

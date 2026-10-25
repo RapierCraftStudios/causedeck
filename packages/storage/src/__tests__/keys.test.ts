@@ -108,11 +108,13 @@ describe('publicObjectKey (#769)', () => {
     expect(new TextDecoder().decode((await store.get(key)).body)).toBe('{}');
   });
 
-  it.each(['status/other.json', '../status/status.json', 'status/status.json/', 'ws/x/status.json'])(
-    'does not widen parseObjectKey to %j',
-    (raw) => {
-      expect(() => publicObjectKey(raw as 'status/status.json')).toThrow(InvalidObjectKeyError);
-      expect(() => parseObjectKey(raw)).toThrow(InvalidObjectKeyError);
-    },
-  );
+  it.each([
+    'status/other.json',
+    '../status/status.json',
+    'status/status.json/',
+    'ws/x/status.json',
+  ])('does not widen parseObjectKey to %j', (raw) => {
+    expect(() => publicObjectKey(raw as 'status/status.json')).toThrow(InvalidObjectKeyError);
+    expect(() => parseObjectKey(raw)).toThrow(InvalidObjectKeyError);
+  });
 });

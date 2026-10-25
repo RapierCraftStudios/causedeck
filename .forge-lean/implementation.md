@@ -28,3 +28,6 @@ The flagged symbols are not members of any list in the named tests (mocks or the
 
 ## Lint fix
 CI lint failed (no log). Committed per-package `.eslintcache` files were the only lint-visible artifact; removed them from git and ignored them. ESLint on all changed ts/js files in core, db, config, storage, i18n and worker tests reports no problems.
+
+## Lint fix 2
+No ESLint findings on changed files; prettier --check flagged three files (cross-tenant-registry.ts, storage keys.ts and keys.test.ts). Formatted them, no logic change; keys tests pass.

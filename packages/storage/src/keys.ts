@@ -86,7 +86,13 @@ export function parseObjectKey(raw: string): ParsedObjectKey {
   if ((PUBLIC_OBJECT_KEYS as readonly string[]).includes(raw)) {
     // Not a workspace object: it parses with no workspace (so no workspace check ever matches it)
     // and the smallest size class, so providers can write it and nothing else changes.
-    return { key: raw as ObjectKey, workspaceId: NO_WORKSPACE, kind: 'image', year: 0, id: NO_WORKSPACE };
+    return {
+      key: raw as ObjectKey,
+      workspaceId: NO_WORKSPACE,
+      kind: 'image',
+      year: 0,
+      id: NO_WORKSPACE,
+    };
   }
   const match = KEY.exec(raw);
   if (!match) throw new InvalidObjectKeyError('malformed object key');

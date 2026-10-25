@@ -44,24 +44,64 @@ export interface MemoryKeySpec {
 
 /** The key registry, per layer. A key's prefix is its layer. */
 export const MEMORY_KEYS = {
-  'M1.courts': { layer: 'M1', strategy: false, description: 'Courts and forums the lawyer appears in' },
+  'M1.courts': {
+    layer: 'M1',
+    strategy: false,
+    description: 'Courts and forums the lawyer appears in',
+  },
   'M1.practice_areas': { layer: 'M1', strategy: false, description: 'Practice areas' },
   'M1.languages': { layer: 'M1', strategy: false, description: 'Working languages' },
   'M1.approach': { layer: 'M1', strategy: true, description: 'How the lawyer approaches a matter' },
   'M2.brief_format': { layer: 'M2', strategy: false, description: 'Preferred brief layout' },
-  'M2.always_carry': { layer: 'M2', strategy: false, description: 'Papers always carried to a hearing' },
-  'M2.reminder.evening_time': { layer: 'M2', strategy: false, description: 'Evening reminder time' },
+  'M2.always_carry': {
+    layer: 'M2',
+    strategy: false,
+    description: 'Papers always carried to a hearing',
+  },
+  'M2.reminder.evening_time': {
+    layer: 'M2',
+    strategy: false,
+    description: 'Evening reminder time',
+  },
   'M2.client_update_tone': { layer: 'M2', strategy: false, description: 'Tone of client updates' },
   'M2.settlement_posture': { layer: 'M2', strategy: true, description: 'Settlement preferences' },
-  'M3.synopsis': { layer: 'M3', strategy: false, description: 'What this matter is about, in the lawyer\'s words' },
-  'M3.client_instruction': { layer: 'M3', strategy: false, description: 'A standing client instruction' },
+  'M3.synopsis': {
+    layer: 'M3',
+    strategy: false,
+    description: "What this matter is about, in the lawyer's words",
+  },
+  'M3.client_instruction': {
+    layer: 'M3',
+    strategy: false,
+    description: 'A standing client instruction',
+  },
   'M3.strategy_note': { layer: 'M3', strategy: true, description: 'A strategy note on the matter' },
-  'M4.hall_note': { layer: 'M4', strategy: false, description: 'A practical note about a court hall or registry' },
-  'M4.registry_tip': { layer: 'M4', strategy: false, description: 'A practical registry or filing tip' },
+  'M4.hall_note': {
+    layer: 'M4',
+    strategy: false,
+    description: 'A practical note about a court hall or registry',
+  },
+  'M4.registry_tip': {
+    layer: 'M4',
+    strategy: false,
+    description: 'A practical registry or filing tip',
+  },
   'M6.client_language': { layer: 'M6', strategy: false, description: 'Language a client prefers' },
-  'M6.preferred_contact': { layer: 'M6', strategy: false, description: 'How a contact prefers to be reached' },
-  'M7.party_alias': { layer: 'M7', strategy: false, description: 'A name a party is also known by' },
-  'M7.matter_alias': { layer: 'M7', strategy: false, description: 'A name a matter is also known by' },
+  'M6.preferred_contact': {
+    layer: 'M6',
+    strategy: false,
+    description: 'How a contact prefers to be reached',
+  },
+  'M7.party_alias': {
+    layer: 'M7',
+    strategy: false,
+    description: 'A name a party is also known by',
+  },
+  'M7.matter_alias': {
+    layer: 'M7',
+    strategy: false,
+    description: 'A name a matter is also known by',
+  },
 } as const satisfies Record<string, MemoryKeySpec>;
 
 export type MemoryKey = keyof typeof MEMORY_KEYS;
@@ -140,23 +180,40 @@ interface TargetShape {
 
 /** The layer, key and scope rules shared by proposals and notes. */
 function checkTarget(input: TargetShape, ctx: z.RefinementCtx): void {
-  const issue = (message: string, path: string) => ctx.addIssue({ code: 'custom', message, path: [path] });
-  if (!isMemoryKey(input.key)) return issue('Not a registered memory key', 'key');
+  const issue = (message: string, path: string) => {
+    ctx.addIssue({ code: 'custom', message, path: [path] });
+  };
+  if (!isMemoryKey(input.key)) {
+    issue('Not a registered memory key', 'key');
+    return;
+  }
   const layer = layerOfKey(input.key);
   if (!LAYER_SCOPES[layer].includes(input.scope)) {
     issue(`${layer} memory cannot have ${input.scope} scope`, 'scope');
   }
   if (input.scope === 'matter' && !input.matterId) issue('Matter scope needs a matter', 'matterId');
-  if (input.scope !== 'matter' && input.matterId) issue('Only matter scope names a matter', 'matterId');
+  if (input.scope !== 'matter' && input.matterId)
+    issue('Only matter scope names a matter', 'matterId');
   if (layer === 'M6' && !input.personId) issue('Relationship memory needs a person', 'personId');
-  if (layer !== 'M6' && input.personId) issue('Only relationship memory names a person', 'personId');
+  if (layer !== 'M6' && input.personId)
+    issue('Only relationship memory names a person', 'personId');
 }
 
 export const MemoryProposalInput = z
   .strictObject({
     ...MemoryTargetFields,
     /** Why this is proposed: ids and counts, never quoted content. */
-    evidence: z.record(z.string().max(60), z.union([z.string().max(500), z.number(), z.boolean(), z.array(z.string().max(100)).max(50)])).default({}),
+    evidence: z
+      .record(
+        z.string().max(60),
+        z.union([
+          z.string().max(500),
+          z.number(),
+          z.boolean(),
+          z.array(z.string().max(100)).max(50),
+        ]),
+      )
+      .default({}),
     sourceType: MemorySourceType.default('ai'),
     sourceRef: z.string().max(200).nullish(),
     anchorId: uuid.nullish(),

@@ -11361,7 +11361,7 @@
         },
         "memory_proposal_status_chk": {
           "name": "memory_proposal_status_chk",
-          "value": "status in ('proposed', 'confirmed', 'dismissed')"
+          "value": "status in ('observing', 'proposed', 'confirmed', 'dismissed')"
         },
         "memory_proposal_key_layer_chk": {
           "name": "memory_proposal_key_layer_chk",

@@ -7,15 +7,15 @@
 //   * clerks read M1, M2, M6 and M7 values that are not strategy-typed, through the view, never M3 or M4
 //   * viewers read no memory
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
-import { Secret } from '@causedeck/config/env';
-import { decryptField, encryptField, ensureWorkspaceKey, getWorkspaceDek } from '@causedeck/storage';
-import type { KeyProvider } from '@causedeck/storage';
+import type { Secret } from '@causedeck/config/env';
 import {
-  isMemoryKey,
-  isStrategyKey,
-  MemoryValue,
-  type MemoryLayer,
-} from '@causedeck/validators';
+  decryptField,
+  encryptField,
+  ensureWorkspaceKey,
+  getWorkspaceDek,
+} from '@causedeck/storage';
+import type { KeyProvider } from '@causedeck/storage';
+import { isMemoryKey, isStrategyKey, MemoryValue, type MemoryLayer } from '@causedeck/validators';
 import { and, eq, or, sql, type SQL } from 'drizzle-orm';
 
 import { invalid, notFound } from '../shared/errors.ts';
@@ -38,7 +38,7 @@ export interface MemoryActor {
 export const nowOf = (deps: Pick<MemoryDeps, 'now'>): Date => (deps.now ?? (() => new Date()))();
 
 /** Layers a clerk may read, and only when the value is not strategy-typed. */
-export const CLERK_LAYERS: readonly MemoryLayer[] = ['M1', 'M2', 'M6', 'M7'];
+export const MEMORY_CLERK_LAYERS: readonly MemoryLayer[] = ['M1', 'M2', 'M6', 'M7'];
 
 export interface ReadableFacts {
   layer: MemoryLayer;
@@ -63,7 +63,7 @@ export function canReadMemory(
   if (role === 'viewer') return false;
   if (item.scope === 'matter' && (matterId == null || item.matterId !== matterId)) return false;
   if (item.scope === 'user' && item.ownerUserId !== userId && !item.sharedWithChamber) return false;
-  if (role === 'clerk') return CLERK_LAYERS.includes(item.layer) && !item.strategy;
+  if (role === 'clerk') return MEMORY_CLERK_LAYERS.includes(item.layer) && !item.strategy;
   return true;
 }
 
@@ -144,6 +144,7 @@ export async function opener(
   deps: MemoryDeps,
   workspaceId: string,
 ): Promise<(ciphertext: string) => MemoryValue> {
+  await ensureWorkspaceKey(deps.db, deps.keys, workspaceId);
   const dek: Secret<Buffer> = await getWorkspaceDek(deps.db, deps.keys, workspaceId);
   return (ciphertext) => {
     const parsed = MemoryValue.safeParse(JSON.parse(decryptField(dek, workspaceId, ciphertext)));

@@ -239,6 +239,12 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: "The workspace's memory and embeddings were erased",
   },
+  // Lawyer memory (#72): an owner changed whether an M4 court note is visible to the chamber.
+  // Metadata holds the note id and the new state, never its text.
+  'memory.sharing_changed': {
+    security: true,
+    description: 'An owner shared an M4 court note with the chamber or made it private again',
+  },
   // Capture inbox (#43). Metadata holds the channel, MIME type, size and flags; never a filename or
   // file content. Channel changes and quarantines are fail-closed: they change where a lawyer's
   // data may flow or record a threat.

@@ -81,7 +81,7 @@ CREATE TABLE "memory_proposal" (
 	"workspace_id" uuid NOT NULL,
 	CONSTRAINT "memory_proposal_layer_chk" CHECK (layer in ('M1', 'M2', 'M3', 'M4', 'M6', 'M7')),
 	CONSTRAINT "memory_proposal_scope_chk" CHECK (scope in ('user', 'workspace', 'matter')),
-	CONSTRAINT "memory_proposal_status_chk" CHECK (status in ('proposed', 'confirmed', 'dismissed')),
+	CONSTRAINT "memory_proposal_status_chk" CHECK (status in ('observing', 'proposed', 'confirmed', 'dismissed')),
 	CONSTRAINT "memory_proposal_key_layer_chk" CHECK (key like layer || '.%'),
 	CONSTRAINT "memory_proposal_matter_scope_chk" CHECK ((scope = 'matter') = (matter_id is not null))
 );
@@ -145,6 +145,7 @@ CREATE POLICY "memory_embedding_matter_scope" ON "memory_embedding" AS RESTRICTI
 CREATE FUNCTION memory_clerk_readable(item_layer text, item_strategy boolean) RETURNS boolean
   LANGUAGE sql IMMUTABLE PARALLEL SAFE SET search_path = pg_catalog
   AS $$ SELECT item_layer IN ('M1', 'M2', 'M6', 'M7') AND NOT item_strategy $$;--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION memory_clerk_readable(text, boolean) TO causedeck_app, causedeck_clerk;--> statement-breakpoint
 CREATE VIEW "memory_item_clerk_v" WITH (security_barrier = true) AS SELECT id, layer, key, scope, matter_id, person_id, owner_user_id, value_ciphertext, source_type, confirmation_state, status, strategy, shared_with_chamber, created_at, updated_at, workspace_id FROM "memory_item" WHERE memory_clerk_readable(layer, strategy) AND status <> 'deleted';--> statement-breakpoint
 REVOKE ALL ON "memory_item", "memory_proposal", "memory_embedding" FROM causedeck_clerk;--> statement-breakpoint
 REVOKE ALL ON "memory_item_clerk_v" FROM PUBLIC, causedeck_app, causedeck_clerk;--> statement-breakpoint

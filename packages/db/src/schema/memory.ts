@@ -6,6 +6,9 @@
 // influenced an output, and `memory_pause` the per-member "pause all memory" switch. Tenant tables
 // under FORCE RLS via `tenantTable()`; the migration adds the scope policies and the clerk view.
 //
+// A proposal is `observing` while a repeated-edit pattern is still being counted (never shown to
+// the lawyer), then `proposed`, then `confirmed` or `dismissed`.
+//
 // A deleted item keeps its row (status `deleted`, `value_ciphertext` null) so usage history and the
 // purge sweep can find its embeddings; the value is gone at once.
 import { sql } from 'drizzle-orm';
@@ -36,7 +39,12 @@ export const MEMORY_SCOPE_VALUES = ['user', 'workspace', 'matter'] as const;
 export type MemoryScopeValue = (typeof MEMORY_SCOPE_VALUES)[number];
 export const MEMORY_ITEM_STATUSES = ['active', 'paused', 'deleted'] as const;
 export type MemoryItemStatus = (typeof MEMORY_ITEM_STATUSES)[number];
-export const MEMORY_PROPOSAL_STATUS_VALUES = ['proposed', 'confirmed', 'dismissed'] as const;
+export const MEMORY_PROPOSAL_STATUS_VALUES = [
+  'observing',
+  'proposed',
+  'confirmed',
+  'dismissed',
+] as const;
 export type MemoryProposalStatusValue = (typeof MEMORY_PROPOSAL_STATUS_VALUES)[number];
 export const MEMORY_USAGE_PURPOSES = ['brief', 'draft', 'matching'] as const;
 export type MemoryUsagePurpose = (typeof MEMORY_USAGE_PURPOSES)[number];

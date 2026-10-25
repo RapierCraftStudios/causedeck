@@ -79,7 +79,7 @@ export async function seedMemoryEmbedding(
       workspaceId: ctx.workspaceId,
       itemId,
       contentRef: `item:${itemId}`,
-      embedding: sql`${vector}::vector` as unknown as number[],
+      embedding: sql`${vector}::vector`,
     })
     .returning({ id: memoryEmbedding.id });
   return { itemId, id: first(rows, 'memory_embedding').id };

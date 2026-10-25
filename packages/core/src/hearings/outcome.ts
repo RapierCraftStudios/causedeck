@@ -131,6 +131,11 @@ interface Loaded {
   matterId: string;
   sensitive: boolean;
   ownerUserId: string | null;
+  /**
+   * The actor the matter policy sees: a member who appeared at this hearing is assigned to its matter,
+   * so a delegated junior passes the matter-graph services' reads too, not only this file's check.
+   */
+  actor: Scope['actor'];
 }
 
 /** The hearing with its matter, or NOT_FOUND (also when the actor may not read the matter); FORBIDDEN to write without rights. */
@@ -212,6 +217,7 @@ async function load(
     matterId: row.matterId,
     sensitive: row.sensitive,
     ownerUserId: row.ownerUserId,
+    actor: policyActor,
   };
 }
 
@@ -275,8 +281,9 @@ export async function getOutcomeProposal(
 ): Promise<OutcomeProposal> {
   const { hearingId } = parse(HearingRef, input);
   return inScope(deps, actor, async (scope) => {
-    const { tx, actor: who, settings } = scope;
+    const { tx, settings } = scope;
     const loaded = await load(scope, hearingId, 'matter.read');
+    const who = loaded.actor;
     const proposals = await openProposals(scope, loaded);
     const confirmed = loaded.hearing.confirmationState === 'confirmed';
     const strategy = can(who, 'strategy.read', undefined, settings).allow;
@@ -408,9 +415,10 @@ export async function confirmOutcome(
 ): Promise<ConfirmedOutcome> {
   const data = parse(OutcomeConfirmation, input);
   return inScope(deps, actor, async (scope) => {
-    const { tx, actor: who } = scope;
-    const { workspaceId, userId } = who;
+    const { tx } = scope;
+    const { workspaceId, userId } = scope.actor;
     const loaded = await load(scope, data.hearingId, 'matter.write');
+    const who = loaded.actor;
     if (loaded.hearing.confirmationState === 'confirmed') {
       throw conflict('This hearing outcome is already confirmed');
     }

@@ -73,7 +73,13 @@ export default async function BriefPage({ params }: BriefPageProps) {
     brief,
     readiness,
     masthead,
-    members: Object.fromEntries(members.map((m) => [m.memberId, m.name])),
+    // Keyed by member id (owners) and by user id (`prepared_by` is the marking user's id).
+    members: Object.fromEntries(
+      members.flatMap((m) => [
+        [m.memberId, m.name],
+        [m.userId, m.name],
+      ]),
+    ),
     canWrite: can(context.role, 'matter.write'),
     printNotes: jar.get(`brief-print-notes-${context.user.id}`)?.value === '1',
     staleCleared,

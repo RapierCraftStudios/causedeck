@@ -31,7 +31,7 @@ export interface SheetViewModel {
   brief: Brief;
   readiness: Readiness;
   masthead: SheetMasthead;
-  /** Member names by id, for 'Prepared by'. */
+  /** Member names by member id and by user id, for owners and 'Prepared by'. */
   members: Record<string, string>;
   canWrite: boolean;
   /** The member's remembered choice to print private court notes. */

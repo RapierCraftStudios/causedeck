@@ -4,7 +4,7 @@ Drafting data layer (#766): `template` (global-or-workspace), `draft`, immutable
 ### Changes
 - packages/db/src/schema/drafting.ts, schema/index.ts: tables and barrel export
 - packages/db/src/conventions.ts: `template` added to GLOBAL_OR_WORKSPACE_TABLES
-- packages/db/migrations/20261025050000_drafting.sql, meta snapshot and journal: migration with RLS, scope guard, immutability trigger
+- packages/db/migrations/20261025060000_drafting.sql, meta snapshot and journal: migration with RLS, scope guard, immutability trigger
 - packages/db/src/index.test.ts, rls/sql.test.ts, testing/cross-tenant-registry.ts, testing/two-tenants.ts, conventions.test.ts: registrations and seeders
 - packages/db/src/__tests__/drafting-schema.test.ts: regression tests (system template read-only, scope guard, immutability, cascade)
 - packages/validators/src/drafting.ts (+ test, index.ts, package.json export): Template/Block/Draft/FormatPreset/ExportRequest schemas
@@ -12,7 +12,7 @@ Drafting data layer (#766): `template` (global-or-workspace), `draft`, immutable
 
 ### Acceptance Criteria Status
 - R1 ✅ packages/db/src/schema/drafting.ts:44-117
-- R2 ✅ packages/db/migrations/20261025050000_drafting.sql, schema/index.ts:132
+- R2 ✅ packages/db/migrations/20261025060000_drafting.sql, schema/index.ts:132
 - R3 ✅ packages/validators/src/drafting.ts, index.ts:9
 - R4 ✅ index.test.ts, rls/sql.test.ts, cross-tenant-registry.ts, two-tenants.ts
 - R5 ✅ drafting-schema.test.ts, rls sql.test.ts
@@ -37,3 +37,6 @@ The CI `test` job log was not available. I could not reproduce a failure locally
 
 ## Merge follow-up
 The reported `turbo: command not found` (exit 127) was an environment failure, not a code conflict. Ran scoped `tsc --noEmit` for db, validators and core (clean) plus the V1-V3 validate commands (pass). Fixed the migration header comment to name 20261025060000_drafting.
+
+### Merge follow-up
+Base took migration number 20261025050000 (research_notes), so the drafting migration is 20261025060000 (SQL unchanged, snapshot and journal regenerated). The reported `turbo: command not found` (exit 127) was the PATH, not the code: `pnpm exec turbo run typecheck` over validators, db, core, i18n, web and worker passes (20 tasks). V1-V5 pass (V4 with a migrated DB URL).

@@ -9,6 +9,7 @@ import type { Brief } from '@causedeck/validators';
 import type { Vault } from './crypto.ts';
 import {
   type OfflineDb,
+  type MetaRow,
   type OfflineScope,
   dexieWrappedKeyStore,
   evictOutsideWindow,
@@ -86,7 +87,14 @@ async function purgeRevoked(
     }
   }
   const byListing = new Map(rows.map((r) => [r.listingId, r.workspaceId]));
-  await Promise.all(doomed.map((id) => db.briefs.delete([byListing.get(id) ?? '', id])));
+  await Promise.all(
+    doomed.map((id) =>
+      db.briefs
+        .where('[workspaceId+listingId]')
+        .equals([byListing.get(id) ?? '', id])
+        .delete(),
+    ),
+  );
   return doomed.length;
 }
 
@@ -113,7 +121,7 @@ export async function prefetchWindow(deps: PrefetchDeps): Promise<PrefetchSummar
   }
   const purged = await purgeRevoked(db, vault, snapshot.purge);
   const evicted = await evictOutsideWindow(db, today);
-  await db.meta.put({ id: 'lastSyncAt', value: now });
+  await db.meta.put({ id: 'lastSyncAt', value: now } as MetaRow);
   return { days: snapshot.days.length, briefs: snapshot.briefs.length, purged, evicted };
 }
 

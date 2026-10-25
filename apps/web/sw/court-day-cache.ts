@@ -12,8 +12,8 @@ export const PREFETCH_MESSAGE = 'COURT_DAY_PREFETCH';
 /** Fallback entry for the Serwist `fallbacks` list; it must come before the generic `/offline`. */
 export const courtDayFallback = {
   url: OFFLINE_SHELL_PATH,
-  matcher: ({ request, url }: { request: Request; url: URL }) =>
-    isOfflineShellNavigation(request, url),
+  matcher: ({ request }: { request: Request }) =>
+    isOfflineShellNavigation(request, new URL(request.url)),
 };
 
 interface ClientLike {

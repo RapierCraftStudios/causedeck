@@ -46,7 +46,7 @@ export interface OutboxRow extends SealedRow {
   createdAt: number;
 }
 
-type MetaRow = ({ id: 'key' } & WrappedKey) | { id: 'lastSyncAt'; value: number };
+export type MetaRow = ({ id: 'key' } & WrappedKey) | { id: 'lastSyncAt'; value: number };
 
 export class OfflineDb extends Dexie {
   courtDay!: EntityTable<CourtDayRow>;

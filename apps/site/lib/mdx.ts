@@ -35,7 +35,7 @@ export async function loadMdxFile(
   contentDir: string = CONTENT_DIR,
 ): Promise<MdxPage> {
   const source = await readFile(file, 'utf8');
-  const { content, frontmatter } = await compileMDX<Record<string, unknown>>({
+  const { content, frontmatter } = await compileMDX({
     source,
     options: { parseFrontmatter: true },
     components: components as never,
@@ -44,7 +44,11 @@ export async function loadMdxFile(
     .relative(contentDir, file)
     .replace(/\.mdx$/, '')
     .split(path.sep);
-  return { slug, frontmatter: parseFrontmatter(frontmatter, path.relative(process.cwd(), file)), content };
+  return {
+    slug,
+    frontmatter: parseFrontmatter(frontmatter, path.relative(process.cwd(), file)),
+    content,
+  };
 }
 
 function assertUnique(pages: MdxPage[], key: 'title' | 'description'): void {

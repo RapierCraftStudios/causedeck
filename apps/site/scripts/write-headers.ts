@@ -18,7 +18,8 @@ export function inlineScriptHashes(html: string): string[] {
     if (/\ssrc\s*=/.test(attributes)) continue;
     const type = /\stype\s*=\s*["']([^"']*)["']/.exec(attributes)?.[1];
     // Data blocks (JSON-LD, importmap-less JSON) never execute and need no hash.
-    if (type !== undefined && type !== '' && type !== 'module' && type !== 'text/javascript') continue;
+    if (type !== undefined && type !== '' && type !== 'module' && type !== 'text/javascript')
+      continue;
     hashes.add(`'sha256-${createHash('sha256').update(body).digest('base64')}'`);
   }
   return [...hashes].sort();
@@ -57,11 +58,17 @@ export function buildHeaders(
 ): string {
   const analyticsOrigin = origin(analyticsSrc);
   const rules = pages.map(({ route, html }) => {
-    const sources = ["'self'", ...inlineScriptHashes(html), ...(analyticsOrigin ? [analyticsOrigin] : [])];
+    const sources = [
+      "'self'",
+      ...inlineScriptHashes(html),
+      ...(analyticsOrigin ? [analyticsOrigin] : []),
+    ];
     return `${route}\n  Content-Security-Policy: script-src ${sources.join(' ')}`;
   });
   if (rules.length + 3 > MAX_RULES) {
-    throw new Error(`write-headers: ${rules.length} page rules exceed the Cloudflare _headers limit`);
+    throw new Error(
+      `write-headers: ${String(rules.length)} page rules exceed the Cloudflare _headers limit`,
+    );
   }
   return [
     base.trimEnd(),
@@ -76,7 +83,8 @@ export function buildHeaders(
 function htmlFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) return entry.name === '_next' || entry.name === '_not-found' ? [] : htmlFiles(full);
+    if (entry.isDirectory())
+      return entry.name === '_next' || entry.name === '_not-found' ? [] : htmlFiles(full);
     return entry.name.endsWith('.html') ? [full] : [];
   });
 }
@@ -94,5 +102,5 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
   // eslint-disable-next-line no-process-env -- build-time switch, same variable as lib/env.ts.
   const analyticsSrc = process.env.NEXT_PUBLIC_ANALYTICS_SRC;
   writeFileSync(path.join(outDir, '_headers'), buildHeaders(base, pages, analyticsSrc));
-  console.log(`Wrote out/_headers for ${pages.length} page(s).`);
+  console.log(`Wrote out/_headers for ${String(pages.length)} page(s).`);
 }

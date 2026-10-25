@@ -1,8 +1,6 @@
 'use client';
 
-import {
-  Button,
-} from '@causedeck/ui/button';
+import { Button } from '@causedeck/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -23,12 +21,16 @@ export function SiteHeader({ appUrl }: { appUrl: string }) {
   return (
     <header className="border-line bg-surface sticky top-0 z-40 border-b">
       <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between gap-4 px-4 md:px-6">
-        <Link href="/" className="font-serif text-ink text-lg font-semibold">
+        <Link href="/" className="text-ink font-serif text-lg font-semibold">
           CauseDeck
         </Link>
         <nav aria-label="Primary" className="hidden items-center gap-6 md:flex">
           {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="cd-link text-ink-muted hover:text-ink text-sm">
+            <Link
+              key={item.href}
+              href={item.href}
+              className="cd-link text-ink-muted hover:text-ink text-sm"
+            >
               {item.label}
             </Link>
           ))}

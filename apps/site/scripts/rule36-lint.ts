@@ -44,7 +44,11 @@ export function scanText(file: string, text: string): Finding[] {
     if (isCode) {
       const declared = DECLARATION.exec(content);
       if (declared) {
-        findings.push({ file, line: index + 1, message: `forbidden component name in "${declared[0]}"` });
+        findings.push({
+          file,
+          line: index + 1,
+          message: `forbidden component name in "${declared[0]}"`,
+        });
       }
     }
   });
@@ -72,18 +76,16 @@ export function scanSite(root: string): Finding[] {
     } catch {
       return [];
     }
-  }).flatMap((file) =>
-    scanText(path.relative(root, file), readFileSync(file, 'utf8')),
-  );
+  }).flatMap((file) => scanText(path.relative(root, file), readFileSync(file, 'utf8')));
 }
 
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const findings = scanSite(process.cwd());
   for (const finding of findings) {
-    console.error(`${finding.file}:${finding.line}: Rule 36: ${finding.message}`);
+    console.error(`${finding.file}:${String(finding.line)}: Rule 36: ${finding.message}`);
   }
   if (findings.length > 0) {
-    console.error(`Rule 36 lint failed with ${findings.length} finding(s).`);
+    console.error(`Rule 36 lint failed with ${String(findings.length)} finding(s).`);
     process.exit(1);
   }
   console.log('Rule 36 lint passed.');

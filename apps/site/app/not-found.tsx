@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <section aria-labelledby="nf-title" className="py-12">
-      <h1 id="nf-title" className="font-serif text-ink text-3xl font-semibold">
+      <h1 id="nf-title" className="text-ink font-serif text-3xl font-semibold">
         We could not find that page
       </h1>
       <p className="text-ink-muted mt-4 max-w-[60ch]">

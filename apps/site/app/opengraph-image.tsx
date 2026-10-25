@@ -8,23 +8,21 @@ export const contentType = 'image/png';
 // Rendered once at build time with next/og's bundled font; no remote fetch.
 export default function OpenGraphImage() {
   return new ImageResponse(
-    (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          padding: 80,
-          background: '#faf9f6',
-          color: '#1a1a1a',
-        }}
-      >
-        <div style={{ fontSize: 96, fontWeight: 700 }}>CauseDeck</div>
-        <div style={{ fontSize: 40, marginTop: 24 }}>Software for advocates</div>
-      </div>
-    ),
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        padding: 80,
+        background: '#faf9f6',
+        color: '#1a1a1a',
+      }}
+    >
+      <div style={{ fontSize: 96, fontWeight: 700 }}>CauseDeck</div>
+      <div style={{ fontSize: 40, marginTop: 24 }}>Software for advocates</div>
+    </div>,
     size,
   );
 }

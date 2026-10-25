@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: repoRoot,
   turbopack: { root: repoRoot },
   // Workspace packages ship TypeScript source, so Next.js compiles them.
-  transpilePackages: ['@causedeck/ui'],
+  transpilePackages: ['@causedeck/ui', '@causedeck/config'],
   poweredByHeader: false,
   reactStrictMode: true,
 };

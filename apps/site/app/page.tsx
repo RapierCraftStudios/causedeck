@@ -15,7 +15,7 @@ export default function HomePage() {
   return (
     <>
       <section aria-labelledby="hero-title" className="py-12">
-        <h1 id="hero-title" className="font-serif text-ink text-4xl font-semibold md:text-5xl">
+        <h1 id="hero-title" className="text-ink font-serif text-4xl font-semibold md:text-5xl">
           Practice software for advocates
         </h1>
         <p className="text-ink-muted mt-4 max-w-[60ch] text-lg">

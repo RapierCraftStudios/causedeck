@@ -18,7 +18,10 @@ export function SiteFooter() {
               <ul className="mt-3 space-y-2">
                 {column.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="cd-link text-ink-muted hover:text-ink text-sm">
+                    <Link
+                      href={link.href}
+                      className="cd-link text-ink-muted hover:text-ink text-sm"
+                    >
                       {link.label}
                     </Link>
                   </li>

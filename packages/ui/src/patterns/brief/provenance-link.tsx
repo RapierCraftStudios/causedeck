@@ -16,12 +16,16 @@ export interface SourcedLine {
 }
 
 /** A non-manual line must cite an anchor or a source reference: no provenance, no line. */
-export function hasLineProvenance(line: Pick<SourcedLine, 'source_type' | 'source_ref' | 'anchor_id'>) {
+export function hasLineProvenance(
+  line: Pick<SourcedLine, 'source_type' | 'source_ref' | 'anchor_id'>,
+) {
   return line.source_type === 'manual' || line.anchor_id !== null || line.source_ref !== null;
 }
 
 /** Throws for a line without provenance, so an unsourced statement can never be rendered. */
-export function assertProvenance(line: Pick<SourcedLine, 'source_type' | 'source_ref' | 'anchor_id'>) {
+export function assertProvenance(
+  line: Pick<SourcedLine, 'source_type' | 'source_ref' | 'anchor_id'>,
+) {
   if (!hasLineProvenance(line)) {
     throw new Error('A brief line needs an anchor or a source reference unless it is manual');
   }

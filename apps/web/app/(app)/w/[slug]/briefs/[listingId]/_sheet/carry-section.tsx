@@ -20,7 +20,14 @@ export interface CarrySectionProps {
   offline: boolean;
 }
 
-export function CarrySection({ workspaceId, listingId, items, reviewed, canWrite, offline }: CarrySectionProps) {
+export function CarrySection({
+  workspaceId,
+  listingId,
+  items,
+  reviewed,
+  canWrite,
+  offline,
+}: CarrySectionProps) {
   const t = useTranslations('brief.carry');
   const tp = useTranslations('brief.prepared');
   const [list, setList] = useState<readonly CarryItem[]>(items);
@@ -35,7 +42,11 @@ export function CarrySection({ workspaceId, listingId, items, reviewed, canWrite
     setList(items);
   }, [items]);
 
-  function save(input: Record<string, unknown>, rollback: readonly CarryItem[], key: string | null) {
+  function save(
+    input: Record<string, unknown>,
+    rollback: readonly CarryItem[],
+    key: string | null,
+  ) {
     setError(false);
     if (offline) {
       if (key) setQueued((q) => new Set(q).add(key));
@@ -64,7 +75,16 @@ export function CarrySection({ workspaceId, listingId, items, reviewed, canWrite
     const label = draft.trim();
     if (label === '') return;
     const before = list;
-    setList([...list, { key: `manual:pending-${String(list.length)}`, kind: 'manual', label, document_id: null, ticked: false }]);
+    setList([
+      ...list,
+      {
+        key: `manual:pending-${String(list.length)}`,
+        kind: 'manual',
+        label,
+        document_id: null,
+        ticked: false,
+      },
+    ]);
     setDraft('');
     save({ action: 'add', label }, before, null);
   };
@@ -74,7 +94,7 @@ export function CarrySection({ workspaceId, listingId, items, reviewed, canWrite
       {list.length === 0 ? <p className="text-muted-foreground">{t('empty')}</p> : null}
       <ul className="grid gap-1">
         {list.map((item) => (
-          <li key={item.key} data-carry-item className="flex items-center gap-2 break-inside-avoid">
+          <li key={item.key} data-carry-item className="flex break-inside-avoid items-center gap-2">
             <Checkbox
               checked={item.ticked}
               disabled={!canWrite}
@@ -83,9 +103,17 @@ export function CarrySection({ workspaceId, listingId, items, reviewed, canWrite
                 tick(item, value === true);
               }}
             />
-            <span className={item.ticked ? 'text-muted-foreground line-through print:text-black' : ''}>{item.label}</span>
-            <span className="text-muted-foreground font-sans text-xs print:hidden">{t(`kind.${item.kind}`)}</span>
-            {queued.has(item.key) ? <span className="font-sans text-xs print:hidden">{t('willSync')}</span> : null}
+            <span
+              className={item.ticked ? 'text-muted-foreground line-through print:text-black' : ''}
+            >
+              {item.label}
+            </span>
+            <span className="text-muted-foreground font-sans text-xs print:hidden">
+              {t(`kind.${item.kind}`)}
+            </span>
+            {queued.has(item.key) ? (
+              <span className="font-sans text-xs print:hidden">{t('willSync')}</span>
+            ) : null}
             {canWrite ? (
               <Button
                 type="button"
@@ -124,7 +152,12 @@ export function CarrySection({ workspaceId, listingId, items, reviewed, canWrite
               setDraft(event.target.value);
             }}
           />
-          <Button type="submit" size="sm" variant="secondary" disabled={pending || draft.trim() === ''}>
+          <Button
+            type="submit"
+            size="sm"
+            variant="secondary"
+            disabled={pending || draft.trim() === ''}
+          >
             {t('add')}
           </Button>
           {reviewed ? null : (

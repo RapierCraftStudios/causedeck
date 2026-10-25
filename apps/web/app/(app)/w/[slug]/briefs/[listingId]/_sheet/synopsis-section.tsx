@@ -22,7 +22,15 @@ export interface SynopsisSectionProps {
   fallbackLabel: string;
 }
 
-export function SynopsisSection({ workspaceId, listingId, synopsis, note, canWrite, offline, fallbackLabel }: SynopsisSectionProps) {
+export function SynopsisSection({
+  workspaceId,
+  listingId,
+  synopsis,
+  note,
+  canWrite,
+  offline,
+  fallbackLabel,
+}: SynopsisSectionProps) {
   const t = useTranslations('brief.synopsis');
   const te = useTranslations('brief.prepared');
   const [editing, setEditing] = useState(false);
@@ -47,11 +55,21 @@ export function SynopsisSection({ workspaceId, listingId, synopsis, note, canWri
 
   return (
     <div className="grid gap-2">
-      <StatementLine line={synopsis.line} fallbackLabel={fallbackLabel} offline={offline} viewOnly={!canWrite} />
+      <StatementLine
+        line={synopsis.line}
+        fallbackLabel={fallbackLabel}
+        offline={offline}
+        viewOnly={!canWrite}
+      />
       {synopsis.strategy ? (
         <div>
           <span className="text-muted-foreground font-sans text-xs">{t('strategy')}</span>
-          <StatementLine line={synopsis.strategy} fallbackLabel={fallbackLabel} offline={offline} viewOnly={!canWrite} />
+          <StatementLine
+            line={synopsis.strategy}
+            fallbackLabel={fallbackLabel}
+            offline={offline}
+            viewOnly={!canWrite}
+          />
         </div>
       ) : null}
       {saved ? (

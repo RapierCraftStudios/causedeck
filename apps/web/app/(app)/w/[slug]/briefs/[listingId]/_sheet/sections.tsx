@@ -27,7 +27,17 @@ export interface SectionsProps {
   failed?: readonly SectionKey[];
 }
 
-function Section({ id, title, children, className }: { id: SectionKey; title: string; children: ReactNode; className?: string }) {
+function Section({
+  id,
+  title,
+  children,
+  className,
+}: {
+  id: SectionKey;
+  title: string;
+  children: ReactNode;
+  className?: string;
+}) {
   const dom = sectionDomId(id);
   return (
     <section
@@ -45,7 +55,18 @@ function Section({ id, title, children, className }: { id: SectionKey; title: st
   );
 }
 
-export function Sections({ workspaceId, listingId, brief, keys, members, canWrite, offline, printNotes, onPrintNotes, failed = [] }: SectionsProps) {
+export function Sections({
+  workspaceId,
+  listingId,
+  brief,
+  keys,
+  members,
+  canWrite,
+  offline,
+  printNotes,
+  onPrintNotes,
+  failed = [],
+}: SectionsProps) {
   const t = useTranslations('brief');
   const viewOnly = !canWrite;
   const none = <p className="text-muted-foreground">{t('empty.section')}</p>;
@@ -63,7 +84,9 @@ export function Sections({ workspaceId, listingId, brief, keys, members, canWrit
       case 'stage':
         return brief.stage ? <StatementLine line={brief.stage} {...line} /> : none;
       case 'last_order':
-        return brief.last_order.length === 0 ? none : (
+        return brief.last_order.length === 0 ? (
+          none
+        ) : (
           <div className="grid gap-1.5">
             {brief.last_order.map((l, i) => (
               <StatementLine key={`${l.text}-${String(i)}`} line={l} {...line} />
@@ -73,10 +96,17 @@ export function Sections({ workspaceId, listingId, brief, keys, members, canWrit
       case 'obligations':
         return (
           <div className="grid gap-1">
-            {brief.obligations.open.length === 0 ? none : (
+            {brief.obligations.open.length === 0 ? (
+              none
+            ) : (
               <ul className="grid list-disc gap-1 pl-5">
                 {brief.obligations.open.map((o) => (
-                  <ObligationRow key={o.obligation_id} line={o} owner={o.owner_member_id ? (members[o.owner_member_id] ?? null) : null} {...line} />
+                  <ObligationRow
+                    key={o.obligation_id}
+                    line={o}
+                    owner={o.owner_member_id ? (members[o.owner_member_id] ?? null) : null}
+                    {...line}
+                  />
                 ))}
               </ul>
             )}
@@ -116,18 +146,27 @@ export function Sections({ workspaceId, listingId, brief, keys, members, canWrit
         return (
           <div className="grid gap-1.5">
             <PrintToggle workspaceId={workspaceId} checked={printNotes} onChange={onPrintNotes} />
-            {(brief.court_notes ?? []).length === 0 ? none : (
-              (brief.court_notes ?? []).map((l, i) => <StatementLine key={`${l.text}-${String(i)}`} line={l} {...line} />)
-            )}
+            {(brief.court_notes ?? []).length === 0
+              ? none
+              : (brief.court_notes ?? []).map((l, i) => (
+                  <StatementLine key={`${l.text}-${String(i)}`} line={l} {...line} />
+                ))}
           </div>
         );
       case 'context':
-        return brief.context.length === 0 ? none : (
+        return brief.context.length === 0 ? (
+          none
+        ) : (
           <ul className="grid gap-1.5">
             {brief.context.map((p) => (
-              <li key={`${p.document_id}-${String(p.page_no)}-${p.quote.slice(0, 24)}`} className="break-inside-avoid">
+              <li
+                key={`${p.document_id}-${String(p.page_no)}-${p.quote.slice(0, 24)}`}
+                className="break-inside-avoid"
+              >
                 <blockquote className="border-border border-l-2 pl-3">{p.quote}</blockquote>
-                <span className="text-muted-foreground font-sans text-xs print:text-black">{t('line.page', { page: p.page_no })}</span>
+                <span className="text-muted-foreground font-sans text-xs print:text-black">
+                  {t('line.page', { page: p.page_no })}
+                </span>
               </li>
             ))}
           </ul>

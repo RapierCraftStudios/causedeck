@@ -2,7 +2,12 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { ProvenanceLink, assertProvenance, footnoteText, type SourcedLine } from './provenance-link';
+import {
+  ProvenanceLink,
+  assertProvenance,
+  footnoteText,
+  type SourcedLine,
+} from './provenance-link';
 import { ReadinessMeter } from './readiness-meter';
 import { SectionLabel, SheetPage } from './sheet-page';
 
@@ -32,16 +37,16 @@ describe('brief patterns (#61)', () => {
 
   it('accepts an anchored, a referenced and a manual line', () => {
     expect(() => assertProvenance(ANCHORED)).not.toThrow();
-    expect(() => assertProvenance({ ...ANCHORED, anchor_id: null, source_ref: 'doc:1' })).not.toThrow();
+    expect(() =>
+      assertProvenance({ ...ANCHORED, anchor_id: null, source_ref: 'doc:1' }),
+    ).not.toThrow();
     expect(() =>
       assertProvenance({ source_type: 'manual', source_ref: null, anchor_id: null }),
     ).not.toThrow();
   });
 
   it('shows the chip on screen and a short footnote for print', () => {
-    const { container } = render(
-      <ProvenanceLink line={ANCHORED} sourceLabel="Order of 12 Aug" />,
-    );
+    const { container } = render(<ProvenanceLink line={ANCHORED} sourceLabel="Order of 12 Aug" />);
     expect(screen.getByRole('button', { name: /^Source: Order of 12 Aug/ })).toBeTruthy();
     expect(container.querySelector('[data-slot="provenance-footnote"]')?.textContent).toBe(
       '[Order of 12 Aug, p. 3]',

@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 
 import { sectionDomId, type SectionKey } from './model.ts';
 
-const LABEL_KEY: Record<SectionKey, string> = {
+const LABEL_KEY = {
   stage: 'stage',
   last_order: 'lastOrder',
   obligations: 'obligations',
@@ -14,14 +14,17 @@ const LABEL_KEY: Record<SectionKey, string> = {
   last_hearing: 'lastHearing',
   court_notes: 'courtNotes',
   context: 'context',
-};
+} as const satisfies Record<SectionKey, string>;
 
 export const sectionLabelKey = (key: SectionKey) => LABEL_KEY[key];
 
 export function SectionIndex({ sections }: { sections: readonly SectionKey[] }) {
   const t = useTranslations('brief');
   return (
-    <nav aria-label={t('actions.jump')} className="flex gap-2 overflow-x-auto font-sans text-sm print:hidden">
+    <nav
+      aria-label={t('actions.jump')}
+      className="flex gap-2 overflow-x-auto font-sans text-sm print:hidden"
+    >
       {sections.map((key, index) => (
         <a
           key={key}

@@ -30,7 +30,13 @@ export interface BriefStateResult {
   prepared_by: string | null;
   prepared_at: string | null;
   note: string | null;
-  carry: { key: string; manual: boolean; label: string | null; ticked: boolean; removed: boolean }[];
+  carry: {
+    key: string;
+    manual: boolean;
+    label: string | null;
+    ticked: boolean;
+    removed: boolean;
+  }[];
 }
 
 function revalidateBrief(): void {

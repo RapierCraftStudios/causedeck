@@ -9,7 +9,10 @@ import type { ReactNode } from 'react';
 import { useProvenanceLabels } from './use-provenance-labels.ts';
 
 /** Where a line's chip points: a page-anchored document link, when the line has an anchor. */
-export function sourceLabelOf(line: Pick<SourcedLine, 'source_type' | 'source_ref'>, fallback: string) {
+export function sourceLabelOf(
+  line: Pick<SourcedLine, 'source_type' | 'source_ref'>,
+  fallback: string,
+) {
   return line.source_ref ?? fallback;
 }
 

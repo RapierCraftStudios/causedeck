@@ -50,12 +50,17 @@ export function BriefSheet({ view }: { view: SheetViewModel }) {
   };
   const { dialog } = useBriefKeyboard(keys, print);
 
-  const segments: ReadinessMeterSegment[] = (Object.keys(readiness.segments) as (keyof typeof readiness.segments)[]).map((key) => ({
+  const segments: ReadinessMeterSegment[] = (
+    Object.keys(readiness.segments) as (keyof typeof readiness.segments)[]
+  ).map((key) => ({
     key,
     label: t(`readiness.${key}`),
     met: readiness.segments[key],
   }));
-  const assembled = new Date(view.assembledAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const assembled = new Date(view.assembledAt).toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 
   return (
     <div data-brief-sheet data-print-notes={printNotes ? 'on' : 'off'} className="grid gap-3">
@@ -69,7 +74,11 @@ export function BriefSheet({ view }: { view: SheetViewModel }) {
         aria-label={t('actions.bar')}
         className="bg-background/95 sticky top-0 z-10 flex flex-wrap items-center gap-3 py-2 print:hidden"
       >
-        <ReadinessMeter score={readiness.score} segments={segments} label={t('readiness.label', { score: readiness.score })} />
+        <ReadinessMeter
+          score={readiness.score}
+          segments={segments}
+          label={t('readiness.label', { score: readiness.score })}
+        />
         <PreparedControl
           workspaceId={view.workspaceId}
           listingId={brief.listing_id}
@@ -124,7 +133,9 @@ export function BriefSheet({ view }: { view: SheetViewModel }) {
         />
       </SheetPage>
       {view.canWrite ? null : (
-        <p className="text-muted-foreground text-center font-sans text-sm print:hidden">{t('viewer.readOnly')}</p>
+        <p className="text-muted-foreground text-center font-sans text-sm print:hidden">
+          {t('viewer.readOnly')}
+        </p>
       )}
       {dialog}
     </div>

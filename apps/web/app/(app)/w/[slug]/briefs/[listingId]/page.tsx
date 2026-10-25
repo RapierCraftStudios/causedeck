@@ -61,7 +61,10 @@ export default async function BriefPage({ params }: BriefPageProps) {
   const lead = overview.kind === 'overview' ? overview.overview.proceedings.lead : null;
   const masthead: SheetMasthead = {
     matterTitle: header?.title ?? t('metaTitle'),
-    caseNo: lead && lead.number ? `${lead.caseType} ${lead.number}${lead.year ? `/${String(lead.year)}` : ''}` : null,
+    caseNo:
+      lead && lead.number
+        ? `${lead.caseType} ${lead.number}${lead.year ? `/${String(lead.year)}` : ''}`
+        : null,
     matterHref: `/w/${slug}/matters/${brief.matter_id}`,
     listDate: overview.kind === 'overview' ? (overview.overview.nextDate?.date ?? null) : null,
   };

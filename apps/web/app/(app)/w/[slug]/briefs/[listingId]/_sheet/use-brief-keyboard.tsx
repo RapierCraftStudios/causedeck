@@ -53,7 +53,10 @@ export function useBriefKeyboard(sections: readonly SectionKey[], print: () => v
     });
   }
 
-  const shortcuts: Shortcut[] = BRIEF_SHORTCUTS.map((s) => ({ keys: s.keys, description: t(s.id) }));
+  const shortcuts: Shortcut[] = BRIEF_SHORTCUTS.map((s) => ({
+    keys: s.keys,
+    description: t(s.id),
+  }));
   const dialog = <ShortcutsDialog shortcuts={shortcuts} open={help} onOpenChange={setHelp} />;
   return { dialog };
 }

@@ -17,7 +17,7 @@ export function SheetPage({ className, children, ...rest }: SheetPageProps) {
       data-slot="sheet-page"
       className={cn(
         'border-border bg-card text-card-foreground mx-auto w-full max-w-[794px] border px-5 py-6 font-serif text-[15px] leading-normal sm:px-10 sm:py-10',
-        '[&_:lang(ta)]:font-sans [&_:lang(ta)]:leading-[1.7] [&_:lang(kn)]:font-sans [&_:lang(kn)]:leading-[1.7]',
+        '[&_:lang(kn)]:font-sans [&_:lang(kn)]:leading-[1.7] [&_:lang(ta)]:font-sans [&_:lang(ta)]:leading-[1.7]',
         'print:max-w-none print:border-0 print:bg-white print:p-0 print:text-[10.5pt] print:text-black',
         className,
       )}

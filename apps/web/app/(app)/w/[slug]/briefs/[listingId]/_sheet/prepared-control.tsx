@@ -20,7 +20,15 @@ export interface PreparedControlProps {
   offline: boolean;
 }
 
-export function PreparedControl({ workspaceId, listingId, prepared, members, staleCleared, canWrite, offline }: PreparedControlProps) {
+export function PreparedControl({
+  workspaceId,
+  listingId,
+  prepared,
+  members,
+  staleCleared,
+  canWrite,
+  offline,
+}: PreparedControlProps) {
   const t = useTranslations('brief.prepared');
   const format = useFormatter();
   const [mark, setMark] = useState<Brief['prepared']>(prepared);
@@ -50,7 +58,11 @@ export function PreparedControl({ workspaceId, listingId, prepared, members, sta
         return;
       }
       setStale(false);
-      setMark(result.data.prepared_at === null ? null : { by: result.data.prepared_by, at: result.data.prepared_at });
+      setMark(
+        result.data.prepared_at === null
+          ? null
+          : { by: result.data.prepared_by, at: result.data.prepared_at },
+      );
     });
   };
 
@@ -61,7 +73,7 @@ export function PreparedControl({ workspaceId, listingId, prepared, members, sta
       <Button
         type="button"
         size="sm"
-        variant={mark ? 'secondary' : 'default'}
+        variant={mark ? 'secondary' : 'primary'}
         aria-pressed={mark !== null}
         disabled={!canWrite || pending || offline}
         onClick={toggle}

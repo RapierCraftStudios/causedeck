@@ -61,7 +61,11 @@ export function isEmptyBrief(brief: Brief): boolean {
 }
 
 /** `Brief - <case no.> - <date>`, the document title the printout and the saved PDF carry. */
-export function printTitle(template: (v: { caseNo: string; date: string }) => string, m: SheetMasthead, today: string) {
+export function printTitle(
+  template: (v: { caseNo: string; date: string }) => string,
+  m: SheetMasthead,
+  today: string,
+) {
   return template({ caseNo: m.caseNo ?? m.matterTitle, date: m.listDate ?? today });
 }
 

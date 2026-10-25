@@ -1,235 +1,28 @@
-{
- "status": "fixed",
- "summary": "WhatsApp link card, five server actions, whatsappLink i18n namespace and cross-tenant entries on the notifications settings page; OTP delivery deferred (R5).",
- "requirements": [
-  {
-   "id": "R1",
-   "status": "implemented",
-   "evidence": "apps/web/components/notifications/whatsapp-link-card.tsx:57; page.tsx WhatsAppSection"
-  },
-  {
-   "id": "R2",
-   "status": "implemented",
-   "evidence": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts:113"
-  },
-  {
-   "id": "R3",
-   "status": "implemented",
-   "evidence": "packages/i18n/src/messages/en/whatsapp-link.json:1; catalog.ts:33"
-  },
-  {
-   "id": "R4",
-   "status": "implemented",
-   "evidence": "apps/web/__tests__/cross-tenant-actions.test.ts:153"
-  }
- ],
- "validation": [
-  {
-   "id": "V1",
-   "command": "web vitest whatsapp-link-actions, whatsapp-link-card, notification-preferences(.actions)",
-   "exit": 0
-  },
-  {
-   "id": "V2",
-   "command": "i18n vitest catalog, check-catalogs",
-   "exit": 0
-  },
-  {
-   "id": "V3",
-   "command": "web vitest tenancy cross-tenant-actions",
-   "exit": 0
-  },
-  {
-   "id": "V4",
-   "command": "checks.mjs --base origin/milestone/instant-gtm-adoption",
-   "exit": 0
-  },
-  {
-   "id": "V5",
-   "command": "pnpm turbo run typecheck --filter=...[722c3900] (merged tree)",
-   "exit": 0
-  }
- ],
- "tests": [
-  {
-   "command": "web whatsapp-link-actions + whatsapp-link-card + cross-tenant-actions",
-   "result": "pass",
-   "fails_without_fix": true
-  }
- ],
- "self_review": [
-  {
-   "question": "1",
-   "answer": "yes",
-   "evidence": "R1-R4 delivered per implementation.md; R5 is a contract-deferred item"
-  },
-  {
-   "question": "2",
-   "answer": "yes",
-   "evidence": "V1-V3 pass; tsc --noEmit in apps/web clean"
-  },
-  {
-   "question": "3",
-   "answer": "yes",
-   "evidence": "forgedock check PASS; preserve items untouched (git diff touches no core/db/notifications)"
-  },
-  {
-   "question": "4",
-   "answer": "yes",
-   "evidence": "git diff --stat lists only deliverable paths and tests"
-  }
- ],
- "amendments": [],
- "not_members": [
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/nav.test.ts",
-   "why": "lists workspace-scoped route ids, not i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/settings-shell.test.tsx",
-   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/shortcuts.test.tsx",
-   "why": "lists nav chord ids, unrelated to i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/static-guards.test.ts",
-   "why": "lists app/api route directories; no API route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/workspace-shell.test.tsx",
-   "why": "lists placeholder page routes; no route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-   "why": "lists mobile nav item ids; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "e2e/tests/courts/courts.spec.ts",
-   "why": "courts page e2e assertions, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-   "why": "delete-workspace e2e helpers, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "e2e/tests/settings/shell.spec.ts",
-   "why": "lists settings nav labels; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/nav.test.ts",
-   "why": "lists workspace-scoped route ids, not i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/settings-shell.test.tsx",
-   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/shortcuts.test.tsx",
-   "why": "lists nav chord ids, unrelated to i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/static-guards.test.ts",
-   "why": "lists app/api route directories; no API route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/workspace-shell.test.tsx",
-   "why": "lists placeholder page routes; no route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-   "why": "lists mobile nav item ids; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "e2e/tests/courts/courts.spec.ts",
-   "why": "courts page e2e assertions, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-   "why": "delete-workspace e2e helpers, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "e2e/tests/settings/shell.spec.ts",
-   "why": "lists settings nav labels; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/nav.test.ts",
-   "why": "lists workspace-scoped route ids, not i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/settings-shell.test.tsx",
-   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/shortcuts.test.tsx",
-   "why": "lists nav chord ids, unrelated to i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/static-guards.test.ts",
-   "why": "lists app/api route directories; no API route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/workspace-shell.test.tsx",
-   "why": "lists placeholder page routes; no route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-   "why": "lists mobile nav item ids; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "e2e/tests/courts/courts.spec.ts",
-   "why": "courts page e2e assertions, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-   "why": "delete-workspace e2e helpers, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "e2e/tests/settings/shell.spec.ts",
-   "why": "lists settings nav labels; no nav item added"
-  }
- ]
-}
+{"status":"fixed","summary":"Court-day freeze guard, staging/prod/hotfix deploy workflows, rolling deploy with rollback, expand-only migration check, warning workflow, deploy CI test and runbook.",
+"requirements":[
+{"id":"R1","status":"implemented","evidence":".github/actions/freeze-guard/freeze.ts:28"},
+{"id":"R2","status":"implemented","evidence":".github/workflows/deploy-prod.yml:27","instrumented":"true"},
+{"id":"R3","status":"implemented","evidence":".github/workflows/deploy-staging.yml:14","instrumented":"true"},
+{"id":"R4","status":"implemented","evidence":".github/workflows/deploy-prod.yml:40","instrumented":"true"},
+{"id":"R5","status":"implemented","evidence":"infra/scripts/deploy.sh; deploy-test.yml","instrumented":"true"},
+{"id":"R6","status":"implemented","evidence":"infra/scripts/rollback.sh","instrumented":"true"},
+{"id":"R7","status":"implemented","evidence":"infra/scripts/deploy.test.sh","instrumented":"true"},
+{"id":"R8","status":"implemented","evidence":".github/workflows/hotfix-prod.yml:36","instrumented":"true"},
+{"id":"R9","status":"implemented","evidence":"infra/scripts/check-migrations.mjs:30"},
+{"id":"R10","status":"implemented","evidence":"infra/scripts/deploy.sh write_release","instrumented":"true"},
+{"id":"R11","status":"implemented","evidence":"infra/scripts/remote-deploy.sh"},
+{"id":"R12","status":"implemented","evidence":"infra/runbooks/court-day-freeze.md"},
+{"id":"R13","status":"implemented","evidence":".github/workflows/freeze-warning.yml"},
+{"id":"R14","status":"implemented","evidence":".github/workflows/deploy-prod.yml:40","instrumented":"true"},
+{"id":"R15","status":"implemented","evidence":"infra/runbooks/court-day-freeze.md"}],
+"validation":[{"id":"V1","command":"freeze.test.ts","exit":0},{"id":"V2","command":"infra node tests","exit":0},{"id":"V3","command":"bash -n scripts","exit":0},{"id":"V4","command":"checks.mjs","exit":0}],
+"tests":[{"command":"node --test freeze.test.ts infra/scripts/*.test.mjs","result":"pass","fails_without_fix":true}],
+"self_review":[
+{"question":"1","answer":"yes","evidence":"requirements table in implementation.md; out-of-band ones instrumented by workflows and deploy.test.sh"},
+{"question":"2","answer":"yes","evidence":"images.yml main push path unchanged apart from branch tag (still main); compose-prod tests pass"},
+{"question":"3","answer":"yes","evidence":"forgedock check PASS; V1-V4 pass; infra/caddy and infra/terraform untouched"},
+{"question":"4","answer":"yes","evidence":"only deliverable paths and three amended files"}],
+"amendments":[
+{"kind":"add-deliverable","path":"infra/scripts/remote-deploy.sh","why":"SSH wrapper with pinned host key shared by the three deploy workflows (R11)"},
+{"kind":"add-deliverable","path":"infra/scripts/check-promotion.sh","why":"Staging-green-within-24h gate used by deploy-prod and hotfix (R4, R14)"},
+{"kind":"add-deliverable","path":".github/actions/freeze-guard/tsconfig.json","why":"The commit-hook type-aware ESLint needs a tsconfig for the action's TypeScript files"}]}

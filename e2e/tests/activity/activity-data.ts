@@ -13,6 +13,22 @@ import { databaseUrl } from '../../support/db-reset.ts';
 export const CAPTURE_ID = '00000000-0000-4000-8000-0000000000c1';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const istDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' });
+
+/**
+ * How long ago to create an item. The feed groups by IST calendar day, and "today" items seeded a
+ * fixed 2.4 h and 4.8 h back fall on yesterday between 00:00 and ~05:00 IST (the CI run that
+ * failed started at 00:28 IST). Items under a day old are therefore kept inside the current IST
+ * day, spread over the time elapsed since IST midnight and still newest-first.
+ */
+function ageMs(daysAgo: number): number {
+  const fixed = daysAgo * DAY_MS;
+  if (daysAgo >= 0.4) return fixed;
+  const now = Date.now();
+  const midnight = Date.parse(`${istDay.format(now)}T00:00:00+05:30`);
+  return Math.min(fixed, (now - midnight) * daysAgo * 2.5);
+}
+
 export interface SeedActivity {
   /** Stable handle for the spec. */
   key: string;
@@ -96,7 +112,7 @@ export async function seedActivities(
   const out: Record<string, SeededActivity> = {};
   try {
     for (const item of items) {
-      const created = new Date(Date.now() - (item.daysAgo ?? 0) * DAY_MS);
+      const created = new Date(Date.now() - ageMs(item.daysAgo ?? 0));
       const expires = new Date(created.getTime() + 7 * DAY_MS);
       let taskId: string | null = null;
       if (item.withTask === true) {

@@ -85,6 +85,11 @@
    "id": "R15",
    "status": "implemented",
    "evidence": "infra/runbooks/court-day-freeze.md"
+  },
+  {
+   "id": "R16",
+   "status": "implemented",
+   "evidence": "infra/terraform/modules/aws-ecs-fargate/variables.tf:1 and infra/terraform/modules/aws-elasticache/variables.tf:1 (enabled=false default)"
   }
  ],
  "validation": [

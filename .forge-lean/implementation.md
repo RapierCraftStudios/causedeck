@@ -67,3 +67,6 @@ Cause: `turbo` not on PATH in the check shell (host environment), not a code con
 
 ## Merge-fix (fifth): turbo typecheck exit 127
 Cause: `turbo` not on PATH in the check shell (host environment), not a symbol or key collision. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` passes (22/22). No source change.
+
+## Conformance fix
+R16 was missing from result.json (dropped in an earlier rewrite). Re-added as implemented: `enabled` defaults to false in both Stage C modules (aws-ecs-fargate/variables.tf:1, aws-elasticache/variables.tf:1), and every resource is gated by `count = var.enabled ? 1 : 0`. The 'Stage C skeletons are disabled by default' test in stage-b-policy.test.mjs (line 286) covers this. V1-V4 re-run green.

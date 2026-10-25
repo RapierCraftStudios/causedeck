@@ -43,7 +43,25 @@ export function startE2eDiag(): void {
       const t0 = Date.now();
       log(`pg#${String(id)} connect start`);
       let gotData = false;
-      this.once('connect', () => log(`pg#${String(id)} tcp connected +${String(Date.now() - t0)}ms`));
+      this.once('connect', () =>
+        log(`pg#${String(id)} tcp connected +${String(Date.now() - t0)}ms lport=${String(this.localPort)}`),
+      );
+      const origWrite = this.write.bind(this) as (...a: unknown[]) => boolean;
+      let wrote = 0;
+      this.write = ((chunk: Buffer | string, ...rest: unknown[]) => {
+        const w0 = Date.now();
+        const n = ++wrote;
+        if (n <= 2) log(`pg#${String(id)} write#${String(n)} bytes=${String(chunk.length)} +${String(w0 - t0)}ms`);
+        const cbIdx = rest.findIndex((r) => typeof r === 'function');
+        if (n <= 2) {
+          const cb = cbIdx >= 0 ? (rest[cbIdx] as (e?: Error) => void) : undefined;
+          rest[cbIdx >= 0 ? cbIdx : rest.length] = (e?: Error) => {
+            log(`pg#${String(id)} write#${String(n)} flushed after ${String(Date.now() - w0)}ms err=${e?.message ?? 'none'}`);
+            cb?.(e);
+          };
+        }
+        return origWrite(chunk, ...rest);
+      }) as typeof this.write;
       this.on('data', () => {
         if (!gotData) {
           gotData = true;

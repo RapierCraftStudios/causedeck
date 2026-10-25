@@ -52,6 +52,11 @@ import { noticesPoll } from './definitions/notices-poll.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
 import { memoryErase } from './definitions/memory-erase.ts';
+import { memoryPurge, systemMemoryPurge } from './definitions/memory-purge.ts';
+import {
+  memoryReviewPrepare,
+  systemMemoryReviewPrepare,
+} from './definitions/memory-review-prepare.ts';
 import { notificationDeliver } from './definitions/notification-deliver.ts';
 import {
   notificationDigest,
@@ -195,6 +200,10 @@ export const registry = createRegistry([
   deletionErase,
   accountDelete,
   memoryErase,
+  systemMemoryPurge,
+  memoryPurge,
+  systemMemoryReviewPrepare,
+  memoryReviewPrepare,
   captureScan,
   captureProcess,
   systemCaptureRetention,
@@ -257,6 +266,10 @@ export type JobMap = RegistryMap<
     typeof deletionErase,
     typeof accountDelete,
     typeof memoryErase,
+    typeof systemMemoryPurge,
+    typeof memoryPurge,
+    typeof systemMemoryReviewPrepare,
+    typeof memoryReviewPrepare,
     typeof captureScan,
     typeof captureProcess,
     typeof systemCaptureRetention,

@@ -1,38 +1,53 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield feature; the central follow-up model is missing and #68/#70/#60 depend on it)
+**Severity**: medium (greenfield P1 feature; no live defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Build the obligation service in `packages/core` (#67): obligation create/update/close/reopen with reasoned closure, `reconcileOrder`, registry defects and `representFiling`, certified copies, `queryQueue`, due-date helpers, reminders job, validators, tables and ADR. Stale `.forge-lean/*` files in the tree belonged to the WhatsApp issue and were overwritten.
+Build the lawyer memory engine in `packages/core` (PRD ME-1..ME-4): layers M1, M2, M3, M4, M6, M7 with confirm-before-save, scope enforced in SQL (RLS plus predicates, clerk column-scoped view), usage citations, per-item edit/delete/pause, a per-member pause-all switch, a judge/bench denylist, envelope-encrypted values, tenure metrics, matter-scoped embeddings with 24 h purge, and cross-tenant coverage. Spec is in the spike §5 and PRD ME-1..ME-4.
 
 ### What We Found
-Verified on `origin/milestone/follow-up-continuity-memory` (216c5d7b, = HEAD).
-- No `packages/core/src/obligations/`, no `packages/validators/src/obligation.ts`, no `obligation-reminders` job, no `obligation_event`/`defect`/`certified_copy` tables.
-- `obligation` table already exists (#33 era): `packages/db/src/schema/docket.ts:234-300`. It has `source` (enum `OBLIGATION_SOURCES` = the issue's `kind` values, `enums.ts:66-75`), `description`, `dueDate`, `basis`, `ownerMemberId`, `status` (`open|done|not_applicable|superseded`, `enums.ts:77`), `closedReasonType` (`task_completed|lawyer_action|not_applicable`, `docket.ts:227`), `closedBy/At/Note`, `sourceOrderId`, provenance columns (source_type, source_ref, anchor_id, confidence, confirmation_state) and `obligation_closure_chk` (`docket.ts:292-297`). So the DB closure check already exists; names differ from the issue (`done` vs `closed`, `task_completed` vs `completed_task`, `source` vs `kind`, `closedReasonType` vs `closed_reason`). Renaming would break timeline (`core/matter-graph/timeline.ts`), merge-split and tests.
-- Order directions are a jsonb array `order.operativeDirections: {text, anchorId}[]` (`docket.ts:175-191`); there is no per-direction id, so reconciliation links by `obligation.sourceOrderId` + `anchor_id`.
-- Proceeding state machine exists (`core/matter-graph/state-machine.ts:36-45`): `filed->sr_fr->defects->re_presented->numbered`; `transitionProceeding` is the only writer of `proceeding.state`; `proceeding.srNo/frNo` exist (`proceedings.ts:~58-59`); `proceeding_state_change.cure_deadline` is set only for `to_state='defects'` (`proceedings.ts:221`); `ProceedingStateChangedEvent.cureDeadline` is documented as the hook for #67 (`matter-graph/events.ts:112-125`).
-- L2/L3 proposal handler exists: `core/automation/handlers/obligation-from-direction.ts:25` (inserts an obligation `open`, records undo payload); undo contract in `automation/undo.ts`.
-- Service conventions: `matter-graph/context.ts` (`inGraphScope`, `parseInput`, `can()`, event buffer), `shared/errors.ts`, `shared/membership.ts`; policy actions `packages/auth/src/policy/actions.ts:12` have only `task.read/write` (no obligation actions; matrix in `policy/matrix.ts:27`, snapshot in `policy/__tests__/__snapshots__/can.test.ts.snap`).
-- Jobs: `core/jobs/definitions/*.ts` (+ `activity-digest.ts` as model for a per-workspace daily job in `Asia/Kolkata`), registered via `core/jobs/registry.ts`, schedules in `apps/worker/src/schedules.ts`, guarded by `apps/worker/src/__tests__/{registry,schedules}.test.ts`. `apps/worker/src/jobs/` does not exist; the issue's path is outdated.
-- Migrations are timestamp-named, latest `20261025040000_whatsapp_inbound.sql` in `packages/db/migrations`; seeds live in `packages/db/src/seed/` (not `seeds/`).
-- Core domains: `packages/config/eslint/core-domains.js` `CORE_DOMAIN_DEPENDENCIES` (e.g. `:26`, `:29`) and `docs/engineering/core-domains.md` must gain an `obligations` domain. Latest ADR is 0036 (`docs/adr/`).
-- `apps/web/app/(app)/w/[slug]/obligations/page.tsx` is a placeholder; the queue UI is #68 (out of scope).
+Verified against `origin/milestone/follow-up-continuity-memory` (216c5d7b).
+- Nothing exists yet: no `packages/core/src/memory/`, no `packages/validators/src/memory.ts`, no `packages/db/src/schema/memory.ts`, no memory migration. `apps/web/app/(app)/w/[slug]/memory/page.tsx:3` is a placeholder (UI is #73, out of scope).
+- Dependencies are in place: the automation engine exists (`packages/core/src/automation/`), and `memory_item` is a registered proposal kind at L2 (`packages/core/src/automation/matrix.ts:89`). Its handler is disabled: `packages/core/src/automation/handlers/disabled.ts:17`. The matter-graph domain exists (`packages/core/src/matter-graph/`). The issue text calls #33 and #47 closed "not_planned" or "invalid", but the code is on the base, so neither blocks.
+- Erasure already assumes these tables. `packages/core/src/lifecycle/deletion/memory.ts` has `MEMORY_TABLES = ['memory_embedding','memory_item']` (deleted by `workspace_id`, skipped if missing), and the job `packages/core/src/jobs/definitions/memory-erase.ts` exists. The real tables must keep `workspace_id` and be deletable children-first.
+- Fixture collision: `packages/core/src/lifecycle/__tests__/memory-erasure.test.ts:62-71` and `packages/db/src/__tests__/rls/vector.test.ts:47-57` run `create table memory_item` and `create table memory_embedding`. They will fail once the real migration creates those tables. Both must be changed to use the real tables or to drop the fixtures first.
+- Field encryption exists: `packages/storage/src/field-crypto.ts` `encryptField(dek, workspaceId, plaintext)` and `decryptField` (AAD = workspace id), described there as being for "memory values". It is the "storage package crypto helper" fallback the issue names.
+- Table conventions: `tenantTable()` from `packages/db/src/schema-helpers/tenant-table.ts` (FORCE RLS, `workspace_id`). Example: `packages/db/src/schema/whatsapp-link.ts`. The vector helper is `packages/db/src/vector.ts`. The clerk-view precedent is `packages/db/src/__tests__/rls/clerk-view.test.ts`, `packages/db/src/rls.ts` and migration `0022_matter_restriction.sql`.
+- Migrations are in `packages/db/migrations/` (not `drizzle/`). The newest is `20261025040000_whatsapp_inbound.sql`, and recent ones are timestamp-named.
+- `packages/core/src/automation/read-models.ts:155` already hides `memory_item` proposals from non-strategy viewers (clerks).
+- Domain registry: a new `memory` folder under `packages/core/src` needs an `index.ts`, an entry in `CORE_DOMAIN_DEPENDENCIES` (`packages/config/eslint/core-domains.js`), and a row in `docs/engineering/core-domains.md`, all asserted by `packages/core/src/domains.test.ts`.
 
 ### Root Cause
-Greenfield: the schema holds a bare `obligation` row and a handler that inserts one, but no service enforces lifecycle, reasons, events, defects, copies, queue or reminders.
+Greenfield: the memory engine was never built. Automation, erasure and the UI were all written against its future tables.
 
 ### Affected Files
-`packages/validators/src/obligation.ts` (+ package.json export if subpaths are listed); `packages/db/src/schema/docket.ts` or new `schema/obligation-tracking.ts` and `schema/index.ts`; new migration + snapshot in `packages/db/migrations`; `packages/core/src/obligations/*` and `core/package.json` export; `packages/core/src/jobs/definitions/obligation-reminders.ts` + registry; `apps/worker/src/schedules.ts`; `packages/auth/src/policy/{actions,matrix}.ts` + snapshot; `packages/db/src/seed/obligation-fixtures.ts`; registries (cross-tenant registry, db index test, RLS catalog, worker tests, core-domains); ADR.
+Listed as deliverables in `contract.json`:
+- `packages/validators/src/memory.ts`
+- `packages/db/src/schema/memory.ts`, `packages/db/src/schema/index.ts`, and a new migration
+- `packages/core/src/memory/*`
+- the memory handler in `packages/core/src/automation/handlers/`
+- the job, the registries and the guard tests
+- an ADR and the docs
 
 ### Sibling Sweep
-Other writers of `obligation` rows: `automation/handlers/obligation-from-direction.ts` (insert; must stay compatible and route through the service guard or keep its direct insert), `matter-graph/merge-split.ts:351,466,583` (moves rows; must not break the new tables' matter linkage), `matter-graph/timeline.ts` (reads closed reasons). Any new `obligation` write path must go through `closeObligation`; a no-direct-update guard test like `matter-graph/__tests__/no-direct-listing-update.test.ts` is the precedent.
+- Other tenant tables follow the registry rules in CLAUDE.md: the root table list in `packages/db/src/index.test.ts`, the RLS catalog in `rls/sql.test.ts`, and the cross-tenant registry `packages/db/src/testing/cross-tenant-registry.ts`.
+- Core exports need `SERVICE_TESTS` cases (`packages/core/src/__tests__/cross-tenant/services.test.ts`).
+- The fixture-table collision (above) is the same pattern in two tests.
 
 ### History
-`obligation` introduced with the docket tables (`0041_docket.sql`, #345-#347 series); proceeding state machine #363 emits the cure-deadline hook; #47 added the proposal handler. No prior attempt at #67 (#33 closed not_planned, #46 completed).
+`memory_item` was registered as a disabled L2 kind in #47. The erasure job (#303) and the `encryptField` helper (#216) anticipate this work. No prior attempt at #72.
 
 ### Recommendation
-One lane, ordered checklist: (1) validators; (2) schema + migration + RLS/registries for `obligation_event`, `defect`, `certified_copy` and any added `obligation` columns (`kind` stays `source`; add only genuinely missing columns such as `confidence` already present); (3) policy actions `obligation.read/write` (+ clerk rules); (4) `due.ts`, `create/update/close/reopen`; (5) `reconcile`; (6) defects (call `transitionProceeding`, never write state directly) and certified copies; (7) `queryQueue`; (8) reminders job + schedule; (9) tests, seed, registries, ADR. Keep existing enum names and document the mapping to the issue's terms in the ADR. Strategy-note hiding from clerks has no strategy column yet: defer.
+Implement in order:
+1. Validators.
+2. Schema and migration (RLS, clerk view, scope checks).
+3. Core `memory` domain: scope, propose, confirm, read, review, embedding.
+4. Enable the `memory_item` handler so accepting a proposal calls `confirmMemory`.
+5. Add a memory-purge job for embeddings.
+6. Register everything and add tests, an ADR and docs.
+
+Confirm-before-save is the invariant: only `confirmMemory` and lawyer-authored notes insert `memory_item`. The embedding generator should use the mock provider in CI. Scope the cross-tenant, clerk and cross-matter tests at the SQL level. If `packages/ai` has no embedding entry point, call the existing AI gateway only through its public interface. Do not add one beyond the gateway.
 
 ### Related Issues
-#1 (parent), #33, #46 (deps), #47 (proposals/undo), #60 (readiness), #23 (notifications), #34 (court-day calendars), #68, #69, #70, #84.
+#1 (parent), #33, #47 (deps), #21, #73, #74, #81, #112.

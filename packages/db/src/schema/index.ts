@@ -329,3 +329,20 @@ export {
   type ReviewKind,
   type ReviewStatus,
 } from './review.ts';
+export {
+  MEMORY_ITEM_STATUSES,
+  MEMORY_LAYERS,
+  MEMORY_PROPOSAL_STATUS_VALUES,
+  MEMORY_SCOPE_VALUES,
+  MEMORY_USAGE_PURPOSES,
+  memoryEmbedding,
+  memoryItem,
+  memoryPause,
+  memoryProposal,
+  memoryUsage,
+  type MemoryItemStatus,
+  type MemoryLayerValue,
+  type MemoryProposalStatusValue,
+  type MemoryScopeValue,
+  type MemoryUsagePurpose,
+} from './memory.ts';

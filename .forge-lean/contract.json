@@ -2,104 +2,103 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "An obligation requires `source_type`, `source_ref` and an anchor (or `manual`), description, owner, due date (nullable only for undated tasks) and status; creation without provenance is rejected.",
+   "quote": "`proposeMemory` writes only `memory_proposal` rows (status `proposed`); no `memory_item` row exists until `confirmMemory` runs; a test asserts that no code path inserts a `memory_item` without a confirmed proposal or a lawyer-authored note. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "A DB check plus service guard enforce that status `closed` requires a `closed_reason` in (`completed_task`, `lawyer_action`, `not_applicable`) and, for `not_applicable`, non-empty reason text; a direct SQL update violating this fails.",
+   "quote": "Each memory item has layer (M1, M2, M3, M4, M6, M7), key, value, scope (user, workspace, matter), source anchor or `manual`, status (`active`, `paused`, `deleted`), confidence and confirmation state; layers outside that set are rejected. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`reconcileOrder(orderId)` returns the order's directions each marked `obligation`, `not_applicable` (with reason) or `unresolved`; an order is `reconciled` only when no direction is unresolved, and the unresolved count feeds brief readiness (#60).",
+   "quote": "Scope in SQL: a matter-scoped item is returned only for its own matter; reading it with another matter's id returns nothing at the query level (RLS plus predicate), proven by tests that attempt cross-matter reads. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Proposed obligations from extraction (#46) arrive as L2 proposals; confirming creates the obligation with the original anchor and records the confirmer.",
+   "quote": "M4 court notes are private to the author by default; marking one chamber-shared requires owner role and is audited; non-owners cannot flip it. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Defects: `raiseDefect` creates a defect obligation with a cure deadline and moves the proceeding to `defects`; `representFiling` moves to `re_presented`; allocation of SR (Madras) or FR (Karnataka) numbers is stored on the proceeding without implying court status.",
+   "quote": "Clerk reads of M3, M4 and strategy-typed M1/M2 values return nothing via the column-scoped view and the policy function; an e2e API test covers each layer. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Certified copies move through applied -> ready -> collected, each transition dated and sourced, and surface in the queue as obligations with a follow-up reminder.",
+   "quote": "M6 relationship memory accepts only a person linked as an existing client or professional contact; creating M6 for a non-client is rejected. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "`queryQueue` groups obligations as `overdue`, `today`, `this_week`, `later`, `undated`, filterable by matter, owner, kind and source; overdue sort first by age; p95 \u003c 150 ms on the seeded dataset and one query per group.",
+   "quote": "`proposeFromEdit` turns a repeated edit pattern (same edit made 3 times across 3 briefs or drafts) into a single rule proposal with evidence ('You added carry vakalat copy to the last 3 first hearings. Save?'); dismissed proposals are not re-proposed for 60 days. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "Rescheduling an obligation requires a reason, preserves history in `obligation_event`, and is distinguished from a miss in the missed-obligation metric (deliberate reschedule is not a miss).",
+   "quote": "`proposeFromCorrection` creates M7 alias proposals from user corrections to party or matter matching (for example 'Rajan' = 'M. Rajan s/o Murugan') and dedupes with existing aliases. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Reminders: a job emits in-app reminders for obligations due within the member's lead time and overdue obligations once per day; idempotent; delivery via #23.",
+   "quote": "Edit, pause and delete work per item; delete removes the value immediately and queues embedding purge so embeddings are gone within 24 h, verified by a time-travel test; export includes active items. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "Roles: owner and advocate manage all; junior manages assigned matters; clerk can manage tasks, defects and copies but not strategy notes; viewer read-only. All checked by `can()` and covered by tests.",
+   "quote": "`recordUsage` logs each time memory influences an output (brief, draft, matching) with the item id; `getMemory` for output includes citations so the UI can render 'because of your note on \u003cdate>'. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Every mutation writes an `audit_event`; undo of an L3 task creation cascades correctly (#47 contract).",
+   "quote": "Memory values are envelope-encrypted with the workspace key (via #21 utilities when available, else the storage package's crypto helper) and never sent to a provider outside India-only mode; no memory content is used for training. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "Obligation due dates are never computed from a generated legal rule; rule-driven limitation dates live in #84 behind a flag.",
+   "quote": "`tenureMetrics` returns correction rate and confirmation rate by tenure week and brief-accepted-unedited rate, aggregate within the workspace only. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both.",
+   "quote": "No memory item or proposal can describe a judge or bench (denylist check on keys and a content guard); attempts are rejected with a clear error. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R14",
-   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite.",
+   "quote": "Per-member 'pause all memory' switch stops proposals and use immediately. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R15",
-   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types.",
+   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R16",
-   "quote": "Strategy-bearing descriptions are hidden from clerks via column-scoped views.",
-   "disposition": "defer",
-   "why": "The obligation table has no strategy-note column or flag to scope on; defining one (and the clerk view) is a product/schema decision separate from the service. Clerk role rules in R10 are still delivered.",
+   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite. [type:unit]",
+   "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R17",
-   "quote": "Jobs: `obligation.reminders` (daily 07:00 IST per workspace).",
+   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -107,117 +106,251 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/validators/src/obligation.ts",
-   "change": "zod ObligationInput, ObligationPatch, CloseInput, DefectInput, CertifiedCopyInput, QueueQuery, ReconcileInput; provenance required; reschedule needs reason; add package export and index test entry if the package lists subpaths",
+   "path": "packages/validators/src/memory.ts",
+   "change": "zod: MemoryLayer (M1,M2,M3,M4,M6,M7 only), MemoryScope, MemoryStatus, MemoryItem, MemoryProposal, MemoryKey registry per layer (examples M1.courts, M2.brief_format, M2.always_carry, M2.reminder.evening_time, M2.client_update_tone, M3.synopsis, M4.hall_note, M6.client_language, M7.party_alias), judge/bench key denylist and content guard patterns, strategy-typed key flags. Export it from packages/validators/src/index.ts and add memory.test.ts.",
    "requirements": [
-    "R1",
     "R2",
-    "R8",
-    "R15"
+    "R13",
+    "R17"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/obligation-tracking.ts",
-   "change": "new tenant tables obligation_event, defect, certified_copy (workspace_id, composite FKs, RLS via tenantTable), export from schema/index.ts; extend obligation only with columns truly missing (keep existing enum names)",
+   "path": "packages/validators/src/index.ts",
+   "change": "Re-export ./memory",
    "requirements": [
-    "R5",
-    "R6",
-    "R8",
-    "R14"
+    "R17"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/migrations",
-   "change": "one new timestamp-named migration + regenerated snapshot/journal for the three tables with RLS; closure check already exists (docket.ts obligation_closure_chk)",
+   "path": "packages/db/src/schema/memory.ts",
+   "change": "tenantTable definitions memory_item, memory_proposal, memory_embedding (vector via packages/db/src/vector.ts, matter_id column), memory_usage, plus a per-member memory-pause table or column (pause-all switch). Columns per the issue's data contract. Keep workspace_id on each so lifecycle MEMORY_TABLES erasure still works.",
    "requirements": [
     "R2",
-    "R14"
+    "R14",
+    "R16"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/auth/src/policy/actions.ts",
-   "change": "add obligation.read/write (and matrix.ts entries, can() snapshot) with owner/advocate all, junior assigned matters, clerk tasks/defects/copies, viewer read",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export the memory schema",
    "requirements": [
-    "R10"
+    "R16"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/obligations/index.ts",
-   "change": "domain barrel plus create.ts, update.ts, close.ts, reopen.ts, due.ts (IST arithmetic, working-day hook, no rule-derived dates), audit_event on every mutation; export from core package.json",
+   "path": "packages/db/migrations/20261025050000_memory.sql",
+   "change": "New migration (name must sort after 20261025040000_whatsapp_inbound; renumber if the base took it) with the tables, RLS policies on app.workspace_id, matter-scope and owner/shared predicates, a policy function for clerk denial, column-scoped view memory_item_clerk_v, and the matching meta/_journal.json entry and snapshot as the repo's migration tooling requires.",
    "requirements": [
-    "R1",
-    "R2",
-    "R8",
-    "R11",
-    "R12"
+    "R3",
+    "R4",
+    "R5",
+    "R16"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/obligations/reconcile.ts",
-   "change": "reconcileOrder over order.operativeDirections linked by source_order_id + anchor_id; unresolved count exposed for #60",
+   "path": "packages/core/src/memory/scope.ts",
+   "change": "canReadMemory and SQL scope predicates (matter scope, M4 private-by-default, chamber-shared, clerk strategy denial).",
    "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/core/src/obligations/defects.ts",
-   "change": "raiseDefect, cureDefect, representFiling via transitionProceeding (never write proceeding.state directly); SR/FR stored on proceeding",
-   "requirements": [
+    "R3",
+    "R4",
     "R5"
    ]
   },
   {
-   "id": "D8",
-   "path": "packages/core/src/obligations/certified-copies.ts",
-   "change": "applied->ready->collected transitions, dated and sourced, backed by an obligation with follow-up",
+   "id": "D7",
+   "path": "packages/core/src/memory/propose.ts",
+   "change": "proposeMemory (writes memory_proposal only, honours pause-all, denylist, M6 person check), proposeFromEdit (3 edits across 3 outputs becomes one proposal with evidence; 60-day dismissed suppression), proposeFromCorrection (M7 alias proposals, deduped against existing aliases).",
    "requirements": [
-    "R6"
+    "R1",
+    "R6",
+    "R7",
+    "R8",
+    "R13",
+    "R14"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/core/src/memory/confirm.ts",
+   "change": "confirmMemory (only path that inserts memory_item from a proposal, encrypting the value with encryptField), lawyer-authored note creation, editMemory, deleteMemory (immediate value removal, queue embedding purge), pauseMemory, set chamber-shared (owner only, audited), per-member pause-all.",
+   "requirements": [
+    "R1",
+    "R4",
+    "R9",
+    "R11",
+    "R14"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/core/src/obligations/queue.ts",
-   "change": "queryQueue: one query per group, filters, overdue by age",
+   "path": "packages/core/src/memory/read.ts",
+   "change": "getMemory (with citations), memoryFor({matterId?, layers, purpose}), recordUsage, export of active items; decrypts values; returns nothing when the member has paused all memory.",
    "requirements": [
-    "R7"
+    "R3",
+    "R5",
+    "R9",
+    "R10",
+    "R11",
+    "R14"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/core/src/obligations/reminders.ts",
-   "change": "reminder selection + notify via @causedeck/notifications, once per day per member",
+   "path": "packages/core/src/memory/review.ts",
+   "change": "monthlyReview and tenureMetrics (correction rate and confirmation rate by tenure week, brief-accepted-unedited rate; workspace-only aggregates).",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/core/src/memory/embedding.ts",
+   "change": "Matter-scoped embeddings through the existing AI gateway (mock provider in CI, India-only mode respected, no memory content to providers outside it), and purge of embeddings of deleted items.",
+   "requirements": [
+    "R9",
+    "R11"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/core/src/memory/index.ts",
+   "change": "Public domain entry point exporting the services above and their types; no `any`.",
+   "requirements": [
+    "R17"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/core/package.json",
+   "change": "Add the ./memory subpath export alongside the other domains; only if the other domains have one there. Match the existing pattern.",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/core/src/automation/handlers/disabled.ts",
+   "change": "Remove memoryItemHandler from the disabled list; add an enabled handler (new file packages/core/src/automation/handlers/memory-item.ts, wired in handlers/index.ts) that validates the draft and lets acceptance call the memory confirm path through the memory index.ts. Update the automation tests that assert memory_item is disabled (handlers.test.ts:276, engine.test.ts:112).",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "packages/core/src/automation/handlers/memory-item.ts",
+   "change": "Enabled memory_item proposal handler (see D14).",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/core/src/automation/handlers/index.ts",
+   "change": "Register the enabled memoryItemHandler.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/core/src/jobs/definitions/memory-purge.ts",
+   "change": "Job memory.purge: purge embeddings of deleted items within 24 h. Plus memory-review-prepare.ts (monthly review prepare). Register in packages/core/src/jobs/registry.ts and add schedules in apps/worker/src/schedules.ts. (The issue's apps/worker/src/jobs path does not exist; jobs live in core/src/jobs/definitions.)",
    "requirements": [
     "R9"
    ]
   },
   {
-   "id": "D11",
-   "path": "packages/core/src/jobs/definitions/obligation-reminders.ts",
-   "change": "defineJob obligation.reminders (+ per-workspace fan-out), register in jobs/registry.ts; schedule 07:00 Asia/Kolkata in apps/worker/src/schedules.ts",
+   "id": "D18",
+   "path": "packages/core/src/jobs/definitions/memory-review-prepare.ts",
+   "change": "Job memory.review-prepare calling monthlyReview.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Register the two new jobs.",
    "requirements": [
     "R9",
-    "R17"
+    "R12"
    ]
   },
   {
-   "id": "D12",
-   "path": "packages/core/src/automation/handlers/obligation-from-direction.ts",
-   "change": "route confirm through createObligation guards (original anchor, confirmer recorded) keeping undo payload shape",
+   "id": "D20",
+   "path": "apps/worker/src/schedules.ts",
+   "change": "Schedule the purge sweep and the monthly review prepare.",
    "requirements": [
-    "R4",
-    "R11"
+    "R9",
+    "R12"
    ]
   },
   {
-   "id": "D13",
-   "path": "packages/core/src/obligations/__tests__/obligations.test.ts",
-   "change": "lifecycle, reconcile, defects, copies, queue (+perf), permissions, direct-SQL closure violation, audit, undo cascade; sibling test files per area allowed",
+   "id": "D21",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add the new job names to the expected list; update schedules.test.ts in the same folder.",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add the `memory` domain to CORE_DOMAIN_DEPENDENCIES with only the domains it imports (expected: audit, workspaces, matter-graph/matters, ai); add a row and edge lines in docs/engineering/core-domains.md. If memory is imported by automation, check that no cycle forms (domains.test.ts cycle check); the handler may need to live in memory with the automation registration inverted if so.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document the memory domain and its edges.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Add SERVICE_TESTS entries for each new runtime export of @causedeck/core/memory (or NOT_A_SERVICE with a reason), with real cases in packages/core/src/__tests__/cross-tenant/services.test.ts (B on A is denied or sees nothing; A unchanged).",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Cross-tenant memory cases, including a user belonging to both workspaces.",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add the new tables to the root table list; add RLS catalog entries in packages/db/src/__tests__/rls/sql.test.ts and the TABLE_TESTS/registry plus two-tenant seeders. Replace the memory_embedding fixture table in packages/db/src/__tests__/rls/vector.test.ts with the real table, or drop the fixture first.",
+   "requirements": [
+    "R16"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "packages/core/src/lifecycle/__tests__/memory-erasure.test.ts",
+   "change": "Stop creating fixture tables memory_item and memory_embedding (they now exist); seed real rows. Check packages/core/src/lifecycle/__tests__/export.memory.test.ts the same way.",
+   "requirements": [
+    "R9",
+    "R16"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "packages/core/src/memory/__tests__/memory.test.ts",
+   "change": "Tests (split into files as needed under packages/core/src/memory/__tests__/): propose-confirm invariant, layer and field validation, scope matrix and cross-matter reads, M4 privacy and owner-only sharing, clerk denial per layer, M6 check, edit-pattern proposals and 60-day suppression, correction aliases, delete/pause/export, 24 h purge time-travel, usage citations, encryption at rest, tenureMetrics, denylist, pause-all, cross-tenant.",
    "requirements": [
     "R1",
     "R2",
@@ -227,85 +360,65 @@
     "R6",
     "R7",
     "R8",
+    "R9",
     "R10",
     "R11",
-    "R12"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/core/src/__tests__/cross-tenant/obligations.test.ts",
-   "change": "B on A denied or sees nothing, A unchanged, incl. two-workspace user; register in packages/db/src/testing/cross-tenant-registry.ts (SERVICE_TESTS / NOT_A_SERVICE)",
-   "requirements": [
+    "R12",
     "R13",
-    "R14"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/db/src/seed/obligation-fixtures.ts",
-   "change": "seeded dataset used by the queue p95 test",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "add obligations domain edges (workspaces, audit, matter-graph, automation as needed) and document in docs/engineering/core-domains.md",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "docs/adr/0037-obligation-model.md",
-   "change": "ADR (next free number): model, enum-name mapping to the issue's terms, reschedule vs miss, no rule-derived dates",
-   "requirements": [
-    "R8",
-    "R12"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/db/src/index.test.ts",
-   "change": "root table list + RLS catalog (packages/db/src/__tests__/rls/sql.test.ts) and two-tenant seeders for the new tables; apps/worker registry.test.ts and schedules.test.ts entries",
-   "requirements": [
     "R14",
-    "R17"
+    "R15"
+   ]
+  },
+  {
+   "id": "D29",
+   "path": "packages/db/src/seed/memory-fixtures.ts",
+   "change": "Seed fixtures for memory items (two-tenant) used by tests; export through packages/db/src/seed/index if the seed folder has one. The issue lists packages/db/src/seeds, but the repo's folder is seed.",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D30",
+   "path": "docs/adr/0037-memory-scopes-and-confirmation.md",
+   "change": "ADR: memory scopes, confirm-before-save, clerk view, encryption, no-judge rule. Use the next free ADR number on the branch (last seen 0036).",
+   "requirements": [
+    "R1",
+    "R4",
+    "R5",
+    "R13"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing obligation enum values and column names (docket.ts, enums.ts): timeline.ts, merge-split.ts and their tests read them"
+   "what": "The automation ladder: L2 default for memory_item (packages/core/src/automation/matrix.ts:89), no L5 path (scripts/check-no-l5.ts), and the clerk filter on memory_item proposals (packages/core/src/automation/read-models.ts:155)."
   },
   {
    "id": "P2",
-   "what": "transitionProceeding in packages/core/src/matter-graph/state-machine.ts stays the only writer of proceeding.state; import matter-graph only via its index.ts"
+   "what": "Memory erasure (#303): MEMORY_TABLES, requestMemoryErasure, runMemoryErasure and the memory.erase job in packages/core/src/lifecycle/deletion/memory.ts and packages/core/src/jobs/definitions/memory-erase.ts keep working on the real tables (workspace_id deletion, embeddings before items)."
   },
   {
    "id": "P3",
-   "what": "automation obligation_from_direction undo payload shape (obligationId) and undo cascade in packages/core/src/automation/undo.ts"
+   "what": "Core domain boundaries: other domains are imported only via index.ts along declared edges, with no cycles (packages/core/src/domains.test.ts)."
   },
   {
    "id": "P4",
-   "what": "No auto-closure, no auto-filing, no court fetching; deadlines are never derived from generated legal rules"
+   "what": "The storage field-crypto format and AAD (packages/storage/src/field-crypto.ts) is used unchanged."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/obligations src/__tests__/cross-tenant/obligations.test.ts src/matter-graph/__tests__/merge-split.test.ts src/matter-graph/__tests__/timeline.test.ts src/automation/__tests__/handlers.test.ts src/jobs/registry.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/memory src/domains.test.ts src/automation src/lifecycle/__tests__/memory-erasure.test.ts src/lifecycle/__tests__/export.memory.test.ts src/jobs/registry.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/memory.test.ts src/index.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/index.test.ts && pnpm --filter @causedeck/auth exec vitest run src/policy"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
@@ -313,39 +426,39 @@
   },
   {
    "id": "V5",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/follow-up-continuity-memory"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/follow-up-continuity-memory  # then run the scoped typecheck, lint and test commands it prints"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Keep existing obligation names (status done, closedReasonType task_completed, column source) and map the issue's closed/completed_task/kind terms in the ADR",
-   "justification": "packages/db/src/schema/docket.ts:227-297 already has the closure check, and timeline/merge-split depend on these names",
+   "choice": "Encrypt memory values with encryptField/decryptField from @causedeck/storage (workspace DEK, AAD = workspace id).",
+   "justification": "packages/storage/src/field-crypto.ts:1-2 names core memory values as its use; #21 is closed and the helper is on the base.",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Defect cure and re-presentation go through transitionProceeding",
-   "justification": "matter-graph/state-machine.ts:1-10 states it is the only writer of proceeding.state; events.ts:112-125 passes cureDeadline for #67",
+   "choice": "New migration goes in packages/db/migrations with a timestamp name, not packages/db/drizzle as the issue says.",
+   "justification": "packages/db/migrations holds all migrations, newest 20261025040000_whatsapp_inbound.sql; CLAUDE.md: use the next free number and renumber if the base took it.",
    "source": "doc"
   },
   {
    "id": "K3",
-   "choice": "Reminders job modelled on activity-digest (per-workspace, Asia/Kolkata, once())",
-   "justification": "core/jobs/definitions/activity-digest.ts header; the issue's apps/worker/src/jobs path does not exist, jobs live in core/jobs/definitions",
+   "choice": "Jobs are defined in packages/core/src/jobs/definitions and registered in the registry, not apps/worker/src/jobs.",
+   "justification": "packages/core/src/jobs/definitions/memory-erase.ts is the precedent; apps/worker has no jobs folder.",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Order directions are reconciled by source_order_id + anchor_id",
-   "justification": "order.operativeDirections is jsonb {text, anchorId} with no id (docket.ts:175-191)",
-   "source": "spec"
+   "choice": "The enabled memory_item handler may need the dependency edge automation to memory or memory to automation; pick the one that keeps CORE_DOMAIN_DEPENDENCIES acyclic.",
+   "justification": "packages/config/eslint/core-domains.js:29 lists the automation edges; domains.test.ts checks cycles. The new edge must be recorded there and in docs/engineering/core-domains.md (CLAUDE.md registry table).",
+   "source": "lint"
   },
   {
    "id": "K5",
-   "choice": "New workspace dependency edges are limited to core-domains.js obligations entry; no package.json dependency between workspace packages is added",
-   "justification": "packages/config/eslint/core-domains.js:26-29 pattern; core already depends on validators, auth, db, notifications",
-   "source": "lint"
+   "choice": "The existing fixture-table tests for memory_item and memory_embedding are changed to use the real tables.",
+   "justification": "packages/core/src/lifecycle/__tests__/memory-erasure.test.ts:62-71 and packages/db/src/__tests__/rls/vector.test.ts:47-57 would fail on `create table` once the migration lands.",
+   "source": "precedent"
   }
  ]
 }

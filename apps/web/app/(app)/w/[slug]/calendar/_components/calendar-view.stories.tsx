@@ -60,6 +60,7 @@ const days: CalendarDay[] = Array.from({ length: 14 }, (_, i) => ({
       : [],
 }));
 const hrefFor = (d: string) => `/w/demo/calendar?open=${d}`;
+const hrefs = Object.fromEntries(days.map((d) => [d.date, hrefFor(d.date)]));
 
 const meta = { title: 'Calendar/CalendarView', component: MonthView } satisfies Meta<
   typeof MonthView
@@ -68,23 +69,23 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-  args: { days, month: '2026-11', hrefFor },
+  args: { days, month: '2026-11', hrefs },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('grid')).toBeVisible();
   },
 };
 
 export const Empty: Story = {
-  args: { days: days.map((d) => ({ ...d, entries: [], clash: false })), month: '2026-11', hrefFor },
+  args: { days: days.map((d) => ({ ...d, entries: [], clash: false })), month: '2026-11', hrefs },
 };
 
 export const Week: Story = {
-  args: { days, month: '2026-11', hrefFor },
+  args: { days, month: '2026-11', hrefs },
   render: () => <WeekView days={days.slice(0, 7)} hrefFor={hrefFor} />,
 };
 
 export const Popover: Story = {
-  args: { days, month: '2026-11', hrefFor },
+  args: { days, month: '2026-11', hrefs },
   render: () => (
     <DayPopover
       day={days[1] as CalendarDay}
@@ -102,26 +103,26 @@ export const Popover: Story = {
 };
 
 export const LegendStory: Story = {
-  args: { days, month: '2026-11', hrefFor },
+  args: { days, month: '2026-11', hrefs },
   render: () => <Legend />,
 };
 
 export const Loading: Story = {
-  args: { days, month: '2026-11', hrefFor },
+  args: { days, month: '2026-11', hrefs },
   render: () => <CalendarLoading />,
 };
 
 export const ErrorState: Story = {
-  args: { days, month: '2026-11', hrefFor },
+  args: { days, month: '2026-11', hrefs },
   render: () => <CalendarError error={new Error('x')} reset={() => undefined} />,
 };
 
 export const Offline: Story = {
-  args: { days, month: '2026-11', hrefFor },
+  args: { days, month: '2026-11', hrefs },
   render: () => <OfflineNotice />,
 };
 
 export const PermissionDenied: Story = {
-  args: { days, month: '2026-11', hrefFor },
+  args: { days, month: '2026-11', hrefs },
   render: () => <PermissionDeniedPage />,
 };

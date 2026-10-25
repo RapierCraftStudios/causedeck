@@ -14,12 +14,13 @@ const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
 export function MonthView({
   days,
   month,
-  hrefFor,
+  hrefs,
 }: {
   days: readonly CalendarDay[];
   /** `YYYY-MM`: days of other months are dimmed. */
   month: string;
-  hrefFor: (date: string) => string;
+  /** The day link per date (`YYYY-MM-DD`). A map, not a function: this is a client component. */
+  hrefs: Readonly<Record<string, string>>;
 }) {
   const t = useTranslations('calendarView');
   const router = useRouter();
@@ -44,7 +45,8 @@ export function MonthView({
     } else if (e.key === 'Enter') {
       e.preventDefault();
       const day = days[i];
-      if (day !== undefined) router.push(hrefFor(day.date));
+      const to = day === undefined ? undefined : hrefs[day.date];
+      if (to !== undefined) router.push(to);
     }
   };
   const rows = Array.from({ length: Math.ceil(days.length / 7) }, (_, r) =>
@@ -84,11 +86,8 @@ export function MonthView({
                   ref={(el) => {
                     cells.current[i] = el;
                   }}
-                  href={hrefFor(d.date)}
+                  href={hrefs[d.date]}
                   tabIndex={i === active ? 0 : -1}
-                  aria-label={`${t('dayLabel', { date: d.date, summary })}${
-                    d.clash ? `, ${t('clash')}` : ''
-                  }${d.closedReason === null ? '' : `, ${t('closed', { reason: d.closedReason })}`}`}
                   onFocus={() => {
                     setActive(i);
                   }}
@@ -97,9 +96,18 @@ export function MonthView({
                   }}
                   className="flex flex-col gap-0.5"
                 >
+                  {/* The visible day number starts the accessible name (label in name); the counts
+                      are read from the label, so their glyphs are hidden from assistive tech. */}
                   <span className="font-medium">{Number(d.date.slice(8))}</span>
-                  {d.counts.listings > 0 ? <span>{`⚖ ${String(d.counts.listings)}`}</span> : null}
-                  {deadlines > 0 ? <span>{`⏰ ${String(deadlines)}`}</span> : null}
+                  <span className="sr-only">{`, ${t('dayLabel', { date: d.date, summary })}${
+                    d.clash ? `, ${t('clash')}` : ''
+                  }${d.closedReason === null ? '' : `, ${t('closed', { reason: d.closedReason })}`}`}</span>
+                  {d.counts.listings > 0 ? (
+                    <span aria-hidden="true">{`⚖ ${String(d.counts.listings)}`}</span>
+                  ) : null}
+                  {deadlines > 0 ? (
+                    <span aria-hidden="true">{`⏰ ${String(deadlines)}`}</span>
+                  ) : null}
                   {d.clash ? <span aria-hidden="true">⚠</span> : null}
                   {d.closedReason === null ? null : <span aria-hidden="true">⚑</span>}
                 </a>

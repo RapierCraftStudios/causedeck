@@ -59,10 +59,11 @@ const DAYS = Array.from({ length: 14 }, (_, i) => {
     : day(date);
 });
 const hrefFor = (d: string) => `/x?open=${d}`;
+const hrefs = Object.fromEntries(DAYS.map((d) => [d.date, hrefFor(d.date)]));
 
 describe('calendar view (#66)', () => {
   it('month view is a grid with per-day labels, counts and markers', () => {
-    renderWithIntl(<MonthView days={DAYS} month="2026-11" hrefFor={hrefFor} />);
+    renderWithIntl(<MonthView days={DAYS} month="2026-11" hrefs={hrefs} />);
     expect(screen.getByRole('grid')).toBeTruthy();
     expect(screen.getAllByRole('row')).toHaveLength(3);
     const link = screen.getByRole('link', { name: /2026-11-03, 1 listing, 1 deadline, Clash/ });
@@ -70,7 +71,7 @@ describe('calendar view (#66)', () => {
   });
 
   it('arrow keys move focus across days and Enter opens the day', () => {
-    renderWithIntl(<MonthView days={DAYS} month="2026-11" hrefFor={hrefFor} />);
+    renderWithIntl(<MonthView days={DAYS} month="2026-11" hrefs={hrefs} />);
     const links = screen.getAllByRole('link');
     links[0]?.focus();
     fireEvent.keyDown(links[0] as HTMLElement, { key: 'ArrowRight' });

@@ -1,6 +1,8 @@
 // Tomorrow plan (#63): empty and denied states, keyboard assign, 360 px targets, axe on every state
 // and visual baselines (light and dark at 360/768/1280 via the viewport and theme projects;
 // baselines are generated in CI by visual-update.yml). Run in CI only.
+import { existsSync } from 'node:fs';
+
 import type { Page } from '@playwright/test';
 
 import type { AsUser } from '../../fixtures/auth.ts';
@@ -22,9 +24,12 @@ const open = async (
 test.describe('tomorrow plan', { tag: '@a11y' }, () => {
   test('empty state', async ({ page, asUser }) => {
     await open(page, asUser);
-    await expect(page.locator('[data-pattern-state="empty"]')).toContainText(
-      'No appearances to assign for tomorrow',
-    );
+    // The court-day board above the plan has its own empty state; match the plan's.
+    await expect(
+      page.locator('[data-pattern-state="empty"]', {
+        hasText: 'No appearances to assign for tomorrow',
+      }),
+    ).toBeVisible();
   });
 
   test('loading state', async ({ page, asUser }) => {
@@ -73,7 +78,12 @@ test.describe('tomorrow plan live outcomes', () => {
 });
 
 test.describe('tomorrow plan visual', { tag: '@visual' }, () => {
-  test('plan', async ({ page, asUser }) => {
+  test('plan', async ({ page, asUser }, testInfo) => {
+    test.skip(
+      testInfo.config.updateSnapshots === 'none' &&
+        !existsSync(testInfo.snapshotPath('tomorrow-plan.png', { kind: 'screenshot' })),
+      'no baseline yet: dispatch the e2e workflow with update_snapshots',
+    );
     await open(page, asUser);
     await expect(page).toHaveScreenshot('tomorrow-plan.png', { fullPage: true });
   });

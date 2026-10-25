@@ -22,8 +22,12 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText('Adjourned to 10 April for reply')).toBeInTheDocument();
-    await expect(canvasElement.querySelectorAll('mark')).toHaveLength(1);
+    await expect(canvasElement.querySelector('p[lang="en"]')).toHaveTextContent(
+      'Adjourned to 10 April for reply. File the reply in two weeks.',
+    );
+    const marks = canvasElement.querySelectorAll('mark');
+    await expect(marks).toHaveLength(1);
+    await expect(marks[0]).toHaveTextContent('Adjourned to 10 April for');
     await expect(canvas.getByText('Original language: English')).toBeVisible();
   },
 };

@@ -23,3 +23,6 @@ Outward update drafts (#735): L4-only drafts composed from templates (EN/TA/KN) 
 
 ### Notes
 No env vars. Policy matrix, worker registry and AI gateway are unchanged.
+
+## Stale-list follow-up
+Checked the four listed tests (admin headers, server-actions-audit, sources-actions, web activity-export-route). None enumerates @causedeck/db schema exports or sibling tables (none names obligation tables either), so the outward symbols are recorded as not_members in result.json. No code change.

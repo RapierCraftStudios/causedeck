@@ -2,423 +2,420 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`getCalendarRange` returns per-day counts and entries (listing, confirmed next date, obligation due, vacation or holiday marker from the forum calendar when present) for a range up to 42 days in one query set.",
+   "quote": "A scheduler enqueues per-member jobs at the member's configured local time (default 20:00 and 07:00 Asia/Kolkata) and the evening job fires only when the member has at least one listing tomorrow. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Week view shows days as rows grouped by hall on desktop and an agenda list on phone; month view shows a density grid with per-day counts and clash and deadline markers.",
+   "quote": "Each reminder is idempotent through `reminder_dispatch(member_id, kind, date)` unique key; a retried job sends nothing twice. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Selecting a day opens a popover with the day's listings and deadlines; 'Open day' navigates to the Court-Day Board for that date (`today`/`tomorrow` aliases when applicable, otherwise `calendar?day=`).",
+   "quote": "Evening brief content: count of listings, halls, clashes, briefs below readiness 60, and obligations due tomorrow, with a deep link to `/tomorrow`; no party names appear in push payloads (they appear only in-app). [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Entries are visually and textually distinguished by kind (listing, next date, obligation due, holiday) using icon, label and tone, never colour alone, with a legend.",
+   "quote": "Morning job sends only when the list diff for today is non-empty and summarises added, moved and removed items with a deep link to the diff sheet. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Entries are provenance-aware: unconfirmed next dates appear as 'Proposed' with a dashed style and are excluded from counts of confirmed commitments.",
+   "quote": "Outcome-missing reminder fires once per hearing at the configured delay (default 90 minutes after the last item in that hall or 16:30) for appearances with no confirmed outcome, to the appearing member and, for delegated appearances, the owner. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Scope toggle Mine / Whole chamber follows `court_day:view_all`; clerk sees dates and counts without strategy fields.",
+   "quote": "Members can disable each kind and each channel (in-app, push, email) in preferences; opt-outs are respected and tested. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "'Subscribe in your calendar' shows the private ICS feed URL from #53 when it exists, with a regenerate action owned there, and a clear explanation that it is private to the user.",
+   "quote": "Quiet-period guard: no reminders are sent on court holidays with no listings and none are scheduled inside the change-freeze windows by deploy tooling; clock handling is tested across IST with a fake clock. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "Empty (no entries in range), loading skeleton, error with retry, offline (cached range from #65 when available, else notice) and permission-denied states are implemented.",
+   "quote": "Email goes through the console transport in dev and CI and SES when configured; push uses VAPID web push through the service worker. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Keyboard: arrow keys move across days, `Enter` opens the day, `t` jumps to today, `w`/`m` switch view, `[`/`]` previous and next range; a11y grid semantics are correct.",
+   "quote": "All recipients are workspace members; a static test asserts there is no code path that addresses a client or external email. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "p95 \u003c 300 ms for a month range on the seeded chamber dataset; route JS \u003c= 180 KB gzip.",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "measured by the CI e2e perf and bundle-size jobs (e2e/lighthouserc*.json, ship PR CI); the in-lane part is a single-query-set read with the existing due_date index"
-  },
-  {
-   "id": "R11",
-   "quote": "Storybook stories exist for every new component with all states (default, empty, loading, error, offline, denied) and interaction tests.",
+   "quote": "Failures are retried with backoff then dead-lettered through the job registry (#15 conventions) and surface in the admin health feed. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R12",
-   "quote": "Playwright visual baselines exist for light and dark themes at 360, 768 and 1280 px.",
+   "id": "R11",
+   "quote": "Settings card renders in all states (loading, error, saved, denied) and is accessible; the whole control is keyboard operable. [type:e2e]",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "e2e/tests/visual specs are run and baselines generated only in CI (Playwright never runs locally)"
+   "evidence": "Playwright e2e/a11y run in CI on ship PRs and nightly (never locally); in lane the card is covered by a jsdom component test of all four states and keyboard operation."
+  },
+  {
+   "id": "R12",
+   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both. [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "axe reports zero serious or critical violations on every state of the surface, and the full flow is operable by keyboard alone.",
+   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite. [type:unit]",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "e2e a11y spec runs in CI Playwright; markup uses grid roles and labels checked by unit tests in lane"
+   "verify": "in_lane"
   },
   {
    "id": "R14",
-   "quote": "All user-facing strings come from `next-intl` catalogs (`en` complete, `ta`/`kn` keys stubbed); no hard-coded copy.",
+   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R15",
-   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both.",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "Local scheduled notifications are the primary path for mobile where the PWA supports it, with server push as backup (PRD recovery table).",
+   "disposition": "defer",
+   "why": "Needs a service-worker/PWA local-notification scheduler that is client work with its own device testing; this change delivers the server push backup path. Follow-up issue."
   },
   {
    "id": "R16",
-   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite.",
-   "disposition": "not-applicable",
-   "evidence": "packages/db/src/schema/docket.ts:234 and :105 — the feature is a derived read over existing tables (hearing, obligation, listing); no new table is added"
+   "quote": "none are scheduled inside the change-freeze windows by deploy tooling",
+   "disposition": "defer",
+   "why": "Deploy tooling lives outside this repo's app code; this change keeps the evening slot inside 18:00-23:00 and the morning job at 07:00 (the existing freeze-safe window used by the #49 digest) and records the constraint in the ADR. Tooling enforcement is separate."
   },
   {
    "id": "R17",
-   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types.",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "Real credentials: #110 (SES). This is NOT a dependency line.",
+   "disposition": "not-applicable",
+   "evidence": "packages/notifications/src/email/ses-transport.ts and console-transport.ts already exist; transport is chosen by config, no change needed."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/validators/src/calendar.ts",
-   "change": "zod CalendarRange (from,to ISO days, to>=from, span\u003c=42 days, scope mine|workspace), CalendarEntry (kind listing|next_date|obligation_due|holiday|vacation, proposed flag, redacted flag, matter/proceeding refs, hall, optional strategy-gated fields), CalendarDay (date, counts, clash flag, closedReason, entries); export from packages/validators/src/index.ts",
+   "path": "packages/validators/src/reminders.ts",
+   "change": "zod `ReminderPrefs` (per kind: enabled, time/delay, channels) and `ReminderPayload` ({workspaceId, memberId, date}); export from packages/validators/src/index.ts; add reminders.test.ts. No `any`.",
    "requirements": [
     "R1",
-    "R5",
     "R6",
-    "R17"
+    "R14"
    ]
   },
   {
    "id": "D2",
    "path": "packages/validators/src/index.ts",
-   "change": "re-export calendar.ts",
+   "change": "re-export reminders schemas.",
    "requirements": [
-    "R17"
+    "R14"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/court-day/calendar.ts",
-   "change": "getCalendarRange(deps, actor, input): one query set per source over the range via inCourtDayScope; listings (placed, readable, redacted if restricted), hearing next dates (confirmed vs proposed), open obligation due dates, holiday/vacation from loadCourtCalendar, clashes via detectClashes; scope workspace needs court_day.view_all; strategy fields only with strategy.read; proposed excluded from confirmed counts; no per-day getCourtDay calls",
+   "path": "packages/db/src/schema/reminder.ts",
+   "change": "tenantTable `reminder_dispatch(id, workspace_id, member_id, kind, for_date, channel, sent_at)` with unique (member_id, kind, for_date, channel), FORCE RLS via tenantTable, FK to organization.",
    "requirements": [
-    "R1",
-    "R5",
-    "R6",
-    "R15"
+    "R2",
+    "R13"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/court-day/index.ts",
-   "change": "export getCalendarRange",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "export the reminder schema.",
    "requirements": [
-    "R1"
+    "R13"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/court-day/calendar.test.ts",
-   "change": "unit tests: 42-day cap and validation, kinds, proposed excluded from counts, clerk without strategy, scope forbidden without view_all, restricted redaction, holiday marker absent when no data",
+   "path": "packages/db/migrations/",
+   "change": "new timestamped migration for reminder_dispatch (+ regenerated meta snapshot; use the next free timestamp after 20261025061924_brief_state, generated with drizzle-kit) including RLS policy on app.workspace_id and grants like sibling tenant tables; plus owner-defined SQL function (like app_notification_digest_targets) if the scheduler needs cross-workspace target listing.",
    "requirements": [
-    "R1",
-    "R5",
-    "R6"
+    "R2",
+    "R13"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "add getCalendarRange to SERVICE_TESTS",
+   "path": "packages/db/src/index.test.ts",
+   "change": "add reminder_dispatch to the root table list.",
    "requirements": [
-    "R15"
+    "R13"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "real getCalendarRange case: B on A denied/empty, A unchanged, user in both workspaces",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "add reminder_dispatch to the RLS catalog; also TABLE_TESTS/registry and the two-tenant seeders used by the rls cross-tenant suite.",
    "requirements": [
-    "R15"
+    "R12",
+    "R13"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/core/src/domains.test.ts",
-   "change": "add court-day -> deadlines (and notices if used) to CORE_DOMAIN_DEPENDENCIES only if calendar.ts imports them; confirm no cycle",
+   "path": "packages/core/src/court-day/reminders.ts",
+   "change": "`buildEveningBrief`, `buildMorningDiff`, `findMissingOutcomes`: pure builders over court-day data (listings tomorrow, halls, clashes via detectClashes, briefs with computeReadiness \u003c 60, open obligations due tomorrow; list diff via diffLists on list_snapshot; hearings with null outcome, delay default 90 min after last item in hall or 16:30, delegated appearance also targets the owner). Push-safe payload type carries counts only; party names only in in-app body. Export from court-day/index.ts. Add reminders.test.ts with fake clock across IST and a no-listings/holiday skip.",
    "requirements": [
-    "R1"
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R7",
+    "R14"
    ]
   },
   {
    "id": "D9",
-   "path": "docs/engineering/core-domains.md",
-   "change": "document getCalendarRange in the court-day row and any new dependency edge",
+   "path": "packages/core/src/court-day/index.ts",
+   "change": "export the reminder builders.",
    "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/page.tsx",
-   "change": "replace placeholder: RSC that keeps placeholder guards, parses ?view/?day/?scope, loads getCalendarRange and getFeedStatus, renders toolbar, week/month/agenda, legend, subscribe block; permission-denied and offline notice",
-   "requirements": [
-    "R2",
     "R3",
-    "R6",
-    "R7",
-    "R8"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/loading.tsx",
-   "change": "skeleton mirroring grid geometry",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/error.tsx",
-   "change": "error state with retry",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/week-view.tsx",
-   "change": "week rows grouped by hall (desktop), uses agenda-list on phone",
-   "requirements": [
-    "R2",
-    "R4",
-    "R9"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/month-view.tsx",
-   "change": "density grid, role=grid, per-day aria-label, count, clash and deadline markers, keyboard navigation",
-   "requirements": [
-    "R2",
-    "R9"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/day-popover.tsx",
-   "change": "day popover/bottom sheet with focus trap and Open day link (today/tomorrow aliases else calendar?day=)",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/calendar-toolbar.tsx",
-   "change": "range nav, week/month toggle, Mine/Whole chamber toggle, shortcuts t w m [ ]",
-   "requirements": [
-    "R6",
-    "R9"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/agenda-list.tsx",
-   "change": "phone agenda grouped by day with 7-day chip strip",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/legend.tsx",
-   "change": "kind legend with icon, label, tone; Proposed dashed",
-   "requirements": [
     "R4",
     "R5"
    ]
   },
   {
-   "id": "D19",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/calendar-view.test.tsx",
-   "change": "component tests: grid semantics, aria labels, keyboard, popover link aliases, empty/denied/offline states",
+   "id": "D10",
+   "path": "packages/core/src/jobs/definitions/reminders.ts",
+   "change": "Jobs `system.reminder.schedule` (cron; evening slot within 18:00-23:00, 07:00), `reminder.evening`, `reminder.morning`, `reminder.outcome_missing` with payload {workspaceId, memberId, date}; follow activity-digest.ts structure (fan-out per workspace via owner-defined targets function, per-member job, retry {limit 3, backoff}, workspaceTimezone/appLink/notificationJobDeps from notification-deliver.ts). Insert reminder_dispatch row per channel with ON CONFLICT DO NOTHING before sending; skip when conflict. Respect category prefs per channel, isSuppressed, active members only; recipient always a member row's user (never client/external email). Add reminders.test.ts (retry sends nothing twice, opt-outs, non-member skipped, no-listings skipped).",
    "requirements": [
-    "R3",
-    "R8",
-    "R9",
-    "R13"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "packages/i18n/src/messages/en/calendarView.json",
-   "change": "new namespace calendarView, en complete; ta/kn stubs in sibling files (calendarView.json under ta and kn)",
-   "requirements": [
-    "R14"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add calendarView to NAMESPACES",
-   "requirements": [
-    "R14"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add calendarView to expected top-level keys",
-   "requirements": [
-    "R14"
-   ]
-  },
-  {
-   "id": "D23",
-   "path": "packages/i18n/src/messages/ta/calendarView.json",
-   "change": "ta stub keys",
-   "requirements": [
-    "R14"
-   ]
-  },
-  {
-   "id": "D24",
-   "path": "packages/i18n/src/messages/kn/calendarView.json",
-   "change": "kn stub keys",
-   "requirements": [
-    "R14"
-   ]
-  },
-  {
-   "id": "D25",
-   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/calendar-view.stories.tsx",
-   "change": "stories for each component with default, empty, loading, error, offline, denied states and play interactions (colocated with web components because packages/ui must not import app code; if the Storybook config only globs packages/ui, put them under packages/ui/src/patterns/calendar/ instead)",
-   "requirements": [
-    "R11"
-   ]
-  },
-  {
-   "id": "D26",
-   "path": "e2e/tests/calendar/calendar.spec.ts",
-   "change": "Playwright product spec: views, popover, Open day, scope, keyboard, states",
-   "requirements": [
+    "R1",
     "R2",
-    "R3",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
     "R9",
     "R10"
    ]
   },
   {
-   "id": "D27",
-   "path": "e2e/tests/calendar/calendar.visual.spec.ts",
-   "change": "visual baselines light/dark at 360, 768, 1280",
+   "id": "D11",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "register the new job definitions (and the typeof union at the end of the file).",
+   "requirements": [
+    "R10"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/notifications/src/categories.ts",
+   "change": "add categories `reminder.evening`, `reminder.morning`, `reminder.outcome_missing` (defaults in_app, push, email; not mandatory) so per-kind/per-channel opt-out uses existing notification_pref; update any category list tests.",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/notifications/src/email/templates/evening-brief.tsx",
+   "change": "React Email template: serif heading, one short paragraph, button 'Open tomorrow', plain-text alternative; register in the email render registry. Same for morning-diff.tsx and outcome-missing.tsx (separate files in the same directory) with tests in packages/notifications/src/email/__tests__/reminders.test.tsx.",
+   "requirements": [
+    "R3",
+    "R4",
+    "R5",
+    "R8"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/notifications/src/email/render.ts",
+   "change": "add the three template names to the render registry/types (adjust messages.ts i18n keys if the renderer takes translations there).",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "packages/i18n/src/messages/en/reminders.json",
+   "change": "new `reminders` namespace (settings card labels, states, email/push copy: push generic \"Tomorrow's court day is ready\"); add kn/ta files (packages/i18n/src/messages/kn/reminders.json, packages/i18n/src/messages/ta/reminders.json); register in packages/i18n/src/catalog.ts NAMESPACES and packages/i18n/src/__tests__/catalog.test.ts; regenerate packages/i18n/src/generated with `pnpm --filter @causedeck/i18n i18n:types`.",
+   "requirements": [
+    "R6",
+    "R11"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/_reminders-card.tsx",
+   "change": "client card: rows Evening brief (time, default 8:00 pm), Morning changes (7:00 am), Outcome missing (delay), each with in-app/push/email toggles; states skeleton, error+retry, saved check (180 ms, prefers-reduced-motion 100 ms opacity fade), denied for viewers; labelled switches, typed time inputs; 360 stacked, 768/1280 two-column grid. Render it from settings/notifications/page.tsx. Add component test for the four states and keyboard operation.",
+   "requirements": [
+    "R6",
+    "R11"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/reminders-actions.ts",
+   "change": "'use server' thin async actions via workspaceAction (get/set reminder preferences, input validated with validators; user is ctx.userId, input never names a user); same pattern as notifications/actions.ts.",
+   "requirements": [
+    "R6",
+    "R12",
+    "R14"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
+   "change": "load reminder preferences and render the reminders card.",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "register the new actions module in ACTIONS, probe inputs and the per-feature 'under B's own workspace' test.",
    "requirements": [
     "R12"
    ]
   },
   {
-   "id": "D28",
-   "path": "e2e/tests/calendar/calendar.a11y.spec.ts",
-   "change": "axe on every state",
+   "id": "D20",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "SERVICE_TESTS entries for each new runtime @causedeck/core export (with real cases in packages/core/src/__tests__/cross-tenant/services.test.ts) or NOT_A_SERVICE with reason for pure builders.",
    "requirements": [
-    "R13"
+    "R12"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "cross-tenant cases: B on A is denied or sees nothing; A unchanged, including a user in both workspaces.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "add the new job names to the ordered definition list.",
+   "requirements": [
+    "R10"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "assert the new scheduled cron(s) and their Asia/Kolkata timezone.",
+   "requirements": [
+    "R1",
+    "R7"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "docs/adr/0039-reminder-scheduling.md",
+   "change": "ADR: slot scheduling in IST, dispatch-row idempotency, push payload privacy, freeze-window-safe slots, jobs in core (not apps/worker/src/jobs).",
+   "requirements": [
+    "R7",
+    "R16"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "docs/engineering/core-domains.md",
+   "change": "only if court-day or jobs gains a new cross-domain import (briefs, notifications): update CORE_DOMAIN_DEPENDENCIES (packages/core/src/domains*.ts / packages/config eslint core-domains) and this doc in the same change; import other domains only through their index.ts.",
+   "requirements": [
+    "R3"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "getCourtDay behaviour and signature (packages/core/src/court-day/query.ts:81); do not refactor it in a way that changes its output (tests query.test.ts, board-pace.test.ts)"
+   "what": "Existing end-of-day digest jobs and registry order semantics in packages/core/src/jobs/definitions/activity-digest.ts (append new definitions; do not reorder existing ones except as the registry test requires)."
   },
   {
    "id": "P2",
-   "what": "The existing `calendar` i18n namespace (ICS settings copy, packages/i18n/src/messages/en/calendar.json) and the settings/integrations/calendar page that uses it"
+   "what": "Existing notification categories, defaults and getPreferences/setPreference behaviour in packages/notifications/src/categories.ts and service.ts."
   },
   {
    "id": "P3",
-   "what": "Placeholder guards for the calendar route (apps/web/components/shell/placeholder-page.tsx: membership, permission, dev states) and nav entry apps/web/lib/nav.ts:90"
+   "what": "apps/web settings/notifications/actions.ts, preferences-form.tsx and whatsapp-actions.ts keep working (page.tsx only gains the reminders card)."
   },
   {
    "id": "P4",
-   "what": "ICS feed ownership: create/rotate/revoke stay in packages/core/src/calendar/feed.ts and the settings page; the calendar page only reads status and links"
+   "what": "court-day service API (getCourtDay, detectClashes, diffLists, snapshotList) in packages/core/src/court-day: reuse, do not change signatures."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/court-day/calendar.test.ts src/court-day/query.test.ts src/domains.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/court-day/reminders.test.ts src/jobs/definitions/reminders.test.ts src/domains.test.ts src/__tests__/cross-tenant/services.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/reminders.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/notifications exec vitest run src/email/__tests__/reminders.test.tsx src/index.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/web exec vitest run 'app/(app)/w/[slug]/calendar'"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts -t getCalendarRange"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts __tests__/reminders-card.test.tsx __tests__/reminders-actions.test.ts"
+  },
+  {
+   "id": "V7",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
+  },
+  {
+   "id": "V8",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/prepare-execute"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "New i18n namespace `calendarView` instead of extending `calendar`",
-   "justification": "`calendar` already holds ICS settings copy (packages/i18n/src/messages/en/calendar.json, catalog.ts:29); the issue's path packages/i18n/messages/... does not exist (real root is packages/i18n/src/messages)",
+   "choice": "Define the reminder jobs in packages/core/src/jobs/definitions/reminders.ts, not apps/worker/src/jobs/ as the issue lists.",
+   "justification": "apps/worker has no jobs dir; every job is a core definition registered in packages/core/src/jobs/registry.ts (activity-digest.ts, registry.ts:~171) and the worker runs the registry (apps/worker/src/worker.ts, schedules.ts:10).",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "getCalendarRange reuses court-day scope/predicates and detectClashes in one range query instead of looping getCourtDay",
-   "justification": "issue requires one query set for up to 42 days; getCourtDay is single-date (query.ts:81)",
+   "choice": "Keep a dedicated reminder_dispatch table for idempotency even though once() exists.",
+   "justification": "The issue's acceptance criteria require the (member_id, kind, for_date[, channel]) unique key, and per-channel dispatch rows allow a retry after a partial failure to resend only the failed channel; once() (packages/core/src/jobs/idempotency.ts) is per job effect.",
    "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "No new server action and no new table, so no cross-tenant-actions or RLS catalog entries",
-   "justification": "derived read in an RSC; registry rule in CLAUDE.md applies only to 'use server' actions and tables; the exported core service is registered (D6/D7)",
-   "source": "doc"
+   "choice": "Store prefs through new notification categories plus notification_setting-style time fields, with workspace defaults, instead of M2 memory_item keys.",
+   "justification": "#72 (memory engine) is open and the issue says to fall back to defaults when it is absent; the digest preference (packages/notifications/src/service.ts:620-632) is the working precedent.",
+   "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Offline state shows a notice only",
-   "justification": "#65 (cached range) is still open; the criterion allows 'else notice'",
-   "source": "spec"
+   "choice": "Email templates and i18n files go under packages/notifications/src/email/templates and packages/i18n/src/messages, not the issue's paths.",
+   "justification": "Actual layout in the repo (email/templates/end-of-day-digest.tsx, i18n catalog.ts:7).",
+   "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "Scheduler lists cross-workspace targets via an owner-defined SQL function in the migration, as app_notification_digest_targets() does.",
+   "justification": "Tenant tables are FORCE RLS and the scheduler job has no workspace (activity-digest.ts header and runActivityDigestSchedule).",
+   "source": "precedent"
   }
  ]
 }

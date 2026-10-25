@@ -1,35 +1,52 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: low (P3 greenfield feature; no live defect)
+**Severity**: medium (greenfield feature, no live defect; no reminder jobs exist)
 **Task Type**: feature
 
 ### What Was Claimed
-Issue #66: build the week and month calendar view at `/w/[slug]/calendar` (listings, confirmed next dates, obligation due dates, holiday/vacation markers), backed by a new `getCalendarRange` over the court-day service, with day popover, Board hand-off, kind legend, Proposed styling, Mine/Whole-chamber scope, ICS feed hand-off, all states, keyboard model, stories, e2e/visual/a11y, i18n. Deps #58 and #145 are closed. A prior bot comment on the issue (WhatsApp card) belongs to a different issue; ignore it, as well as the stale `.forge-lean/*` files for it.
+Issue #64 (base `milestone/prepare-execute`): court-day reminder jobs. An 8 pm evening brief, a 7 am supplementary-list diff summary and an "outcome missing" nudge, honouring each member's time preference (defaults 20:00/07:00 IST). They are idempotent through `reminder_dispatch`, go out through in-app/push/email, per-kind and per-channel opt-outs, a settings card, cross-tenant coverage, zod validators and a new tenant table with RLS. The issue's file list is a guess: several paths do not match the repo layout (see Root Cause). The earlier "Investigation Report" comment on the issue is about a different issue (WhatsApp link UI) and must be ignored.
 
 ### What We Found
-- `apps/web/app/(app)/w/[slug]/calendar/page.tsx:1-3` is only `placeholderPage('calendar')`; no `calendar/` components, no `loading.tsx`/`error.tsx`. History: `7f6fe4ed` (#154).
-- No `getCalendarRange`/`CalendarRange` anywhere (`grep` over packages and apps), no `packages/validators/src/calendar.ts`.
-- Court-day service exists (#58): `packages/core/src/court-day/query.ts:81` `getCourtDay` (single date; scope `mine|workspace`; `court_day.view_all` check at `:~104`; `strategy.read` gates strategy fields at `:~110`; restricted matters filtered via `can('listing.read')` at `:~196`). `scope.ts:84` `inCourtDayScope`; `clashes.ts` `detectClashes`. Barrel `court-day/index.ts` re-exports `query.ts` (so a new export needs a cross-tenant registry entry).
-- Next dates: `packages/db/src/schema/docket.ts:113-114` `hearing.nextDateProposed` / `nextDateConfirmed` (provenance for Proposed vs confirmed). Obligations: `docket.ts:242` `obligation.dueDate`, status `open`, index `obligation_workspace_due_date_idx`.
-- Holidays/vacations: `packages/core/src/deadlines/calendar.ts:60` `loadCourtCalendar` (holiday notices + static `FORUM_VACATIONS`, `closedReason`); `packages/core/src/notices/holidays.ts:29` `listHolidayListings`. Using them from court-day adds a domain edge (court-day currently depends only on sources, matter-graph, workspaces, audit: `docs/engineering/core-domains.md:102-105`).
-- ICS feed: `packages/core/src/calendar/feed.ts:83` `getFeedStatus`; token shown only once on create/rotate (settings page `settings/integrations/calendar/*`). The existing i18n namespace `calendar` (`packages/i18n/src/messages/en/calendar.json`, `catalog.ts:29`, `catalog.test.ts:92`) is the ICS settings copy, so the issue's `packages/i18n/messages/...` path is wrong and the view needs a new namespace.
-- UI patterns available: `packages/ui/src/patterns/{stage-badge,provenance-chip,obligation-row,court-item-chip,states}`; stories live next to components (`*.stories.tsx`). e2e lives in `e2e/tests/<area>/` (no `e2e/product`).
-- Web precedent for server pages: `apps/web/app/(app)/w/[slug]/today/page.tsx` (`getWorkspaceContext`, dynamic `@causedeck/core/runtime`, logged fallbacks).
+- No reminder feature: `grep -i reminder` finds only the `reminder.hearing` category (`packages/notifications/src/categories.ts:~37`) and UI strings; no `reminder_dispatch`, no `reminder.*` job.
+- There is no `apps/worker/src/jobs/`. Jobs are defined in core: `packages/core/src/jobs/definitions/*.ts`, listed in `packages/core/src/jobs/registry.ts:~171-183`. The worker only runs the registry (`apps/worker/src/worker.ts`, `schedules.ts:10` registers `def.schedule` crons in `Asia/Kolkata`). Tests: `apps/worker/src/__tests__/registry.test.ts:~118-140` (ordered definition names), `schedules.test.ts`.
+- Closest precedent is the #49 end-of-day digest, `packages/core/src/jobs/definitions/activity-digest.ts`: scheduler job (`:~118`, cron `0,30 18-23 * * *`, targets via owner-defined SQL function `app_notification_digest_targets()` because tenant tables are FORCE RLS), per-workspace fan-out (`:~162`), per-member job using `once()` (`packages/core/src/jobs/idempotency.ts`, `job_effect` table), `notify()` for in-app, `renderEmail`, `isSuppressed`, `isQuietTime`, retry `{limit:3, backoff}`. Pure slot/date maths: `packages/notifications/src/digest/schedule.ts` (`localDateOf`, `localDayBounds`, `endOfDaySlot`; slots limited to 18:00-23:00 to respect deploy-freeze windows, `:5-12`).
+- Preferences: `getEndOfDayPreference`/`setEndOfDayPreference` (`packages/notifications/src/service.ts:620-632`) keep `time` on `notification_setting` and the per-channel `enabled` on `notification_pref` rows keyed by category. The categories registry (`categories.ts`) decides channels and defaults. The M2 `memory_item` source named in the issue does not exist (#72 is open), and the issue says to fall back to defaults when it is absent.
+- Email templates live in `packages/notifications/src/email/templates/*.tsx` (e.g. `end-of-day-digest.tsx`), tests in `packages/notifications/src/email/__tests__/`; not `src/templates/`. Push: `packages/notifications/src/push/`, `channels/`.
+- i18n messages live in `packages/i18n/src/messages/{en,kn,ta}/<ns>.json` (not `packages/i18n/messages`); namespaces registered in `packages/i18n/src/catalog.ts:7`, asserted in `packages/i18n/src/__tests__/catalog.test.ts`; generated files in `packages/i18n/src/generated/` regenerate with `pnpm --filter @causedeck/i18n i18n:types`.
+- Court-day data (#58) exists: `packages/core/src/court-day/{query,clashes,diff,board}.ts`; `getCourtDay` (`query.ts:81`), `detectClashes` (`clashes.ts`), `diffLists`/`snapshotList` (`diff.ts:61,131`, `list_snapshot` table `packages/db/src/schema/court-day.ts:59`). Hearing outcome is `hearing.outcome` (null = unconfirmed) in `packages/db/src/schema/docket.ts:105-114`; `appearance` is at `docket.ts:141`, `obligation` in `docket.ts` (`status='open'`, used in `query.ts:~103`). Readiness: `computeReadiness` in `packages/core/src/briefs/index.ts:19`. Court holidays only exist as notices (`notices.ts`, kind `holiday`).
+- Whole-reminder idempotency is also available through `once()`, but the issue explicitly requires the `reminder_dispatch` unique key, so that table is needed.
+- Migrations are timestamped SQL in `packages/db/migrations/` (latest `20261025061924_brief_state.sql`) plus `meta/*_snapshot.json`.
+- Another sibling already occupies `apps/web/app/(app)/w/[slug]/settings/notifications/` (`page.tsx`, `preferences-form.tsx`, `actions.ts`, `whatsapp-actions.ts`).
 
 ### Root Cause
-Greenfield: the route is a placeholder and there is no range read model.
+Greenfield. #58 (court-day data) and #23 (notification channels) provide the inputs but no job turns them into reminders. The issue body's paths for jobs, templates and i18n are wrong for this repo, so implementation must follow the layout above.
 
 ### Affected Files
-`packages/validators/src/{calendar.ts,index.ts}`; `packages/core/src/court-day/{calendar.ts,calendar.test.ts,index.ts}`; `calendar/{page,loading,error}.tsx` and `_components/*` under the web route; `packages/ui` calendar stories (or story files beside the web components if ui must stay app-free); `packages/i18n/src/messages/{en,ta,kn}/calendarView.json`, `catalog.ts`, `__tests__/catalog.test.ts`, generated catalogs; registry/guards listed below; e2e specs.
+- `packages/validators/src/reminders.ts` (+ export in `index.ts`, test)
+- `packages/db/src/schema/reminder.ts`, `schema/index.ts`, new migration + snapshot
+- `packages/core/src/court-day/reminders.ts` (pure builders and DB readers) + test; export via `court-day/index.ts`
+- `packages/core/src/jobs/definitions/reminders.ts` (3 jobs + scheduler), `jobs/registry.ts`
+- `packages/notifications/src/categories.ts` (three categories), `src/email/templates/{evening-brief,morning-diff,outcome-missing}.tsx`, email renderer registry
+- `apps/worker/src/__tests__/registry.test.ts`, `schedules.test.ts`
+- `packages/i18n/src/messages/{en,kn,ta}/reminders.json`, `catalog.ts`, `__tests__/catalog.test.ts`, regenerated `generated/**`
+- `apps/web/app/(app)/w/[slug]/settings/notifications/{_reminders-card.tsx,reminders-actions.ts,page.tsx}`, `apps/web/__tests__/cross-tenant-actions.test.ts`
+- `packages/db/src/index.test.ts`, `packages/db/src/__tests__/rls/sql.test.ts`, `packages/db/src/testing/cross-tenant-registry.ts`, two-tenant seeders, `packages/core/src/__tests__/cross-tenant/services.test.ts`
+- `packages/core/src/domains*` / `docs/engineering/core-domains.md` (if court-day imports notifications or briefs), `docs/adr/0039-reminder-scheduling.md`
 
 ### Sibling Sweep
-Other placeholder routes exist but are separate issues (#59 Board, #65 offline cache, #84 limitation). Guards to update: `packages/db/src/testing/cross-tenant-registry.ts` (`SERVICE_TESTS` near `getCourtDay` :502) + `packages/core/src/__tests__/cross-tenant/services.test.ts` (:1934 pattern); `packages/core/src/domains.test.ts` + `docs/engineering/core-domains.md` if court-day imports deadlines/notices; no `'use server'` action is needed (read-only RSC), so no `cross-tenant-actions` entry.
+Same pattern (scheduler, fan-out, member job) in `activity-digest.ts`, `news-digest.ts`, `notification-deliver.ts` (digest). Reuse their helpers (`workspaceTimezone`, `appLink`, `notificationJobDeps`) rather than copy. The registry/guard lists in CLAUDE.md all apply (core export, server actions, table, jobs, i18n, core domain deps, migration).
 
 ### History
-Placeholder from #154. Court-day service #58 (ADR 0037); ICS feed #53 (PR #524); holiday notices #587; deadline calendar #494.
+Digest pattern from #49; court-day read model from #58 (`6a91720a`, ADR 0037); notifications from #23/#194. No earlier reminder attempt (`git log` on court-day shows none).
 
 ### Recommendation
-Implement in order: validators; `getCalendarRange` (one query set per source: listings, hearings' next dates, open obligations, forum calendar; reuse `inCourtDayScope`, the same mine/readable predicates and `detectClashes` rather than calling `getCourtDay` per day; redact restricted matters; clerk gets no strategy fields; proposed dates flagged and excluded from confirmed counts; cap range at 42 days via zod); then the page (week/month/agenda, popover with Board link using `today`/`tomorrow` aliases, legend, states, keyboard grid), i18n, stories, e2e. Offline: #65 is open, so show the offline notice when no cached range exists. Perf/bundle budgets are measured in CI.
+Implement as in the contract. Key points:
+- Follow the #49 job shape in core, with scheduler jobs for 07:00 and evening slots and a per-minute-or-half-hour outcome-missing scan.
+- Write a `reminder_dispatch` row per (member, kind, date, channel) before sending, `ON CONFLICT DO NOTHING`, and skip the send if no row was inserted.
+- Add three categories (`reminder.evening`, `reminder.morning`, `reminder.outcome_missing`) so per-kind and per-channel opt-out reuses `notification_pref`.
+- Push payloads are generic ("Tomorrow's court day is ready"); only in-app and email carry counts.
+- Skip when there are no listings, and send only to active members of the workspace.
+- Defer the PWA local-notification path and deploy-tooling freeze enforcement.
 
 ### Related Issues
-#1 (parent), #58, #145 (deps, closed), #53 (feed), #59 (Board, open), #65 (offline cache, open), #84 (limitation, out of scope), #34 (forum calendar data).
+#1 (parent), #58 and #23 (inputs, merged), #15 (job conventions), #72 (memory prefs, open; fall back to defaults), #67/#70 (obligation reminders out of scope), #110 (SES credentials), #49 (digest precedent).

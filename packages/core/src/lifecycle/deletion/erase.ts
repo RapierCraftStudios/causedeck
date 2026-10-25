@@ -54,6 +54,8 @@ export const PURGE_ORDER = [
   'notification',
   'notification_pref',
   'notification_setting',
+  // Court-day reminder ledger (#64): cites the member, so it goes before the members.
+  'reminder_dispatch',
   // WhatsApp number link (#678): the pending challenge and the verified link cite only the user.
   'whatsapp_otp_challenge',
   'whatsapp_link',

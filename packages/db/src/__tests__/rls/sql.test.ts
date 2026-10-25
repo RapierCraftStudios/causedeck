@@ -190,6 +190,9 @@ describe('row-level security catalog', () => {
         // Brief state (#60).
         'brief_state',
 
+        // Court-day reminders (#64).
+        'reminder_dispatch',
+
         // Review and correction queue (#518).
         'review_correction',
 

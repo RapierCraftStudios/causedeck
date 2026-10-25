@@ -13,3 +13,20 @@ export { clearCurrentItem, setCurrentItem, type MarkerRow } from './markers.ts';
 export type { CourtDayActor, CourtDayDeps, CourtDayEvent, CourtDayEvents } from './scope.ts';
 export { getCalendarRange } from './calendar.ts';
 export { listConflictCards, proposeCourtDayNextDate } from './next-date.ts';
+// Court-day reminders (#64, ADR 0039): pure builders for the evening brief, the morning diff and the missing outcomes.
+export {
+  addDays,
+  buildEveningBrief,
+  buildMorningDiff,
+  eveningPushPayload,
+  findMissingOutcomes,
+  LOW_READINESS_BELOW,
+  OUTCOME_FALLBACK_TIME,
+  type EveningBrief,
+  type EveningBriefInput,
+  type EveningPushPayload,
+  type HearingForOutcome,
+  type MissingOutcome,
+  type MissingOutcomeInput,
+  type MorningDiff,
+} from './reminders.ts';

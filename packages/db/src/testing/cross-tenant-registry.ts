@@ -266,6 +266,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // privacy settings (#286)
   getPrivacySettings: empty,
   updateWorkspacePrivacy: denies,
+  // Eval-reuse consent (#558): B reads A's flag as the default, and may not opt A in.
+  getAllowEvalReuse: empty,
+  setAllowEvalReuse: denies,
   // integration tokens (#287)
   getIntegrations: empty,
   rotateIntegrationToken: denies,

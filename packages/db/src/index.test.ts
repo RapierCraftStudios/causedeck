@@ -127,6 +127,7 @@ describe('@causedeck/db root entry point', () => {
       'news_item',
       'news_pref',
       'notice',
+      'notice_holiday',
       'notice_match',
       'notification',
       'notification_pref',

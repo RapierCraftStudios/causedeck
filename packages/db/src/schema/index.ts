@@ -317,6 +317,7 @@ export {
   NOTICE_KINDS,
   NOTICE_MATCH_REASONS,
   notice,
+  noticeHoliday,
   noticeKind,
   noticeMatch,
   type NoticeKind,

@@ -1,11 +1,11 @@
 // Court calendars for the deadline engine (#494, D-048): which days a forum is closed. Holidays come
 // from the notices feed (a `holiday` notice matched to the workspace with a machine-readable
-// `effective_on`, the same read as `listHolidayListings`); vacations come from the per-forum table
+// `effective_on` or dates read from its document in `notice_holiday`, the same read as `listHolidayListings`); vacations come from the per-forum table
 // below, because a notice carries a single date and no range. Weekly offs default to Sunday.
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
-import { and, asc, eq, gte, lte, sql } from 'drizzle-orm';
+import { and, eq, gte, lte, sql } from 'drizzle-orm';
 
-const { notice, noticeMatch } = schema;
+const { notice, noticeHoliday, noticeMatch } = schema;
 
 export interface VacationRange {
   /** First closed day (ISO date), inclusive. */
@@ -62,24 +62,44 @@ export async function loadCourtCalendar(
   workspaceId: string,
   input: LoadCourtCalendarInput,
 ): Promise<CourtCalendar> {
-  const rows = await withWorkspace(db, { workspaceId }, (tx) =>
-    tx
+  const rows = await withWorkspace(db, { workspaceId }, async (tx) => {
+    const matched = and(
+      eq(noticeMatch.workspaceId, workspaceId),
+      eq(noticeMatch.noticeId, notice.id),
+    );
+    const forumHoliday = and(
+      eq(notice.kind, 'holiday'),
+      sql`${input.forumCode} = any(${notice.forumCodes})`,
+    );
+    const single = await tx
       .selectDistinct({ effectiveOn: notice.effectiveOn, title: notice.title, id: notice.id })
       .from(notice)
-      .innerJoin(
-        noticeMatch,
-        and(eq(noticeMatch.workspaceId, workspaceId), eq(noticeMatch.noticeId, notice.id)),
-      )
+      .innerJoin(noticeMatch, matched)
+      .where(
+        and(forumHoliday, gte(notice.effectiveOn, input.from), lte(notice.effectiveOn, input.to)),
+      );
+    // The dates the poll read out of the holiday-list document (#628), named as printed.
+    const listed = await tx
+      .selectDistinct({
+        effectiveOn: noticeHoliday.holidayOn,
+        title: noticeHoliday.name,
+        id: notice.id,
+      })
+      .from(notice)
+      .innerJoin(noticeMatch, matched)
+      .innerJoin(noticeHoliday, eq(noticeHoliday.noticeId, notice.id))
       .where(
         and(
-          eq(notice.kind, 'holiday'),
-          sql`${input.forumCode} = any(${notice.forumCodes})`,
-          gte(notice.effectiveOn, input.from),
-          lte(notice.effectiveOn, input.to),
+          forumHoliday,
+          gte(noticeHoliday.holidayOn, input.from),
+          lte(noticeHoliday.holidayOn, input.to),
         ),
-      )
-      .orderBy(asc(notice.effectiveOn), asc(notice.id)),
-  );
+      );
+    return [...single, ...listed].sort(
+      (x, y) =>
+        (x.effectiveOn ?? '').localeCompare(y.effectiveOn ?? '') || x.id.localeCompare(y.id),
+    );
+  });
   const holidays = new Map<string, string>();
   for (const row of rows) {
     if (row.effectiveOn !== null && !holidays.has(row.effectiveOn)) {

@@ -1,5 +1,5 @@
 {
-  "id": "d607c000-3575-4acb-8c73-94c261efb859",
+  "id": "7ea9d444-f8bd-408e-8728-e6eca1827408",
   "prevId": "4cf89f39-fe78-4f6a-82f8-b2b9f30e2c9b",
   "version": "7",
   "dialect": "postgresql",
@@ -5354,167 +5354,6 @@
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.correction": {
-      "name": "correction",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "document_id": {
-          "name": "document_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "forum_code": {
-          "name": "forum_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "row_key": {
-          "name": "row_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "column_name": {
-          "name": "column_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "before": {
-          "name": "before",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "after": {
-          "name": "after",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "page": {
-          "name": "page",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "quote": {
-          "name": "quote",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "eval_consent": {
-          "name": "eval_consent",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "correction_workspace_id_idx": {
-          "name": "correction_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "correction_workspace_id_fk": {
-          "name": "correction_workspace_id_fk",
-          "tableFrom": "correction",
-          "tableTo": "organization",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "correction_document_fk": {
-          "name": "correction_document_fk",
-          "tableFrom": "correction",
-          "tableTo": "document",
-          "columnsFrom": [
-            "workspace_id",
-            "document_id"
-          ],
-          "columnsTo": [
-            "workspace_id",
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "correction_workspace_id_id_uq": {
-          "name": "correction_workspace_id_id_uq",
-          "nullsNotDistinct": false,
-          "columns": [
-            "workspace_id",
-            "id"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "correction_page_chk": {
-          "name": "correction_page_chk",
-          "value": "page >= 1"
-        },
-        "correction_after_chk": {
-          "name": "correction_after_chk",
-          "value": "btrim(after) <> ''"
-        },
-        "correction_column_chk": {
-          "name": "correction_column_chk",
-          "value": "column_name in ('caseNumber', 'parties', 'courtHall', 'stageText', 'date')"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.court_hall": {
@@ -12931,6 +12770,102 @@
         "notice_document_chk": {
           "name": "notice_document_chk",
           "value": "(document_key is null and document_sha256 is null and document_mime is null) or (document_key is not null and document_sha256 ~ '^[0-9a-f]{64}$' and document_mime is not null)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.notice_holiday": {
+      "name": "notice_holiday",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "notice_id": {
+          "name": "notice_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "holiday_on": {
+          "name": "holiday_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "notice_holiday_holiday_on_idx": {
+          "name": "notice_holiday_holiday_on_idx",
+          "columns": [
+            {
+              "expression": "holiday_on",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "notice_holiday_notice_id_notice_id_fk": {
+          "name": "notice_holiday_notice_id_notice_id_fk",
+          "tableFrom": "notice_holiday",
+          "tableTo": "notice",
+          "columnsFrom": [
+            "notice_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "notice_holiday_notice_date_uq": {
+          "name": "notice_holiday_notice_date_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "notice_id",
+            "holiday_on"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "notice_holiday_name_chk": {
+          "name": "notice_holiday_name_chk",
+          "value": "btrim(name) <> ''"
         }
       },
       "isRLSEnabled": false
@@ -21974,13 +21909,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": 30
-        },
-        "allow_eval_reuse": {
-          "name": "allow_eval_reuse",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "created_at": {
           "name": "created_at",

@@ -1,34 +1,48 @@
 ### Approach
-Outward update drafts (#735): L4-only drafts composed from templates (EN/TA/KN) with an optional India-only `outward_update` AI task, a guard that blocks forbidden phrasing, a diff for edits, and a share record. There is no send path (ADR 0039). Prior commits already hold the work; this pass merged the base (no collision left: base head 68a9c8ba, ADR 0039 and migration 20261025135312 are the next free numbers), re-ran every validate command, and applied prettier.
+Dates named inside a holiday-list document are parsed by a pure parser, stored in a new global `notice_holiday` table by the poll (through an optional injected document fetcher, since core cannot import `@causedeck/fetch`), and read together with `notice.effective_on` by `listHolidayListings` and `loadCourtCalendar`.
 
 ### Changes
-- packages/validators/src/outward-draft.ts (+test, index): DraftRequest, DraftEdit, ShareRecord, Audience, Language.
-- packages/db: schema/outward-draft.ts, migration 20261025135312_outward_drafts.sql, registries, RLS catalog, two-tenant seeders.
-- packages/ai: task `outward_update`, mock fixtures EN/TA/KN, drafting tier.
-- packages/core/src/outward/*: compose, guard, diff, share, context, templates; audit events; erase/export hooks.
-- docs/adr/0039, adr README, core-domains doc and eslint domain edge.
+- packages/intelligence/src/notices/parse-holiday-list.ts (+ index export, __tests__/parse-holiday-list.test.ts): `parseHolidayListLines/Text/Html/Pdf`.
+- packages/db/src/schema/notices.ts, schema/index.ts: `notice_holiday` table; migrations/20261025194355_notice_holiday.sql (+ snapshot, journal): grants SELECT, INSERT to the app role.
+- packages/db/src/conventions.ts: table added to GLOBAL_TABLES; src/index.test.ts table list; __tests__/notices-schema.test.ts: privilege, unique and check test.
+- packages/core/src/notices/poll.ts, index.ts: optional `documentFetcher`, `holidayDates`/`holidayFailed` in the report; failures never fail the poll.
+- packages/core/src/notices/holidays.ts, deadlines/calendar.ts: read `notice_holiday` plus `effective_on`.
+- packages/core/src/notices/notices.test.ts, __tests__/cross-tenant/services.test.ts: regression and cross-tenant cases.
+- docs/engineering/core-domains.md.
 
 ### Acceptance Criteria Status
-- R1 ✅ packages/validators/src/outward-draft.ts, packages/db/src/schema/outward-draft.ts
-- R2 ✅ packages/ai/src/tasks/outward-update.ts
-- R3 ✅ packages/core/src/outward/{compose,guard,diff,share}.ts, packages/core/src/audit/events.ts
-- R4 ✅ docs/adr/0039-outward-drafts-no-send-path.md, packages/db/src/testing/cross-tenant-registry.ts
-- R5 ✅ packages/core/src/outward/__tests__/*, packages/ai/src/tasks/__tests__/outward-update.test.ts
-- R6 ✅ same tests
+- R1 ✅ holidays.ts leftJoin on `notice_holiday`; calendar.ts `listed` query; notices.test.ts "holiday-list documents".
+- R2 ✅ parse-holiday-list.ts (PDF text layer, HTML, text); poll.ts `storeHolidayDates`.
+- R3 ✅ the `effective_on` path is kept (existing listHolidayListings tests and the cross-tenant case still pass).
 
 ### Verification
-- V1 validators vitest: pass. V2 ai vitest: pass. V3 core vitest: pass. V4 db vitest: pass. V5 config vitest: pass. V6 adr:lint: pass.
-- V7 lane-check.sh does not exist on this host (exit 127, environment problem); substituted `tsc --noEmit` for validators, ai, db and core: all clean.
-- The new tests fail without the fix because the outward modules do not exist.
+- V1 intelligence src/notices: 17 passed.
+- V2 core src/notices src/deadlines: 27 passed.
+- V3 db notices-schema + index tests: passed.
+- V4 core cross-tenant services `-t holiday` matches no test name (case-sensitive); `-t "loadCourtCalendar|listHolidayListings"` ran 2 passed.
+- The new poll and calendar test fails without the fix (no `notice_holiday` table or `documentFetcher`).
+- Typecheck of the changed packages and dependents: 22 of 23 tasks passed; `apps/web` typecheck died with a Node heap OOM on the shared host (environment, not a type error). ESLint on changed files in core, db and intelligence: clean.
 
 ### Notes
-No env vars. Policy matrix, worker registry and AI gateway are unchanged.
+Nothing wires `documentFetcher` in the worker yet, so production polls store no dates until that is added. `@causedeck/fetch` is string-bodied, so PDF bytes need a separate fetch change. Migration and conventions edits are listed as amendments.
 
-## Stale-list follow-up
-Checked the four listed tests (admin headers, server-actions-audit, sources-actions, web activity-export-route). None enumerates @causedeck/db schema exports or sibling tables (none names obligation tables either), so the outward symbols are recorded as not_members in result.json. No code change.
+### CI sibling-list follow-up
+The ten flagged apps/admin and apps/web tests list no db schema tables (none names `noticeMatch` or any notice table), so `noticeHoliday` is not a member of any; each is recorded in result.json `not_members`.
 
-## Export-collision follow-up
-Renamed outward/context.ts exports `requireMatterFor` -> `requireOutwardMatter` and `audit` -> `auditOutward` (they collided with obligations/context.ts); updated diff.ts, compose.ts and share.ts. No registry or test keyed by those names. Core tsc clean; vitest on src/outward and domains.test.ts passes (27 tests).
+### Merge-check failure (turbo: command not found)
+No code conflict: the failing check only ran `turbo` outside PATH (exit 127). Re-ran `pnpm turbo run typecheck --filter='...[base]'`: 0 TS errors; every package passed except `@causedeck/web`, which died with a V8 heap OOM on the shared host (environment, not a type error). V1-V3 pass; V4 is skipped locally (the cross-tenant suite skips without its database), left to CI. No source change was needed.
 
-## Fix: D20 cross-tenant case
-Added a real B-on-A outward describe (composeUpdate/saveEdit/recordShared/recordCopied) to packages/core/src/__tests__/cross-tenant/services.test.ts. Outward is a subpath export, not in the root index, so no SERVICE_TESTS entries apply (same as billing).
+### Merge re-check
+The merged-tree failure was `turbo: command not found` (exit 127): `turbo` is not on PATH, not a code conflict. Run via `pnpm exec turbo`, typecheck passes for 22 of 23 packages; `@causedeck/web` hit a V8 heap OOM under the default heap and passes (rc 0, no TS errors) with `NODE_OPTIONS=--max-old-space-size=6144`. No source change was needed.
+
+### CI `test` failure (no log available)
+The job log could not be read. Re-ran locally: db (notices-schema, index, rls, cross-tenant, lint-migrations, migrate, conventions), core (notices, deadlines, jobs, domains), full intelligence, tsc for db/core/intelligence, prettier and ESLint on changed files: all pass. The core cross-tenant suite skips without its database, so it could only be checked by CI; it is the one suite not run here. Changed `listHolidayListings` case so the listing's date is named only by a `notice_holiday` row (contract D6), the multi-date path it had not exercised. No source change otherwise; the cause of the CI failure is unconfirmed.
+
+### CI `test` failure: rosters-perf (#387)
+The only failing test was `src/court/__tests__/rosters-perf.test.ts > are index-backed` (planner did not pick `bench_roster_entry_workspace_roster_idx` under `enable_seqscan = off`). It touches only the `bench_roster*` tables; this branch adds `notice_holiday` and changes nothing in `court` or those tables, and the other 185 core test files passed. It is a query-plan assertion on a CI database under load (shard took 554s), unrelated to #628, so no source change. Also untracked three accidentally committed `.eslintcache` files (gitignored).
+
+### CI `test` failure (second report, no log available)
+The log was unreadable again. Re-ran core src/notices src/deadlines: 27 passed. No source change; the failing test is unconfirmed and is most likely the unrelated rosters-perf query-plan assertion recorded above (the core cross-tenant suite needs a database, so only CI runs it).
+
+## CI fix (db:check)
+After merging the base, the notice_holiday snapshot still pointed at snapshot c36110c7 as parent, colliding with 20261025192217. Re-parented it to 4cf89f39 and restored the appearance_appearing_for_person_fk entry. drizzle-kit check and V3 pass.

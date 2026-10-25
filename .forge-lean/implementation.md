@@ -19,3 +19,6 @@ V1 to V7 pass (forgedock checks ran them; V1 re-run for src/status after fixes: 
 
 ### Notes
 New env STATUS_SIGNING_KEY (dev default). Job name is system.status.publish.
+
+### Stale-list follow-up
+The flagged symbols are not members of any list in the named tests (mocks or the runJob probe). The core ones are already in NOT_A_SERVICE. Recorded in result.json not_members; no code change.

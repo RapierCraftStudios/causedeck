@@ -5,7 +5,7 @@ import type { AsUser } from '../../fixtures/auth.ts';
 import { expect, type E2eRole } from '../../fixtures/index.ts';
 import { MATTERS, MATTERS_WORKSPACE } from '../../fixtures/matters-data.ts';
 
-export const BRIEF_LISTING_ID = MATTERS.appeal.listings[0]?.id ?? '';
+export const BRIEF_LISTING_ID = MATTERS.appeal.listings[0].id;
 
 export async function openBrief(
   page: Page,

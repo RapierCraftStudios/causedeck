@@ -133,6 +133,10 @@ describe('row-level security catalog', () => {
         'obligation_event',
         'defect',
         'certified_copy',
+        // Outward update drafts (#735).
+        'outward_draft',
+        'outward_draft_version',
+        'outward_share_log',
         'task',
         // People (#348).
         'person',

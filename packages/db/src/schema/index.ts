@@ -51,6 +51,22 @@ export {
   type CertifiedCopyStatus,
   type ObligationEventKind,
 } from './obligation-tracking.ts';
+export {
+  OUTWARD_AUDIENCES,
+  OUTWARD_DRAFT_STATUSES,
+  OUTWARD_LANGUAGES,
+  OUTWARD_SHARE_CHANNELS,
+  OUTWARD_TONES,
+  outwardDraft,
+  outwardDraftVersion,
+  outwardShareLog,
+  type OutwardAudience,
+  type OutwardDraftStatus,
+  type OutwardFact,
+  type OutwardLanguage,
+  type OutwardShareChannel,
+  type OutwardTone,
+} from './outward-draft.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export {
   CAPTURE_CHANNELS,

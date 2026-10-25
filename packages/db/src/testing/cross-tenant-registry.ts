@@ -97,6 +97,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   obligation_event: DB_TABLES_TEST,
   defect: DB_TABLES_TEST,
   certified_copy: DB_TABLES_TEST,
+  // Outward update drafts (#735).
+  outward_draft: DB_TABLES_TEST,
+  outward_draft_version: DB_TABLES_TEST,
+  outward_share_log: DB_TABLES_TEST,
   task: DB_TABLES_TEST,
   // People (#348).
   person: DB_TABLES_TEST,

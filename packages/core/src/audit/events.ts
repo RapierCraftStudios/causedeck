@@ -355,6 +355,12 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A certified copy moved to its next step',
   },
+  'outward.prepared': { security: false, description: 'An outward update draft was prepared' },
+  'outward.edited': { security: false, description: 'A lawyer saved an edit of an outward draft' },
+  'outward.shared': {
+    security: false,
+    description: 'A lawyer shared an outward draft from their own channel',
+  },
 } as const satisfies Record<string, AuditActionSpec>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

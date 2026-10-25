@@ -19,7 +19,7 @@ const meta = { title: 'Research/NotesList', component: NotesList } satisfies Met
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Empty: Story = { args: base };
-export const Loading: Story = { args: { ...base, state: 'loading' } };
-export const ErrorState: Story = { args: { ...base, state: 'error' } };
-export const Denied: Story = { args: { ...base, state: 'denied' } };
+export const NotesEmpty: Story = { args: base };
+export const NotesLoading: Story = { args: { ...base, state: 'loading' } };
+export const NotesErrorState: Story = { args: { ...base, state: 'error' } };
+export const NotesDenied: Story = { args: { ...base, state: 'denied' } };

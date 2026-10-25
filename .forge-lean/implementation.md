@@ -31,3 +31,6 @@ V1–V5 pass (forgedock check PASS). Web tsc --noEmit clean. ESLint could not ru
 
 ## Stale-list follow-up
 Core research exports are registered in NOT_A_SERVICE; the other flagged lists do not enumerate them. Recorded in result.json not_members.
+
+## Story export collision
+Renamed notes-list story exports to NotesEmpty/NotesLoading/NotesErrorState/NotesDenied and link-out-menu Empty to NoLinks so they no longer collide with whatsapp-import stories. Nothing else references them.

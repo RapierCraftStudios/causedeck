@@ -24,4 +24,4 @@ export const WithLinks: Story = {
   },
 };
 
-export const Empty: Story = { args: { links: [] } };
+export const NoLinks: Story = { args: { links: [] } };

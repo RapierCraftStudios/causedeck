@@ -1,0 +1,340 @@
+# Production stack for a single India VPS (Stage A, spike §3.1) and, with a different env file,
+# staging. Run it with the env file passed for BOTH interpolation and the containers:
+#
+#   export CAUSEDECK_ENV_FILE=/etc/causedeck/prod.env      # 0600, see env/prod.env.example
+#   docker compose -f compose.prod.yml --env-file "$CAUSEDECK_ENV_FILE" up -d --wait
+#
+# Rules this file keeps (asserted by infra/scripts/compose-prod.test.mjs):
+#   - only caddy publishes ports (80, 443, 443/udp for HTTP/3); everything else is internal;
+#   - cap_drop ALL, no-new-privileges, read-only root filesystem with tmpfs where needed;
+#   - every service has memory and CPU limits and a restart policy;
+#   - app images are ghcr.io/<org>/causedeck-<svc>:sha-<gitsha>; third-party images are pinned.
+# Limits below are per container and sized for 4 vCPU / 8 GB (README table); staging shrinks them
+# through the *_MEM / *_CPUS variables. No secrets live here: they come from the env file.
+name: causedeck-${COMPOSE_ENV_NAME:-prod}
+
+networks:
+  # Egress allowed (AI, email, payment providers); no ports are published from it except caddy's.
+  edge:
+  # No route out of the host: Postgres and MinIO live only here, with the services that use them.
+  data:
+    internal: true
+
+volumes:
+  pgdata:
+  miniodata:
+  caddy_data:
+  caddy_config:
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    # Caddy runs as root in the image and must bind 80 and 443.
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: ['no-new-privileges:true']
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      # Caddy configuration is owned by #98; this mounts whatever infra/caddy/Caddyfile holds.
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    tmpfs:
+      - /tmp
+    environment:
+      TZ: UTC
+    networks: [edge]
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: ${CADDY_MEM:-128m}
+          cpus: '${CADDY_CPUS:-0.25}'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:80/healthz']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '5'
+
+  web:
+    image: ghcr.io/${IMAGE_ORG:?set IMAGE_ORG}/causedeck-web:sha-${GIT_SHA:?set GIT_SHA}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    env_file: ${CAUSEDECK_ENV_FILE:?set CAUSEDECK_ENV_FILE}
+    environment:
+      TZ: UTC
+      DATABASE_URL: postgres://causedeck_app:${APP_DB_PASSWORD:?set APP_DB_PASSWORD}@postgres:5432/causedeck?sslmode=require
+      PORT: '3000'
+    tmpfs:
+      - /tmp
+      - /app/apps/web/.next/cache
+    networks: [edge, data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    stop_grace_period: 20s
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: ${WEB_MEM:-768m}
+          cpus: '${WEB_CPUS:-1.0}'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/readyz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    logging: *logging
+
+  api:
+    image: ghcr.io/${IMAGE_ORG:?set IMAGE_ORG}/causedeck-api:sha-${GIT_SHA:?set GIT_SHA}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    env_file: ${CAUSEDECK_ENV_FILE:?set CAUSEDECK_ENV_FILE}
+    environment:
+      TZ: UTC
+      DATABASE_URL: postgres://causedeck_app:${APP_DB_PASSWORD:?set APP_DB_PASSWORD}@postgres:5432/causedeck?sslmode=require
+      API_PORT: '3001'
+    tmpfs:
+      - /tmp
+    networks: [edge, data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    stop_grace_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: ${API_MEM:-768m}
+          cpus: '${API_CPUS:-1.0}'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3001/readyz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    logging: *logging
+
+  worker:
+    image: ghcr.io/${IMAGE_ORG:?set IMAGE_ORG}/causedeck-worker:sha-${GIT_SHA:?set GIT_SHA}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    env_file: ${CAUSEDECK_ENV_FILE:?set CAUSEDECK_ENV_FILE}
+    environment:
+      TZ: UTC
+      DATABASE_URL: postgres://causedeck_app:${APP_DB_PASSWORD:?set APP_DB_PASSWORD}@postgres:5432/causedeck?sslmode=require
+      WORKER_PORT: '3003'
+    tmpfs:
+      - /tmp
+    networks: [edge, data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    stop_grace_period: 40s
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: ${WORKER_MEM:-512m}
+          cpus: '${WORKER_CPUS:-0.75}'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3003/readyz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    logging: *logging
+
+  admin:
+    image: ghcr.io/${IMAGE_ORG:?set IMAGE_ORG}/causedeck-admin:sha-${GIT_SHA:?set GIT_SHA}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    env_file: ${CAUSEDECK_ENV_FILE:?set CAUSEDECK_ENV_FILE}
+    environment:
+      TZ: UTC
+      DATABASE_URL: postgres://causedeck_app:${APP_DB_PASSWORD:?set APP_DB_PASSWORD}@postgres:5432/causedeck?sslmode=require
+      PORT: '3200'
+    tmpfs:
+      - /tmp
+      - /app/apps/admin/.next/cache
+    networks: [edge, data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    stop_grace_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: ${ADMIN_MEM:-384m}
+          cpus: '${ADMIN_CPUS:-0.5}'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3200/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    logging: *logging
+
+  postgres:
+    image: ghcr.io/${IMAGE_ORG:?set IMAGE_ORG}/causedeck-postgres:sha-${GIT_SHA:?set GIT_SHA}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    # The official image would start as root and drop to postgres; run as postgres from the start
+    # so no capability is needed. The data volume inherits the image's postgres ownership.
+    user: postgres
+    environment:
+      TZ: UTC
+      POSTGRES_USER: causedeck
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: causedeck
+      # WAL-G: continuous archiving target for archive_command (postgresql.conf). Defaults to the
+      # stack's own MinIO; point WALG_S3_PREFIX/AWS_ENDPOINT at off-host storage in production.
+      WALG_S3_PREFIX: ${WALG_S3_PREFIX:-s3://causedeck-wal}
+      AWS_ENDPOINT: ${WALG_AWS_ENDPOINT:-http://minio:9000}
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+      AWS_S3_FORCE_PATH_STYLE: 'true'
+      AWS_REGION: ${S3_REGION:-ap-south-1}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql:mode=1777
+    shm_size: 256mb
+    networks: [data]
+    depends_on:
+      minio:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: ${POSTGRES_MEM:-2g}
+          cpus: '${POSTGRES_CPUS:-2.0}'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U causedeck -d causedeck']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    stop_grace_period: 60s
+    logging: *logging
+
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    command: ['server', '/data', '--console-address', '127.0.0.1:9001']
+    environment:
+      TZ: UTC
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+    volumes:
+      - miniodata:/data
+    tmpfs:
+      - /tmp
+    networks: [data]
+    deploy:
+      resources:
+        limits:
+          memory: ${MINIO_MEM:-512m}
+          cpus: '${MINIO_CPUS:-0.5}'
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:9000/minio/health/live']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    logging: *logging
+
+  # One-shot, idempotent: creates the application bucket (versioned, no anonymous access) and the
+  # WAL-G bucket. `docker compose --profile init run --rm minio-init` (migrate.sh does it).
+  minio-init:
+    image: pgsty/mc:RELEASE.2026-10-18T00-00-00Z
+    restart: 'no'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    profiles: [init]
+    environment:
+      TZ: UTC
+      MC_CONFIG_DIR: /tmp/.mc
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        mc alias set local http://minio:9000 "$$S3_ACCESS_KEY" "$$S3_SECRET_KEY" &&
+        mc mb --ignore-existing "local/$$S3_BUCKET" &&
+        mc version enable "local/$$S3_BUCKET" &&
+        mc anonymous set none "local/$$S3_BUCKET" &&
+        mc mb --ignore-existing local/causedeck-wal
+    env_file: ${CAUSEDECK_ENV_FILE:?set CAUSEDECK_ENV_FILE}
+    tmpfs:
+      - /tmp
+    networks: [data]
+    depends_on:
+      minio:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: '0.25'
+    logging: *logging
+
+  # One-shot: applies migrations as the schema owner role, then seeds the forum catalogue. The app
+  # services never receive DATABASE_URL_OWNER, so their role stays subject to RLS.
+  migrate:
+    image: ghcr.io/${IMAGE_ORG:?set IMAGE_ORG}/causedeck-worker:sha-${GIT_SHA:?set GIT_SHA}
+    restart: 'no'
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    profiles: [migrate]
+    env_file: ${CAUSEDECK_ENV_FILE:?set CAUSEDECK_ENV_FILE}
+    environment:
+      TZ: UTC
+      DATABASE_URL: postgres://causedeck_app:${APP_DB_PASSWORD:?set APP_DB_PASSWORD}@postgres:5432/causedeck?sslmode=require
+      DATABASE_URL_OWNER: postgres://causedeck_owner:${OWNER_DB_PASSWORD:?set OWNER_DB_PASSWORD}@postgres:5432/causedeck?sslmode=require
+    command: ['node', '--import', 'tsx', 'node_modules/@causedeck/db/scripts/migrate.ts']
+    tmpfs:
+      - /tmp
+    networks: [data]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
+    logging: *logging

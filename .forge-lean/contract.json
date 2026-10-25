@@ -2,228 +2,367 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
+   "quote": "Each Dockerfile builds with BuildKit, runs as a non-root UID, has no package manager caches in the final layer, and the final image size is under budget (web under 350 MB, api and worker under 250 MB) [type:unit]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "images.yml size-gate step measures size; non-root and cache rules statically asserted in compose-prod.test.mjs"
   },
   {
    "id": "R2",
-   "quote": "with a server action per operation",
+   "quote": "`compose.prod.yml` starts caddy, web x2, api, worker x2, admin, postgres and minio with healthchecks; `docker compose up -d` reaches healthy for all services within 120 s in CI [type:api]",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "images.yml compose-smoke job"
   },
   {
    "id": "R3",
-   "quote": "an i18n namespace in en/kn/ta with catalog test",
+   "quote": "No container runs privileged; `cap_drop: [ALL]`, `no-new-privileges`, read-only root filesystem with tmpfs where needed, asserted by a compose lint script [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "and cross-tenant-actions test entries",
+   "quote": "Only Caddy publishes ports 80 and 443 (and 443/udp for HTTP/3); Postgres, MinIO, admin and internal services are on a private network and unreachable from outside, verified by a port scan in the smoke test [type:api]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "images.yml compose-smoke job port scan; static port check in compose-prod.test.mjs is in-lane"
+  },
+  {
+   "id": "R5",
+   "quote": "Postgres image bundles pgvector and the WAL-G binary; `archive_mode=on` and `archive_command` point at WAL-G with env-provided storage, defaulting to a local MinIO bucket in CI [type:api]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "images.yml compose-smoke job"
+  },
+  {
+   "id": "R6",
+   "quote": "The app database role is not the owner so RLS is enforced; migrations run through the owner role in a one-off container; the smoke test asserts RLS-forced tables reject cross-workspace reads [type:api]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "images.yml compose-smoke job"
+  },
+  {
+   "id": "R7",
+   "quote": "All services read configuration only from env validated by the shared env schema; booting with a missing required variable fails fast with a clear message [type:unit]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "compose-smoke.sh boots a service with a missing variable and asserts non-zero exit; packages/config already validates"
+  },
+  {
+   "id": "R8",
+   "quote": "No service writes outside declared volumes or tmpfs; verified with a read-only filesystem run of the smoke test [type:api]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "images.yml compose-smoke job runs with read_only: true"
+  },
+  {
+   "id": "R9",
+   "quote": "Images are multi-arch, tagged `sha-\u003cgitsha>` and `main`, pushed to GHCR, scanned by Trivy (fail on critical with fix available), and signed with cosign; SBOM attached [type:manual]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "images.yml on push to main"
+  },
+  {
+   "id": "R10",
+   "quote": "Resource limits (memory and CPU) are set for every service and documented, sized for a 4 vCPU and 8 GB VPS within the cost target of about ₹6 to 12k per month for staging and prod combined [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R5",
-   "quote": "Settings UI to link a WhatsApp number (OTP)",
-   "disposition": "defer",
-   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
+   "id": "R11",
+   "quote": "`bootstrap-vps.sh` is idempotent: running twice makes no changes the second time; it configures firewall (only 22 limited by allowlist, 80, 443), fail2ban, unattended security upgrades and time sync (chrony) [type:manual]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "needs a real VPS (#108); in-lane is bash -n and guard-pattern review"
+  },
+  {
+   "id": "R12",
+   "quote": "Timezone and clocks: containers log in UTC, host NTP is verified by a startup check that fails readiness if drift exceeds 1 s [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R13",
+   "quote": "Staging runs the same compose with `staging.env.example` overrides and smaller limits, using preview data only [type:manual]",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
-   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
+   "path": "infra/docker/web.Dockerfile",
+   "change": "Harden: digest-pinned base via ARG, tini, no apt/pnpm caches in final layer, numeric non-root USER, writes only to /tmp and .next/cache (tmpfs), TZ=UTC, healthcheck /healthz, exec-form CMD",
    "requirements": [
     "R1",
-    "R2"
+    "R8",
+    "R12"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
-   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
+   "path": "infra/docker/api.Dockerfile",
+   "change": "Same hardening; pnpm deploy --prod to prune; tini; numeric UID; exec-form CMD so 10s SIGTERM drain works",
    "requirements": [
-    "R1"
+    "R1",
+    "R8",
+    "R12"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
-   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
+   "path": "infra/docker/worker.Dockerfile",
+   "change": "Same as api; include owner-role migrate entry (packages/db/scripts/migrate.ts via tsx) usable by migrate.sh; exec-form CMD keeps 30s drain",
+   "requirements": [
+    "R1",
+    "R6",
+    "R8"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "infra/docker/admin.Dockerfile",
+   "change": "Same hardening as web; healthcheck /healthz (admin has no /readyz)",
+   "requirements": [
+    "R1",
+    "R8",
+    "R12"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "infra/docker/.dockerignore",
+   "change": "Exclude node_modules, .next, .git, .forge-lean, tests, docs from build context",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D4",
-   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
-   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
-   "change": "same keys, Kannada",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
    "id": "D6",
-   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
-   "change": "same keys, Tamil",
+   "path": "infra/docker/base/README.md",
+   "change": "Document pinned base image digests and how to refresh them",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'whatsapp-link' to NAMESPACES",
+   "path": "infra/docker/postgres/Dockerfile",
+   "change": "pgvector pg17 pinned by digest + checksum-verified per-arch WAL-G binary + init scripts + postgresql.conf",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
+   "path": "infra/docker/postgres/postgresql.conf",
+   "change": "archive_mode=on, archive_command wal-g wal-push with env storage, ssl, log_statement policy, timezone UTC",
    "requirements": [
-    "R3"
+    "R5",
+    "R12"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
+   "path": "infra/docker/compose.prod.yml",
+   "change": "Services caddy, web x2, api, worker x2, admin, postgres, minio; private network, only caddy publishes 80/443/443udp; cap_drop ALL, no-new-privileges, read_only+tmpfs, mem/cpu limits (documented for 4 vCPU/8 GB, overridable via env for staging), restart policy, named volumes, healthchecks, depends_on service_healthy; images ghcr.io/\u003corg>/causedeck-\u003csvc>:sha-\u003cgitsha>; mount infra/caddy/Caddyfile",
    "requirements": [
-    "R3"
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R8",
+    "R10",
+    "R13"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "regenerated output",
+   "path": "infra/docker/env/prod.env.example",
+   "change": "Variables only, no secrets, matching packages/config env schema",
    "requirements": [
-    "R3"
+    "R7"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "regenerated output",
+   "path": "infra/docker/env/staging.env.example",
+   "change": "Staging overrides: smaller limit variables, preview data only",
    "requirements": [
-    "R3"
+    "R13"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "regenerated output",
+   "path": "infra/scripts/migrate.sh",
+   "change": "Run owner-role migration in a one-off container before up -d; fail on error",
    "requirements": [
-    "R3"
+    "R6"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
-   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
+   "path": "infra/scripts/healthcheck.sh",
+   "change": "Aggregate /readyz of web, api, worker plus admin /healthz for deploys",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D15",
-   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
-   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
+   "id": "D14",
+   "path": "infra/scripts/bootstrap-vps.sh",
+   "change": "Idempotent ufw (22 limited + allowlist, 80, 443), fail2ban, unattended-upgrades, chrony, Docker, deploy user, dirs; set -euo pipefail, guard before each change",
    "requirements": [
-    "R1"
+    "R11"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "infra/docker/test/compose-smoke.sh",
+   "change": "Boot stack with mock providers, wait healthy \u003c=120s, port scan, RLS cross-workspace read assertion, missing-env fail-fast, read-only run",
+   "requirements": [
+    "R2",
+    "R4",
+    "R6",
+    "R7",
+    "R8"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
+   "path": "infra/scripts/compose-prod.test.mjs",
+   "change": "Node test modelled on compose-dev.test.mjs: no privileged, cap_drop ALL, no-new-privileges, read_only, mem/cpu limits on every service, only caddy publishes 80/443/443udp, replica counts, pinned images, Dockerfiles non-root numeric USER",
    "requirements": [
-    "R1"
+    "R1",
+    "R3",
+    "R4",
+    "R10"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/observability/src/health.ts",
+   "change": "Add exported clock-drift HealthCheck factory (reference time source injectable, 1 s threshold)",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/observability/src/__tests__/health.test.ts",
+   "change": "Unit tests for clock-drift check (ok under 1 s, fails over 1 s, source error)",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/web/src/health.ts",
+   "change": "Register clock-drift readiness check",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/api/src/app.ts",
+   "change": "Register clock-drift readiness check alongside db check",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "apps/worker/src/health.ts",
+   "change": "Register clock-drift readiness check",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": ".github/workflows/images.yml",
+   "change": "buildx multi-arch, tags sha-\u003cgitsha> and main, GHCR push on main, Trivy (fail critical with fix), SBOM, cosign keyless, size gate, compose-smoke job; actions pinned by SHA; passes lint-workflows",
+   "requirements": [
+    "R1",
+    "R2",
+    "R9"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "infra/docker/README.md",
+   "change": "Document prod stack, bootstrap, resource limit table and cost sizing, staging override usage",
+   "requirements": [
+    "R10",
+    "R11",
+    "R13"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "infra/caddy/Caddyfile",
+   "change": "Minimal placeholder only if absent; real config owned by #98",
+   "requirements": [
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
+   "what": "Build context stays the repo root and CMDs stay exec-form so SIGTERM drains (api 10s, worker 30s): infra/docker/{api,worker}.Dockerfile"
   },
   {
    "id": "P2",
-   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
+   "what": "infra/docker/compose.dev.yml, infra/scripts/compose-dev.test.mjs, dev-up/down scripts unchanged"
   },
   {
    "id": "P3",
-   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
+   "what": "/healthz stays dependency-free liveness; /readyz contracts in apps/web/app, apps/api/src/app.ts, apps/worker/src/health.ts; drift check only added to readiness"
+  },
+  {
+   "id": "P4",
+   "what": "Role split in infra/docker/postgres/init/02-roles.sql (app role non-owner, NOBYPASSRLS) unchanged"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "node --experimental-strip-types --no-warnings --test infra/scripts/compose-prod.test.mjs infra/scripts/compose-dev.test.mjs"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "bash -n infra/scripts/migrate.sh && bash -n infra/scripts/healthcheck.sh && bash -n infra/scripts/bootstrap-vps.sh && bash -n infra/docker/test/compose-smoke.sh"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/observability exec vitest run src/__tests__/health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/health.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1} && pnpm --filter @causedeck/web exec vitest run app/__tests__/health-routes.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
-   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
-   "source": "precedent"
+   "choice": "Docker builds, size budgets, multi-arch, Trivy/cosign and compose smoke run only in CI (images.yml)",
+   "justification": "CLAUDE.md forbids heavy local runs (Playwright, builds); in-lane coverage is static compose lint mirroring infra/scripts/compose-dev.test.mjs",
+   "source": "doc"
   },
   {
    "id": "K2",
-   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
-   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
+   "choice": "Clock-drift check lives in packages/observability, no new workspace dependency",
+   "justification": "apps/worker/src/health.ts:5 and apps/api/src/app.ts:13 already import from @causedeck/observability",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
-   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
+   "choice": "Caddyfile content belongs to #98; only a placeholder is shipped if absent",
+   "justification": "#98 is the open Caddy config issue; infra/caddy does not exist on base",
    "source": "spec"
-  },
-  {
-   "id": "K4",
-   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
-   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
-   "source": "doc"
-  },
-  {
-   "id": "K5",
-   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
-   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
-   "source": "precedent"
   }
  ]
 }

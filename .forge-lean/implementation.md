@@ -28,3 +28,7 @@ No env vars. Behaviour change: the matter tab list gains Memory for roles with `
 - packages/ui/src/index.test.ts: added DEFAULT_SCOPE_CHIP_LABELS and DEFAULT_PROPOSAL_TRAY_LABELS to the pattern export list.
 - scope-chip and proposal-tray stories now carry the shared states (real Default/LongText/RtlNeutral/Tamil/Kannada/Disabled, n/a declared for static ones); this fixed the pattern story check.
 - Not members (recorded in result.json): MEMORY_REVIEW_AFTER_DAYS (constant, in NOT_A_SERVICE), the new ui exports in activity-item/proposal-card tests, Paused story in check-stories.test.ts.
+
+### Follow-up: merge and hotspot
+- Merged origin/milestone/follow-up-continuity-memory (conflict only in this file); V1, V2, V4, V5 re-run: pass. V3 still exits 1 only because Chromium is missing on this host (`browserType.launch: Executable doesn't exist`); the same files pass with `--project unit` (53 tests), and CI has the browser.
+- packages/i18n/translation-status.json grew by 244 lines: `i18n:check` requires one status entry per ta/kn key, so a new 122-key namespace cannot avoid it. It is generated bookkeeping.

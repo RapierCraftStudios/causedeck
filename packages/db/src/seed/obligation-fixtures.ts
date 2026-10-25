@@ -29,7 +29,7 @@ export async function seedObligationQueue(
     workspaceId,
     matterId,
     source: 'internal' as const,
-    description: `Seeded obligation ${i + 1}`,
+    description: `Seeded obligation ${String(i + 1)}`,
     dueDate: i % 5 === 4 ? null : offsetDay(today, (i % 91) - 30),
     ownerMemberId,
     status: 'open' as const,

@@ -1,0 +1,21 @@
+# CI-only Postgres settings, layered on compose.dev.yml by infra/scripts/dev-up.sh when CI=true.
+# The e2e harness drops and re-clones a worker database from the template before tests; with the
+# schema at ~140 tables those clones stalled Postgres on GitHub runners and new connections timed
+# out (CONNECT_TIMEOUT, ship PR #759). A throwaway CI database needs no crash safety, so skip the
+# fsync work, allow more connections, and log slow statements and lock waits for diagnosis.
+services:
+  postgres:
+    command:
+      - postgres
+      - -c
+      - fsync=off
+      - -c
+      - synchronous_commit=off
+      - -c
+      - full_page_writes=off
+      - -c
+      - max_connections=300
+      - -c
+      - log_min_duration_statement=2000
+      - -c
+      - log_lock_waits=on

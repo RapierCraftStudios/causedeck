@@ -9,6 +9,7 @@ import type { AsUser } from '../../fixtures/auth.ts';
 import { COURTS_WORKSPACE_ID } from '../../fixtures/courts-data.ts';
 import { MATTERS, MATTERS_WORKSPACE } from '../../fixtures/matters-data.ts';
 import { expect, type E2eRole } from '../../fixtures/index.ts';
+import { e2eUser } from '../../fixtures/workspace.ts';
 import { withSql } from '../lifecycle/helpers.ts';
 
 const matter = MATTERS.appeal;
@@ -23,7 +24,7 @@ export interface SeededHearing {
 /** A hearing on the main proceeding; `proposals` stages the voice job's drafts for it. */
 export async function seedHearing(
   database: string,
-  opts: { proposals: boolean; conflict?: boolean },
+  opts: { proposals: boolean; conflict?: boolean; delegateTo?: E2eRole },
 ): Promise<SeededHearing> {
   const ws = COURTS_WORKSPACE_ID;
   return withSql(database, async (sql) => {
@@ -37,12 +38,25 @@ export async function seedHearing(
     await sql`
       insert into hearing (id, workspace_id, listing_id, held_on, source_type)
       values (${hearingId}, ${ws}, ${listingId}, ${HELD_ON}, 'manual')`;
-    if (opts.conflict === true) {
+    // The fixture's appeal matter already has a confirmed canonical next date (2099-03-02), and a
+    // proceeding may hold only one (`listing_one_canonical_uq`). That date is the conflict: the
+    // proposed 10/04/2026 differs from it. Without `conflict`, drop the flag so a proposed or typed
+    // date is a plain choice and Confirm is not gated on a conflict the test never asked for.
+    if (opts.conflict !== true) {
       await sql`
-        insert into listing (id, workspace_id, proceeding_id, list_date, list_type, stage_raw, canonical,
-          source_type, confirmation_state)
-        values (${randomUUID()}, ${ws}, ${proceeding.id}, '2026-04-01', 'daily', 'For hearing', true,
-                'manual', 'confirmed')`;
+        update listing set canonical = false
+        where workspace_id = ${ws} and proceeding_id = ${proceeding.id} and canonical`;
+    }
+    if (opts.delegateTo !== undefined) {
+      // A delegated appearance (#63): the member appears for the lawyer, which is what lets a
+      // junior read and confirm this matter's outcome.
+      const [found] = await sql<{ id: string }[]>`
+        select id from member where workspace_id = ${ws} and user_id = ${e2eUser(opts.delegateTo).id}`;
+      if (found === undefined)
+        throw new Error(`e2e: no ${opts.delegateTo} member in the workspace`);
+      await sql`
+        insert into appearance (workspace_id, hearing_id, member_id, capacity)
+        values (${ws}, ${hearingId}, ${found.id}, 'for_other')`;
     }
     if (opts.proposals) {
       const documentId = randomUUID();

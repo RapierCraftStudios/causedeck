@@ -2,7 +2,7 @@
 
 Stage C is a decision document plus disabled skeletons (`infra/terraform/modules/aws-ecs-fargate`,
 `aws-elasticache`, both `enabled = false`). Nothing here is built until a trigger below fires. The
-decision is reviewed in [ADR 0037](../../docs/adr/0037-stage-b-c-scale-path.md). Stage B is
+decision is reviewed in [ADR 0038](../../docs/adr/0038-stage-b-c-scale-path.md). Stage B is
 `stage-b-scale-out.md`. Nothing is applied automatically.
 
 A trigger counts when it holds for two consecutive weeks, measured on the Stage B system, unless noted.

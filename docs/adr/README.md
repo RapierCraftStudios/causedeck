@@ -44,7 +44,8 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0034](0034-governed-fetch-layer.md) | Governed fetch layer | Proposed | 2026-10-23 | — |
 | [0035](0035-data-ops-alerting.md) | Data operations alerting | Proposed | 2026-10-23 | — |
 | [0036](0036-bench-facts.md) | Internal bench facts and the flagged bench card | Proposed | 2026-10-24 | — |
-| [0037](0037-stage-b-c-scale-path.md) | Stage B and C scale path | Proposed | 2026-10-25 | — |
+| [0037](0037-incident-and-key-rotation-policy.md) | Incident and key rotation policy | Proposed | 2026-10-25 | — |
+| [0038](0038-stage-b-c-scale-path.md) | Stage B and C scale path | Proposed | 2026-10-25 | — |
 
 ## Statuses
 

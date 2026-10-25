@@ -14,6 +14,8 @@ export default [
       'research/**',
       // Node-test files run with --experimental-strip-types and sit outside every tsconfig (#102).
       'infra/monitoring/test/**',
+      'infra/runbooks/test/**',
+      'infra/scripts/runbooks/**',
     ],
   },
   {

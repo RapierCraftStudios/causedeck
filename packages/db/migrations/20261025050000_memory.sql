@@ -5,7 +5,8 @@
 --   * memory_item_matter_scope / memory_embedding_matter_scope (RESTRICTIVE): when the transaction pins app.matter_id, a matter-scoped row is visible only for that matter.
 --   * memory_clerk_readable(layer, strategy): the clerk policy function. Clerks read M1, M2, M6 and M7 values that are not strategy-typed, never M3 or M4.
 --   * memory_item_clerk_v: the clerk column-scoped view (no source_ref, anchor_id, confidence, proposal_id, deleted_at) over the readable rows only; the clerk role has no privilege on memory_item, memory_proposal or memory_embedding.
--- New tables, a function and a view only: nothing existing is altered or dropped.
+--   * owner_definer_read + app_memory_purge_targets() / app_memory_review_targets(): ids-only target lists for the memory.purge and memory.review-prepare schedules.
+-- New tables, functions and a view only: nothing existing is altered or dropped.
 CREATE TABLE "memory_embedding" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"item_id" uuid NOT NULL,
@@ -147,4 +148,29 @@ CREATE FUNCTION memory_clerk_readable(item_layer text, item_strategy boolean) RE
 CREATE VIEW "memory_item_clerk_v" WITH (security_barrier = true) AS SELECT id, layer, key, scope, matter_id, person_id, owner_user_id, value_ciphertext, source_type, confirmation_state, status, strategy, shared_with_chamber, created_at, updated_at, workspace_id FROM "memory_item" WHERE memory_clerk_readable(layer, strategy) AND status <> 'deleted';--> statement-breakpoint
 REVOKE ALL ON "memory_item", "memory_proposal", "memory_embedding" FROM causedeck_clerk;--> statement-breakpoint
 REVOKE ALL ON "memory_item_clerk_v" FROM PUBLIC, causedeck_app, causedeck_clerk;--> statement-breakpoint
-GRANT SELECT ON "memory_item_clerk_v" TO causedeck_app, causedeck_clerk;
+GRANT SELECT ON "memory_item_clerk_v" TO causedeck_app, causedeck_clerk;--> statement-breakpoint
+CREATE POLICY "owner_definer_read" ON "memory_item" AS PERMISSIVE FOR SELECT TO causedeck_owner USING (true);--> statement-breakpoint
+CREATE POLICY "owner_definer_read" ON "memory_embedding" AS PERMISSIVE FOR SELECT TO causedeck_owner USING (true);--> statement-breakpoint
+CREATE FUNCTION app_memory_purge_targets()
+  RETURNS TABLE (workspace_id uuid)
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp
+  AS $$
+    SELECT DISTINCT e.workspace_id FROM memory_embedding e
+    JOIN memory_item i ON i.workspace_id = e.workspace_id AND i.id = e.item_id
+    WHERE i.status = 'deleted'
+    ORDER BY e.workspace_id
+    LIMIT 1000
+  $$;--> statement-breakpoint
+CREATE FUNCTION app_memory_review_targets()
+  RETURNS TABLE (workspace_id uuid)
+  LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp
+  AS $$
+    SELECT DISTINCT i.workspace_id FROM memory_item i
+    WHERE i.status <> 'deleted'
+    ORDER BY i.workspace_id
+    LIMIT 1000
+  $$;--> statement-breakpoint
+REVOKE ALL ON FUNCTION app_memory_purge_targets() FROM PUBLIC;--> statement-breakpoint
+REVOKE ALL ON FUNCTION app_memory_review_targets() FROM PUBLIC;--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION app_memory_purge_targets() TO causedeck_app;--> statement-breakpoint
+GRANT EXECUTE ON FUNCTION app_memory_review_targets() TO causedeck_app;

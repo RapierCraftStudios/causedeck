@@ -142,6 +142,61 @@ export async function getBrief(
   };
 }
 
+/** What the outbox seals per row: the queued item, its state and, for a conflict, the card. */
+export interface OutboxEntry {
+  key: string;
+  createdAt: number;
+  state: 'pending' | 'failed' | 'conflict';
+  item: unknown;
+  /** Why it stopped: a domain code for `failed`, the server's value for a next-date conflict. */
+  code?: string;
+  serverDate?: string | null;
+}
+
+/** Queue an edit. `createdAt` is strictly increasing per database so replay order is stable. */
+export async function enqueueOutbox(
+  db: OfflineDb,
+  vault: Vault,
+  workspaceId: string,
+  key: string,
+  item: unknown,
+  now: number,
+): Promise<OutboxEntry> {
+  const last = await db.outbox.orderBy('createdAt').last();
+  const createdAt = last && last.createdAt >= now ? last.createdAt + 1 : now;
+  const entry: OutboxEntry = { key, createdAt, state: 'pending', item };
+  await db.outbox.put({
+    id: key,
+    workspaceId,
+    createdAt,
+    savedAt: stampSavedAt(now),
+    ...(await vault.seal(entry)),
+  });
+  return entry;
+}
+
+/** Every queued entry, oldest first. */
+export async function listOutbox(db: OfflineDb, vault: Vault): Promise<OutboxEntry[]> {
+  const rows = await db.outbox.orderBy('createdAt').toArray();
+  return Promise.all(rows.map((row) => vault.open<OutboxEntry>(row)));
+}
+
+/** Rewrite an entry's state in place (keeps its key and order). */
+export async function updateOutbox(
+  db: OfflineDb,
+  vault: Vault,
+  entry: OutboxEntry,
+  now: number,
+): Promise<void> {
+  const row = await db.outbox.get(entry.key);
+  if (!row) return;
+  await db.outbox.put({ ...row, savedAt: stampSavedAt(now), ...(await vault.seal(entry)) });
+}
+
+export async function removeOutbox(db: OfflineDb, key: string): Promise<void> {
+  await db.outbox.delete(key);
+}
+
 /** Rolling window: drop court days and briefs dated before yesterday. Returns how many rows went. */
 export async function evictOutsideWindow(db: OfflineDb, today: string): Promise<number> {
   const cutoff = windowStart(today);

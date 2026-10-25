@@ -15,7 +15,8 @@ export const CLERK_WORKSPACE = 'bengaluru-chamber';
  * the flag-gated `invoices` and `limitation`, and `billing` and `activity`, real pages since #256
  * and #232 with their own specs in tests/billing and tests/activity, and `courts`, a real page since
  * #399 with its own states in tests/courts, #425, and `inbox`, a real page since #48 with its own
- * specs in tests/inbox). `settings` redirects to its profile section since
+ * specs in tests/inbox, and `drafts`, a real page since #736 with its own specs in
+ * tests/product/outward-drafts). `settings` redirects to its profile section since
  * #284 (tests/settings).
  */
 export const PLACEHOLDER_ROUTES = [
@@ -25,7 +26,6 @@ export const PLACEHOLDER_ROUTES = [
   // `matters` is a real page since #388 (its own states are covered in tests/matters).
   'briefs',
   'obligations',
-  'drafts',
   'memory',
   'people',
   'insights',

@@ -28,3 +28,6 @@ Mirror the push channel. A new `createWhatsAppSender` (Meta Cloud API, injectabl
 ### Notes
 - New env vars: `WHATSAPP_PHONE_NUMBER_ID` and `WHATSAPP_ACCESS_TOKEN` (together; absent = WhatsApp disabled), optional `WHATSAPP_API_VERSION` (default v21.0). Provider assumed to be the Meta Cloud API; template names `causedeck_court_board`, `causedeck_status_order`, `causedeck_end_of_day` must be approved with the provider.
 - Behaviour: members with a whatsapp preference row on now enqueue `notification.deliver` for it; with no provider env those are recorded as skipped.
+
+### CI failure follow-up (job `test`, run 40157596902)
+The CI log was not available. No code change: I could not reproduce a failure. Passing locally: notifications (with `--coverage`, as in CI), config, core jobs/notices/cross-tenant/domains, worker, web notification and static-guard tests, `tsc --noEmit` on notifications and core, eslint and prettier on changed files, `check:no-l5`, `docs:links`, `docs:permissions:check`. Not run locally: `db:check`, `i18n:check`, the adapters golden steps, and the full sharded run. The failure may be one of those or a flaky Testcontainers run; the CI log is needed to say which.

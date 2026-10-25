@@ -100,7 +100,7 @@ export async function inOutwardScope<T>(
 }
 
 /** The matter if the actor may `action` it: NOT_FOUND when unreadable, FORBIDDEN when denied. */
-export async function requireMatterFor(
+export async function requireOutwardMatter(
   scope: OutwardScope,
   matterId: string,
   action: Action,
@@ -138,7 +138,7 @@ export async function requireMatterFor(
 }
 
 /** One audit event for a mutation: ids and flags only, never draft text. */
-export async function audit(
+export async function auditOutward(
   scope: OutwardScope,
   action: AuditAction,
   target: { kind: string; id: string },

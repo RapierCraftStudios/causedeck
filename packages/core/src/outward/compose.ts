@@ -18,10 +18,10 @@ import { createCoreAiGateway } from '../ai/index.ts';
 import { invalid, notFound } from '../shared/errors.ts';
 
 import {
-  audit,
+  auditOutward,
   inOutwardScope,
   parseOutwardInput,
-  requireMatterFor,
+  requireOutwardMatter,
   type OutwardActor,
   type OutwardDeps,
   type OutwardScope,
@@ -251,7 +251,7 @@ export async function composeUpdate(
   const tone = request.tone ?? 'formal';
   return inOutwardScope(deps, actor, async (scope) => {
     const workspaceId = scope.actor.workspaceId;
-    const row: typeof schema.matter.$inferSelect = await requireMatterFor(
+    const row: typeof schema.matter.$inferSelect = await requireOutwardMatter(
       scope,
       request.matterId,
       'draft.write',
@@ -309,7 +309,7 @@ export async function composeUpdate(
       })
       .returning({ id: outwardDraftVersion.id });
     if (version === undefined) throw notFound('Draft not found');
-    await audit(
+    await auditOutward(
       scope,
       'outward.prepared',
       { kind: 'outward_draft', id: draft.id },

@@ -26,3 +26,6 @@ No env vars. Policy matrix, worker registry and AI gateway are unchanged.
 
 ## Stale-list follow-up
 Checked the four listed tests (admin headers, server-actions-audit, sources-actions, web activity-export-route). None enumerates @causedeck/db schema exports or sibling tables (none names obligation tables either), so the outward symbols are recorded as not_members in result.json. No code change.
+
+## Export-collision follow-up
+Renamed outward/context.ts exports `requireMatterFor` -> `requireOutwardMatter` and `audit` -> `auditOutward` (they collided with obligations/context.ts); updated diff.ts, compose.ts and share.ts. No registry or test keyed by those names. Core tsc clean; vitest on src/outward and domains.test.ts passes (27 tests).

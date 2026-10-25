@@ -6,11 +6,11 @@ import { DraftEdit } from '@causedeck/validators/outward-draft';
 import { and, desc, eq } from 'drizzle-orm';
 
 import {
-  audit,
+  auditOutward,
   inOutwardScope,
   notFoundDraft,
   parseOutwardInput,
-  requireMatterFor,
+  requireOutwardMatter,
   type OutwardActor,
   type OutwardDeps,
 } from './context.ts';
@@ -117,7 +117,7 @@ export async function saveEdit(
       .for('update');
     if (draft === undefined) throw notFoundDraft();
     try {
-      await requireMatterFor(scope, draft.matterId, 'draft.write');
+      await requireOutwardMatter(scope, draft.matterId, 'draft.write');
     } catch (error) {
       if ((error as { code?: string }).code === 'NOT_FOUND') throw notFoundDraft();
       throw error;
@@ -152,7 +152,7 @@ export async function saveEdit(
           and(eq(outwardDraft.workspaceId, scope.actor.workspaceId), eq(outwardDraft.id, draft.id)),
         );
     }
-    await audit(
+    await auditOutward(
       scope,
       'outward.edited',
       { kind: 'outward_draft', id: draft.id },

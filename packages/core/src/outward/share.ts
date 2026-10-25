@@ -6,11 +6,11 @@ import { ShareRecord, type ShareChannel } from '@causedeck/validators/outward-dr
 import { and, desc, eq } from 'drizzle-orm';
 
 import {
-  audit,
+  auditOutward,
   inOutwardScope,
   notFoundDraft,
   parseOutwardInput,
-  requireMatterFor,
+  requireOutwardMatter,
   type OutwardActor,
   type OutwardDeps,
 } from './context.ts';
@@ -41,7 +41,7 @@ export async function recordShared(
       .for('update');
     if (draft === undefined) throw notFoundDraft();
     try {
-      await requireMatterFor(scope, draft.matterId, 'draft.write');
+      await requireOutwardMatter(scope, draft.matterId, 'draft.write');
     } catch (error) {
       if ((error as { code?: string }).code === 'NOT_FOUND') throw notFoundDraft();
       throw error;
@@ -74,7 +74,7 @@ export async function recordShared(
       .update(outwardDraft)
       .set({ status: 'shared', updatedAt: scope.now })
       .where(and(eq(outwardDraft.workspaceId, workspaceId), eq(outwardDraft.id, draft.id)));
-    await audit(
+    await auditOutward(
       scope,
       'outward.shared',
       { kind: 'outward_draft', id: draft.id },

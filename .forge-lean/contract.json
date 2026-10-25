@@ -2,227 +2,358 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
+   "quote": "The screen shows, from one `OutcomeProposal`: what happened (editable text), adjournment reason, next date (proposed, with source anchor), stage after, directions as obligation proposals and tasks, each with a Provenance Chip to the transcript span or order line.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "with a server action per operation",
+   "quote": "Confirm is disabled until the next date is explicitly confirmed, set to 'No next date / disposed', or marked 'To be notified'; the date field requires a human action even when proposed with high confidence.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "an i18n namespace in en/kn/ta with catalog test",
+   "quote": "A next date that is absent from every anchored source is rejected by the validator with a visible reason; it can only be entered manually.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "and cross-tenant-actions test entries",
+   "quote": "When the proposed date differs from an existing confirmed canonical date, a conflict card shows both sources side by side and the existing date stays unchanged until the lawyer picks one; the choice is logged.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Settings UI to link a WhatsApp number (OTP)",
-   "disposition": "defer",
-   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
+   "quote": "`confirmOutcome` runs in one transaction: updates hearing outcome, sets the canonical next date (single canonical per proceeding), creates confirmed obligations and tasks with provenance, writes `audit_event`, and is all-or-nothing on failure.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "Each obligation proposal can be confirmed, edited (description, due date, owner) or dismissed; a dismissed item records a reason or 'not applicable'; none are silently created.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "Manual entry works with no voice note or proposals (L0); a hearing with only a typed note produces the same confirmation path.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "The transcript drawer shows the transcript with highlighted source spans and the original language (EN, TA, KN) without translation claims.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "Time-to-confirm benchmark: with a 3-obligation seeded proposal the happy path takes at most 6 keyboard actions or 8 taps, asserted by an e2e step counter.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "e2e/product/hearing-outcome.spec.ts step counter, run by the CI Playwright e2e job (ship PRs and nightly)"
+  },
+  {
+   "id": "R10",
+   "quote": "All states handled: no proposal yet ('Processing your note'), low-confidence ('Needs you' with unanchored fields blank), error with retry, offline (confirm queues locally and is applied through the proposal flow on sync, never auto-overwriting), permission denied for viewer and clerk-without-rights.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "Delegated appearances: a junior who appeared 'for' the lawyer can submit an outcome that notifies the owner; the owner's view updates live.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "p95 server action \u003c 300 ms for `confirmOutcomeAction` on seeded data.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "CI e2e/api job timing assertion on seeded data (not run locally)"
+  },
+  {
+   "id": "R13",
+   "quote": "Storybook stories exist for every new component with all states (default, empty, loading, error, offline, denied) and interaction tests.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "Playwright visual baselines exist for light and dark themes at 360, 768 and 1280 px.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "CI Playwright visual job (e2e/visual/hearing-outcome.spec.ts) generates and compares baselines"
+  },
+  {
+   "id": "R15",
+   "quote": "axe reports zero serious or critical violations on every state of the surface, and the full flow is operable by keyboard alone.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "CI Playwright e2e axe step (e2e/product/hearing-outcome.spec.ts)"
+  },
+  {
+   "id": "R16",
+   "quote": "All user-facing strings come from `next-intl` catalogs (`en` complete, `ta`/`kn` keys stubbed); no hard-coded copy.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R17",
+   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R18",
+   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite.",
+   "disposition": "not-applicable",
+   "evidence": "packages/db/src/schema/docket.ts:105 (hearing), :234 (obligation), :312 (task) already exist; the issue states 'Uses existing tables; no new tenant tables'"
+  },
+  {
+   "id": "R19",
+   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
-   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
+   "path": "packages/validators/src/hearing-outcome.ts",
+   "change": "zod `OutcomeProposal`, `OutcomeConfirmation`, `Line\u003cT>` with provenance, obligation/task proposal decisions (confirm/edit/dismiss with reason), next-date resolution (confirmed | none/disposed | to_be_notified | manual); refinement rejecting a non-manual next date absent from anchored sources with a reason key; no `any`.",
    "requirements": [
     "R1",
-    "R2"
+    "R2",
+    "R3",
+    "R6",
+    "R19"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
-   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
+   "path": "packages/validators/package.json",
+   "change": "add subpath export `./hearing-outcome` -> `./src/hearing-outcome.ts` (same as the other validators exports at :8-17).",
    "requirements": [
-    "R1"
+    "R19"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
-   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
+   "path": "packages/core/src/hearings/outcome.ts",
+   "change": "`getOutcomeProposal` (assemble from the hearing, its proceeding's open `hearing_outcome`/`next_date`/`obligation_from_direction`/`task` proposals matching heldOn, and the stored transcript; none -> processing state; policy `matter.read`, clerks get no strategy text), `confirmOutcome` (one tx via the workspace tx: update hearing, next date through matter-graph `confirmNextDate`/`chooseNextDateSource`, insert confirmed obligations/tasks with provenance, mark proposals applied/dismissed with reasons, `record` audit, emit `hearing.outcome_confirmed`; delegated appearance notifies owner), `recordManualOutcome` (L0 path, same confirm path); policy `matter.write`; errors via shared/errors.",
    "requirements": [
-    "R1"
+    "R1",
+    "R2",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R11",
+    "R19"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
-   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
+   "path": "packages/core/src/hearings/index.ts",
+   "change": "barrel exporting the three services and types; imports other domains only through their index.ts.",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
-   "change": "same keys, Kannada",
+   "path": "packages/core/src/index.ts",
+   "change": "`export * from './hearings/index.ts'`; and `packages/core/package.json` add subpath export `./hearings`.",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
-   "change": "same keys, Tamil",
+   "path": "packages/core/src/hearings/__tests__/outcome.test.ts",
+   "change": "tests: atomic rollback, next date unconfirmed rejected, unanchored date rejected, conflict leaves canonical unchanged until chosen and choice logged, dismissed needs reason, manual-only path, audit written, event emitted, delegated appearance notifies owner, viewer/clerk denied.",
    "requirements": [
-    "R3"
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R10",
+    "R11"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'whatsapp-link' to NAMESPACES",
+   "path": "packages/core/src/hearings/__tests__/cross-tenant.test.ts",
+   "change": "B cannot read or confirm A's hearing outcome (service level, incl. a user in both workspaces); A unchanged.",
    "requirements": [
-    "R3"
+    "R17"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "register the new `@causedeck/core` runtime exports (`getOutcomeProposal`, `confirmOutcome`, `recordManualOutcome`) in `SERVICE_TESTS` pointing at a real case in `packages/core/src/__tests__/cross-tenant/services.test.ts` (edit that file too).",
    "requirements": [
-    "R3"
+    "R17"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
+   "path": "packages/core/src/domains.test.ts",
+   "change": "add `hearings` to `CORE_DOMAIN_DEPENDENCIES` (matter-graph, audit, automation, voice, workspaces via index only) and add a `hearings` row to `docs/engineering/core-domains.md`.",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "regenerated output",
+   "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts",
+   "change": "`'use server'` `confirmOutcomeAction` (async wrapper over `workspaceAction`, `WorkspaceScoped`, `ctx.tx`, `ctx.userId`; never takes a user id; domain errors mapped via `domainErrorCode`) plus save-for-later/manual variants if needed; revalidate path.",
    "requirements": [
-    "R3"
+    "R2",
+    "R5",
+    "R7",
+    "R10",
+    "R11",
+    "R12"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "regenerated output",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "import the new actions module, add it to `ACTIONS`, probe inputs in `inputs()` and a per-feature 'under B's own workspace' test that A's snapshot is unchanged; add `apps/web/__tests__/hearing-outcome-actions.test.ts` for validation/denied/error mapping.",
    "requirements": [
-    "R3"
+    "R10",
+    "R17"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "regenerated output",
+   "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/page.tsx",
+   "change": "server page (plus `loading.tsx`, `error.tsx` with retry) loading `getOutcomeProposal` in a workspace tx; states: processing, needs-you, empty (manual), denied for viewer/clerk-without-rights; responsive layout 360/768/1280.",
    "requirements": [
-    "R3"
+    "R1",
+    "R10"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
+   "path": "apps/web/app/(app)/w/[slug]/hearings/[hearingId]/outcome/_components/ (outcome-form.tsx, next-date-field.tsx, conflict-card.tsx, obligation-proposals.tsx, task-proposals.tsx, transcript-drawer.tsx, confirm-bar.tsx)",
+   "change": "client components using packages/ui Proposal Card, Provenance Chip, Stage Badge, Sheet, Sonner; confirm bar disabled until next date resolved; typed dd/mm/yyyy; keyboard shortcuts (Cmd/Ctrl+Enter, a/e/x/t, Esc); offline banner and local queue through the existing offline outbox pattern from #543; reduced-motion; ARIA groups and live region; component tests alongside.",
    "requirements": [
-    "R4"
+    "R1",
+    "R2",
+    "R4",
+    "R6",
+    "R7",
+    "R8",
+    "R10",
+    "R15",
+    "R16"
    ]
   },
   {
    "id": "D14",
-   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
-   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
+   "path": "packages/i18n/src/messages/en/outcome.json",
+   "change": "`outcome` namespace in en (complete) and `ta`, `kn` stubs (`packages/i18n/src/messages/{ta,kn}/outcome.json`), registered in `packages/i18n/src/catalog.ts` `NAMESPACES`, top-level key list in `packages/i18n/src/__tests__/catalog.test.ts`, regenerated `packages/i18n/src/generated/**` via `pnpm --filter @causedeck/i18n i18n:types`.",
    "requirements": [
-    "R2"
+    "R16"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
-   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
+   "path": "packages/ui/src/patterns/outcome/*.stories.tsx",
+   "change": "stories with interaction tests for every new pattern component in default, empty, loading, error, offline and denied states (components needed from the web folder are presented as ui patterns where the layering test `packages/ui/src/patterns/boundaries.test.ts` requires).",
    "requirements": [
-    "R1"
+    "R13"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
+   "path": "e2e/product/hearing-outcome.spec.ts",
+   "change": "Playwright product spec (written, run in CI): proposal display, confirm gating, conflict card, obligation actions, manual path, transcript drawer, step counter benchmark, states, delegated appearance, axe + keyboard; with `e2e/visual/hearing-outcome.spec.ts` for the 360/768/1280 light/dark visuals.",
    "requirements": [
-    "R1"
+    "R1",
+    "R2",
+    "R4",
+    "R6",
+    "R7",
+    "R8",
+    "R9",
+    "R10",
+    "R11",
+    "R14",
+    "R15"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
+   "what": "matter-graph next-date services remain the only writers of `listing.list_date`/`canonical` (packages/core/src/matter-graph/next-date.ts; architecture test no-direct-listing-update); a confirmed date is never overwritten silently."
   },
   {
    "id": "P2",
-   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
+   "what": "The disabled `hearing_outcome` proposal handler and the voice job staging behaviour (packages/core/src/automation/handlers/disabled.ts, packages/core/src/voice/run.ts) are unchanged; no auto-apply (no L5)."
   },
   {
    "id": "P3",
-   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
+   "what": "Existing court-day wrappers and exports (packages/core/src/court-day/index.ts) and existing actions modules registered in apps/web/__tests__/cross-tenant-actions.test.ts."
+  },
+  {
+   "id": "P4",
+   "what": "No schema change or migration: hearing, obligation, task, proposal tables in packages/db/src/schema stay as they are."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/hearing-outcome.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/hearings src/domains.test.ts src/__tests__/cross-tenant/services.test.ts src/court-day src/matter-graph/__tests__"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts __tests__/hearing-outcome-actions.test.ts"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+  },
+  {
+   "id": "V5",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/prepare-execute"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
-   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
+   "choice": "Link a hearing to its proposals by proceeding + heldOn + payload hearingDate (no hearing_id on proposal) and do not enable the `hearing_outcome` handler; `confirmOutcome` writes directly and marks the matched proposals applied/dismissed.",
+   "justification": "packages/db/src/schema/automation.ts:49 has no hearing column and packages/core/src/automation/handlers/disabled.ts:23 keeps the handler off; avoids a migration (issue: no new tables).",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
-   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
-   "source": "precedent"
+   "choice": "Set and resolve the canonical next date only through matter-graph `confirmNextDate`/`chooseNextDateSource`, imported via the matter-graph index.",
+   "justification": "packages/core/src/matter-graph/next-date.ts:1-12 (sole writer rule) and CLAUDE.md domain-import rule.",
+   "source": "lint"
   },
   {
    "id": "K3",
-   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
-   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
-   "source": "spec"
+   "choice": "i18n files go in packages/i18n/src/messages/\u003clocale>/outcome.json, not the issue's packages/i18n/messages path.",
+   "justification": "packages/i18n/src/messages/en/ holds the existing namespaces; catalog.ts NAMESPACES.",
+   "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
-   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
-   "source": "doc"
-  },
-  {
-   "id": "K5",
-   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
-   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
+   "choice": "No new workspace-package dependency is added; web uses existing @causedeck/core, validators, ui and i18n.",
+   "justification": "apps/web already imports these (matters/actions.ts).",
    "source": "precedent"
   }
  ]

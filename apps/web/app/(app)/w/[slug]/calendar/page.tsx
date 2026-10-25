@@ -143,7 +143,11 @@ export default async function CalendarPage(props: WorkspacePageProps) {
         <EmptyState data-pattern-state="empty" icon={<ShieldAlert />} title={t('empty')} />
       ) : null}
       {view === 'month' ? (
-        <MonthView days={days} month={anchor.slice(0, 7)} hrefFor={hrefFor} />
+        <MonthView
+          days={days}
+          month={anchor.slice(0, 7)}
+          hrefs={Object.fromEntries(days.map((d) => [d.date, hrefFor(d.date)]))}
+        />
       ) : (
         <WeekView days={days} hrefFor={hrefFor} />
       )}

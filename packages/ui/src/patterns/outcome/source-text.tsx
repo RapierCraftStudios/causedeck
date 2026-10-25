@@ -43,7 +43,10 @@ export function SourceText({
       <p lang={language} className="text-sm leading-relaxed whitespace-pre-wrap">
         {parts.map((part, index) =>
           part.mark ? (
-            <mark key={index} className="bg-accent text-accent-foreground rounded px-0.5">
+            <mark
+              key={index}
+              className="text-ink decoration-accent-soft bg-transparent underline decoration-[0.45em] underline-offset-[-0.2em] [text-decoration-skip-ink:none] forced-colors:decoration-current"
+            >
               {part.text}
             </mark>
           ) : (

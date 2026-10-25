@@ -48,3 +48,5 @@ bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.ka.bengal
 bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.tn.chennai.district/list-commercial.expected.json:generic-api-key:39
 bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.tn.chennai.district/list-tamil.expected.json:generic-api-key:147
 bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.tn.chennai.district/list-table.expected.json:generic-api-key:111
+# A memory key in the automation handler test (M2.judge_habit), not a secret; history only.
+f0d4e871d81af87606a5badef683c627b57338ab:packages/core/src/automation/__tests__/handlers.test.ts:generic-api-key:293

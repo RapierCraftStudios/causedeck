@@ -503,6 +503,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getBenchCard: denies,
   // court day (#58): B acting on A's workspace is denied, A's rows are unchanged
   getCourtDay: denies,
+  // calendar range (#66): B acting on A's workspace is denied, A's rows are unchanged
+  getCalendarRange: denies,
   setCurrentItem: denies,
   clearCurrentItem: denies,
   snapshotList: denies,

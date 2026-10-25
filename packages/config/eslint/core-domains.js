@@ -22,7 +22,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Court-day display-board tracking (#493): the board source's clearance through sources. The court
   // day (#58) reads roles through workspaces, audits the hall marker through audit and wraps the
   // canonical next-date proposal and conflict view of matter-graph (imports `index.ts` only).
-  'court-day': Object.freeze(['sources', 'matter-graph', 'workspaces', 'audit']),
+  // The calendar range (#66) reads forum closures through deadlines (`loadCourtCalendar`).
+  'court-day': Object.freeze(['sources', 'matter-graph', 'workspaces', 'audit', 'deadlines']),
   // The hearing outcome (#62): roles through workspaces, the canonical next date through the
   // matter-graph index only, the audit event through audit. It reads the voice proposals and their
   // transcript anchors as rows and imports no other domain.

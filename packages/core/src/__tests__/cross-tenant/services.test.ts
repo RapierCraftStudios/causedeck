@@ -1949,6 +1949,31 @@ const CASES: Record<string, Case> = {
       ),
     ).rejects.toBeDefined();
   },
+  getCalendarRange: async (f) => {
+    const range = { from: '2026-11-02', to: '2026-11-08', scope: 'workspace' } as const;
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listing));
+    // ub names A's workspace without a seat in it: denied, for both scopes.
+    await expect(
+      core.getCalendarRange({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, range),
+    ).rejects.toBeDefined();
+    await expect(
+      f.asB((s) =>
+        core.getCalendarRange(
+          { db: s },
+          { userId: f.ub, workspaceId: f.a.id },
+          { ...range, scope: 'mine' },
+        ),
+      ),
+    ).rejects.toBeDefined();
+    // ub's own workspace is readable and shows nothing of A.
+    const own = await core.getCalendarRange(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id },
+      range,
+    );
+    expect(own.flatMap((d) => d.entries)).toEqual([]);
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listing))).toEqual(before);
+  },
   setCurrentItem: async (f) => {
     const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.courtDayMarker));
     const hallId = '00000000-0000-4000-8000-000000000001';

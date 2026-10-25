@@ -859,6 +859,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // briefs (#60): pure scoring, the empty memory port, and the system sweep
   computeReadiness: 'pure',
   emptyMemoryProvider: 'constant: the default memory port returns nothing',
+  onCourtDayListChanged:
+    'trigger consumer: lists the changed list\'s listings inside the event\'s own workspace scope and enqueues a refresh each; covered by briefs/__tests__/state.test.ts',
   refreshBriefTargets:
     'system job body: no workspace; lists targets only through the owner-defined app_brief_refresh_targets and refreshes each in its own workspace scope; covered by briefs/__tests__/state.test.ts',
   // portfolio (#663): pure CSV reader and constants

@@ -46,6 +46,7 @@ describe('registerSchedules', () => {
       'system.status.poll',
       'system.webhook.sweep',
       'system.orders.poll',
+      'system.brief.refresh-sweep',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');

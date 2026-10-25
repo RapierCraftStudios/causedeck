@@ -47,7 +47,9 @@ async function seed(tx: Transaction) {
       return { matterId: m.id, proceedingId: p.id };
     });
   const listAt = (proceedingId: string, listDate: string, over: Record<string, unknown>) =>
-    inWorkspace(tx, workspaceId, (s) => buildListing(s, workspaceId, { proceedingId, listDate, ...over }));
+    inWorkspace(tx, workspaceId, (s) =>
+      buildListing(s, workspaceId, { proceedingId, listDate, ...over }),
+    );
   return { ownerId, workspaceId, ownerMemberId, ...base, matterWith, listAt };
 }
 
@@ -87,8 +89,16 @@ describe('getCalendarRange (#66)', () => {
         { from: FROM, to: TO },
       );
       expect(days.map((d) => d.date)).toHaveLength(7);
-      expect(byDate(days, '2026-11-03').counts).toMatchObject({ listings: 1, proposed: 1, confirmed: 0 });
-      expect(byDate(days, '2026-11-03').entries[0]).toMatchObject({ kind: 'listing', hallNo: '3', itemNo: '4' });
+      expect(byDate(days, '2026-11-03').counts).toMatchObject({
+        listings: 1,
+        proposed: 1,
+        confirmed: 0,
+      });
+      expect(byDate(days, '2026-11-03').entries[0]).toMatchObject({
+        kind: 'listing',
+        hallNo: '3',
+        itemNo: '4',
+      });
       expect(byDate(days, '2026-11-04').counts).toMatchObject({ obligationsDue: 1, confirmed: 1 });
       const confirmed = byDate(days, '2026-11-05');
       expect(confirmed.counts).toMatchObject({ nextDates: 1, confirmed: 1, proposed: 0 });
@@ -168,11 +178,15 @@ describe('getCalendarRange (#66)', () => {
       expect(byDate(owner, '2026-11-03').counts.listings).toBe(2);
       const junior = await addMember(tx, s.workspaceId, 'junior');
       await expect(
-        getCalendarRange({ db: tx }, { userId: junior, workspaceId: s.workspaceId }, {
-          from: FROM,
-          to: TO,
-          scope: 'workspace',
-        }),
+        getCalendarRange(
+          { db: tx },
+          { userId: junior, workspaceId: s.workspaceId },
+          {
+            from: FROM,
+            to: TO,
+            scope: 'workspace',
+          },
+        ),
       ).rejects.toMatchObject({ code: 'FORBIDDEN' });
     });
   });
@@ -258,7 +272,9 @@ describe('getCalendarRange (#66)', () => {
         { from: FROM, to: TO },
       );
       expect(days.every((d) => d.closedReason === null)).toBe(true);
-      expect(days.flatMap((d) => d.entries).some((e) => e.kind === 'holiday' || e.kind === 'vacation')).toBe(false);
+      expect(
+        days.flatMap((d) => d.entries).some((e) => e.kind === 'holiday' || e.kind === 'vacation'),
+      ).toBe(false);
     });
   });
 });

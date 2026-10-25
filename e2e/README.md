@@ -17,10 +17,10 @@ E2E_SKIP_BUILD=1 pnpm --filter @causedeck/e2e test   # reuse the last e2e build
 `pnpm --filter @causedeck/e2e exec playwright install chromium webkit`. Root `pnpm test` (Turborepo)
 skips this package on purpose: it is the unit-test pipeline (see `support/playwright.mjs`).
 
-| Project                                | What runs                             |
-| -------------------------------------- | ------------------------------------- |
-| `chromium-{360,768,1280}-{light,dark}` | every spec, `reducedMotion: 'reduce'` |
-| `webkit-360`                           | `@smoke` specs only                   |
+| Project                                  | What runs                                          |
+| ---------------------------------------- | -------------------------------------------------- |
+| `chromium-{360,768,1280}-{light,dark}`   | every spec, `reducedMotion: 'reduce'`              |
+| `webkit-360`                             | `@smoke` specs only                                |
 
 Tags: `@smoke` (fast, also on WebKit and in the nightly flake job), `@a11y` (axe after the test),
 `@visual` (screenshot baselines, clock frozen).
@@ -67,15 +67,15 @@ test('owner sees today', { tag: '@smoke' }, async ({ page, asUser }) => {
 });
 ```
 
-| Fixture                             | Gives you                                                                    |
-| ----------------------------------- | ---------------------------------------------------------------------------- |
-| `asUser(role, { workspace, path })` | the page, signed in as that seeded role, on `/w/<workspace>/<path>`          |
-| `db`                                | the worker database (`url`, `reset()`, `seed()`), already reset              |
-| `readMagicLink(email)`              | the newest magic link this worker's server emailed during the test           |
-| `readPhoneOtp(phone)`               | the code issued to an E.164 number, read from the worker DB (`verification`) |
-| `expirePhoneOtp(phone)`             | ages that code past its five minutes                                         |
-| `a11y.expectNoViolations(page)`     | axe; fails on serious/critical violations and lists every node               |
-| `clock.freeze(at?)`                 | `page.clock` pinned to `2026-03-12T09:30:00+05:30`                           |
+| Fixture                            | Gives you                                                              |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| `asUser(role, { workspace, path })`| the page, signed in as that seeded role, on `/w/<workspace>/<path>`    |
+| `db`                               | the worker database (`url`, `reset()`, `seed()`), already reset         |
+| `readMagicLink(email)`             | the newest magic link this worker's server emailed during the test     |
+| `readPhoneOtp(phone)`              | the code issued to an E.164 number, read from the worker DB (`verification`) |
+| `expirePhoneOtp(phone)`            | ages that code past its five minutes                                   |
+| `a11y.expectNoViolations(page)`    | axe; fails on serious/critical violations and lists every node         |
+| `clock.freeze(at?)`                | `page.clock` pinned to `2026-03-12T09:30:00+05:30`                     |
 
 Until #18 lands, the app shell resolves workspaces from an in-memory dev stub
 (`apps/web/lib/workspace-context.ts`). The seeded sessions are real, but `/w/chennai-solo/*` renders
@@ -216,14 +216,10 @@ dispatch; until they exist the specs skip.
 
 - **Pull requests and pushes:** two shards on the host. The Compose stack comes from
   `infra/scripts/dev-up.sh`, and Playwright runs inside the pinned image (`docker run --network
-host`). It uploads the HTML report and the test results, which include traces.
+  host`). It uploads the HTML report and the test results, which include traces.
 - **Lighthouse:** starts the Compose stack, migrates and seeds it (`e2e` profile), builds for
   production and runs `lhci` and `lhci:courts`.
 - **Nightly (`schedule`):** `@smoke` with `--repeat-each=5 --retries=0 --fail-on-flaky-tests`.
 - **`workflow_dispatch` with `update_snapshots`:** regenerates the baselines (see above). Creating
   the PR needs "Allow GitHub Actions to create and approve pull requests" enabled in the repository
   settings.
-
-`pnpm --filter @causedeck/e2e lhci:calendar` (#66) runs the same signed-in script with
-`lighthouserc.calendar.json` on the month calendar. It adds a route budget: script transfer size
-<= 180 KB (`resource-summary:script:size`). Reports go to `.lighthouseci/calendar`.

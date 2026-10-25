@@ -1949,11 +1949,19 @@ const CASES: Record<string, Case> = {
     ).rejects.toBeDefined();
     await expect(
       f.asB((s) =>
-        core.getCalendarRange({ db: s }, { userId: f.ub, workspaceId: f.a.id }, { ...range, scope: 'mine' }),
+        core.getCalendarRange(
+          { db: s },
+          { userId: f.ub, workspaceId: f.a.id },
+          { ...range, scope: 'mine' },
+        ),
       ),
     ).rejects.toBeDefined();
     // ub's own workspace is readable and shows nothing of A.
-    const own = await core.getCalendarRange({ db: f.tx }, { userId: f.ub, workspaceId: f.b.id }, range);
+    const own = await core.getCalendarRange(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id },
+      range,
+    );
     expect(own.flatMap((d) => d.entries)).toEqual([]);
     expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listing))).toEqual(before);
   },

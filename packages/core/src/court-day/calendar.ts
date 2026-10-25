@@ -46,8 +46,15 @@ function addDays(date: string, days: number): string {
   return new Date(Date.parse(`${date}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 }
 
-function caseLabel(p: { caseTypeCode: string; number: string | null; year: number | null }): string {
-  const parts = [p.caseTypeCode, p.number === null ? null : `${p.number}${p.year === null ? '' : `/${p.year}`}`];
+function caseLabel(p: {
+  caseTypeCode: string;
+  number: string | null;
+  year: number | null;
+}): string {
+  const parts = [
+    p.caseTypeCode,
+    p.number === null ? null : `${p.number}${p.year === null ? '' : `/${String(p.year)}`}`,
+  ];
   return parts.filter((x) => x !== null).join(' ');
 }
 
@@ -99,7 +106,13 @@ export async function getCalendarRange(
 
     const days = new Map<string, CalendarDay>();
     for (let d = query.from; d <= query.to; d = addDays(d, 1)) {
-      days.set(d, { date: d, counts: { ...EMPTY_COUNTS }, clash: false, closedReason: null, entries: [] });
+      days.set(d, {
+        date: d,
+        counts: { ...EMPTY_COUNTS },
+        clash: false,
+        closedReason: null,
+        entries: [],
+      });
     }
     const add = (date: string, entry: Omit<CalendarEntry, 'date'>) => {
       const dayRow = days.get(date);
@@ -158,7 +171,10 @@ export async function getCalendarRange(
       .from(listing)
       .innerJoin(
         proceeding,
-        and(eq(proceeding.workspaceId, listing.workspaceId), eq(proceeding.id, listing.proceedingId)),
+        and(
+          eq(proceeding.workspaceId, listing.workspaceId),
+          eq(proceeding.id, listing.proceedingId),
+        ),
       )
       .innerJoin(
         matter,
@@ -188,7 +204,10 @@ export async function getCalendarRange(
             .from(appearance)
             .innerJoin(
               hearing,
-              and(eq(hearing.workspaceId, appearance.workspaceId), eq(hearing.id, appearance.hearingId)),
+              and(
+                eq(hearing.workspaceId, appearance.workspaceId),
+                eq(hearing.id, appearance.hearingId),
+              ),
             )
             .where(
               and(
@@ -264,7 +283,10 @@ export async function getCalendarRange(
       )
       .innerJoin(
         proceeding,
-        and(eq(proceeding.workspaceId, listing.workspaceId), eq(proceeding.id, listing.proceedingId)),
+        and(
+          eq(proceeding.workspaceId, listing.workspaceId),
+          eq(proceeding.id, listing.proceedingId),
+        ),
       )
       .innerJoin(
         matter,
@@ -276,7 +298,10 @@ export async function getCalendarRange(
         and(
           eq(hearing.workspaceId, workspaceId),
           or(
-            and(gte(hearing.nextDateConfirmed, query.from), lte(hearing.nextDateConfirmed, query.to)),
+            and(
+              gte(hearing.nextDateConfirmed, query.from),
+              lte(hearing.nextDateConfirmed, query.to),
+            ),
             and(gte(hearing.nextDateProposed, query.from), lte(hearing.nextDateProposed, query.to)),
           ),
           query.scope === 'mine' ? sql`${matter.ownerMemberId} = ${me}` : undefined,
@@ -369,7 +394,11 @@ export async function getCalendarRange(
         add(date, { ...base, kind: 'holiday', proposed: false, forumName: f.court, label: title });
       }
       for (const v of calendar.vacations) {
-        for (let d = v.from > query.from ? v.from : query.from; d <= v.to && d <= query.to; d = addDays(d, 1)) {
+        for (
+          let d = v.from > query.from ? v.from : query.from;
+          d <= v.to && d <= query.to;
+          d = addDays(d, 1)
+        ) {
           add(d, { ...base, kind: 'vacation', proposed: false, forumName: f.court, label: v.name });
         }
       }

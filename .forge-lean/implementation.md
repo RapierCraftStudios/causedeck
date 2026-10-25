@@ -46,3 +46,6 @@ Added briefs/__tests__/ai-and-budget.test.ts: R10 deterministic-path p95 < 1.5 s
 
 ## Lint fix
 CI lint failed on restrict-template-expressions in packages/core/src/briefs/readiness.ts:36; wrapped the number in String(). ESLint on all changed files now clean.
+
+## CI fix
+CI test/tenancy logs were unavailable. brief_state was missing from the lifecycle export coverage and erase-order lists (core/lifecycle), which guard tests require for every tenant table; added both. Removed committed .eslintcache files. The worker schedules two-replica test failure in V5 looked like a minute-boundary timing flake and is unrelated.

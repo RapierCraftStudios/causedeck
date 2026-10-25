@@ -51,6 +51,10 @@ const ROUTES: Record<string, string> = {
     'B’s key or session cannot delete A’s endpoint: 404 and the row survives (this file)',
   'POST /v1/inbound/email':
     'provider-verified; the workspace comes only from the resolved intake address (inbound-email.test.ts)',
+  'POST /v1/inbound/whatsapp':
+    'signature-verified; the workspace comes only from the verified link of the sender number (inbound-whatsapp.test.ts)',
+  'GET /v1/inbound/whatsapp':
+    'handshake only: echoes the challenge for the verify token, touches no tenant data (inbound-whatsapp.test.ts)',
 };
 
 const PROBE_PATHS = new Set(['/v1/xt-probe', '/v1/workspaces/:workspaceId/xt-probe']);

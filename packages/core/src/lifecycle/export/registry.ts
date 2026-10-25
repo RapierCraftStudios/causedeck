@@ -71,6 +71,8 @@ export const EXPORT_EXCLUSIONS: Readonly<Record<string, string>> = {
     'Derived link from a global official notice to a matter or forum of the workspace (#584); holds no user content, is recomputed from the public feed, and is erased with the workspace.',
   whatsapp_otp_challenge:
     'Short-lived (10 min) pending WhatsApp verification (#678): a hash of a one-time code, never exported; the verified link itself is exported, and the challenge is erased with the workspace.',
+  whatsapp_inbound_message:
+    'Dedupe ledger of provider message ids and media references for forwarded WhatsApp media (#680); the media itself is exported as captures, and the ledger is erased with the workspace.',
   ai_call_result:
     'Short-lived (24 h) retry cache of validated AI gateway outputs (#44); derived from records that are exported themselves, and erased with the workspace.',
 };

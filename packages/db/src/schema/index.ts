@@ -37,6 +37,8 @@ export {
 export {
   WHATSAPP_E164_PATTERN,
   WHATSAPP_OTP_MAX_ATTEMPTS,
+  WHATSAPP_INBOUND_STATUSES,
+  whatsappInboundMessage,
   whatsappLink,
   whatsappOtpChallenge,
 } from './whatsapp-link.ts';

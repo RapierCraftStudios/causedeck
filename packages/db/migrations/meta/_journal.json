@@ -687,6 +687,13 @@
       "when": 1792897200000,
       "tag": "20261025030000_whatsapp_link",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1792900800000,
+      "tag": "20261025040000_whatsapp_inbound",
+      "breakpoints": true
     }
   ]
 }

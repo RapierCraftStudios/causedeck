@@ -1,33 +1,35 @@
 ### Approach
-Mirror the push channel. A new `createWhatsAppSender` (Meta Cloud API, injectable `fetch`) is built from env and is `undefined` when the provider env is absent, so delivery is recorded as skipped. The sender only takes a target resolved by the caller. `notification.deliver` resolves it with `getWhatsAppSendTarget` (the owner's verified, consented number, category chosen), and the end-of-day digest does the same for its own summary. `@causedeck/notifications` never imports core, so the lookup stays in the jobs.
+Recovery pass for ci.red. The failing check was `apps/api` openapi.test.ts (committed openapi/v1.json stale after adding `/v1/inbound/whatsapp`). Also removed the re-tracked `.eslintcache` files (scope creep).
 
 ### Changes
-- packages/notifications/src/channels/whatsapp.ts, channels/index.ts: sender, template registry (`court.board`, `status.order`, `digest.end_of_day`), E.164 re-check, permanent vs retryable errors; `./whatsapp` export in package.json.
-- packages/notifications/src/service.ts: `DeliveryJob.channel` includes whatsapp; `notify()` fan-out includes whatsapp for opted-in preferences (no category defaults it on).
-- packages/core/src/jobs/definitions/notification-deliver.ts: `whatsapp` in `DELIVERY_CHANNELS`, deps and branch (skips `whatsapp_disabled`, `no_template`, `not_linked`, `quiet_hours`; permanent 4xx recorded failed).
-- packages/core/src/jobs/definitions/activity-digest.ts: evening WhatsApp summary (counts and link), after the email, never in court hours, failure logged not retried.
-- packages/core/src/jobs/definitions/news-digest.ts: widen a local `channel` type (needed to typecheck; amendment).
-- packages/config/src/env/schema.ts, .env.example, docs/engineering/env.md: `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_API_VERSION`, set-together check.
-- packages/config/eslint/core-domains.js, docs/engineering/core-domains.md: `jobs --> whatsapp-link`.
-- docs/engineering/notifications.md: channel docs.
-- Tests: channels/__tests__/whatsapp.test.ts, notification-deliver.test.ts, activity-digest.test.ts, config schema.test.ts.
+- apps/api/openapi/v1.json: regenerated via `openapi:export`, prettier-formatted (+126 lines, whatsapp route and ack schema only).
+- apps/*/.eslintcache, packages/*/.eslintcache: untracked (not deliverables).
+- Earlier work (capture whatsapp-inbound module, db schema and migration, core receive/run/job, api route) unchanged.
 
 ### Acceptance Criteria Status
-- R1 ✅ packages/notifications/src/channels/whatsapp.ts:100
-- R2 ✅ packages/core/src/jobs/definitions/notification-deliver.ts:85, activity-digest.ts (sendWhatsAppSummary), notifications/src/service.ts fan-out
-- R3 ✅ packages/config/src/env/schema.ts (WHATSAPP_*)
-- R4 ✅ notification-deliver.test.ts "sends only to the verified number of the notification owner, once"; whatsapp.test.ts "refuses a target that is not an E.164 number"
-- R5 deferred (human residency review, #488)
+- R1: ✅ apps/api/src/routes/inbound-whatsapp.ts, packages/capture/src/whatsapp-inbound/meta.ts
+- R2: ✅ packages/core/src/whatsapp-link/receive.ts, run.ts
+- R3: ✅ packages/core/src/jobs/definitions/whatsapp-intake.ts
+- R4: ✅ apps/api/src/routes/inbound-whatsapp.ts (silent drop), core receive.ts
 
 ### Verification
-- V1 notifications vitest (channels, index, push): pass. The new channel tests fail without the fix (module absent).
-- V2 core vitest (notification-deliver, activity-digest, domains): pass, 40 tests; the new whatsapp tests fail without the fix.
-- V3 config vitest: pass, 296 tests.
-- V4 checks.mjs: ran (widened because of a package.json change); instead tsc --noEmit on notifications, config and core is clean, and eslint on changed files is clean (lint hook passed on commit). `lane-check.sh` does not exist on this host.
+- V1-V5 (capture, core, api, db, worker vitest): PASS via forgedock check.
+- openapi.test.ts: fails without the regenerated v1.json (CI failure), passes with it.
 
 ### Notes
-- New env vars: `WHATSAPP_PHONE_NUMBER_ID` and `WHATSAPP_ACCESS_TOKEN` (together; absent = WhatsApp disabled), optional `WHATSAPP_API_VERSION` (default v21.0). Provider assumed to be the Meta Cloud API; template names `causedeck_court_board`, `causedeck_status_order`, `causedeck_end_of_day` must be approved with the provider.
-- Behaviour: members with a whatsapp preference row on now enqueue `notification.deliver` for it; with no provider env those are recorded as skipped.
+No behavior or env changes in this pass.
 
-### CI failure follow-up (job `test`, run 40157596902)
-The CI log was not available. No code change: I could not reproduce a failure. Passing locally: notifications (with `--coverage`, as in CI), config, core jobs/notices/cross-tenant/domains, worker, web notification and static-guard tests, `tsc --noEmit` on notifications and core, eslint and prettier on changed files, `check:no-l5`, `docs:links`, `docs:permissions:check`. Not run locally: `db:check`, `i18n:check`, the adapters golden steps, and the full sharded run. The failure may be one of those or a flaky Testcontainers run; the CI log is needed to say which.
+## Stale-list follow-up
+Checked the flagged tests: none enumerate whatsapp siblings (whatsappLink/whatsappOtpChallenge absent), so all symbols are recorded as not_members in result.json. The core cross-tenant factory is already in NOT_A_SERVICE.
+
+## Merge check fix
+The merge failure was `turbo: command not found` (exit 127), a PATH problem. The merged tree has no symbol clash. Ran `pnpm exec turbo run typecheck --filter=...[c44d5405]` (24/24 pass) and capture vitest V1 (12 pass). No source changes.
+
+### Merge verification
+After merging the base, `pnpm turbo run typecheck --filter='...[c44d5405]'` passes on the merged tree (24/24 tasks). The earlier exit 127 came from invoking bare `turbo`, which is not on PATH; there are no duplicate-key or symbol clashes, so no code change was needed.
+
+## CI follow-up
+CI test-shard failure: packages/ai gateway.test.ts "performance" asserts one mock call < 5 ms on a shared runner. The branch has no diff in packages/ai; the test passes locally (17/17). Treated as a timing flake; no code change.
+
+### CI run 40161592454 (test-shard rest)
+Only failure: `packages/ai/src/__tests__/gateway.test.ts:301`, a wall-clock `performance.now() - t < 5` assertion on a single mock call. This branch does not touch `packages/ai` (empty diff vs base). The test passes locally (17/17) and is a timing flake on a loaded runner, so no code change is made; a rerun of the shard should clear it.

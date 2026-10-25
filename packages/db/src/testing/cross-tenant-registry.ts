@@ -309,6 +309,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   setWhatsAppCategories: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
   getWhatsAppLink: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
   getWhatsAppSendTarget: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  // Inbound WhatsApp (#680): the workspace comes only from the sender's verified link.
+  receiveInboundWhatsApp: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
+  runWhatsAppIntake: { test: CORE_WHATSAPP_LINK_TEST, kind: 'denies' },
   // Exception alerts (#665): the scan opens withWorkspace on the given workspace id only.
   scanPortfolioAlerts: {
     test: CORE_PORTFOLIO_TEST,
@@ -872,6 +875,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   WHATSAPP_OTP_TTL_MS: 'constant',
   WHATSAPP_OTP_RESEND_COOLDOWN_MS: 'constant',
   WHATSAPP_OTP_MAX_ATTEMPTS: 'constant',
+  whatsappInboundProviderFromProcess: 'env factory, no tenant data',
   // portfolio (#663): pure CSV reader and constants
   parsePortfolioCsv: 'pure',
   MAX_PORTFOLIO_IMPORT_ROWS: 'constant',

@@ -2,10 +2,12 @@
 // workspace A. Every call is refused (NOT_FOUND) or yields nothing, and A's link and pending
 // challenge are unchanged. Driven by the same registry as services.test.ts, so a registered
 // service without a case fails.
+import { captureConfigFromEnv } from '@causedeck/capture';
 import { schema, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
+import { createMemoryObjectStore } from '@causedeck/storage';
 import { describe, expect, it } from 'vitest';
 
 import * as core from '../../index.ts';
@@ -81,6 +83,52 @@ const CASES: Record<string, Case> = {
       { userId: f.ub, workspaceId: f.b.id },
     );
     expect(own?.e164).not.toBe((await aState(f)).links[0]?.e164);
+  },
+  receiveInboundWhatsApp: async (f) => {
+    // The workspace comes only from the verified link of the sender: A's number lands in A, never B.
+    const e164 = (await aState(f)).links[0]?.e164 ?? '';
+    const bRows = () =>
+      inWorkspace(f.tx, f.b.id, (s) => s.select().from(schema.whatsappInboundMessage));
+    const before = await bRows();
+    const outcome = await core.receiveInboundWhatsApp(
+      f.tx,
+      {
+        message: {
+          providerMessageId: 'wamid.xt-in',
+          from: e164,
+          mediaId: 'm1',
+          mime: 'application/pdf',
+          filename: 'x.pdf',
+        },
+      },
+      () => Promise.resolve(),
+    );
+    if (outcome.status === 'accepted') expect(outcome.workspaceId).toBe(f.a.id);
+    expect(await bRows()).toEqual(before);
+  },
+  runWhatsAppIntake: async (f) => {
+    // B's scope names A's message id: not found, and A's messages are unchanged.
+    const aRows = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s.select().from(schema.whatsappInboundMessage).orderBy(schema.whatsappInboundMessage.id),
+      );
+    const before = await aRows();
+    const result = await core.runWhatsAppIntake(
+      {
+        db: f.tx,
+        store: createMemoryObjectStore(),
+        provider: { fetchMedia: () => Promise.resolve(new Uint8Array()) },
+        config: captureConfigFromEnv({}),
+        jobs: { scan: () => Promise.resolve(), process: () => Promise.resolve() },
+      },
+      {
+        workspaceId: f.b.id,
+        userId: f.ub,
+        inboundMessageId: f.a.rows.whatsapp_inbound_message?.id ?? '',
+      },
+    );
+    expect(result.outcome).toBe('missing');
+    expect(await aRows()).toEqual(before);
   },
 };
 

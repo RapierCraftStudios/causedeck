@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { mdxComponents, Prose } from '../../../components/prose.tsx';
+import { isLegalOwned } from '../../../lib/legal.ts';
 import { loadAllMdx, loadMdxPage } from '../../../lib/mdx.ts';
 import { pageMetadata } from '../../../lib/seo.ts';
 
@@ -13,7 +14,8 @@ interface Props {
 
 export async function generateStaticParams() {
   const pages = await loadAllMdx();
-  return pages.map((page) => ({ slug: page.slug }));
+  // The dedicated app/legal/* pages own their slugs.
+  return pages.filter((page) => !isLegalOwned(page.slug)).map((page) => ({ slug: page.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -142,6 +142,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The obligation service (#67): roles through workspaces, audit events through audit, defect
   // transitions through the matter-graph state machine (imports `index.ts` only).
   obligations: Object.freeze(['workspaces', 'audit', 'matter-graph']),
+  // A0 grid corrections (#558): roles and the owner's eval-reuse switch through workspaces.
+  corrections: Object.freeze(['workspaces']),
   // Outward update drafts (#735, ADR 0039): roles through workspaces, audit events through audit,
   // the narrative through the AI gateway wiring in ai; reads graph rows from the tables.
   outward: Object.freeze(['workspaces', 'audit', 'matter-graph', 'ai']),

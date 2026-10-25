@@ -25,7 +25,11 @@ import { can, type WorkspaceContext } from '../../../../../../lib/workspace-cont
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
 
-import { updateWorkspacePrivacyAction, type PrivacySettingsView } from './actions.ts';
+import {
+  setAllowEvalReuseAction,
+  updateWorkspacePrivacyAction,
+  type PrivacySettingsView,
+} from './actions.ts';
 import { PrivacyError } from './error.tsx';
 import { PrivacyForm, PrivacySkeleton } from './privacy-form.tsx';
 
@@ -57,14 +61,17 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t('metaTitle') };
 }
 
-async function loadPrivacy(context: WorkspaceContext): Promise<PrivacySettingsView> {
+async function loadPrivacy(
+  context: WorkspaceContext,
+): Promise<{ settings: PrivacySettingsView; allowEvalReuse: boolean }> {
   // One at a time, not in a Promise.all: concurrent imports race the test mocks.
   const { inWorkspace } = await import('@causedeck/core/runtime');
-  const { getPrivacySettings } = await import('@causedeck/core/workspaces');
+  const { getPrivacySettings, getAllowEvalReuse } = await import('@causedeck/core/workspaces');
   const workspaceId = context.workspace.id;
-  return inWorkspace({ workspaceId, userId: context.user.id }, (tx) =>
-    getPrivacySettings(tx, workspaceId),
-  );
+  return inWorkspace({ workspaceId, userId: context.user.id }, async (tx) => ({
+    settings: await getPrivacySettings(tx, workspaceId),
+    allowEvalReuse: await getAllowEvalReuse(tx, workspaceId),
+  }));
 }
 
 async function PrivacySection({
@@ -74,10 +81,10 @@ async function PrivacySection({
   context: WorkspaceContext;
   state: string | undefined;
 }) {
-  let settings: PrivacySettingsView;
+  let loaded: Awaited<ReturnType<typeof loadPrivacy>>;
   try {
     if (state === 'error') throw new Error('Privacy error state (dev toggle)');
-    settings = await loadPrivacy(context);
+    loaded = await loadPrivacy(context);
   } catch (error) {
     if (state !== 'error') logger.error({ err: error }, 'privacy page: could not load settings');
     return <PrivacyError />;
@@ -85,9 +92,14 @@ async function PrivacySection({
   return (
     <PrivacyForm
       workspaceId={context.workspace.id}
-      settings={settings}
+      settings={loaded.settings}
       canEdit={can(context.role, 'workspace.manage')}
       save={updateWorkspacePrivacyAction}
+      evalReuse={{
+        allow: loaded.allowEvalReuse,
+        canEdit: can(context.role, 'member.role'),
+        save: setAllowEvalReuseAction,
+      }}
     />
   );
 }

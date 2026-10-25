@@ -133,6 +133,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Review and correction queue (#518).
   review_correction: DB_TABLES_TEST,
+  // A0 corrections (#558).
+  correction: DB_TABLES_TEST,
 
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,
@@ -264,6 +266,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // privacy settings (#286)
   getPrivacySettings: empty,
   updateWorkspacePrivacy: denies,
+  // Eval-reuse consent (#558): B reads A's flag as the default, and may not opt A in.
+  getAllowEvalReuse: empty,
+  setAllowEvalReuse: denies,
   // integration tokens (#287)
   getIntegrations: empty,
   rotateIntegrationToken: denies,

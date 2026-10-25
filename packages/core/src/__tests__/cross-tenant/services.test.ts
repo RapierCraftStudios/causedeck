@@ -1349,6 +1349,23 @@ const CASES: Record<string, Case> = {
       core.DEFAULT_PRIVACY_SETTINGS,
     );
   },
+  getAllowEvalReuse: async (f) => {
+    await f.tx
+      .update(schema.workspaceSettings)
+      .set({ allowEvalReuse: true })
+      .where(eq(schema.workspaceSettings.workspaceId, f.a.id));
+    // Under B's scope A's settings row is invisible: B reads the opt-out default, not A's opt-in.
+    expect(await f.asB((s) => core.getAllowEvalReuse(s, f.a.id))).toBe(false);
+  },
+  setAllowEvalReuse: async (f) => {
+    const before = await core.getAllowEvalReuse(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.setAllowEvalReuse(s, { workspaceId: f.a.id, actorUserId: f.ub, allow: !before }),
+      ),
+    );
+    expect(await core.getAllowEvalReuse(f.tx, f.a.id)).toBe(before);
+  },
   updateWorkspacePrivacy: async (f) => {
     const before = await core.getPrivacySettings(f.tx, f.a.id);
     await expectDenied(

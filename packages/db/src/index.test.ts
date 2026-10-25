@@ -79,6 +79,7 @@ describe('@causedeck/db root entry point', () => {
       'certified_copy',
       'contributed_document',
       'contribution_ledger',
+      'correction',
       'court_hall',
       'data_ops_alert',
       'data_ops_oncall',

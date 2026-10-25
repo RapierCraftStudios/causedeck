@@ -171,6 +171,8 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'matters',
   // Its own page and shell test since #48 (components/inbox/__tests__/inbox-shell.test.tsx).
   'inbox',
+  // Its own component test since #66 (calendar/_components/calendar-view.test.tsx).
+  'calendar',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),

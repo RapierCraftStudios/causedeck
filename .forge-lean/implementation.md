@@ -1,34 +1,30 @@
 ### Approach
-Outward update drafts (#735): L4-only drafts composed from templates (EN/TA/KN) with an optional India-only `outward_update` AI task, a guard that blocks forbidden phrasing, a diff for edits, and a share record. There is no send path (ADR 0039). Prior commits already hold the work; this pass merged the base (no collision left: base head 68a9c8ba, ADR 0039 and migration 20261025135312 are the next free numbers), re-ran every validate command, and applied prettier.
+Dates named inside a holiday-list document are parsed by a pure parser, stored in a new global `notice_holiday` table by the poll (through an optional injected document fetcher, since core cannot import `@causedeck/fetch`), and read together with `notice.effective_on` by `listHolidayListings` and `loadCourtCalendar`.
 
 ### Changes
-- packages/validators/src/outward-draft.ts (+test, index): DraftRequest, DraftEdit, ShareRecord, Audience, Language.
-- packages/db: schema/outward-draft.ts, migration 20261025135312_outward_drafts.sql, registries, RLS catalog, two-tenant seeders.
-- packages/ai: task `outward_update`, mock fixtures EN/TA/KN, drafting tier.
-- packages/core/src/outward/*: compose, guard, diff, share, context, templates; audit events; erase/export hooks.
-- docs/adr/0039, adr README, core-domains doc and eslint domain edge.
+- packages/intelligence/src/notices/parse-holiday-list.ts (+ index export, __tests__/parse-holiday-list.test.ts): `parseHolidayListLines/Text/Html/Pdf`.
+- packages/db/src/schema/notices.ts, schema/index.ts: `notice_holiday` table; migrations/20261025194355_notice_holiday.sql (+ snapshot, journal): grants SELECT, INSERT to the app role.
+- packages/db/src/conventions.ts: table added to GLOBAL_TABLES; src/index.test.ts table list; __tests__/notices-schema.test.ts: privilege, unique and check test.
+- packages/core/src/notices/poll.ts, index.ts: optional `documentFetcher`, `holidayDates`/`holidayFailed` in the report; failures never fail the poll.
+- packages/core/src/notices/holidays.ts, deadlines/calendar.ts: read `notice_holiday` plus `effective_on`.
+- packages/core/src/notices/notices.test.ts, __tests__/cross-tenant/services.test.ts: regression and cross-tenant cases.
+- docs/engineering/core-domains.md.
 
 ### Acceptance Criteria Status
-- R1 ✅ packages/validators/src/outward-draft.ts, packages/db/src/schema/outward-draft.ts
-- R2 ✅ packages/ai/src/tasks/outward-update.ts
-- R3 ✅ packages/core/src/outward/{compose,guard,diff,share}.ts, packages/core/src/audit/events.ts
-- R4 ✅ docs/adr/0039-outward-drafts-no-send-path.md, packages/db/src/testing/cross-tenant-registry.ts
-- R5 ✅ packages/core/src/outward/__tests__/*, packages/ai/src/tasks/__tests__/outward-update.test.ts
-- R6 ✅ same tests
+- R1 ✅ holidays.ts leftJoin on `notice_holiday`; calendar.ts `listed` query; notices.test.ts "holiday-list documents".
+- R2 ✅ parse-holiday-list.ts (PDF text layer, HTML, text); poll.ts `storeHolidayDates`.
+- R3 ✅ the `effective_on` path is kept (existing listHolidayListings tests and the cross-tenant case still pass).
 
 ### Verification
-- V1 validators vitest: pass. V2 ai vitest: pass. V3 core vitest: pass. V4 db vitest: pass. V5 config vitest: pass. V6 adr:lint: pass.
-- V7 lane-check.sh does not exist on this host (exit 127, environment problem); substituted `tsc --noEmit` for validators, ai, db and core: all clean.
-- The new tests fail without the fix because the outward modules do not exist.
+- V1 intelligence src/notices: 17 passed.
+- V2 core src/notices src/deadlines: 27 passed.
+- V3 db notices-schema + index tests: passed.
+- V4 core cross-tenant services `-t holiday` matches no test name (case-sensitive); `-t "loadCourtCalendar|listHolidayListings"` ran 2 passed.
+- The new poll and calendar test fails without the fix (no `notice_holiday` table or `documentFetcher`).
+- Typecheck of the changed packages and dependents: 22 of 23 tasks passed; `apps/web` typecheck died with a Node heap OOM on the shared host (environment, not a type error). ESLint on changed files in core, db and intelligence: clean.
 
 ### Notes
-No env vars. Policy matrix, worker registry and AI gateway are unchanged.
+Nothing wires `documentFetcher` in the worker yet, so production polls store no dates until that is added. `@causedeck/fetch` is string-bodied, so PDF bytes need a separate fetch change. Migration and conventions edits are listed as amendments.
 
-## Stale-list follow-up
-Checked the four listed tests (admin headers, server-actions-audit, sources-actions, web activity-export-route). None enumerates @causedeck/db schema exports or sibling tables (none names obligation tables either), so the outward symbols are recorded as not_members in result.json. No code change.
-
-## Export-collision follow-up
-Renamed outward/context.ts exports `requireMatterFor` -> `requireOutwardMatter` and `audit` -> `auditOutward` (they collided with obligations/context.ts); updated diff.ts, compose.ts and share.ts. No registry or test keyed by those names. Core tsc clean; vitest on src/outward and domains.test.ts passes (27 tests).
-
-## Fix: D20 cross-tenant case
-Added a real B-on-A outward describe (composeUpdate/saveEdit/recordShared/recordCopied) to packages/core/src/__tests__/cross-tenant/services.test.ts. Outward is a subpath export, not in the root index, so no SERVICE_TESTS entries apply (same as billing).
+### CI sibling-list follow-up
+The ten flagged apps/admin and apps/web tests list no db schema tables (none names `noticeMatch` or any notice table), so `noticeHoliday` is not a member of any; each is recorded in result.json `not_members`.

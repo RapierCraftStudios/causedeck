@@ -2020,7 +2020,7 @@ const CASES: Record<string, Case> = {
     const { hearingId } = await aHearing(f);
     await expect(
       core.getOutcomeProposal(
-        { db: f.tx },
+        { db: f.tx, events: { emit: () => undefined } },
         { userId: f.ub, workspaceId: f.a.id },
         { hearingId },
       ),

@@ -5,14 +5,18 @@ import {
   OutcomeConfirmation,
   OutcomeProposal,
   nextDateRejection,
-} from './hearing-outcome.ts';
+} from './hearing-outcome';
 
 const id = '11111111-1111-4111-8111-111111111111';
-const base = { hearingId: id, outcome: 'Adjourned for arguments', nextDate: { kind: 'none' } } as const;
+const base = {
+  hearingId: id,
+  outcome: 'Adjourned for arguments',
+  nextDate: { kind: 'none' },
+} as const;
 
 describe('OutcomeConfirmation', () => {
   it('needs an explicit next date resolution', () => {
-    const { nextDate: _omit, ...withoutDate } = base;
+    const withoutDate = { hearingId: base.hearingId, outcome: base.outcome };
     expect(OutcomeConfirmation.safeParse(withoutDate).success).toBe(false);
     expect(OutcomeConfirmation.safeParse(base).success).toBe(true);
     expect(

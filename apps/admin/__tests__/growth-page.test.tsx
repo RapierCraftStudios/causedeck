@@ -20,7 +20,16 @@ vi.mock('../lib/data/index.ts', () => {
   ];
   return {
     ACTIVATION_STEPS: steps,
-    ACTIVATION_CHANNELS: ['direct', 'invite', 'whatsapp', 'search', 'social', 'referral', 'other'],
+    ACTIVATION_CHANNELS: [
+      'direct',
+      'invite',
+      'whatsapp',
+      'search',
+      'social',
+      'referral',
+      'education',
+      'other',
+    ],
     growthFunnel: state.growthFunnel,
   };
 });

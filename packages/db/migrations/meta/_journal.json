@@ -678,7 +678,14 @@
       "idx": 96,
       "version": "7",
       "when": 1792893600000,
-      "tag": "20261025020000_whatsapp_link",
+      "tag": "20261025020000_education_channel",
+      "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1792897200000,
+      "tag": "20261025030000_whatsapp_link",
       "breakpoints": true
     }
   ]

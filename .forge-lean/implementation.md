@@ -1,13 +1,13 @@
 ### Approach
 Resumed the earlier run; verified the branch against the contract, ran all validates, declared out-of-contract files by amendment.
 ### Changes
-- packages/db: whatsapp-link schema, migration 20261025020000 + snapshot/journal, whatsapp channel enum, registry/seeders/RLS/index tests
+- packages/db: whatsapp-link schema, migration 20261025030000 + snapshot/journal, whatsapp channel enum, registry/seeders/RLS/index tests
 - packages/core: whatsapp-link domain (OTP request/verify, unlink, categories, send target), exports, erase/export registration, cross-tenant tests
 - packages/notifications: 'whatsapp' in CHANNELS; DeliveryJob type excludes it
 - apps/web, eslint core-domains.js: type-fallout and domain dependency entry
 ### Acceptance Criteria Status
 - R1 ✅ packages/db/src/schema/whatsapp-link.ts
-- R2 ✅ packages/db/migrations/20261025020000_whatsapp_link.sql
+- R2 ✅ packages/db/migrations/20261025030000_whatsapp_link.sql
 - R3 ✅ packages/core/src/whatsapp-link/link.ts
 - R4 ✅ link.ts getWhatsAppSendTarget
 - R5 ✅ cross-tenant-registry.ts, two-tenants.ts, sql.test.ts, index.test.ts, core index.ts

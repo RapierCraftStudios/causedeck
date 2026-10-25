@@ -1,0 +1,62 @@
+name: Monitoring
+
+# Validates the monitoring stack (#102): promtool unit tests for every alert, config checks for
+# Prometheus, Alertmanager, Loki and the OTel Collector, the static node tests, the 180-day
+# retention fixture and a synthetic alert delivery through the webhook mock. Tools run as pinned
+# container images, like lint-workflows.yml, so no third-party action is needed.
+
+on:
+  pull_request:
+    paths:
+      - 'infra/monitoring/**'
+      - 'packages/observability/src/redact.ts'
+      - '.github/workflows/monitoring.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'infra/monitoring/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitoring-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  monitoring:
+    name: Alert tests, config checks and synthetic delivery
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: promtool test rules and check config
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE/infra/monitoring/prometheus:/etc/prometheus:ro" \
+            --entrypoint promtool prom/prometheus:v3.5.0 test rules /etc/prometheus/tests/alerts.test.yml
+          docker run --rm -v "$GITHUB_WORKSPACE/infra/monitoring/prometheus:/etc/prometheus:ro" \
+            --entrypoint promtool prom/prometheus:v3.5.0 check config /etc/prometheus/prometheus.yml
+      - name: amtool check-config
+        run: |
+          sed -e 's|__[A-Z_]*URL__|http://mock:9095/h|g' -e 's|__ALERT_EMAIL_[A-Z]*__|a@example.com|g' \
+            -e 's|__SMTP_SMARTHOST__|mail:25|' infra/monitoring/alertmanager/alertmanager.yml > "$RUNNER_TEMP/am.yml"
+          docker run --rm -v "$RUNNER_TEMP/am.yml:/am.yml:ro" --entrypoint amtool \
+            prom/alertmanager:v0.28.1 check-config /am.yml
+      - name: Loki and collector config
+        run: |
+          docker run --rm -e LOKI_S3_ENDPOINT=minio:9000 -e LOKI_S3_BUCKET=b -e LOKI_S3_ACCESS_KEY=a \
+            -e LOKI_S3_SECRET_KEY=s -v "$GITHUB_WORKSPACE/infra/monitoring/loki:/c:ro" \
+            grafana/loki:3.5.1 -config.file=/c/loki-config.yml -config.expand-env=true -verify-config
+          docker run --rm --user 0:0 -v "$GITHUB_WORKSPACE/infra/monitoring/otel-collector.yml:/c.yml:ro" \
+            otel/opentelemetry-collector-contrib:0.130.0 validate --config=/c.yml
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Static tests and retention fixture
+        run: |
+          node --experimental-strip-types --no-warnings --test infra/monitoring/test/
+          bash infra/monitoring/log-retention/verify-retention.sh --fixture
+      - name: Synthetic alert delivery
+        run: bash infra/monitoring/test/synthetic-alert.sh

@@ -1,0 +1,8 @@
+# External probe targets (blackbox-public). Replace the hostnames at deploy time (#108); the app and
+# api names are DNS-only, so the probe also measures the India VPS TLS certificate.
+- targets:
+    - https://app.example.in/readyz
+    - https://api.example.in/readyz
+    - https://static.example.in/healthz
+    - https://www.example.in/
+    - https://status.example.in/

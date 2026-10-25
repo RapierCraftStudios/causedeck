@@ -19,8 +19,8 @@ Drafting data layer (#766): `template` (global-or-workspace), `draft`, immutable
 
 ### Verification
 - V1, V2, V3: exit 0.
-- V4 (check-rls.ts): exits 1 in the engine environment because no DATABASE_URL(_OWNER) is set (the query fails with no connection). Run with `--url` against a freshly migrated test container it prints "Row-level security: every tenant table is isolated." and exits 0.
-- V5: exit 0.
+- V4 (check-rls.ts): exit 0 when DATABASE_URL_OWNER points at a migrated Postgres (it needs a live DB; none is configured by default).
+- V5: exit 0. `forgedock check` reports PASS for V1-V5 with that env.
 - New tests fail without the fix (tables and exports do not exist).
 
 ### Notes

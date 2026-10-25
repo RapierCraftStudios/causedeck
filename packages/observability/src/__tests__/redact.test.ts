@@ -13,10 +13,21 @@ import { captureLogger } from './helpers.ts';
 describe('redaction', () => {
   it('never logs seeded privileged strings under title, filename, email, body or token', () => {
     const { logger, raw } = captureLogger();
-    const seeded = ['Sharma v. State brief', 'affidavit-final.pdf', 'client@example.com', 'secret-body', 'tok-seeded'];
+    const seeded = [
+      'Sharma v. State brief',
+      'affidavit-final.pdf',
+      'client@example.com',
+      'secret-body',
+      'tok-seeded',
+    ];
 
     logger.info(
-      { title: seeded[0], doc: { filename: seeded[1], email: seeded[2] }, body: seeded[3], token: seeded[4] },
+      {
+        title: seeded[0],
+        doc: { filename: seeded[1], email: seeded[2] },
+        body: seeded[3],
+        token: seeded[4],
+      },
       'event',
     );
 

@@ -10,9 +10,7 @@
     "to": "now"
   },
   "refresh": "1m",
-  "tags": [
-    "causedeck"
-  ],
+  "tags": ["causedeck"],
   "panels": [
     {
       "id": 1,

@@ -32,9 +32,7 @@ describe('adapter metrics', () => {
     recordAdapterRun('madras-hc', { parsed: 9, total: 10, at: new Date('2026-01-01T00:00:00Z') });
     await reader.forceFlush();
 
-    const all = exporter
-      .getMetrics()
-      .flatMap((m) => m.scopeMetrics.flatMap((s) => s.metrics));
+    const all = exporter.getMetrics().flatMap((m) => m.scopeMetrics.flatMap((s) => s.metrics));
     const ratio = all.find((m) => m.descriptor.name === ADAPTER_METRICS.parseSuccessRatio);
     const last = all.find((m) => m.descriptor.name === ADAPTER_METRICS.lastSuccessTimestamp);
     expect(ratio?.dataPoints[0]?.value).toBeCloseTo(0.9);

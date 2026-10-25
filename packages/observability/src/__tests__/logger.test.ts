@@ -42,7 +42,9 @@ describe('createLogger', () => {
   it('adds snake_case request_id and workspace_id for the log pipeline', () => {
     const { logger, lines } = captureLogger();
 
-    withRequestContext({ requestId: 'req-2', workspaceId: 'ws-2' }, () => logger.info('inside'));
+    withRequestContext({ requestId: 'req-2', workspaceId: 'ws-2' }, () => {
+      logger.info('inside');
+    });
 
     expect(lines()[0]).toMatchObject({ request_id: 'req-2', workspace_id: 'ws-2' });
   });

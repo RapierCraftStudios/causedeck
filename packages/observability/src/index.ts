@@ -1,11 +1,7 @@
 /** Logger, OpenTelemetry, Sentry wiring and health endpoints (spike §1, §3.2, §6). */
 export const packageName: string = '@causedeck/observability';
 
-export {
-  ADAPTER_METRICS,
-  recordAdapterRun,
-  resetAdapterMetrics,
-} from './adapter-metrics.ts';
+export { ADAPTER_METRICS, recordAdapterRun, resetAdapterMetrics } from './adapter-metrics.ts';
 export {
   getRequestContext,
   REQUEST_ID_HEADER,

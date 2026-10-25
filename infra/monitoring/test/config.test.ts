@@ -74,9 +74,12 @@ describe('monitoring compose', () => {
   });
 
   it('publishes ports on 127.0.0.1 only and never publishes Grafana publicly', () => {
-    const ports = [...compose.matchAll(/^\s*-\s*'(\S+?:\d+:\d+)'\s*$/gm)].map((m) => m[1] as string);
+    const ports = [...compose.matchAll(/^\s*-\s*'(\S+?:\d+:\d+)'\s*$/gm)].map(
+      (m) => m[1] as string,
+    );
     assert.ok(ports.length > 0);
-    for (const port of ports) assert.ok(port.startsWith('127.0.0.1:'), `${port} must bind loopback`);
+    for (const port of ports)
+      assert.ok(port.startsWith('127.0.0.1:'), `${port} must bind loopback`);
     assert.match(services.grafana as string, /'127\.0\.0\.1:3030:3000'/);
     assert.match(services.grafana as string, /GF_AUTH_ANONYMOUS_ENABLED: 'false'/);
   });
@@ -96,11 +99,22 @@ describe('monitoring compose', () => {
   it('provisions Grafana dashboards as code', () => {
     const dir = path.join(root, 'grafana', 'dashboards');
     const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
-    for (const required of ['court-day-windows', 'overview', 'adapters', 'database', 'backups', 'caddy', 'host']) {
+    for (const required of [
+      'court-day-windows',
+      'overview',
+      'adapters',
+      'database',
+      'backups',
+      'caddy',
+      'host',
+    ]) {
       assert.ok(files.includes(`${required}.json`), `missing dashboard ${required}`);
     }
     for (const file of files) {
-      const dash = JSON.parse(read(`grafana/dashboards/${file}`)) as { uid: string; panels: unknown[] };
+      const dash = JSON.parse(read(`grafana/dashboards/${file}`)) as {
+        uid: string;
+        panels: unknown[];
+      };
       assert.ok(dash.uid && dash.panels.length > 0, `${file} is empty`);
     }
     assert.match(read('grafana/provisioning/dashboards/dashboards.yml'), /disableDeletion: true/);

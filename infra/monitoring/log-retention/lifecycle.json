@@ -26,16 +26,8 @@
     "Statement": [
       {
         "Effect": "Allow",
-        "Action": [
-          "s3:PutObject",
-          "s3:GetObject",
-          "s3:ListBucket",
-          "s3:DeleteObject"
-        ],
-        "Resource": [
-          "arn:aws:s3:::causedeck-logs",
-          "arn:aws:s3:::causedeck-logs/*"
-        ]
+        "Action": ["s3:PutObject", "s3:GetObject", "s3:ListBucket", "s3:DeleteObject"],
+        "Resource": ["arn:aws:s3:::causedeck-logs", "arn:aws:s3:::causedeck-logs/*"]
       },
       {
         "Effect": "Deny",
@@ -44,9 +36,7 @@
           "s3:PutBucketObjectLockConfiguration",
           "s3:BypassGovernanceRetention"
         ],
-        "Resource": [
-          "arn:aws:s3:::causedeck-logs"
-        ]
+        "Resource": ["arn:aws:s3:::causedeck-logs"]
       }
     ]
   }

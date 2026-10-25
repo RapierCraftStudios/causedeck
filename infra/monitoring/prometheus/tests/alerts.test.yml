@@ -9,7 +9,7 @@ rule_files:
 evaluation_interval: 1m
 
 tests:
-    # service down for 5 minutes
+  # service down for 5 minutes
   - interval: 1m
     input_series:
       - series: 'up{job="loki",instance="loki:3100"}'

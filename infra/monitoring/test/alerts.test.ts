@@ -53,10 +53,17 @@ describe('alert rules', () => {
 
   it('give every alert a severity, a priority and a promtool case', () => {
     const names = [...ruleNames(alerts), ...ruleNames(courtDay)];
-    assert.equal((alerts.match(/severity: (page|ticket|info)/g) ?? []).length, ruleNames(alerts).length);
+    assert.equal(
+      (alerts.match(/severity: (page|ticket|info)/g) ?? []).length,
+      ruleNames(alerts).length,
+    );
     assert.equal((courtDay.match(/severity: page/g) ?? []).length, ruleNames(courtDay).length);
     for (const name of names) {
-      assert.match(promtool, new RegExp(`alertname: ${name}$`, 'm'), `no promtool case for ${name}`);
+      assert.match(
+        promtool,
+        new RegExp(`alertname: ${name}$`, 'm'),
+        `no promtool case for ${name}`,
+      );
     }
   });
 });
@@ -82,13 +89,19 @@ describe('alertmanager routing', () => {
     assert.match(alertmanager, /matchers: \['priority=~"P0\|P1"'\]\n\s+receiver: oncall/);
     assert.match(alertmanager, /receiver: oncall[\s\S]*?continue: true/);
     assert.match(alertmanager, /matchers: \['priority=~"P0\|P1"'\]\n\s+receiver: fallback/);
-    assert.match(alertmanager, /name: oncall\n\s+webhook_configs:\n\s+- url: '__ONCALL_WEBHOOK_URL__'/);
+    assert.match(
+      alertmanager,
+      /name: oncall\n\s+webhook_configs:\n\s+- url: '__ONCALL_WEBHOOK_URL__'/,
+    );
     assert.match(alertmanager, /name: fallback\n\s+email_configs:/);
   });
 
   it('mutes by IST time of day on the ticket and info routes only, never on P0/P1', () => {
     assert.match(alertmanager, /location: Asia\/Kolkata/);
-    const routes = alertmanager.slice(alertmanager.indexOf('  routes:'), alertmanager.indexOf('receivers:'));
+    const routes = alertmanager.slice(
+      alertmanager.indexOf('  routes:'),
+      alertmanager.indexOf('receivers:'),
+    );
     const blocks = routes.split(/\n {4}- matchers:/).slice(1);
     assert.ok(blocks.length >= 4);
     for (const block of blocks) {

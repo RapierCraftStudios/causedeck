@@ -105,6 +105,10 @@ export const PURGE_ORDER = [
   'obligation_event',
   'defect',
   'certified_copy',
+  // Outward drafts (#735): the share log and versions before their draft, then the matter rows.
+  'outward_share_log',
+  'outward_draft_version',
+  'outward_draft',
   'obligation',
   'order',
   'listing',

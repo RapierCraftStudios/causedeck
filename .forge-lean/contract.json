@@ -2,104 +2,37 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "An obligation requires `source_type`, `source_ref` and an anchor (or `manual`), description, owner, due date (nullable only for undated tasks) and status; creation without provenance is rejected.",
+   "quote": "Build validators `outward-draft.ts` (DraftRequest, DraftEdit, ShareRecord, Audience, Language), tables `outward_draft`, `outward_draft_version`, `outward_share_log` with RLS and migration",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "A DB check plus service guard enforce that status `closed` requires a `closed_reason` in (`completed_task`, `lawyer_action`, `not_applicable`) and, for `not_applicable`, non-empty reason text; a direct SQL update violating this fails.",
+   "quote": "AI task `outward_update` (packages/ai/src/tasks, mock fixtures EN/TA/KN, drafting tier)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`reconcileOrder(orderId)` returns the order's directions each marked `obligation`, `not_applicable` (with reason) or `unresolved`; an order is `reconciled` only when no direction is unresolved, and the unresolved count feeds brief readiness (#60).",
+   "quote": "`packages/core/src/outward/{compose,guard,diff,share,templates/en|ta|kn}.ts`, audit events for prepared/edited/shared, `outward.shared` event",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Proposed obligations from extraction (#46) arrive as L2 proposals; confirming creates the obligation with the original anchor and records the confirmer.",
+   "quote": "ADR 0038 (no send path), core-domains entry, and registries (cross-tenant registry, db index test, RLS catalog)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Defects: `raiseDefect` creates a defect obligation with a cure deadline and moves the proceeding to `defects`; `representFiling` moves to `re_presented`; allocation of SR (Madras) or FR (Karnataka) numbers is stored on the proceeding without implying court status.",
+   "quote": "Tests: compose, guard (30+ phrases per language set), diff, share, no-send static test, cross-tenant, sensitive-matter template-only, India-only AI, client_contact requirement.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Certified copies move through applied -> ready -> collected, each transition dated and sourced, and surface in the queue as obligations with a follow-up reminder.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R7",
-   "quote": "`queryQueue` groups obligations as `overdue`, `today`, `this_week`, `later`, `undated`, filterable by matter, owner, kind and source; overdue sort first by age; p95 \u003c 150 ms on the seeded dataset and one query per group.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R8",
-   "quote": "Rescheduling an obligation requires a reason, preserves history in `obligation_event`, and is distinguished from a miss in the missed-obligation metric (deliberate reschedule is not a miss).",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R9",
-   "quote": "Reminders: a job emits in-app reminders for obligations due within the member's lead time and overdue obligations once per day; idempotent; delivery via #23.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R10",
-   "quote": "Roles: owner and advocate manage all; junior manages assigned matters; clerk can manage tasks, defects and copies but not strategy notes; viewer read-only. All checked by `can()` and covered by tests.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R11",
-   "quote": "Every mutation writes an `audit_event`; undo of an L3 task creation cascades correctly (#47 contract).",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R12",
-   "quote": "Obligation due dates are never computed from a generated legal rule; rule-driven limitation dates live in #84 behind a flag.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R13",
-   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R14",
-   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R15",
-   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R16",
-   "quote": "Strategy-bearing descriptions are hidden from clerks via column-scoped views.",
-   "disposition": "defer",
-   "why": "The obligation table has no strategy-note column or flag to scope on; defining one (and the clerk view) is a product/schema decision separate from the service. Clerk role rules in R10 are still delivered.",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R17",
-   "quote": "Jobs: `obligation.reminders` (daily 07:00 IST per workspace).",
+   "quote": "Acceptance criteria of #69 marked [type:unit] and [type:api] that concern core and db.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -107,245 +40,284 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/validators/src/obligation.ts",
-   "change": "zod ObligationInput, ObligationPatch, CloseInput, DefectInput, CertifiedCopyInput, QueueQuery, ReconcileInput; provenance required; reschedule needs reason; add package export and index test entry if the package lists subpaths",
+   "path": "packages/validators/src/outward-draft.ts",
+   "change": "zod DraftRequest, DraftEdit, ShareRecord, Audience (client|senior_counsel|briefing_counsel), Language (en|ta|kn), Tone (formal|brief|warm), share channels (clipboard|whatsapp_link|mailto|download); export from packages/validators/src/index.ts; add outward-draft.test.ts",
    "requirements": [
     "R1",
-    "R2",
-    "R8",
-    "R15"
+    "R6"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/obligation-tracking.ts",
-   "change": "new tenant tables obligation_event, defect, certified_copy (workspace_id, composite FKs, RLS via tenantTable), export from schema/index.ts; extend obligation only with columns truly missing (keep existing enum names)",
+   "path": "packages/db/src/schema/outward-draft.ts",
+   "change": "tenantTable() outward_draft, outward_draft_version, outward_share_log per #69 data contract (workspace_id, FORCE RLS, composite FKs like obligation-tracking.ts); export in schema/index.ts",
    "requirements": [
-    "R5",
-    "R6",
-    "R8",
-    "R14"
+    "R1",
+    "R6"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/migrations",
-   "change": "one new timestamp-named migration + regenerated snapshot/journal for the three tables with RLS; closure check already exists (docket.ts obligation_closure_chk)",
+   "path": "packages/db/migrations/20261025120000_outward_drafts.sql",
+   "change": "CREATE TABLEs, RLS policies on app.workspace_id, plus regenerated drizzle snapshot/journal entry under packages/db/migrations/meta (pick a timestamp later than 20261025095244, or the next free one on the base)",
    "requirements": [
-    "R2",
-    "R14"
+    "R1",
+    "R6"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/auth/src/policy/actions.ts",
-   "change": "add obligation.read/write (and matrix.ts entries, can() snapshot) with owner/advocate all, junior assigned matters, clerk tasks/defects/copies, viewer read",
+   "path": "packages/ai/src/tasks/outward-update.ts",
+   "change": "TaskDef `outward_update` (tier 'drafting', providers bedrock+sarvam, zod narrative-blocks output, promptId outward_update.v1); add id to TASK_IDS in packages/ai/src/types.ts and TASKS in tasks/registry.ts; add EN/TA/KN fixtures under packages/ai/fixtures/mock/outward_update/\u003cinputHash>.json (hashes via inputHash from packages/ai/src/hash.ts) and a task test",
    "requirements": [
-    "R10"
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/obligations/index.ts",
-   "change": "domain barrel plus create.ts, update.ts, close.ts, reopen.ts, due.ts (IST arithmetic, working-day hook, no rule-derived dates), audit_event on every mutation; export from core package.json",
+   "path": "packages/core/src/outward/compose.ts",
+   "change": "composeUpdate: reads confirmed hearing/order/obligation facts with provenance, unconfirmed => 'to be confirmed' flagged line, narrative via the AI gateway (task outward_update), template-only when matter.sensitive, audience client requires a client person, creates draft + system version, audits outward.prepared",
    "requirements": [
-    "R1",
-    "R2",
-    "R8",
-    "R11",
-    "R12"
+    "R3",
+    "R6"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/obligations/reconcile.ts",
-   "change": "reconcileOrder over order.operativeDirections linked by source_order_id + anchor_id; unresolved count exposed for #60",
+   "path": "packages/core/src/outward/templates/en.ts",
+   "change": "structured fact blocks per audience and tone in English (templates/ta.ts and templates/kn.ts likewise)",
    "requirements": [
-    "R3"
+    "R3",
+    "R6"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/src/obligations/defects.ts",
-   "change": "raiseDefect, cureDefect, representFiling via transitionProceeding (never write proceeding.state directly); SR/FR stored on proceeding",
+   "path": "packages/core/src/outward/templates/ta.ts",
+   "change": "Tamil fact blocks per audience and tone",
    "requirements": [
-    "R5"
+    "R3",
+    "R6"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/core/src/obligations/certified-copies.ts",
-   "change": "applied->ready->collected transitions, dated and sourced, backed by an obligation with follow-up",
+   "path": "packages/core/src/outward/templates/kn.ts",
+   "change": "Kannada fact blocks per audience and tone",
    "requirements": [
+    "R3",
     "R6"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/core/src/obligations/queue.ts",
-   "change": "queryQueue: one query per group, filters, overdue by age",
+   "path": "packages/core/src/outward/guard.ts",
+   "change": "guardOutward: reject/strip advice, commitments, fee terms, outcome predictions, citations/authorities, for en, ta and kn phrase sets",
    "requirements": [
-    "R7"
+    "R3",
+    "R6"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/core/src/obligations/reminders.ts",
-   "change": "reminder selection + notify via @causedeck/notifications, once per day per member",
+   "path": "packages/core/src/outward/diff.ts",
+   "change": "diffDraft word-level diff (Indic-safe tokenising) plus saveEdit creating outward_draft_version rows and audit outward.edited (keep in diff.ts or a sibling file under outward/)",
    "requirements": [
-    "R9"
+    "R3",
+    "R6"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/core/src/jobs/definitions/obligation-reminders.ts",
-   "change": "defineJob obligation.reminders (+ per-workspace fan-out), register in jobs/registry.ts; schedule 07:00 Asia/Kolkata in apps/worker/src/schedules.ts",
+   "path": "packages/core/src/outward/share.ts",
+   "change": "recordShared and recordCopied: explicit member action only, writes outward_share_log with channel and final_version_id, sets draft status, audit outward.shared; no job/system path",
    "requirements": [
-    "R9",
-    "R17"
+    "R3",
+    "R6"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/core/src/automation/handlers/obligation-from-direction.ts",
-   "change": "route confirm through createObligation guards (original anchor, confirmer recorded) keeping undo payload shape",
+   "path": "packages/core/src/outward/index.ts",
+   "change": "public barrel plus internal context.ts (scope, can('draft.write'), matter access like obligations/context.ts)",
    "requirements": [
-    "R4",
-    "R11"
+    "R3",
+    "R6"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/core/src/obligations/__tests__/obligations.test.ts",
-   "change": "lifecycle, reconcile, defects, copies, queue (+perf), permissions, direct-SQL closure violation, audit, undo cascade; sibling test files per area allowed",
+   "path": "packages/core/package.json",
+   "change": "add \"./outward\": \"./src/outward/index.ts\" export",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R5",
-    "R6",
-    "R7",
-    "R8",
-    "R10",
-    "R11",
-    "R12"
+    "R3"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/core/src/__tests__/cross-tenant/obligations.test.ts",
-   "change": "B on A denied or sees nothing, A unchanged, incl. two-workspace user; register in packages/db/src/testing/cross-tenant-registry.ts (SERVICE_TESTS / NOT_A_SERVICE)",
+   "path": "packages/core/src/audit/events.ts",
+   "change": "declare outward.prepared, outward.edited, outward.shared (security:false)",
    "requirements": [
-    "R13",
-    "R14"
+    "R3",
+    "R6"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/db/src/seed/obligation-fixtures.ts",
-   "change": "seeded dataset used by the queue p95 test",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "add `outward` domain to CORE_DOMAIN_DEPENDENCIES (workspaces, audit, matter-graph, obligations, ai gateway adapters as needed) and the domain list",
    "requirements": [
-    "R7"
+    "R4"
    ]
   },
   {
    "id": "D16",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "add obligations domain edges (workspaces, audit, matter-graph, automation as needed) and document in docs/engineering/core-domains.md",
+   "path": "docs/engineering/core-domains.md",
+   "change": "add the outward row",
    "requirements": [
-    "R5"
+    "R4"
    ]
   },
   {
    "id": "D17",
-   "path": "docs/adr/0037-obligation-model.md",
-   "change": "ADR (next free number): model, enum-name mapping to the issue's terms, reschedule vs miss, no rule-derived dates",
+   "path": "docs/adr/0038-outward-drafts-no-send-path.md",
+   "change": "ADR (Status/Date/Context/Decision/Consequences per adr:lint): L4 only, no transport, share = clipboard/user-initiated links/download, guard, sensitive template-only; update docs/adr/README.md index",
    "requirements": [
-    "R8",
-    "R12"
+    "R4",
+    "R6"
    ]
   },
   {
    "id": "D18",
-   "path": "packages/db/src/index.test.ts",
-   "change": "root table list + RLS catalog (packages/db/src/__tests__/rls/sql.test.ts) and two-tenant seeders for the new tables; apps/worker registry.test.ts and schedules.test.ts entries",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "register outward_draft, outward_draft_version, outward_share_log (DB_TABLES_TEST) and SERVICE_TESTS entries for the new outward exports (or NOT_A_SERVICE with reason for pure helpers such as guardOutward/diffDraft)",
    "requirements": [
-    "R14",
-    "R17"
+    "R4",
+    "R6"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/db/src/index.test.ts",
+   "change": "add the three tables to the root table list; also add them to packages/db/src/__tests__/rls/sql.test.ts RLS catalog and TABLE_TESTS/two-tenant seeders",
+   "requirements": [
+    "R4",
+    "R6"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "real cases for composeUpdate/saveEdit/recordShared/recordCopied: B on A is denied or sees nothing, A unchanged",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/core/src/outward/__tests__/compose.test.ts",
+   "change": "tests compose.test.ts, guard.test.ts (30+ phrases per language set), diff.test.ts, share.test.ts, no-send.test.ts (static import/job/endpoint scan), cross-tenant.test.ts, sensitive template-only, India-only AI, client requirement, tone",
+   "requirements": [
+    "R5",
+    "R6"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing obligation enum values and column names (docket.ts, enums.ts): timeline.ts, merge-split.ts and their tests read them"
+   "what": "Policy matrix and snapshot unchanged: use existing `draft.write` (packages/auth/src/policy/actions.ts:15, matrix.ts:33); do not add policy actions"
   },
   {
    "id": "P2",
-   "what": "transitionProceeding in packages/core/src/matter-graph/state-machine.ts stays the only writer of proceeding.state; import matter-graph only via its index.ts"
+   "what": "No new job, schedule or worker registration: apps/worker/src/__tests__/registry.test.ts and schedules.test.ts stay unchanged (no auto-share job)"
   },
   {
    "id": "P3",
-   "what": "automation obligation_from_direction undo payload shape (obligationId) and undo cascade in packages/core/src/automation/undo.ts"
+   "what": "AI gateway behaviour (packages/ai/src/gateway.ts sensitive block, India-only residency, ai_call audit) and existing task ids/fixtures unchanged"
   },
   {
    "id": "P4",
-   "what": "No auto-closure, no auto-filing, no court fetching; deadlines are never derived from generated legal rules"
+   "what": "Existing obligation, hearing and order tables and the obligations service (packages/core/src/obligations, packages/db/src/schema/docket.ts) are read only, never altered"
+  },
+  {
+   "id": "P5",
+   "what": "Migration numbering stays contiguous: use the next free timestamp after the base's latest (packages/db/migrations)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/obligations src/__tests__/cross-tenant/obligations.test.ts src/matter-graph/__tests__/merge-split.test.ts src/matter-graph/__tests__/timeline.test.ts src/automation/__tests__/handlers.test.ts src/jobs/registry.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/outward-draft.test.ts src/index.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/ai exec vitest run src/tasks src/__tests__ src/index.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/index.test.ts && pnpm --filter @causedeck/auth exec vitest run src/policy"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/outward src/domains.test.ts src/index.test.ts src/__tests__/cross-tenant/services.test.ts src/audit"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
   },
   {
    "id": "V5",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/follow-up-continuity-memory"
+   "command": "pnpm --filter @causedeck/config exec vitest run test/core-domain-boundaries.test.ts test/eslint-boundaries.test.ts"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm adr:lint"
+  },
+  {
+   "id": "V7",
+   "command": "bash /home/dev/.forge/causedeck-chain/lane-check.sh typecheck"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Keep existing obligation names (status done, closedReasonType task_completed, column source) and map the issue's closed/completed_task/kind terms in the ADR",
-   "justification": "packages/db/src/schema/docket.ts:227-297 already has the closure check, and timeline/merge-split depend on these names",
+   "choice": "Reuse the existing `draft.write` policy action instead of a new `outward.*` action",
+   "justification": "actions.ts:15 and matrix.ts:33 already gate drafting at junior; avoids a policy snapshot change",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Defect cure and re-presentation go through transitionProceeding",
-   "justification": "matter-graph/state-machine.ts:1-10 states it is the only writer of proceeding.state; events.ts:112-125 passes cureDeadline for #67",
-   "source": "doc"
+   "choice": "Model the contract on packages/core/src/obligations (context.ts scope/can/record, tenantTable schema in obligation-tracking.ts)",
+   "justification": "Same-shape domain merged in #725; its CI misses were registry items",
+   "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Reminders job modelled on activity-digest (per-workspace, Asia/Kolkata, once())",
-   "justification": "core/jobs/definitions/activity-digest.ts header; the issue's apps/worker/src/jobs path does not exist, jobs live in core/jobs/definitions",
+   "choice": "`outward.shared` is emitted as an audit event (events.ts) which the activity feed and #86 read, not a new event bus",
+   "justification": "obligation.* events in audit/events.ts:325-336 are the existing pattern; no separate outward bus exists",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Order directions are reconciled by source_order_id + anchor_id",
-   "justification": "order.operativeDirections is jsonb {text, anchorId} with no id (docket.ts:175-191)",
+   "choice": "Minimal client contact reference is a `person` of kind `client` (db/schema/people.ts) because no client_contact table exists",
+   "justification": "The issue allows a minimal contact reference until #82; people.ts:39-58 holds client contact data",
    "source": "spec"
   },
   {
    "id": "K5",
-   "choice": "New workspace dependency edges are limited to core-domains.js obligations entry; no package.json dependency between workspace packages is added",
-   "justification": "packages/config/eslint/core-domains.js:26-29 pattern; core already depends on validators, auth, db, notifications",
-   "source": "lint"
+   "choice": "AI prompt lives in the task file (promptId outward_update.v1), not packages/ai/src/prompts/",
+   "justification": "No prompts directory exists; tasks/summarise.ts uses promptId only",
+   "source": "precedent"
+  },
+  {
+   "id": "K6",
+   "choice": "Language default falls back to the request language then 'en' until #72/#82 supply M6/M2 data",
+   "justification": "No preferred-language columns exist in db/schema; #72 and #82 are open",
+   "source": "spec"
+  },
+  {
+   "id": "K7",
+   "choice": "The #69 criteria in scope are its [type:unit]/[type:api] ones for core and db (compose from confirmed facts with provenance; EN/TA/KN; guard 30+ phrases per language set; unconfirmed => 'to be confirmed'; versions + word diff; action log with lawyer-only shared; no-send static test; India-only AI and sensitive template-only; client requires contact; tone formal/brief/warm; cross-tenant; RLS on new tables; zod inputs). The [type:e2e] criteria and Storybook, i18n catalog, visual and axe ones belong to #736/#737 and are not requirements of this issue",
+   "justification": "#735 body scopes itself to 'Part 1 of #69' backend and names siblings #736 (web) and #737 (e2e)",
+   "source": "spec"
   }
  ]
 }

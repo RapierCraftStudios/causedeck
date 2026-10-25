@@ -43,3 +43,7 @@ A lawyer wants an evening brief of tomorrow's court day, a morning note when tod
 
 - Failures retry with backoff and dead-letter through the registry, and show in the admin health feed.
 - Local scheduled notifications on mobile remain a follow-up; server push is the backup path.
+
+## Revisit when
+
+- A mobile client ships local scheduled notifications, or per-member quiet hours replace the fixed freeze-safe evening window.

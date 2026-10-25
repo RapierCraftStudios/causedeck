@@ -89,6 +89,7 @@ describe('namespaced catalogs (#174)', () => {
         'auth',
         'billing',
         'bootstrapImport',
+        'brief',
         'calendar',
         'calendarView',
         'camera',

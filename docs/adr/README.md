@@ -48,6 +48,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0038](0038-brief-as-derived-view.md) | The brief is a derived view | Proposed | 2026-10-25 | — |
 | [0039](0039-reminder-scheduling.md) | Court-day reminder scheduling | Proposed | 2026-10-25 | — |
 | [0040](0040-court-day-board-interaction-model.md) | The court-day board interaction model | Proposed | 2026-10-25 | — |
+| [0041](0041-brief-print-via-css.md) | Brief printing through a print stylesheet | Proposed | 2026-10-25 | — |
 
 ## Statuses
 

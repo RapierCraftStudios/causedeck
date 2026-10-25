@@ -1,0 +1,57 @@
+{
+  "offline": {
+    "title": "Offline",
+    "body": "You are offline. Saved court days and briefs remain available once synced.",
+    "banner": {
+      "offline": "You are offline. Showing what was saved on this device.",
+      "savedAt": "Saved {time}",
+      "stale": "Saved {time}. This may be out of date.",
+      "backOnline": "Back online. Syncing."
+    },
+    "sync": {
+      "label": "Sync status",
+      "idle": "Everything is saved",
+      "syncing": "Syncing",
+      "pending": "{count, plural, one {# change waiting to sync} other {# changes waiting to sync}}",
+      "failed": "Some changes could not sync",
+      "retry": "Try again",
+      "lastSynced": "Last synced {time}"
+    },
+    "courtDay": {
+      "savedFor": "Court day for {date} is saved on this device",
+      "notSaved": "Not saved offline",
+      "unavailable": "This court day was not saved. Connect to load it."
+    },
+    "brief": {
+      "savedFor": "Brief saved on this device",
+      "notSaved": "Not saved offline",
+      "unavailable": "This brief was not saved. Connect to load it."
+    },
+    "outbox": {
+      "queued": "Queued",
+      "uploading": "Uploading",
+      "failed": "Failed",
+      "sent": "Sent",
+      "conflict": "Needs review"
+    },
+    "storage": {
+      "title": "Offline storage",
+      "used": "{used} of {quota} used",
+      "days": "{count, plural, one {# court day saved} other {# court days saved}}",
+      "clear": "Clear saved data",
+      "cleared": "Saved data removed from this device",
+      "unsupported": "This browser cannot save data for offline use."
+    },
+    "privacy": {
+      "title": "What is kept on this device",
+      "body": "Court days and briefs for the next few days are kept encrypted on this device so you can read them without a connection. They are removed when you sign out or switch workspace.",
+      "lostPhone": "If you lose this device, signing out from another device does not erase it. Use the device lock, and clear saved data before you hand a device over.",
+      "clearConfirm": "Remove all saved court days and briefs from this device?"
+    },
+    "errors": {
+      "decrypt": "Saved data could not be read. Connect to load it again.",
+      "quota": "There is not enough space on this device to save more.",
+      "unknown": "Something went wrong with offline storage."
+    }
+  }
+}

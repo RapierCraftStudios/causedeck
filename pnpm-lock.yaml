@@ -249,6 +249,9 @@ catalogs:
     eslint-plugin-unicorn:
       specifier: 65.0.0
       version: 65.0.0
+    fake-indexeddb:
+      specifier: 6.2.6
+      version: 6.2.6
     fast-check:
       specifier: 4.10.2
       version: 4.10.2
@@ -819,6 +822,9 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)
+      fake-indexeddb:
+        specifier: 'catalog:'
+        version: 6.2.6
       jsdom:
         specifier: 'catalog:'
         version: 27.0.1
@@ -7687,6 +7693,10 @@ packages:
     resolution: {integrity: sha512-GDhU9ntwuKyGXdZBUgTIe+vXnWj0fppUEtMDL0+idd5Sta8TGpHssn/eusA9mrPr9qNDym6SxAYZjNvCn/9RBg==}
     engines: {node: '>= 10.17.0'}
     hasBin: true
+
+  fake-indexeddb@6.2.6:
+    resolution: {integrity: sha512-ihhmr0KoET51jT8R4YhbUYuLLvr1qqO6INISygtN16i8loR8kAxtAUr4+EKHTSMjL+lggaAn4OC7DRqzrNgnuQ==}
+    engines: {node: '>=18'}
 
   fast-check@4.10.2:
     resolution: {integrity: sha512-iK2f+YrcmoeGqk6fA0ea2bptcu/itMIm4NfEozq6N25+aG6h7s5HZbB/k1aV7b5w5sFLMCbbtRUsTVR+BgC3xw==}
@@ -16474,6 +16484,8 @@ snapshots:
       '@types/yauzl': 2.10.3
     transitivePeerDependencies:
       - supports-color
+
+  fake-indexeddb@6.2.6: {}
 
   fast-check@4.10.2:
     dependencies:

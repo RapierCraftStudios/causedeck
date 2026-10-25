@@ -12,6 +12,7 @@ export default defineConfig({
       '__tests__/**/*.test.{ts,tsx}',
       'app/**/__tests__/**/*.test.ts',
       'components/**/__tests__/**/*.test.{ts,tsx}',
+      'lib/**/*.test.ts',
       'src/**/*.test.ts',
     ],
     // Cross-tenant suites need the test database; `vitest.tenancy.config.ts` runs them (#209).

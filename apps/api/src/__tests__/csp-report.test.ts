@@ -12,6 +12,7 @@ import {
   CSP_REPORT_PATH,
   CSP_REPORT_RATE_LIMIT,
   cspReportRouter,
+  type CspReportDeps,
   parseCspReports,
   sanitiseUrl,
 } from '../routes/csp-report.ts';
@@ -19,10 +20,10 @@ import {
 function harness(limit = CSP_REPORT_RATE_LIMIT) {
   const logs: { fields: unknown; message: string }[] = [];
   const counts: { directive: string }[] = [];
-  const logger = {
-    info: (fields: unknown, message: string) => logs.push({ fields, message }),
-    warn: (fields: unknown, message: string) => logs.push({ fields, message }),
+  const record = (fields: unknown, message?: string) => {
+    logs.push({ fields, message: message ?? '' });
   };
+  const logger = { info: record, warn: record } as unknown as CspReportDeps['logger'];
   const app = createRouter();
   app.onError(errorHandler({ ...logger, debug: () => undefined, error: () => undefined } as never));
   app.use('*', bodyLimit({ groups: { [CSP_REPORT_PATH]: CSP_REPORT_MAX_BYTES } }));

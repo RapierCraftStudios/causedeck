@@ -70,7 +70,7 @@ rules:
       An automation level above L4 (L5..L9) must not exist: nothing auto-sends, files or pays
       (PRD TR-1, `pnpm check:no-l5`).
     pattern-either:
-      - pattern: "=~/^L[5-9]$/"
+      - pattern: '=~/^L[5-9]$/'
       - patterns:
           - pattern: '{ ..., automationLevel: $N, ... }'
           - metavariable-comparison:

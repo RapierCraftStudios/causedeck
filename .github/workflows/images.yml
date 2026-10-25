@@ -18,6 +18,7 @@ on:
       - '.github/workflows/images.yml'
   push:
     branches: [main]
+    tags: ['v*']
 
 permissions:
   contents: read
@@ -30,7 +31,7 @@ env:
   NODE_TAG: node:22.23.0-bookworm-slim
   PG_TAG: pgvector/pgvector:0.8.7-pg17
   WALG_VERSION: v3.0.5
-  TRIVY_IMAGE: aquasec/trivy:0.58.1
+  TRIVY_IMAGE: aquasec/trivy:0.58.1@sha256:ab70a02200597efa04748f210f793936eb647cbcdb0ea69cc30b226d6f5a22c7
   COSIGN_IMAGE: gcr.io/projectsigstore/cosign:v2.4.1
   BINFMT_IMAGE: tonistiiv/binfmt:qemu-v9.2.0
 
@@ -112,11 +113,11 @@ jobs:
   publish:
     name: Publish ${{ matrix.svc }}
     needs: verify
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
-      contents: read
+      contents: write # attach SBOMs to the release on a tag build
       packages: write
       id-token: write
     strategy:
@@ -170,9 +171,12 @@ jobs:
         run: |
           set -euo pipefail
           trivy() {
-            docker run --rm -e TRIVY_USERNAME -e TRIVY_PASSWORD -v "$RUNNER_TEMP:/out" "$TRIVY_IMAGE" "$@"
+            docker run --rm -e TRIVY_USERNAME -e TRIVY_PASSWORD -v "$RUNNER_TEMP:/out" \
+              -v "$GITHUB_WORKSPACE/infra/security/trivy:/trivy:ro" "$TRIVY_IMAGE" "$@"
           }
-          trivy image --severity CRITICAL --ignore-unfixed --exit-code 1 "$REF@$DIGEST"
+          # Config and ignore file (entries expire) live in infra/security/trivy.
+          trivy image --config /trivy/trivy.yaml --ignorefile /trivy/.trivyignore.yaml \
+            --severity CRITICAL --ignore-unfixed --exit-code 1 "$REF@$DIGEST"
           trivy image --format cyclonedx --output /out/sbom.cdx.json "$REF@$DIGEST"
       - name: Sign and attach SBOM (cosign keyless)
         run: |
@@ -185,5 +189,17 @@ jobs:
           }
           cosign sign --yes "$REF@$DIGEST"
           cosign attest --yes --type cyclonedx --predicate /out/sbom.cdx.json "$REF@$DIGEST"
+      - name: Attach SBOM to the release (tag builds)
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SVC: ${{ matrix.svc }}
+        run: |
+          set -euo pipefail
+          cp "$RUNNER_TEMP/sbom.cdx.json" "$RUNNER_TEMP/sbom-$SVC.cdx.json"
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag
+          gh release upload "$GITHUB_REF_NAME" "$RUNNER_TEMP/sbom-$SVC.cdx.json" --clobber
       - name: Tag main
+        if: ${{ github.ref == 'refs/heads/main' }}
         run: docker buildx imagetools create -t "$REF:main" "$REF@$DIGEST"

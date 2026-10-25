@@ -6,10 +6,24 @@ updates:
     schedule:
       interval: weekly
     groups:
+      # Weekly: one grouped PR for version updates.
       catalog:
+        applies-to: version-updates
+        patterns: ['*']
+      # Immediately (not on the weekly schedule): security fixes, grouped per ecosystem so one advisory
+      # does not wait for the rest. Policy: docs/engineering/ci.md, infra/runbooks/vuln-triage.md.
+      security:
+        applies-to: security-updates
         patterns: ['*']
   # Workflows plus the composite actions under .github/actions/.
   - package-ecosystem: github-actions
     directories: ['/', '/.github/actions/*']
     schedule:
       interval: weekly
+    groups:
+      actions:
+        applies-to: version-updates
+        patterns: ['*']
+      actions-security:
+        applies-to: security-updates
+        patterns: ['*']

@@ -363,6 +363,7 @@
         "listing": "Cause list",
         "draft": "Drafts",
         "audit": "Audit log",
+        "court_day": "Court day",
         "export": "Export",
         "support": "Support",
         "shell": "Workspace areas"
@@ -410,6 +411,9 @@
         },
         "audit": {
           "read": "Read and export the audit log"
+        },
+        "court_day": {
+          "view_all": "See the whole workspace's court day"
         },
         "export": {
           "run": "Export all workspace data"

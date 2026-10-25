@@ -54,6 +54,13 @@ export const PURGE_ORDER = [
   'notification',
   'notification_pref',
   'notification_setting',
+  // Court-day reminder ledger (#64): cites the member, so it goes before the members.
+  'reminder_dispatch',
+  // WhatsApp number link (#678): the pending challenge and the verified link cite only the user.
+  'whatsapp_otp_challenge',
+  'whatsapp_link',
+  // Inbound WhatsApp ledger (#680): provider message ids of the member's forwarded media.
+  'whatsapp_inbound_message',
   // News digest (#481): the member's followed areas and digest time (news_item is global).
   'news_pref',
   'invitation',
@@ -98,6 +105,8 @@ export const PURGE_ORDER = [
   'task',
   'obligation',
   'order',
+  // Brief state (#60): cites a listing, so it goes first.
+  'brief_state',
   'listing',
   'bench_change_alert',
   'bench_roster_entry',
@@ -108,6 +117,10 @@ export const PURGE_ORDER = [
   // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.
   'case_status_snapshot',
   'case_watch',
+  // Court day (#58): the marker cites a hall and the snapshot a forum and a capture; all three
+  // are purged later, so both go before them.
+  'court_day_marker',
+  'list_snapshot',
   'review_correction',
   'proceeding_state_change',
   'proceeding_link',

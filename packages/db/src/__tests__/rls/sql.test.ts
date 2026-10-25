@@ -168,6 +168,10 @@ describe('row-level security catalog', () => {
         'portfolio_case',
         'portfolio_panel_advocate',
 
+        // WhatsApp number link and OTP challenge (#678); inbound dedupe ledger (#680).
+        'whatsapp_link',
+        'whatsapp_otp_challenge',
+        'whatsapp_inbound_message',
         // Enterprise onboarding (#682).
         'sso_provider',
         'scim_token',
@@ -178,6 +182,16 @@ describe('row-level security catalog', () => {
         // Case-status watch (#589).
         'case_watch',
         'case_status_snapshot',
+
+        // Court-day marker and list snapshots (#58).
+        'court_day_marker',
+        'list_snapshot',
+
+        // Brief state (#60).
+        'brief_state',
+
+        // Court-day reminders (#64).
+        'reminder_dispatch',
 
         // Review and correction queue (#518).
         'review_correction',

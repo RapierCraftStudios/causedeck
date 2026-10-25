@@ -330,6 +330,15 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: "A capture's results were moved to another matter",
   },
+  // The lawyer's manual "court is at item N" hall marker (#58): an internal note, ids and numbers only.
+  'court_day.marker_set': {
+    security: false,
+    description: 'A manual court-is-at-item marker was set for a hall',
+  },
+  'court_day.marker_cleared': {
+    security: false,
+    description: 'A manual court-is-at-item marker was cleared',
+  },
 } as const satisfies Record<string, AuditActionSpec>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

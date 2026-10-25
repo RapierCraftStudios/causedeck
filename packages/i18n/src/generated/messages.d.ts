@@ -1321,6 +1321,7 @@ export type Messages = {
         listing: string;
         draft: string;
         audit: string;
+        court_day: string;
         export: string;
         support: string;
         shell: string;
@@ -1368,6 +1369,9 @@ export type Messages = {
         };
         audit: {
           read: string;
+        };
+        court_day: {
+          view_all: string;
         };
         export: {
           run: string;
@@ -2699,6 +2703,68 @@ export type Messages = {
       updated: string;
     };
   };
+  reminders: {
+    settings: {
+      title: string;
+      description: string;
+      evening: {
+        label: string;
+        hint: string;
+      };
+      morning: {
+        label: string;
+        hint: string;
+      };
+      outcomeMissing: {
+        label: string;
+        hint: string;
+      };
+      time: string;
+      delay: string;
+      minutes: string;
+      channels: {
+        in_app: string;
+        push: string;
+        email: string;
+      };
+      loading: string;
+      error: string;
+      retry: string;
+      saved: string;
+      denied: string;
+      saving: string;
+    };
+    email: {
+      evening: {
+        subject: string;
+        preview: string;
+        heading: string;
+        body: string;
+        cta: string;
+      };
+      morning: {
+        subject: string;
+        preview: string;
+        heading: string;
+        body: string;
+        cta: string;
+      };
+      outcomeMissing: {
+        subject: string;
+        preview: string;
+        heading: string;
+        body: string;
+        cta: string;
+      };
+      note: string;
+    };
+    inApp: {
+      eveningBody: string;
+      eveningNames: string;
+      morningBody: string;
+      outcomeBody: string;
+    };
+  };
   courtInsights: {
     metaTitle: string;
     title: string;
@@ -3624,6 +3690,7 @@ export type Messages = {
         email: string;
         ics: string;
         whatsapp_export: string;
+        whatsapp: string;
         bulk_import: string;
         manual: string;
       };
@@ -3971,6 +4038,34 @@ export type Messages = {
         empty: string;
         failed: string;
       };
+    };
+  };
+  whatsappLink: {
+    title: string;
+    description: string;
+    consent: string;
+    numberLabel: string;
+    numberHint: string;
+    sendCode: string;
+    codeLabel: string;
+    codeSent: string;
+    verify: string;
+    linked: string;
+    categoriesTitle: string;
+    categories: {
+      courtBoard: string;
+      statusOrder: string;
+      digestEndOfDay: string;
+    };
+    unlink: string;
+    unlinked: string;
+    saved: string;
+    loadError: string;
+    error: {
+      consent: string;
+      invalid: string;
+      conflict: string;
+      generic: string;
     };
   };
   bootstrapImport: {

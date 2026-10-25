@@ -207,6 +207,14 @@ describe('notify: channels and preferences', () => {
           digest: 'instant',
           locked: false,
         },
+        // WhatsApp (#678) is in no category's defaults: off until the member links a number.
+        {
+          category: 'security.alert',
+          channel: 'whatsapp',
+          enabled: false,
+          digest: 'instant',
+          locked: false,
+        },
       ]);
     });
   });
@@ -413,7 +421,11 @@ describe('preferences page: digest selector and court hours (#199)', () => {
         } else if (
           p.category === 'digest.daily' ||
           p.category === 'digest.end_of_day' ||
-          p.category === 'digest.news'
+          p.category === 'digest.news' ||
+          // Court-day reminders (#64) stay instant: the digest selector does not batch them.
+          p.category === 'reminder.evening' ||
+          p.category === 'reminder.morning' ||
+          p.category === 'reminder.outcome_missing'
         ) {
           expect(p).toMatchObject({ enabled: true, digest: 'instant' });
         } else {

@@ -2,234 +2,419 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add the better-auth SSO plugin (new catalog dependency in pnpm-workspace.yaml and packages/auth/package.json)",
+   "quote": "A scheduler enqueues per-member jobs at the member's configured local time (default 20:00 and 07:00 Asia/Kolkata) and the evening job fires only when the member has at least one listing tomorrow. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "organisation-scoped provider config using sso_provider",
+   "quote": "Each reminder is idempotent through `reminder_dispatch(member_id, kind, date)` unique key; a retried job sends nothing twice. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "SSO sign-in entry on the web sign-in page",
+   "quote": "Evening brief content: count of listings, halls, clashes, briefs below readiness 60, and obligations due tomorrow, with a deep link to `/tomorrow`; no party names appear in push payloads (they appear only in-app). [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "an owner settings page to configure it",
+   "quote": "Morning job sends only when the list diff for today is non-empty and summarises added, moved and removed items with a deep link to the diff sheet. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "rate limits and audit rows",
+   "quote": "Outcome-missing reminder fires once per hearing at the configured delay (default 90 minutes after the last item in that hall or 16:30) for appearances with no confirmed outcome, to the appearing member and, for delegated appearances, the owner. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Acceptance: an organisation can sign in through SSO. [type:integration]",
+   "quote": "Members can disable each kind and each channel (in-app, push, email) in preferences; opt-outs are respected and tested. [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "Quiet-period guard: no reminders are sent on court holidays with no listings and none are scheduled inside the change-freeze windows by deploy tooling; clock handling is tested across IST with a fake clock. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "Email goes through the console transport in dev and CI and SES when configured; push uses VAPID web push through the service worker. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "All recipients are workspace members; a static test asserts there is no code path that addresses a client or external email. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "Failures are retried with backoff then dead-lettered through the job registry (#15 conventions) and surface in the admin health feed. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "Settings card renders in all states (loading, error, saved, denied) and is accessible; the whole control is keyboard operable. [type:e2e]",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Playwright e2e/a11y run in CI on ship PRs and nightly (never locally); in lane the card is covered by a jsdom component test of all four states and keyboard operation."
+  },
+  {
+   "id": "R12",
+   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both. [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R13",
+   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "Local scheduled notifications are the primary path for mobile where the PWA supports it, with server push as backup (PRD recovery table).",
+   "disposition": "defer",
+   "why": "Needs a service-worker/PWA local-notification scheduler that is client work with its own device testing; this change delivers the server push backup path. Follow-up issue."
+  },
+  {
+   "id": "R16",
+   "quote": "none are scheduled inside the change-freeze windows by deploy tooling",
+   "disposition": "defer",
+   "why": "Deploy tooling lives outside this repo's app code; this change keeps the evening slot inside 18:00-23:00 and the morning job at 07:00 (the existing freeze-safe window used by the #49 digest) and records the constraint in the ADR. Tooling enforcement is separate."
+  },
+  {
+   "id": "R17",
+   "quote": "Real credentials: #110 (SES). This is NOT a dependency line.",
+   "disposition": "not-applicable",
+   "evidence": "packages/notifications/src/email/ses-transport.ts and console-transport.ts already exist; transport is chosen by config, no change needed."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "pnpm-workspace.yaml",
-   "change": "Add catalog entry for @better-auth/sso pinned to the version matching better-auth 1.7.10 (verify on the registry).",
+   "path": "packages/validators/src/reminders.ts",
+   "change": "zod `ReminderPrefs` (per kind: enabled, time/delay, channels) and `ReminderPayload` ({workspaceId, memberId, date}); export from packages/validators/src/index.ts; add reminders.test.ts. No `any`.",
    "requirements": [
-    "R1"
+    "R1",
+    "R6",
+    "R14"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/auth/package.json",
-   "change": "Add \"@better-auth/sso\": \"catalog:\" to dependencies; update pnpm-lock.yaml via pnpm install (delete node_modules first if EACCES).",
+   "path": "packages/validators/src/index.ts",
+   "change": "re-export reminders schemas.",
    "requirements": [
-    "R1"
+    "R14"
    ]
   },
   {
    "id": "D3",
-   "path": "pnpm-lock.yaml",
-   "change": "Lockfile update for the new dependency.",
+   "path": "packages/db/src/schema/reminder.ts",
+   "change": "tenantTable `reminder_dispatch(id, workspace_id, member_id, kind, for_date, channel, sent_at)` with unique (member_id, kind, for_date, channel), FORCE RLS via tenantTable, FK to organization.",
    "requirements": [
-    "R1"
+    "R2",
+    "R13"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/auth/src/server.ts",
-   "change": "Register the sso plugin in createAuth mapped onto sso_provider (organisation-scoped, enabled-only), add 'sso' to SignInMethod and signInMethod() for the SSO callback paths, add SSO rate-limit customRules and a hooks.before per-domain limit, record sso sign-in success/failure through the SecurityEventRecorder, provision SSO users as plain members (never owner).",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "export the reminder schema.",
    "requirements": [
-    "R1",
-    "R2",
-    "R5",
-    "R6"
+    "R13"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/auth/src/client.ts",
-   "change": "Add ssoClient() plugin to createCauseDeckAuthClient.",
+   "path": "packages/db/migrations/",
+   "change": "new timestamped migration for reminder_dispatch (+ regenerated meta snapshot; use the next free timestamp after 20261025061924_brief_state, generated with drizzle-kit) including RLS policy on app.workspace_id and grants like sibling tenant tables; plus owner-defined SQL function (like app_notification_digest_targets) if the scheduler needs cross-workspace target listing.",
    "requirements": [
-    "R3"
+    "R2",
+    "R13"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/auth/src/rate-limit.ts",
-   "change": "Add SSO limits (per IP per window, per domain-hash key via consumeRateLimit) and a key helper.",
+   "path": "packages/db/src/index.test.ts",
+   "change": "add reminder_dispatch to the root table list.",
    "requirements": [
-    "R5"
+    "R13"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/auth/src/sso.ts",
-   "change": "New: SSO helpers (domain normalisation, provider config validation, plugin schema mapping) with unit tests in packages/auth/src/__tests__/sso.test.ts.",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "add reminder_dispatch to the RLS catalog; also TABLE_TESTS/registry and the two-tenant seeders used by the rls cross-tenant suite.",
    "requirements": [
-    "R2",
-    "R6"
+    "R12",
+    "R13"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/db/src/schema/enterprise.ts",
-   "change": "Only if the installed plugin schema cannot map onto the table: additive nullable columns (plus migration with next free number and regenerated snapshot) and a narrow domain-lookup function exposing id/protocol/enabled but never config. Update packages/db/src/index.test.ts and RLS catalog tests if touched.",
+   "path": "packages/core/src/court-day/reminders.ts",
+   "change": "`buildEveningBrief`, `buildMorningDiff`, `findMissingOutcomes`: pure builders over court-day data (listings tomorrow, halls, clashes via detectClashes, briefs with computeReadiness \u003c 60, open obligations due tomorrow; list diff via diffLists on list_snapshot; hearings with null outcome, delay default 90 min after last item in hall or 16:30, delegated appearance also targets the owner). Push-safe payload type carries counts only; party names only in in-app body. Export from court-day/index.ts. Add reminders.test.ts with fake clock across IST and a no-listings/holiday skip.",
    "requirements": [
-    "R2",
-    "R6"
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R7",
+    "R14"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/core/src/audit/events.ts",
-   "change": "Add audit event types for SSO provider create/update/delete/enable and an sso sign-in method; update packages/core/src/audit/security-events.ts accordingly and their tests.",
+   "path": "packages/core/src/court-day/index.ts",
+   "change": "export the reminder builders.",
    "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/core/src/workspaces/sso.ts",
-   "change": "New owner-only core service (list/upsert/delete/enable provider for a workspace, writes audit row, never returns config secrets), exported via workspaces index; register in packages/db/src/testing/cross-tenant-registry.ts SERVICE_TESTS with real cases in packages/core/src/__tests__/cross-tenant/services.test.ts; update docs/engineering/core-domains.md only if a cross-domain import is added.",
-   "requirements": [
-    "R2",
+    "R3",
     "R4",
     "R5"
    ]
   },
   {
-   "id": "D11",
-   "path": "apps/web/app/(public)/sign-in/sso-form.tsx",
-   "change": "New SSO entry (work email -> start SSO) rendered from sign-in-form.tsx/page.tsx; same response for unknown domains (no enumeration); test in apps/web/__tests__/sign-in.test.tsx.",
+   "id": "D10",
+   "path": "packages/core/src/jobs/definitions/reminders.ts",
+   "change": "Jobs `system.reminder.schedule` (cron; evening slot within 18:00-23:00, 07:00), `reminder.evening`, `reminder.morning`, `reminder.outcome_missing` with payload {workspaceId, memberId, date}; follow activity-digest.ts structure (fan-out per workspace via owner-defined targets function, per-member job, retry {limit 3, backoff}, workspaceTimezone/appLink/notificationJobDeps from notification-deliver.ts). Insert reminder_dispatch row per channel with ON CONFLICT DO NOTHING before sending; skip when conflict. Respect category prefs per channel, isSuppressed, active members only; recipient always a member row's user (never client/external email). Add reminders.test.ts (retry sends nothing twice, opt-outs, non-member skipped, no-listings skipped).",
    "requirements": [
-    "R3"
+    "R1",
+    "R2",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "register the new job definitions (and the typeof union at the end of the file).",
+   "requirements": [
+    "R10"
    ]
   },
   {
    "id": "D12",
-   "path": "apps/web/app/(app)/w/[slug]/settings/sso/page.tsx",
-   "change": "New owner-only settings page with actions.ts (workspaceAction, zod), loading.tsx, error.tsx; add its actions to ACTIONS and probe inputs in apps/web/__tests__/cross-tenant-actions.test.ts; link from settings nav.",
+   "path": "packages/notifications/src/categories.ts",
+   "change": "add categories `reminder.evening`, `reminder.morning`, `reminder.outcome_missing` (defaults in_app, push, email; not mandatory) so per-kind/per-channel opt-out uses existing notification_pref; update any category list tests.",
    "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/i18n/src/messages/en/auth.json",
-   "change": "Add SSO copy for sign-in and settings in en, kn and ta message files (use the existing auth namespace, or a new namespace registered in packages/i18n/src/catalog.ts and __tests__/catalog.test.ts).",
-   "requirements": [
-    "R3",
-    "R4"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "docs/engineering/auth.md",
-   "change": "Document the SSO plugin, domain lookup, provisioning role, rate limits (rate-limit table section) and audit events.",
-   "requirements": [
-    "R5",
     "R6"
    ]
   },
   {
+   "id": "D13",
+   "path": "packages/notifications/src/email/templates/evening-brief.tsx",
+   "change": "React Email template: serif heading, one short paragraph, button 'Open tomorrow', plain-text alternative; register in the email render registry. Same for morning-diff.tsx and outcome-missing.tsx (separate files in the same directory) with tests in packages/notifications/src/email/__tests__/reminders.test.tsx.",
+   "requirements": [
+    "R3",
+    "R4",
+    "R5",
+    "R8"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/notifications/src/email/render.ts",
+   "change": "add the three template names to the render registry/types (adjust messages.ts i18n keys if the renderer takes translations there).",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
    "id": "D15",
-   "path": "packages/auth/src/__tests__/sso-sign-in.test.ts",
-   "change": "Integration test: mocked OIDC IdP, a user at a configured, enabled domain signs in via SSO and becomes a member of the organisation; disabled/unknown domain fails; rate limit returns 429; audit row recorded.",
+   "path": "packages/i18n/src/messages/en/reminders.json",
+   "change": "new `reminders` namespace (settings card labels, states, email/push copy: push generic \"Tomorrow's court day is ready\"); add kn/ta files (packages/i18n/src/messages/kn/reminders.json, packages/i18n/src/messages/ta/reminders.json); register in packages/i18n/src/catalog.ts NAMESPACES and packages/i18n/src/__tests__/catalog.test.ts; regenerate packages/i18n/src/generated with `pnpm --filter @causedeck/i18n i18n:types`.",
    "requirements": [
     "R6",
-    "R5"
+    "R11"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/_reminders-card.tsx",
+   "change": "client card: rows Evening brief (time, default 8:00 pm), Morning changes (7:00 am), Outcome missing (delay), each with in-app/push/email toggles; states skeleton, error+retry, saved check (180 ms, prefers-reduced-motion 100 ms opacity fade), denied for viewers; labelled switches, typed time inputs; 360 stacked, 768/1280 two-column grid. Render it from settings/notifications/page.tsx. Add component test for the four states and keyboard operation.",
+   "requirements": [
+    "R6",
+    "R11"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/reminders-actions.ts",
+   "change": "'use server' thin async actions via workspaceAction (get/set reminder preferences, input validated with validators; user is ctx.userId, input never names a user); same pattern as notifications/actions.ts.",
+   "requirements": [
+    "R6",
+    "R12",
+    "R14"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
+   "change": "load reminder preferences and render the reminders card.",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "register the new actions module in ACTIONS, probe inputs and the per-feature 'under B's own workspace' test.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "SERVICE_TESTS entries for each new runtime @causedeck/core export (with real cases in packages/core/src/__tests__/cross-tenant/services.test.ts) or NOT_A_SERVICE with reason for pure builders.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "cross-tenant cases: B on A is denied or sees nothing; A unchanged, including a user in both workspaces.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "add the new job names to the ordered definition list.",
+   "requirements": [
+    "R10"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "assert the new scheduled cron(s) and their Asia/Kolkata timezone.",
+   "requirements": [
+    "R1",
+    "R7"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "docs/adr/0039-reminder-scheduling.md",
+   "change": "ADR: slot scheduling in IST, dispatch-row idempotency, push payload privacy, freeze-window-safe slots, jobs in core (not apps/worker/src/jobs).",
+   "requirements": [
+    "R7",
+    "R16"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "docs/engineering/core-domains.md",
+   "change": "only if court-day or jobs gains a new cross-domain import (briefs, notifications): update CORE_DOMAIN_DEPENDENCIES (packages/core/src/domains*.ts / packages/config eslint core-domains) and this doc in the same change; import other domains only through their index.ts.",
+   "requirements": [
+    "R3"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Magic link, passkey, Google and 2FA sign-in behaviour and rate limits in packages/auth/src/server.ts (existing packages/auth/src/__tests__/server.test.ts must pass unchanged)."
+   "what": "Existing end-of-day digest jobs and registry order semantics in packages/core/src/jobs/definitions/activity-digest.ts (append new definitions; do not reorder existing ones except as the registry test requires)."
   },
   {
    "id": "P2",
-   "what": "createAuth(CreateAuthDeps) signature and the Auth type used by apps/web/lib/auth.ts and the admin console (disableSignUp, sessionExpiresInSeconds)."
+   "what": "Existing notification categories, defaults and getPreferences/setPreference behaviour in packages/notifications/src/categories.ts and service.ts."
   },
   {
    "id": "P3",
-   "what": "sso_provider table contract from #682: workspace_id RLS isolation, unique domain, config never exported (packages/db/src/schema/enterprise.ts, packages/db/src/__tests__/enterprise-schema.test.ts)."
+   "what": "apps/web settings/notifications/actions.ts, preferences-form.tsx and whatsapp-actions.ts keep working (page.tsx only gains the reminders card)."
   },
   {
    "id": "P4",
-   "what": "Existing SecurityEventRecorder interface consumers (packages/core/src/audit/security-events.ts) stay backward compatible; new methods have no-op defaults in noopSecurityEventRecorder."
+   "what": "court-day service API (getCourtDay, detectClashes, diffLists, snapshotList) in packages/core/src/court-day: reuse, do not change signatures."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/auth exec vitest run src/__tests__/sso.test.ts src/__tests__/sso-sign-in.test.ts src/__tests__/server.test.ts src/__tests__/security-events.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/court-day/reminders.test.ts src/jobs/definitions/reminders.test.ts src/domains.test.ts src/__tests__/cross-tenant/services.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/audit --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/reminders.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/sign-in.test.tsx __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/notifications exec vitest run src/email/__tests__/reminders.test.tsx src/index.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/enterprise-schema.test.ts src/index.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   },
   {
    "id": "V6",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts __tests__/reminders-card.test.tsx __tests__/reminders-actions.test.ts"
+  },
+  {
+   "id": "V7",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
+  },
+  {
+   "id": "V8",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/prepare-execute"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "New dependency @better-auth/sso added to the pnpm catalog and packages/auth only (third-party, not a workspace package).",
-   "justification": "Issue text mandates it; sibling plugin precedent @better-auth/passkey at pnpm-workspace.yaml:55 and packages/auth/package.json:29.",
-   "source": "spec"
-  },
-  {
-   "id": "K2",
-   "choice": "Provider writes go through an owner-only core service, not the plugin's registration endpoint; the plugin is mapped onto the existing sso_provider table.",
-   "justification": "Table is tenant-scoped under FORCE RLS with secret config (packages/db/src/schema/enterprise.ts:45-70); workspace-scoped audit and owner policy live in core (packages/auth/src/policy/matrix.ts:10).",
+   "choice": "Define the reminder jobs in packages/core/src/jobs/definitions/reminders.ts, not apps/worker/src/jobs/ as the issue lists.",
+   "justification": "apps/worker has no jobs dir; every job is a core definition registered in packages/core/src/jobs/registry.ts (activity-digest.ts, registry.ts:~171) and the worker runs the registry (apps/worker/src/worker.ts, schedules.ts:10).",
    "source": "precedent"
   },
   {
+   "id": "K2",
+   "choice": "Keep a dedicated reminder_dispatch table for idempotency even though once() exists.",
+   "justification": "The issue's acceptance criteria require the (member_id, kind, for_date[, channel]) unique key, and per-channel dispatch rows allow a retry after a partial failure to resend only the failed channel; once() (packages/core/src/jobs/idempotency.ts) is per job effect.",
+   "source": "spec"
+  },
+  {
    "id": "K3",
-   "choice": "Per-domain SSO rate limit reuses consumeRateLimit with a hashed key in the rate_limit table.",
-   "justification": "Same mechanism as magic-link per-email limit, packages/auth/src/rate-limit.ts:21-50 and docs/engineering/auth.md:148-158.",
+   "choice": "Store prefs through new notification categories plus notification_setting-style time fields, with workspace defaults, instead of M2 memory_item keys.",
+   "justification": "#72 (memory engine) is open and the issue says to fall back to defaults when it is absent; the digest preference (packages/notifications/src/service.ts:620-632) is the working precedent.",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "Email templates and i18n files go under packages/notifications/src/email/templates and packages/i18n/src/messages, not the issue's paths.",
+   "justification": "Actual layout in the repo (email/templates/end-of-day-digest.tsx, i18n catalog.ts:7).",
+   "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "Scheduler lists cross-workspace targets via an owner-defined SQL function in the migration, as app_notification_digest_targets() does.",
+   "justification": "Tenant tables are FORCE RLS and the scheduler job has no workspace (activity-digest.ts header and runActivityDigestSchedule).",
    "source": "precedent"
   }
  ]

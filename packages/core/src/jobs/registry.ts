@@ -9,6 +9,12 @@ import {
   activityDigestMember,
   activityDigestSchedule,
 } from './definitions/activity-digest.ts';
+import {
+  reminderEvening,
+  reminderMorning,
+  reminderOutcomeMissing,
+  reminderSchedule,
+} from './definitions/reminders.ts';
 import { courtDataRetention } from './definitions/court-data-retention.ts';
 import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
 import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
@@ -28,6 +34,7 @@ import { captureRetention, systemCaptureRetention } from './definitions/capture-
 import { captureScan } from './definitions/capture-scan.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
+import { briefRefresh, briefRefreshSweep } from './definitions/brief-refresh.ts';
 import { portfolioAlertScan } from './definitions/portfolio-alert-scan.ts';
 import { ordersPoll } from './definitions/orders-poll.ts';
 import { statusPoll } from './definitions/status-poll.ts';
@@ -37,6 +44,7 @@ import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { importBatch, importFile } from './definitions/import-batch.ts';
 import { voiceProcess } from './definitions/voice-process.ts';
 import { whatsappImport } from './definitions/whatsapp-import.ts';
+import { whatsappIntake } from './definitions/whatsapp-intake.ts';
 import { emailIntake } from './definitions/email-intake.ts';
 import { emailRawExpire } from './definitions/email-raw-expire.ts';
 import { deletionErase } from './definitions/deletion-erase.ts';
@@ -197,6 +205,7 @@ export const registry = createRegistry([
   whatsappImport,
   voiceProcess,
   emailIntake,
+  whatsappIntake,
   emailRawExpire,
   extractOrder,
   importBatch,
@@ -212,6 +221,12 @@ export const registry = createRegistry([
   webhookDeliver,
   systemWebhookSweep,
   ordersPoll,
+  briefRefresh,
+  briefRefreshSweep,
+  reminderSchedule,
+  reminderEvening,
+  reminderMorning,
+  reminderOutcomeMissing,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -256,6 +271,7 @@ export type JobMap = RegistryMap<
     typeof whatsappImport,
     typeof voiceProcess,
     typeof emailIntake,
+    typeof whatsappIntake,
     typeof emailRawExpire,
     typeof extractOrder,
     typeof importBatch,
@@ -271,6 +287,12 @@ export type JobMap = RegistryMap<
     typeof webhookDeliver,
     typeof systemWebhookSweep,
     typeof ordersPoll,
+    typeof briefRefresh,
+    typeof briefRefreshSweep,
+    typeof reminderSchedule,
+    typeof reminderEvening,
+    typeof reminderMorning,
+    typeof reminderOutcomeMissing,
   ]
 >;
 export type JobName = keyof JobMap;

@@ -100,13 +100,15 @@ test.describe('placeholder page states', () => {
       await expect(main.getByRole('heading', { level: 1 })).toHaveText('No access');
     }
     // The same pages render normally for the owner.
+    // Scoped to `main`: a hidden copy of the page can sit outside it while the route settles, and
+    // an unscoped locator then matches two elements.
     for (const route of CLERK_DENIED_ROUTES) {
       await page.goto(url(route));
-      await expect(page.locator(`[data-route="${route}"]`)).toBeVisible();
+      await expect(page.locator(`main [data-route="${route}"]`)).toBeVisible();
     }
     // And the clerk still gets every other placeholder.
     await page.goto(url('matters', undefined, CLERK_WORKSPACE));
-    await expect(page.locator('[data-route="matters"]')).toBeVisible();
+    await expect(page.locator('main [data-route="matters"]')).toBeVisible();
   });
 
   test('flag-gated routes are not found while their flag is off', async ({ page, asUser }) => {

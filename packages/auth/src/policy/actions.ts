@@ -13,6 +13,8 @@ export const ACTIONS = {
   listing: ['listing.read'],
   draft: ['draft.write'],
   audit: ['audit.read'],
+  // The workspace-wide court-day view (#58); `mine` needs no action beyond `listing.read`.
+  court_day: ['court_day.view_all'],
   export: ['export.run'],
   support: ['support.manage'],
   // Shell surfaces gated in apps/web/lib/workspace-context.ts.

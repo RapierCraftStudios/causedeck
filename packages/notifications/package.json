@@ -10,7 +10,8 @@
     "./service": "./src/service.ts",
     "./email": "./src/email/index.ts",
     "./quiet-hours": "./src/quiet-hours.ts",
-    "./push": "./src/push/index.ts"
+    "./push": "./src/push/index.ts",
+    "./whatsapp": "./src/channels/index.ts"
   },
   "scripts": {
     "lint": "eslint .",

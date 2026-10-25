@@ -1,45 +1,52 @@
 **Verdict**: CONFIRMED
-**Confidence**: medium
-**Severity**: medium (greenfield enterprise feature, part 2 of #508; adds a dependency and a sign-in path)
+**Confidence**: high
+**Severity**: medium (greenfield feature, no live defect; no reminder jobs exist)
 **Task Type**: feature
 
 ### What Was Claimed
-Add the better-auth SSO plugin (new catalog dependency in `pnpm-workspace.yaml` and `packages/auth/package.json`), organisation-scoped provider config on `sso_provider`, an SSO sign-in entry on the web sign-in page, an owner settings page to configure it, rate limits and audit rows. Acceptance: an organisation can sign in through SSO. [type:integration]. Depends on #682 (merged).
+Issue #64 (base `milestone/prepare-execute`): court-day reminder jobs. An 8 pm evening brief, a 7 am supplementary-list diff summary and an "outcome missing" nudge, honouring each member's time preference (defaults 20:00/07:00 IST). They are idempotent through `reminder_dispatch`, go out through in-app/push/email, per-kind and per-channel opt-outs, a settings card, cross-tenant coverage, zod validators and a new tenant table with RLS. The issue's file list is a guess: several paths do not match the repo layout (see Root Cause). The earlier "Investigation Report" comment on the issue is about a different issue (WhatsApp link UI) and must be ignored.
 
 ### What We Found
-- No SSO anywhere: `packages/auth/src/server.ts:208-247` plugins are magicLink, passkey, organization, twoFactor only; `packages/auth/package.json:29-38` has no SSO dep; `pnpm-workspace.yaml:48-111` catalog has `@better-auth/passkey` (:55) and `better-auth` 1.7.10 (:111) but no `@better-auth/sso`; `node_modules/.pnpm` has no sso/saml package (must be installed; lockfile changes).
-- Schema exists (#682): `packages/db/src/schema/enterprise.ts:45-70` `ssoProvider` (tenant table, FORCE RLS): `protocol` saml|oidc, `issuer`, `domain` (globally unique, `sso_provider_domain_uq`), `config` jsonb (secret), `enabled` default false, `createdBy`. Header comment (:6-7) says the sign-in lookup by domain before a workspace is known belongs to this issue. Registered `DB_TABLES_TEST` at `packages/db/src/testing/cross-tenant-registry.ts:150`.
-- Shape mismatch: the plugin owns a model also named `ssoProvider` (providerId, issuer, oidcConfig, samlConfig, domain, userId, organizationId). The drizzle adapter at `server.ts:269` is given the whole `schema`, so the plugin will resolve `schema.ssoProvider` (our table) and its writes/reads will not match columns. Must be reconciled (see Recommendation) after reading the installed plugin's schema.
-- RLS: sign-in resolves a provider by email domain with no workspace context, but `sso_provider` is FORCE RLS; `config` holds client secrets so it must not be broadly readable.
-- Rate limit pattern: `packages/auth/src/rate-limit.ts:9-50` (`consumeRateLimit`, `rate_limit` table) and `server.ts:297-305` customRules + `hooks.before` (:318-330); documented `docs/engineering/auth.md:148-158`.
-- Audit pattern: auth security events `packages/core/src/audit/events.ts:65-78`, recorder `packages/core/src/audit/security-events.ts:82-88`, injected via `SecurityEventRecorder` (`server.ts:55-77`, hook `:176-210`); sign-in method union `SignInMethod` (:44) and `signInMethod()` (:121-131) map `/callback/` to google. SSO needs its own method (`sso`) and callback paths. Workspace-scoped settings audit rows go through core audit (see `settings/danger/actions.ts` pattern, `workspaceAction`).
-- Web: sign-in page `apps/web/app/(public)/sign-in/page.tsx:84-120` (`SignInForm`, `googleEnabled`); client `packages/auth/src/client.ts:9-19` needs `ssoClient()`. Owner settings pages live under `apps/web/app/(app)/w/[slug]/settings/*` (e.g. `integrations`, `danger`) with `actions.ts`, `loading.tsx`, `error.tsx`; owner-only policy via `packages/auth/src/policy/matrix.ts:10` and `actions.ts:5`.
+- No reminder feature: `grep -i reminder` finds only the `reminder.hearing` category (`packages/notifications/src/categories.ts:~37`) and UI strings; no `reminder_dispatch`, no `reminder.*` job.
+- There is no `apps/worker/src/jobs/`. Jobs are defined in core: `packages/core/src/jobs/definitions/*.ts`, listed in `packages/core/src/jobs/registry.ts:~171-183`. The worker only runs the registry (`apps/worker/src/worker.ts`, `schedules.ts:10` registers `def.schedule` crons in `Asia/Kolkata`). Tests: `apps/worker/src/__tests__/registry.test.ts:~118-140` (ordered definition names), `schedules.test.ts`.
+- Closest precedent is the #49 end-of-day digest, `packages/core/src/jobs/definitions/activity-digest.ts`: scheduler job (`:~118`, cron `0,30 18-23 * * *`, targets via owner-defined SQL function `app_notification_digest_targets()` because tenant tables are FORCE RLS), per-workspace fan-out (`:~162`), per-member job using `once()` (`packages/core/src/jobs/idempotency.ts`, `job_effect` table), `notify()` for in-app, `renderEmail`, `isSuppressed`, `isQuietTime`, retry `{limit:3, backoff}`. Pure slot/date maths: `packages/notifications/src/digest/schedule.ts` (`localDateOf`, `localDayBounds`, `endOfDaySlot`; slots limited to 18:00-23:00 to respect deploy-freeze windows, `:5-12`).
+- Preferences: `getEndOfDayPreference`/`setEndOfDayPreference` (`packages/notifications/src/service.ts:620-632`) keep `time` on `notification_setting` and the per-channel `enabled` on `notification_pref` rows keyed by category. The categories registry (`categories.ts`) decides channels and defaults. The M2 `memory_item` source named in the issue does not exist (#72 is open), and the issue says to fall back to defaults when it is absent.
+- Email templates live in `packages/notifications/src/email/templates/*.tsx` (e.g. `end-of-day-digest.tsx`), tests in `packages/notifications/src/email/__tests__/`; not `src/templates/`. Push: `packages/notifications/src/push/`, `channels/`.
+- i18n messages live in `packages/i18n/src/messages/{en,kn,ta}/<ns>.json` (not `packages/i18n/messages`); namespaces registered in `packages/i18n/src/catalog.ts:7`, asserted in `packages/i18n/src/__tests__/catalog.test.ts`; generated files in `packages/i18n/src/generated/` regenerate with `pnpm --filter @causedeck/i18n i18n:types`.
+- Court-day data (#58) exists: `packages/core/src/court-day/{query,clashes,diff,board}.ts`; `getCourtDay` (`query.ts:81`), `detectClashes` (`clashes.ts`), `diffLists`/`snapshotList` (`diff.ts:61,131`, `list_snapshot` table `packages/db/src/schema/court-day.ts:59`). Hearing outcome is `hearing.outcome` (null = unconfirmed) in `packages/db/src/schema/docket.ts:105-114`; `appearance` is at `docket.ts:141`, `obligation` in `docket.ts` (`status='open'`, used in `query.ts:~103`). Readiness: `computeReadiness` in `packages/core/src/briefs/index.ts:19`. Court holidays only exist as notices (`notices.ts`, kind `holiday`).
+- Whole-reminder idempotency is also available through `once()`, but the issue explicitly requires the `reminder_dispatch` unique key, so that table is needed.
+- Migrations are timestamped SQL in `packages/db/migrations/` (latest `20261025061924_brief_state.sql`) plus `meta/*_snapshot.json`.
+- Another sibling already occupies `apps/web/app/(app)/w/[slug]/settings/notifications/` (`page.tsx`, `preferences-form.tsx`, `actions.ts`, `whatsapp-actions.ts`).
 
 ### Root Cause
-Missing feature. #682 laid the tables only; no plugin, config service, lookup, UI or limits exist.
+Greenfield. #58 (court-day data) and #23 (notification channels) provide the inputs but no job turns them into reminders. The issue body's paths for jobs, templates and i18n are wrong for this repo, so implementation must follow the layout above.
 
 ### Affected Files
-- `pnpm-workspace.yaml`, `packages/auth/package.json`, `pnpm-lock.yaml` (new `@better-auth/sso` catalog pin matching better-auth 1.7.10).
-- `packages/auth/src/server.ts` (plugin, SignInMethod `sso`, rate limit rule, hook), `src/client.ts` (`ssoClient`), `src/rate-limit.ts`, new `src/sso.ts`, tests in `src/__tests__/`.
-- `packages/db/src/schema/enterprise.ts` + migration (only if column reconciliation needs it), plus RLS/lookup function for domain resolution.
-- `packages/core/src/audit/events.ts` (+ `security-events.ts`) for `sso.*` / `auth.sign_in` method, `packages/core/src/workspaces/` or new service for provider CRUD (owner-only, registry entries in `packages/db/src/testing/cross-tenant-registry.ts` and `packages/core/src/__tests__/cross-tenant/services.test.ts`).
-- Web: `apps/web/app/(public)/sign-in/{page,sign-in-form}.tsx` + new `sso-form.tsx`; new `apps/web/app/(app)/w/[slug]/settings/sso/{page,actions,loading,error}.tsx`; `ACTIONS`/probes in `apps/web/__tests__/cross-tenant-actions.test.ts`; settings nav; i18n JSON in `packages/i18n/src/messages/{en,kn,ta}` (+ catalog test if a namespace is added); `docs/engineering/auth.md`.
+- `packages/validators/src/reminders.ts` (+ export in `index.ts`, test)
+- `packages/db/src/schema/reminder.ts`, `schema/index.ts`, new migration + snapshot
+- `packages/core/src/court-day/reminders.ts` (pure builders and DB readers) + test; export via `court-day/index.ts`
+- `packages/core/src/jobs/definitions/reminders.ts` (3 jobs + scheduler), `jobs/registry.ts`
+- `packages/notifications/src/categories.ts` (three categories), `src/email/templates/{evening-brief,morning-diff,outcome-missing}.tsx`, email renderer registry
+- `apps/worker/src/__tests__/registry.test.ts`, `schedules.test.ts`
+- `packages/i18n/src/messages/{en,kn,ta}/reminders.json`, `catalog.ts`, `__tests__/catalog.test.ts`, regenerated `generated/**`
+- `apps/web/app/(app)/w/[slug]/settings/notifications/{_reminders-card.tsx,reminders-actions.ts,page.tsx}`, `apps/web/__tests__/cross-tenant-actions.test.ts`
+- `packages/db/src/index.test.ts`, `packages/db/src/__tests__/rls/sql.test.ts`, `packages/db/src/testing/cross-tenant-registry.ts`, two-tenant seeders, `packages/core/src/__tests__/cross-tenant/services.test.ts`
+- `packages/core/src/domains*` / `docs/engineering/core-domains.md` (if court-day imports notifications or briefs), `docs/adr/0039-reminder-scheduling.md`
 
 ### Sibling Sweep
-Same registration hazards as every enterprise slice: new core runtime exports (SERVICE_TESTS/NOT_A_SERVICE), each `'use server'` action (cross-tenant-actions), i18n namespace, core-domain imports (`CORE_DOMAIN_DEPENDENCIES`, `docs/engineering/core-domains.md`). Siblings #684 (SCIM/CSV) and #685 (migration) are separate; SCIM tokens/provisioning must not be built here. Auth `Auth` type consumers (`apps/web/lib/auth.ts`, admin console `disableSignUp`) must still typecheck.
+Same pattern (scheduler, fan-out, member job) in `activity-digest.ts`, `news-digest.ts`, `notification-deliver.ts` (digest). Reuse their helpers (`workspaceTimezone`, `appLink`, `notificationJobDeps`) rather than copy. The registry/guard lists in CLAUDE.md all apply (core export, server actions, table, jobs, i18n, core domain deps, migration).
 
 ### History
-`ssoProvider` table added by be0f4b12 (#682, merged in 887c58e5 lineage). `server.ts` last touched by step-up (#304) and the admin console session work (#309). No prior SSO attempt.
+Digest pattern from #49; court-day read model from #58 (`6a91720a`, ADR 0037); notifications from #23/#194. No earlier reminder attempt (`git log` on court-day shows none).
 
 ### Recommendation
-1. Add `@better-auth/sso` to the catalog (version = better-auth 1.7.10) and to `packages/auth` deps; install; read the installed plugin's `schema` and endpoints before designing.
-2. Reconcile the model: prefer mapping the plugin onto our table via the plugin `schema.ssoProvider.fields` mapping, adding nullable additive columns by migration (next free number) only for what cannot map (providerId, oidc/saml config); keep `workspace_id`/RLS. Provider writes go through our owner-only core service (not the plugin's registerSSOProvider endpoint), which sets `workspace_id` and writes an audit row; disable plugin self-registration for non-owners.
-3. Domain lookup before workspace is known: a narrow SECURITY DEFINER SQL function (or auth-db role) returning only `id, protocol, enabled` by domain; never `config`. Only `enabled` providers sign in.
-4. Wire sign-in: sso plugin in `createAuth`, `ssoClient` in client, `sso` SignInMethod + callback path mapping, join the user to the workspace as the default member role (never owner) through `organizationProvisioning`/hook using `roles.ts`.
-5. Rate limit SSO sign-in start and callback per IP (customRules) and per domain (`consumeRateLimit` key `sso:domain:<sha256>`), 429 with `RATE_LIMIT_MESSAGE`; document in `docs/engineering/auth.md`.
-6. Audit rows: `sso.provider_created|updated|deleted|enabled` (workspace-scoped) and `auth.sign_in` with method `sso`; failed SSO sign-in as `auth.sign_in_failed`.
-7. UI: "Sign in with SSO" email/domain entry on the sign-in page (no enumeration: same response for unknown domain), owner settings page (step-up not required unless a policy exists), i18n in en/kn/ta.
-8. Integration test: with a mocked OIDC IdP, a user at a configured domain signs in and lands as a member of the organisation. Never run Playwright locally.
+Implement as in the contract. Key points:
+- Follow the #49 job shape in core, with scheduler jobs for 07:00 and evening slots and a per-minute-or-half-hour outcome-missing scan.
+- Write a `reminder_dispatch` row per (member, kind, date, channel) before sending, `ON CONFLICT DO NOTHING`, and skip the send if no row was inserted.
+- Add three categories (`reminder.evening`, `reminder.morning`, `reminder.outcome_missing`) so per-kind and per-channel opt-out reuses `notification_pref`.
+- Push payloads are generic ("Tomorrow's court day is ready"); only in-app and email carry counts.
+- Skip when there are no listings, and send only to active members of the workspace.
+- Defer the PWA local-notification path and deploy-tooling freeze enforcement.
 
 ### Related Issues
-#508 (parent), #682 (schema, merged), #684, #685, #686 (siblings).
+#1 (parent), #58 and #23 (inputs, merged), #15 (job conventions), #72 (memory prefs, open; fall back to defaults), #67/#70 (obligation reminders out of scope), #110 (SES credentials), #49 (digest precedent).

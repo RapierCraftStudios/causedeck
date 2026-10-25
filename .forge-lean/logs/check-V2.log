@@ -1,24 +1,13 @@
 
- RUN  v3.2.7 /work/repo/.claude/worktrees/lean-683/packages/core
+ RUN  v3.2.7 /work/repo/.claude/worktrees/lean-678/packages/db
 
- ✓ |@causedeck/core| src/audit/__tests__/export.test.ts (5 tests) 27283ms
-   ✓ exportAudit > streams CSV with a header row, optional BOM, RFC 4180 quoting and a formula guard  564ms
-   ✓ exportAudit > leaves the IP column out for advocates  354ms
-   ✓ exportAudit > records audit.exported before streaming, and nothing when denied  333ms
-   ✓ exportAudit > exports 100k rows page by page with under 64 MB of heap growth  25865ms
-{"level":"error","time":"2026-10-25T11:21:07.912Z","service":"audit","env":"test","version":"dev","region":"ap-south-1","err":"[REDACTED]","action":"access.denied","msg":"access denial not recorded"}
- ✓ |@causedeck/core| src/audit/__tests__/security-events.test.ts (22 tests) 2839ms
- ✓ |@causedeck/core| src/audit/__tests__/query.test.ts (5 tests) 1338ms
-   ✓ audit.read gate > allows owners and advocates; denies juniors, clerks, viewers and non-members  373ms
-   ✓ queryAudit > pages newest first without gaps or repeats, and filters by actor, action group and date  403ms
- ✓ |@causedeck/core| src/audit/__tests__/cross-tenant.test.ts (3 tests) 833ms
-   ✓ audit cross-tenant > B's owner cannot read, export or verify A's events from B's scope  310ms
- ✓ |@causedeck/core| src/audit/__tests__/chain.test.ts (4 tests) 958ms
-   ✓ audit chain > serialises concurrent record() calls in one workspace into one linear chain  420ms
- ✓ |@causedeck/core| src/audit/__tests__/writer.test.ts (10 tests) 406ms
- ✓ |@causedeck/core| src/audit/__tests__/redaction.test.ts (16 tests) 263ms
- ✓ |@causedeck/core| src/audit/__tests__/ai-call.test.ts (4 tests) 179ms
- ↓ |@causedeck/core| src/audit/__tests__/writer.bench.test.ts (1 test | 1 skipped)
-{"level":"error","time":"2026-10-25T11:22:13.915Z","service":"audit","env":"test","version":"dev","region":"ap-south-1","err":"[REDACTED]","action":"access.denied","msg":"access denial not recorded"}
+ ✓ |@causedeck/db| src/index.test.ts (4 tests) 83ms
+ ✓ |@causedeck/db| src/__tests__/cross-tenant/registry.test.ts (4 tests) 303ms
+ ✓ |@causedeck/db| src/__tests__/rls/sql.test.ts (14 tests) 48409ms
+   ✓ row-level security catalog > every table with workspace_id (outside GLOBAL_TABLES) has ENABLE, FORCE and ws_isolation  516ms
+   ✓ row-level security catalog > flags a tenant table that lacks ENABLE, FORCE or the policy  469ms
+   ✓ row-level security catalog > flags a foreign key to a tenant table that does not pair workspace_id  5931ms
+   ✓ global-or-workspace reference tables (#344) > flags missing catalogue policies and a FK into the table without a scope guard  390ms
+   ✓ db:check-rls CLI > passes the migrated database and fails on a fixture table lacking RLS  40771ms
 
 (timed out after 300s)

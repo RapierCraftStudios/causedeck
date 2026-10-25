@@ -44,6 +44,7 @@ export const ACTIVATION_CHANNELS = [
   'search',
   'social',
   'referral',
+  'education',
   'other',
 ] as const;
 export type ActivationChannel = (typeof ACTIVATION_CHANNELS)[number];

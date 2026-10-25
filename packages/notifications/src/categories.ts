@@ -2,7 +2,7 @@
 // decides its default channels and whether the member may turn it off. Pure and client-safe (the
 // preferences UI imports it through `@causedeck/notifications/categories`): no database imports.
 
-export const CHANNELS = ['in_app', 'email', 'push'] as const;
+export const CHANNELS = ['in_app', 'email', 'push', 'whatsapp'] as const;
 export type Channel = (typeof CHANNELS)[number];
 
 /** `instant` sends as it happens, `daily` waits for the digest (#196), `off` never sends. */
@@ -69,6 +69,22 @@ export const CATEGORIES = {
   // The legal news digest (#481): headlines and links to the original, at most one a day.
   'digest.news': {
     defaultChannels: ['in_app', 'email', 'push'],
+    mandatory: false,
+    lockedChannels: [],
+  },
+  // Court-day reminders (#64): the evening brief, the morning list diff, the missing-outcome nudge.
+  'reminder.evening': {
+    defaultChannels: ['in_app', 'push', 'email'],
+    mandatory: false,
+    lockedChannels: [],
+  },
+  'reminder.morning': {
+    defaultChannels: ['in_app', 'push', 'email'],
+    mandatory: false,
+    lockedChannels: [],
+  },
+  'reminder.outcome_missing': {
+    defaultChannels: ['in_app', 'push', 'email'],
     mandatory: false,
     lockedChannels: [],
   },

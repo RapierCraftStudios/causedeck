@@ -19,8 +19,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
   // The KHC cause-list watch (#482) stages proposals through automation and the import matcher.
   court: Object.freeze(['workspaces', 'automation', 'import', 'matter-graph', 'sources']),
-  // Court-day display-board tracking (#493): the board source's clearance through sources.
-  'court-day': Object.freeze(['sources']),
+  // Court-day display-board tracking (#493): the board source's clearance through sources. The court
+  // day (#58) reads roles through workspaces, audits the hall marker through audit and wraps the
+  // canonical next-date proposal and conflict view of matter-graph (imports `index.ts` only).
+  'court-day': Object.freeze(['sources', 'matter-graph', 'workspaces', 'audit']),
   // The matter graph (#362): roles and role settings through workspaces, the matter actor through
   // matters. It emits events through its own port and never imports audit or notifications.
   'matter-graph': Object.freeze(['workspaces', 'matters']),
@@ -41,6 +43,12 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Institution portfolios (#663, #498 part 3): the owner check through workspaces, watches through case-watch
   // (status sources) and the matter read probe through matter-graph; clearance through sources.
   portfolio: Object.freeze(['workspaces', 'matter-graph', 'case-watch', 'sources']),
+  // The derived listing brief (#60, ADR 0038): the scope and member role through workspaces, the
+  // sensitive-matter-safe `summarise` call through ai, graph reads through matter-graph and court-day
+  // (imports `index.ts` only).
+  briefs: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day', 'ai']),
+  // WhatsApp number link and OTP (#678, #502 part 1): the membership check through workspaces
+  'whatsapp-link': Object.freeze(['workspaces', 'audit', 'capture']),
   // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same
   // read as `listHolidayListings`) and the day arithmetic is the extraction's own, from intelligence.
   deadlines: Object.freeze([]),
@@ -144,6 +152,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'automation',
     'calendar',
     'whatsapp',
+    'whatsapp-link',
     'voice',
     'email-intake',
     'extraction',
@@ -153,6 +162,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'data-ops',
     'court',
     'court-day',
+    'briefs',
     'sources',
     'notices',
     'research',

@@ -14,6 +14,10 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
+import {
+  WhatsAppLinkCard,
+  WhatsAppLinkError,
+} from '../../../../../../components/notifications/whatsapp-link-card.tsx';
 import { PushPermissionCard } from '../../../../../../components/notifications/push-permission-card.tsx';
 import { isDev, serverEnv } from '../../../../../../lib/env.ts';
 import type { WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
@@ -29,6 +33,15 @@ import {
   type SettingsView,
 } from './actions.ts';
 import { PreferencesError, PreferencesForm, PreferencesSkeleton } from './preferences-form.tsx';
+import { RemindersCard, RemindersError, RemindersSkeleton } from './_reminders-card.tsx';
+import { setReminderPreferencesAction, type ReminderPrefsView } from './reminders-actions.ts';
+import {
+  requestWhatsAppOtpAction,
+  setWhatsAppCategoriesAction,
+  unlinkWhatsAppAction,
+  verifyWhatsAppOtpAction,
+  type WhatsAppLinkState,
+} from './whatsapp-actions.ts';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -61,6 +74,70 @@ async function loadPreferences(context: WorkspaceContext): Promise<Loaded> {
     workspaceId: context.workspace.id,
     userId: context.user.id,
   });
+}
+
+/** The caller's own WhatsApp link (masked number), read on the workspace-scoped transaction. */
+async function loadWhatsAppLink(context: WorkspaceContext): Promise<WhatsAppLinkState | null> {
+  const { inWorkspace } = await import('@causedeck/core/runtime');
+  const { getWhatsAppLink } = await import('@causedeck/core/whatsapp-link');
+  const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+  const link = await inWorkspace(actor, (tx) => getWhatsAppLink({ db: tx }, actor));
+  if (link === null) return null;
+  return {
+    maskedNumber: link.maskedNumber,
+    verifiedAt: link.verifiedAt.toISOString(),
+    consentAt: link.consentAt.toISOString(),
+    categories: link.categories,
+  };
+}
+
+async function WhatsAppSection({ context }: { context: WorkspaceContext }) {
+  let link: WhatsAppLinkState | null;
+  try {
+    link = await loadWhatsAppLink(context);
+  } catch (error) {
+    logger.error({ err: error }, 'notification preferences: could not load the WhatsApp link');
+    return <WhatsAppLinkError />;
+  }
+  return (
+    <WhatsAppLinkCard
+      workspaceId={context.workspace.id}
+      link={link}
+      actions={{
+        requestOtp: requestWhatsAppOtpAction,
+        verifyOtp: verifyWhatsAppOtpAction,
+        setCategories: setWhatsAppCategoriesAction,
+        unlink: unlinkWhatsAppAction,
+      }}
+    />
+  );
+}
+
+/** The caller's own court-day reminder preferences (#64), read on the workspace-scoped transaction. */
+async function loadReminders(context: WorkspaceContext): Promise<ReminderPrefsView> {
+  const { inWorkspace } = await import('@causedeck/core/runtime');
+  const { getReminderPreferences } = await import('@causedeck/notifications');
+  const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+  return inWorkspace(actor, (tx) =>
+    getReminderPreferences({ db: tx, workspaceId: actor.workspaceId }, { userId: actor.userId }),
+  );
+}
+
+async function RemindersSection({ context }: { context: WorkspaceContext }) {
+  let prefs: ReminderPrefsView;
+  try {
+    prefs = await loadReminders(context);
+  } catch (error) {
+    logger.error({ err: error }, 'notification preferences: could not load reminders');
+    return <RemindersError />;
+  }
+  return (
+    <RemindersCard
+      workspaceId={context.workspace.id}
+      prefs={prefs}
+      actions={{ set: setReminderPreferencesAction }}
+    />
+  );
 }
 
 async function PreferencesSection({
@@ -124,7 +201,17 @@ export default async function NotificationPreferencesPage({
           <PreferencesSection context={context} failOnPurpose={state === 'error'} />
         </Suspense>
       )}
+      {state === 'loading' ? (
+        <RemindersSkeleton />
+      ) : (
+        <Suspense fallback={<RemindersSkeleton />}>
+          <RemindersSection context={context} />
+        </Suspense>
+      )}
       <PushPermissionCard vapidPublicKey={vapidPublicKey} />
+      <Suspense>
+        <WhatsAppSection context={context} />
+      </Suspense>
     </div>
   );
 }

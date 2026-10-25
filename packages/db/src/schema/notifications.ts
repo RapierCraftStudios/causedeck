@@ -9,6 +9,7 @@ import {
   check,
   foreignKey,
   index,
+  integer,
   jsonb,
   pgEnum,
   pgTable,
@@ -24,7 +25,7 @@ import { tenantTable } from '../schema-helpers/tenant-table.ts';
 
 import { inList, organization, user } from './auth.ts';
 
-export const NOTIFICATION_CHANNELS = ['in_app', 'email', 'push'] as const;
+export const NOTIFICATION_CHANNELS = ['in_app', 'email', 'push', 'whatsapp'] as const;
 export const NOTIFICATION_DIGESTS = ['instant', 'daily', 'off'] as const;
 export const EMAIL_SUPPRESSION_REASONS = ['bounce', 'complaint', 'manual'] as const;
 
@@ -108,6 +109,10 @@ export const notificationSetting = tenantTable(
     endOfDayTime: text('end_of_day_time').notNull().default('20:30'),
     /** The end-of-day digest names matters; off (the default) it carries counts only. */
     endOfDayIncludeNames: boolean('end_of_day_include_names').notNull().default(false),
+    /** The evening brief (#64) goes out at this local `HH:MM` (:00 or :30, 18:00-23:00). */
+    reminderEveningTime: text('reminder_evening_time').notNull().default('20:00'),
+    /** The outcome-missing nudge (#64) waits this many minutes after the last item in the hall. */
+    reminderOutcomeDelayMin: integer('reminder_outcome_delay_min').notNull().default(90),
     ...timestamps(),
   },
   (t) => [

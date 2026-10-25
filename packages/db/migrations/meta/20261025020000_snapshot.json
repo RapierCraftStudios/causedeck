@@ -1,5 +1,5 @@
 {
-  "id": "2214afd4-02b1-49de-98f3-0564c0363d31",
+  "id": "f957a61f-fe99-4cc5-8ad2-b012684783b7",
   "prevId": "110f3eab-dc07-4ca7-819f-59a02fd4e31f",
   "version": "7",
   "dialect": "postgresql",
@@ -306,7 +306,7 @@
         },
         "activation_event_channel_chk": {
           "name": "activation_event_channel_chk",
-          "value": "channel is null or channel in ('direct', 'invite', 'whatsapp', 'search', 'social', 'referral', 'other')"
+          "value": "channel is null or channel in ('direct', 'invite', 'whatsapp', 'search', 'social', 'referral', 'education', 'other')"
         }
       },
       "isRLSEnabled": false
@@ -15780,18 +15780,6 @@
           "notNull": true,
           "default": false
         },
-        "domain_verification_token": {
-          "name": "domain_verification_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "domain_verified_at": {
-          "name": "domain_verified_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_by": {
           "name": "created_by",
           "type": "uuid",
@@ -15846,7 +15834,6 @@
             }
           ],
           "isUnique": true,
-          "where": "\"sso_provider\".\"domain_verified_at\" is not null",
           "concurrently": false,
           "method": "btree",
           "with": {}

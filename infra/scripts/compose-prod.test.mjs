@@ -208,3 +208,39 @@ describe('env examples', () => {
     assert.match(staging, /preview data only/i);
   });
 });
+
+describe('backup services (#101)', () => {
+  it('defines the backup profile services hardened like the rest', () => {
+    for (const name of ['backup', 'minio-replicate']) {
+      assert.ok(name in services, `missing service ${name}`);
+      assert.match(services[name], /profiles: \[backup\]/);
+      assert.match(services[name], /read_only: true/);
+      assert.match(services[name], /cap_drop: \[ALL\]/);
+      assert.match(services[name], /no-new-privileges:true/);
+      assert.match(services[name], /memory:/);
+    }
+    assert.match(services.backup, /user: postgres/);
+    assert.match(services.backup, /pgdata:\/var\/lib\/postgresql\/data:ro/);
+  });
+
+  it('mounts the libsodium key as a secret file, never an inline value', () => {
+    assert.match(compose, /^secrets:\n {2}walg_key:\n {4}file: \$\{WALG_KEY_FILE/m);
+    for (const name of ['postgres', 'backup']) {
+      assert.match(services[name], /secrets: \[walg_key\]/);
+      assert.match(services[name], /WALG_LIBSODIUM_KEY_PATH: \/run\/secrets\/walg_key/);
+    }
+    assert.doesNotMatch(compose, /WALG_LIBSODIUM_KEY:/);
+  });
+
+  it('versions and locks down the wal and ops buckets', () => {
+    for (const b of ['causedeck-wal', 'causedeck-ops']) {
+      assert.match(services['minio-init'], new RegExp(`mc version enable local/${b}`));
+      assert.match(services['minio-init'], new RegExp(`mc anonymous set none local/${b}`));
+    }
+  });
+
+  it('gives the archiver its own write-only credential variables', () => {
+    assert.match(services.postgres, /WALG_ARCHIVE_ACCESS_KEY/);
+    assert.match(services.backup, /WALG_ADMIN_ACCESS_KEY/);
+  });
+});

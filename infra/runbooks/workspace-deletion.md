@@ -67,3 +67,7 @@ then they stay.
 Database backups and object storage versions expire on the Production Infra retention schedule. A
 restored backup still cannot decrypt the workspace's objects or fields: the DEK was zeroed before
 the purge and is not in any later backup. Never restore a deleted workspace's rows from a backup.
+
+Backups made before the zeroing hold the wrapped DEK until they age out (14 daily, 8 weekly, so at
+most 8 weeks, `restore.md`). After any restore, re-run `system.deletion.tick`; the restore drill's
+`crypto_erase` check fails if a destroyed workspace key in the restore still holds key material.

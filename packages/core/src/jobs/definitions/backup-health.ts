@@ -27,7 +27,12 @@ export interface BackupReports {
   archive: { checkedAt?: string; lastArchivedAt?: string; ageSeconds?: number } | null;
   basebackup: { finishedAt?: string; ok?: boolean } | null;
   replication: { finishedAt?: string; ok?: boolean } | null;
-  drillLatest: { startedAt?: string; ok?: boolean; rtoSeconds?: number; rpoSeconds?: number } | null;
+  drillLatest: {
+    startedAt?: string;
+    ok?: boolean;
+    rtoSeconds?: number;
+    rpoSeconds?: number;
+  } | null;
   drillLastSuccess: { startedAt?: string; rtoSeconds?: number } | null;
 }
 
@@ -69,17 +74,23 @@ export function evaluateBackupHealth(reports: BackupReports, now: Date): BackupH
     problems.push(`missed backup: last base backup finished ${String(Math.round(backupAge))}s ago`);
   }
 
-  if (replication?.ok === false) problems.push('MinIO replication to the second India location failed');
+  if (replication?.ok === false)
+    problems.push('MinIO replication to the second India location failed');
 
   if (drillLatest?.ok === false) problems.push('failed drill: the last restore drill did not pass');
   if ((drillLatest?.rpoSeconds ?? 0) > RPO_TARGET_SECONDS) {
-    problems.push(`RPO breach: ${String(drillLatest?.rpoSeconds)}s exceeds ${String(RPO_TARGET_SECONDS)}s`);
+    problems.push(
+      `RPO breach: ${String(drillLatest?.rpoSeconds)}s exceeds ${String(RPO_TARGET_SECONDS)}s`,
+    );
   }
   if ((drillLatest?.rtoSeconds ?? 0) > RTO_TARGET_SECONDS) {
-    problems.push(`RTO breach: ${String(drillLatest?.rtoSeconds)}s exceeds ${String(RTO_TARGET_SECONDS)}s`);
+    problems.push(
+      `RTO breach: ${String(drillLatest?.rtoSeconds)}s exceeds ${String(RTO_TARGET_SECONDS)}s`,
+    );
   }
   const drillAge = ageSeconds(drillLastSuccess?.startedAt, now);
-  if (drillAge > DRILL_MAX_AGE_SECONDS) problems.push('no successful restore drill in the last 8 days');
+  if (drillAge > DRILL_MAX_AGE_SECONDS)
+    problems.push('no successful restore drill in the last 8 days');
 
   const lastSuccess = Date.parse(drillLastSuccess?.startedAt ?? '');
   return {
@@ -120,7 +131,8 @@ export function opsBucketConfigFromEnv(env: NodeJS.ProcessEnv): OpsBucketConfig 
   };
 }
 
-const hmac = (key: Buffer | string, data: string): Buffer => createHmac('sha256', key).update(data).digest();
+const hmac = (key: Buffer | string, data: string): Buffer =>
+  createHmac('sha256', key).update(data).digest();
 const sha256Hex = (data: string): string => createHash('sha256').update(data).digest('hex');
 
 /** SigV4 path-style GET of `<bucket>/<key>`; the packages/storage client is workspace-keyed only. */
@@ -131,7 +143,9 @@ export function createOpsReportReader(
 ): ReportReader {
   return async (key) => {
     const url = new URL(`${config.endpoint.replace(/\/$/, '')}/${config.bucket}/${key}`);
-    const amzDate = clock().toISOString().replace(/[:-]|\.\d{3}/g, '');
+    const amzDate = clock()
+      .toISOString()
+      .replace(/[:-]|\.\d{3}/g, '');
     const day = amzDate.slice(0, 8);
     const payloadHash = sha256Hex('');
     const headers = `host:${url.host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
@@ -153,7 +167,7 @@ export function createOpsReportReader(
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) return null;
-    return (await response.json()) as unknown;
+    return await response.json();
   };
 }
 
@@ -182,7 +196,7 @@ export async function readBackupReports(read: ReportReader): Promise<BackupRepor
     get(KEYS.drillLatest),
     get(KEYS.drillLastSuccess),
   ]);
-  return { archive, basebackup, replication, drillLatest, drillLastSuccess } as BackupReports;
+  return { archive, basebackup, replication, drillLatest, drillLastSuccess };
 }
 
 // Gauges are observable: the latest evaluation is held here and read at each metric collection.
@@ -221,13 +235,17 @@ export async function runBackupHealth(
   now: Date = new Date(),
 ): Promise<BackupHealth | null> {
   if (reader === null) {
-    ctx.log.warn({ backup_alert: false }, 'backup health not configured: set BACKUP_OPS_* variables');
+    ctx.log.warn(
+      { backup_alert: false },
+      'backup health not configured: set BACKUP_OPS_* variables',
+    );
     return null;
   }
   const health = evaluateBackupHealth(await readBackupReports(reader), now);
   latest = health.metrics;
   registerGauges();
-  for (const problem of health.problems) ctx.log.error({ backup_alert: true, problem }, 'backup health');
+  for (const problem of health.problems)
+    ctx.log.error({ backup_alert: true, problem }, 'backup health');
   if (health.problems.length === 0) ctx.log.info({ ...health.metrics }, 'backup health ok');
   return health;
 }
@@ -239,6 +257,7 @@ export const backupHealth = defineJob({
   singleton: { key: () => 'backup-health', policy: 'stately' },
   schedule: { cron: '* * * * *', payload: {} },
   handler: async (ctx) => {
+    // eslint-disable-next-line no-process-env -- optional BACKUP_OPS_* variables, outside the typed env schema.
     const config = opsBucketConfigFromEnv(process.env);
     await runBackupHealth(ctx, config === null ? null : createOpsReportReader(config));
   },

@@ -43,6 +43,11 @@
    "id": "V4",
    "command": "checks.mjs --base origin/milestone/instant-gtm-adoption",
    "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "pnpm turbo run typecheck --filter=...[722c3900] (merged tree)",
+   "exit": 0
   }
  ],
  "tests": [

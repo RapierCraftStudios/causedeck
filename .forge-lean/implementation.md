@@ -26,3 +26,9 @@ No env vars. The code is not delivered over WhatsApp yet (no sendOtp, R5 deferre
 
 ### Stale-list follow-up
 The 30 flagged sibling lists (nav, routes, shortcuts, API dirs, e2e) are not i18n namespace lists; recorded as not_members in result.json. No code change.
+
+### Post-merge verification
+The merge failure (`turbo: command not found`, exit 127) was environmental: `turbo` was not on PATH. No code conflict. Reran via `pnpm exec turbo run typecheck --filter='...[722c3900]'` (23 tasks passed), plus V1 (42 tests) and V2 (37 tests): all pass. No source change.
+
+### Post-merge typecheck
+Bare `turbo` is not on PATH (exit 127, environment). `pnpm turbo run typecheck --filter=...[722c3900]` on the merged tree: 23/23 tasks successful, no code change needed.

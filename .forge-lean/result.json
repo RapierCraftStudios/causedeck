@@ -119,6 +119,11 @@
    "command": "pnpm exec turbo run typecheck --concurrency=2 (merged tree)",
    "result": "pass",
    "fails_without_fix": "unknown"
+  },
+  {
+   "command": "pnpm exec turbo run typecheck --concurrency=2 (after second merge)",
+   "result": "pass",
+   "fails_without_fix": "unknown"
   }
  ],
  "self_review": [

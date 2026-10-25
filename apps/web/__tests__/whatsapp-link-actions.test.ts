@@ -14,7 +14,7 @@ const TX = { scoped: true };
 
 const state = vi.hoisted(() => ({
   session: null as AppSession | null,
-  role: 'junior',
+  role: null as string | null,
   rolledBack: false,
 }));
 

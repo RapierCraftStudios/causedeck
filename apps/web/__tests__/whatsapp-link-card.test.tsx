@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // The WhatsApp link card (#681): opt-in before a code is requested, verify, categories limited to
 // the ones with an approved template, unlink, error states, and en/ta/kn copy.
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -65,16 +65,18 @@ describe('unlinked', () => {
     });
     fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: t.sendCode }));
-    await waitFor(() => { expect(actions.requestOtp).toHaveBeenCalledWith({
+    await waitFor(() => {
+      expect(actions.requestOtp).toHaveBeenCalledWith({
         workspaceId: WS,
         e164: '+919812345678',
         consent: true,
-      }); },
-    );
+      });
+    });
     fireEvent.change(await screen.findByLabelText(t.codeLabel), { target: { value: '123456' } });
     fireEvent.click(screen.getByRole('button', { name: t.verify }));
-    await waitFor(() => { expect(actions.verifyOtp).toHaveBeenCalledWith({ workspaceId: WS, code: '123456' }); },
-    );
+    await waitFor(() => {
+      expect(actions.verifyOtp).toHaveBeenCalledWith({ workspaceId: WS, code: '123456' });
+    });
     expect(await screen.findByText(t.linked.replace('{number}', '••••5678'))).toBeTruthy();
     expect(screen.queryByText(/9812345678/)).toBeNull();
   });
@@ -101,19 +103,18 @@ describe('linked', () => {
     const actions = show(LINK);
     expect(screen.getAllByRole('checkbox')).toHaveLength(3);
     fireEvent.click(screen.getByLabelText(t.categories.statusOrder));
-    await waitFor(() => { expect(actions.setCategories).toHaveBeenCalledWith({
+    await waitFor(() => {
+      expect(actions.setCategories).toHaveBeenCalledWith({
         workspaceId: WS,
         categories: ['court.board', 'status.order'],
-      }); },
-    );
+      });
+    });
     expect(await screen.findByText(t.saved)).toBeTruthy();
   });
 
   it('unlinks and returns to the number form', async () => {
     const actions = show(LINK);
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: t.unlink }));
-    });
+    fireEvent.click(screen.getByRole('button', { name: t.unlink }));
     expect(actions.unlink).toHaveBeenCalledWith({ workspaceId: WS });
     expect(await screen.findByText(t.unlinked)).toBeTruthy();
     expect(screen.getByLabelText(t.numberLabel)).toBeTruthy();

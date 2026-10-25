@@ -158,7 +158,9 @@ export function WhatsAppLinkCard({ workspaceId, link: initial, actions }: WhatsA
             inputMode="tel"
             autoComplete="tel"
             value={number}
-            onChange={(event) => { setNumber(event.target.value); }}
+            onChange={(event) => {
+              setNumber(event.target.value);
+            }}
             className={INPUT_CLASS}
           />
           <p className="text-ink-muted text-xs">{t('numberHint')}</p>
@@ -166,7 +168,9 @@ export function WhatsAppLinkCard({ workspaceId, link: initial, actions }: WhatsA
             <input
               type="checkbox"
               checked={consent}
-              onChange={(event) => { setConsent(event.target.checked); }}
+              onChange={(event) => {
+                setConsent(event.target.checked);
+              }}
               className="mt-1"
             />
             <span>{t('consent')}</span>
@@ -187,7 +191,9 @@ export function WhatsAppLinkCard({ workspaceId, link: initial, actions }: WhatsA
                 autoComplete="one-time-code"
                 maxLength={6}
                 value={code}
-                onChange={(event) => { setCode(event.target.value); }}
+                onChange={(event) => {
+                  setCode(event.target.value);
+                }}
                 className={INPUT_CLASS}
               />
               <div>
@@ -208,7 +214,9 @@ export function WhatsAppLinkCard({ workspaceId, link: initial, actions }: WhatsA
                 <input
                   type="checkbox"
                   checked={link.categories.includes(category)}
-                  onChange={(event) => { toggle(category, event.target.checked); }}
+                  onChange={(event) => {
+                    toggle(category, event.target.checked);
+                  }}
                 />
                 <span>{t(`categories.${CATEGORY_MESSAGE[category]}`)}</span>
               </label>

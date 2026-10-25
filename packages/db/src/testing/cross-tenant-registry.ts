@@ -517,6 +517,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   setCarryItem: denies,
   setBriefNote: denies,
   refreshBrief: denies,
+  // delegation (#63): B acting on A's listing or appearances is denied, A's appearances are unchanged
+  assignAppearance: denies,
+  reassignAppearance: denies,
+  unassign: denies,
+  suggestAssignments: denies,
+  myAppearances: denies,
+  chamberOutcomesLive: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -904,6 +911,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     "trigger consumer: lists the changed list's listings inside the event's own workspace scope and enqueues a refresh each; covered by briefs/__tests__/state.test.ts",
   refreshBriefTargets:
     'system job body: no workspace; lists targets only through the owner-defined app_brief_refresh_targets and refreshes each in its own workspace scope; covered by briefs/__tests__/state.test.ts',
+  // delegation (#63): the offboarding provider runs only inside removeMember's workspace scope, and
+  // the registrar is a no-op wiring call; both covered by delegation/__tests__/assign.test.ts
+  appearanceReassignProvider:
+    "offboarding provider: runs on removeMember's workspace-scoped transaction; covered by delegation/__tests__/assign.test.ts",
+  registerAppearanceReassignProvider: 'wiring: registers the provider once, touches no data',
   // whatsapp-link (#678): constants
   WHATSAPP_OTP_TTL_MS: 'constant',
   WHATSAPP_OTP_RESEND_COOLDOWN_MS: 'constant',

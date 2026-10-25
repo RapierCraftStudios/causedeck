@@ -48,6 +48,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // sensitive-matter-safe `summarise` call through ai, graph reads through matter-graph and court-day
   // (imports `index.ts` only).
   briefs: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day', 'ai']),
+  // Chamber delegation (#63): the member role and the offboarding provider through workspaces,
+  // assignment audit through audit, the day and its clashes through court-day (imports `index.ts` only).
+  delegation: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day']),
   // WhatsApp number link and OTP (#678, #502 part 1): the membership check through workspaces
   'whatsapp-link': Object.freeze(['workspaces', 'audit', 'capture']),
   // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same
@@ -164,6 +167,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'court',
     'court-day',
     'briefs',
+    'delegation',
     'sources',
     'notices',
     'research',

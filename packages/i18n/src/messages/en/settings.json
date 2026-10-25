@@ -365,7 +365,8 @@
         "court_day": "Court day",
         "export": "Export",
         "support": "Support",
-        "shell": "Workspace areas"
+        "shell": "Workspace areas",
+        "appearance": "Appearances"
       },
       "actions": {
         "workspace": {
@@ -431,6 +432,9 @@
         },
         "invoices": {
           "read": "Download invoices"
+        },
+        "appearance": {
+          "assign": "Assign appearances to members"
         }
       },
       "settings": {

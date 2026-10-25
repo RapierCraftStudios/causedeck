@@ -715,6 +715,13 @@
       "when": 1792913210293,
       "tag": "20261025072650_reminder_dispatch",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1792927346602,
+      "tag": "20261025112226_appearance_delegation",
+      "breakpoints": true
     }
   ]
 }

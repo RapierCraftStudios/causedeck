@@ -5060,6 +5060,9 @@ export type Messages = {
       failed: string;
       retry: string;
       lastSynced: string;
+      keepLocal: string;
+      details: string;
+      detailsFailed: string;
     };
     courtDay: {
       savedFor: string;
@@ -5085,6 +5088,14 @@ export type Messages = {
       clear: string;
       cleared: string;
       unsupported: string;
+      size: string;
+      loading: string;
+      empty: string;
+      full: string;
+      denied: string;
+      optedOut: string;
+      cancel: string;
+      clearFailed: string;
     };
     privacy: {
       title: string;

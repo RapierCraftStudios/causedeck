@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { symmetricEncrypt } from 'better-auth/crypto';
 import postgres from 'postgres';
 
+import { diagLog } from './diag.ts';
 import { ADMIN_FIXTURES, ADMIN_TOTP_SECRET } from '../fixtures/admin-data.ts';
 import {
   BENCH_ALERTS,
@@ -323,10 +324,28 @@ export async function sealTemplateDb(): Promise<void> {
 export async function resetWorkerDb(workerIndex: number): Promise<{ url: string; ms: number }> {
   const name = assertName(workerDbName(workerIndex));
   const started = performance.now();
-  await admin([
-    `drop database if exists ${name} with (force)`,
-    `create database ${name} template ${TEMPLATE_DB} owner ${ROLES.owner.user}`,
-  ]);
+  const t0 = new Date().toISOString();
+  const sql = postgres(databaseUrl('postgres', 'superuser'), { max: 1, onnotice: () => undefined, connect_timeout: 5 });
+  let dropMs = 0;
+  let createMs = 0;
+  let conns = '';
+  try {
+    const rows = await sql<{ datname: string; n: string }[]>`
+      select datname, count(*)::text as n from pg_stat_activity where datname is not null group by 1 order by 1`;
+    conns = rows.map((r) => `${r.datname}=${r.n}`).join(',');
+    const a = performance.now();
+    await sql.unsafe(`drop database if exists ${name} with (force)`);
+    dropMs = Math.round(performance.now() - a);
+    const b = performance.now();
+    await sql.unsafe(`create database ${name} template ${TEMPLATE_DB} owner ${ROLES.owner.user}`);
+    createMs = Math.round(performance.now() - b);
+  } finally {
+    await sql.end();
+  }
+  diagLog(
+    `harness-w${String(workerIndex)}.log`,
+    `reset start=${t0} drop=${String(dropMs)}ms create=${String(createMs)}ms total=${String(Math.round(performance.now() - started))}ms conns_before[${conns}]`,
+  );
   const ms = Math.round(performance.now() - started);
   if (RESET_BUDGET_MS > 0 && ms > RESET_BUDGET_MS) {
     throw new Error(

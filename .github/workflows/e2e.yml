@@ -61,6 +61,24 @@ jobs:
       - uses: ./.github/actions/setup
       - name: Start the Compose stack (Postgres, MinIO, Mailpit)
         run: bash infra/scripts/dev-up.sh
+      - name: DIAG Postgres logging
+        run: |
+          c=$(docker ps --filter ancestor=pgvector/pgvector:0.8.7-pg17 -q | head -1)
+          echo "PG_CID=$c" >>"$GITHUB_ENV"
+          for s in "log_connections=on" "log_lock_waits=on" "deadlock_timeout='1s'" "log_checkpoints=on" "log_min_duration_statement=500" "log_line_prefix='%m [%p] %d '"; do
+            docker exec "$c" psql -U causedeck -d causedeck -c "alter system set $s"
+          done
+          docker exec "$c" psql -U causedeck -d causedeck -c "select pg_reload_conf()"
+          docker exec "$c" psql -U causedeck -d causedeck -tc "show max_connections; show fsync; show shared_buffers"
+          cat >"$RUNNER_TEMP/sampler.sh" <<'SAMP'
+          while true; do
+            echo "== $(date -u +%FT%T.%3NZ)"
+            docker exec "$PG_CID" psql -U causedeck -d postgres -AtF'|' -c "select pid,datname,usename,state,wait_event_type,wait_event,backend_type,left(query,60),now()-backend_start from pg_stat_activity where backend_type='client backend' and pid<>pg_backend_pid() and now()-backend_start > interval '4 seconds' and state is distinct from 'idle'" -c "select pid,locktype,mode,database,classid,objid from pg_locks where not granted" 2>&1
+            sleep 2
+          done
+          SAMP
+          export PG_CID="$c"
+          RUNNER_TRACKING_ID="" setsid nohup bash "$RUNNER_TEMP/sampler.sh" >"$RUNNER_TEMP/sampler.log" 2>&1 &
       # The image carries the pinned browsers, so nothing is downloaded at test time.
       - name: Pull the pinned Playwright image
         run: docker pull "$PLAYWRIGHT_IMAGE"
@@ -69,7 +87,7 @@ jobs:
           SHARD: ${{ matrix.shard }}
         run: >-
           docker run --rm --network host --ipc host
-          -e CI=true -e E2E_ASSERT_RESET_MS=2000 -e E2E_SCOPE -e E2E_PERF=skip
+          -e CI=true -e E2E_DIAG=1 -e E2E_ASSERT_RESET_MS=2000 -e E2E_SCOPE -e E2E_PERF=skip
           -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
           node support/playwright.mjs --shard="$SHARD/2"
       # The `@perf` timing specs run here, alone, once the shard's tests are done: beside a second
@@ -93,6 +111,14 @@ jobs:
             "select datname, state, count(*) from pg_stat_activity group by 1, 2 order by 3 desc"
           "${compose[@]}" exec -T postgres psql -U causedeck -d postgres -Atc "show max_connections"
           "${compose[@]}" logs --no-color postgres | grep -E 'duration:|lock|FATAL|too many|checkpoint' | tail -n 200 || true
+      - name: DIAG dump Postgres log and host info
+        if: ${{ !cancelled() }}
+        run: |
+          sudo mkdir -p e2e/test-results/diag
+          docker logs --timestamps "$PG_CID" >"$RUNNER_TEMP/postgres.log" 2>&1 || true
+          { nproc; uptime; free -m; } >"$RUNNER_TEMP/host.txt" 2>&1 || true
+          sudo cp "$RUNNER_TEMP/postgres.log" "$RUNNER_TEMP/host.txt" "$RUNNER_TEMP/sampler.log" e2e/test-results/diag/ || true
+          sudo chown -R "$(id -u):$(id -g)" e2e/test-results || true
       - name: Upload the HTML report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

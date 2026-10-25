@@ -6,4 +6,6 @@ export async function register(): Promise<void> {
   const { initSentry, initTelemetry } = await import('@causedeck/observability');
   initTelemetry({ service: 'web' });
   initSentry();
+  // eslint-disable-next-line no-process-env -- TEMPORARY diag/e2e-556
+  if (process.env.E2E_DIAG === '1') (await import('./e2e-diag')).startE2eDiag();
 }

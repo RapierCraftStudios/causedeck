@@ -14,6 +14,7 @@ import { generateKeyPairSync } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { diagLog } from './diag.ts';
 import { assertStackUp, databaseUrl, E2E_AUTH_SECRET, TEMPLATE_DB } from './db-reset.ts';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
@@ -192,7 +193,11 @@ async function startNext(
   });
   let output = '';
   const collect = (chunk: Buffer) => {
-    output += chunk.toString('utf8');
+    const text = chunk.toString('utf8');
+    output += text;
+    for (const line of text.split('\n')) {
+      if (line !== '') diagLog(`server-${String(port)}.log`, line);
+    }
   };
   child.stdout.on('data', collect);
   child.stderr.on('data', collect);

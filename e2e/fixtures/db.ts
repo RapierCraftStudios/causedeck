@@ -4,6 +4,7 @@
 // starts from the same seeded rows.
 import { test as base } from '@playwright/test';
 
+import { diagLog } from '../support/diag.ts';
 import { resetWorkerDb, workerDbName } from '../support/db-reset.ts';
 import { startServer, workerPort, type RunningServer } from '../support/server-pool.ts';
 
@@ -59,10 +60,16 @@ export const test = base.extend<DbFixtures, WorkerFixtures>({
   ],
   db: [
     async ({ workerDb, workerServer }, use, testInfo) => {
+      const tag = `w${String(testInfo.parallelIndex)}`;
+      diagLog(`harness-${tag}.log`, `TEST-START retry=${String(testInfo.retry)} ${testInfo.titlePath.join(' > ')}`);
       const ms = await workerDb.reset();
       testInfo.annotations.push({ type: 'db-reset-ms', description: String(ms) });
       const since = workerServer.logs().length;
       await use(workerDb);
+      diagLog(
+        `harness-${tag}.log`,
+        `TEST-END status=${testInfo.status ?? '?'} ${String(testInfo.duration)}ms ${testInfo.titlePath.join(' > ')}`,
+      );
       // A failing test gets the worker server's log for its duration.
       if (testInfo.status !== testInfo.expectedStatus) {
         await testInfo.attach('server-log.txt', {

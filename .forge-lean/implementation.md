@@ -61,3 +61,6 @@ The `turbo: command not found` (exit 127) was an environment PATH issue, not a c
 
 ### Merge re-check
 `turbo run typecheck` failed with exit 127 because `turbo` is not on PATH (not a code conflict). `pnpm exec turbo run typecheck --filter=@causedeck/api --filter=@causedeck/web --filter=@causedeck/config` on the merged tree: 20/20 tasks pass. No source change needed.
+
+### Merge re-check (2)
+Same exit 127: `turbo` is not on PATH in the check shell; no code conflict. With node_modules/.bin on PATH, `turbo run typecheck --filter=...[origin/milestone/production-infra-scale]` passes (24/24). No source change.

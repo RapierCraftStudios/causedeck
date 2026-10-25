@@ -43,3 +43,6 @@ Also moved the shared briefs plumbing from assemble.ts into briefs/scope.ts to b
 
 ## Conformance fix
 Added briefs/__tests__/ai-and-budget.test.ts: R10 deterministic-path p95 < 1.5 s over 10 assemblies; R12 gateway call writes ai_call rows (task summarise) and none on a sensitive matter.
+
+## Lint fix
+CI lint failed on restrict-template-expressions in packages/core/src/briefs/readiness.ts:36; wrapped the number in String(). ESLint on all changed files now clean.

@@ -33,7 +33,7 @@ export function computeReadiness(brief: Brief): Readiness {
       segment: 'obligations_reconciled',
       reason:
         overdue > 0
-          ? `${overdue} open obligation${overdue === 1 ? ' is' : 's are'} overdue`
+          ? `${String(overdue)} open obligation${overdue === 1 ? ' is' : 's are'} overdue`
           : 'An open obligation has no owner',
     });
   }

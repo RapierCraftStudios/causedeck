@@ -90,6 +90,7 @@ describe('namespaced catalogs (#174)', () => {
         'billing',
         'bootstrapImport',
         'calendar',
+        'calendarView',
         'camera',
         'caseWatch',
         'common',

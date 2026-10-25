@@ -2,228 +2,423 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
+   "quote": "`getCalendarRange` returns per-day counts and entries (listing, confirmed next date, obligation due, vacation or holiday marker from the forum calendar when present) for a range up to 42 days in one query set.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "with a server action per operation",
+   "quote": "Week view shows days as rows grouped by hall on desktop and an agenda list on phone; month view shows a density grid with per-day counts and clash and deadline markers.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "an i18n namespace in en/kn/ta with catalog test",
+   "quote": "Selecting a day opens a popover with the day's listings and deadlines; 'Open day' navigates to the Court-Day Board for that date (`today`/`tomorrow` aliases when applicable, otherwise `calendar?day=`).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "and cross-tenant-actions test entries",
+   "quote": "Entries are visually and textually distinguished by kind (listing, next date, obligation due, holiday) using icon, label and tone, never colour alone, with a legend.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Settings UI to link a WhatsApp number (OTP)",
-   "disposition": "defer",
-   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
+   "quote": "Entries are provenance-aware: unconfirmed next dates appear as 'Proposed' with a dashed style and are excluded from counts of confirmed commitments.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "Scope toggle Mine / Whole chamber follows `court_day:view_all`; clerk sees dates and counts without strategy fields.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "'Subscribe in your calendar' shows the private ICS feed URL from #53 when it exists, with a regenerate action owned there, and a clear explanation that it is private to the user.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "Empty (no entries in range), loading skeleton, error with retry, offline (cached range from #65 when available, else notice) and permission-denied states are implemented.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "Keyboard: arrow keys move across days, `Enter` opens the day, `t` jumps to today, `w`/`m` switch view, `[`/`]` previous and next range; a11y grid semantics are correct.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "p95 \u003c 300 ms for a month range on the seeded chamber dataset; route JS \u003c= 180 KB gzip.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "measured by the CI e2e perf and bundle-size jobs (e2e/lighthouserc*.json, ship PR CI); the in-lane part is a single-query-set read with the existing due_date index"
+  },
+  {
+   "id": "R11",
+   "quote": "Storybook stories exist for every new component with all states (default, empty, loading, error, offline, denied) and interaction tests.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "Playwright visual baselines exist for light and dark themes at 360, 768 and 1280 px.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "e2e/tests/visual specs are run and baselines generated only in CI (Playwright never runs locally)"
+  },
+  {
+   "id": "R13",
+   "quote": "axe reports zero serious or critical violations on every state of the surface, and the full flow is operable by keyboard alone.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "e2e a11y spec runs in CI Playwright; markup uses grid roles and labels checked by unit tests in lane"
+  },
+  {
+   "id": "R14",
+   "quote": "All user-facing strings come from `next-intl` catalogs (`en` complete, `ta`/`kn` keys stubbed); no hard-coded copy.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R16",
+   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite.",
+   "disposition": "not-applicable",
+   "evidence": "packages/db/src/schema/docket.ts:234 and :105 — the feature is a derived read over existing tables (hearing, obligation, listing); no new table is added"
+  },
+  {
+   "id": "R17",
+   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
-   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
+   "path": "packages/validators/src/calendar.ts",
+   "change": "zod CalendarRange (from,to ISO days, to>=from, span\u003c=42 days, scope mine|workspace), CalendarEntry (kind listing|next_date|obligation_due|holiday|vacation, proposed flag, redacted flag, matter/proceeding refs, hall, optional strategy-gated fields), CalendarDay (date, counts, clash flag, closedReason, entries); export from packages/validators/src/index.ts",
    "requirements": [
     "R1",
-    "R2"
+    "R5",
+    "R6",
+    "R17"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
-   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
+   "path": "packages/validators/src/index.ts",
+   "change": "re-export calendar.ts",
    "requirements": [
-    "R1"
+    "R17"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
-   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
+   "path": "packages/core/src/court-day/calendar.ts",
+   "change": "getCalendarRange(deps, actor, input): one query set per source over the range via inCourtDayScope; listings (placed, readable, redacted if restricted), hearing next dates (confirmed vs proposed), open obligation due dates, holiday/vacation from loadCourtCalendar, clashes via detectClashes; scope workspace needs court_day.view_all; strategy fields only with strategy.read; proposed excluded from confirmed counts; no per-day getCourtDay calls",
+   "requirements": [
+    "R1",
+    "R5",
+    "R6",
+    "R15"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/core/src/court-day/index.ts",
+   "change": "export getCalendarRange",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D4",
-   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
-   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
    "id": "D5",
-   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
-   "change": "same keys, Kannada",
+   "path": "packages/core/src/court-day/calendar.test.ts",
+   "change": "unit tests: 42-day cap and validation, kinds, proposed excluded from counts, clerk without strategy, scope forbidden without view_all, restricted redaction, holiday marker absent when no data",
    "requirements": [
-    "R3"
+    "R1",
+    "R5",
+    "R6"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
-   "change": "same keys, Tamil",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "add getCalendarRange to SERVICE_TESTS",
    "requirements": [
-    "R3"
+    "R15"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "add 'whatsapp-link' to NAMESPACES",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "real getCalendarRange case: B on A denied/empty, A unchanged, user in both workspaces",
    "requirements": [
-    "R3"
+    "R15"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
+   "path": "packages/core/src/domains.test.ts",
+   "change": "add court-day -> deadlines (and notices if used) to CORE_DOMAIN_DEPENDENCIES only if calendar.ts imports them; confirm no cycle",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
+   "path": "docs/engineering/core-domains.md",
+   "change": "document getCalendarRange in the court-day row and any new dependency edge",
    "requirements": [
-    "R3"
+    "R1"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "regenerated output",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/page.tsx",
+   "change": "replace placeholder: RSC that keeps placeholder guards, parses ?view/?day/?scope, loads getCalendarRange and getFeedStatus, renders toolbar, week/month/agenda, legend, subscribe block; permission-denied and offline notice",
    "requirements": [
-    "R3"
+    "R2",
+    "R3",
+    "R6",
+    "R7",
+    "R8"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "regenerated output",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/loading.tsx",
+   "change": "skeleton mirroring grid geometry",
    "requirements": [
-    "R3"
+    "R8"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "regenerated output",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/error.tsx",
+   "change": "error state with retry",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/week-view.tsx",
+   "change": "week rows grouped by hall (desktop), uses agenda-list on phone",
+   "requirements": [
+    "R2",
+    "R4",
+    "R9"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/month-view.tsx",
+   "change": "density grid, role=grid, per-day aria-label, count, clash and deadline markers, keyboard navigation",
+   "requirements": [
+    "R2",
+    "R9"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/day-popover.tsx",
+   "change": "day popover/bottom sheet with focus trap and Open day link (today/tomorrow aliases else calendar?day=)",
    "requirements": [
     "R3"
    ]
   },
   {
-   "id": "D13",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
+   "id": "D16",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/calendar-toolbar.tsx",
+   "change": "range nav, week/month toggle, Mine/Whole chamber toggle, shortcuts t w m [ ]",
    "requirements": [
-    "R4"
+    "R6",
+    "R9"
    ]
   },
   {
-   "id": "D14",
-   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
-   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
+   "id": "D17",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/agenda-list.tsx",
+   "change": "phone agenda grouped by day with 7-day chip strip",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D15",
-   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
-   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
+   "id": "D18",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/legend.tsx",
+   "change": "kind legend with icon, label, tone; Proposed dashed",
    "requirements": [
-    "R1"
+    "R4",
+    "R5"
    ]
   },
   {
-   "id": "D16",
-   "path": "apps/web/__tests__/notification-preferences.test.tsx",
-   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
+   "id": "D19",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/calendar-view.test.tsx",
+   "change": "component tests: grid semantics, aria labels, keyboard, popover link aliases, empty/denied/offline states",
    "requirements": [
-    "R1"
+    "R3",
+    "R8",
+    "R9",
+    "R13"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/i18n/src/messages/en/calendarView.json",
+   "change": "new namespace calendarView, en complete; ta/kn stubs in sibling files (calendarView.json under ta and kn)",
+   "requirements": [
+    "R14"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "add calendarView to NAMESPACES",
+   "requirements": [
+    "R14"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "add calendarView to expected top-level keys",
+   "requirements": [
+    "R14"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "packages/i18n/src/messages/ta/calendarView.json",
+   "change": "ta stub keys",
+   "requirements": [
+    "R14"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "packages/i18n/src/messages/kn/calendarView.json",
+   "change": "kn stub keys",
+   "requirements": [
+    "R14"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "apps/web/app/(app)/w/[slug]/calendar/_components/calendar-view.stories.tsx",
+   "change": "stories for each component with default, empty, loading, error, offline, denied states and play interactions (colocated with web components because packages/ui must not import app code; if the Storybook config only globs packages/ui, put them under packages/ui/src/patterns/calendar/ instead)",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "e2e/tests/calendar/calendar.spec.ts",
+   "change": "Playwright product spec: views, popover, Open day, scope, keyboard, states",
+   "requirements": [
+    "R2",
+    "R3",
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "e2e/tests/calendar/calendar.visual.spec.ts",
+   "change": "visual baselines light/dark at 360, 768, 1280",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "e2e/tests/calendar/calendar.a11y.spec.ts",
+   "change": "axe on every state",
+   "requirements": [
+    "R13"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
+   "what": "getCourtDay behaviour and signature (packages/core/src/court-day/query.ts:81); do not refactor it in a way that changes its output (tests query.test.ts, board-pace.test.ts)"
   },
   {
    "id": "P2",
-   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
+   "what": "The existing `calendar` i18n namespace (ICS settings copy, packages/i18n/src/messages/en/calendar.json) and the settings/integrations/calendar page that uses it"
   },
   {
    "id": "P3",
-   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
+   "what": "Placeholder guards for the calendar route (apps/web/components/shell/placeholder-page.tsx: membership, permission, dev states) and nav entry apps/web/lib/nav.ts:90"
+  },
+  {
+   "id": "P4",
+   "what": "ICS feed ownership: create/rotate/revoke stay in packages/core/src/calendar/feed.ts and the settings page; the calendar page only reads status and links"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/court-day/calendar.test.ts src/court-day/query.test.ts src/domains.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
+   "command": "pnpm --filter @causedeck/web exec vitest run 'app/(app)/w/[slug]/calendar'"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts -t getCalendarRange"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
-   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
+   "choice": "New i18n namespace `calendarView` instead of extending `calendar`",
+   "justification": "`calendar` already holds ICS settings copy (packages/i18n/src/messages/en/calendar.json, catalog.ts:29); the issue's path packages/i18n/messages/... does not exist (real root is packages/i18n/src/messages)",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
-   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
-   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
+   "choice": "getCalendarRange reuses court-day scope/predicates and detectClashes in one range query instead of looping getCourtDay",
+   "justification": "issue requires one query set for up to 42 days; getCourtDay is single-date (query.ts:81)",
    "source": "spec"
   },
   {
-   "id": "K4",
-   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
-   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
+   "id": "K3",
+   "choice": "No new server action and no new table, so no cross-tenant-actions or RLS catalog entries",
+   "justification": "derived read in an RSC; registry rule in CLAUDE.md applies only to 'use server' actions and tables; the exported core service is registered (D6/D7)",
    "source": "doc"
   },
   {
-   "id": "K5",
-   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
-   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
-   "source": "precedent"
+   "id": "K4",
+   "choice": "Offline state shows a notice only",
+   "justification": "#65 (cached range) is still open; the criterion allows 'else notice'",
+   "source": "spec"
   }
  ]
 }

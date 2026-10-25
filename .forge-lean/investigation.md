@@ -1,39 +1,35 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (feature; no live defect, no UI for the shipped WhatsApp link service)
+**Severity**: low (P3 greenfield feature; no live defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 4 of #502: a settings UI to link a WhatsApp number (OTP), choose message categories and unlink, with one server action per operation, an i18n namespace in en/kn/ta with its catalog test, and cross-tenant-actions test entries. Depends on #678 and #679 (both merged).
+Issue #66: build the week and month calendar view at `/w/[slug]/calendar` (listings, confirmed next dates, obligation due dates, holiday/vacation markers), backed by a new `getCalendarRange` over the court-day service, with day popover, Board hand-off, kind legend, Proposed styling, Mine/Whole-chamber scope, ICS feed hand-off, all states, keyboard model, stories, e2e/visual/a11y, i18n. Deps #58 and #145 are closed. A prior bot comment on the issue (WhatsApp card) belongs to a different issue; ignore it, as well as the stale `.forge-lean/*` files for it.
 
 ### What We Found
-- Core service exists (#678), verified on base `origin/milestone/instant-gtm-adoption` (c44d5405): `packages/core/src/whatsapp-link/link.ts:90` `requestWhatsAppOtp` (needs `consent`, 60s cooldown), `:166` `verifyWhatsAppOtp`, `:242` `getWhatsAppLink` (masked number), `:254` `setWhatsAppCategories`, `:275` `unlinkWhatsApp`; exported via `@causedeck/core/whatsapp-link` (`packages/core/package.json:37`). `WhatsAppDeps.sendOtp` is optional (`link.ts:32`): without it no code is delivered.
-- Outbound sender exists (#679): `packages/notifications/src/channels/whatsapp.ts:18` has templates only for `court.board`, `status.order`, `digest.end_of_day` (`WHATSAPP_CATEGORIES`, `:25`, exported as `@causedeck/notifications/whatsapp`). No OTP template exists.
-- No web UI or action references WhatsApp link: `grep whatsapp-link apps/web` finds nothing. Closest pattern: `apps/web/app/(app)/w/[slug]/settings/notifications/{actions.ts,page.tsx,preferences-form.tsx}` (`workspaceAction` + `WorkspaceScoped`, `ctx.tx`, `ctx.userId`; actions are thin async wrappers because a `'use server'` module can only export async functions).
-- Errors: core throws domain errors (`NOT_FOUND`, `CONFLICT`, `VALIDATION`, rate-limited); `apps/web/lib/matters/graph-deps.ts:30` `domainErrorCode` + the `guarded` pattern in `settings/case-watch/actions.ts:~64` map them to `ActionError`.
-- Page reads under a workspace tx via `inWorkspace` from `@causedeck/core/runtime` (`apps/web/lib/workspace-action.ts:105`).
-- Registry guard: `apps/web/__tests__/cross-tenant-actions.test.ts:93-` imports each actions module, `ACTIONS` (`:~118`) maps name to module, probe inputs in `inputs()` (`:~475`), and a per-feature "under B's own workspace" test (`:~937`) checks A's snapshot is unchanged. A new actions file without entries fails that test.
-- i18n: `packages/i18n/src/catalog.ts:7` `NAMESPACES` (one file per locale per namespace, asserted by `catalog.test.ts` "exactly one file per namespace"), top-level key list asserted at `catalog.test.ts:~92`; generated catalogs are committed (`packages/i18n/src/generated/`, regenerated with `pnpm --filter @causedeck/i18n i18n:types`, checked by the test "committed generated files match").
-- Nav: `apps/web/lib/settings-nav.ts` has fixed section lists; the push card is already placed as a card on the notifications page (`page.tsx` `PushPermissionCard`), so a WhatsApp card there needs no nav change.
+- `apps/web/app/(app)/w/[slug]/calendar/page.tsx:1-3` is only `placeholderPage('calendar')`; no `calendar/` components, no `loading.tsx`/`error.tsx`. History: `7f6fe4ed` (#154).
+- No `getCalendarRange`/`CalendarRange` anywhere (`grep` over packages and apps), no `packages/validators/src/calendar.ts`.
+- Court-day service exists (#58): `packages/core/src/court-day/query.ts:81` `getCourtDay` (single date; scope `mine|workspace`; `court_day.view_all` check at `:~104`; `strategy.read` gates strategy fields at `:~110`; restricted matters filtered via `can('listing.read')` at `:~196`). `scope.ts:84` `inCourtDayScope`; `clashes.ts` `detectClashes`. Barrel `court-day/index.ts` re-exports `query.ts` (so a new export needs a cross-tenant registry entry).
+- Next dates: `packages/db/src/schema/docket.ts:113-114` `hearing.nextDateProposed` / `nextDateConfirmed` (provenance for Proposed vs confirmed). Obligations: `docket.ts:242` `obligation.dueDate`, status `open`, index `obligation_workspace_due_date_idx`.
+- Holidays/vacations: `packages/core/src/deadlines/calendar.ts:60` `loadCourtCalendar` (holiday notices + static `FORUM_VACATIONS`, `closedReason`); `packages/core/src/notices/holidays.ts:29` `listHolidayListings`. Using them from court-day adds a domain edge (court-day currently depends only on sources, matter-graph, workspaces, audit: `docs/engineering/core-domains.md:102-105`).
+- ICS feed: `packages/core/src/calendar/feed.ts:83` `getFeedStatus`; token shown only once on create/rotate (settings page `settings/integrations/calendar/*`). The existing i18n namespace `calendar` (`packages/i18n/src/messages/en/calendar.json`, `catalog.ts:29`, `catalog.test.ts:92`) is the ICS settings copy, so the issue's `packages/i18n/messages/...` path is wrong and the view needs a new namespace.
+- UI patterns available: `packages/ui/src/patterns/{stage-badge,provenance-chip,obligation-row,court-item-chip,states}`; stories live next to components (`*.stories.tsx`). e2e lives in `e2e/tests/<area>/` (no `e2e/product`).
+- Web precedent for server pages: `apps/web/app/(app)/w/[slug]/today/page.tsx` (`getWorkspaceContext`, dynamic `@causedeck/core/runtime`, logged fallbacks).
 
 ### Root Cause
-Missing feature: #678 and #679 shipped the service and sender without a user-facing surface, so no member can opt in, verify, choose categories or unlink.
+Greenfield: the route is a placeholder and there is no range read model.
 
 ### Affected Files
-- new `apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts` (actions)
-- new `apps/web/components/notifications/whatsapp-link-card.tsx` (client card)
-- `apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx` (load link, render card)
-- `packages/i18n/src/messages/{en,kn,ta}/whatsapp-link.json`, `packages/i18n/src/catalog.ts`, `packages/i18n/src/__tests__/catalog.test.ts`, regenerated `packages/i18n/src/generated/**`
-- `apps/web/__tests__/cross-tenant-actions.test.ts`; new `apps/web/__tests__/whatsapp-link-actions.test.ts`, `whatsapp-link-card.test.tsx`
+`packages/validators/src/{calendar.ts,index.ts}`; `packages/core/src/court-day/{calendar.ts,calendar.test.ts,index.ts}`; `calendar/{page,loading,error}.tsx` and `_components/*` under the web route; `packages/ui` calendar stories (or story files beside the web components if ui must stay app-free); `packages/i18n/src/messages/{en,ta,kn}/calendarView.json`, `catalog.ts`, `__tests__/catalog.test.ts`, generated catalogs; registry/guards listed below; e2e specs.
 
 ### Sibling Sweep
-Same defect class (service without UI) not present elsewhere in the lane. Other actions modules are all registered in `cross-tenant-actions.test.ts`; the new module must be too. The nested `settings/integrations/*` modules show per-feature action files are accepted.
+Other placeholder routes exist but are separate issues (#59 Board, #65 offline cache, #84 limitation). Guards to update: `packages/db/src/testing/cross-tenant-registry.ts` (`SERVICE_TESTS` near `getCourtDay` :502) + `packages/core/src/__tests__/cross-tenant/services.test.ts` (:1934 pattern); `packages/core/src/domains.test.ts` + `docs/engineering/core-domains.md` if court-day imports deadlines/notices; no `'use server'` action is needed (read-only RSC), so no `cross-tenant-actions` entry.
 
 ### History
-Service added in 15574312 (#678); sender in #679 (merged, PR #709). No prior UI attempt. Earlier `.forge-lean/*` files in the tree belong to #679 and are overwritten.
+Placeholder from #154. Court-day service #58 (ADR 0037); ICS feed #53 (PR #524); holiday notices #587; deadline calendar #494.
 
 ### Recommendation
-Add five actions (request OTP, verify, set categories, unlink, get link) via `workspaceAction`; the input never names a user (`ctx.userId`). Add a WhatsApp card to the notifications settings page, a new `whatsappLink` i18n namespace, tests and registry entries. Outbound OTP delivery needs a provider-approved OTP template (an external provider action) and is deferred; until then the request action works without a sender and the code is not delivered.
+Implement in order: validators; `getCalendarRange` (one query set per source: listings, hearings' next dates, open obligations, forum calendar; reuse `inCourtDayScope`, the same mine/readable predicates and `detectClashes` rather than calling `getCourtDay` per day; redact restricted matters; clerk gets no strategy fields; proposed dates flagged and excluded from confirmed counts; cap range at 42 days via zod); then the page (week/month/agenda, popover with Board link using `today`/`tomorrow` aliases, legend, states, keyboard grid), i18n, stories, e2e. Offline: #65 is open, so show the offline notice when no cached range exists. Perf/bundle budgets are measured in CI.
 
 ### Related Issues
-#502 (parent), #678, #679 (done), #680 (inbound webhook sibling), #488 (provider residency review).
+#1 (parent), #58, #145 (deps, closed), #53 (feed), #59 (Board, open), #65 (offline cache, open), #84 (limitation, out of scope), #34 (forum calendar data).

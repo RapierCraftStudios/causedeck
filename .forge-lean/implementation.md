@@ -63,3 +63,9 @@ The 30 memory schema symbols flagged against three admin tests are not members o
 
 ## CI memory-erasure seed fix
 `memory-erasure.test.ts` seedMemory's "extra embeddings" insert picked `(select id from memory_item limit 1)` without a workspace filter, so it could take another workspace's item (FK violation on `memory_embedding_item_fk`). It now filters by `workspace_id`. Test-only change; the file passes (4 tests).
+
+## CI storage test image failure (no code change)
+`@causedeck/storage#test` failed with `No such image: pgvector/pgvector:0.8.7-pg17` (HTTP 404). The tag has been pinned in `packages/db/src/testing/container.ts`, `infra/docker/compose.dev.yml` and `ci.yml` since the Testcontainers harness commit, and this branch changes neither those nor `packages/storage`. It is a runner/registry problem; recorded as an amendment in result.json. No code change.
+
+## CI storage image failure, rerun analysis
+`@causedeck/storage#test` failed with `No such image: pgvector/pgvector:0.8.7-pg17`. The tag is identical on the base (`packages/db/src/testing/container.ts:15`), and this branch changes nothing in `packages/storage`, `container.ts`, `infra` or `.github`. `docker manifest inspect pgvector/pgvector:0.8.7-pg17` succeeds from here, so the image exists and the runner's pull failed. No code change; a CI rerun is needed. The earlier `ci_infrastructure` amendment was not one of the allowed typed kinds, so I removed it from result.json (amendments is empty) and recorded the finding here.

@@ -2,12 +2,7 @@
 // and latest text. Read in the actor's workspace scope with the same matter rules as `saveEdit`
 // (`draft.write` on the matter; an unreadable matter's drafts do not exist for the actor).
 import { schema } from '@causedeck/db';
-import type {
-  Audience,
-  DraftStatus,
-  Language,
-  Tone,
-} from '@causedeck/validators/outward-draft';
+import type { Audience, DraftStatus, Language, Tone } from '@causedeck/validators/outward-draft';
 import { and, asc, desc, eq, ne } from 'drizzle-orm';
 
 import {

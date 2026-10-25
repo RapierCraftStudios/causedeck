@@ -13,16 +13,19 @@ export function istDate(now: Date, offsetDays = 0): string {
 
 /** A hall whose list could not be read: the board keeps the last known data and says so. */
 export interface HallFailure {
-  hallId: string;
+  /** The hall number the adapter could not read. */
+  hallNo: string;
   forum: string;
+  /** When the data on screen was read. */
   readAt: Date | null;
+  /** The forum's official cause-list page, opened in a new window; null when it has none. */
   officialUrl: string | null;
 }
 
 export interface BoardData {
   day: CourtDay;
   clashes: Clash[];
-  /** List changes since the previous snapshot; empty until a snapshot reader exists. */
+  /** The latest list change of each forum on the day (`getListDiffs`). */
   diffs: ListDiff[];
   failures: HallFailure[];
 }
@@ -49,6 +52,59 @@ export async function clashesOf(day: CourtDay): Promise<Clash[]> {
   );
 }
 
+/** The parse-run facts of one forum that the failure banner needs (`getCourtsIndex`). */
+export interface ForumParse {
+  id: string;
+  latestParse: { status: string; at: Date; hallsUnreadable: string[] } | null;
+  officialList: { url: string } | null;
+}
+
+/**
+ * The halls the newest list read could not read, for the forums the day has items in. A run applies
+ * to the day it was made for or the day after it (the evening list is for tomorrow); the data on
+ * screen stays and is labelled with when it was read.
+ */
+export function failuresOf(day: CourtDay, forums: readonly ForumParse[]): HallFailure[] {
+  return day.complexes.flatMap((complex) => {
+    const found = forums.find((f) => f.id === complex.forumId);
+    const run = found?.latestParse;
+    if (found === undefined || !run || run.status === 'ok') return [];
+    const runDay = istDate(run.at);
+    if (runDay !== day.date && istDate(run.at, 1) !== day.date) return [];
+    return run.hallsUnreadable.map((hallNo) => ({
+      hallNo,
+      forum: complex.name,
+      readAt: day.freshness ?? run.at,
+      officialUrl: found.officialList?.url ?? null,
+    }));
+  });
+}
+
+/**
+ * A member who cannot see the whole workspace is shown only the diff entries of their own items: a
+ * stored list holds every case of the forum.
+ */
+export function scopeDiffs(diffs: readonly ListDiff[], day: CourtDay): ListDiff[] {
+  const keys = new Set(
+    day.complexes.flatMap((c) =>
+      c.halls.flatMap((h) =>
+        h.lists.flatMap((l) => l.items.flatMap((i) => [i.proceedingId, i.caseLabel])),
+      ),
+    ),
+  );
+  const keep = (entries: ListDiff['added']) => entries.filter((e) => keys.has(e.proceedingKey));
+  return diffs
+    .map((d) => ({
+      label: d.label,
+      added: keep(d.added),
+      removed: keep(d.removed),
+      moved: keep(d.moved),
+      stage_changed: keep(d.stage_changed),
+      entries: keep(d.entries),
+    }))
+    .filter((d) => d.entries.length > 0);
+}
+
 /** Load one day for a member. Throws on a failed read so the route's error boundary shows. */
 export async function loadBoard(input: {
   workspaceId: string;
@@ -56,12 +112,25 @@ export async function loadBoard(input: {
   role: Role;
   date: string;
 }): Promise<BoardData> {
-  const { db } = await import('@causedeck/core/runtime');
-  const { getCourtDay } = await import('@causedeck/core/court-day');
-  const day = await getCourtDay(
-    { db },
-    { workspaceId: input.workspaceId, userId: input.userId },
-    { date: input.date, scope: can(input.role, 'court_day.view_all') ? 'workspace' : 'mine' },
-  );
-  return { day, clashes: await clashesOf(day), diffs: [], failures: [] };
+  const { db, inWorkspace } = await import('@causedeck/core/runtime');
+  const { getCourtDay, getListDiffs } = await import('@causedeck/core/court-day');
+  const all = can(input.role, 'court_day.view_all');
+  const actor = { workspaceId: input.workspaceId, userId: input.userId };
+  const day = await getCourtDay({ db }, actor, {
+    date: input.date,
+    scope: all ? 'workspace' : 'mine',
+  });
+  const stored = await getListDiffs({ db }, actor, { date: input.date });
+  const diffs = all ? stored : scopeDiffs(stored, day);
+  // A failed parse-health read must not take the board down: the day is still readable.
+  let failures: HallFailure[] = [];
+  try {
+    const { getCourtsIndex } = await import('@causedeck/core/court');
+    const index = await inWorkspace(actor, (tx) => getCourtsIndex(tx, input.workspaceId));
+    const forums = index.cities.flatMap((city) => city.courts.flatMap((court) => court.forums));
+    failures = failuresOf(day, forums);
+  } catch {
+    failures = [];
+  }
+  return { day, clashes: await clashesOf(day), diffs, failures };
 }

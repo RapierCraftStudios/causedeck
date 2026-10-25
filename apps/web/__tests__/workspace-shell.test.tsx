@@ -171,6 +171,9 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'matters',
   // Its own page and shell test since #48 (components/inbox/__tests__/inbox-shell.test.tsx).
   'inbox',
+  // The court-day board since #59 (_court-day/__tests__/court-day.test.ts, e2e court-day-board).
+  'today',
+  'tomorrow',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
@@ -522,7 +525,6 @@ describe('placeholder pages', () => {
 
   it('uses the #11 design-spec empty copy verbatim', async () => {
     const spec: Partial<Record<PlaceholderId, string>> = {
-      today: 'No hearings today. Forward a cause list to see your court day.',
       obligations: 'No open obligations.',
     };
     for (const [route, copy] of Object.entries(spec)) {
@@ -590,7 +592,7 @@ describe('placeholder pages', () => {
 
   it('shows the offline banner only while navigator.onLine is false', async () => {
     online = false;
-    withIntl(await PAGES.today(props('demo')));
+    withIntl(await PAGES.calendar(props('demo')));
     const banner = () => document.querySelector('[data-pattern-state="offline"]');
     expect(banner()?.textContent).toContain('You are offline.');
 
@@ -608,7 +610,7 @@ describe('placeholder pages', () => {
   });
 
   it('renders no offline banner when online', async () => {
-    withIntl(await PAGES.today(props('demo')));
+    withIntl(await PAGES.calendar(props('demo')));
     expect(document.querySelector('[data-pattern-state="offline"]')).toBeNull();
   });
 });

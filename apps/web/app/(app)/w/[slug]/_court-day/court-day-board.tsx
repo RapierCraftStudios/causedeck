@@ -44,10 +44,11 @@ export async function CourtDayBoard(props: CourtDayBoardProps) {
     : (halls[0]?.key ?? '');
   const diffs: readonly ListDiff[] = board.diffs;
   const changes = diffs.reduce((n, d) => n + d.added.length + d.removed.length + d.moved.length, 0);
-  const failures = board.failures.map((failure) => ({
-    ...failure,
-    hallNo: halls.find((h) => h.hall.hallId === failure.hallId)?.hall.hallNo ?? '',
-  }));
+  const hallNos = new Map(
+    halls.flatMap(({ hall }) =>
+      hall.hallId === null || hall.hallNo === null ? [] : [[hall.hallId, hall.hallNo] as const],
+    ),
+  );
   const firstItem = halls[0]?.hall.lists.flatMap((l) => l.items)[0]?.listingId ?? null;
 
   return (
@@ -63,7 +64,14 @@ export async function CourtDayBoard(props: CourtDayBoardProps) {
         />
         <DayRibbon slug={slug} which={which} />
         <BoardStatus changes={changes} readAt={day.freshness} />
-        <AttentionStrip which={which} failures={failures} diffs={diffs} locale={props.locale} />
+        <AttentionStrip
+          slug={slug}
+          which={which}
+          failures={board.failures}
+          diffs={diffs}
+          expected={day.expectedNotListed}
+          locale={props.locale}
+        />
         {itemCount === 0 ? (
           <EmptyState
             data-pattern-state="empty"
@@ -97,6 +105,7 @@ export async function CourtDayBoard(props: CourtDayBoardProps) {
                     listDate={day.date}
                     canWrite={props.canWrite}
                     clashes={board.clashes}
+                    hallNos={hallNos}
                     diffs={diffs}
                     selected={key === selected}
                     tabStopListingId={firstItem}

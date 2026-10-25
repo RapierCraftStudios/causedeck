@@ -34,7 +34,7 @@ export async function DayHeader({
   return (
     <header className="bg-canvas z-sticky sticky top-0 flex flex-col gap-1 py-2">
       <h1 className="font-serif text-2xl font-medium">{t(which)}</h1>
-      <p className="text-ink-muted text-sm">
+      <p data-day-meta className="text-ink-muted text-sm">
         <time dateTime={date}>{formatted}</time>
         {' · '}
         {t('summary', { items, halls })}

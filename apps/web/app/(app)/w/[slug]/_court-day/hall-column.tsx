@@ -16,6 +16,8 @@ export interface HallColumnProps {
   listDate: string;
   canWrite: boolean;
   clashes: readonly Clash[];
+  /** Hall id to hall number across the day, for the clash statement. */
+  hallNos: ReadonlyMap<string, string>;
   diffs: readonly ListDiff[];
   /** Shown on a phone; hidden there when another hall is selected. */
   selected: boolean;
@@ -30,6 +32,8 @@ export async function HallColumn(props: HallColumnProps) {
   const own = clashes.filter((c) =>
     c.items.some((i) => items.some((x) => x.listingId === i.listingId)),
   );
+  // The bench a listing is before is cause-list content; nothing here counts or rates a judge.
+  const benchNames = [...new Set(items.flatMap((item) => item.bench))];
   const marker = hall.marker?.currentItem ?? null;
   const title =
     hall.hallNo === null ? t('hall.unassigned') : t('hall.name', { hallNo: hall.hallNo });
@@ -55,6 +59,11 @@ export async function HallColumn(props: HallColumnProps) {
           <>
             {props.forum} · {t('hall.count', { count: items.length })}
             {marker === null ? '' : ` · ${t('hall.courtIsAt', { item: marker })}`}
+            {benchNames.length === 0 ? null : (
+              <span data-hall-bench className="block [font-variant-caps:all-small-caps]">
+                {t('hall.bench', { judges: benchNames.join(', ') })}
+              </span>
+            )}
           </>
         }
         actions={
@@ -69,7 +78,13 @@ export async function HallColumn(props: HallColumnProps) {
         }
       />
       <div className="flex flex-col gap-2 p-2">
-        {own[0] === undefined ? null : <ClashCard clash={own[0]} />}
+        {own.map((clash) => (
+          <ClashCard
+            key={`${clash.items[0].listingId}-${clash.items[1].listingId}`}
+            clash={clash}
+            hallNos={props.hallNos}
+          />
+        ))}
         {items.map((item, index) => {
           const n = ordinalOf(item.itemNo);
           return (

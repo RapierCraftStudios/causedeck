@@ -11,7 +11,7 @@ export async function DayRail({ day, slug }: { day: CourtDay; slug: string }) {
     c.halls.flatMap((h) => h.lists.flatMap((l) => l.items)),
   );
   const carried = items.filter((i) => i.carryCount > 0);
-  const needs = items.filter((i) => i.confirmationState === 'proposed');
+  const needs = items.filter((i) => i.confirmationState === 'proposed' || i.openObligations > 0);
   const body = (
     <div className="flex flex-col gap-4 text-sm">
       <section data-carry-list tabIndex={-1} aria-labelledby="carry-heading">
@@ -46,7 +46,14 @@ export async function DayRail({ day, slug }: { day: CourtDay; slug: string }) {
                 <Link href={`/w/${slug}/matters/${i.matterId}`} className="hover:underline">
                   {i.caseLabel}
                 </Link>{' '}
-                <span className="text-ink-muted">{t('toConfirm')}</span>
+                <span className="text-ink-muted">
+                  {[
+                    ...(i.confirmationState === 'proposed' ? [t('toConfirm')] : []),
+                    ...(i.openObligations > 0
+                      ? [t('obligations', { count: i.openObligations })]
+                      : []),
+                  ].join(' · ')}
+                </span>
               </li>
             ))}
           </ul>
@@ -56,13 +63,19 @@ export async function DayRail({ day, slug }: { day: CourtDay; slug: string }) {
   );
   return (
     <>
-      <details className="border-border bg-surface z-sticky sticky bottom-0 rounded-t-md border p-3 md:block xl:hidden">
+      <details
+        data-day-drawer
+        className="border-border bg-surface z-sticky sticky bottom-0 rounded-t-md border p-3 md:block xl:hidden"
+      >
         <summary className="min-h-11 cursor-pointer text-sm font-medium">
           {t('summary', { carry: carried.length, needs: needs.length })}
         </summary>
         {body}
       </details>
-      <aside className="hidden xl:sticky xl:top-20 xl:block xl:w-72 xl:shrink-0 xl:self-start">
+      <aside
+        data-day-rail
+        className="hidden xl:sticky xl:top-20 xl:block xl:w-72 xl:shrink-0 xl:self-start"
+      >
         {body}
       </aside>
     </>

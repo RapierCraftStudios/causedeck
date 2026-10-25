@@ -19,6 +19,8 @@ import { useRef, useState, useTransition, type ReactNode } from 'react';
 import { setCurrentItemAction } from './actions.ts';
 
 const LONG_PRESS_MS = 500;
+/** A press that moves further than this is a drag or a scroll, not a long-press. */
+const MOVE_TOLERANCE_PX = 10;
 
 export interface QuickActionsSheetProps {
   children: ReactNode;
@@ -51,6 +53,7 @@ export function QuickActionsSheet({
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const origin = useRef<{ x: number; y: number } | null>(null);
   const number = itemNo === null ? Number.NaN : Number.parseInt(itemNo, 10);
   const canMark = canWrite && hallId !== null && Number.isInteger(number) && number > 0;
 
@@ -66,11 +69,21 @@ export function QuickActionsSheet({
       aria-label={label}
       tabIndex={tabIndex}
       className="border-border bg-surface focus-visible:ring-ring relative flex gap-3 rounded-md border p-3 focus-visible:ring-2 focus-visible:outline-none data-dimmed:opacity-60"
-      onPointerDown={() => {
+      onPointerDown={(event) => {
         cancel();
+        origin.current = { x: event.clientX, y: event.clientY };
         timer.current = setTimeout(() => {
           setOpen(true);
         }, LONG_PRESS_MS);
+      }}
+      onPointerMove={(event) => {
+        const from = origin.current;
+        if (
+          from !== null &&
+          Math.hypot(event.clientX - from.x, event.clientY - from.y) > MOVE_TOLERANCE_PX
+        ) {
+          cancel();
+        }
       }}
       onPointerUp={cancel}
       onPointerLeave={cancel}

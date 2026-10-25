@@ -3,6 +3,7 @@
 // board unless a dev state is being previewed.
 import { getLocale } from 'next-intl/server';
 
+import { PermissionDeniedPage } from '../../../../../components/shell/permission-denied-page.tsx';
 import type {
   PlaceholderRoute,
   WorkspacePageProps,
@@ -23,12 +24,21 @@ export async function renderBoard(
   if (query.__state !== undefined) return { base, board: null };
   const context = await getWorkspaceContext(slug);
   if (!context) return { base, board: null };
-  const data = await loadBoard({
-    workspaceId: context.workspace.id,
-    userId: context.user.id,
-    role: context.role,
-    date: istDate(new Date(), which === 'today' ? 0 : 1),
-  });
+  let data;
+  try {
+    data = await loadBoard({
+      workspaceId: context.workspace.id,
+      userId: context.user.id,
+      role: context.role,
+      date: istDate(new Date(), which === 'today' ? 0 : 1),
+    });
+  } catch (error) {
+    // A role without the court day sees the permission state; anything else reaches the boundary.
+    if (error instanceof Error && 'code' in error && error.code === 'FORBIDDEN') {
+      return { base, board: <PermissionDeniedPage /> };
+    }
+    throw error;
+  }
   const hall = query.hall;
   return {
     base,

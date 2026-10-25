@@ -31,3 +31,6 @@ CI lint failed (no log). Committed per-package `.eslintcache` files were the onl
 
 ## Lint fix 2
 No ESLint findings on changed files; prettier --check flagged three files (cross-tenant-registry.ts, storage keys.ts and keys.test.ts). Formatted them, no logic change; keys tests pass.
+
+## Test fix
+CI test failed (no log). Reproduced locally: i18n `check-catalogs` repo test failed because packages/i18n/translation-status.json had no entries for the new kn/ta `status.*` keys. Added them as "draft" (appended, as for other namespaces). i18n vitest passes (76).

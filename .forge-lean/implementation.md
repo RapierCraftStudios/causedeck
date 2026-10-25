@@ -33,3 +33,13 @@ Renamed `parseInput` in packages/core/src/memory/propose.ts to `parseMemoryInput
 
 ## Merge-fix note
 The reported `turbo: command not found` was a PATH problem, not a code conflict. Running `node_modules/.bin/turbo run typecheck --filter='...[origin/milestone/follow-up-continuity-memory]'` passes (24/24). No source change was needed.
+
+## Merge-fix recheck
+Second report of `turbo: command not found` (exit 127): host PATH only. With `node_modules/.bin` on PATH, turbo typecheck for validators, db and core passes (16/16). No source change.
+
+### Post-merge typecheck
+`turbo: command not found` is a PATH problem: turbo is only at `node_modules/.bin/turbo`. It is not a code conflict. After the merge, `tsc --noEmit` is clean for validators, db, core and worker, so no source change was needed. I did not run a monorepo-wide turbo typecheck, because the host rules forbid it.
+
+## CI lint fix
+
+`pnpm adr:lint` failed: ADR 0038 lacked the required `## Revisit when` section. Added it. ESLint on changed files in core, db, validators, worker and config, and prettier, are clean.

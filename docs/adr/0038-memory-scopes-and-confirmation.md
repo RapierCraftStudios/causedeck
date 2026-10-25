@@ -45,3 +45,8 @@ Lawyer memory (#72, PRD ME-1..ME-4) keeps what the OS learned about one lawyer: 
 - Positive: a missed predicate or a clerk bug still cannot return another matter's or a strategy value; proposals never become memory unseen.
 - Negative: two checks (policy and predicate) per read; a deleted item leaves a row until the workspace is erased (`memory.erase`, #303, deletes by `workspace_id`, embeddings first).
 - Follow-up: a provider-backed embedding task in the AI gateway; the memory UI (#73).
+
+## Revisit when
+
+- A provider-backed embedding task exists in the AI gateway (the India-only and sensitive-matter rules need review).
+- Members need memory visible to a clerk beyond the non-strategy M1, M2, M6 and M7 values.

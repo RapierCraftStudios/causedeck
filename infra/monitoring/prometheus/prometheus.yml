@@ -1,0 +1,61 @@
+# Prometheus (#102). Services push OTLP to the collector, which exposes it on :8889; host,
+# container and probe exporters are scraped directly. Times are UTC; court-day windows are computed
+# in rules/court-day.yml (IST = UTC+5:30).
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    stack: causedeck
+    region: ap-south-1
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['prometheus:9090']
+  - job_name: alertmanager
+    static_configs:
+      - targets: ['alertmanager:9093']
+  - job_name: loki
+    static_configs:
+      - targets: ['loki:3100']
+  # Application metrics (causedeck_<area>_<name>, http_server_duration_*, adapter_*) via OTLP.
+  - job_name: otel-collector
+    honor_labels: true
+    static_configs:
+      - targets: ['otel-collector:8889']
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+  - job_name: node
+    static_configs:
+      - targets: ['node-exporter:9100']
+  # Internal /readyz of each service (private network, no TLS).
+  - job_name: blackbox-readyz
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ['http://web:3000/readyz', 'http://api:3001/readyz', 'http://worker:3003/readyz']
+    relabel_configs: &probe_relabel
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox:9115
+  # Public endpoints: app, api, static, site and status. Edit targets/public.yml at deploy.
+  - job_name: blackbox-public
+    metrics_path: /probe
+    params:
+      module: [http_2xx_tls]
+    file_sd_configs:
+      - files: ['/etc/prometheus/targets/public.yml']
+    relabel_configs: *probe_relabel

@@ -16,6 +16,9 @@ export const CONTENT_KEYS: readonly string[] = [
   'quote',
   'prompt',
   'memoryValue',
+  'title',
+  'filename',
+  'email',
 ];
 
 const contentKeySet = new Set(CONTENT_KEYS);

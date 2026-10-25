@@ -1,0 +1,45 @@
+# Court-day windows (#102): 07:00-10:30 and 18:00-23:00 IST. IST = UTC+5:30, so the windows are
+# 01:30-05:00 and 12:30-17:30 UTC (minutes of the UTC day: 90-300 and 750-1050). Advocates prepare
+# in the morning and the evening, so thresholds are stricter inside the windows. These rules only
+# tighten thresholds; muting for noise lives in alertmanager.yml and never touches P0.
+groups:
+  - name: court-day-window
+    rules:
+      - record: causedeck:court_day_window:active
+        expr: >-
+          clamp_max(
+            ((hour() * 60 + minute() >= bool 90) * (hour() * 60 + minute() < bool 300))
+            + ((hour() * 60 + minute() >= bool 750) * (hour() * 60 + minute() < bool 1050)),
+            1)
+  - name: court-day-alerts
+    rules:
+      - alert: CourtDayLatencyP95High
+        expr: >-
+          (histogram_quantile(0.95, sum by (le) (rate(http_server_duration_milliseconds_bucket[5m]))) > 250)
+          and on() (causedeck:court_day_window:active == 1)
+        for: 5m
+        labels: { severity: page, priority: P1, window: court-day }
+        annotations:
+          summary: 'p95 latency above 250 ms during a court-day window'
+      - alert: CourtDayQueueLagHigh
+        expr: >-
+          (max by (queue) (causedeck_queue_lag_seconds) > 60)
+          and on() (causedeck:court_day_window:active == 1)
+        for: 3m
+        labels: { severity: page, priority: P1, window: court-day }
+        annotations:
+          summary: 'Queue {{ $labels.queue }} lag above 60 s during a court-day window'
+      - alert: CourtDayBriefLatencyHigh
+        expr: >-
+          (histogram_quantile(0.95, sum by (le) (rate(job_duration_milliseconds_bucket{jobName=~"brief.*"}[10m]))) > 60000)
+          and on() (causedeck:court_day_window:active == 1)
+        for: 5m
+        labels: { severity: page, priority: P1, window: court-day }
+        annotations:
+          summary: 'Brief generation p95 above 60 s during a court-day window'
+      - alert: CourtDayReadyzFailing
+        expr: (probe_success{job="blackbox-readyz"} == 0) and on() (causedeck:court_day_window:active == 1)
+        for: 1m
+        labels: { severity: page, priority: P0, window: court-day }
+        annotations:
+          summary: '{{ $labels.instance }} failing /readyz during a court-day window'

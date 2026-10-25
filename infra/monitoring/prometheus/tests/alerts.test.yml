@@ -1,0 +1,412 @@
+# promtool unit tests (#102): `promtool test rules infra/monitoring/prometheus/tests/alerts.test.yml`,
+# run in CI by .github/workflows/monitoring.yml with the pinned Prometheus image. One case per
+# required alert; infra/monitoring/test/alerts.test.ts checks that every alert has a case here.
+# promtool time starts at 00:00 UTC, so eval_time doubles as the UTC time of day (IST = UTC+5:30).
+rule_files:
+  - ../rules/alerts.yml
+  - ../rules/court-day.yml
+
+evaluation_interval: 1m
+
+tests:
+  # service down for 5 minutes
+  - interval: 1m
+    input_series:
+      - series: 'up{job="loki",instance="loki:3100"}'
+        values: '0x10'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: ServiceDown
+        exp_alerts:
+          - exp_labels:
+              job: 'loki'
+              instance: 'loki:3100'
+              severity: 'page'
+              priority: 'P0'
+            exp_annotations:
+              summary: 'loki has been down for 5 minutes'
+    # service flapping shorter than 5 minutes stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'up{job="loki",instance="loki:3100"}'
+        values: '0 0 1 1 1 1 1 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: ServiceDown
+        exp_alerts: []
+    # readyz failing
+  - interval: 1m
+    input_series:
+      - series: 'probe_success{job="blackbox-readyz",instance="http://api:3001/readyz"}'
+        values: '0x10'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: ReadyzFailing
+        exp_alerts:
+          - exp_labels:
+              job: 'blackbox-readyz'
+              instance: 'http://api:3001/readyz'
+              severity: 'page'
+              priority: 'P0'
+            exp_annotations:
+              summary: 'http://api:3001/readyz is failing /readyz'
+    # public endpoint down
+  - interval: 1m
+    input_series:
+      - series: 'probe_success{job="blackbox-public",instance="https://app.example.in/readyz"}'
+        values: '0x10'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: PublicEndpointDown
+        exp_alerts:
+          - exp_labels:
+              job: 'blackbox-public'
+              instance: 'https://app.example.in/readyz'
+              severity: 'page'
+              priority: 'P0'
+            exp_annotations:
+              summary: 'https://app.example.in/readyz is unreachable from the probe'
+    # certificate expiring in under 14 days
+  - interval: 1m
+    input_series:
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-public",instance="https://app.example.in/readyz"}'
+        values: '864000x100'
+    alert_rule_test:
+      - eval_time: 90m
+        alertname: CertificateExpiringSoon
+        exp_alerts:
+          - exp_labels:
+              job: 'blackbox-public'
+              instance: 'https://app.example.in/readyz'
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Certificate for https://app.example.in/readyz expires in under 14 days'
+    # p95 latency above 400 ms for 10 minutes
+  - interval: 1m
+    input_series:
+      - series: 'http_server_duration_milliseconds_bucket{le="100"}'
+        values: '0x30'
+      - series: 'http_server_duration_milliseconds_bucket{le="500"}'
+        values: '0x30'
+      - series: 'http_server_duration_milliseconds_bucket{le="1000"}'
+        values: '0+60x30'
+      - series: 'http_server_duration_milliseconds_bucket{le="+Inf"}'
+        values: '0+60x30'
+    alert_rule_test:
+      - eval_time: 14m
+        alertname: ApiLatencyP95High
+        exp_alerts:
+          - exp_labels:
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'p95 request latency above 400 ms for 10 minutes'
+    # error rate spike
+  - interval: 1m
+    input_series:
+      - series: 'http_server_duration_milliseconds_count{http_response_status_code="500"}'
+        values: '0+10x20'
+      - series: 'http_server_duration_milliseconds_count{http_response_status_code="200"}'
+        values: '0+10x20'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: ErrorRateSpike
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: '5xx responses above 5% of requests'
+    # database CPU above 60% for 15 minutes
+  - interval: 1m
+    input_series:
+      - series: 'container_cpu_usage_seconds_total{name="causedeck-prod-postgres-1"}'
+        values: '0+48x40'
+      - series: 'container_spec_cpu_quota{name="causedeck-prod-postgres-1"}'
+        values: '100000x40'
+      - series: 'container_spec_cpu_period{name="causedeck-prod-postgres-1"}'
+        values: '100000x40'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: DatabaseCpuHigh
+        exp_alerts:
+          - exp_labels:
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Postgres CPU above 60% of its limit for 15 minutes'
+    # disk above 80%
+  - interval: 1m
+    input_series:
+      - series: 'node_filesystem_avail_bytes{fstype="ext4",mountpoint="/",device="sda1",instance="node-exporter:9100"}'
+        values: '10x20'
+      - series: 'node_filesystem_size_bytes{fstype="ext4",mountpoint="/",device="sda1",instance="node-exporter:9100"}'
+        values: '100x20'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: DiskUsageHigh
+        exp_alerts:
+          - exp_labels:
+              fstype: 'ext4'
+              mountpoint: '/'
+              device: 'sda1'
+              instance: 'node-exporter:9100'
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Disk / above 80%'
+    # queue lag above threshold
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_queue_lag_seconds{queue="brief"}'
+        values: '400x20'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: QueueLagHigh
+        exp_alerts:
+          - exp_labels:
+              queue: 'brief'
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Queue brief lag above 5 minutes'
+    # dead-letter growth
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_queue_dead_letter_total{queue="ocr"}'
+        values: '0+3x30'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: DeadLetterGrowth
+        exp_alerts:
+          - exp_labels:
+              queue: 'ocr'
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Dead-letter queue ocr grew by more than 5 in 15 minutes'
+    # WAL archive older than 5 minutes
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_backup_wal_age_seconds'
+        values: '600x10'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: BackupWalStale
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P0'
+            exp_annotations:
+              summary: 'Newest archived WAL segment is older than 5 minutes'
+    # base backup older than 26 hours
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_backup_base_age_seconds'
+        values: '100000x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: BackupBaseStale
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Newest base backup is older than 26 hours'
+    # fresh base backup stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_backup_base_age_seconds'
+        values: '80000x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: BackupBaseStale
+        exp_alerts: []
+    # restore drill failed
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_backup_restore_drill_success'
+        values: '0x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: RestoreDrillFailed
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'The last automated restore drill failed'
+    # clock drift above 1 s
+  - interval: 1m
+    input_series:
+      - series: 'node_timex_offset_seconds{instance="node-exporter:9100"}'
+        values: '1.5x10'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: ClockDriftHigh
+        exp_alerts:
+          - exp_labels:
+              instance: 'node-exporter:9100'
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Host clock offset above 1 s'
+    # clock drift under 1 s stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'node_timex_offset_seconds{instance="node-exporter:9100"}'
+        values: '0.2x10'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: ClockDriftHigh
+        exp_alerts: []
+    # NTP not synchronised
+  - interval: 1m
+    input_series:
+      - series: 'node_timex_sync_status{instance="node-exporter:9100"}'
+        values: '0x30'
+    alert_rule_test:
+      - eval_time: 17m
+        alertname: NtpNotSynchronised
+        exp_alerts:
+          - exp_labels:
+              instance: 'node-exporter:9100'
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Host clock is not NTP-synchronised'
+    # adapter parse ratio low
+  - interval: 1m
+    input_series:
+      - series: 'adapter_parse_success_ratio{adapter="madras-hc"}'
+        values: '0.5x50'
+    alert_rule_test:
+      - eval_time: 32m
+        alertname: AdapterParseRatioLow
+        exp_alerts:
+          - exp_labels:
+              adapter: 'madras-hc'
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Adapter madras-hc parse success below 90%'
+    # adapter stale for 6 hours
+  - interval: 1m
+    input_series:
+      - series: 'adapter_last_success_timestamp{adapter="madras-hc"}'
+        values: '0x430'
+    alert_rule_test:
+      - eval_time: 7h
+        alertname: AdapterStale
+        exp_alerts:
+          - exp_labels:
+              adapter: 'madras-hc'
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Adapter madras-hc has not succeeded for 6 hours'
+    # court day: queue lag 120 s inside the morning window (02:00 UTC = 07:30 IST)
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_queue_lag_seconds{queue="brief"}'
+        values: '120x600'
+    alert_rule_test:
+      - eval_time: 2h
+        alertname: CourtDayQueueLagHigh
+        exp_alerts:
+          - exp_labels:
+              queue: 'brief'
+              severity: 'page'
+              priority: 'P1'
+              window: 'court-day'
+            exp_annotations:
+              summary: 'Queue brief lag above 60 s during a court-day window'
+    # court day: the same lag outside the windows (06:00 UTC = 11:30 IST) stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_queue_lag_seconds{queue="brief"}'
+        values: '120x600'
+    alert_rule_test:
+      - eval_time: 6h
+        alertname: CourtDayQueueLagHigh
+        exp_alerts: []
+    # court day: readyz failure inside the evening window (13:00 UTC = 18:30 IST) is P0
+  - interval: 1m
+    input_series:
+      - series: 'probe_success{job="blackbox-readyz",instance="http://web:3000/readyz"}'
+        values: '0x900'
+    alert_rule_test:
+      - eval_time: 13h
+        alertname: CourtDayReadyzFailing
+        exp_alerts:
+          - exp_labels:
+              job: 'blackbox-readyz'
+              instance: 'http://web:3000/readyz'
+              severity: 'page'
+              priority: 'P0'
+              window: 'court-day'
+            exp_annotations:
+              summary: 'http://web:3000/readyz failing /readyz during a court-day window'
+    # court day: p95 latency above 250 ms inside the morning window
+  - interval: 1m
+    input_series:
+      - series: 'http_server_duration_milliseconds_bucket{le="100"}'
+        values: '0x600'
+      - series: 'http_server_duration_milliseconds_bucket{le="500"}'
+        values: '0+60x600'
+      - series: 'http_server_duration_milliseconds_bucket{le="+Inf"}'
+        values: '0+60x600'
+    alert_rule_test:
+      - eval_time: 2h
+        alertname: CourtDayLatencyP95High
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+              window: 'court-day'
+            exp_annotations:
+              summary: 'p95 latency above 250 ms during a court-day window'
+    # court day: brief generation p95 above 60 s inside the morning window
+  - interval: 1m
+    input_series:
+      - series: 'job_duration_milliseconds_bucket{jobName="brief.generate",le="60000"}'
+        values: '0x600'
+      - series: 'job_duration_milliseconds_bucket{jobName="brief.generate",le="300000"}'
+        values: '0+10x600'
+      - series: 'job_duration_milliseconds_bucket{jobName="brief.generate",le="+Inf"}'
+        values: '0+10x600'
+    alert_rule_test:
+      - eval_time: 2h
+        alertname: CourtDayBriefLatencyHigh
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+              window: 'court-day'
+            exp_annotations:
+              summary: 'Brief generation p95 above 60 s during a court-day window'
+    # court-day window recording rule: 01:30-05:00 and 12:30-17:30 UTC
+  - interval: 1m
+    input_series: []
+    promql_expr_test:
+      - expr: causedeck:court_day_window:active
+        eval_time: 2h
+        exp_samples:
+          - labels: 'causedeck:court_day_window:active'
+            value: 1
+      - expr: causedeck:court_day_window:active
+        eval_time: 6h
+        exp_samples:
+          - labels: 'causedeck:court_day_window:active'
+            value: 0
+      - expr: causedeck:court_day_window:active
+        eval_time: 13h
+        exp_samples:
+          - labels: 'causedeck:court_day_window:active'
+            value: 1
+      - expr: causedeck:court_day_window:active
+        eval_time: 20h
+        exp_samples:
+          - labels: 'causedeck:court_day_window:active'
+            value: 0

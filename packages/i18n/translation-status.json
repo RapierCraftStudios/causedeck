@@ -3234,7 +3234,23 @@
     "whatsappLink.error.consent": "draft",
     "whatsappLink.error.invalid": "draft",
     "whatsappLink.error.conflict": "draft",
-    "whatsappLink.error.generic": "draft"
+    "whatsappLink.error.generic": "draft",
+    "share.metaTitle": "draft",
+    "share.unavailable": "draft",
+    "share.states.invalid": "draft",
+    "share.states.expired": "draft",
+    "share.states.revoked": "draft",
+    "share.stage": "draft",
+    "share.lastOrder": "draft",
+    "share.lastHearing": "draft",
+    "share.obligations": "draft",
+    "share.due": "draft",
+    "share.footer": "draft",
+    "share.join": "draft",
+    "share.import": "draft",
+    "share.errors.noWorkspace": "draft",
+    "share.errors.gone": "draft",
+    "share.errors.failed": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -6461,6 +6477,22 @@
     "whatsappLink.error.consent": "draft",
     "whatsappLink.error.invalid": "draft",
     "whatsappLink.error.conflict": "draft",
-    "whatsappLink.error.generic": "draft"
+    "whatsappLink.error.generic": "draft",
+    "share.metaTitle": "draft",
+    "share.unavailable": "draft",
+    "share.states.invalid": "draft",
+    "share.states.expired": "draft",
+    "share.states.revoked": "draft",
+    "share.stage": "draft",
+    "share.lastOrder": "draft",
+    "share.lastHearing": "draft",
+    "share.obligations": "draft",
+    "share.due": "draft",
+    "share.footer": "draft",
+    "share.join": "draft",
+    "share.import": "draft",
+    "share.errors.noWorkspace": "draft",
+    "share.errors.gone": "draft",
+    "share.errors.failed": "draft"
   }
 }

@@ -4396,6 +4396,28 @@
       "full": "The device outbox is full. Let uploads finish, then try again."
     }
   },
+  "share": {
+    "metaTitle": "Shared brief",
+    "unavailable": "Shared brief unavailable",
+    "states": {
+      "invalid": "This link is not valid.",
+      "expired": "This link has expired. Ask the sender for a new one.",
+      "revoked": "The sender has withdrawn this link."
+    },
+    "stage": "Stage: {stage}",
+    "lastOrder": "Last order",
+    "lastHearing": "Last hearing: {date}",
+    "obligations": "Open obligations",
+    "due": "{text} (due {date})",
+    "footer": "Shared as of {assembledAt}. Link expires {expiresAt}.",
+    "join": "Join CauseDeck and import this matter",
+    "import": "Import this matter",
+    "errors": {
+      "noWorkspace": "Create a workspace first, then open this link again.",
+      "gone": "This link can no longer be imported.",
+      "failed": "Something went wrong. Try again."
+    }
+  },
   "error": {
     "title": "Something went wrong.",
     "description": "Your saved work is safe. Try again, or go back to Today.",

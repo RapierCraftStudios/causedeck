@@ -119,6 +119,7 @@ describe('namespaced catalogs (#174)', () => {
         'provisioning',
         'pwa',
         'settings',
+        'share',
         'shell',
         'shortcuts',
         'theme',
@@ -129,6 +130,17 @@ describe('namespaced catalogs (#174)', () => {
         'workspace',
       ].sort(),
     );
+  });
+});
+
+describe('share namespace (#507)', () => {
+  it.each(LOCALES)('%s has the share page and import strings', (locale) => {
+    const catalog = { en, ta, kn }[locale] as { share?: { states?: Record<string, string> } };
+    expect(Object.keys(catalog.share?.states ?? {}).sort()).toEqual([
+      'expired',
+      'invalid',
+      'revoked',
+    ]);
   });
 });
 

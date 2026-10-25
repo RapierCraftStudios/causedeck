@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@causedeck/ui/button';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -15,6 +16,7 @@ export interface ImportFormProps {
 
 /** `Import this matter`: lands on the new matter, or says why the link no longer works. */
 export function ImportForm({ token, action }: ImportFormProps) {
+  const t = useTranslations('share');
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,11 +32,11 @@ export function ImportForm({ token, action }: ImportFormProps) {
       }
       setError(
         result.ok && result.data.status === 'rejected' && result.data.reason === 'NO_WORKSPACE'
-          ? 'Create a workspace first, then open this link again.'
-          : 'This link can no longer be imported.',
+          ? t('errors.noWorkspace')
+          : t('errors.gone'),
       );
     } catch {
-      setError('Something went wrong. Try again.');
+      setError(t('errors.failed'));
     } finally {
       setBusy(false);
     }
@@ -43,7 +45,7 @@ export function ImportForm({ token, action }: ImportFormProps) {
   return (
     <div className="space-y-2">
       <Button size="lg" disabled={busy} onClick={() => void run()}>
-        Import this matter
+        {t('import')}
       </Button>
       {error && <p role="alert">{error}</p>}
     </div>

@@ -4397,6 +4397,28 @@ export type Messages = {
       full: string;
     };
   };
+  share: {
+    metaTitle: string;
+    unavailable: string;
+    states: {
+      invalid: string;
+      expired: string;
+      revoked: string;
+    };
+    stage: string;
+    lastOrder: string;
+    lastHearing: string;
+    obligations: string;
+    due: string;
+    footer: string;
+    join: string;
+    import: string;
+    errors: {
+      noWorkspace: string;
+      gone: string;
+      failed: string;
+    };
+  };
   error: {
     title: string;
     description: string;

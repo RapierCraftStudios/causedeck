@@ -31,3 +31,4 @@ Outward drafts UI (#736) on top of the merged #735 services. A new core read mod
 
 ### Export-name collision fix
 - outward.stories.tsx exported Empty, Loading, ErrorState, Denied, which whatsapp-import.stories.tsx also exports; renamed to StatesEmpty, StatesLoading, StatesError, StatesDenied. No other references.
+- CI lint fix: removed unused _workspaceId binding in _outward/actions.ts; untracked committed apps/web/.eslintcache.

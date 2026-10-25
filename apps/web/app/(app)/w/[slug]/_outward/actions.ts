@@ -51,7 +51,9 @@ const refresh = () => {
 
 const compose = workspaceAction(
   Compose,
-  async ({ workspaceId: _workspaceId, ...request }, ctx) => {
+  async (input, ctx) => {
+    const request: Omit<typeof input, 'workspaceId'> & { workspaceId?: string } = { ...input };
+    delete request.workspaceId;
     assertCan(ctx.actor, 'draft.write');
     const { composeUpdate } = await import('@causedeck/core/outward');
     const draft = await composeUpdate(deps(ctx), actor(ctx), request);

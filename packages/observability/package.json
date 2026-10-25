@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./adapter-metrics": "./src/adapter-metrics.ts",
     "./context": "./src/context.ts",
     "./health": "./src/health.ts",
     "./http": "./src/http.ts",

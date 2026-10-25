@@ -1,0 +1,17 @@
+# Remote state with locking in an India-region S3-compatible bucket (AWS S3 ap-south-1).
+# Copy to envs/<env>/backend.tf and set the bucket and key (or pass -backend-config flags, as
+# .github/workflows/terraform.yml does). Credentials come from AWS_ACCESS_KEY_ID /
+# AWS_SECRET_ACCESS_KEY or OIDC; never write them here.
+#
+# Bucket requirements: versioning on, default encryption on, public access blocked, region
+# ap-south-1. State holds provider-required values only (no application secrets); tokens are
+# variables supplied from the environment.
+terraform {
+  backend "s3" {
+    bucket       = "causedeck-tfstate-REPLACE_ME"
+    key          = "ENV/terraform.tfstate"
+    region       = "ap-south-1"
+    encrypt      = true
+    use_lockfile = true
+  }
+}

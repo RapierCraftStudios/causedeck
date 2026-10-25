@@ -1,13 +1,5 @@
 
- RUN  v3.2.7 /work/repo/.claude/worktrees/lean-678/packages/db
+ RUN  v3.2.7 /work/repo/.claude/worktrees/lean-736/packages/core
 
- ✓ |@causedeck/db| src/index.test.ts (4 tests) 83ms
- ✓ |@causedeck/db| src/__tests__/cross-tenant/registry.test.ts (4 tests) 303ms
- ✓ |@causedeck/db| src/__tests__/rls/sql.test.ts (14 tests) 48409ms
-   ✓ row-level security catalog > every table with workspace_id (outside GLOBAL_TABLES) has ENABLE, FORCE and ws_isolation  516ms
-   ✓ row-level security catalog > flags a tenant table that lacks ENABLE, FORCE or the policy  469ms
-   ✓ row-level security catalog > flags a foreign key to a tenant table that does not pair workspace_id  5931ms
-   ✓ global-or-workspace reference tables (#344) > flags missing catalogue policies and a FK into the table without a scope guard  390ms
-   ✓ db:check-rls CLI > passes the migrated database and fails on a fixture table lacking RLS  40771ms
 
 (timed out after 300s)

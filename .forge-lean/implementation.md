@@ -44,3 +44,6 @@ The base merged without a code conflict. The reported `turbo: command not found`
 
 ### Re-verification
 Same exit 127 reported again. `pnpm exec turbo run typecheck --filter='...[b39e8276]' --concurrency=2` passes (23/23, cached). No code change.
+
+### Final verification
+forgedock check: PASS (V1-V5 exit 0). An earlier check run hit 300 s timeouts on V2/V3 from host load (exit 124, no test output); V2/V3 pass on rerun. No code change.

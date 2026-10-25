@@ -1,34 +1,34 @@
 ### Approach
-Build the #73 memory surface on the #72 core domain. Core gains read models (`views.ts`) and review completion (`review.ts`); `apps/web` gets the memory screen, review stepper, matter Memory tab and zod-validated, `can()`-gated server actions; `@causedeck/ui` gains ScopeChip and ProposalTray and extends MemoryCard.
+Outward update drafts (#735): L4-only drafts composed from templates (EN/TA/KN) with an optional India-only `outward_update` AI task, a guard that blocks forbidden phrasing, a diff for edits, and a share record. There is no send path (ADR 0039). Prior commits already hold the work; this pass merged the base (no collision left: base head 68a9c8ba, ADR 0039 and migration 20261025135312 are the next free numbers), re-ran every validate command, and applied prettier.
 
 ### Changes
-- packages/validators/src/memory.ts (+test): key `M1.last_memory_review`.
-- packages/core/src/memory/views.ts, review.ts, index.ts (+tests): proposals, usage, last-used, review candidates, `getLastMemoryReview`, `completeMemoryReview`; cross-tenant registry entries.
-- packages/ui/src/patterns: ScopeChip, ProposalTray (s/e/x shortcuts), MemoryCard extensions, stories, tests.
-- apps/web/app/(app)/w/[slug]/memory/*: page, actions, loading, error, cards, dialogs, list, used-in, tenure panel, review stepper; matter Memory tab (`matters/[id]/memory/page.tsx`, `lib/matters/tabs.ts`).
-- packages/i18n: `memory` namespace (en complete, ta/kn), matters tab label, catalog.
-- Tests: cross-tenant-actions, memory-actions, memory-page, matter-tab-registry, workspace-shell; e2e/tests/memory/*.
+- packages/validators/src/outward-draft.ts (+test, index): DraftRequest, DraftEdit, ShareRecord, Audience, Language.
+- packages/db: schema/outward-draft.ts, migration 20261025135312_outward_drafts.sql, registries, RLS catalog, two-tenant seeders.
+- packages/ai: task `outward_update`, mock fixtures EN/TA/KN, drafting tier.
+- packages/core/src/outward/*: compose, guard, diff, share, context, templates; audit events; erase/export hooks.
+- docs/adr/0039, adr README, core-domains doc and eslint domain edge.
 
 ### Acceptance Criteria Status
-- R1–R10, R12, R15–R17 ✅ (apps/web/app/(app)/w/[slug]/memory/page.tsx, _components/*, packages/core/src/memory/views.ts, review.ts)
-- R11, R13, R14 ✅ instrumented only: CI Lighthouse, bundle budget, Playwright visual and axe (e2e/tests/memory/memory.visual.spec.ts, memory.spec.ts); not run locally.
+- R1 ✅ packages/validators/src/outward-draft.ts, packages/db/src/schema/outward-draft.ts
+- R2 ✅ packages/ai/src/tasks/outward-update.ts
+- R3 ✅ packages/core/src/outward/{compose,guard,diff,share}.ts, packages/core/src/audit/events.ts
+- R4 ✅ docs/adr/0039-outward-drafts-no-send-path.md, packages/db/src/testing/cross-tenant-registry.ts
+- R5 ✅ packages/core/src/outward/__tests__/*, packages/ai/src/tasks/__tests__/outward-update.test.ts
+- R6 ✅ same tests
 
 ### Verification
-- V1 validators memory.test.ts: pass (7).
-- V2 core memory + cross-tenant memory/registry: pass (79).
-- V3 ui patterns: pass (53) with `--project unit`; the default run also launches browser projects needing Chromium, which is not installed on this host.
-- V4 i18n catalog.test.ts: pass (21).
-- V5 web cross-tenant-actions, workspace-shell, memory-page, memory-actions (+ matter-tab-registry): pass (117).
-- The new tests fail without the fix: the modules, actions and page do not exist.
+- V1 validators vitest: pass. V2 ai vitest: pass. V3 core vitest: pass. V4 db vitest: pass. V5 config vitest: pass. V6 adr:lint: pass.
+- V7 lane-check.sh does not exist on this host (exit 127, environment problem); substituted `tsc --noEmit` for validators, ai, db and core: all clean.
+- The new tests fail without the fix because the outward modules do not exist.
 
 ### Notes
-No env vars. Behaviour change: the matter tab list gains Memory for roles with `memory.read` (junior and above).
+No env vars. Policy matrix, worker registry and AI gateway are unchanged.
 
-### Follow-up: stale sibling lists
-- packages/ui/src/index.test.ts: added DEFAULT_SCOPE_CHIP_LABELS and DEFAULT_PROPOSAL_TRAY_LABELS to the pattern export list.
-- scope-chip and proposal-tray stories now carry the shared states (real Default/LongText/RtlNeutral/Tamil/Kannada/Disabled, n/a declared for static ones); this fixed the pattern story check.
-- Not members (recorded in result.json): MEMORY_REVIEW_AFTER_DAYS (constant, in NOT_A_SERVICE), the new ui exports in activity-item/proposal-card tests, Paused story in check-stories.test.ts.
+## Stale-list follow-up
+Checked the four listed tests (admin headers, server-actions-audit, sources-actions, web activity-export-route). None enumerates @causedeck/db schema exports or sibling tables (none names obligation tables either), so the outward symbols are recorded as not_members in result.json. No code change.
 
-### Follow-up: merge and hotspot
-- Merged origin/milestone/follow-up-continuity-memory (conflict only in this file); V1, V2, V4, V5 re-run: pass. V3 still exits 1 only because Chromium is missing on this host (`browserType.launch: Executable doesn't exist`); the same files pass with `--project unit` (53 tests), and CI has the browser.
-- packages/i18n/translation-status.json grew by 244 lines: `i18n:check` requires one status entry per ta/kn key, so a new 122-key namespace cannot avoid it. It is generated bookkeeping.
+## Export-collision follow-up
+Renamed outward/context.ts exports `requireMatterFor` -> `requireOutwardMatter` and `audit` -> `auditOutward` (they collided with obligations/context.ts); updated diff.ts, compose.ts and share.ts. No registry or test keyed by those names. Core tsc clean; vitest on src/outward and domains.test.ts passes (27 tests).
+
+## Fix: D20 cross-tenant case
+Added a real B-on-A outward describe (composeUpdate/saveEdit/recordShared/recordCopied) to packages/core/src/__tests__/cross-tenant/services.test.ts. Outward is a subpath export, not in the root index, so no SERVICE_TESTS entries apply (same as billing).

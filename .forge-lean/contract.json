@@ -2,106 +2,107 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "The memory screen lists active items grouped by layer tabs (Profile, Preferences, Matters, Court notes, Clients, Recognition) with a Memory Card per item showing plain-language statement, scope chip (Only you / Chamber / This matter), source chip and last-used time.",
+   "quote": "The queue groups obligations as Overdue, Today, This week, Later, Undated, each group collapsible with a count, overdue first and sorted by age; group state persists per member.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "A proposal tray shows pending proposals with evidence; each has Save, Edit and Dismiss, and nothing becomes memory without Save; keyboard shortcuts `s`, `e`, `x` work on the focused proposal.",
+   "quote": "Each row shows description, matter and case number, owner avatar, due label with relative text ('due Fri 23 Oct, 3 days'), kind icon, status and a Provenance Chip to the source line; overdue uses an icon plus text, not colour alone.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Edit opens a sheet with the value, scope selector (chamber sharing visible only to the owner) and save; delete uses a confirmation dialog stating that embeddings are removed within 24 hours; pause per item and 'Pause all memory' work.",
+   "quote": "Closing an obligation always opens the close dialog requiring a reason (completed task, lawyer action, not applicable plus text); there is no one-tap silent close, including via swipe or keyboard.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "'Used in' popover lists where an item influenced output (brief, draft, matching) with links, using `memory_usage`.",
+   "quote": "On touch devices, swipe right opens 'Done' (which opens the close dialog) and swipe left opens 'Reschedule' (date picker plus mandatory reason); a visible button and keyboard shortcut provide the same actions.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Monthly review is a stepper through items not confirmed or used in 60 days with Keep, Edit, Delete; completing it records the review date and shows a summary; a reminder card appears on the screen when a month has passed.",
+   "quote": "Each item shows one drafted next step (task, reminder to the clerk, or letter to the client) as a collapsed card; 'Use' creates a task or an internal reminder immediately and a client letter as a draft that is never sent.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Tenure panel shows correction rate and brief-accepted-unedited rate by week as simple accessible charts with a data table alternative; no cross-workspace comparison appears.",
+   "quote": "Filters (matter, owner, kind, source, group) and a text search narrow the queue within 100 ms client-side and are reflected in the URL.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "A clerk opening `/memory` sees a permission-denied explanation, not an empty list; juniors see only personal-scope items and matter memory for their assigned matters.",
+   "quote": "Defects tab lists registry defects with cure-by dates and proceeding state; Certified copies tab shows applied, ready and collected with next action.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "The matter workspace Memory tab renders the same cards filtered to that matter and cannot show another matter's items.",
+   "quote": "Reorder and group changes animate with layout animation (220 ms) and reduced motion disables them.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "States: empty ('Nothing saved yet. As you work, CauseDeck will suggest things to remember and ask first'), skeleton, error with retry, offline (read-only cache; edits disabled with explanation), denied.",
+   "quote": "States: empty ('Nothing outstanding. Orders you confirm will add obligations here'), skeleton, error with retry, offline (read from cache; mutations queue and show 'Will sync'), permission-denied (viewer read-only, clerk without strategy text).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "No screen element profiles a judge or bench; court notes are labelled 'Your own notes' and the add form shows a note about not recording analysis of individual judges.",
+   "quote": "Keyboard: `j`/`k` move, `x` select, `d` done (dialog), `r` reschedule, `a` add, `o` open detail, `/` search, `g o` go to queue, `?` help; all are listed in the shortcut sheet.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Light and dark AA; baselines at 360, 768, 1280; initial JS \u003c= 180 KB gzip; Lighthouse performance and accessibility >= 95.",
+   "quote": "Light and dark themes meet AA; visual baselines at 360, 768, 1280 px.",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "CI Lighthouse, Playwright visual and bundle-budget (apps/web/__tests__/bundle-budget.test.ts) jobs on the ship PR; baselines and Lighthouse never run locally"
+   "evidence": "e2e workflow update_snapshots and visual job generate and compare baselines in CI"
   },
   {
    "id": "R12",
+   "quote": "Initial JS \u003c= 180 KB gzip, Lighthouse performance and accessibility >= 95, p95 server action \u003c 300 ms.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Lighthouse CI (e2e/lighthouserc.json, add an obligations config) and next build bundle check run only in CI"
+  },
+  {
+   "id": "R13",
+   "quote": "The surface never auto-sends anything; letter and reminder next steps only create drafts or internal tasks.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
    "quote": "Storybook stories exist for every new component with all states (default, empty, loading, error, offline, denied) and interaction tests.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R13",
+   "id": "R15",
    "quote": "Playwright visual baselines exist for light and dark themes at 360, 768 and 1280 px.",
    "disposition": "deliver",
    "verify": "out_of_band",
-   "evidence": "Playwright visual job in CI generates baselines (Playwright never runs locally); the lane adds e2e/tests/memory/memory.visual.spec.ts"
-  },
-  {
-   "id": "R14",
-   "quote": "axe reports zero serious or critical violations on every state of the surface, and the full flow is operable by keyboard alone.",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "CI Playwright axe run of e2e/tests/memory/memory.spec.ts; component tests assert roles, labels and keyboard handling in lane"
-  },
-  {
-   "id": "R15",
-   "quote": "All user-facing strings come from `next-intl` catalogs (`en` complete, `ta`/`kn` keys stubbed); no hard-coded copy.",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "evidence": "Baselines are generated only by the e2e workflow update_snapshots (CLAUDE.md: no Playwright locally); the visual spec is delivered here"
   },
   {
    "id": "R16",
-   "quote": "Server actions wrap `confirmMemory`, `editMemory`, `deleteMemory`, `pauseMemory`, `monthlyReview` from #72; zod validated; `can()` checked.",
+   "quote": "axe reports zero serious or critical violations on every state of the surface, and the full flow is operable by keyboard alone.",
    "disposition": "deliver",
-   "verify": "in_lane"
+   "verify": "out_of_band",
+   "evidence": "e2e a11y job (e2e/tests/a11y) runs axe in CI; the spec is delivered here"
   },
   {
    "id": "R17",
-   "quote": "Review completion stores `M1.last_memory_review` as a confirmed workspace setting.",
+   "quote": "All user-facing strings come from `next-intl` catalogs (`en` complete, `ta`/`kn` keys stubbed); no hard-coded copy.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -109,140 +110,275 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/validators/src/memory.ts",
-   "change": "Register key `M1.last_memory_review` in MEMORY_KEYS (layer M1, non-strategy, description). Update packages/validators/src/memory.test.ts expectations.",
+   "path": "packages/core/src/obligations/views.ts",
+   "change": "New read models: listDefects, listCertifiedCopies and a queue hydration (matter title and case number, owner name, source quote anchor) scoped by inObligationScope and visibleMatters; export from index.ts",
    "requirements": [
-    "R17"
+    "R2",
+    "R7"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/memory/views.ts",
-   "change": "New read models in the member's workspace scope: listMemoryProposals (pending, own, decrypted, with evidence), listMemoryUsage(itemId) (usedIn, outputRef, usedAt), last-used per item for listMemory consumers, listReviewCandidates (active items with no confirm/use in 60 days). Reuse scoped/readable helpers from read.ts; hide M1.last_memory_review from lists.",
+   "path": "packages/core/src/obligations/index.ts",
+   "change": "Export the views",
    "requirements": [
-    "R1",
-    "R2",
-    "R4",
-    "R5",
     "R7"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/memory/review.ts",
-   "change": "Add getLastMemoryReview and completeMemoryReview (writes M1.last_memory_review as a confirmed workspace-scope item, returns summary counts); keep monthlyReview signature unchanged.",
-   "requirements": [
-    "R5",
-    "R17"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/core/src/memory/index.ts",
-   "change": "Export the new functions/types.",
-   "requirements": [
-    "R2",
-    "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D5",
    "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register each new core export as memoryDenies (or caller-checked with reason); add real cases (B on A denied, A unchanged) in packages/core/src/__tests__/cross-tenant/memory.test.ts plus functional tests in packages/core/src/memory/__tests__/.",
+   "change": "Register new core runtime exports under SERVICE_TESTS (cases in packages/core/src/__tests__/cross-tenant/services.test.ts)",
    "requirements": [
-    "R2",
-    "R4",
-    "R5",
     "R7"
    ]
   },
   {
-   "id": "D6",
-   "path": "packages/ui/src/patterns/scope-chip/scope-chip.tsx",
-   "change": "New ScopeChip (Only you / Chamber / This matter; text not colour) with story and test; export from patterns/index.ts.",
+   "id": "D4",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Cases: tenant B listing defects/copies/hydrated queue sees nothing of A; A unchanged",
    "requirements": [
-    "R1",
-    "R12"
+    "R7"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/ui/src/patterns/obligation-row/obligation-row.tsx",
+   "change": "Swipe right=Done (opens dialog), left=Reschedule, threshold 72 px; labels reschedule not snooze; kind icon, status; 220 ms layout animation with reduced-motion fade; keep existing props working",
+   "requirements": [
+    "R2",
+    "R4",
+    "R8"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/ui/src/patterns/obligation-row/obligation-row.stories.tsx",
+   "change": "Stories for default, empty, loading, error, offline, denied with play tests",
+   "requirements": [
+    "R14"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/ui/src/patterns/proposal-tray/proposal-tray.tsx",
-   "change": "New ProposalTray (sticky card at 360, drawer at 768, right rail at 1280) over ProposalCard with s/e/x shortcuts on the focused proposal; story + test; export from patterns/index.ts.",
+   "path": "packages/ui/src/patterns/obligation-row/obligation-row.test.tsx",
+   "change": "Update tests for swipe directions and labels",
    "requirements": [
-    "R2",
-    "R12"
+    "R4"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/ui/src/patterns/memory-card/memory-card.tsx",
-   "change": "Extend MemoryCard with paused state (dimmed + 'Paused'), scope chip slot, last-used, used-in slot, pause control; update stories/tests/fixtures; keep existing props backward compatible.",
+   "path": "packages/ui/src/patterns/index.ts",
+   "change": "Export any new pattern parts (DueLabel, GroupHeader)",
    "requirements": [
     "R1",
-    "R3",
-    "R4",
-    "R12"
+    "R2"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/ui/src/patterns/index.ts",
-   "change": "Export ScopeChip, ProposalTray and new MemoryCard types.",
+   "path": "packages/i18n/src/messages/en/obligations.json",
+   "change": "Complete en catalog for the surface",
    "requirements": [
-    "R12"
+    "R17",
+    "R9",
+    "R10"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'memory' namespace; add packages/i18n/src/messages/{en,ta,kn}/memory.json (en complete, ta/kn stubbed with real keys); add `memory` tab label to matters.json in en/ta/kn; update packages/i18n/src/__tests__/catalog.test.ts.",
+   "path": "packages/i18n/src/messages/ta/obligations.json",
+   "change": "Stub keys",
    "requirements": [
-    "R15"
+    "R17"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/web/lib/memory/memory-state.ts",
-   "change": "Layer-tab/URL params, view models (card view, empty/denied/offline states), review-due calc (month elapsed) used by page, review and matter panel.",
+   "path": "packages/i18n/src/messages/kn/obligations.json",
+   "change": "Stub keys",
    "requirements": [
-    "R1",
-    "R5",
-    "R9"
+    "R17"
    ]
   },
   {
    "id": "D12",
-   "path": "apps/web/app/(app)/w/[slug]/memory/actions.ts",
-   "change": "'use server' actions confirmAction, editAction, deleteAction, pauseAction, pauseAllAction, dismissAction, completeReviewAction via workspaceAction, strict zod, assertCan, lazy core import, revalidatePath. Add ACTIONS entries and probe inputs in apps/web/__tests__/cross-tenant-actions.test.ts.",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "Add 'obligations' to NAMESPACES",
    "requirements": [
-    "R2",
-    "R3",
-    "R5",
-    "R16",
     "R17"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/web/app/(app)/w/[slug]/memory/page.tsx",
-   "change": "Replace placeholder: server page (can memory.read else PermissionDenied), layer tabs, cards, tray, tenure panel, review reminder card, dev `?__state=` previews; add loading.tsx and error.tsx beside it.",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Add obligations to the expected namespace list",
+   "requirements": [
+    "R17"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/web/lib/obligations/queue-state.ts",
+   "change": "URL param parse/serialise for filters, search, tab; client-side filter and next-step suggestion (deterministic, no send)",
+   "requirements": [
+    "R5",
+    "R6"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/page.tsx",
+   "change": "Server page: load queue/defects/copies via core, permission-denied and dev __state previews",
+   "requirements": [
+    "R1",
+    "R9"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/loading.tsx",
+   "change": "Skeleton",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/error.tsx",
+   "change": "Error with Retry",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/actions.ts",
+   "change": "closeObligationAction, rescheduleAction, reassignAction, addObligationAction (+ use-next-step) via workspaceAction, strict zod, can() checked, revalidatePath; no send path",
+   "requirements": [
+    "R3",
+    "R4",
+    "R5",
+    "R13"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Add the new actions to ACTIONS with probe inputs",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-view.tsx",
+   "change": "Client queue: groups, selection, shortcuts (j k x d r a o / g o ?), shortcut sheet, offline queue 'Will sync', group collapse persisted per member",
    "requirements": [
     "R1",
     "R6",
-    "R7",
     "R9",
     "R10"
    ]
   },
   {
-   "id": "D14",
-   "path": "apps/web/app/(app)/w/[slug]/memory/_components/memory-list.tsx",
-   "change": "Client components: memory-list, layer-tabs, edit-sheet (scope selector, chamber option owner-only, judge-analysis note on court notes add form, 'Your own notes' label), delete-dialog (24 h embeddings note, 7 s undo only before purge), used-in-popover, pause-switch, tenure-panel (chart + table), proposal-tray wrapper; offline read-only handling.",
+   "id": "D21",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-group.tsx",
+   "change": "Collapsible group with count and sticky header",
    "requirements": [
     "R1",
+    "R8"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/close-dialog.tsx",
+   "change": "Reason-required close dialog",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/reschedule-popover.tsx",
+   "change": "Date picker plus mandatory reason",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/next-step-card.tsx",
+   "change": "Collapsed drafted next step with Use",
+   "requirements": [
+    "R5",
+    "R13"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-filters.tsx",
+   "change": "Matter, owner, kind, source, group filters and search",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/defects-tab.tsx",
+   "change": "Defects list",
+   "requirements": [
+    "R7"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/copies-tab.tsx",
+   "change": "Certified copies list",
+   "requirements": [
+    "R7"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/detail-sheet.tsx",
+   "change": "Detail with source quote, history, next step",
+   "requirements": [
     "R2",
+    "R5"
+   ]
+  },
+  {
+   "id": "D29",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/use-swipe.ts",
+   "change": "Pointer swipe hook with keyboard parity",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D30",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/swipe-row.tsx",
+   "change": "Swipe wrapper using use-swipe",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D31",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/obligation-row.tsx",
+   "change": "Row adapter over the ui pattern",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D32",
+   "path": "e2e/tests/obligations/obligation-queue.spec.ts",
+   "change": "Product e2e journeys (CI only)",
+   "requirements": [
+    "R1",
     "R3",
     "R4",
     "R6",
@@ -251,113 +387,86 @@
    ]
   },
   {
-   "id": "D15",
-   "path": "apps/web/app/(app)/w/[slug]/memory/review/page.tsx",
-   "change": "Monthly review route plus _components/review-stepper.tsx (Keep, Edit, Delete; summary on completion).",
-   "requirements": [
-    "R5",
-    "R17"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/memory/page.tsx",
-   "change": "Matter Memory tab page rendering _memory/matter-memory-panel.tsx filtered by matterId (listMemory with matterId); re-check memory.read and matter access.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "apps/web/lib/matters/tabs.ts",
-   "change": "Add and call registerMemoryTab (id memory, order after research, visible when can memory.read).",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "e2e/tests/memory/memory.spec.ts",
-   "change": "Playwright specs for the flows (not run locally) plus memory.visual.spec.ts at 360/768/1280 light and dark, following e2e/tests/obligations/.",
+   "id": "D33",
+   "path": "e2e/tests/obligations/obligation-queue.visual.spec.ts",
+   "change": "Visual and axe spec for light/dark at 360, 768, 1280",
    "requirements": [
     "R11",
-    "R13",
-    "R14"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "apps/web/__tests__/workspace-shell.test.tsx",
-   "change": "Only if it asserts the memory placeholder: update to the real page.",
-   "requirements": [
-    "R1"
+    "R15",
+    "R16"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Public signatures and behaviour of existing @causedeck/core/memory exports (packages/core/src/memory/index.ts), including monthlyReview 90-day stale count and nothing saved without confirmMemory"
+   "what": "@causedeck/core/obligations service behaviour and signatures (queryQueue, closeObligation, updateObligation, createObligation) in packages/core/src/obligations/*; the UI only calls them"
   },
   {
    "id": "P2",
-   "what": "MemoryCard existing props/defaults (packages/ui/src/patterns/memory-card/memory-card.tsx) and its current stories, tests and __fixtures__ consumers"
+   "what": "The DB closure check obligation_closure_chk and enum names (done, task_completed, source) in packages/db/src/schema/docket.ts; no schema or migration change"
   },
   {
    "id": "P3",
-   "what": "Matter workspace layout and other tabs (apps/web/app/(app)/w/[slug]/matters/[id]/layout.tsx, lib/matters/tab-registry.ts API)"
+   "what": "Other consumers of the ui patterns index (packages/ui/src/patterns/index.ts) and the ObligationRow public props"
   },
   {
    "id": "P4",
-   "what": "No judge or bench profiling anywhere (engine guard in packages/core/src/memory/propose.ts:47); no L5 automation"
+   "what": "No outward send path: nothing on the page may call a mail, WhatsApp or filing provider"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/memory.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/memory src/__tests__/cross-tenant/memory.test.ts src/__tests__/cross-tenant/registry.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/obligations"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/ui exec vitest run src/patterns/memory-card src/patterns/scope-chip src/patterns/proposal-tray src/patterns/boundaries.test.ts"
-  },
-  {
-   "id": "V4",
    "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   },
   {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/ui exec vitest run src/patterns/obligation-row src/patterns/boundaries.test.ts src/patterns/motion.test.ts"
+  },
+  {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts __tests__/workspace-shell.test.tsx __tests__/memory-page.test.tsx __tests__/memory-actions.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run lib/obligations"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Store the review date as a workspace-scope M1 memory item under new key M1.last_memory_review instead of a new workspace_settings column",
-   "justification": "The issue names `M1.last_memory_review`; M1 allows workspace scope (packages/validators/src/memory.ts:30-36) and a migration (packages/db/src/schema/workspace.ts:22) would also require RLS/index test updates per CLAUDE.md; the key is hidden from lists.",
-   "source": "spec"
+   "choice": "Keep existing enum and column names (source as kind, done as closed) in the UI and map to issue wording in i18n",
+   "justification": "packages/db/src/schema/enums.ts:66-77 and docket.ts:227; ADR docs/adr/0037-obligation-model.md",
+   "source": "doc"
   },
   {
    "id": "K2",
-   "choice": "Gate /memory on can(role,'memory.read') so clerks see PermissionDenied although the engine would serve clerk layers",
-   "justification": "Matrix has memory.read at junior+ (packages/auth/src/policy/matrix.ts:23); issue requires a denied explanation for clerks.",
+   "choice": "Client letter next step creates an internal task via createObligation(source 'internal') until #69 lands",
+   "justification": "Issue 'Data and API contracts' says so; #69 is open; core/obligations/create.ts:95",
    "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "Follow the #68 obligations route layout and workspaceAction pattern; real paths: patterns/memory-card (not patterns/memory), i18n under packages/i18n/src/messages, e2e under e2e/tests/memory",
-   "justification": "apps/web/app/(app)/w/[slug]/obligations/, apps/web/app/(app)/w/[slug]/inbox/actions.ts:1-60, packages/i18n/src/catalog.ts:20-45.",
+   "choice": "New core read models for defects and copies instead of querying the db from apps/web",
+   "justification": "core/obligations has only writers (defects.ts:52, certified-copies.ts:33); apps/web reaches data through core services (inbox/actions.ts pattern); new core exports need cross-tenant registry entries (CLAUDE.md)",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "New core exports are registered in the cross-tenant registry with real cases",
-   "justification": "CLAUDE.md registries table; packages/db/src/testing/cross-tenant-registry.ts:875-905.",
-   "source": "doc"
+   "choice": "Reuse and adapt packages/ui/src/patterns/obligation-row rather than create patterns/obligation/",
+   "justification": "obligation-row.tsx already has swipe, due state, ProvenanceChip; the issue path is outdated",
+   "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "Group-collapse persistence per member via client storage keyed by member id, no new table",
+   "justification": "No member-preferences store found; a table would need RLS catalog and migration registries",
+   "source": "precedent"
   }
  ]
 }

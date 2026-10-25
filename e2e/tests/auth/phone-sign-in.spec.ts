@@ -50,8 +50,13 @@ test.describe('phone sign-in', () => {
       phoneNumberVerified: true,
     });
     // A signed-in visitor is bounced off the sign-in page.
+    // `/sign-in` redirects to `/`, which redirects a user with no workspace to `/onboarding`. Wait
+    // for that chain to settle on the page itself: asserting only "not /sign-in" passes on the
+    // intermediate `/` and leaves a redirect in flight that the cookie reset below would turn into a
+    // `/sign-in?next=/onboarding` navigation racing the next `goto`.
     await page.goto('/sign-in');
-    await expect(page).not.toHaveURL(/\/sign-in/);
+    await expect(page).toHaveURL((url) => url.pathname === '/onboarding');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await page.waitForLoadState('load');
 
     // Sign out (the user menu has no sign-out action yet, so use the auth endpoint).
@@ -62,7 +67,7 @@ test.describe('phone sign-in', () => {
     expect(signOut.status(), await signOut.text()).toBe(200);
     await page.context().clearCookies();
     expect(await session()).toBeNull();
-    await page.goto('/sign-in', { waitUntil: 'commit' });
+    await page.goto('/sign-in');
     await expect(page.getByLabel('Mobile number')).toBeVisible();
 
     // Sign in again: a new code is issued, and it is the same account.

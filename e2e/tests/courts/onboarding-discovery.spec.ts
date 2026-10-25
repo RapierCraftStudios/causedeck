@@ -5,14 +5,14 @@
 import { expect, test } from '../../fixtures/index.ts';
 
 import { COURTS_WORKSPACE } from '../../fixtures/courts-data.ts';
-import { shellReady } from '../shell/helpers.ts';
+import { contentReady } from '../shell/helpers.ts';
 
 const BUDGET_MS = 10 * 60 * 1000;
 
 test('enrolment number to a result inside the 10-minute budget', async ({ page, asUser }) => {
   const started = Date.now();
   await asUser('owner', { workspace: COURTS_WORKSPACE, path: 'onboarding' });
-  await shellReady(page);
+  await contentReady(page);
   const root = page.locator('[data-slot="onboarding-discovery"]');
 
   await expect(root.getByRole('heading', { name: 'Who should we look for?' })).toBeVisible();
@@ -35,7 +35,7 @@ test('enrolment number to a result inside the 10-minute budget', async ({ page, 
 
 test('a name alone prompts for confirmation instead of saving', async ({ page, asUser }) => {
   await asUser('owner', { workspace: COURTS_WORKSPACE, path: 'onboarding' });
-  await shellReady(page);
+  await contentReady(page);
   const root = page.locator('[data-slot="onboarding-discovery"]');
   await root.getByLabel('Name spellings, one per line').fill('R Kumar');
   await root.getByRole('button', { name: 'Choose courts' }).click();

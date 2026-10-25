@@ -1,1 +1,235 @@
-{"status":"fixed","summary":"CI failure was a wall-clock flake in packages/ai gateway.test.ts (single mock call <5ms), a package this branch does not touch; passes locally (17/17), no code change. Earlier: Merge check failed only because turbo was not on PATH (use pnpm exec turbo); typecheck passes, no code change. Earlier: Regenerated stale openapi/v1.json (CI failure) and untracked eslint caches; recorded stale-list findings as not_members (no list names the siblings)","requirements":[{"id":"R1","status":"implemented","evidence":"apps/api/src/routes/inbound-whatsapp.ts:1","instrumented":"false"},{"id":"R2","status":"implemented","evidence":"packages/core/src/whatsapp-link/receive.ts:1","instrumented":"false"},{"id":"R3","status":"implemented","evidence":"packages/core/src/jobs/definitions/whatsapp-intake.ts:1","instrumented":"false"},{"id":"R4","status":"implemented","evidence":"apps/api/src/routes/inbound-whatsapp.ts:1","instrumented":"false"}],"validation":[{"id":"V1","command":"capture vitest","exit":0},{"id":"V2","command":"core vitest","exit":0},{"id":"V3","command":"api vitest","exit":0},{"id":"V4","command":"db vitest","exit":0},{"id":"V5","command":"worker vitest","exit":0},{"id":"V6","command":"pnpm turbo run typecheck --filter=...[c44d5405]","exit":0},{"id":"CI-flake","command":"pnpm --filter @causedeck/ai exec vitest run src/__tests__/gateway.test.ts","exit":0}],"tests":[{"command":"pnpm --filter @causedeck/api exec vitest run src/__tests__/openapi.test.ts","result":"pass","fails_without_fix":true}],"self_review":[{"question":"1","answer":"yes","evidence":"R1-R4 implemented; validate commands pass"},{"question":"2","answer":"yes","evidence":"openapi.test.ts now passes; forgedock check PASS"},{"question":"3","answer":"yes","evidence":"forgedock check V1-V5 PASS"},{"question":"4","answer":"no","evidence":"apps/api/openapi/v1.json is outside the listed deliverables; declared via add-deliverable"}],"amendments":[{"kind":"add-deliverable","path":"apps/api/openapi/v1.json","why":"New public route /v1/inbound/whatsapp changes the generated OpenAPI doc; openapi.test.ts requires the committed snapshot to match"}],"not_members":[{"symbol":"whatsappInboundProviderFromProcess","test":"packages/core/src/__tests__/cross-tenant/whatsapp-link.test.ts","why":"env factory with no tenant data; CASES only holds tenant-scoped services, and it is registered in NOT_A_SERVICE in cross-tenant-registry.ts"},{"symbol":"WHATSAPP_INBOUND_STATUSES","test":"apps/admin/__tests__/headers.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"whatsappInboundMessage","test":"apps/admin/__tests__/headers.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"WHATSAPP_INBOUND_STATUSES","test":"apps/admin/__tests__/server-actions-audit.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"whatsappInboundMessage","test":"apps/admin/__tests__/server-actions-audit.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"WHATSAPP_INBOUND_STATUSES","test":"apps/admin/__tests__/sources-actions.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"whatsappInboundMessage","test":"apps/admin/__tests__/sources-actions.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"WHATSAPP_INBOUND_STATUSES","test":"apps/web/__tests__/activity-export-route.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"whatsappInboundMessage","test":"apps/web/__tests__/activity-export-route.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"WHATSAPP_INBOUND_STATUSES","test":"apps/web/__tests__/billing-actions.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"whatsappInboundMessage","test":"apps/web/__tests__/billing-actions.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"WHATSAPP_INBOUND_STATUSES","test":"apps/web/__tests__/case-watch-actions.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"whatsappInboundMessage","test":"apps/web/__tests__/case-watch-actions.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"WHATSAPP_INBOUND_STATUSES","test":"apps/web/__tests__/conflicts-action.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"whatsappInboundMessage","test":"apps/web/__tests__/conflicts-action.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"WHATSAPP_INBOUND_STATUSES","test":"apps/web/__tests__/cross-tenant-actions.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"whatsappInboundMessage","test":"apps/web/__tests__/cross-tenant-actions.test.ts","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"WHATSAPP_INBOUND_STATUSES","test":"apps/web/__tests__/document-preview-sheet.test.tsx","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"whatsappInboundMessage","test":"apps/web/__tests__/document-preview-sheet.test.tsx","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"WHATSAPP_INBOUND_STATUSES","test":"apps/web/__tests__/matter-documents-tab.test.tsx","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"},{"symbol":"whatsappInboundMessage","test":"apps/web/__tests__/matter-documents-tab.test.tsx","why":"test mocks other modules and lists no whatsapp_link/whatsapp_otp_challenge siblings of this schema export (grep finds no whatsapp symbol there), so it is not a member of any list there"}]}
+{
+ "status": "fixed",
+ "summary": "WhatsApp link card, five server actions, whatsappLink i18n namespace and cross-tenant entries on the notifications settings page; OTP delivery deferred (R5).",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "apps/web/components/notifications/whatsapp-link-card.tsx:57; page.tsx WhatsAppSection"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts:113"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/i18n/src/messages/en/whatsapp-link.json:1; catalog.ts:33"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "apps/web/__tests__/cross-tenant-actions.test.ts:153"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "web vitest whatsapp-link-actions, whatsapp-link-card, notification-preferences(.actions)",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "i18n vitest catalog, check-catalogs",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "web vitest tenancy cross-tenant-actions",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "checks.mjs --base origin/milestone/instant-gtm-adoption",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "pnpm turbo run typecheck --filter=...[722c3900] (merged tree)",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "web whatsapp-link-actions + whatsapp-link-card + cross-tenant-actions",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R4 delivered per implementation.md; R5 is a contract-deferred item"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "V1-V3 pass; tsc --noEmit in apps/web clean"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "forgedock check PASS; preserve items untouched (git diff touches no core/db/notifications)"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "git diff --stat lists only deliverable paths and tests"
+  }
+ ],
+ "amendments": [],
+ "not_members": [
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/nav.test.ts",
+   "why": "lists workspace-scoped route ids, not i18n namespaces"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/settings-shell.test.tsx",
+   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/shortcuts.test.tsx",
+   "why": "lists nav chord ids, unrelated to i18n namespaces"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/static-guards.test.ts",
+   "why": "lists app/api route directories; no API route added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/workspace-shell.test.tsx",
+   "why": "lists placeholder page routes; no route added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
+   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
+   "why": "lists mobile nav item ids; no nav item added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
+   "test": "e2e/tests/courts/courts.spec.ts",
+   "why": "courts page e2e assertions, not a namespace list"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
+   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
+   "why": "delete-workspace e2e helpers, not a namespace list"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
+   "test": "e2e/tests/settings/shell.spec.ts",
+   "why": "lists settings nav labels; no nav item added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/nav.test.ts",
+   "why": "lists workspace-scoped route ids, not i18n namespaces"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/settings-shell.test.tsx",
+   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/shortcuts.test.tsx",
+   "why": "lists nav chord ids, unrelated to i18n namespaces"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/static-guards.test.ts",
+   "why": "lists app/api route directories; no API route added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/workspace-shell.test.tsx",
+   "why": "lists placeholder page routes; no route added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
+   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
+   "why": "lists mobile nav item ids; no nav item added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
+   "test": "e2e/tests/courts/courts.spec.ts",
+   "why": "courts page e2e assertions, not a namespace list"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
+   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
+   "why": "delete-workspace e2e helpers, not a namespace list"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
+   "test": "e2e/tests/settings/shell.spec.ts",
+   "why": "lists settings nav labels; no nav item added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/nav.test.ts",
+   "why": "lists workspace-scoped route ids, not i18n namespaces"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/settings-shell.test.tsx",
+   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/shortcuts.test.tsx",
+   "why": "lists nav chord ids, unrelated to i18n namespaces"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/static-guards.test.ts",
+   "why": "lists app/api route directories; no API route added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/workspace-shell.test.tsx",
+   "why": "lists placeholder page routes; no route added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
+   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
+   "why": "lists mobile nav item ids; no nav item added"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
+   "test": "e2e/tests/courts/courts.spec.ts",
+   "why": "courts page e2e assertions, not a namespace list"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
+   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
+   "why": "delete-workspace e2e helpers, not a namespace list"
+  },
+  {
+   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
+   "test": "e2e/tests/settings/shell.spec.ts",
+   "why": "lists settings nav labels; no nav item added"
+  }
+ ]
+}

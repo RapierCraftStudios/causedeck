@@ -14,6 +14,10 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
+import {
+  WhatsAppLinkCard,
+  WhatsAppLinkError,
+} from '../../../../../../components/notifications/whatsapp-link-card.tsx';
 import { PushPermissionCard } from '../../../../../../components/notifications/push-permission-card.tsx';
 import { isDev, serverEnv } from '../../../../../../lib/env.ts';
 import type { WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
@@ -29,6 +33,13 @@ import {
   type SettingsView,
 } from './actions.ts';
 import { PreferencesError, PreferencesForm, PreferencesSkeleton } from './preferences-form.tsx';
+import {
+  requestWhatsAppOtpAction,
+  setWhatsAppCategoriesAction,
+  unlinkWhatsAppAction,
+  verifyWhatsAppOtpAction,
+  type WhatsAppLinkState,
+} from './whatsapp-actions.ts';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -61,6 +72,43 @@ async function loadPreferences(context: WorkspaceContext): Promise<Loaded> {
     workspaceId: context.workspace.id,
     userId: context.user.id,
   });
+}
+
+/** The caller's own WhatsApp link (masked number), read on the workspace-scoped transaction. */
+async function loadWhatsAppLink(context: WorkspaceContext): Promise<WhatsAppLinkState | null> {
+  const { inWorkspace } = await import('@causedeck/core/runtime');
+  const { getWhatsAppLink } = await import('@causedeck/core/whatsapp-link');
+  const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+  const link = await inWorkspace(actor, (tx) => getWhatsAppLink({ db: tx }, actor));
+  if (link === null) return null;
+  return {
+    maskedNumber: link.maskedNumber,
+    verifiedAt: link.verifiedAt.toISOString(),
+    consentAt: link.consentAt.toISOString(),
+    categories: link.categories,
+  };
+}
+
+async function WhatsAppSection({ context }: { context: WorkspaceContext }) {
+  let link: WhatsAppLinkState | null;
+  try {
+    link = await loadWhatsAppLink(context);
+  } catch (error) {
+    logger.error({ err: error }, 'notification preferences: could not load the WhatsApp link');
+    return <WhatsAppLinkError />;
+  }
+  return (
+    <WhatsAppLinkCard
+      workspaceId={context.workspace.id}
+      link={link}
+      actions={{
+        requestOtp: requestWhatsAppOtpAction,
+        verifyOtp: verifyWhatsAppOtpAction,
+        setCategories: setWhatsAppCategoriesAction,
+        unlink: unlinkWhatsAppAction,
+      }}
+    />
+  );
 }
 
 async function PreferencesSection({
@@ -125,6 +173,9 @@ export default async function NotificationPreferencesPage({
         </Suspense>
       )}
       <PushPermissionCard vapidPublicKey={vapidPublicKey} />
+      <Suspense>
+        <WhatsAppSection context={context} />
+      </Suspense>
     </div>
   );
 }

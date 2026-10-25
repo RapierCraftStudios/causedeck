@@ -99,7 +99,12 @@ export const NULLABLE_WORKSPACE_TABLES: readonly string[] = ['audit_event', 'del
  * from `globalOrWorkspacePolicy()`. A foreign key into them is single-column (a composite FK cannot
  * express "global or same workspace") and guarded by the `app_reference_scope_guard` trigger.
  */
-export const GLOBAL_OR_WORKSPACE_TABLES: readonly string[] = ['forum', 'court_hall', 'bench'];
+export const GLOBAL_OR_WORKSPACE_TABLES: readonly string[] = [
+  'forum',
+  'court_hall',
+  'bench',
+  'template',
+];
 
 export const WORKSPACE_COLUMN = 'workspace_id';
 

@@ -324,6 +324,14 @@ const whatsappLinkExporter = tablesExporter('whatsapp-link', [
   ws('whatsapp_link', { userColumn: 'user_id' }),
 ]);
 
+// Drafting (#766): the workspace's own templates (system templates are not tenant data), its drafts
+// and their immutable versions with the content digest. Block trees hold the text the member drafted.
+const draftingExporter = tablesExporter('drafting', [
+  ws('template'),
+  ws('draft', { userColumn: 'created_by' }),
+  ws('draft_version', { userColumn: 'created_by' }),
+]);
+
 // Enterprise onboarding (#682): SSO providers without their config (client secrets), SCIM tokens
 // without the hash, and the provisioning and migration runs with their per-row state.
 const enterpriseExporter = tablesExporter('enterprise', [
@@ -350,6 +358,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   webhooksExporter,
   portfoliosExporter,
   whatsappLinkExporter,
+  draftingExporter,
   enterpriseExporter,
 ];
 

@@ -1,45 +1,48 @@
 ### Approach
-Continued the interrupted lane: core/db/validators were already committed. This session added the web layer (Research tab link-out menu, notes, settings page), i18n namespaces, action registrations and tests.
+Drafting data layer (#766): `template` (global-or-workspace), `draft`, immutable `draft_version`, plus Zod validators for block trees.
 
 ### Changes
-- apps/web/app/(app)/w/[slug]/matters/[id]/research/{page,actions}.ts(x): link-out menu from getResearchFacts, notes list/editor, denied state without memory.read; six note/authority actions (memory.write).
-- apps/web/app/(app)/w/[slug]/settings/research/{page,actions,provider-form}: provider templates (workspace.manage); lib/settings-nav.ts entry.
-- apps/web/components/research/*: link-out-menu, notes-list, note-editor and stories.
-- packages/i18n: research.json (en/ta/kn), catalog NAMESPACES, settings.nav.research, translation-status, generated types.
-- Tests: apps/web/__tests__/research/no-ai-no-iframe.test.ts, cross-tenant-actions, settings-shell, i18n catalog; e2e/tests/matters/research.spec.ts (CI only).
+- packages/db/src/schema/drafting.ts, schema/index.ts: tables and barrel export
+- packages/db/src/conventions.ts: `template` added to GLOBAL_OR_WORKSPACE_TABLES
+- packages/db/migrations/20261025060000_drafting.sql, meta snapshot and journal: migration with RLS, scope guard, immutability trigger
+- packages/db/src/index.test.ts, rls/sql.test.ts, testing/cross-tenant-registry.ts, testing/two-tenants.ts, conventions.test.ts: registrations and seeders
+- packages/db/src/__tests__/drafting-schema.test.ts: regression tests (system template read-only, scope guard, immutability, cascade)
+- packages/validators/src/drafting.ts (+ test, index.ts, package.json export): Template/Block/Draft/FormatPreset/ExportRequest schemas
+- packages/core lifecycle erase.ts, exporters.ts: purge order and export for the new tables
 
 ### Acceptance Criteria Status
-- R1 ✅ packages/core/src/research/links.ts
-- R2 ✅ links.ts, providers.ts, apps/web/__tests__/research/no-ai-no-iframe.test.ts
-- R3 ✅ notes-service.ts researchFactsFromTags
-- R4 ✅ providers.ts validateProviderTemplate; settings/research
-- R5 ✅ notes-service.ts, cross-tenant services and actions tests
-- R6 ✅ page.tsx notesDenied; notes-service memory.read/write
-- R7 deferred (contract disposition)
-- R8 ✅ notes-list.tsx states (verified out of band in CI e2e)
-- R9 ✅ no-ai-no-iframe.test.ts
-- R10, R11 ✅ instrumented in e2e/tests/matters/research.spec.ts (CI)
-- R12 ✅ packages/i18n/src/messages/*/research.json
+- R1 ✅ packages/db/src/schema/drafting.ts:44-117
+- R2 ✅ packages/db/migrations/20261025060000_drafting.sql, schema/index.ts:132
+- R3 ✅ packages/validators/src/drafting.ts, index.ts:9
+- R4 ✅ index.test.ts, rls/sql.test.ts, cross-tenant-registry.ts, two-tenants.ts
+- R5 ✅ drafting-schema.test.ts, rls sql.test.ts
 
 ### Verification
-V1–V5 pass (forgedock check PASS). Web tsc --noEmit clean. ESLint could not run locally (heap OOM on the type-aware config); CI lints. The new guard test fails without the components (files absent).
+- V1, V2, V3: exit 0.
+- V4 (check-rls.ts): exit 0 when DATABASE_URL_OWNER points at a migrated Postgres (it needs a live DB; none is configured by default).
+- V5: exit 0. `forgedock check` reports PASS for V1-V5 with that env.
+- New tests fail without the fix (tables and exports do not exist).
 
 ### Notes
-- Link-out menu uses a DropdownMenu at all widths (no separate bottom Sheet at 360).
-- e2e spec is at e2e/tests/matters/research.spec.ts (Playwright testDir is ./tests); amended as a deliverable.
-- Settings nav gains a "research" entry (advocate+).
+No env vars. Expand-only migration.
 
-## Stale-list follow-up
-Core research exports are registered in NOT_A_SERVICE; the other flagged lists do not enumerate them. Recorded in result.json not_members.
+### Sibling-list follow-up
+Checked the 9 flagged tests: none enumerate @causedeck/db schema exports at the flagged lines (hoisted state, unrelated mocks, fixtures), so every symbol is recorded under not_members in result.json. No test edits needed.
 
-## Story export collision
-Renamed notes-list story exports to NotesEmpty/NotesLoading/NotesErrorState/NotesDenied and link-out-menu Empty to NoLinks so they no longer collide with whatsapp-import stories. Nothing else references them.
+### CI failure follow-up (test job, no log available)
+Could not reproduce. Run locally with one worker and no file parallelism: packages/db (60 files), packages/core cross-tenant + lifecycle/export + receipt/memory-erasure/step-up, packages/validators, and two apps/web action tests all pass; tsc --noEmit is clean for db, core and validators. With parallel files, core lifecycle tests hit Postgres deadlocks (40P01) in the shared `seedTwoTenants` plan/organization inserts, which look like an existing cross-file race rather than something this branch changed. No code change made.
 
-## Lint fix
-CI lint failed on two `@typescript-eslint/no-base-to-string` errors (`String(FormData.get(..) ?? "")`) in settings/research/provider-form.tsx and components/research/note-editor.tsx. Narrowed with `typeof value === "string"`. ESLint on all changed files is now clean (core/db/validators/i18n had no errors).
+### CI follow-up
+The CI `test` job log was not available. I could not reproduce a failure locally. These pass on the branch: core `src/lifecycle` (15 files) and `src/__tests__` (13 files), db drafting-schema, conventions, migrate, lint-migrations, cross-tenant and rls (15 files), `tsc --noEmit` for validators, db, core, web and worker, and `drizzle-kit generate` (no schema changes). No code change was made. If the failure is outside these, the CI log is needed.
 
-## CI lint fix
-CI lint failed with no log. Removed committed .eslintcache files (apps/web, core, db, i18n, validators) and applied prettier to 4 files (core cross-tenant services.test.ts, db schema/index.ts, validators research.ts + test). eslint on changed files passes.
+## Merge follow-up
+The reported `turbo: command not found` (exit 127) was an environment failure, not a code conflict. Ran scoped `tsc --noEmit` for db, validators and core (clean) plus the V1-V3 validate commands (pass). Fixed the migration header comment to name 20261025060000_drafting.
 
-## CI tenancy fix
-The `tenancy` job also runs `test:export-coverage`. The new tenant tables `research_note` and `research_provider` had no exporter and were not in the erase order. Added `ws('research_note')` and `ws('research_provider')` to the workspace exporter in `lifecycle/export/exporters.ts`, and both tables ahead of `matter` in `lifecycle/deletion/erase.ts`. The export-coverage test passes locally. The Testcontainers cross-tenant suite was not run (no log, no Docker here).
+### Merge follow-up
+Base took migration number 20261025050000 (research_notes), so the drafting migration is 20261025060000 (SQL unchanged, snapshot and journal regenerated). The reported `turbo: command not found` (exit 127) was the PATH, not the code: `pnpm exec turbo run typecheck` over validators, db, core, i18n, web and worker passes (20 tasks). V1-V5 pass (V4 with a migrated DB URL).
+
+## Merge follow-up 2
+turbo was not on PATH (exit 127); no source conflict. Verified with scoped tsc and the validate commands.
+
+## Follow-up: turbo-not-found (re-verified)
+`turbo: command not found` is a host PATH issue, not a merge conflict. No code change. Scoped tsc (db, validators), validators vitest, schema-conventions, lint-migrations, drizzle-kit check all pass.

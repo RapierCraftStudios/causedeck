@@ -140,6 +140,11 @@ export const PURGE_ORDER = [
   'capture',
   'workspace_capture_channel',
   'matter_restriction',
+  // Drafts (#766): the draft first (its versions are immutable and go with it by cascade), then
+  // the workspace's own templates (the system catalogue, null workspace_id, is never matched).
+  'draft',
+  'draft_version',
+  'template',
   // Judgment alerts (#497): alerts before the tag they cite, both before their matter.
   'judgment_alert',
   'matter_issue_tag',

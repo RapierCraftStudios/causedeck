@@ -76,6 +76,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   forum: DB_TABLES_TEST,
   court_hall: DB_TABLES_TEST,
   bench: DB_TABLES_TEST,
+  // Drafting (#766): template is global-or-workspace; draft_version is immutable.
+  template: DB_TABLES_TEST,
+  draft: DB_TABLES_TEST,
+  draft_version: DB_TABLES_TEST,
   // Matter and documents (#345).
   matter: DB_TABLES_TEST,
   document: DB_TABLES_TEST,

@@ -130,6 +130,14 @@ export {
 } from './network.ts';
 export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
 export {
+  DRAFT_STATUSES,
+  draft,
+  draftVersion,
+  template,
+  type DraftStatus,
+  type DraftingBlocks,
+} from './drafting.ts';
+export {
   ANCHOR_KINDS,
   ANCHOR_QUOTE_MAX,
   anchor,

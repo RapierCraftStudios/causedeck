@@ -2,76 +2,31 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`buildResearchLinks` returns provider links with query strings URL-encoded from statute, section, issue keywords and court; Tamil and Kannada text is encoded correctly [type:unit]",
+   "quote": "Add `packages/db/src/schema/drafting.ts` (tables `template` with nullable workspace_id for system templates and a SELECT-only policy for members, `draft`, `draft_version` immutable with content_sha256)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Only hosts in the provider allow-list are produced; all links use `https`, `target=\"_blank\"` and `rel=\"noopener noreferrer\"`; no iframe is used anywhere [type:unit]",
+   "quote": "the generated timestamped migration under `packages/db/migrations` with snapshot, schema barrel export",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Query building uses only matter facts the user can see; clerk without strategy access does not get issue keywords from restricted memory [type:api]",
+   "quote": "`packages/validators/src/drafting.ts` (`TemplateSchema`, `BlockSchema` with unknown block type / slot without resolver / narrative without length cap rejected with field-level errors, `DraftSchema`, `FormatPresetSchema`, `ExportRequestSchema`) and its barrel export.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "A lawyer can configure additional provider URL templates per workspace in settings; templates are validated and unsafe schemes (`javascript:`, `data:`) are rejected [type:unit]",
+   "quote": "Register in `packages/db/src/index.test.ts`, the RLS catalog in `packages/db/src/__tests__/rls/sql.test.ts`, TABLE_TESTS/registry and two-tenant seeders.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Research notes CRUD works with RLS; a note in workspace A is invisible to workspace B (cross-tenant suite) [type:api]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "Clerk role cannot read or write research notes; the UI shows a permission-denied state [type:e2e]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R7",
-   "quote": "Pinning an authority from a note inserts the citation string into a chosen draft block, and D03 later labels it; the note itself never auto-adds citations [type:e2e]",
-   "disposition": "defer",
-   "why": "No draft model, drafting studio or D03 exists on this lane (drafts page is a placeholder; #77 and #81 open), so there is no draft block to insert into. This change stores a `pinned` flag on note authorities and never auto-adds citations; the insertion and research-menu-slot follow the drafting studio."
-  },
-  {
-   "id": "R8",
-   "quote": "Empty, loading skeleton, error, offline (notes cached read-only) and permission-denied states render [type:e2e]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": ".github/workflows/e2e.yml (E2E workflow, Playwright e2e/product/research.spec.ts)"
-  },
-  {
-   "id": "R9",
-   "quote": "The page contains no AI summary, answer or suggested authority; a content test asserts no AI call is made on this route [type:e2e]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R10",
-   "quote": "a11y: link-out menu is keyboard operable (arrow keys, Enter, Esc), axe has zero serious violations in light and dark [type:e2e]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": ".github/workflows/e2e.yml (E2E workflow, Playwright keyboard and axe checks in e2e/product/research.spec.ts)"
-  },
-  {
-   "id": "R11",
-   "quote": "Responsive layout verified at 360, 768 and 1280 with visual baselines in light and dark [type:e2e]",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": ".github/workflows/e2e.yml (E2E workflow visual baselines) and .github/workflows/storybook.yml (Storybook visual tests)"
-  },
-  {
-   "id": "R12",
-   "quote": "i18n keys exist in `en` with `ta`/`kn` stubs [type:unit]",
+   "quote": "Acceptance: tables exist with workspace_id not null (except system templates), RLS enabled and forced keyed on app.workspace_id; invalid trees rejected; typecheck strict.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -79,211 +34,177 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/research/providers.ts",
-   "change": "Built-in provider registry (Indian Kanoon, SC judgments, HC judgments; SCC Online and Manupatra only when a workspace template is configured): key, label, https URL template with {q} placeholder, allowed host. Export `validateProviderTemplate` (https only, no userinfo, host must equal template host, rejects javascript:/data: and other schemes).",
+   "path": "packages/db/src/schema/drafting.ts",
+   "change": "Define `template` via globalOrWorkspaceTable (id, code, name, kind, court preset key, blocks jsonb, locale, version int, enabled, timestamps; unique (workspace_id, code) nullsNotDistinct like forum_scope_code_uq), `draft` via tenantTable (id, template_id single-column FK restrict, optional matter_id composite FK (workspace_id, matter_id) to matter, title, status text + check, created_by user FK, timestamps; unique (workspace_id, id)), `draft_version` via tenantTable (id, draft_id composite FK (workspace_id, draft_id), version_no int unique per draft, content jsonb, content_sha256 text with check ^[0-9a-f]{64}$, created_by, created_at only).",
    "requirements": [
-    "R2",
-    "R4"
+    "R1",
+    "R5"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/research/links.ts",
-   "change": "Pure `buildResearchLinks(facts, providers)` returning ResearchLink[] {providerKey,label,url,host,target:'_blank',rel:'noopener noreferrer'}; facts are {statute, section, keywords[], court}; encodeURIComponent on every part (Tamil/Kannada); no matter id, CNR or party names; drops any link whose host is not in the allow-list.",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export template, draft, draftVersion from ./drafting.ts",
    "requirements": [
-    "R1",
     "R2"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/research/notes-service.ts",
-   "change": "CRUD for research notes (list/create/update/delete, authority add/remove/pin flag) modelled on asMatterMember in alerts.ts: NOT_FOUND for unreadable matters, requires memory.read/memory.write so clerk is denied, writes inside the actor workspace scope; plus `getResearchFacts` returning issue keywords only when the actor has strategy.read and only from confirmed tags; and workspace provider template list/save requiring workspace.manage.",
+   "path": "packages/db/src/conventions.ts",
+   "change": "Add 'template' to GLOBAL_OR_WORKSPACE_TABLES",
    "requirements": [
-    "R3",
-    "R4",
-    "R5",
-    "R6"
+    "R1",
+    "R5"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/research/index.ts",
-   "change": "Export the new services, `buildResearchLinks`, providers and types.",
+   "path": "packages/db/migrations/20261025050000_drafting.sql",
+   "change": "Generate with `pnpm --filter @causedeck/db db:generate`, rename to the next free timestamp after 20261025040000 if needed, then hand-add: tenantPolicy SQL (ENABLE+FORCE RLS, ws_isolation) for draft and draft_version; globalOrWorkspacePolicy SQL for template (ws_isolation, global_read, owner_catalogue); scopeGuardTrigger for draft.template_id -> template; BEFORE UPDATE OR DELETE immutability trigger on draft_version with REVOKE ALL ON FUNCTION FROM PUBLIC and GRANT to causedeck_app; table GRANTs to causedeck_app; header comments like 20261025030000_whatsapp_link.sql. Expand-only.",
    "requirements": [
-    "R1",
+    "R2",
     "R5"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/db/src/schema/research-note.ts",
-   "change": "Tenant tables `research_note` (id, workspace_id, matter_id, title, body, authorities jsonb, created_by, updated_at, composite FK to matter, RLS via tenantTable) and `research_provider` (workspace_id, key, label, url_template, enabled); register in schema/index.ts.",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "change": "Journal entry idx 99 for the new migration (generated)",
    "requirements": [
-    "R4",
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/migrations/20261025050000_research_notes.sql",
-   "change": "Generate with drizzle-kit (plus meta/20261025050000_snapshot.json and _journal.json entry): both tables, FKs, checks (url_template starts with https://), FORCE RLS policies written like 20261025030000_whatsapp_link.sql. Use the next free number if the lane moved.",
+   "path": "packages/db/migrations/meta/20261025050000_snapshot.json",
+   "change": "Generated drizzle snapshot",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/validators/src/research.ts",
-   "change": "zod schemas for note input, authority {label, citation?, url? (https only), pinned}, provider template input; export from packages/validators/src/index.ts.",
-   "requirements": [
-    "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/research/page.tsx",
-   "change": "Add link-out menu (facts from getResearchFacts), the notes list and editor; permission-denied state for notes when the role lacks memory.read; no AI import on the route.",
-   "requirements": [
-    "R3",
-    "R6",
-    "R8",
-    "R9"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/research/actions.ts",
-   "change": "Add note create/update/delete and authority actions via workspaceAction (memory.write); keep existing tag actions unchanged.",
-   "requirements": [
-    "R5",
-    "R6"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "apps/web/components/research/link-out-menu.tsx",
-   "change": "Keyboard-operable DropdownMenu (bottom Sheet at 360) of quiet text links, each showing the exact URL preview and 'Opens in a new window on a site we do not control.'; anchors use target=_blank rel='noopener noreferrer'; no iframe. Add notes-list.tsx, note-editor.tsx and *.stories.tsx for each (all states, Tamil and Kannada samples); notes UI read-only while offline via useOfflineSince from components/matters/matters-offline-banner.tsx.",
-   "requirements": [
-    "R2",
-    "R8",
-    "R10",
-    "R11"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "apps/web/app/(app)/w/[slug]/settings/research/page.tsx",
-   "change": "Settings page (advocate+) listing built-in providers and workspace templates; add settings/research/actions.ts (save/remove provider template via workspaceAction, workspace.manage) and an entry in apps/web/lib/settings-nav.ts.",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add 'template', 'draft', 'draft_version' to the root table list (alphabetical)",
    "requirements": [
     "R4"
    ]
   },
   {
-   "id": "D12",
-   "path": "packages/i18n/src/messages/en/research.json",
-   "change": "New namespace `research` with en, plus kn/ta stubs (messages/kn/research.json, messages/ta/research.json); add to NAMESPACES in packages/i18n/src/catalog.ts and the top-level key list in packages/i18n/src/__tests__/catalog.test.ts; regenerate with `pnpm --filter @causedeck/i18n i18n:types` (generated/**).",
+   "id": "D8",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add draft and draft_version to the tenant catalog list, template to the global-or-workspace list and to the ws_isolation/global_read/owner_catalogue policy test; add tests that a member of B can SELECT a system template but cannot INSERT/UPDATE/DELETE one, and that draft_version UPDATE/DELETE is rejected",
    "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register the new core runtime exports in SERVICE_TESTS (note CRUD and provider templates, with real cases in packages/core/src/__tests__/cross-tenant/services.test.ts: B on A denied or empty, A unchanged) and the pure exports (buildResearchLinks, providers, validateProviderTemplate) in NOT_A_SERVICE with a reason. Also update packages/db/src/index.test.ts (root table list), packages/db/src/__tests__/rls/sql.test.ts (RLS catalog), packages/db/src/testing/two-tenants.ts (seeders), apps/web/__tests__/cross-tenant-actions.test.ts (ACTIONS and probe inputs for the new note and provider actions), docs/engineering/core-domains.md (research row).",
-   "requirements": [
+    "R4",
     "R5"
    ]
   },
   {
-   "id": "D14",
-   "path": "packages/core/src/research/links.test.ts",
-   "change": "Unit tests: encoding incl. Tamil and Kannada, https-only, host allow-list, rel/target, clerk gets no keywords, unsafe template schemes rejected (also providers.test.ts); apps/web test asserting no iframe in components/research and no @causedeck/ai import in the research route.",
+   "id": "D9",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Add template, draft, draft_version: DB_TABLES_TEST to TABLE_TESTS",
    "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R9"
+    "R4"
    ]
   },
   {
-   "id": "D15",
-   "path": "e2e/product/research.spec.ts",
-   "change": "Playwright journeys (CI only): link-out menu keyboard, clerk permission-denied, empty/error/offline states, axe, 360/768/1280 light and dark baselines.",
+   "id": "D10",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "change": "Two-tenant seeders for template (workspace-owned row), draft (with its template) and draft_version (with its draft, valid 64-hex content_sha256)",
    "requirements": [
-    "R6",
-    "R8",
-    "R10",
-    "R11"
+    "R4"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/validators/src/drafting.ts",
+   "change": "zod: closed lists BLOCK_TYPES, SLOT_RESOLVERS, COURT_PRESETS, EXPORT_FORMATS (docx, pdf); recursive BlockSchema (z.lazy, discriminated by type; unknown type rejected; slot requires a resolver in SLOT_RESOLVERS; narrative requires integer maxChars 1..N; section/list carry children); TemplateSchema (blocks array, bounded depth/count), FormatPresetSchema (page size, margins, font, line spacing, numbering), DraftSchema, draft version content shape with sha256 hex, ExportRequestSchema (draftVersionId uuid, format). Issues carry field paths.",
+   "requirements": [
+    "R3",
+    "R5"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/validators/src/drafting.test.ts",
+   "change": "Tests: valid tree passes; unknown block type, slot without/with unknown resolver, narrative without cap, nested bad block each rejected with the expected issue path",
+   "requirements": [
+    "R3",
+    "R5"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/validators/src/index.ts",
+   "change": "export * from './drafting'",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/validators/package.json",
+   "change": "Add subpath export \"./drafting\": \"./src/drafting.ts\" (alphabetical, matching the existing subpath exports)",
+   "requirements": [
+    "R3"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing tag actions and exports in apps/web/app/(app)/w/[slug]/matters/[id]/research/actions.ts and packages/core/src/research/index.ts (addTag, confirmTag, dismissTag, listTags, proposeTags, scanJudgments, listRelevantJudgments) keep their signatures and behaviour."
+   "what": "Existing global-or-workspace tables forum/court_hall/bench and their policies (packages/db/src/schema/court.ts, packages/db/src/rls-policies.ts) are unchanged"
   },
   {
    "id": "P2",
-   "what": "Research tab registration in apps/web/lib/matters/tabs.ts (id research, order 40, matter.read) and apps/web/__tests__/matter-tab-registry.test.ts stay valid."
+   "what": "Existing migrations and snapshots are not edited; only a new migration is appended after 20261025040000_whatsapp_inbound"
   },
   {
    "id": "P3",
-   "what": "No outbound link carries matter id, CNR or party names; no framing, proxying or scraping of provider sites; no AI call, summary or suggested authority on the route."
-  },
-  {
-   "id": "P4",
-   "what": "Existing matters.workspace.research i18n keys in packages/i18n/src/messages/*/matters.json remain unchanged."
+   "what": "Existing exports of @causedeck/validators (packages/validators/src/index.ts) and the @causedeck/db schema barrel stay unchanged; packages/db gains no dependency on @causedeck/validators"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/research src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/drafting.test.ts src/index.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts __tests__/matter-tab-registry.test.ts __tests__/research --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/db exec tsx scripts/check-schema-conventions.ts && pnpm --filter @causedeck/db exec tsx scripts/lint-migrations.ts && pnpm --filter @causedeck/db exec drizzle-kit check"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/db exec tsx scripts/check-rls.ts"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/index.test.ts"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Gate research notes on memory.read/memory.write (junior and up) rather than matter.read, and issue keywords on strategy.read.",
-   "justification": "Issue says notes are memory-adjacent and clerk is denied; packages/auth/src/policy/matrix.ts:19-24 puts memory.* and strategy.read at junior, clerk below.",
-   "source": "spec"
+   "choice": "template uses globalOrWorkspaceTable + globalOrWorkspacePolicy rather than a bespoke SELECT-only policy",
+   "justification": "Gives members SELECT on system rows (global_read) and owner-only writes; precedent forum at packages/db/src/schema/court.ts:26 and rls-policies.ts:91; the table must be listed at conventions.ts:102",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Store per-workspace provider templates in a new tenant table `research_provider` instead of a workspace_settings column.",
-   "justification": "workspace_settings is a non-tenant table (packages/db/src/schema/workspace.ts:22); tenantTable() gives FORCE RLS like matter_issue_tag (matter-issue.ts:33).",
+   "choice": "draft_version immutability via BEFORE UPDATE OR DELETE trigger copied from saas_invoice",
+   "justification": "packages/db/migrations/0017_saas_invoices.sql:77-111",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Reuse the existing Research tab and page for link-outs and notes; no new route or tab.",
-   "justification": "Tab already registered at apps/web/lib/matters/tabs.ts:34 and the page at research/page.tsx:25.",
-   "source": "precedent"
-  },
-  {
-   "id": "K4",
-   "choice": "Copy the asMatterMember access pattern for notes and the workspaceAction pattern for actions; no new workspace package dependency (validators already a dependency of core and web).",
-   "justification": "packages/core/src/research/alerts.ts:101; packages/core/package.json:71; apps/web/package.json:65.",
-   "source": "precedent"
+   "choice": "Closed block/resolver/preset lists live in packages/validators; db stores jsonb without importing validators",
+   "justification": "Avoids a new db->validators workspace dependency (P3); #767 and #768 import validators for parsing",
+   "source": "spec"
   }
  ]
 }

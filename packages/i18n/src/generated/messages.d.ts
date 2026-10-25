@@ -4863,6 +4863,137 @@ export type Messages = {
     forbidden: string;
     delegated: string;
   };
+  brief: {
+    metaTitle: string;
+    printTitle: string;
+    masthead: {
+      listedOn: string;
+      hall: string;
+      item: string;
+      assembled: string;
+      openMatter: string;
+    };
+    sections: {
+      stage: string;
+      lastOrder: string;
+      obligations: string;
+      carry: string;
+      synopsis: string;
+      lastHearing: string;
+      courtNotes: string;
+      context: string;
+    };
+    empty: {
+      title: string;
+      body: string;
+      section: string;
+    };
+    line: {
+      unconfirmed: string;
+      overdue: string;
+      dueOn: string;
+      closedCount: string;
+      page: string;
+    };
+    provenance: {
+      openPage: string;
+      source: string;
+      confidence: string;
+    };
+    readiness: {
+      label: string;
+      stage_known: string;
+      last_order_confirmed: string;
+      obligations_reconciled: string;
+      carry_reviewed: string;
+    };
+    prepared: {
+      mark: string;
+      unmark: string;
+      by: string;
+      byUnknown: string;
+      stale: string;
+      saving: string;
+      error: string;
+    };
+    carry: {
+      add: string;
+      addLabel: string;
+      addPlaceholder: string;
+      remove: string;
+      tick: string;
+      kind: {
+        document: string;
+        rule: string;
+        manual: string;
+      };
+      willSync: string;
+      reviewed: string;
+      empty: string;
+    };
+    synopsis: {
+      edit: string;
+      label: string;
+      save: string;
+      cancel: string;
+      hint: string;
+      strategy: string;
+      note: string;
+    };
+    courtNotes: {
+      private: string;
+      shared: string;
+      printToggle: string;
+      hiddenInPrint: string;
+    };
+    actions: {
+      print: string;
+      share: string;
+      shared: string;
+      jump: string;
+      shortcuts: string;
+      refresh: string;
+      bar: string;
+    };
+    shortcuts: {
+      title: string;
+      print: string;
+      prev: string;
+      next: string;
+      carry: string;
+      notes: string;
+      edit: string;
+      section: string;
+      close: string;
+      help: string;
+    };
+    offline: {
+      banner: string;
+      notSaved: string;
+    };
+    denied: {
+      title: string;
+      body: string;
+      request: string;
+    };
+    viewer: {
+      readOnly: string;
+    };
+    error: {
+      title: string;
+      retry: string;
+      openMatter: string;
+      section: string;
+      sectionRetry: string;
+    };
+    notFound: {
+      title: string;
+      body: string;
+      request: string;
+      back: string;
+    };
+    loading: string;
+  };
   share: {
     metaTitle: string;
     unavailable: string;

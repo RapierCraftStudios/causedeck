@@ -4862,6 +4862,137 @@
     "forbidden": "You can't confirm this outcome.",
     "delegated": "The matter owner is notified."
   },
+  "brief": {
+    "metaTitle": "Brief",
+    "printTitle": "Brief - {caseNo} - {date}",
+    "masthead": {
+      "listedOn": "Listed {date}",
+      "hall": "Court {hall}",
+      "item": "Item {item}",
+      "assembled": "Assembled {time}",
+      "openMatter": "Open matter"
+    },
+    "sections": {
+      "stage": "Stage",
+      "lastOrder": "Last order",
+      "obligations": "Open obligations",
+      "carry": "Carry",
+      "synopsis": "Synopsis",
+      "lastHearing": "Last hearing",
+      "courtNotes": "Court notes",
+      "context": "From the file"
+    },
+    "empty": {
+      "title": "Nothing on record yet",
+      "body": "This listing has no stage, orders or obligations yet. Add them to the matter and the brief fills in.",
+      "section": "Nothing to show"
+    },
+    "line": {
+      "unconfirmed": "Unconfirmed",
+      "overdue": "Overdue",
+      "dueOn": "Due {date}",
+      "closedCount": "{count, plural, =0 {No closed obligations} one {# closed obligation} other {# closed obligations}}",
+      "page": "Page {page}"
+    },
+    "provenance": {
+      "openPage": "Open page",
+      "source": "Source",
+      "confidence": "Confidence {value}"
+    },
+    "readiness": {
+      "label": "Ready {score} of 100",
+      "stage_known": "Stage known",
+      "last_order_confirmed": "Last order confirmed",
+      "obligations_reconciled": "Obligations reconciled",
+      "carry_reviewed": "Carry reviewed"
+    },
+    "prepared": {
+      "mark": "Mark prepared",
+      "unmark": "Prepared. Undo",
+      "by": "Prepared by {name}, {when}",
+      "byUnknown": "Prepared {when}",
+      "stale": "Brief changed since you marked it prepared",
+      "saving": "Saving",
+      "error": "Could not save. Try again."
+    },
+    "carry": {
+      "add": "Add item",
+      "addLabel": "New carry item",
+      "addPlaceholder": "A document or thing to carry",
+      "remove": "Remove {label}",
+      "tick": "Packed: {label}",
+      "kind": {
+        "document": "Document",
+        "rule": "Always carry",
+        "manual": "Added by you"
+      },
+      "willSync": "Will sync",
+      "reviewed": "Mark list reviewed",
+      "empty": "Nothing to carry."
+    },
+    "synopsis": {
+      "edit": "Edit synopsis",
+      "label": "Your correction",
+      "save": "Save correction",
+      "cancel": "Cancel",
+      "hint": "Saved as a matter note. The synopsis itself changes only when you confirm a memory proposal.",
+      "strategy": "Strategy",
+      "note": "Your note"
+    },
+    "courtNotes": {
+      "private": "Private to you",
+      "shared": "Shared in chamber",
+      "printToggle": "Include private notes when printing",
+      "hiddenInPrint": "Court notes are left out of the printout"
+    },
+    "actions": {
+      "print": "Print / Save as PDF",
+      "share": "Share inside workspace",
+      "shared": "Link copied. Members of this workspace can open it.",
+      "jump": "Jump to section",
+      "shortcuts": "Keyboard shortcuts",
+      "refresh": "Refresh brief",
+      "bar": "Brief actions"
+    },
+    "shortcuts": {
+      "title": "Brief shortcuts",
+      "print": "Print",
+      "prev": "Previous section",
+      "next": "Next section",
+      "carry": "Go to carry",
+      "notes": "Go to court notes",
+      "edit": "Edit synopsis",
+      "section": "Jump to section 1 to 9",
+      "close": "Close popover or editor",
+      "help": "Show this help"
+    },
+    "offline": {
+      "banner": "Offline. Brief saved at {time}",
+      "notSaved": "Not saved offline"
+    },
+    "denied": {
+      "title": "You cannot open this brief",
+      "body": "This matter is restricted. Ask its owner for access.",
+      "request": "Request access"
+    },
+    "viewer": {
+      "readOnly": "You can read this brief but not change it."
+    },
+    "error": {
+      "title": "The brief could not load",
+      "retry": "Retry",
+      "openMatter": "Open matter",
+      "section": "This section could not load",
+      "sectionRetry": "Retry section"
+    },
+    "notFound": {
+      "title": "Brief not found",
+      "body": "The listing does not exist or you do not have access to it.",
+      "request": "Request access",
+      "back": "Back to briefs"
+    },
+    "loading": "Loading brief"
+  },
   "share": {
     "metaTitle": "பகிரப்பட்ட சுருக்கம்",
     "unavailable": "பகிரப்பட்ட சுருக்கம் கிடைக்கவில்லை",

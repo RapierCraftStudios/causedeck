@@ -41,6 +41,7 @@ export const NAMESPACES = [
   'camera',
   'voice',
   'outcome',
+  'brief',
   'share',
   'errors',
 ] as const;

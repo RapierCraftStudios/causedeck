@@ -122,6 +122,7 @@ const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/act
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
+const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listingId]/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
@@ -228,6 +229,10 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   confirmNextDateAction: matterWorkspace,
   addTagAction: research,
   confirmOutcomeAction: hearingOutcome,
+  markPreparedAction: briefSheet,
+  setCarryItemAction: briefSheet,
+  setBriefNoteAction: briefSheet,
+  setPrintNotesAction: briefSheet,
   recordManualOutcomeAction: hearingOutcome,
   confirmTagAction: research,
   dismissTagAction: research,
@@ -822,6 +827,20 @@ function inputs(workspaceId: string): Record<string, unknown> {
       outcome: 'Cross-tenant probe outcome',
       nextDate: { kind: 'none' },
     },
+    // Brief sheet (#61): ub may not mark, tick or note A's listing.
+    markPreparedAction: { workspaceId, listingId: t.a.rows.listing?.listingId, prepared: true },
+    setCarryItemAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      action: 'add',
+      label: 'Cross-tenant probe',
+    },
+    setBriefNoteAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      note: 'Cross-tenant probe note',
+    },
+    setPrintNotesAction: { workspaceId, include: true },
     // Research tab (#497): ub may not tag A's matter or confirm A's tag.
     addTagAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId, statute: 'ipc' },
     confirmTagAction: {
@@ -1361,6 +1380,17 @@ describe('cross-tenant server actions', () => {
     const before = await snapshotA();
     const own = inputs(t.b.id);
     for (const name of ['confirmOutcomeAction', 'recordManualOutcomeAction']) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('brief sheet actions under B’s own workspace find none of A’s listing (#61)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    for (const name of ['markPreparedAction', 'setCarryItemAction', 'setBriefNoteAction']) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
       expect(result, name).not.toHaveProperty('data');

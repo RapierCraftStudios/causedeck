@@ -64,3 +64,6 @@ After merging the base, `turbo` was not on PATH (exit 127), which is an environm
 
 ## Merge-fix: turbo typecheck exit 127
 Cause: `turbo` not on PATH in the check shell (host environment), not a code conflict. With node_modules/.bin on PATH, `turbo run typecheck` passes (24/24). No source change.
+
+## Merge-fix (fifth): turbo typecheck exit 127
+Cause: `turbo` not on PATH in the check shell (host environment), not a symbol or key collision. With `node_modules/.bin` on PATH, `turbo run typecheck --filter='...[origin/milestone/production-infra-scale]'` passes (22/22). No source change.

@@ -133,6 +133,11 @@
    "kind": "add-deliverable",
    "path": "pnpm-lock.yaml",
    "why": "hotspot-exempt: generated lockfile; the growth is the resolved dependency graph of the new @causedeck/site dependencies (next, next-mdx-remote, next-themes, tailwind, tsx) from `pnpm install --lockfile-only`, and cannot be split into another module."
+  },
+  {
+   "kind": "note-unrelated-ci-failure",
+   "path": "packages/intelligence/src/pipeline/pipeline.test.ts",
+   "why": "CI failure is a wall-clock budget assertion (20.26 s vs 20 s) in packages/intelligence on a shared runner. This branch changes nothing under packages/intelligence or its dependencies (apps/site, e2e/site, workflow, workspace files only), so the failure is a timing flake unrelated to #89; no code change made. Re-run the shard."
   }
  ],
  "facts": {

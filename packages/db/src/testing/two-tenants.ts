@@ -35,7 +35,7 @@ import {
   ssoProvider,
 } from '../schema/enterprise.ts';
 import { portfolio, portfolioCase, portfolioPanelAdvocate } from '../schema/portfolio.ts';
-import { whatsappLink, whatsappOtpChallenge } from '../schema/whatsapp-link.ts';
+import { whatsappInboundMessage, whatsappLink, whatsappOtpChallenge } from '../schema/whatsapp-link.ts';
 import { webhookDelivery, webhookEndpoint } from '../schema/webhooks.ts';
 import { causeListWatch } from '../schema/cause-list-watch.ts';
 import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
@@ -1099,6 +1099,20 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: whatsappOtpChallenge.id });
     return { id: first(rows, 'whatsapp_otp_challenge').id };
+  },
+  whatsapp_inbound_message: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(whatsappInboundMessage)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        providerMessageId: `wamid.${tag}`,
+        mediaId: `media-${tag}`,
+        mime: 'application/pdf',
+        filename: 'order.pdf',
+      })
+      .returning({ id: whatsappInboundMessage.id });
+    return { id: first(rows, 'whatsapp_inbound_message').id };
   },
   sso_provider: async (tx, { workspaceId, ownerId, tag }) => {
     const rows = await tx

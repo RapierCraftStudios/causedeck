@@ -165,6 +165,7 @@ describe('@causedeck/db root entry point', () => {
       'verification',
       'webhook_delivery',
       'webhook_endpoint',
+      'whatsapp_inbound_message',
       'whatsapp_link',
       'whatsapp_otp_challenge',
       'workspace_capture_channel',

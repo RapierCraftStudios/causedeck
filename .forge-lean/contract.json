@@ -2,43 +2,25 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add a `whatsapp_link` table (user, workspace, E.164 number, verified_at, consent_at, categories) and an OTP challenge table with expiry and attempt limits",
+   "quote": "Add apps/api/src/routes/inbound-whatsapp.ts (signature verification, sender mapped to a verified link without an oracle, size and type allow-list, dedupe by provider message id)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "add `whatsapp` to the `notification_channel` enum (migration, next free number)",
+   "quote": "core receive logic that stores the media in the linked user's workspace capture inbox (#43) and enqueues processing, modelled on inbound-email (#530)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Core service: request OTP, verify, unlink (unlink stops all messages), set categories.",
+   "quote": "a forwarded PDF or voice note lands in the right workspace's capture inbox within a minute",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Messages may only ever target the verified number of the owning user (D-029).",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R5",
-   "quote": "Register tables (db index test, RLS catalog, seeders) and core exports (cross-tenant registry with real cases).",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "Add `'whatsapp'` to CHANNELS in packages/notifications/src/categories.ts.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R7",
-   "quote": "Acceptance: opt-in and verification required before any message; unlink stops messages; cross-tenant tests pass.",
+   "quote": "unknown or unverified senders are dropped silently",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -46,201 +28,197 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/src/schema/whatsapp-link.ts",
-   "change": "New tenantTable whatsapp_link (workspace_id, user_id, e164 with CHECK, verified_at, consent_at, unlinked_at, categories text[], unique per workspace+user) and whatsapp_otp_challenge (code hash, expires_at, attempts with CHECK cap, consumed_at). Export from schema/index.ts.",
+   "path": "packages/capture/src/whatsapp-inbound/index.ts",
+   "change": "Pure inbound WhatsApp module (plus sibling files and a test under packages/capture/src/whatsapp-inbound/__tests__): WhatsAppInboundProvider interface (verify raw body+headers incl. X-Hub-Signature-256 HMAC-SHA256 constant-time, parse messages to {providerMessageId, from, kind, mime, filename, sizeBytes, mediaId}, fetchMedia), type/size allow-list reusing resolveAllowedType/assertWithinCap, env factory; export from packages/capture/src/index.ts",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/index.ts",
-   "change": "Export the new tables.",
+   "path": "packages/capture/src/index.ts",
+   "change": "Re-export the whatsapp-inbound module (name must not clash with the existing whatsapp chat-export exports)",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/src/schema/notifications.ts",
-   "change": "Add 'whatsapp' to NOTIFICATION_CHANNELS.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/db/migrations",
-   "change": "Next free migration (renumber if base took it) creating both tables with FORCE RLS ws_isolation and grants, plus ALTER TYPE notification_channel ADD VALUE IF NOT EXISTS 'whatsapp'; update meta/_journal.json and snapshot (drizzle-kit generate, then hand-add grants/RLS as in 20261024110000_portfolio.sql).",
+   "path": "packages/db/src/schema/whatsapp-link.ts",
+   "change": "Add tenantTable whatsapp_inbound_message (workspace_id, provider_message_id unique per workspace, status, media/mime/size, received_at); export via schema index",
    "requirements": [
     "R1",
     "R2"
    ]
   },
   {
-   "id": "D5",
-   "path": "packages/notifications/src/categories.ts",
-   "change": "Add 'whatsapp' to CHANNELS; no category lists it as default.",
+   "id": "D4",
+   "path": "packages/db/src/schema/capture.ts",
+   "change": "Add 'whatsapp' to CAPTURE_CHANNELS (not in DEFAULT_ENABLED_CHANNELS, so opt-in stays)",
    "requirements": [
-    "R6"
+    "R2"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/db/migrations/",
+   "change": "New migration at the next free number on the milestone branch (re-check ls packages/db/migrations; renumber if taken) plus regenerated meta snapshot and journal: replace capture_channel_chk with the list including 'whatsapp'; CREATE whatsapp_inbound_message with RLS ws_isolation; owner_definer_read policy on whatsapp_link; SECURITY DEFINER app_resolve_whatsapp_sender(p_e164 text) returning (workspace_id, user_id) only when exactly one verified link matches, REVOKE from PUBLIC and GRANT to causedeck_app (as 0059_email_intake.sql:77-88)",
+   "requirements": [
+    "R1",
+    "R2",
+    "R4"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/whatsapp-link/index.ts",
-   "change": "New domain (plus sibling files): requestWhatsAppOtp, verifyWhatsAppOtp, unlinkWhatsApp, setWhatsAppCategories, getWhatsAppSendTarget (only verified+consented+not-unlinked number of the owning user). OTP hashed, constant-time compare, expiry, attempt cap, resend cooldown; sender injected.",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add whatsapp_inbound_message to the root table list; also update packages/db/src/__tests__/rls/sql.test.ts, packages/db/src/testing/cross-tenant-registry.ts and packages/db/src/testing/two-tenants.ts (TABLE_TESTS + seeders), and packages/core/src/lifecycle/deletion/erase.ts PURGE_ORDER (and exporters if its guard test demands)",
    "requirements": [
-    "R3",
-    "R4",
-    "R7"
+    "R2"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/package.json",
-   "change": "Add ./whatsapp-link subpath export; also export from packages/core/src/index.ts.",
+   "path": "packages/core/src/whatsapp-link/receive.ts",
+   "change": "receiveInboundWhatsApp(db, input, afterInsert): resolve sender via app_resolve_whatsapp_sender (E.164 validated, malformed = dropped), isChannelEnabled(tx, ws, 'whatsapp') gate, allow-list/size check, insert dedupe row onConflictDoNothing, run afterInsert (enqueue) in the same tx; outcomes accepted|duplicate|dropped{reason}",
    "requirements": [
-    "R5"
+    "R1",
+    "R2",
+    "R4"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/core/src/index.ts",
-   "change": "Re-export whatsapp-link.",
+   "path": "packages/core/src/whatsapp-link/run.ts",
+   "change": "runWhatsAppIntake(deps, payload): fetch media via provider, re-sniff type/size, sha256 dedupe, store.put, blob+capture insert (channel 'whatsapp', createdBy linked user, sourceMeta with provider message id only), then jobs.scan or jobs.process as run.ts:245-260 of email-intake; delete the object on failure",
    "requirements": [
-    "R5"
+    "R2",
+    "R3"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "TABLE_TESTS for both tables; SERVICE_TESTS for each service export, NOT_A_SERVICE for pure ones.",
+   "path": "packages/core/src/whatsapp-link/index.ts",
+   "change": "Export receive and run; add the new exports to cross-tenant registry (SERVICE_TESTS with a real case in packages/core/src/__tests__/cross-tenant/services.test.ts or NOT_A_SERVICE with reason)",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real cases: B on A's link/OTP is denied or sees nothing; A unchanged.",
+   "path": "packages/core/src/jobs/definitions/whatsapp-intake.ts",
+   "change": "Job 'whatsapp.intake' modelled on definitions/email-intake.ts (singleton per message, 5 retries with backoff); register in packages/core/src/jobs/registry.ts, add the name to the capture job names if they live in packages/capture/src/jobs.ts",
    "requirements": [
-    "R5",
-    "R7"
+    "R2",
+    "R3"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/db/src/testing/two-tenants.ts",
-   "change": "Seeders for whatsapp_link and whatsapp_otp_challenge.",
+   "path": "apps/api/src/routes/inbound-whatsapp.ts",
+   "change": "Public POST /inbound/whatsapp (plus GET hub.challenge handshake) modelled on inbound-email.ts: raw body, provider.verify (bad = 400), for each parsed message call receiveInboundWhatsApp, log only drop reasons, always 200 ack; null provider = 400",
    "requirements": [
-    "R5"
+    "R1",
+    "R4"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "Add both tables to the RLS catalog.",
+   "path": "apps/api/src/app.ts",
+   "change": "Add inboundWhatsapp deps and mount the router; wire provider in apps/api/src/server.ts; add 'routes/inbound-whatsapp.ts' to apps/api/src/__tests__/static-guards.test.ts and the route entries to apps/api/src/__tests__/cross-tenant.test.ts (and the OpenAPI snapshot if one is checked in)",
    "requirements": [
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add both tables to the root table list.",
+   "path": "apps/api/src/__tests__/inbound-whatsapp.test.ts",
+   "change": "Tests modelled on inbound-email.test.ts: bad signature 400, unknown/unverified/ambiguous sender 200 and nothing stored, duplicate message id once, disallowed type/oversize dropped, PDF and voice note accepted and job enqueued, channel disabled dropped",
    "requirements": [
-    "R5"
+    "R1",
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/core/src/lifecycle/deletion/erase.ts",
-   "change": "Add both tables to PURGE_ORDER (challenge before link if cited).",
+   "path": "packages/core/src/whatsapp-link/__tests__/whatsapp-inbound.test.ts",
+   "change": "DB-backed tests: accept PDF and ogg voice note into the linked workspace capture (channel whatsapp, status queued/scanning), other workspace sees nothing, unlinked number dropped, duplicate by provider id, runWhatsAppIntake stores blob+capture",
    "requirements": [
-    "R5"
+    "R2",
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/core/src/lifecycle/export/exporters.ts",
-   "change": "Export whatsapp_link (number masked or included, categories, timestamps); exclude code hashes / challenge table.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D16",
    "path": "docs/engineering/core-domains.md",
-   "change": "Document the whatsapp-link domain and its dependencies.",
+   "change": "Record whatsapp-link -> capture dependency in CORE_DOMAIN_DEPENDENCIES (packages/core/src/domains.test.ts) and the doc; update packages/validators/src/capture.ts, packages/capture/src/__tests__/lists.test.ts and apps/worker/src/__tests__/registry.test.ts (+ schedules.test.ts only if a schedule is added) for the new channel and job; add i18n/channel labels only if packages/i18n catalog test fails",
    "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/core/src/domains.test.ts",
-   "change": "Add whatsapp-link to CORE_DOMAIN_DEPENDENCIES (audit only if audited).",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/core/src/whatsapp-link/__tests__/whatsapp-link.test.ts",
-   "change": "Regression tests: no send target before verify/consent, OTP expiry, attempt cap, wrong code, unlink stops target, categories, number is E.164, target never another user's number.",
-   "requirements": [
-    "R3",
-    "R4",
-    "R7"
+    "R2"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "packages/notifications/src/service.ts fan-out stays email/push only (line ~239); whatsapp sends are #679, no message is sent by this change"
+   "what": "POST /v1/inbound/email behaviour and signature in apps/api/src/routes/inbound-email.ts and core email-intake receive/run"
   },
   {
    "id": "P2",
-   "what": "Existing notification preference behaviour: categories' defaultChannels unchanged, so whatsapp defaults off (service.ts resolve)"
+   "what": "whatsapp_link semantics from #678 (packages/core/src/whatsapp-link/link.ts): unlink deletes the row, getWhatsAppSendTarget unchanged; the existing whatsapp_export capture channel and packages/core/src/whatsapp chat-export import"
   },
   {
    "id": "P3",
-   "what": "packages/core/src/whatsapp/ chat-import domain is untouched"
+   "what": "DEFAULT_ENABLED_CHANNELS stays ['manual','upload'] (packages/capture/src/types.ts:12): the whatsapp channel is opt-in"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/whatsapp-link src/__tests__/cross-tenant/services.test.ts src/__tests__/cross-tenant/registry.test.ts src/domains.test.ts src/lifecycle --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/capture exec vitest run src/whatsapp-inbound src/__tests__/lists.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts src/__tests__/cross-tenant --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/whatsapp-link src/email-intake src/capture src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/notifications exec vitest run src/__tests__ --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/api exec vitest run src/__tests__/inbound-whatsapp.test.ts src/__tests__/inbound-email.test.ts src/__tests__/static-guards.test.ts src/__tests__/cross-tenant.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "New core domain `whatsapp-link` rather than extending `whatsapp` (chat import)",
-   "justification": "Separate concern and dependency set; domains registered via CORE_DOMAIN_DEPENDENCIES and docs/engineering/core-domains.md:211-240",
-   "source": "doc"
+   "choice": "Add a 'whatsapp' capture channel (migration widening capture_channel_chk) instead of reusing 'whatsapp_export'",
+   "justification": "whatsapp_export means a chat-export import (packages/core/src/whatsapp); channels are opt-in per workspace (packages/core/src/capture/channels.ts:49-60) and need their own disclosure/gate",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Hand-add RLS/grants to the generated migration",
-   "justification": "Pattern in packages/db/migrations/20261024182641_activation_event.sql and 20261024110000_portfolio.sql",
+   "choice": "Webhook only verifies, dedupes and enqueues; a whatsapp.intake job downloads and stores the media",
+   "justification": "inbound-email.ts:1-10 keeps the handler fast and the WhatsApp Cloud API gives only a media id needing an authenticated fetch",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "OTP sender is injected; no provider dependency",
-   "justification": "Provider and residency review belong to #679/#502 item 4",
-   "source": "spec"
+   "choice": "Workspace-free sender lookup through a SECURITY DEFINER function returning a row only for exactly one verified link; ambiguous numbers are dropped silently",
+   "justification": "packages/db/migrations/0059_email_intake.sql:77-88 and email-intake/address.ts:183-200 (no-oracle resolve)",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "No new workspace package dependency: whatsapp-link imports capture through its index only",
+   "justification": "core already depends on @causedeck/capture (email-intake/receive.ts:8); record the domain edge in CORE_DOMAIN_DEPENDENCIES and docs/engineering/core-domains.md",
+   "source": "doc"
   }
  ]
 }

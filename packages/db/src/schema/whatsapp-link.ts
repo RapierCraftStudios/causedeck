@@ -3,7 +3,8 @@
 // with consent, so it carries `verified_at` and `consent_at`, and unlinking deletes it. Messages
 // may only ever target this number of this user. `whatsapp_otp_challenge` is the pending
 // verification (one per member): it holds a hash of the code, never the code, with an expiry and an
-// attempt cap. Tenant tables under FORCE RLS via `tenantTable()`.
+// attempt cap. `whatsapp_inbound_message` (#680) records one forwarded provider message once per
+// workspace so a redelivery is a no-op. Tenant tables under FORCE RLS via `tenantTable()`.
 import { sql } from 'drizzle-orm';
 import { check, foreignKey, integer, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
@@ -69,5 +70,40 @@ export const whatsappOtpChallenge = tenantTable(
     unique('whatsapp_otp_challenge_workspace_user_uq').on(t.workspaceId, t.userId),
     check('whatsapp_otp_challenge_e164_chk', sql`e164 ~ '^\\+[1-9][0-9]{7,14}$'`),
     check('whatsapp_otp_challenge_attempts_chk', sql`attempts between 0 and 5`),
+  ],
+);
+
+export const WHATSAPP_INBOUND_STATUSES = ['received', 'stored', 'dropped'] as const;
+export type WhatsAppInboundStatus = (typeof WHATSAPP_INBOUND_STATUSES)[number];
+
+/** One forwarded provider message of a linked member; unique per workspace by provider id. */
+export const whatsappInboundMessage = tenantTable(
+  'whatsapp_inbound_message',
+  {
+    id: id(),
+    userId: userRef(),
+    /** The provider's message id (`wamid...`); the dedupe key within a workspace. */
+    providerMessageId: text('provider_message_id').notNull(),
+    /** The provider's reference to the media; the job downloads it. */
+    mediaId: text('media_id').notNull(),
+    mime: text('mime').notNull(),
+    filename: text('filename').notNull(),
+    status: text('status').$type<WhatsAppInboundStatus>().notNull().default('received'),
+    receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      name: 'whatsapp_inbound_message_workspace_id_fk',
+      columns: [t.workspaceId],
+      foreignColumns: [organization.id],
+    }).onDelete('cascade'),
+    unique('whatsapp_inbound_message_workspace_provider_id_uq').on(
+      t.workspaceId,
+      t.providerMessageId,
+    ),
+    check(
+      'whatsapp_inbound_message_status_chk',
+      sql`status in ('received', 'stored', 'dropped')`,
+    ),
   ],
 );

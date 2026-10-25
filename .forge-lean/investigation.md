@@ -1,38 +1,39 @@
 **Verdict**: CONFIRMED
-**Confidence**: high
-**Severity**: medium (feature foundation; no live defect, blocks #679, #680, #681)
+**Confidence**: medium
+**Severity**: medium (feature part 3 of #502; no live defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 1 of #502: add `whatsapp_link` and an OTP challenge table, add `whatsapp` to the `notification_channel` enum, a core service (request OTP, verify, unlink, set categories) that only ever targets the owner's verified number (D-029), register tables and exports, and add `'whatsapp'` to `CHANNELS`.
+Add `POST /v1/inbound/whatsapp` (`apps/api/src/routes/inbound-whatsapp.ts`): signature verification, sender mapped to a verified link without an oracle, size/type allow-list, dedupe by provider message id; core receive logic stores the media in the linked user's workspace capture inbox (#43) and enqueues processing, modelled on inbound-email (#530). A forwarded PDF or voice note lands in the right workspace's capture inbox within a minute; unknown or unverified senders are dropped silently.
 
 ### What We Found
-- No WhatsApp link, OTP or consent storage exists; `packages/core/src/whatsapp/` is only the chat-export import (#526), unrelated.
-- `packages/notifications/src/categories.ts:5` `CHANNELS = ['in_app','email','push']`; `packages/db/src/schema/notifications.ts:24` `NOTIFICATION_CHANNELS` and `:31` pgEnum `notification_channel` have the same three values.
-- `packages/notifications/src/service.ts:132` validates pref channels with `z.enum(CHANNELS)`; `:366` lists prefs over `CHANNELS`; `:239` fan-out is hard-coded to `['email','push']`, so adding `whatsapp` creates no sends (delivery is #679). `resolve` (`:175`) defaults a channel off unless in `defaultChannels`.
-- Latest migration is `20261024182641_activation_event.sql` (journal idx 90); the next free number must be taken on the milestone branch. No prior `ALTER TYPE ... ADD VALUE` migration exists, so the first one needs care (not usable in the same tx as the new value's use; the migration must not use the value).
-- Registries to update: `packages/db/src/index.test.ts` (~l.40-133 table list), `packages/db/src/__tests__/rls/sql.test.ts:150-170` RLS catalog, `packages/db/src/testing/cross-tenant-registry.ts:120-150` TABLE_TESTS and `:271` SERVICE_TESTS (+ `NOT_A_SERVICE` for pure exports), `packages/db/src/testing/two-tenants.ts:1040-1070` seeders, `packages/core/src/lifecycle/deletion/erase.ts:60` PURGE_ORDER (guard: every tenant table purged), `packages/core/src/lifecycle/export/exporters.ts:300` exporters.
-- Core domain wiring pattern: `packages/core/package.json:13` subpath export, `packages/core/src/index.ts:22`, `docs/engineering/core-domains.md:29/48/211` and `CORE_DOMAIN_DEPENDENCIES` (`packages/core/src/domains.test.ts`).
+- Dependency #678 is closed and merged (7cb370dd): `packages/core/src/whatsapp-link/link.ts` has `whatsapp_link` (`packages/db/src/schema/whatsapp-link.ts:28`, one row per verified member+workspace, `e164`, `verifiedAt`, `consentAt`; unlink deletes the row). No inbound code exists (`apps/api/src/routes` has only `inbound-email.ts`).
+- Template to copy: `apps/api/src/routes/inbound-email.ts:1-94` (raw body, provider.verify -> 400, per-item core call, 200 ack, drop reasons logged without PII); core `packages/core/src/email-intake/receive.ts:42-70` (resolve, channel gate, insert dedupe row with `onConflictDoNothing`, enqueue in the same tx); worker body `packages/core/src/email-intake/run.ts:150-290` (hash, dedupe, `store.put`, `blob` + `capture` insert, then `jobs.scan`/`jobs.process`); job `packages/core/src/jobs/definitions/email-intake.ts`.
+- Workspace-free sender lookup must be a SECURITY DEFINER function, as `app_resolve_intake_address` (`packages/db/migrations/0059_email_intake.sql:77-88`, called at `packages/core/src/email-intake/address.ts:195`). `whatsapp_link` is under FORCE RLS, so it needs an `owner_definer_read` policy plus `app_resolve_whatsapp_sender(e164)`. Nothing prevents the same number being linked by several members/workspaces, so the function must return a row only when exactly one link matches.
+- `'whatsapp'` is not a capture channel: `CAPTURE_CHANNELS` (`packages/db/src/schema/capture.ts:31-41`) has only `whatsapp_export`, and the DB check `capture_channel_chk` (`:114`, migration `0053_capture_inbox.sql:37`) enumerates them. Channels other than `manual`/`upload` are opt-in (`packages/capture/src/types.ts:12`, `packages/core/src/capture/channels.ts:49-60`). Other users of the list: `packages/validators/src/capture.ts`, `packages/capture/src/__tests__/lists.test.ts`, `packages/core/src/capture/retention.ts`.
+- Allow-list/size caps: `packages/capture/src/allow-list.ts` (`resolveAllowedType`, `DEFAULT_SIZE_CAPS_BYTES`: pdf 50MB, ogg/m4a/mp3 25MB). A WhatsApp voice note is audio/ogg (opus).
+- WhatsApp Cloud API delivers only a media id; bytes need a Graph API fetch with an access token, so the webhook cannot store media inline in 300 ms (the inbound-email handler's budget). Webhook verification is `X-Hub-Signature-256` HMAC-SHA256 over the raw body with the app secret, plus a GET `hub.challenge` handshake.
+- API wiring: `apps/api/src/app.ts:54-59,119,127`, `apps/api/src/server.ts:12,137`, rate limit `'/v1/inbound'` already covers the path; guards `apps/api/src/__tests__/static-guards.test.ts:44`, `apps/api/src/__tests__/cross-tenant.test.ts:52`. Jobs registry `packages/core/src/jobs/registry.ts:40,193`; `apps/worker/src/__tests__/registry.test.ts:158`.
 
 ### Root Cause
-Missing feature: the WhatsApp channel has no consent/verification model; #502 was split into #678-#681.
+Missing feature: nothing receives WhatsApp-forwarded media. Part 3 of #502 (parts #678 done, #679, #681 open).
 
 ### Affected Files
-- packages/db/src/schema/whatsapp-link.ts (new), schema/notifications.ts, schema/index.ts
-- packages/db/migrations/<next>_whatsapp_link.sql + meta journal/snapshot
-- packages/db/src/index.test.ts, __tests__/rls/sql.test.ts, testing/cross-tenant-registry.ts, testing/two-tenants.ts
-- packages/notifications/src/categories.ts (+ its tests)
-- packages/core/src/whatsapp-link/* (new), core index/package.json, lifecycle erase/export, docs/engineering/core-domains.md, domains test
-- packages/core/src/__tests__/cross-tenant/services.test.ts
+- packages/capture/src/whatsapp-inbound/* (new: provider interface, Meta signature verify, payload parse, type/size allow-list) + index export
+- packages/db/src/schema/whatsapp-link.ts (+ new `whatsapp_inbound_message` dedupe table), schema/capture.ts (channel), migration + journal/snapshot
+- packages/db registries: `src/index.test.ts`, `__tests__/rls/sql.test.ts`, `testing/cross-tenant-registry.ts`, `testing/two-tenants.ts`; `packages/core/src/lifecycle/deletion/erase.ts` PURGE_ORDER, export exporters if the guard requires
+- packages/core/src/whatsapp-link/{receive,run}.ts (+ index), core package exports, `jobs/definitions/whatsapp-intake.ts`, `jobs/registry.ts`, `docs/engineering/core-domains.md` + `CORE_DOMAIN_DEPENDENCIES` (whatsapp-link -> capture)
+- apps/api/src/routes/inbound-whatsapp.ts (new), `app.ts`, `server.ts`, `routes/v1/index.ts` if routes mount there, static-guards and cross-tenant tests, OpenAPI snapshot if one is checked in
+- apps/worker registry/schedules tests; packages/validators/src/capture.ts; i18n channel labels if the catalog test enumerates channels
 
 ### Sibling Sweep
-Same pattern as `email-intake` (per-user address, verified senders) and `notification_pref`. Other places that enumerate channels: `NOTIFICATION_CHANNELS`/`CHANNELS` only (checked via grep); the preferences UI iterates `CHANNELS` through `service.ts`, so a `whatsapp` column will appear in prefs listings; check web tests that count rows.
+Same pattern: inbound email (#530) and the Razorpay webhook. Other places enumerating capture channels: validators, retention, `lists.test.ts`, web channel settings (grep `whatsapp_export` before finishing). Any new `@causedeck/core` runtime export needs `SERVICE_TESTS` or `NOT_A_SERVICE` in the cross-tenant registry.
 
 ### History
-`CHANNELS` last touched by a3a7e081 (category additions). #502 closed not_planned and split; siblings #679-#681 are open and depend on this.
+Inbound email landed in #530 (needs-human after ci.red); link/OTP in #678/#694. #678 needed-human outcomes came from registries and scope creep: keep strictly to the deliverables.
 
 ### Recommendation
-Implement in one lane. New tenant tables `whatsapp_link` (unique per workspace+user and unique verified number per user; CHECK E.164 `^\+[1-9][0-9]{7,14}$`; verified_at, consent_at, categories text[], unlinked state by deleting the row or `unlinked_at`) and `whatsapp_otp_challenge` (code hash only, expires_at, attempts with CHECK cap, consumed_at). Core domain `whatsapp-link` with `requestOtp`, `verifyOtp`, `unlink`, `setCategories`, and `getSendTarget` (returns the verified number only when verified, consented and not unlinked, for the owning user; the only way to obtain a destination). OTP: random 6 digits, stored hashed, constant-time compare, expiry and max attempts, resend cooldown; the sender is injected (no provider here). Add `'whatsapp'` to both enums and a hand-written migration `ALTER TYPE notification_channel ADD VALUE IF NOT EXISTS 'whatsapp'`.
+One lane. Webhook verifies (provider injected; `null` = every call 400), parses text-free events, resolves sender by `app_resolve_whatsapp_sender`, applies the capture-channel gate and the type/size allow-list from the declared mime and size, inserts a dedupe row `(workspace_id, provider_message_id)` and enqueues `whatsapp.intake` in the same tx. The job downloads the media via the provider, stores bytes through the same blob/capture path as `runEmailIntake` (channel `whatsapp`), then scan/process. Unknown, unverified, ambiguous, disabled and disallowed senders get 200 and a logged reason only (no reply, no number logged). Open points for the implementer: exact provider (Meta Cloud API assumed) and whether media may be fetched in the webhook; keep the provider behind an interface with a shared-secret file/dev variant for tests.
 
 ### Related Issues
-#502 (parent), #679, #680, #681 (siblings), #493/#494 (deps of parent).
+#502 (parent), #678 (dependency, closed), #679, #681 (siblings), #43, #530.

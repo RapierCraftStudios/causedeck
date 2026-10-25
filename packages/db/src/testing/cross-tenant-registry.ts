@@ -150,6 +150,7 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // WhatsApp number link and OTP challenge (#678).
   whatsapp_link: DB_TABLES_TEST,
   whatsapp_otp_challenge: DB_TABLES_TEST,
+  whatsapp_inbound_message: DB_TABLES_TEST,
   // Enterprise onboarding (#682).
   sso_provider: DB_TABLES_TEST,
   scim_token: DB_TABLES_TEST,

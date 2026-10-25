@@ -17,8 +17,9 @@ import {
   type ParsedCauseList,
   type ParsedListRow,
 } from '@causedeck/adapters';
+import { autoMapColumns, parseCsv, rowsToDrafts } from '@causedeck/capture';
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
-import { and, asc, count, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, or, sql } from 'drizzle-orm';
 
 import { submitProposals } from '../automation/index.ts';
 import type { GraphActor, MatterGraphDeps } from '../matter-graph/index.ts';
@@ -52,6 +53,12 @@ export interface ImportBatchDeps {
   log?: (event: string, counts: Record<string, number>) => void;
   /** Reads a cause list; defaults to the dedicated court adapters (tests inject a mock). */
   parser?: ListParser;
+  /** Rows of an Excel capture (its bytes are not in the database); a CSV is read from its text. */
+  sheetReader?: (input: {
+    workspaceId: string;
+    captureId: string;
+    fileName: string | null;
+  }) => Promise<string[][] | null>;
 }
 
 export interface ListParseInput {
@@ -562,6 +569,9 @@ export async function processImportFile(
       await setFile(tx, where, { status: 'parsed', adapterId });
       return { outcome: 'parsed', adapterId, rows: 0 };
     }
+    if (cap.fileName !== null && SHEET_FILE.test(cap.fileName)) {
+      return stageSheetFile(deps, tx, { ...where, fileName: cap.fileName, docId: doc.id, now });
+    }
     if (doc.kind !== 'cause_list') {
       await setFile(tx, where, { status: 'unmatched', adapterId: null });
       return { outcome: 'unmatched', adapterId: null, rows: 0 };
@@ -634,6 +644,122 @@ export async function processImportFile(
     await setFile(tx, where, { status: 'parsed', adapterId: parsed.adapterId, rowsMatched: rows });
     return { outcome: 'parsed', adapterId: parsed.adapterId, rows };
   });
+}
+
+const SHEET_FILE = /\.(csv|xlsx)$/i;
+const codeOf = (value: string): string => value.toUpperCase().replace(/[^A-Z0-9]+/g, '');
+
+/**
+ * Drop sheet drafts for a case the workspace already tracks: same CNR, or same case type code,
+ * number and year (a repeat import must not re-propose a discovered matter).
+ */
+async function dropKnownCases<D extends SheetDraft>(
+  tx: Transaction,
+  workspaceId: string,
+  drafts: readonly D[],
+): Promise<D[]> {
+  const { proceeding } = schema;
+  const cnrs = drafts.flatMap((d) => (d.payload.cnr === undefined ? [] : [d.payload.cnr]));
+  const numbers = drafts.flatMap((d) =>
+    d.payload.caseNumber === undefined ? [] : [d.payload.caseNumber],
+  );
+  if (cnrs.length === 0 && numbers.length === 0) return [...drafts];
+  const known = await tx
+    .select({
+      cnr: proceeding.cnr,
+      code: proceeding.caseTypeCode,
+      number: proceeding.number,
+      year: proceeding.year,
+    })
+    .from(proceeding)
+    .where(
+      and(
+        eq(proceeding.workspaceId, workspaceId),
+        or(
+          cnrs.length > 0 ? inArray(proceeding.cnr, cnrs) : undefined,
+          numbers.length > 0 ? inArray(proceeding.number, numbers) : undefined,
+        ),
+      ),
+    );
+  const cnrSet = new Set(known.flatMap((k) => (k.cnr === null ? [] : [k.cnr])));
+  const identity = new Set(known.map((k) => `${k.code}|${k.number ?? ''}|${String(k.year ?? '')}`));
+  return [...drafts].filter((d) => {
+    const { cnr, caseNumber, caseTypeRaw, caseYear } = d.payload;
+    if (cnr !== undefined && cnrSet.has(cnr)) return false;
+    if (caseNumber === undefined || caseTypeRaw === undefined) return true;
+    return !identity.has(`${codeOf(caseTypeRaw)}|${caseNumber}|${String(caseYear ?? '')}`);
+  });
+}
+
+interface SheetDraft {
+  payload: { cnr?: string; caseNumber?: string; caseTypeRaw?: string; caseYear?: number };
+}
+
+const SHEET_ADAPTER = 'sheet';
+
+/** A spreadsheet capture: rows become `new_proceeding` drafts minus cases already tracked. */
+async function stageSheetFile(
+  deps: ImportBatchDeps,
+  tx: Transaction,
+  input: {
+    workspaceId: string;
+    batchId: string;
+    captureId: string;
+    fileName: string;
+    docId: string;
+    now: () => Date;
+  },
+): Promise<ImportFileOutcome> {
+  const { workspaceId, batchId, captureId, fileName, docId } = input;
+  const where = { workspaceId, batchId, captureId };
+  const [batch] = await tx
+    .select({ createdBy: schema.importBatch.createdBy })
+    .from(schema.importBatch)
+    .where(
+      and(eq(schema.importBatch.workspaceId, workspaceId), eq(schema.importBatch.id, batchId)),
+    );
+  const userId = batch?.createdBy;
+  let table: string[][] | null = null;
+  if (/\.csv$/i.test(fileName)) {
+    const pages = await tx
+      .select({ text: schema.documentPage.text })
+      .from(schema.documentPage)
+      .where(
+        and(
+          eq(schema.documentPage.workspaceId, workspaceId),
+          eq(schema.documentPage.documentId, docId),
+        ),
+      )
+      .orderBy(asc(schema.documentPage.pageNo));
+    table = parseCsv(pages.map((page) => page.text ?? '').join('\n'));
+  } else if (deps.sheetReader !== undefined) {
+    table = await deps.sheetReader({ workspaceId, captureId, fileName });
+  }
+  const [header, ...body] = table ?? [];
+  if (header === undefined || userId == null) {
+    await setFile(tx, where, { status: 'unmatched', adapterId: null });
+    return { outcome: 'unmatched', adapterId: null, rows: 0 };
+  }
+  const { drafts } = rowsToDrafts(body, autoMapColumns(header).indices);
+  const fresh = await dropKnownCases(tx, workspaceId, drafts);
+  if (fresh.length > 0) {
+    await submitProposals(
+      { db: tx, events: NO_EVENTS, now: input.now },
+      { workspaceId, userId },
+      fresh.map((draft) => ({ ...draft, captureId })),
+    );
+  }
+  deps.log?.('import.sheet_read', { rows: fresh.length, known: drafts.length - fresh.length });
+  if (fresh.length === 0) {
+    await setFile(tx, where, { status: 'unmatched', adapterId: SHEET_ADAPTER });
+    return { outcome: 'unmatched', adapterId: SHEET_ADAPTER, rows: 0 };
+  }
+  await setFile(tx, where, {
+    status: 'parsed',
+    adapterId: SHEET_ADAPTER,
+    rowsMatched: fresh.length,
+  });
+  return { outcome: 'parsed', adapterId: SHEET_ADAPTER, rows: fresh.length };
 }
 
 export type FinishImportOutcome =

@@ -70,6 +70,7 @@ describe('upload allow-list and sniffing', () => {
   it('covers every type the issue lists', () => {
     expect(ALLOWED_TYPES.map((t) => t.name).sort()).toEqual(
       [
+        'csv',
         'docx',
         'heic',
         'ics',
@@ -81,6 +82,7 @@ describe('upload allow-list and sniffing', () => {
         'png',
         'txt',
         'wav',
+        'xlsx',
         'webm',
         'webp',
         'zip',
@@ -105,6 +107,20 @@ describe('upload allow-list and sniffing', () => {
     ['sheet.xlsx', 'application/vnd.ms-excel', 'document'],
   ])('rejects %s declared as %s (%s)', (filename, mime, kind) => {
     expect(findAllowedType(kind, filename, mime)).toBeNull();
+  });
+
+  it('accepts csv and xlsx by extension and declared type, and rejects html posing as csv', async () => {
+    const csv = findAllowedType('document', 'diary.csv', 'text/csv');
+    const xlsx = findAllowedType(
+      'document',
+      'diary.xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    if (csv === null || xlsx === null) throw new Error('allow-list entry missing');
+    const bytes = new TextEncoder().encode('Case Number,Court\nWP 1/2026,madras-hc\n');
+    expect(isCompatible(csv, await sniffMime(bytes))).toBe(true);
+    expect(isCompatible(csv, await sniffMime(SAMPLES.html))).toBe(false);
+    expect(isCompatible(xlsx, await sniffMime(SAMPLES.zip))).toBe(false);
   });
 
   it('sniffs markup and scripts as text/html, never as plain text', async () => {

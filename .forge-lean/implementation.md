@@ -35,3 +35,9 @@ Outward drafts UI (#736) on top of the merged #735 services. A new core read mod
 
 ## CI lint fix
 CI lint log was unavailable. Local eslint on all changed ts/tsx files (web, core, i18n) was clean; prettier flagged packages/core/src/outward/views.ts, now reformatted (formatting only).
+
+## Merge check failure (turbo exit 127)
+`turbo: command not found` was an environment PATH problem, not a code conflict. With node_modules/.bin on PATH the scoped typecheck ran: all packages passed except web, which hit a V8 heap OOM (no TS errors). Re-ran web `tsc --noEmit` with NODE_OPTIONS=--max-old-space-size=6144: exit 0, 0 errors. No source change needed.
+
+### Merge verification (base b39e8276)
+The base merged without a code conflict. The reported `turbo: command not found` (exit 127) was `turbo` missing from PATH, not a code fault: `pnpm exec turbo run typecheck --filter='...[b39e8276]'` passes (23/23 tasks). No code change was needed; V1-V5 re-run below.

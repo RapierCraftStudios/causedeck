@@ -9,6 +9,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pages = await loadAllMdx();
   return sitemapEntries([
     { path: '' },
+    { path: 'status' },
+    { path: 'status/history' },
     ...pages.map((page) => ({
       path: page.slug.join('/'),
       noindex: page.frontmatter.noindex,

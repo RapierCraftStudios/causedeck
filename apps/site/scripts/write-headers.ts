@@ -30,8 +30,12 @@ function origin(url: string | undefined): string | undefined {
 }
 
 /** The page-independent policy: everything except script-src, which is per route. */
-export function baseCsp(analyticsOrigin?: string): string {
-  const connect = ["'self'", ...(analyticsOrigin === undefined ? [] : [analyticsOrigin])];
+export function baseCsp(analyticsOrigin?: string, statusOrigin?: string): string {
+  const connect = [
+    "'self'",
+    ...(analyticsOrigin === undefined ? [] : [analyticsOrigin]),
+    ...(statusOrigin === undefined || statusOrigin === analyticsOrigin ? [] : [statusOrigin]),
+  ];
   return [
     "base-uri 'none'",
     "object-src 'none'",
@@ -55,8 +59,11 @@ export function buildHeaders(
   base: string,
   pages: { route: string; html: string }[],
   analyticsSrc?: string,
+  statusUrl?: string,
 ): string {
   const analyticsOrigin = origin(analyticsSrc);
+  // Only an absolute status URL adds an origin; the default is root-relative ('self').
+  const statusOrigin = statusUrl?.startsWith('/') === false ? origin(statusUrl) : undefined;
   const rules = pages.map(({ route, html }) => {
     const sources = [
       "'self'",
@@ -74,7 +81,7 @@ export function buildHeaders(
     base.trimEnd(),
     '',
     '/*',
-    `  Content-Security-Policy: ${baseCsp(analyticsOrigin)}`,
+    `  Content-Security-Policy: ${baseCsp(analyticsOrigin, statusOrigin)}`,
     '',
     ...rules.flatMap((rule) => [rule, '']),
   ].join('\n');
@@ -101,6 +108,8 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
   const base = readFileSync(path.join(root, 'public', '_headers'), 'utf8');
   // eslint-disable-next-line no-process-env -- build-time switch, same variable as lib/env.ts.
   const analyticsSrc = process.env.NEXT_PUBLIC_ANALYTICS_SRC;
-  writeFileSync(path.join(outDir, '_headers'), buildHeaders(base, pages, analyticsSrc));
+  // eslint-disable-next-line no-process-env -- build-time switch, same variable as lib/env.ts.
+  const statusUrl = process.env.NEXT_PUBLIC_STATUS_URL;
+  writeFileSync(path.join(outDir, '_headers'), buildHeaders(base, pages, analyticsSrc, statusUrl));
   console.log(`Wrote out/_headers for ${String(pages.length)} page(s).`);
 }

@@ -9,7 +9,10 @@ export type StatusState =
   | { kind: 'unverified' }
   | { kind: 'unavailable' };
 
-export type FetchLike = (url: string, init?: { cache?: 'no-store' }) => Promise<{
+export type FetchLike = (
+  url: string,
+  init?: { cache?: 'no-store' },
+) => Promise<{
   ok: boolean;
   json(): Promise<unknown>;
 }>;
@@ -44,4 +47,23 @@ export async function loadStatus(
   return snapshot.overall === 'operational' && quiet && snapshot.components.length > 0
     ? { kind: 'empty', snapshot }
     : { kind: 'ok', snapshot };
+}
+
+/** Calls `onChange` on the browser's online/offline events; returns the unsubscribe function. */
+export function watchOnline(
+  target: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>,
+  onChange: (online: boolean) => void,
+): () => void {
+  const up = () => {
+    onChange(true);
+  };
+  const down = () => {
+    onChange(false);
+  };
+  target.addEventListener('online', up);
+  target.addEventListener('offline', down);
+  return () => {
+    target.removeEventListener('online', up);
+    target.removeEventListener('offline', down);
+  };
 }

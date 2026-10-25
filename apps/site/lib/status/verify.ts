@@ -39,10 +39,7 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 /** The parsed snapshot when it matches the schema and its signature verifies, else null. */
-export async function verifySnapshot(
-  raw: unknown,
-  key: string,
-): Promise<StatusSnapshot | null> {
+export async function verifySnapshot(raw: unknown, key: string): Promise<StatusSnapshot | null> {
   const parsed = statusSnapshotSchema.safeParse(raw);
   if (!parsed.success) return null;
   const { signature, ...unsigned } = parsed.data;

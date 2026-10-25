@@ -94,3 +94,6 @@ Same exit 127 (bare `turbo` not on PATH). `pnpm exec turbo run typecheck` passes
 
 ### Merge re-check (7)
 Exit 127: bare `turbo` is not on PATH (environment). With `node_modules/.bin` on PATH, typecheck passes 24/24 on the merged tree; V1-V5 re-run and pass (19, 80, 3, 1 tests; check:no-l5 clean). No source change.
+
+### Merge re-check (9)
+Exit 127 again: bare `turbo` is not on PATH (environment). With `node_modules/.bin` on PATH, typecheck passes 24/24. No source change.

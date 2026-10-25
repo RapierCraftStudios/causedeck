@@ -330,6 +330,11 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A manual court-is-at-item marker was cleared',
   },
+  // A confirmed hearing outcome (#62): ids, kinds and counts only, never the outcome text.
+  'hearing.outcome_confirmed': {
+    security: true,
+    description: 'A person confirmed a hearing outcome, its next date, obligations and tasks',
+  },
 } as const satisfies Record<string, AuditActionSpec>;
 
 export type AuditAction = keyof typeof AUDIT_ACTIONS;

@@ -27,7 +27,9 @@ export const MATRIX: Readonly<Record<Action, Role>> = {
   'task.read': 'viewer',
   'task.write': 'clerk',
   'listing.read': 'viewer',
+  'draft.read': 'junior',
   'draft.write': 'junior',
+  'draft.export': 'junior',
   'audit.read': 'advocate',
   'export.run': 'owner',
   // Only the owner grants, denies or revokes support sessions (#313); staff never can, since
@@ -49,7 +51,9 @@ export const JUNIOR_MATTER_SCOPED: ReadonlySet<Action> = new Set<Action>([
   'document.write',
   'task.read',
   'task.write',
+  'draft.read',
   'draft.write',
+  'draft.export',
 ]);
 
 /** Roles the matrix grants `action` to, most privileged first. */

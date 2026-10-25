@@ -11,7 +11,7 @@ export const ACTIONS = {
   document: ['document.read', 'document.write'],
   task: ['task.read', 'task.write'],
   listing: ['listing.read'],
-  draft: ['draft.write'],
+  draft: ['draft.read', 'draft.write', 'draft.export'],
   audit: ['audit.read'],
   export: ['export.run'],
   support: ['support.manage'],

@@ -80,6 +80,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   template: DB_TABLES_TEST,
   draft: DB_TABLES_TEST,
   draft_version: DB_TABLES_TEST,
+  // Drafting exports (#768): one stored file per draft version and format.
+  draft_export: DB_TABLES_TEST,
   // Matter and documents (#345).
   matter: DB_TABLES_TEST,
   document: DB_TABLES_TEST,

@@ -2,49 +2,61 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "In `packages/drafting`: `blocks.ts`, `slots.ts` (pure resolvers over supplied facts returning {value, provenance} for case number, court, bench, parties, next date, counsel; unresolved renders `[[missing: \u003cslot>]]` and blocks export unless acknowledged)",
+   "quote": "Add `packages/core/src/drafting/{service,policy,index}.ts` (`createDraft`, `renderDraft`, `saveVersion` immutable with content hash, `listVersions`, `restoreVersion` creating a new version, `exportDraft`;",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "`presets/madras-hc.ts` and `karnataka-hc.ts` as data (A4, Times New Roman 14pt, 1.5 spacing, 20 MB cap for Madras)",
+   "quote": "`can(user,'draft:*')` with clerk restrictions; facts loaded via the matter-graph index and passed to pure slot resolvers)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`render/docx.ts` (docx lib, custom property `AI-assisted` true only when a model-drafted narrative block is unrewritten)",
+   "quote": "`packages/core/src/jobs/definitions/drafting-export.ts` (job `drafting.export`, payload {workspaceId, draftVersionId, format}, idempotent on (draft_version_id, format) returning the stored file)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "`render/pdf.ts` (pdf-lib + fontkit, embedded fonts incl. Noto Sans Tamil/Kannada, searchable text, typed error above 20 MB)",
+   "quote": "storage under the workspace key prefix with envelope encryption and presigned download only (no email/share path)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "`narrative.ts` (calls the ai gateway through an injected port, schema-validated output, no tools, India-only default) and a `draft_narrative` task in `packages/ai/src/tasks`.",
+   "quote": "`exported_at` plus audit_event with actor, format and version hash, ai_call audit on refused non-India calls.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Static test: package exposes no send/file/submit function.",
+   "quote": "Add `@causedeck/drafting` dependency in `packages/core/package.json` and the `./drafting` export;",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "Update `packages/drafting/package.json` (docx, pdf-lib, @pdf-lib/fontkit, fflate dev, @causedeck/validators, @causedeck/ai; reasons: render and schema validation).",
+   "quote": "update CORE_DOMAIN_DEPENDENCIES and `docs/engineering/core-domains.md`,",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "Coverage >= 90% lines for presets and slots; golden DOCX styles XML snapshot; no `any` in exports.",
+   "quote": "`packages/db/src/testing/cross-tenant-registry.ts` SERVICE_TESTS with real cases in `packages/core/src/__tests__/cross-tenant/services.test.ts` (B on A denied, A unchanged, including export job and presign), `apps/worker/src/__tests__/registry.test.ts`.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "Testcontainers integration test `packages/core/src/drafting/__tests__/drafting.integration.test.ts`.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "No draft text in pino logs.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -52,226 +64,263 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/drafting/package.json",
-   "change": "Add dependencies: docx, pdf-lib, @pdf-lib/fontkit (render: DOCX/PDF output, catalog versions), @causedeck/validators (schema validation of block trees and presets; subpath ./drafting), @causedeck/ai (draft_narrative task input/output types and gateway port types); devDependencies: fflate (unzip DOCX in the golden styles.xml test), @fontsource/noto-sans-tamil, @fontsource/noto-sans-kannada, regenerator-runtime (fontkit needs it; same as packages/intelligence/package.json). All 'catalog:' except workspace:*. Update pnpm-lock.yaml via pnpm install --offline --lockfile-only if possible.",
+   "path": "packages/core/src/drafting/policy.ts",
+   "change": "New. Draft access: member role via workspaces index, matter visibility like research/notes-service.ts, `can()` checks for draft.read/draft.write/draft.export; clerk denied (NOT_FOUND/FORBIDDEN per matter-service convention).",
    "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D2",
-   "path": "pnpm-lock.yaml",
-   "change": "Lockfile importer entry for packages/drafting reflecting D1 (no new catalog versions).",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/validators/src/drafting.ts",
-   "change": "Add 'karnataka_hc' to COURT_PRESETS and 'hearing.bench' to SLOT_RESOLVERS (and any counsel resolver needed; keep advocate.name as counsel); update packages/validators/src/drafting.test.ts expectations.",
-   "requirements": [
-    "R1",
     "R2"
    ]
   },
   {
+   "id": "D2",
+   "path": "packages/core/src/drafting/service.ts",
+   "change": "New. createDraft, renderDraft (loads facts through matter-graph index only, resolveBlocks, no narrative calls unless port given), saveVersion (canonical-JSON sha256 into draft_version.content_sha256, next version_no), listVersions, restoreVersion (new version copying old content), exportDraft (permission check, enqueue `drafting.export`; returns existing export when present). Never logs draft text.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R10"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "packages/core/src/drafting/export.ts",
+   "change": "New. runDraftingExport({db,store,keys,log,now}, payload): idempotent on (draft_version_id, format): return the existing draft_export row if present; else render docx/pdf via @causedeck/drafting (block on MissingSlotsError), put to storage key objectKey kind 'export' under ws/\u003cworkspaceId>/ with envelope encryption (same keys/store usage as lifecycle/export), insert draft_export with exported_at, record audit `draft.exported` (actor, format, version content hash). `createDraftExportDownload` returns presigned GET only (createDownloadUrl). No email/share function. Narrative calls via createAiPorts so refused non-India calls write ai_call rows.",
+   "requirements": [
+    "R3",
+    "R4",
+    "R5",
+    "R10"
+   ]
+  },
+  {
    "id": "D4",
-   "path": "packages/drafting/src/blocks.ts",
-   "change": "Block tree helpers over validators Block: walk, validate via BlockTreeSchema, collect slots/narratives, block ids.",
+   "path": "packages/core/src/drafting/index.ts",
+   "change": "New. Public exports of the service functions and types only.",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/drafting/src/slots.ts",
-   "change": "Pure resolveSlot/resolveBlocks over a supplied Facts object returning {value, provenance}; unresolved gives '[[missing: \u003cresolver>]]'; exportBlockers(...) lists unresolved slots unless acknowledged.",
+   "path": "packages/core/src/jobs/definitions/drafting-export.ts",
+   "change": "New. defineJob `drafting.export` (zod payload {workspaceId, draftVersionId, format: ExportFormat}); singleton and idempotencyKey `${draftVersionId}:${format}`; handler calls runDraftingExport; pattern from export-build.ts.",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Wiring only: import and register draftingExport (3 spots like exportBuild at :48,:187,:247).",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/core/package.json",
+   "change": "Add dependency `@causedeck/drafting: workspace:*` (core uses the engine to render; docs/engineering/13-technical-architecture-spike.md:94 lists drafting in core's dependencies) and exports entry `./drafting`.",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/core/src/index.ts",
+   "change": "Add `export * from './drafting/index.ts';`.",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D6",
-   "path": "packages/drafting/src/presets/madras-hc.ts",
-   "change": "Madras HC FormatPreset data (A4, Times New Roman 14pt, 1.5 spacing) plus maxExportBytes 20 MB; validated with FormatPresetSchema.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/drafting/src/presets/karnataka-hc.ts",
-   "change": "Karnataka HC FormatPreset data (A4, Times New Roman 14pt, 1.5 spacing); presets/index.ts exports a lookup by key.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/drafting/src/presets/index.ts",
-   "change": "Barrel + getPreset(key) over the two presets.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
    "id": "D9",
-   "path": "packages/drafting/src/render/docx.ts",
-   "change": "renderDocx(blocks, preset, facts, opts) -> Uint8Array using docx; custom property 'AI-assisted' true only when a model-drafted narrative block is unrewritten; styles from preset.",
+   "path": "packages/config/eslint/core-domains.js",
+   "change": "Add `drafting` domain (CORE_DOMAINS list as the file requires) with CORE_DOMAIN_DEPENDENCIES entry: workspaces, matter-graph, audit (plus usage/ai only if imported, via their index.ts); add 'drafting' to the jobs dependency list; keep acyclic.",
    "requirements": [
-    "R3",
-    "R8"
+    "R7"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/drafting/src/render/pdf.ts",
-   "change": "renderPdf(...) using pdf-lib + fontkit, embed Noto Sans Tamil/Kannada (resolve woff via createRequire like packages/intelligence/src/synthetic/make-docs.ts:10-18, import regenerator-runtime first) and a Latin-capable face so text is searchable; throw typed PdfTooLargeError when bytes exceed preset cap (20 MB Madras).",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Add drafting row to the domain table, the dependency graph edges and dependency table, and jobs row, matching D9.",
    "requirements": [
-    "R4"
+    "R7"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/drafting/src/narrative.ts",
-   "change": "draftNarrative(port, block, facts, ctx): port is an injected interface {run(taskId,input,ctx)}; calls 'draft_narrative', validates output with the task output schema and block maxChars; no tools; passes india-only default through context (indiaOnly true unless caller overrides).",
+   "path": "packages/db/src/schema/drafting.ts",
+   "change": "Add tenantTable `draft_export` (id, draft_version_id, format text check in pdf/docx, storage_key, size_bytes, exported_at timestamptz not null, created_by nullable, composite FK (workspace_id, draft_version_id) to draft_version, unique (draft_version_id, format), workspace FK cascade) following the existing tables' conventions.",
    "requirements": [
+    "R3",
     "R5"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/drafting/src/index.ts",
-   "change": "Re-export public API; keep packageName; no send/file/submit export; no `any`.",
+   "path": "packages/db/migrations",
+   "change": "Add next free-numbered migration SQL (after 20261025060000_drafting.sql) creating draft_export with forced RLS keyed on app.workspace_id, regenerated snapshot/journal in migrations/meta; renumber if the base took the slot.",
    "requirements": [
-    "R6",
-    "R8"
+    "R3",
+    "R5"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/ai/src/tasks/draft-narrative.ts",
-   "change": "New TaskDef id 'draft_narrative', zod input {prompt, facts, maxChars, locale} / output {text}, providers ['bedrock'], tier 'drafting', promptId 'draft_narrative.v1', defaultLevel 2.",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add `draft_export` to the root table list.",
    "requirements": [
-    "R5"
+    "R3"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/ai/src/types.ts",
-   "change": "Add 'draft_narrative' to TASK_IDS.",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add `draft_export` to the RLS catalog; plus TABLE_TESTS/registry entry and two-tenant seeder for it in packages/db/src/testing (cross-tenant-registry.ts table map).",
    "requirements": [
-    "R5"
+    "R3"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/ai/src/tasks/registry.ts",
-   "change": "Import and register draft_narrative in TASKS.",
+   "path": "packages/auth/src/policy/actions.ts",
+   "change": "Add `draft.read` and `draft.export` to ACTIONS.draft.",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D16",
-   "path": "packages/ai/src/providers/bedrock.ts",
-   "change": "Add 'draft_narrative' to BEDROCK_TASKS.",
+   "path": "packages/auth/src/policy/matrix.ts",
+   "change": "MATRIX: draft.read 'junior', draft.export 'junior'; add both to JUNIOR_MATTER_SCOPED (clerks and viewers denied). Regenerate docs/engineering/permissions.md with `pnpm docs:permissions` and update any policy matrix test snapshot that lists actions.",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
    "id": "D17",
-   "path": "packages/ai/src/tasks/__tests__/draft-narrative.test.ts",
-   "change": "Task test: promptId, tier drafting, bedrock-only, schema accept/reject.",
+   "path": "packages/core/src/audit/events.ts",
+   "change": "Register audit action `draft.exported` (non-security, description) so record() accepts it; update the audit events test list if one enumerates actions.",
    "requirements": [
     "R5"
    ]
   },
   {
    "id": "D18",
-   "path": "packages/drafting/src/__tests__/engine.test.ts",
-   "change": "Tests for blocks, slots (>=90% lines), presets, docx (golden styles.xml snapshot via fflate, AI-assisted property both ways), pdf (Tamil/Kannada text, 20 MB typed error via injected cap), narrative (fake port, invalid output rejected), static API test (no export name matches /send|file|submit/i, source has no `: any`/`as any`). May be split into several test files; update packages/drafting/src/index.test.ts as needed.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "SERVICE_TESTS entries for every new runtime export of @causedeck/core (createDraft, renderDraft, saveVersion, listVersions, restoreVersion, exportDraft, runDraftingExport, createDraftExportDownload, draftingExport job exports, etc.) pointing to a real test; NOT_A_SERVICE with reason for pure helpers/consts. Table map: draft_export: DB_TABLES_TEST.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Hotspot (3619 lines): add only a thin wiring (\u003c=150 lines) of real B-on-A cases for drafting (B denied or sees nothing, A unchanged, export job and presign); put bulk in a new file packages/core/src/drafting/__tests__/cross-tenant.test.ts and reference it from the registry if the registry allows a per-entry test path (as LIFECYCLE_TEST does).",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add 'drafting.export' to the expected job names list (near 'export.build' :145).",
+   "requirements": [
+    "R8",
+    "R3"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/core/src/drafting/__tests__/drafting.integration.test.ts",
+   "change": "New testcontainers integration test: create/save/restore/list versions with hash checks, exportDraft end to end with in-memory store (idempotent second run returns same row and key, audit event with actor/format/hash, exported_at set, missing slot blocks export, clerk denied), refused non-India narrative writes ai_call, presigned download only. Add unit tests for policy and for no draft text in logs.",
    "requirements": [
     "R1",
     "R2",
     "R3",
     "R4",
     "R5",
-    "R6",
-    "R8"
+    "R9",
+    "R10"
    ]
   },
   {
-   "id": "D19",
-   "path": "packages/drafting/vitest.config.ts",
-   "change": "Add coverage thresholds (lines 90) scoped to src/slots.ts and src/presets/**.",
+   "id": "D22",
+   "path": "pnpm-lock.yaml",
+   "change": "Lockfile importer entry for packages/core adding @causedeck/drafting (pnpm install --lockfile-only; delete node_modules first if EACCES).",
    "requirements": [
-    "R8"
+    "R6"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "All existing task ids, schemas and the 'every task has a schema-valid mock output / promptId contains id' guard in packages/ai/src/__tests__/policy.test.ts"
+   "what": "packages/drafting public API and purity (packages/drafting/src/index.ts): no send/file/submit function; engine unchanged except nothing."
   },
   {
    "id": "P2",
-   "what": "Validators contracts consumed by packages/db and core (BlockSchema, TemplateSchema, DraftSchema, ExportRequestSchema, existing COURT_PRESETS/SLOT_RESOLVERS members) in packages/validators/src/drafting.ts; changes are additive only"
+   "what": "draft_version immutability trigger and existing drafting RLS in packages/db/migrations/20261025060000_drafting.sql: do not edit; add a new migration only."
   },
   {
    "id": "P3",
-   "what": "@causedeck/drafting stays importable by apps/web (apps/web/package.json:56) with packageName export unchanged"
+   "what": "export.build workspace export (packages/core/src/jobs/definitions/export-build.ts, lifecycle/export) behaviour and its presign/audit actions."
   },
   {
    "id": "P4",
-   "what": "No new core runtime export: do not touch packages/core, so the cross-tenant registry needs no change"
+   "what": "Existing permission matrix rows (packages/auth/src/policy/matrix.ts): only add draft.read and draft.export; draft.write unchanged."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/drafting exec vitest run --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/ai exec vitest run src/tasks src/__tests__/policy.test.ts src/providers/providers.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/drafting src/domains.test.ts src/jobs/registry.test.ts src/__tests__/cross-tenant/registry.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/drafting.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
+   "command": "pnpm --filter @causedeck/auth exec vitest run src/policy --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/db exec tsx scripts/check-schema-conventions.ts && pnpm --filter @causedeck/db exec tsx scripts/lint-migrations.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "packages/drafting depends on @causedeck/validators and @causedeck/ai",
-   "justification": "Named in the issue; drafting is a leaf consumed by core (docs/engineering/13-technical-architecture-spike.md:94); packages/intelligence already depends on both (packages/intelligence/package.json). Reasons: schema validation (validators) and the draft_narrative task types (ai).",
+   "choice": "New table `draft_export` instead of a column on draft_version",
+   "justification": "draft_version is immutable by trigger (packages/db/src/schema/drafting.ts:8-10, only created_by may change), so exported_at and the stored file key cannot live there; unique (draft_version_id, format) gives the idempotency key",
    "source": "spec"
   },
   {
    "id": "K2",
-   "choice": "Embed Tamil/Kannada fonts from @fontsource via createRequire and import regenerator-runtime before fontkit",
-   "justification": "packages/intelligence/src/synthetic/make-docs.ts:10-18 does exactly this; the packages are in pnpm-workspace.yaml:60-61.",
+   "choice": "Add policy actions draft.read and draft.export (junior, matter-scoped) rather than reuse draft.write",
+   "justification": "matrix.ts:30 has only draft.write; the issue requires can(user,'draft:*') with clerk restrictions; juniors and up, clerks denied, mirrors memory.read/write (research/notes-service.ts:1-8)",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Extend validators' closed lists (karnataka_hc, hearing.bench) rather than keeping presets outside the schema",
-   "justification": "FormatPresetSchema.key is z.enum(COURT_PRESETS) (packages/validators/src/drafting.ts:38,~150), so a Karnataka preset would otherwise fail validation; changes are additive.",
-   "source": "spec"
+   "choice": "Add workspace dependency core -> drafting",
+   "justification": "docs/engineering/13-technical-architecture-spike.md:94 lists drafting among core's dependencies; apps/web already depends on it",
+   "source": "doc"
   },
   {
    "id": "K4",
-   "choice": "Narrative uses an injected port typed locally, not a hard import of createGateway",
-   "justification": "Issue says 'through an injected port'; keeps the engine pure and testable. AiGateway.run signature is packages/ai/src/gateway.ts:38.",
-   "source": "spec"
+   "choice": "Reuse storage kind 'export' and the export-build store/keys wiring",
+   "justification": "packages/storage/src/limits.ts:13 SERVER_OBJECT_KINDS includes 'export'; jobs/definitions/export-build.ts:36-49 shows createObjectStoreFromEnv and EnvKeyProvider usage",
+   "source": "precedent"
   }
  ]
 }

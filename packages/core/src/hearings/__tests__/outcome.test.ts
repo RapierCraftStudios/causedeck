@@ -66,9 +66,7 @@ describe('getOutcomeProposal', () => {
       expect(p.obligations).toEqual([]);
       const other = await world(tx);
       expect(
-        await codeOf(
-          getOutcomeProposal(w.deps, other.owner, { hearingId: w.hearingId }),
-        ),
+        await codeOf(getOutcomeProposal(w.deps, other.owner, { hearingId: w.hearingId })),
       ).toBe('NOT_FOUND');
     });
   });
@@ -135,11 +133,15 @@ describe('confirmOutcome', () => {
         status: 'open',
       });
       expect(w.events.map((e) => e.type)).toContain('hearing.outcome_confirmed');
-      expect(await codeOf(confirmOutcome(w.deps, w.owner, {
-        hearingId: w.hearingId,
-        ...outcome,
-        nextDate: { kind: 'none' },
-      }))).toBe('CONFLICT');
+      expect(
+        await codeOf(
+          confirmOutcome(w.deps, w.owner, {
+            hearingId: w.hearingId,
+            ...outcome,
+            nextDate: { kind: 'none' },
+          }),
+        ),
+      ).toBe('CONFLICT');
     });
   });
 
@@ -158,10 +160,7 @@ describe('confirmOutcome', () => {
       const rows = await inWorkspace(tx, w.workspaceId, async (s) => ({
         hearing: await s.select().from(schema.hearing),
         obligations: await s.select().from(schema.obligation),
-        canonical: await s
-          .select()
-          .from(schema.listing)
-          .where(eq(schema.listing.canonical, true)),
+        canonical: await s.select().from(schema.listing).where(eq(schema.listing.canonical, true)),
       }));
       expect(rows.hearing[0]?.confirmationState).not.toBe('confirmed');
       expect(rows.obligations).toEqual([]);
@@ -183,7 +182,10 @@ describe('confirmOutcome', () => {
         }),
       );
       const proposal = await getOutcomeProposal(w.deps, w.owner, { hearingId: w.hearingId });
-      expect(proposal.conflict).toMatchObject({ currentDate: '2026-11-17', proposedDate: '2026-11-03' });
+      expect(proposal.conflict).toMatchObject({
+        currentDate: '2026-11-17',
+        proposedDate: '2026-11-03',
+      });
       const input = {
         hearingId: w.hearingId,
         ...outcome,
@@ -215,7 +217,11 @@ describe('confirmOutcome', () => {
         ...outcome,
         nextDate: { kind: 'to_be_notified' },
         obligations: [
-          { proposalId: ids['obligation_from_direction'] ?? null, action: 'dismiss', reason: 'not applicable' },
+          {
+            proposalId: ids['obligation_from_direction'] ?? null,
+            action: 'dismiss',
+            reason: 'not applicable',
+          },
         ],
       });
       const rows = await inWorkspace(tx, w.workspaceId, async (s) => ({
@@ -226,7 +232,10 @@ describe('confirmOutcome', () => {
           .where(eq(schema.proposal.id, ids['obligation_from_direction'] ?? '')),
       }));
       expect(rows.obligations).toEqual([]);
-      expect(rows.dismissed[0]).toMatchObject({ status: 'dismissed', resolutionReason: 'not applicable' });
+      expect(rows.dismissed[0]).toMatchObject({
+        status: 'dismissed',
+        resolutionReason: 'not applicable',
+      });
       expect(
         await codeOf(
           confirmOutcome(w.deps, w.owner, {
@@ -249,6 +258,14 @@ describe('confirmOutcome', () => {
           .select({ id: schema.member.id })
           .from(schema.member)
           .where(eq(schema.member.userId, junior));
+        const [ownerMember] = await s
+          .select({ id: schema.member.id })
+          .from(schema.member)
+          .where(eq(schema.member.userId, w.ownerId));
+        await s
+          .update(schema.matter)
+          .set({ ownerMemberId: ownerMember?.id ?? null })
+          .where(eq(schema.matter.id, w.matterId));
         await s.insert(schema.appearance).values({
           workspaceId: w.workspaceId,
           hearingId: w.hearingId,

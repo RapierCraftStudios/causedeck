@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, type KeyboardEvent } from 'react';
 
-import { EntryLine, formatDay } from './agenda-list.tsx';
+import { EntryLine, formatCalendarDay } from './agenda-list.tsx';
 
 export function openDayHref(slug: string, date: string, today: string): string {
   const next = new Date(Date.parse(`${today}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
@@ -60,12 +60,12 @@ export function DayPopover({
       ref={ref}
       role="dialog"
       aria-modal="true"
-      aria-label={formatDay(day.date)}
+      aria-label={formatCalendarDay(day.date)}
       data-slot="day-popover"
       onKeyDown={onKeyDown}
       className="border-line bg-surface fixed inset-x-0 bottom-0 z-50 flex max-h-[70vh] flex-col gap-3 overflow-y-auto rounded-t-lg border p-4 md:inset-x-auto md:end-6 md:bottom-6 md:w-96 md:rounded-lg"
     >
-      <h2 className="font-serif text-lg font-medium">{formatDay(day.date)}</h2>
+      <h2 className="font-serif text-lg font-medium">{formatCalendarDay(day.date)}</h2>
       {day.clash ? <p className="text-sm">{`⚠ ${t('day.clash')}`}</p> : null}
       {day.closedReason === null ? null : (
         <p className="text-ink-muted text-sm">{t('closed', { reason: day.closedReason })}</p>

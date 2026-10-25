@@ -4,7 +4,7 @@ import type { CalendarDay, CalendarEntry } from '@causedeck/validators';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
-import { AgendaList, EntryLine, formatDay } from './agenda-list.tsx';
+import { AgendaList, EntryLine, formatCalendarDay } from './agenda-list.tsx';
 
 function groupByHall(entries: readonly CalendarEntry[]) {
   const groups = new Map<string, CalendarEntry[]>();
@@ -33,11 +33,11 @@ export function WeekView({
         {days.map((d) => (
           <section
             key={d.date}
-            aria-label={formatDay(d.date)}
+            aria-label={formatCalendarDay(d.date)}
             className="border-line flex flex-col gap-2 rounded-md border p-3"
           >
             <h3 className="flex items-center justify-between text-sm font-medium">
-              <Link href={hrefFor(d.date)}>{formatDay(d.date)}</Link>
+              <Link href={hrefFor(d.date)}>{formatCalendarDay(d.date)}</Link>
               <span className="text-ink-muted text-xs">
                 {d.closedReason === null ? '' : t('closed', { reason: d.closedReason })}
                 {d.clash ? ` ⚠ ${t('clash')}` : ''}

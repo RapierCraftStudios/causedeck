@@ -13,7 +13,7 @@ const dayFormat = new Intl.DateTimeFormat('en-IN', {
   month: 'short',
 });
 
-export const formatDay = (date: string) => dayFormat.format(new Date(`${date}T00:00:00Z`));
+export const formatCalendarDay = (date: string) => dayFormat.format(new Date(`${date}T00:00:00Z`));
 
 export function EntryLine({ entry }: { entry: CalendarEntry }) {
   const t = useTranslations('calendarView');
@@ -61,7 +61,7 @@ export function AgendaList({
               tabIndex={-1}
               className="border-line rounded-full border px-2 py-1 text-xs"
             >
-              {formatDay(d.date)}
+              {formatCalendarDay(d.date)}
             </a>
           </li>
         ))}
@@ -70,11 +70,11 @@ export function AgendaList({
         <section
           key={d.date}
           id={`agenda-${d.date}`}
-          aria-label={formatDay(d.date)}
+          aria-label={formatCalendarDay(d.date)}
           className="flex flex-col gap-1"
         >
           <h3 className="flex items-center justify-between text-sm font-medium">
-            <Link href={hrefFor(d.date)}>{formatDay(d.date)}</Link>
+            <Link href={hrefFor(d.date)}>{formatCalendarDay(d.date)}</Link>
             {d.clash ? <span>{`⚠ ${t('clash')}`}</span> : null}
           </h3>
           {d.closedReason === null ? null : (

@@ -121,7 +121,7 @@ export const Offline: Story = {
   render: () => <OfflineNotice />,
 };
 
-export const Denied: Story = {
+export const PermissionDenied: Story = {
   args: { days, month: '2026-11', hrefFor },
   render: () => <PermissionDeniedPage />,
 };

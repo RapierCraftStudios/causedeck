@@ -1,15 +1,14 @@
 
  RUN  v3.2.7 /work/repo/.claude/worktrees/lean-768/packages/core
 
- ✓ |@causedeck/core| src/__tests__/cross-tenant/registry.test.ts (6 tests) 21473ms
-   ✓ cross-tenant registry: core services > registers every runtime export of @causedeck/core  21264ms
- ✓ |@causedeck/core| src/drafting/__tests__/drafting.integration.test.ts (4 tests) 26860ms
-   ✓ drafting service and export > saves immutable hashed versions and restores as a new version  8319ms
-   ✓ drafting service and export > denies a clerk and another workspace  8476ms
-   ✓ drafting service and export > exports once, encrypted, with audit, a presigned download and no draft text in logs  5656ms
-   ✓ drafting service and export > blocks an export with an unresolved slot  4405ms
- ✓ |@causedeck/core| src/domains.test.ts (5 tests) 79ms
- ✓ |@causedeck/core| src/jobs/registry.test.ts (10 tests) 22ms
-{"level":"error","time":"2026-10-25T23:48:46.998Z","service":"audit","env":"test","version":"dev","region":"ap-south-1","err":"[REDACTED]","action":"access.denied","msg":"access denial not recorded"}
+ ✓ |@causedeck/core| src/__tests__/cross-tenant/registry.test.ts (6 tests) 16499ms
+   ✓ cross-tenant registry: core services > registers every runtime export of @causedeck/core  16405ms
+ ✓ |@causedeck/core| src/drafting/__tests__/drafting.integration.test.ts (4 tests) 35284ms
+   ✓ drafting service and export > saves immutable hashed versions and restores as a new version  10257ms
+   ✓ drafting service and export > denies a clerk and another workspace  11499ms
+   ✓ drafting service and export > exports once, encrypted, with audit, a presigned download and no draft text in logs  7915ms
+   ✓ drafting service and export > blocks an export with an unresolved slot  5609ms
+ ✓ |@causedeck/core| src/domains.test.ts (5 tests) 72ms
+ ✓ |@causedeck/core| src/jobs/registry.test.ts (10 tests) 17ms
 
 (timed out after 300s)

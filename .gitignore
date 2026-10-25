@@ -36,3 +36,4 @@ packages/adapters/fixtures/generated/
 # OS and editor noise
 .DS_Store
 *.log
+.eslintcache

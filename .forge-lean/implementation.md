@@ -44,3 +44,6 @@ Still a PATH problem: bare `turbo` is not installed on PATH (exit 127). `pnpm ex
 
 ### Lint fix
 CI lint failed on `consistent-type-imports` in `packages/core/src/whatsapp-link/__tests__/whatsapp-link.test.ts` (WorkspaceError used only as a type). Changed to `import type`. ESLint on all changed files in core, db, notifications, web and config is clean.
+
+### Lint fix (second)
+No CI log was available. ESLint on every changed source file in core, db, notifications and web is clean, and prettier passes. Removed three accidentally committed `.eslintcache` files (packages/config, db, notifications) and ignored `.eslintcache`. The earlier `import type` fix is already in HEAD.

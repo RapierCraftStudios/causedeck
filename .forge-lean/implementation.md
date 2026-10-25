@@ -27,3 +27,9 @@ The merge failure was `turbo: command not found` (exit 127), a PATH problem. The
 
 ### Merge verification
 After merging the base, `pnpm turbo run typecheck --filter='...[c44d5405]'` passes on the merged tree (24/24 tasks). The earlier exit 127 came from invoking bare `turbo`, which is not on PATH; there are no duplicate-key or symbol clashes, so no code change was needed.
+
+## CI follow-up
+CI test-shard failure: packages/ai gateway.test.ts "performance" asserts one mock call < 5 ms on a shared runner. The branch has no diff in packages/ai; the test passes locally (17/17). Treated as a timing flake; no code change.
+
+### CI run 40161592454 (test-shard rest)
+Only failure: `packages/ai/src/__tests__/gateway.test.ts:301`, a wall-clock `performance.now() - t < 5` assertion on a single mock call. This branch does not touch `packages/ai` (empty diff vs base). The test passes locally (17/17) and is a timing flake on a loaded runner, so no code change is made; a rerun of the shard should clear it.

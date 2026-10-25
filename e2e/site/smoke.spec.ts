@@ -8,6 +8,12 @@ const ROUTES = [
   { path: '/', noindex: false },
   { path: '/about/', noindex: false },
   { path: '/legal/draft-notice/', noindex: true },
+  { path: '/legal/', noindex: true },
+  { path: '/legal/terms/', noindex: true },
+  { path: '/legal/privacy/', noindex: true },
+  { path: '/legal/dpa/', noindex: true },
+  { path: '/legal/ai-disclosure/', noindex: true },
+  { path: '/legal/sub-processors/', noindex: true },
 ];
 
 async function meta(page: Page, selector: string): Promise<string | null> {

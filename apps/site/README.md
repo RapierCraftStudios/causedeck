@@ -17,6 +17,24 @@ validated by `lib/frontmatter.ts`: `title`, `description`, `date` (YYYY-MM-DD) a
 `noindex`. Invalid frontmatter or a duplicate title or description fails the build. Plain markdown
 under `content/learn` and `content/developers` has its own loaders in `src/`.
 
+### Legal pages
+
+`content/legal/*.mdx` (terms, privacy, dpa, ai-disclosure, sub-processors) are rendered by
+`app/legal/*`. Counsel supplies the text (#117); until then each page is placeholder structure with
+`TODO(counsel)` markers and `status: draft`. Legal frontmatter adds `status` (`draft|final`),
+`version`, `history` (date and summary, newest shown first) and `effectiveDate`, which is set only
+when counsel approves (a draft must not carry one, a final page must).
+
+- A draft page renders the `Draft pending counsel review` banner and `noindex`, and stays out of the
+  sitemap.
+- `scripts/legal-status.ts` runs first in `build` and fails while any page is a draft unless
+  `ALLOW_DRAFT_LEGAL=1`. `site.yml` sets it for every build except `main` (production), so
+  production fails until counsel's text lands and the pages are marked `final`.
+- The sub-processor table is `content/legal/sub-processors.ts`. `infra/sub-processors.json` is the
+  manifest of services the infrastructure uses; `lib/legal.test.ts` fails when a manifest service is
+  missing from the public list. Change the data's `effectiveDate` (and add a history entry in
+  `sub-processors.mdx`) on a material change: both feed `/legal/sub-processors/feed.xml`.
+
 Public copy must pass the Rule 36 lint (no rankings, testimonials, outcomes or directory copy).
 
 ## Environment (all public, build time)

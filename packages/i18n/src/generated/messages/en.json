@@ -2699,14 +2699,15 @@
       },
       "clash": {
         "title": "Clash",
-        "hall": "You are listed in two halls on this date.",
-        "complex": "You are listed in two court complexes on this date."
+        "hall": "Items {a} (Hall {hallA}) and {b} (Hall {hallB}) are listed for the same advocate on this date.",
+        "complex": "Items {a} ({hallA}) and {b} ({hallB}) are in different court complexes for the same advocate on this date."
       },
       "hall": {
         "unassigned": "Hall not yet assigned",
         "name": "Hall {hallNo}",
         "count": "{count, plural, one {# item} other {# items}}",
-        "courtIsAt": "Court is at item {item}"
+        "courtIsAt": "Court is at item {item}",
+        "bench": "Before {judges}"
       },
       "item": {
         "name": "Item {n}",
@@ -2749,7 +2750,8 @@
         "needsEmpty": "Nothing to confirm.",
         "carriedTimes": "{count, plural, one {listed once before} other {listed # times before}}",
         "toConfirm": "to confirm",
-        "summary": "Carry {carry}, needs you {needs}"
+        "summary": "Carry {carry}, needs you {needs}",
+        "obligations": "{count, plural, one {# open obligation} other {# open obligations}}"
       },
       "actions": {
         "open": "Quick actions",
@@ -2764,7 +2766,7 @@
         "title": "Nothing listed",
         "description": "None of your matters are on a cause list for this day."
       },
-      "offline": "You are offline. Showing the last known data.",
+      "offline": "Offline. Showing the last known data.",
       "denied": {
         "title": "You cannot view this day",
         "description": "Your role does not include the court day."
@@ -2773,7 +2775,9 @@
       "error": {
         "title": "The court day could not load",
         "retry": "Try again"
-      }
+      },
+      "expectedNotListed": "{case} is due {day} but not listed.",
+      "offlineAt": "Offline. Showing data saved at {time}."
     }
   },
   "courtInsights": {

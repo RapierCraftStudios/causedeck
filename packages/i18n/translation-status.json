@@ -27,12 +27,14 @@
     "courtDay.board.empty.title",
     "courtDay.board.error.retry",
     "courtDay.board.error.title",
+    "courtDay.board.expectedNotListed",
     "courtDay.board.failure.lastKnown",
     "courtDay.board.failure.message",
     "courtDay.board.failure.openOfficial",
     "courtDay.board.failure.shareAgain",
     "courtDay.board.failure.today",
     "courtDay.board.failure.tomorrow",
+    "courtDay.board.hall.bench",
     "courtDay.board.hall.count",
     "courtDay.board.hall.courtIsAt",
     "courtDay.board.hall.name",
@@ -59,11 +61,13 @@
     "courtDay.board.marker.label",
     "courtDay.board.marker.set",
     "courtDay.board.offline",
+    "courtDay.board.offlineAt",
     "courtDay.board.rail.carriedTimes",
     "courtDay.board.rail.carry",
     "courtDay.board.rail.carryEmpty",
     "courtDay.board.rail.needsEmpty",
     "courtDay.board.rail.needsYou",
+    "courtDay.board.rail.obligations",
     "courtDay.board.rail.summary",
     "courtDay.board.rail.toConfirm",
     "courtDay.board.shortcuts.actions",
@@ -3406,7 +3410,11 @@
     "courtDay.board.denied.description": "draft",
     "courtDay.board.loading": "draft",
     "courtDay.board.error.title": "draft",
-    "courtDay.board.error.retry": "draft"
+    "courtDay.board.error.retry": "draft",
+    "courtDay.board.hall.bench": "draft",
+    "courtDay.board.rail.obligations": "draft",
+    "courtDay.board.expectedNotListed": "draft",
+    "courtDay.board.offlineAt": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -6719,6 +6727,10 @@
     "courtDay.board.denied.description": "draft",
     "courtDay.board.loading": "draft",
     "courtDay.board.error.title": "draft",
-    "courtDay.board.error.retry": "draft"
+    "courtDay.board.error.retry": "draft",
+    "courtDay.board.hall.bench": "draft",
+    "courtDay.board.rail.obligations": "draft",
+    "courtDay.board.expectedNotListed": "draft",
+    "courtDay.board.offlineAt": "draft"
   }
 }

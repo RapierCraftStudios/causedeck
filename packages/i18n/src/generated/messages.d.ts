@@ -2708,6 +2708,7 @@ export type Messages = {
         name: string;
         count: string;
         courtIsAt: string;
+        bench: string;
       };
       item: {
         name: string;
@@ -2751,6 +2752,7 @@ export type Messages = {
         carriedTimes: string;
         toConfirm: string;
         summary: string;
+        obligations: string;
       };
       actions: {
         open: string;
@@ -2775,6 +2777,8 @@ export type Messages = {
         title: string;
         retry: string;
       };
+      expectedNotListed: string;
+      offlineAt: string;
     };
   };
   courtInsights: {

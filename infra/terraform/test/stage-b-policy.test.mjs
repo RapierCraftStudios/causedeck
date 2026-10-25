@@ -185,8 +185,15 @@ describe('aws-s3-documents', () => {
   });
 
   it('enables versioning and SSE-KMS', () => {
-    assert.match(resource(text, 'aws_s3_bucket_versioning', 'documents').body, /status\s*=\s*"Enabled"/);
-    const sse = resource(text, 'aws_s3_bucket_server_side_encryption_configuration', 'documents').body;
+    assert.match(
+      resource(text, 'aws_s3_bucket_versioning', 'documents').body,
+      /status\s*=\s*"Enabled"/,
+    );
+    const sse = resource(
+      text,
+      'aws_s3_bucket_server_side_encryption_configuration',
+      'documents',
+    ).body;
     assert.match(sse, /sse_algorithm\s*=\s*"aws:kms"/);
     assert.match(sse, /kms_master_key_id\s*=\s*aws_kms_key\.primary\.arn/);
     assert.match(resource(text, 'aws_kms_key', 'primary').body, /enable_key_rotation\s*=\s*true/);
@@ -202,7 +209,10 @@ describe('aws-s3-documents', () => {
     const r = resource(text, 'aws_s3_bucket_replication_configuration', 'documents').body;
     assert.match(r, /bucket\s*=\s*aws_s3_bucket\.replica\.arn/);
     assert.match(r, /replica_kms_key_id\s*=\s*aws_kms_key\.replica\.arn/);
-    assert.match(resource(text, 'aws_s3_bucket_versioning', 'replica').body, /status\s*=\s*"Enabled"/);
+    assert.match(
+      resource(text, 'aws_s3_bucket_versioning', 'replica').body,
+      /status\s*=\s*"Enabled"/,
+    );
     assert.match(resource(text, 'aws_s3_bucket', 'replica').body, /provider\s*=\s*aws\.replica/);
     const v = variable(mod('aws-s3-documents', 'variables.tf'), 'replica_region');
     assert.match(v.body, /var\.replica_region != var\.region/);
@@ -217,15 +227,24 @@ describe('aws-alb-multinode', () => {
   const text = mod('aws-alb-multinode');
 
   it('health-checks /readyz and terminates TLS', () => {
-    assert.match(variable(mod('aws-alb-multinode', 'variables.tf'), 'health_check_path').body, /default\s*=\s*"\/readyz"/);
-    assert.match(resource(text, 'aws_lb_target_group', 'app').body, /path\s*=\s*var\.health_check_path/);
+    assert.match(
+      variable(mod('aws-alb-multinode', 'variables.tf'), 'health_check_path').body,
+      /default\s*=\s*"\/readyz"/,
+    );
+    assert.match(
+      resource(text, 'aws_lb_target_group', 'app').body,
+      /path\s*=\s*var\.health_check_path/,
+    );
     assert.match(resource(text, 'aws_lb_listener', 'https').body, /protocol\s*=\s*"HTTPS"/);
   });
 
   it('keeps the WAF off by default', () => {
     const v = variable(mod('aws-alb-multinode', 'variables.tf'), 'enable_waf');
     assert.match(v.body, /default\s*=\s*false/);
-    assert.match(resource(text, 'aws_wafv2_web_acl_association', 'app').body, /count\s*=\s*var\.enable_waf \? 1 : 0/);
+    assert.match(
+      resource(text, 'aws_wafv2_web_acl_association', 'app').body,
+      /count\s*=\s*var\.enable_waf \? 1 : 0/,
+    );
   });
 });
 
@@ -253,8 +272,14 @@ describe('cloudflare-lb is gated by the residency decision', () => {
   it('is off in the stage-b env example and the ALB is wired in', () => {
     const env = read('envs', 'stage-b', 'main.tf');
     assert.match(env, /module "alb"/);
-    assert.match(read('envs', 'stage-b', 'terraform.tfvars.example'), /enable_cloudflare_lb\s*=\s*false/);
-    assert.match(variable(read('envs', 'stage-b', 'variables.tf'), 'enable_cloudflare_lb').body, /default\s*=\s*false/);
+    assert.match(
+      read('envs', 'stage-b', 'terraform.tfvars.example'),
+      /enable_cloudflare_lb\s*=\s*false/,
+    );
+    assert.match(
+      variable(read('envs', 'stage-b', 'variables.tf'), 'enable_cloudflare_lb').body,
+      /default\s*=\s*false/,
+    );
   });
 });
 
@@ -269,13 +294,19 @@ describe('Stage C skeletons are disabled by default', () => {
   }
 
   it('stage-b env keeps Stage C off', () => {
-    assert.match(variable(read('envs', 'stage-b', 'variables.tf'), 'enable_stage_c').body, /default\s*=\s*false/);
+    assert.match(
+      variable(read('envs', 'stage-b', 'variables.tf'), 'enable_stage_c').body,
+      /default\s*=\s*false/,
+    );
     assert.match(read('envs', 'stage-b', 'terraform.tfvars.example'), /enable_stage_c\s*=\s*false/);
   });
 });
 
 describe('nothing applies automatically', () => {
-  const wf = readFileSync(path.join(tf, '..', '..', '.github', 'workflows', 'terraform.yml'), 'utf8');
+  const wf = readFileSync(
+    path.join(tf, '..', '..', '.github', 'workflows', 'terraform.yml'),
+    'utf8',
+  );
 
   it('stage-b is validated and planned on pull requests only', () => {
     assert.match(wf, /for env in staging prod stage-b/);
@@ -292,7 +323,9 @@ describe('nothing applies automatically', () => {
   });
 
   it('the stage-b env commits no backend and no provider credentials', () => {
-    const all = files(path.join(tf, 'envs', 'stage-b')).map((f) => readFileSync(f, 'utf8')).join('\n');
+    const all = files(path.join(tf, 'envs', 'stage-b'))
+      .map((f) => readFileSync(f, 'utf8'))
+      .join('\n');
     assert.doesNotMatch(all, /backend\s+"/);
     assert.doesNotMatch(all, /access_key|secret_key/);
   });

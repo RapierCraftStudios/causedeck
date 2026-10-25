@@ -21,7 +21,8 @@ export interface StartedS3Mock {
 }
 
 const sha256 = (data: string) => createHash('sha256').update(data).digest('hex');
-const hmac = (key: Buffer | string, data: string) => createHmac('sha256', key).update(data).digest();
+const hmac = (key: Buffer | string, data: string) =>
+  createHmac('sha256', key).update(data).digest();
 
 function xml(res: ServerResponse, status: number, body: string): void {
   res.writeHead(status, { 'content-type': 'application/xml' });
@@ -75,7 +76,10 @@ function presignedValid(req: IncomingMessage, url: URL, serverNow: () => number)
   const [, day, region, service] = credential as [string, string, string, string, string];
   const scope = `${day}/${region}/${service}/aws4_request`;
   const toSign = ['AWS4-HMAC-SHA256', date, scope, sha256(canonical)].join('\n');
-  const signingKey = hmac(hmac(hmac(hmac(`AWS4${MOCK_SECRET_KEY}`, day), region), service), 'aws4_request');
+  const signingKey = hmac(
+    hmac(hmac(hmac(`AWS4${MOCK_SECRET_KEY}`, day), region), service),
+    'aws4_request',
+  );
   return createHmac('sha256', signingKey).update(toSign).digest('hex') === signature;
 }
 
@@ -122,7 +126,7 @@ export async function startS3Mock(): Promise<StartedS3Mock> {
         xml(
           res,
           200,
-          `<ListBucketResult><Name>${bucketName}</Name><Prefix>${prefix}</Prefix><KeyCount>${String(keys.length)}</KeyCount><IsTruncated>false</IsTruncated>${items.join('')}</ListBucketResult>`,
+          `<ListBucketResult><Name>${bucketName ?? ''}</Name><Prefix>${prefix}</Prefix><KeyCount>${String(keys.length)}</KeyCount><IsTruncated>false</IsTruncated>${items.join('')}</ListBucketResult>`,
         );
       } else res.writeHead(405).end();
       return;
@@ -132,7 +136,7 @@ export async function startS3Mock(): Promise<StartedS3Mock> {
       const body = await readBody(req);
       bucket.set(key, {
         body,
-        contentType: String(req.headers['content-type'] ?? 'application/octet-stream'),
+        contentType: req.headers['content-type'] ?? 'application/octet-stream',
         modified: new Date(),
       });
       res.writeHead(200, { etag: '"x"' }).end();
@@ -149,7 +153,9 @@ export async function startS3Mock(): Promise<StartedS3Mock> {
         'last-modified': o.modified.toUTCString(),
         etag: '"x"',
         ...(url.searchParams.has('response-content-disposition')
-          ? { 'content-disposition': url.searchParams.get('response-content-disposition') as string }
+          ? {
+              'content-disposition': url.searchParams.get('response-content-disposition') as string,
+            }
           : {}),
       });
       res.end(req.method === 'HEAD' ? undefined : o.body);
@@ -175,7 +181,9 @@ export async function startS3Mock(): Promise<StartedS3Mock> {
     stop: () =>
       new Promise<void>((resolve) => {
         server.closeAllConnections();
-        server.close(() => resolve());
+        server.close(() => {
+          resolve();
+        });
       }),
   };
 }

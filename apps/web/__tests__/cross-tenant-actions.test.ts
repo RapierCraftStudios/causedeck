@@ -120,6 +120,8 @@ const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
+const hearingOutcome =
+  await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
@@ -225,6 +227,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
   addTagAction: research,
+  confirmOutcomeAction: hearingOutcome,
+  recordManualOutcomeAction: hearingOutcome,
   confirmTagAction: research,
   dismissTagAction: research,
   chooseNextDateSourceAction: matterWorkspace,
@@ -805,6 +809,19 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
     confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    // Hearing outcome (#62): ub may not confirm A's hearing outcome.
+    confirmOutcomeAction: {
+      workspaceId,
+      hearingId: t.a.rows.hearing?.hearingId,
+      outcome: 'Cross-tenant probe outcome',
+      nextDate: { kind: 'none' },
+    },
+    recordManualOutcomeAction: {
+      workspaceId,
+      hearingId: t.a.rows.hearing?.hearingId,
+      outcome: 'Cross-tenant probe outcome',
+      nextDate: { kind: 'none' },
+    },
     // Research tab (#497): ub may not tag A's matter or confirm A's tag.
     addTagAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId, statute: 'ipc' },
     confirmTagAction: {
@@ -1333,6 +1350,17 @@ describe('cross-tenant server actions', () => {
       'upsertPersonAction',
       'setRoleEdgeAction',
     ]) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('hearing outcome actions under B’s own workspace find none of A’s hearing (#62)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    for (const name of ['confirmOutcomeAction', 'recordManualOutcomeAction']) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
       expect(result, name).not.toHaveProperty('data');

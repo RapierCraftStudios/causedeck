@@ -339,6 +339,11 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A manual court-is-at-item marker was cleared',
   },
+  // A confirmed hearing outcome (#62): ids, kinds and counts only, never the outcome text.
+  'hearing.outcome_confirmed': {
+    security: true,
+    description: 'A person confirmed a hearing outcome, its next date, obligations and tasks',
+  },
   // Chamber delegation of appearances (#63): ids only, never the delegator's note.
   'appearance.assigned': {
     security: false,

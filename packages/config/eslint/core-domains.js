@@ -26,6 +26,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // canonical next-date proposal and conflict view of matter-graph (imports `index.ts` only).
   // The calendar range (#66) reads forum closures through deadlines (`loadCourtCalendar`).
   'court-day': Object.freeze(['sources', 'matter-graph', 'workspaces', 'audit', 'deadlines']),
+  // The hearing outcome (#62): roles through workspaces, the canonical next date through the
+  // matter-graph index only, the audit event through audit. It reads the voice proposals and their
+  // transcript anchors as rows and imports no other domain.
+  hearings: Object.freeze(['matter-graph', 'audit', 'workspaces']),
   // The matter graph (#362): roles and role settings through workspaces, the matter actor through
   // matters. It emits events through its own port and never imports audit or notifications.
   'matter-graph': Object.freeze(['workspaces', 'matters']),

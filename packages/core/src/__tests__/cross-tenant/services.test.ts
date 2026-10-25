@@ -14,6 +14,7 @@ import { seedPlans } from '@causedeck/db/seed/plans';
 import { seedForumCatalogue } from '@causedeck/db/seed/forum-catalogue';
 import { createDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
 import { BILLING_SERVICE_TESTS, SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
+import { buildHearing } from '@causedeck/db/testing/matter-graph-fixtures';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { createLogger } from '@causedeck/observability';
 import { and, eq } from 'drizzle-orm';
@@ -267,6 +268,14 @@ async function aListing(f: Fixture): Promise<{ listingId: string; proceedingId: 
   );
   if (!row) throw new Error("A's listing not found");
   return { listingId, proceedingId: row.proceedingId };
+}
+
+async function aHearing(f: Fixture): Promise<{ hearingId: string }> {
+  const { listingId } = await aListing(f);
+  const hearing = await inWorkspace(f.tx, f.a.id, (s) =>
+    buildHearing(s, f.a.id, { listingId, heldOn: '2026-10-12' }),
+  );
+  return { hearingId: hearing.id };
 }
 
 async function aWorkspace(f: Fixture) {
@@ -2145,6 +2154,41 @@ const CASES: Record<string, Case> = {
         },
       ),
     );
+  },
+  // hearing outcome (#62): ub names A's workspace and A's hearing; each entry point is denied and the hearing is unchanged.
+  getOutcomeProposal: async (f) => {
+    const { hearingId } = await aHearing(f);
+    await expect(
+      core.getOutcomeProposal(
+        { db: f.tx, events: { emit: () => undefined } },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hearingId },
+      ),
+    ).rejects.toBeDefined();
+  },
+  confirmOutcome: async (f) => {
+    const { hearingId } = await aHearing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing));
+    await expect(
+      core.confirmOutcome(
+        { db: f.tx, events: { emit: () => undefined } },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hearingId, outcome: 'Adjourned', nextDate: { kind: 'none' } },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing))).toEqual(before);
+  },
+  recordManualOutcome: async (f) => {
+    const { hearingId } = await aHearing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing));
+    await expect(
+      core.recordManualOutcome(
+        { db: f.tx, events: { emit: () => undefined } },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hearingId, outcome: 'Adjourned', nextDate: { kind: 'none' } },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing))).toEqual(before);
   },
   // briefs (#60): B acting on A's listing is denied and A's brief state is unchanged.
   assembleBrief: async (f) => {

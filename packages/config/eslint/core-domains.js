@@ -15,6 +15,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Product activation (#509): a leaf; workspaces records `invite_sent` through it.
   activation: Object.freeze([]),
   workspaces: Object.freeze(['audit', 'activation']),
+  // Brief sharing and referral (#507): reads a brief, imports a matter, records activation.
+  shares: Object.freeze(['briefs', 'matter-graph', 'activation', 'workspaces']),
   matters: Object.freeze(['workspaces', 'audit']),
   // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
   // The KHC cause-list watch (#482) stages proposals through automation and the import matcher.

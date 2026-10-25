@@ -107,6 +107,8 @@ export const PURGE_ORDER = [
   'order',
   // Brief state (#60): cites a listing, so it goes first.
   'brief_state',
+  // Brief shares (#507): no listing reference; revoked by the workspace's deletion.
+  'brief_share',
   'listing',
   'bench_change_alert',
   'bench_roster_entry',

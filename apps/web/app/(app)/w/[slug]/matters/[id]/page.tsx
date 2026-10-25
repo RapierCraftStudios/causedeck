@@ -22,6 +22,10 @@ import {
 import { ReportError } from '../../../../../../components/matters/report-error.tsx';
 import { MatterOverview } from '../../../../../../components/matters/matter-overview.tsx';
 import { MattersPermissionDenied } from '../../../../../../components/matters/matters-list.tsx';
+import {
+  BriefSharePanel,
+  type ShareLinkView,
+} from '../../../../../../components/shares/brief-share-panel.tsx';
 import { isDev } from '../../../../../../lib/env.ts';
 import type { SearchParams } from '../../../../../../lib/matters/list-params.ts';
 import {
@@ -40,6 +44,7 @@ import {
   reportRecordErrorAction,
   updateMatterAction,
 } from './actions.ts';
+import { createBriefShareAction, revokeBriefShareAction } from '../../briefs/actions.ts';
 import MatterLoading from './loading.tsx';
 
 interface MatterPageProps {
@@ -121,6 +126,36 @@ async function loadBenchNotices(
   }
 }
 
+/** The owner's brief-sharing panel data (#507). A failed read hides the panel, never breaks the page. */
+async function loadBriefSharing(
+  context: WorkspaceContext,
+  matterId: string,
+): Promise<{ listingId: string | null; shares: ShareLinkView[] } | null> {
+  if (!can(context.role, 'export.run')) return null;
+  try {
+    const { db } = await import('@causedeck/core/runtime');
+    const { listBriefShares, shareableListingId } = await import('@causedeck/core/shares');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    const [listingId, rows] = await Promise.all([
+      shareableListingId({ db }, actor, matterId),
+      listBriefShares({ db }, actor),
+    ]);
+    return {
+      listingId,
+      shares: rows.map((row) => ({
+        id: row.id,
+        matterTitle: row.matterTitle,
+        createdAt: row.createdAt.toISOString(),
+        expiresAt: row.expiresAt.toISOString(),
+        canRevoke: true,
+      })),
+    };
+  } catch (error) {
+    logger.error({ err: error }, 'matter overview: could not load the brief shares');
+    return null;
+  }
+}
+
 export default async function MatterOverviewPage({ params, searchParams }: MatterPageProps) {
   const [{ slug, id }, query] = await Promise.all([params, searchParams]);
   const context = await getWorkspaceContext(slug);
@@ -139,6 +174,7 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   const notices = dev === 'empty' ? [] : await loadMatterNotices(context, id);
   const locale = await pageLocale();
   const benchNotices = dev === 'empty' ? [] : await loadBenchNotices(context, id);
+  const sharing = dev === 'empty' ? null : await loadBriefSharing(context, id);
   const view = toOverviewView(loaded.overview, { locale, now: new Date() });
   const proceedingId = view.nextDate?.proceedingId;
   const corrections =
@@ -161,6 +197,15 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
           updateMatter: updateMatterAction,
         }}
       />
+      {sharing === null ? null : (
+        <BriefSharePanel
+          workspaceId={context.workspace.id}
+          listingId={sharing.listingId}
+          canShare
+          shares={sharing.shares}
+          actions={{ create: createBriefShareAction, revoke: revokeBriefShareAction }}
+        />
+      )}
       {proceedingId === undefined ? null : (
         <ReportError
           workspaceId={context.workspace.id}

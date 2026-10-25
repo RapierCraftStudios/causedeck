@@ -6,7 +6,12 @@
 // reschedule moves the date, is counted apart and is not a miss.
 import { can } from '@causedeck/auth/policy';
 import { schema } from '@causedeck/db';
-import { MissedQuery, QUEUE_GROUPS, QueueQuery, type QueueGroup } from '@causedeck/validators/obligation';
+import {
+  MissedQuery,
+  QUEUE_GROUPS,
+  QueueQuery,
+  type QueueGroup,
+} from '@causedeck/validators/obligation';
 import { and, asc, count, eq, gt, gte, isNull, lt, lte, ne, or, sql, type SQL } from 'drizzle-orm';
 
 import { localDay, weekEnd } from './due.ts';
@@ -31,7 +36,7 @@ export async function queryQueue(
 ): Promise<QueueResult> {
   const q = parseInput(QueueQuery, input);
   return inObligationScope(deps, actor, async (scope) => {
-    if (!(roleCanRead(scope))) return emptyQueue();
+    if (!roleCanRead(scope)) return emptyQueue();
     const today = localDay(scope.now);
     const base: SQL[] = [
       eq(obligation.workspaceId, scope.actor.workspaceId),
@@ -104,7 +109,7 @@ export async function missedObligations(
 ): Promise<MissedReport> {
   const q = parseInput(MissedQuery, input);
   return inObligationScope(deps, actor, async (scope) => {
-    if (!(roleCanRead(scope))) return { missed: 0, rescheduled: 0 };
+    if (!roleCanRead(scope)) return { missed: 0, rescheduled: 0 };
     const today = localDay(scope.now);
     const [missed] = await scope.tx
       .select({ n: count() })

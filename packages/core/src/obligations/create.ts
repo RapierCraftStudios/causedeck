@@ -72,17 +72,23 @@ export async function insertObligation(
       sourceRef: p.sourceRef ?? null,
       anchorId: p.anchorId ?? null,
       confidence: p.confidence ?? null,
-      confirmationState: p.confirmationState ?? (p.sourceType === 'manual' ? 'confirmed' : 'proposed'),
+      confirmationState:
+        p.confirmationState ?? (p.sourceType === 'manual' ? 'confirmed' : 'proposed'),
       ...(p.capturedAt === undefined ? {} : { capturedAt: p.capturedAt }),
     })
     .returning();
   if (row === undefined) throw new Error('createObligation: insert returned no row');
   await addEvent(scope, row.id, { kind: 'created', toValue: data.dueDate });
-  await audit(scope, 'obligation.created', { kind: 'obligation', id: row.id }, {
-    source: row.source,
-    sourceType: row.sourceType,
-    dated: row.dueDate !== null,
-  });
+  await audit(
+    scope,
+    'obligation.created',
+    { kind: 'obligation', id: row.id },
+    {
+      source: row.source,
+      sourceType: row.sourceType,
+      dated: row.dueDate !== null,
+    },
+  );
   return row;
 }
 
@@ -116,7 +122,10 @@ export async function createObligationFromProposal(
     .where(and(eq(member.organizationId, actor.workspaceId), eq(member.userId, actor.userId)))
     .limit(1);
   if (self === undefined) throw invalid('confirmer is not a member of this workspace');
-  const data = parseInput(ObligationInput, { ...input, ownerMemberId: input.ownerMemberId ?? self.id });
+  const data = parseInput(ObligationInput, {
+    ...input,
+    ownerMemberId: input.ownerMemberId ?? self.id,
+  });
   const scope: ObligationScope = {
     tx,
     actor: { ...actor, role: 'owner' },

@@ -21,11 +21,11 @@ The obligation service (#67) tracks what a court or a person requires an advocat
 
 ## Considered options
 
-| Option                                                         | Verdict  | Reason                                                             |
-| -------------------------------------------------------------- | -------- | ------------------------------------------------------------------ |
-| Keep the stored names and map the issue's terms here           | Chosen   | No migration of existing columns; `timeline` and `merge-split` hold |
-| Rename the enums to the issue's terms                          | Rejected | Breaks existing readers and tests for no behaviour                  |
-| Derive due dates from limitation or procedure rules            | Rejected | A wrong generated date is worse than none; belongs to #84           |
+| Option                                               | Verdict  | Reason                                                              |
+| ---------------------------------------------------- | -------- | ------------------------------------------------------------------- |
+| Keep the stored names and map the issue's terms here | Chosen   | No migration of existing columns; `timeline` and `merge-split` hold |
+| Rename the enums to the issue's terms                | Rejected | Breaks existing readers and tests for no behaviour                  |
+| Derive due dates from limitation or procedure rules  | Rejected | A wrong generated date is worse than none; belongs to #84           |
 
 ## Decision
 

@@ -3,7 +3,7 @@
 // goes through `notify` (#23); the dedupe key makes a second run on the same local day a no-op.
 // Only open obligations on matters the member may read are counted. Nothing here closes,
 // reschedules or files anything.
-import { schema, type Database, type Transaction } from '@causedeck/db';
+import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { notify } from '@causedeck/notifications';
 import { and, eq, lte, sql } from 'drizzle-orm';
 
@@ -33,9 +33,17 @@ export async function sendObligationReminders(
   deps: ReminderDeps,
   workspaceId: string,
 ): Promise<ReminderSummary> {
+  return withWorkspace(deps.db, { workspaceId }, (tx) => remindIn(tx, deps, workspaceId));
+}
+
+async function remindIn(
+  db: Transaction,
+  deps: ReminderDeps,
+  workspaceId: string,
+): Promise<ReminderSummary> {
   const today = localDay(deps.now?.() ?? new Date(), deps.timeZone);
   const horizon = addDays(today, deps.leadDays ?? DEFAULT_REMINDER_LEAD_DAYS);
-  const rows = await deps.db
+  const rows = await db
     .select({
       userId: member.userId,
       overdue: sql<number>`count(*) filter (where ${obligation.dueDate} < ${today})::int`,
@@ -44,7 +52,10 @@ export async function sendObligationReminders(
     .from(obligation)
     .innerJoin(
       member,
-      and(eq(member.organizationId, obligation.workspaceId), eq(member.id, obligation.ownerMemberId)),
+      and(
+        eq(member.organizationId, obligation.workspaceId),
+        eq(member.id, obligation.ownerMemberId),
+      ),
     )
     .innerJoin(
       matter,
@@ -71,19 +82,20 @@ export async function sendObligationReminders(
   for (const row of rows) {
     const total = row.overdue + row.soon;
     if (total === 0) continue;
-    const before = await countReminders(deps.db, workspaceId, row.userId, `obl:${today}`);
+    const before = await countReminders(db, workspaceId, row.userId, `obl:${today}`);
     await notify(
-      { db: deps.db, workspaceId },
+      // In-app only: the notice is the delivery, so no email or push is queued.
+      { db, workspaceId, enqueueDelivery: () => Promise.resolve(undefined) },
       {
         userId: row.userId,
         category: 'system.notice',
         title: 'Obligations need attention',
-        body: `${row.overdue} overdue, ${row.soon} due within ${deps.leadDays ?? DEFAULT_REMINDER_LEAD_DAYS} days.`,
+        body: `${String(row.overdue)} overdue, ${String(row.soon)} due within ${String(deps.leadDays ?? DEFAULT_REMINDER_LEAD_DAYS)} days.`,
         href: '/obligations',
         dedupeKey: `obl:${today}`,
       },
     );
-    const after = await countReminders(deps.db, workspaceId, row.userId, `obl:${today}`);
+    const after = await countReminders(db, workspaceId, row.userId, `obl:${today}`);
     if (after > before) summary.notified += 1;
     else summary.alreadyReminded += 1;
   }
@@ -109,4 +121,3 @@ async function countReminders(
     );
   return row?.n ?? 0;
 }
-

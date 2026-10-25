@@ -4,10 +4,7 @@
 // unresolved; the unresolved count feeds brief readiness (#60). Directions have no id of their
 // own (`order.operative_directions` is jsonb), so the anchor is the key.
 import { schema, type Transaction } from '@causedeck/db';
-import {
-  DirectionNotApplicableInput,
-  ReconcileInput,
-} from '@causedeck/validators/obligation';
+import { DirectionNotApplicableInput, ReconcileInput } from '@causedeck/validators/obligation';
 import { and, eq } from 'drizzle-orm';
 
 import { conflict, invalid, notFound } from '../shared/errors.ts';
@@ -147,7 +144,12 @@ export async function markDirectionNotApplicable(
     await requireMatterFor(scope, found.matterId, 'obligation.write');
     const direction = found.order.operativeDirections.find((d) => d.anchorId === data.anchorId);
     if (direction === undefined) throw invalid('anchorId: not a direction of this order');
-    const before = await reconcileIn(scope.tx, scope.actor.workspaceId, found.order, found.matterId);
+    const before = await reconcileIn(
+      scope.tx,
+      scope.actor.workspaceId,
+      found.order,
+      found.matterId,
+    );
     const existing = before.directions.find((d) => d.anchorId === data.anchorId);
     if (existing !== undefined && existing.state !== 'unresolved') {
       throw conflict('The direction already has an obligation or a decision');
@@ -174,9 +176,15 @@ export async function markDirectionNotApplicable(
       })
       .returning({ id: obligation.id });
     if (row === undefined) throw new Error('markDirectionNotApplicable: insert returned no row');
-    await addEvent(scope, row.id, { kind: 'closed', toValue: 'not_applicable', reason: data.reason });
-    await audit(scope, 'obligation.direction_not_applicable', { kind: 'order', id: found.order.id });
+    await addEvent(scope, row.id, {
+      kind: 'closed',
+      toValue: 'not_applicable',
+      reason: data.reason,
+    });
+    await audit(scope, 'obligation.direction_not_applicable', {
+      kind: 'order',
+      id: found.order.id,
+    });
     return reconcileIn(scope.tx, scope.actor.workspaceId, found.order, found.matterId);
   });
 }
-

@@ -44,8 +44,17 @@ export async function closeInScope(
     .where(and(eq(obligation.workspaceId, scope.actor.workspaceId), eq(obligation.id, current.id)))
     .returning();
   if (row === undefined) throw new Error('closeObligation: update returned no row');
-  await addEvent(scope, row.id, { kind: 'closed', toValue: data.reason, reason: data.note ?? null });
-  await audit(scope, 'obligation.closed', { kind: 'obligation', id: row.id }, { reason: data.reason });
+  await addEvent(scope, row.id, {
+    kind: 'closed',
+    toValue: data.reason,
+    reason: data.note ?? null,
+  });
+  await audit(
+    scope,
+    'obligation.closed',
+    { kind: 'obligation', id: row.id },
+    { reason: data.reason },
+  );
   return row;
 }
 

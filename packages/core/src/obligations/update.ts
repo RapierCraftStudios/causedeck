@@ -32,7 +32,8 @@ export async function updateObligation(
   return inObligationScope(deps, actor, async (scope) => {
     const current = await loadObligation(scope, obligationId, 'obligation.read');
     await loadObligation(scope, obligationId, writeActionFor(current.source));
-    if (current.status !== 'open') throw conflict('A closed obligation cannot be edited; reopen it');
+    if (current.status !== 'open')
+      throw conflict('A closed obligation cannot be edited; reopen it');
     const rescheduled = patch.dueDate !== undefined && patch.dueDate !== current.dueDate;
     if (patch.dueDate === null && current.source !== 'internal') {
       throw invalid('dueDate: only an undated task may have no due date');
@@ -49,11 +50,15 @@ export async function updateObligation(
         ...(patch.dueDate === undefined ? {} : { dueDate: patch.dueDate }),
         updatedAt: scope.now,
       })
-      .where(and(eq(obligation.workspaceId, scope.actor.workspaceId), eq(obligation.id, current.id)))
+      .where(
+        and(eq(obligation.workspaceId, scope.actor.workspaceId), eq(obligation.id, current.id)),
+      )
       .returning();
     if (row === undefined) throw new Error('updateObligation: update returned no row');
     const edited =
-      patch.description !== undefined || patch.basis !== undefined || patch.ownerMemberId !== undefined;
+      patch.description !== undefined ||
+      patch.basis !== undefined ||
+      patch.ownerMemberId !== undefined;
     if (edited) await addEvent(scope, row.id, { kind: 'updated' });
     if (rescheduled) {
       await addEvent(scope, row.id, {

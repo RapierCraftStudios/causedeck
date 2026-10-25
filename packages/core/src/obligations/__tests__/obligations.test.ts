@@ -60,7 +60,15 @@ async function world(tx: Transaction) {
   const proceeding = await inWorkspace(tx, workspaceId, (s) =>
     buildProceeding(s, workspaceId, { matterId: matter.id, forumId: forum.id, state: 'sr_fr' }),
   );
-  return { tx, workspaceId, owner, ownerMemberId, matterId: matter.id, forumId: forum.id, proceedingId: proceeding.id };
+  return {
+    tx,
+    workspaceId,
+    owner,
+    ownerMemberId,
+    matterId: matter.id,
+    forumId: forum.id,
+    proceedingId: proceeding.id,
+  };
 }
 type World = Awaited<ReturnType<typeof world>>;
 
@@ -80,7 +88,12 @@ const auditCount = async (w: World, action: string) =>
       s
         .select({ id: schema.auditEvent.id })
         .from(schema.auditEvent)
-        .where(and(eq(schema.auditEvent.workspaceId, w.workspaceId), eq(schema.auditEvent.action, action))),
+        .where(
+          and(
+            eq(schema.auditEvent.workspaceId, w.workspaceId),
+            eq(schema.auditEvent.action, action),
+          ),
+        ),
     )
   ).length;
 
@@ -89,8 +102,14 @@ describe('createObligation', () => {
     await withTestDb(async (tx) => {
       const w = await world(tx);
       const row = await createObligation(deps(tx), w.owner, task(w));
-      expect(row).toMatchObject({ status: 'open', source: 'internal', confirmationState: 'confirmed' });
-      const events = await inWorkspace(tx, w.workspaceId, (s) => s.select().from(schema.obligationEvent));
+      expect(row).toMatchObject({
+        status: 'open',
+        source: 'internal',
+        confirmationState: 'confirmed',
+      });
+      const events = await inWorkspace(tx, w.workspaceId, (s) =>
+        s.select().from(schema.obligationEvent),
+      );
       expect(events.map((e) => e.kind)).toEqual(['created']);
       expect(await auditCount(w, 'obligation.created')).toBe(1);
     });
@@ -105,10 +124,14 @@ describe('createObligation', () => {
         task(w, { source: 'order_direction', provenance: { sourceType: 'document' } }),
       );
       await expect(noProv).rejects.toMatchObject({ code: 'VALIDATION' });
-      await expect(createObligation(deps(tx), w.owner, task(w, { provenance: undefined }))).rejects.toMatchObject({
+      await expect(
+        createObligation(deps(tx), w.owner, task(w, { provenance: undefined })),
+      ).rejects.toMatchObject({
         code: 'VALIDATION',
       });
-      await expect(createObligation(deps(tx), w.owner, task(w, { source: 'rule' }))).rejects.toMatchObject({
+      await expect(
+        createObligation(deps(tx), w.owner, task(w, { source: 'rule' })),
+      ).rejects.toMatchObject({
         code: 'VALIDATION',
       });
       await expect(
@@ -133,7 +156,9 @@ describe('closure', () => {
       await expect(
         closeObligation(deps(tx), w.owner, row.id, { reason: 'lawyer_action' }),
       ).rejects.toMatchObject({ code: 'CONFLICT' });
-      const reopened = await reopenObligation(deps(tx), w.owner, row.id, { reason: 'Listed again' });
+      const reopened = await reopenObligation(deps(tx), w.owner, row.id, {
+        reason: 'Listed again',
+      });
       expect(reopened.status).toBe('open');
       const kinds = (
         await inWorkspace(tx, w.workspaceId, (s) => s.select().from(schema.obligationEvent))
@@ -166,14 +191,25 @@ describe('reschedule versus miss', () => {
       await expect(
         updateObligation(deps(tx), w.owner, row.id, { dueDate: '2026-11-20' }),
       ).rejects.toMatchObject({ code: 'VALIDATION' });
-      await updateObligation(deps(tx), w.owner, row.id, { dueDate: '2026-11-20', reason: 'Hearing adjourned' });
+      await updateObligation(deps(tx), w.owner, row.id, {
+        dueDate: '2026-11-20',
+        reason: 'Hearing adjourned',
+      });
       const events = await inWorkspace(tx, w.workspaceId, (s) =>
-        s.select().from(schema.obligationEvent).where(eq(schema.obligationEvent.kind, 'rescheduled')),
+        s
+          .select()
+          .from(schema.obligationEvent)
+          .where(eq(schema.obligationEvent.kind, 'rescheduled')),
       );
-      expect(events).toMatchObject([{ fromValue: '2026-11-05', toValue: '2026-11-20', reason: 'Hearing adjourned' }]);
+      expect(events).toMatchObject([
+        { fromValue: '2026-11-05', toValue: '2026-11-20', reason: 'Hearing adjourned' },
+      ]);
       const missed = await createObligation(deps(tx), w.owner, task(w, { dueDate: '2026-11-01' }));
       expect(missed.status).toBe('open');
-      const report = await missedObligations(deps(tx), w.owner, { from: '2026-10-01', to: '2026-11-30' });
+      const report = await missedObligations(deps(tx), w.owner, {
+        from: '2026-10-01',
+        to: '2026-11-30',
+      });
       expect(report).toEqual({ missed: 1, rescheduled: 1 });
     });
   });
@@ -184,17 +220,18 @@ describe('reconcileOrder', () => {
     await withTestDb(async (tx) => {
       const w = await world(tx);
       const doc = await inWorkspace(tx, w.workspaceId, (s) => buildDocument(s, w.workspaceId));
-      const [a1, a2] = await inWorkspace(tx, w.workspaceId, async (s) => [
-        await buildAnchor(s, w.workspaceId, { documentId: doc.id }),
-        await buildAnchor(s, w.workspaceId, { documentId: doc.id }),
-      ]);
+      const [a1, a2] = await inWorkspace(tx, w.workspaceId, async (s) => {
+        const first = await buildAnchor(s, w.workspaceId, { documentId: doc.id });
+        const second = await buildAnchor(s, w.workspaceId, { documentId: doc.id });
+        return [first, second] as const;
+      });
       const ord = await inWorkspace(tx, w.workspaceId, (s) =>
         buildOrder(s, w.workspaceId, {
           proceedingId: w.proceedingId,
           documentId: doc.id,
           operativeDirections: [
-            { text: 'File counter', anchorId: a1!.id },
-            { text: 'Serve notice', anchorId: a2!.id },
+            { text: 'File counter', anchorId: a1.id },
+            { text: 'Serve notice', anchorId: a2.id },
           ],
         }),
       );
@@ -206,22 +243,29 @@ describe('reconcileOrder', () => {
         task(w, {
           source: 'order_direction',
           sourceOrderId: ord.id,
-          provenance: { sourceType: 'document', anchorId: a1!.id },
+          provenance: { sourceType: 'document', anchorId: a1.id },
         }),
       );
       const mid = await reconcileOrder(deps(tx), w.owner, { orderId: ord.id });
       expect(mid.directions.map((d) => d.state)).toEqual(['obligation', 'unresolved']);
       expect(await countUnresolvedDirections(deps(tx), w.owner, w.matterId)).toBe(1);
       await expect(
-        markDirectionNotApplicable(deps(tx), w.owner, { orderId: ord.id, anchorId: a2!.id, reason: ' ' }),
+        markDirectionNotApplicable(deps(tx), w.owner, {
+          orderId: ord.id,
+          anchorId: a2.id,
+          reason: ' ',
+        }),
       ).rejects.toMatchObject({ code: 'VALIDATION' });
       const done = await markDirectionNotApplicable(deps(tx), w.owner, {
         orderId: ord.id,
-        anchorId: a2!.id,
+        anchorId: a2.id,
         reason: 'Already served',
       });
       expect(done).toMatchObject({ reconciled: true, unresolvedCount: 0 });
-      expect(done.directions[1]).toMatchObject({ state: 'not_applicable', reason: 'Already served' });
+      expect(done.directions[1]).toMatchObject({
+        state: 'not_applicable',
+        reason: 'Already served',
+      });
     });
   });
 });
@@ -248,16 +292,26 @@ describe('defects and registry numbers', () => {
       const [raised] = await inWorkspace(tx, w.workspaceId, (s) =>
         s.select().from(schema.obligation).where(eq(schema.obligation.id, defect.obligationId)),
       );
-      expect(raised).toMatchObject({ source: 'registry_defect', dueDate: '2026-11-17', status: 'open' });
+      expect(raised).toMatchObject({
+        source: 'registry_defect',
+        dueDate: '2026-11-17',
+        status: 'open',
+      });
       await cureDefect(deps(tx), w.owner, { defectId: defect.id, curedOn: '2026-11-12' });
       const [closed] = await inWorkspace(tx, w.workspaceId, (s) =>
         s.select().from(schema.obligation).where(eq(schema.obligation.id, defect.obligationId)),
       );
       expect(closed?.status).toBe('done');
-      await representFiling(deps(tx), w.owner, { proceedingId: w.proceedingId, srNo: 'SR 1234/2026' });
+      await representFiling(deps(tx), w.owner, {
+        proceedingId: w.proceedingId,
+        srNo: 'SR 1234/2026',
+      });
       const after = await state();
       expect(after).toMatchObject({ state: 're_presented', srNo: 'SR 1234/2026' });
-      await allocateRegistryNumber(deps(tx), w.owner, { proceedingId: w.proceedingId, frNo: 'FR 77/2026' });
+      await allocateRegistryNumber(deps(tx), w.owner, {
+        proceedingId: w.proceedingId,
+        frNo: 'FR 77/2026',
+      });
       expect((await state())?.frNo).toBe('FR 77/2026');
     });
   });
@@ -272,6 +326,7 @@ describe('certified copies', () => {
         proceedingId: w.proceedingId,
         description: 'Certified copy of the order',
         appliedOn: '2026-11-10',
+        followUpOn: '2026-11-12',
         ownerMemberId: w.ownerMemberId,
         provenance: manual,
       });
@@ -358,21 +413,37 @@ describe('roles', () => {
   it('viewer reads only; clerk tracks tasks but not order directions; junior sees assigned matters only', async () => {
     await withTestDb(async (tx) => {
       const w = await world(tx);
-      const viewer = { userId: await addMember(tx, w.workspaceId, 'viewer'), workspaceId: w.workspaceId };
-      const clerk = { userId: await addMember(tx, w.workspaceId, 'clerk'), workspaceId: w.workspaceId };
-      const junior = { userId: await addMember(tx, w.workspaceId, 'junior'), workspaceId: w.workspaceId };
-      await expect(createObligation(deps(tx), viewer, task(w))).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      const viewer = {
+        userId: await addMember(tx, w.workspaceId, 'viewer'),
+        workspaceId: w.workspaceId,
+      };
+      const clerk = {
+        userId: await addMember(tx, w.workspaceId, 'clerk'),
+        workspaceId: w.workspaceId,
+      };
+      const junior = {
+        userId: await addMember(tx, w.workspaceId, 'junior'),
+        workspaceId: w.workspaceId,
+      };
+      await expect(createObligation(deps(tx), viewer, task(w))).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      });
       await createObligation(deps(tx), clerk, task(w));
       await expect(
         createObligation(
           deps(tx),
           clerk,
-          task(w, { source: 'order_direction', provenance: { sourceType: 'document', sourceRef: 'x' } }),
+          task(w, {
+            source: 'order_direction',
+            provenance: { sourceType: 'document', sourceRef: 'x' },
+          }),
         ),
       ).rejects.toMatchObject({ code: 'FORBIDDEN' });
       expect(Object.values(await queryQueue(deps(tx), viewer)).flat()).toHaveLength(1);
       expect(Object.values(await queryQueue(deps(tx), junior)).flat()).toHaveLength(0);
-      await expect(createObligation(deps(tx), junior, task(w))).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      await expect(createObligation(deps(tx), junior, task(w))).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      });
     });
   });
 });
@@ -382,16 +453,27 @@ describe('proposal confirmation and undo', () => {
     await withTestDb(async (tx) => {
       const w = await world(tx);
       const row = await inWorkspace(tx, w.workspaceId, (s) =>
-        createObligationFromProposal(s, w.owner, {
-          matterId: w.matterId,
-          source: 'order_direction',
-          description: 'File counter',
-          dueDate: '2026-11-20',
-          provenance: { sourceType: 'ai', sourceRef: 'order.pdf#p1', confirmationState: 'confirmed' },
-        }, NOW),
+        createObligationFromProposal(
+          s,
+          w.owner,
+          {
+            matterId: w.matterId,
+            source: 'order_direction',
+            description: 'File counter',
+            dueDate: '2026-11-20',
+            provenance: {
+              sourceType: 'ai',
+              sourceRef: 'order.pdf#p1',
+              confirmationState: 'confirmed',
+            },
+          },
+          NOW,
+        ),
       );
       expect(row.ownerMemberId).toBe(w.ownerMemberId);
-      const [created] = await inWorkspace(tx, w.workspaceId, (s) => s.select().from(schema.obligationEvent));
+      const [created] = await inWorkspace(tx, w.workspaceId, (s) =>
+        s.select().from(schema.obligationEvent),
+      );
       expect(created).toMatchObject({ kind: 'created', actorMemberId: w.ownerMemberId });
       await expect(
         inWorkspace(tx, w.workspaceId, (s) =>
@@ -407,7 +489,9 @@ describe('proposal confirmation and undo', () => {
       await inWorkspace(tx, w.workspaceId, (s) =>
         s.delete(schema.obligation).where(eq(schema.obligation.id, row.id)),
       );
-      expect(await inWorkspace(tx, w.workspaceId, (s) => s.select().from(schema.obligationEvent))).toEqual([]);
+      expect(
+        await inWorkspace(tx, w.workspaceId, (s) => s.select().from(schema.obligationEvent)),
+      ).toEqual([]);
     });
   });
 });
@@ -423,7 +507,9 @@ describe('reminders', () => {
       expect(first).toEqual({ notified: 1, alreadyReminded: 0 });
       const second = await sendObligationReminders({ db: tx, now: () => NOW }, w.workspaceId);
       expect(second).toEqual({ notified: 0, alreadyReminded: 1 });
-      const rows = await inWorkspace(tx, w.workspaceId, (s) => s.select().from(schema.notification));
+      const rows = await inWorkspace(tx, w.workspaceId, (s) =>
+        s.select().from(schema.notification),
+      );
       expect(rows).toHaveLength(1);
       expect(rows[0]?.body).toBe('1 overdue, 1 due within 2 days.');
     });

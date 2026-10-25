@@ -118,7 +118,12 @@ export async function transitionCertifiedCopy(
       .update(certifiedCopy)
       .set(
         data.to === 'ready'
-          ? { status: 'ready', readyOn: data.on, readySourceRef: data.sourceRef, updatedAt: scope.now }
+          ? {
+              status: 'ready',
+              readyOn: data.on,
+              readySourceRef: data.sourceRef,
+              updatedAt: scope.now,
+            }
           : {
               status: 'collected',
               collectedOn: data.on,
@@ -140,9 +145,14 @@ export async function transitionCertifiedCopy(
     if (data.to === 'collected' && current.status === 'open') {
       await closeInScope(scope, current, { reason: 'task_completed', note: data.sourceRef });
     }
-    await audit(scope, 'obligation.copy_transitioned', { kind: 'certified_copy', id: row.id }, {
-      to: data.to,
-    });
+    await audit(
+      scope,
+      'obligation.copy_transitioned',
+      { kind: 'certified_copy', id: row.id },
+      {
+        to: data.to,
+      },
+    );
     return row;
   });
 }

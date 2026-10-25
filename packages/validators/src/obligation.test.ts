@@ -26,21 +26,25 @@ describe('obligation inputs', () => {
       false,
     );
     expect(
-      ObligationInput.safeParse({ ...base, provenance: { sourceType: 'ai', sourceRef: 'order p2' } })
-        .success,
+      ObligationInput.safeParse({
+        ...base,
+        provenance: { sourceType: 'ai', sourceRef: 'order p2' },
+      }).success,
     ).toBe(true);
   });
 
   it('accepts an undated task and rejects a missing due date key', () => {
     expect(ObligationInput.safeParse({ ...base, dueDate: null }).success).toBe(true);
-    const { dueDate: _dueDate, ...without } = base;
+    const without: Record<string, unknown> = { ...base };
+    delete without.dueDate;
     expect(ObligationInput.safeParse(without).success).toBe(false);
   });
 
   it('needs a reason to reschedule', () => {
     expect(ObligationPatch.safeParse({ dueDate: '2026-11-09' }).success).toBe(false);
-    expect(ObligationPatch.safeParse({ dueDate: '2026-11-09', reason: 'Court adjourned' }).success)
-      .toBe(true);
+    expect(
+      ObligationPatch.safeParse({ dueDate: '2026-11-09', reason: 'Court adjourned' }).success,
+    ).toBe(true);
     expect(ObligationPatch.safeParse({}).success).toBe(false);
   });
 
@@ -57,7 +61,8 @@ describe('obligation inputs', () => {
   it('rejects unknown keys and an empty registry allocation', () => {
     expect(QueueQuery.safeParse({ nope: 1 }).success).toBe(false);
     expect(AllocateRegistryNumberInput.safeParse({ proceedingId: uuid }).success).toBe(false);
-    expect(AllocateRegistryNumberInput.safeParse({ proceedingId: uuid, srNo: 'SR 12' }).success)
-      .toBe(true);
+    expect(
+      AllocateRegistryNumberInput.safeParse({ proceedingId: uuid, srNo: 'SR 12' }).success,
+    ).toBe(true);
   });
 });

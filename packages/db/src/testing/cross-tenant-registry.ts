@@ -129,6 +129,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Brief state (#60).
   brief_state: DB_TABLES_TEST,
 
+  // Court-day reminders (#64).
+  reminder_dispatch: DB_TABLES_TEST,
+
   // Review and correction queue (#518).
   review_correction: DB_TABLES_TEST,
 

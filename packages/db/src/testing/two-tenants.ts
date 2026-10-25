@@ -5,7 +5,7 @@
 // committed data (the api and web suites, whose users come from Better Auth).
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 
-import { sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import type { Database, Transaction } from '../client.ts';
 import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rls-policies.ts';
@@ -22,6 +22,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { briefState } from '../schema/brief.ts';
+import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
@@ -1337,6 +1338,18 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, listingId, note: `Seed note ${tag}`, updatedBy: ownerId })
       .returning({ id: briefState.id });
     return { listingId, id: first(rows, 'brief_state').id };
+  },
+  reminder_dispatch: async (tx, { workspaceId, ownerId }) => {
+    const [owner] = await tx
+      .select({ id: member.id })
+      .from(member)
+      .where(and(eq(member.organizationId, workspaceId), eq(member.userId, ownerId)));
+    const memberId = first(owner === undefined ? [] : [owner], 'member').id;
+    const rows = await tx
+      .insert(reminderDispatch)
+      .values({ workspaceId, memberId, kind: 'evening', forDate: '2026-10-26', channel: 'push' })
+      .returning({ id: reminderDispatch.id });
+    return { memberId, id: first(rows, 'reminder_dispatch').id };
   },
   listing: async (tx, { workspaceId, tag }) => ({
     listingId: await seedListing(tx, workspaceId, tag),

@@ -155,6 +155,31 @@ const CASES: Record<string, Case> = {
     );
     expect(settings.filter((r) => r.userId === f.ub)).toEqual([]);
   },
+  getReminderPreferences: async (f) => {
+    await expectDenied(notifications.getReminderPreferences(f.inA, { userId: f.ub }));
+    await expectDenied(notifications.getReminderPreferences(f.inB, { userId: f.ua }));
+  },
+  setReminderPreferences: async (f) => {
+    await expectDenied(
+      notifications.setReminderPreferences(f.inA, {
+        userId: f.ub,
+        evening: { time: '20:00', channels: { in_app: true, push: true, email: false } },
+      }),
+    );
+    await expectDenied(
+      notifications.setReminderPreferences(f.inB, {
+        userId: f.ua,
+        outcome_missing: {
+          delayMinutes: 30,
+          channels: { in_app: true, push: false, email: false },
+        },
+      }),
+    );
+    const settings = await inWorkspace(f.tx, f.a.id, (s) =>
+      s.select().from(schema.notificationSetting),
+    );
+    expect(settings.filter((r) => r.userId === f.ub)).toEqual([]);
+  },
 };
 
 const registered = Object.entries(NOTIFICATION_SERVICE_TESTS)

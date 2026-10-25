@@ -51,3 +51,6 @@ Second report of `turbo: command not found` (exit 127): host PATH only. With `no
 ## CI tenancy fix (2)
 
 The `tenancy` job's last step, `pnpm test:export-coverage`, failed: the five new memory tables (`memory_item`, `memory_proposal`, `memory_embedding`, `memory_usage`, `memory_pause`) had neither an exporter nor an exclusion. They are now in `EXPORT_EXCLUSIONS` (`packages/core/src/lifecycle/export/registry.ts`), each with a reason: the values are sealed and role-scoped, so the decrypted export is `exportMemory`; the rest are derived or content-free. `export-coverage.test.ts`, the db cross-tenant and rls suites pass.
+
+## Rerun verification
+V1 (17 files, 398 passed), V2, V3, V4 pass; V5 widened to full monorepo, so tsc --noEmit for validators, db, core, worker is clean. forgedock check passes.

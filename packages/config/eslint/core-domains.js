@@ -45,7 +45,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   portfolio: Object.freeze(['workspaces', 'matter-graph', 'case-watch', 'sources']),
   // WhatsApp number link and OTP (#678, #502 part 1): the membership check through workspaces
   'whatsapp-link': Object.freeze(['workspaces', 'audit', 'capture']),
-  // Lawyer memory (#72, ADR 0039): the member's role through workspaces, the sharing change through
+  // Lawyer memory (#72, ADR 0038): the member's role through workspaces, the sharing change through
   // audit. Matters and people are read from the tables; proposals are confirmed here, never by
   // automation (automation's `memory_item` handler calls `acceptMemoryDraft` through the index).
   memory: Object.freeze(['workspaces', 'audit']),

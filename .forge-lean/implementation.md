@@ -31,3 +31,6 @@ Pure engine in `packages/drafting`: block-tree helpers, slot resolvers over a su
 ### Notes
 - PDFs use Noto Sans Latin/Tamil/Kannada (Times New Roman cannot be embedded); DOCX names Times New Roman.
 - `indiaOnly` is passed in the run context; the gateway's own residency policy remains authoritative.
+
+## Stale-list follow-up
+No edits to pricing.test.ts / providers.test.ts: neither enumerates the task registry (recorded in result.json not_members).

@@ -18,17 +18,34 @@ const PHONE = { width: 360, height: 780 };
 const TABLET = { width: 768, height: 1024 };
 const DESKTOP = { width: 1280, height: 800 };
 
-/** Turn `bench_facts` on for the shell workspace (a workspace override row; off in the seed). */
+/**
+ * Turn `bench_facts` on for the shell workspace. It is legal-gated (#118): it is on only when the
+ * global row and the workspace row are both on and carry `legal_ack_by` and a note. A workspace row
+ * alone never enables it.
+ */
 async function enableBenchFacts(database: string): Promise<void> {
   const sql = postgres(databaseUrl(database, 'superuser'), { max: 1, onnotice: () => undefined });
   try {
     await sql`
-      insert into workspace_feature_flag (workspace_id, key, enabled, updated_by)
-      select o.id, 'bench_facts', true, m.user_id
+      insert into feature_flag (key, enabled, updated_by, legal_ack_by, legal_ack_note)
+      select 'bench_facts', true, m.user_id, m.user_id,
+             'e2e fixture: counsel sign-off recorded (fictional)'
         from organization o
         join member m on m.workspace_id = o.id and m.role = 'owner'
        where o.slug = ${SHELL_WORKSPACE}
-       limit 1`;
+       limit 1
+      on conflict (key) do update set enabled = true, legal_ack_by = excluded.legal_ack_by,
+        legal_ack_note = excluded.legal_ack_note`;
+    await sql`
+      insert into workspace_feature_flag
+        (workspace_id, key, enabled, updated_by, legal_ack_by, legal_ack_note)
+      select o.id, 'bench_facts', true, m.user_id, m.user_id,
+             'e2e fixture: counsel sign-off recorded (fictional)'
+        from organization o
+        join member m on m.workspace_id = o.id and m.role = 'owner'
+       where o.slug = ${SHELL_WORKSPACE}
+       limit 1
+      on conflict do nothing`;
   } finally {
     await sql.end();
   }
@@ -108,7 +125,12 @@ test.describe('court-day board', () => {
       .click();
     await expect(page).toHaveURL(/\/tomorrow$/);
     await expect(page.getByRole('heading', { level: 1, name: 'Tomorrow' })).toBeVisible();
-    await expect(page.getByText('Tomorrow v. State (fictional)')).toBeVisible();
+    // The plan below the board names the matter too: the board's item is the link.
+    await expect(
+      page
+        .locator('[data-court-item]')
+        .getByRole('link', { name: 'Tomorrow v. State (fictional)' }),
+    ).toBeVisible();
     await expect(page.getByText(COURT_DAY.sharedTitle)).toHaveCount(0);
     await page
       .getByRole('navigation', { name: 'Court day' })

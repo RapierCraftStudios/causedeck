@@ -180,9 +180,12 @@ export function ShortcutsProvider({ slug, role, isEnabled, children }: Shortcuts
       const shortcut = dispatch(event);
       if (shortcut && latest.current.run(shortcut)) event.preventDefault();
     };
-    document.addEventListener('keydown', onKeyDown);
+    // On `window`, so it runs after every page-level `document` hotkey whatever order they bound
+    // in (a streamed page hydrates after the shell): a page that claims a key, like `c` for the
+    // board's carry list, calls `preventDefault` and the shell leaves it alone.
+    window.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keydown', onKeyDown);
     };
   }, [shortcuts, mac]);
 

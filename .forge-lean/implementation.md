@@ -34,3 +34,6 @@ Pure engine in `packages/drafting`: block-tree helpers, slot resolvers over a su
 
 ## Stale-list follow-up
 No edits to pricing.test.ts / providers.test.ts: neither enumerates the task registry (recorded in result.json not_members).
+
+## Duplicate export fix
+Preset data constants are now `madrasHcPreset` / `karnatakaHcPreset` in their own modules; `presets/index.ts` re-exports them under the public names `madrasHc` / `karnatakaHc`, so no two modules export the same name.

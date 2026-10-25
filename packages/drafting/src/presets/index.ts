@@ -1,14 +1,14 @@
 import { FormatPresetSchema, type CourtPreset } from '@causedeck/validators/drafting';
 
-import { karnatakaHc } from './karnataka-hc';
-import { madrasHc, type CourtFormatPreset } from './madras-hc';
+import { karnatakaHcPreset } from './karnataka-hc';
+import { madrasHcPreset, type CourtFormatPreset } from './madras-hc';
 
-export { karnatakaHc, madrasHc };
+export { karnatakaHcPreset as karnatakaHc, madrasHcPreset as madrasHc };
 export { MADRAS_HC_MAX_EXPORT_BYTES, type CourtFormatPreset } from './madras-hc';
 
 export const PRESETS: Readonly<Partial<Record<CourtPreset, CourtFormatPreset>>> = {
-  madras_hc: madrasHc,
-  karnataka_hc: karnatakaHc,
+  madras_hc: madrasHcPreset,
+  karnataka_hc: karnatakaHcPreset,
 };
 
 /** The preset for a court key, or undefined when none is defined yet. */

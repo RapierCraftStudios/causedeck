@@ -7,7 +7,7 @@ export type CourtFormatPreset = FormatPreset & {
 
 export const MADRAS_HC_MAX_EXPORT_BYTES = 20 * 1024 * 1024;
 
-export const madrasHc: CourtFormatPreset = {
+export const madrasHcPreset: CourtFormatPreset = {
   key: 'madras_hc',
   pageSize: 'A4',
   marginsMm: { top: 25, right: 25, bottom: 25, left: 38 },

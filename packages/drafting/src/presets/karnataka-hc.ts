@@ -1,6 +1,6 @@
 import type { CourtFormatPreset } from './madras-hc';
 
-export const karnatakaHc: CourtFormatPreset = {
+export const karnatakaHcPreset: CourtFormatPreset = {
   key: 'karnataka_hc',
   pageSize: 'A4',
   marginsMm: { top: 25, right: 25, bottom: 25, left: 35 },

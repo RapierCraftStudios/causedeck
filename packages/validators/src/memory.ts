@@ -52,6 +52,11 @@ export const MEMORY_KEYS = {
   'M1.practice_areas': { layer: 'M1', strategy: false, description: 'Practice areas' },
   'M1.languages': { layer: 'M1', strategy: false, description: 'Working languages' },
   'M1.approach': { layer: 'M1', strategy: true, description: 'How the lawyer approaches a matter' },
+  'M1.last_memory_review': {
+    layer: 'M1',
+    strategy: false,
+    description: 'When the lawyer last completed the monthly memory review',
+  },
   'M2.brief_format': { layer: 'M2', strategy: false, description: 'Preferred brief layout' },
   'M2.always_carry': {
     layer: 'M2',

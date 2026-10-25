@@ -119,9 +119,10 @@ describe('R1: confirm before save', () => {
     const writers = files.filter(({ text }) =>
       /\.insert\((?:schema\.)?memoryItem\)|insert\s+into\s+memory_item\b/i.test(text),
     );
-    expect(writers.map((f) => f.file)).toEqual(['memory/confirm.ts']);
-    const count = (writers[0]?.text.match(/\.insert\(memoryItem\)/g) ?? []).length;
-    expect(count).toBe(2);
+    // `completeMemoryReview` (#73) writes the review date, a bookkeeping row that is never a card.
+    expect(writers.map((f) => f.file)).toEqual(['memory/confirm.ts', 'memory/review.ts']);
+    const confirm = writers.find((f) => f.file === 'memory/confirm.ts');
+    expect((confirm?.text.match(/\.insert\(memoryItem\)/g) ?? []).length).toBe(2);
   });
 });
 

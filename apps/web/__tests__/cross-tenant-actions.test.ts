@@ -116,6 +116,7 @@ const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/act
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const obligations = await import('../app/(app)/w/[slug]/obligations/actions.ts');
+const memory = await import('../app/(app)/w/[slug]/memory/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
@@ -259,6 +260,15 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   reassignAction: obligations,
   addObligationAction: obligations,
   useNextStepAction: obligations,
+  confirmAction: memory,
+  dismissAction: memory,
+  editAction: memory,
+  deleteAction: memory,
+  pauseAction: memory,
+  pauseAllAction: memory,
+  addNoteAction: memory,
+  usageAction: memory,
+  completeReviewAction: memory,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -738,6 +748,16 @@ function inputs(workspaceId: string): Record<string, unknown> {
       dueDate: null,
       ownerMemberId: XT_ID,
     },
+    // Memory (#73): ub may not confirm, edit, delete, pause or read the usage of A's memory.
+    confirmAction: { workspaceId, proposalId: XT_ID },
+    dismissAction: { workspaceId, proposalId: XT_ID },
+    editAction: { workspaceId, itemId: XT_ID, value: 'Cross-tenant probe' },
+    deleteAction: { workspaceId, itemId: XT_ID },
+    pauseAction: { workspaceId, itemId: XT_ID, paused: true },
+    pauseAllAction: { workspaceId, paused: true },
+    addNoteAction: { workspaceId, key: 'M4.hall_note', value: 'Cross-tenant probe' },
+    usageAction: { workspaceId, itemId: XT_ID },
+    completeReviewAction: { workspaceId },
     useNextStepAction: {
       workspaceId,
       type: 'task',

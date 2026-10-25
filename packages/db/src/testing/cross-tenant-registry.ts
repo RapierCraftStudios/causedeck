@@ -898,6 +898,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   memoryFor: memoryDenies,
   recordUsage: memoryDenies,
   tenureMetrics: memoryDenies,
+  // memory screen read models and the review date (#73)
+  listMemoryProposals: memoryDenies,
+  listMemoryUsage: memoryDenies,
+  listMemoryWithUsage: memoryDenies,
+  listReviewCandidates: memoryDenies,
+  getLastMemoryReview: memoryDenies,
+  completeMemoryReview: memoryDenies,
   monthlyReview: {
     test: CORE_MEMORY_TEST,
     kind: 'caller-checked',
@@ -1447,6 +1454,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   localMemoryEmbedder: 'pure, in-process hashing embedder',
   MEMORY_CLERK_LAYERS: 'constant',
   MEMORY_STALE_AFTER_DAYS: 'constant',
+  MEMORY_REVIEW_AFTER_DAYS: 'constant',
   purgeMemoryTargets:
     'system job target list: workspace ids only, through an owner-defined function',
   reviewMemoryTargets:

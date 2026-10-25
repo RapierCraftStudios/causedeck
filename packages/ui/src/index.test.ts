@@ -169,6 +169,10 @@ describe('@causedeck/ui', () => {
       'MemoryCard',
       'MEMORY_SCOPES',
       'MEMORY_SCOPE_META',
+      'ScopeChip',
+      'DEFAULT_SCOPE_CHIP_LABELS',
+      'ProposalTray',
+      'DEFAULT_PROPOSAL_TRAY_LABELS',
     ]) {
       expect(ui, name).toHaveProperty(name);
       expect(patterns[name]).toBe((ui as Record<string, unknown>)[name]);

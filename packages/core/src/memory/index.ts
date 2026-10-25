@@ -33,14 +33,26 @@ export {
   type MemoryForOutput,
 } from './read.ts';
 export {
+  completeMemoryReview,
+  getLastMemoryReview,
   monthlyReview,
   reviewMemoryTargets,
   MEMORY_STALE_AFTER_DAYS,
   tenureMetrics,
+  type MemoryReviewSummary,
   type MonthlyReview,
   type TenureMetrics,
   type TenureWeek,
 } from './review.ts';
+export {
+  listMemoryProposals,
+  listMemoryUsage,
+  listMemoryWithUsage,
+  listReviewCandidates,
+  MEMORY_REVIEW_AFTER_DAYS,
+  type MemoryListItem,
+  type MemoryUsageEntry,
+} from './views.ts';
 export {
   canReadMemory,
   canWriteMemory,

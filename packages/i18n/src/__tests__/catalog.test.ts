@@ -108,6 +108,7 @@ describe('namespaced catalogs (#174)', () => {
         'matterTimeline',
         'matters',
         'members',
+        'memory',
         'nav',
         'notFound',
         'notices',

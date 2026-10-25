@@ -1,13 +1,23 @@
 // Memory metrics and the monthly review (#72). Aggregates only, within one workspace: counts and
 // rates by tenure week (weeks since the workspace was created), never a value, a key or a name.
 import { schema, withWorkspace } from '@causedeck/db';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import { forbidden } from '../shared/errors.ts';
 
-import { nowOf, requireRole, type Db, type MemoryActor, type MemoryDeps } from './scope.ts';
+import {
+  canWriteMemory,
+  inScope,
+  nowOf,
+  opener,
+  requireRole,
+  sealValue,
+  type Db,
+  type MemoryActor,
+  type MemoryDeps,
+} from './scope.ts';
 
-const { organization } = schema;
+const { organization, memoryItem } = schema;
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 /** An active item not used for this long is offered for review. */
@@ -177,3 +187,79 @@ export async function reviewMemoryTargets(db: Db): Promise<string[]> {
   );
   return rows.map((r) => r.workspace_id);
 }
+
+export interface MemoryReviewSummary {
+  completedAt: Date;
+  activeItems: number;
+  pausedItems: number;
+}
+
+/** When the actor last completed the monthly review (`M1.last_memory_review`); null if never. */
+export async function getLastMemoryReview(
+  deps: MemoryDeps,
+  actor: MemoryActor,
+): Promise<Date | null> {
+  await requireRole(deps, actor);
+  const open = await opener(deps, actor.workspaceId);
+  const [row] = await inScope(deps, actor, (tx) =>
+    tx.select({ value: memoryItem.valueCiphertext }).from(memoryItem).where(reviewRow(actor)),
+  );
+  if (row?.value == null) return null;
+  const value = open(row.value);
+  const at = typeof value === 'string' ? new Date(value) : null;
+  return at === null || Number.isNaN(at.getTime()) ? null : at;
+}
+
+/**
+ * Record the review as done now: the date is a confirmed workspace-scope item under
+ * `M1.last_memory_review` (one per member), so the screen can tell when a month has passed.
+ */
+export async function completeMemoryReview(
+  deps: MemoryDeps,
+  actor: MemoryActor,
+): Promise<MemoryReviewSummary> {
+  const role = await requireRole(deps, actor);
+  if (!canWriteMemory(role)) throw forbidden('This role cannot change memory');
+  const now = nowOf(deps);
+  const sealed = await sealValue(deps, actor.workspaceId, now.toISOString());
+  return inScope(deps, actor, async (tx) => {
+    const [existing] = await tx
+      .select({ id: memoryItem.id })
+      .from(memoryItem)
+      .where(reviewRow(actor));
+    if (existing) {
+      await tx
+        .update(memoryItem)
+        .set({ valueCiphertext: sealed, updatedAt: now })
+        .where(and(eq(memoryItem.workspaceId, actor.workspaceId), eq(memoryItem.id, existing.id)));
+    } else {
+      await tx.insert(memoryItem).values({
+        workspaceId: actor.workspaceId,
+        layer: 'M1',
+        key: 'M1.last_memory_review',
+        scope: 'workspace',
+        ownerUserId: actor.userId,
+        valueCiphertext: sealed,
+        sourceType: 'manual',
+        confirmationState: 'confirmed',
+        strategy: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    const [counts] = await tx.execute<{ active: number; paused: number }>(sql`
+      select
+        count(*) filter (where status = 'active' and key <> 'M1.last_memory_review')::int as active,
+        count(*) filter (where status = 'paused')::int as paused
+      from memory_item where workspace_id = ${actor.workspaceId}::uuid`);
+    return { completedAt: now, activeItems: counts?.active ?? 0, pausedItems: counts?.paused ?? 0 };
+  });
+}
+
+const reviewRow = (actor: MemoryActor) =>
+  and(
+    eq(memoryItem.workspaceId, actor.workspaceId),
+    eq(memoryItem.key, 'M1.last_memory_review'),
+    eq(memoryItem.ownerUserId, actor.userId),
+    eq(memoryItem.status, 'active'),
+  );

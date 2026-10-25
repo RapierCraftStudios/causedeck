@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   assertNotBench,
   isMemoryKey,
+  isStrategyKey,
+  layerOfKey,
   LAYER_SCOPES,
   MEMORY_KEYS,
   MEMORY_LAYERS,
@@ -86,5 +88,20 @@ describe('memory validators', () => {
     expect(() => {
       assertNotBench('M4.hall_note', 'Court hall 4 opens at 10:15');
     }).not.toThrow();
+  });
+});
+
+describe('M1.last_memory_review (#73)', () => {
+  it('is a registered, non-strategy workspace-scope M1 key', () => {
+    expect(isMemoryKey('M1.last_memory_review')).toBe(true);
+    expect(layerOfKey('M1.last_memory_review')).toBe('M1');
+    expect(isStrategyKey('M1.last_memory_review')).toBe(false);
+    expect(
+      MemoryNoteInput.safeParse({
+        key: 'M1.last_memory_review',
+        value: '2026-01-01T00:00:00.000Z',
+        scope: 'workspace',
+      }).success,
+    ).toBe(true);
   });
 });

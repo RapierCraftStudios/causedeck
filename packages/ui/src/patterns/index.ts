@@ -125,4 +125,11 @@ export {
 export { SourceCompare, type CompareSide, type SourceCompareProps } from './outcome/source-compare';
 export { SourceText, type SourceSpan, type SourceTextProps } from './outcome/source-text';
 export { ConfirmBar, type ConfirmBarProps } from './outcome/confirm-bar';
+  ClashBracket,
+  HallHeader,
+  ItemNumeral,
+  type ClashBracketProps,
+  type HallHeaderProps,
+  type ItemNumeralProps,
+} from './court-day';
 export * from './delegation';

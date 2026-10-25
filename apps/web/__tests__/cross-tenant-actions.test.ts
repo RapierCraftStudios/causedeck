@@ -127,12 +127,15 @@ const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
+const courtDay = await import('../app/(app)/w/[slug]/_court-day/actions.ts');
 const shareActions = await import('../app/(public)/share/[token]/actions.ts');
 const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
 const FAR_FUTURE = '9999-12-31T23:59:59.999999Z';
+/** A hall id no tenant owns: the court-day marker actions must refuse it, never write. */
+const PROBE_HALL_ID = '00000000-0000-4000-8000-0000000000a1';
 const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
 
 /** Every exported server action and the module it comes from. */
@@ -277,6 +280,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   outcomesLiveAction: planActions,
   typeKeyLineAction: inbox,
   markSentAction: inbox,
+  setCurrentItemAction: courtDay,
+  clearCurrentItemAction: courtDay,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -532,6 +537,13 @@ function inputs(workspaceId: string): Record<string, unknown> {
     requestWhatsAppOtpAction: { workspaceId, e164: '+919812345678', consent: true },
     verifyWhatsAppOtpAction: { workspaceId, code: '000000' },
     setWhatsAppCategoriesAction: { workspaceId, categories: ['court.board'] },
+    setCurrentItemAction: {
+      workspaceId,
+      hallId: PROBE_HALL_ID,
+      listDate: '2030-01-02',
+      currentItem: 3,
+    },
+    clearCurrentItemAction: { workspaceId, hallId: PROBE_HALL_ID, listDate: '2030-01-02' },
     unlinkWhatsAppAction: { workspaceId },
     getWhatsAppLinkAction: { workspaceId },
     saveNewsPreferencesAction: {
@@ -1016,6 +1028,20 @@ describe('cross-tenant server actions', () => {
     expect(before.supportSessions.find((row) => row.id === aSupportSessionId)?.status).toBe(
       'requested',
     );
+  });
+
+  it('court-day marker actions refuse a hall outside the workspace and write nothing', async () => {
+    const before = await snapshotA();
+    for (const workspaceId of [t.a.id, t.b.id]) {
+      const all = inputs(workspaceId);
+      const set = (await action('setCurrentItemAction')(all.setCurrentItemAction)) as {
+        ok: boolean;
+      };
+      expect(set.ok, `set ${workspaceId}`).toBe(false);
+      // Clearing a marker that does not exist is a no-op, never an error and never a write.
+      await action('clearCurrentItemAction')(all.clearCurrentItemAction);
+    }
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('notifications under B’s own workspace never show or mark A’s notification', async () => {

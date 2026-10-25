@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
-// Tomorrow plan page (#63): the next court day's appearances with an assignee picker, unassigned
-// and clashing items first, suggestions as proposals, and the live outcome strip for the owner
-// only. Denied without `court_day.view_all`; a load failure shows `Try again`; empty and offline
-// states; every string comes from the en, ta and kn catalogs.
+// Tomorrow page (#59, #63): the court-day board with the tomorrow plan under it. The plan lists the
+// next court day's appearances with an assignee picker, unassigned and clashing items first,
+// suggestions as proposals, and the live outcome strip for the owner only. Without
+// `court_day.view_all` the member sees the board alone; a load failure shows `Try again` under the
+// board; empty and offline states; every string comes from the en, ta and kn catalogs. The board
+// itself is covered by _court-day/__tests__/court-day.test.ts.
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
@@ -15,7 +17,6 @@ import { testWorkspaceContext } from './helpers/workspace.ts';
 
 const page = vi.hoisted(() => ({
   context: null as WorkspaceContext | null,
-  dev: true,
   locale: 'en',
   items: [] as Record<string, unknown>[],
   suggestions: [] as Record<string, unknown>[],
@@ -59,7 +60,15 @@ vi.mock('next-intl/server', () => ({
 vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(page.context),
 }));
-vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
+vi.mock('../app/(app)/w/[slug]/_court-day/render-board.tsx', () => ({
+  renderBoard: async (props: { searchParams: Promise<Record<string, string>> }) => {
+    const query = await props.searchParams;
+    const base = <div data-testid="base" />;
+    if (query.__state !== undefined) return { base, board: null };
+    return { base, board: <div data-testid="board" /> };
+  },
+}));
+vi.mock('../components/shell/placeholder-page.tsx', () => ({ placeholderPage: () => vi.fn() }));
 vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/court-day', () => courtDay);
@@ -107,7 +116,6 @@ function setOnline(online: boolean) {
 
 beforeEach(() => {
   page.context = testWorkspaceContext('demo', 'owner');
-  page.dev = true;
   page.locale = 'en';
   page.items = [item('l1', 1, 'm1'), item('l2', 2, null), item('l3', 3, 'm2')];
   page.suggestions = [
@@ -123,11 +131,12 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('tomorrow page (#63)', () => {
+describe('tomorrow page (#59, #63)', () => {
   it('renders the plan with unassigned items first, read in its own workspace scope', async () => {
     withIntl(await TomorrowPage(props()));
     const en = catalogs.en.delegation;
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(en.title);
+    expect(screen.getByTestId('board')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe(en.title);
     const rows = document.querySelectorAll('[data-slot="assignment-row"]');
     expect(rows).toHaveLength(3);
     expect(rows[0]?.getAttribute('data-flag')).toBe('unassigned');
@@ -149,11 +158,12 @@ describe('tomorrow page (#63)', () => {
   });
 
   it.each(['junior', 'clerk', 'viewer'] satisfies Role[])(
-    'renders permission-denied for a %s',
+    'shows a %s the board without the plan',
     async (role) => {
       page.context = testWorkspaceContext('demo', role);
       withIntl(await TomorrowPage(props()));
-      expect(document.querySelector('[data-pattern-state="permission-denied"]')).not.toBeNull();
+      expect(screen.getByTestId('board')).toBeTruthy();
+      expect(screen.queryByRole('heading', { level: 2 })).toBeNull();
       expect(document.querySelector('[data-slot="assignment-row"]')).toBeNull();
       expect(runtime.listMembersIn).not.toHaveBeenCalled();
     },
@@ -174,16 +184,14 @@ describe('tomorrow page (#63)', () => {
     expect(alert.textContent).toContain(catalogs.en.delegation.error);
     expect(within(alert).getByText(catalogs.en.delegation.retry)).toBeTruthy();
     expect(logger.error).toHaveBeenCalled();
+    expect(screen.getByTestId('board')).toBeTruthy();
   });
 
-  it('previews loading and error states in dev only', async () => {
+  it('hands a previewed state to the placeholder page and loads no plan', async () => {
     withIntl(await TomorrowPage(props({ __state: 'error' })));
-    expect(screen.getByRole('alert')).toBeTruthy();
-    expect(logger.error).not.toHaveBeenCalled();
-    cleanup();
-    page.dev = false;
-    withIntl(await TomorrowPage(props({ __state: 'error' })));
-    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByTestId('base')).toBeTruthy();
+    expect(screen.queryByTestId('board')).toBeNull();
+    expect(runtime.listMembersIn).not.toHaveBeenCalled();
   });
 
   it('shows the offline banner while offline', async () => {
@@ -198,7 +206,7 @@ describe('tomorrow page (#63)', () => {
     page.locale = locale;
     withIntl(await TomorrowPage(props()), locale);
     const text = document.body.textContent;
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe(
       catalogs[locale].delegation.title,
     );
     expect(catalogs[locale].delegation.title).not.toBe(catalogs.en.delegation.title);

@@ -694,6 +694,20 @@
       "when": 1792900800000,
       "tag": "20261025040000_whatsapp_inbound",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1792904400000,
+      "tag": "20261025050000_help_state",
+      "breakpoints": true
+    },
+    {
+      "idx": 100,
+      "version": "7",
+      "when": 1792908000000,
+      "tag": "20261025060000_support_session_member_request",
+      "breakpoints": true
     }
   ]
 }

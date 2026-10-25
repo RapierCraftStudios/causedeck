@@ -76,6 +76,10 @@ export const AUDIT_ACTIONS = {
     description: 'Two-factor authentication was disabled',
   },
   'auth.session_revoked': { security: true, description: 'A session was revoked' },
+  'support.session_requested': {
+    security: true,
+    description: 'A member asked for a support session',
+  },
   'support.session_started': { security: true, description: 'A support session started' },
   'support.session_ended': { security: true, description: 'A support session ended' },
   // Fail-closed: a support read whose audit event cannot be written is not served (#308).

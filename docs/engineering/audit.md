@@ -55,6 +55,7 @@ Each action is either **security** or **informational**:
 | `auth.two_factor_disabled`            | security      | `databaseHooks.user.update` (`/two-factor/disable`)                                                                        |
 | `auth.session_revoked`                | security      | `databaseHooks.session.delete` (revoke paths)                                                                              |
 | `audit.exported`                      | security      | `exportAudit`, before the first byte (#229); `recordExportRun`                                                             |
+| `support.session_requested`           | security      | `requestMemberSupport` (#94)                                                                                               |
 | `support.session_started`             | security      | `recordSupportSessionStarted` (#27)                                                                                        |
 | `support.session_ended`               | security      | `recordSupportSessionEnded` (#27)                                                                                          |
 | `access.denied`                       | security      | web `guard`/`workspaceAction`, api `requireWorkspace`/`authorize`; core lifecycle step-up gate (role refusals, #304)        |

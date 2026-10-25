@@ -151,6 +151,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   whatsapp_link: DB_TABLES_TEST,
   whatsapp_otp_challenge: DB_TABLES_TEST,
   whatsapp_inbound_message: DB_TABLES_TEST,
+  // In-app help state (#94).
+  help_state: DB_TABLES_TEST,
   // Enterprise onboarding (#682).
   sso_provider: DB_TABLES_TEST,
   scim_token: DB_TABLES_TEST,
@@ -560,6 +562,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
+  requestMemberSupport: denies,
+  dismissCoachmark: denies,
+  listDismissedCoachmarks: denies,
   grantSession: denies,
   denySession: denies,
   revokeSession: denies,

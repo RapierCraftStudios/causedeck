@@ -34,6 +34,7 @@ export {
   scimToken,
   ssoProvider,
 } from './enterprise.ts';
+export { HELP_STATE_KEY_PATTERN, helpState } from './help-state.ts';
 export {
   WHATSAPP_E164_PATTERN,
   WHATSAPP_OTP_MAX_ATTEMPTS,

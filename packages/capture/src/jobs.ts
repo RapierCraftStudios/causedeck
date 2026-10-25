@@ -10,6 +10,8 @@ export const CAPTURE_JOB_NAMES = {
   voiceProcess: 'voice.process',
   /** Runs one forwarded email through the parser registry (#530); queued by the inbound webhook. */
   emailIntake: 'email.intake',
+  /** Downloads and stores one forwarded WhatsApp media message (#680); queued by the inbound webhook. */
+  whatsappIntake: 'whatsapp.intake',
   /** Deletes the raw MIME of one received email once its 30 days are up (#530). */
   emailRawExpire: 'email.raw-expire',
   /** The daily global tick (02:00 IST) that queues `capture.retention` per workspace. */
@@ -44,6 +46,13 @@ export interface EmailIntakePayload {
   /** The member whose intake address received the message. */
   userId: string;
   intakeMessageId: string;
+}
+
+export interface WhatsAppIntakePayload {
+  workspaceId: string;
+  /** The member whose verified number forwarded the media. */
+  userId: string;
+  inboundMessageId: string;
 }
 
 export interface CaptureRetentionPayload {

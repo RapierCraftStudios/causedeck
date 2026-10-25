@@ -38,6 +38,7 @@ import { extractOrder } from './definitions/extraction-extract-order.ts';
 import { importBatch, importFile } from './definitions/import-batch.ts';
 import { voiceProcess } from './definitions/voice-process.ts';
 import { whatsappImport } from './definitions/whatsapp-import.ts';
+import { whatsappIntake } from './definitions/whatsapp-intake.ts';
 import { emailIntake } from './definitions/email-intake.ts';
 import { emailRawExpire } from './definitions/email-raw-expire.ts';
 import { deletionErase } from './definitions/deletion-erase.ts';
@@ -198,6 +199,7 @@ export const registry = createRegistry([
   whatsappImport,
   voiceProcess,
   emailIntake,
+  whatsappIntake,
   emailRawExpire,
   extractOrder,
   importBatch,
@@ -259,6 +261,7 @@ export type JobMap = RegistryMap<
     typeof whatsappImport,
     typeof voiceProcess,
     typeof emailIntake,
+    typeof whatsappIntake,
     typeof emailRawExpire,
     typeof extractOrder,
     typeof importBatch,

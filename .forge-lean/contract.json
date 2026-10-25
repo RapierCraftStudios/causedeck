@@ -2,446 +2,161 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`assembleBrief(ctx, listingId)` returns all PRD PR-1 sections; each `BriefLine` carries `source_type`, `source_ref`, `anchor_id` (or `manual`), `confidence` and `confirmation_state`. A line with no provenance is not emitted. [type:unit]",
+   "quote": "Settings UI to link a WhatsApp number (OTP), choose message categories and unlink",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Last order section shows 2-3 lines produced from the order's confirmed operative directions with a page-anchored link; if the extraction is unconfirmed the line is labelled 'Unconfirmed' and still anchored. No date appears that is absent from the anchored source text. [type:unit]",
+   "quote": "with a server action per operation",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Open obligations are listed with owner, due date, status and the phrase pattern 'counter not yet filed; due 20 Oct'; overdue items sort first; closed obligations are excluded but counted. [type:unit]",
+   "quote": "an i18n namespace in en/kn/ta with catalog test",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Carry list is the union of (a) documents linked to open obligations, (b) the workspace's M2 'always carry' rules (when #74 wires memory; until then an empty provider), and (c) manual items; manual add, remove and tick persist in `brief_state` and survive re-assembly. [type:unit]",
+   "quote": "and cross-tenant-actions test entries",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Synopsis (M3), last-hearing summary and court notes (M4) are fetched through the memory scope check; a clerk's brief omits synopsis strategy fields and M4 notes entirely (server-side, not hidden in the UI). [type:api]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R6",
-   "quote": "Document context returns at most 5 matter-scoped passages with page and quote anchors, retrieved by pgvector or full-text within the matter only; it never returns a passage from another matter or workspace. [type:api]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R7",
-   "quote": "`computeReadiness` returns a 0-100 score and per-segment booleans (stage known, last order present and confirmed, obligations reconciled, carry list reviewed) with human-readable reasons for each missing segment. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R8",
-   "quote": "`markPrepared` records who and when; any later material change (new order, changed stage, new obligation) clears the mark and emits `brief.stale` with the reason. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R9",
-   "quote": "Sensitive-matter flag (AI off): assembly skips AI compression and context retrieval from embeddings and still returns a deterministic brief. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R10",
-   "quote": "Assembly p95 \u003c 5 s per listing on the seeded dataset (target \u003c 1.5 s deterministic path), and `brief.refresh` is idempotent (running twice yields the same row and no duplicate events). [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R11",
-   "quote": "A job refreshes briefs for all listings on tomorrow's board and for matters likely to be reached (all matters with a confirmed next date within 7 days), because advance notice in Karnataka is about one day. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R12",
-   "quote": "All AI calls go through the gateway, are logged to `ai_call`, and run in India-only mode; the mock provider is used in CI. [type:api]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R13",
-   "quote": "No outward action exists in this module: no send, export-to-third-party or filing function. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R14",
-   "quote": "Cross-tenant tests pass: a user in workspace A cannot read or mutate this feature's rows in workspace B via SQL, service, server action or API, including a user who belongs to both. [type:api]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R15",
-   "quote": "Every new tenant table has `workspace_id uuid not null`, an RLS policy using `app.workspace_id`, and is covered by the CI cross-tenant suite. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R16",
-   "quote": "Inputs are validated with zod schemas from `packages/validators`; no `any` appears in exported types. [type:unit]",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "Settings UI to link a WhatsApp number (OTP)",
+   "disposition": "defer",
+   "why": "Delivering the OTP over WhatsApp needs a provider-approved OTP template (WHATSAPP_TEMPLATES in packages/notifications/src/channels/whatsapp.ts has none) and a sendOtp sender; template approval is a provider action. Follow-up: add OTP template and wire sendOtp into the request action."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/validators/src/brief.ts",
-   "change": "zod schemas and types: Brief, BriefSection, BriefLine (source_type, source_ref, anchor_id|manual, confidence, confirmation_state), ObligationLine, ContextPassage, Readiness, CarryItem, BriefState, input schemas for markPrepared/setCarryItem/setBriefNote. Export from packages/validators/src/index.ts with a colocated brief.test.ts.",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts",
+   "change": "'use server' module with requestWhatsAppOtpAction({workspaceId,e164,consent}), verifyWhatsAppOtpAction({workspaceId,code}), setWhatsAppCategoriesAction({workspaceId,categories}), unlinkWhatsAppAction({workspaceId}), getWhatsAppLinkAction({workspaceId}), each built with workspaceAction + WorkspaceScoped, calling @causedeck/core/whatsapp-link with {db: ctx.tx} and actor {userId: ctx.userId, workspaceId: ctx.workspaceId} (never a user from input); domain errors mapped to ActionError via domainErrorCode (NOT_FOUND, FORBIDDEN, CONFLICT, VALIDATION, RATE_LIMITED if the ActionError codes include it, else map to the nearest); exports only async functions plus types; returned view has the masked number only",
    "requirements": [
     "R1",
-    "R7",
-    "R16"
+    "R2"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/validators/src/index.ts",
-   "change": "re-export brief.ts",
-   "requirements": [
-    "R16"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/db/src/schema/brief.ts",
-   "change": "tenantTable brief_state(id, workspace_id, listing_id, prepared_by, prepared_at, carry jsonb, note text, updated_at, updated_by), unique (workspace_id, listing_id), composite FK to listing, checks on carry jsonb array.",
-   "requirements": [
-    "R4",
-    "R8",
-    "R15"
-   ]
-  },
-  {
-   "id": "D4",
-   "path": "packages/db/src/schema/index.ts",
-   "change": "export brief schema",
-   "requirements": [
-    "R15"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/db/migrations/20261025000000_brief_state.sql",
-   "change": "create brief_state with FORCE RLS on app.workspace_id (match 20261024170000_court_day.sql), plus owner-defined app_brief_refresh_targets() returning (workspace_id, listing_id) for tomorrow's listings and matters with a confirmed next date within 7 days; add meta/20261025000000_snapshot.json and _journal.json entry (use the next free timestamp if taken).",
-   "requirements": [
-    "R11",
-    "R15"
-   ]
-  },
-  {
-   "id": "D6",
-   "path": "packages/db/migrations/meta/_journal.json",
-   "change": "journal entry for the brief_state migration (snapshot file generated alongside)",
-   "requirements": [
-    "R15"
-   ]
-  },
-  {
-   "id": "D7",
-   "path": "packages/db/src/index.test.ts",
-   "change": "add brief_state to the root table list",
-   "requirements": [
-    "R15"
-   ]
-  },
-  {
-   "id": "D8",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "add brief_state to the RLS catalog",
-   "requirements": [
-    "R14",
-    "R15"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "register brief_state table test; SERVICE_TESTS entries for every new runtime export of @causedeck/core briefs (assembleBrief, computeReadiness (NOT_A_SERVICE: pure), markPrepared, unmarkPrepared, setCarryItem, setBriefNote, refreshBrief/run job body) or NOT_A_SERVICE with reason.",
-   "requirements": [
-    "R14",
-    "R15"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/db/src/testing/two-tenants.ts",
-   "change": "two-tenant seeder for brief_state",
-   "requirements": [
-    "R14",
-    "R15"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/db/src/seed/brief-fixtures.ts",
-   "change": "seeded dataset for the brief tests and the p95 check (listings, anchored orders, obligations, document pages, a sensitive matter, a second matter and workspace); valid domain values only.",
-   "requirements": [
-    "R1",
-    "R6",
-    "R10"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/core/src/briefs/assemble.ts",
-   "change": "assembleBrief(ctx, listingId, opts?): derived brief via scope helper (withWorkspace, role from membership, can()), drops any line without provenance, applies sensitive flag (no AI, no context retrieval), injected BriefDeps {memory, events, gateway, now}.",
-   "requirements": [
-    "R1",
-    "R5",
-    "R9",
-    "R10",
-    "R12",
-    "R13"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/core/src/briefs/sections/stage.ts",
-   "change": "stage line from listing stageRaw/stageNorm with listing provenance",
+   "path": "apps/web/components/notifications/whatsapp-link-card.tsx",
+   "change": "client component: number input + consent checkbox -> request code; code input -> verify; when linked show masked number, category checkboxes limited to WHATSAPP_CATEGORIES (@causedeck/notifications/whatsapp) and an unlink button; all strings from useTranslations('whatsappLink'); actions passed as props",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D14",
-   "path": "packages/core/src/briefs/sections/last-order.ts",
-   "change": "2-3 lines from the latest order's operative directions with anchor (page link); 'Unconfirmed' label; AI compression only from anchored extraction output through the gateway, with date-presence check against anchor quote text; deterministic fallback.",
+   "id": "D3",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/page.tsx",
+   "change": "load the caller's link with inWorkspace (@causedeck/core/runtime) + getWhatsAppLink, render the card below the preferences (error state: card shows retry/message, page still renders)",
    "requirements": [
-    "R2",
-    "R9",
-    "R12"
+    "R1"
    ]
   },
   {
-   "id": "D15",
-   "path": "packages/core/src/briefs/sections/obligations.ts",
-   "change": "open obligations with owner, due, status and 'counter not yet filed; due 20 Oct' phrasing; overdue first; closed counted not listed",
+   "id": "D4",
+   "path": "packages/i18n/src/messages/en/whatsapp-link.json",
+   "change": "new namespace file, single top-level key whatsappLink (title, description, consent, number, send code, code, verify, categories labels, unlink, errors, masked-number text)",
    "requirements": [
     "R3"
    ]
   },
   {
-   "id": "D16",
-   "path": "packages/core/src/briefs/sections/carry.ts",
-   "change": "carry union: documents of open obligations + memory M2 always-carry provider + manual items from brief_state",
+   "id": "D5",
+   "path": "packages/i18n/src/messages/kn/whatsapp-link.json",
+   "change": "same keys, Kannada",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/i18n/src/messages/ta/whatsapp-link.json",
+   "change": "same keys, Tamil",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "add 'whatsapp-link' to NAMESPACES",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "add 'whatsappLink' to the expected top-level keys and a test that en/ta/kn have the whatsappLink keys",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/i18n/src/generated/messages/en.json",
+   "change": "regenerate with pnpm --filter @causedeck/i18n i18n:types (also kn.json, ta.json, messages.d.ts in the same directory)",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/i18n/src/generated/messages/kn.json",
+   "change": "regenerated output",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/i18n/src/generated/messages/ta.json",
+   "change": "regenerated output",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/i18n/src/generated/messages.d.ts",
+   "change": "regenerated output",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "import the new actions module, add the five actions to ACTIONS and probe inputs, add a 'under B's own workspace' test: request+verify (fixed code is not injectable, so insert via core with generateCode or assert request/get/setCategories/unlink only touch ub's rows in B) and A's snapshot unchanged; extend snapshotA if it does not cover whatsapp tables",
    "requirements": [
     "R4"
    ]
   },
   {
-   "id": "D17",
-   "path": "packages/core/src/briefs/sections/synopsis.ts",
-   "change": "M3 synopsis via MemoryProvider behind memory.read/strategy.read; strategy fields omitted for clerk",
+   "id": "D14",
+   "path": "apps/web/__tests__/whatsapp-link-actions.test.ts",
+   "change": "new unit test mirroring notification-preferences-actions.test.ts: user comes from the session never the input, non-member FORBIDDEN, error mapping, consent required",
    "requirements": [
-    "R5"
+    "R2"
    ]
   },
   {
-   "id": "D18",
-   "path": "packages/core/src/briefs/sections/last-hearing.ts",
-   "change": "last-hearing summary line from the latest hearing/memory with provenance",
-   "requirements": [
-    "R1",
-    "R5"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/core/src/briefs/sections/court-notes.ts",
-   "change": "M4 private court notes via MemoryProvider scope check (author-private unless chamber-shared); absent for clerk",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "packages/core/src/briefs/sections/context.ts",
-   "change": "at most 5 matter-scoped passages from document_page full-text (search_tsv) joined on the matter's documents, with page and quote anchors; skipped for sensitive matters",
-   "requirements": [
-    "R6",
-    "R9"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "packages/core/src/briefs/readiness.ts",
-   "change": "computeReadiness(brief): pure 0-100 score, four segment booleans, reasons",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D22",
-   "path": "packages/core/src/briefs/state.ts",
-   "change": "markPrepared, unmarkPrepared, setCarryItem, setBriefNote persisting brief_state; material-change detection clears the mark and emits brief.stale {workspaceId, listingId, reason} through the injected events port",
-   "requirements": [
-    "R4",
-    "R8",
-    "R14"
-   ]
-  },
-  {
-   "id": "D23",
-   "path": "packages/core/src/briefs/refresh.ts",
-   "change": "refreshBrief and refreshTomorrow sweep (idempotent: same row, no duplicate events); consumes court_day.list_changed, extraction and obligation change triggers",
-   "requirements": [
-    "R8",
-    "R10",
-    "R11"
-   ]
-  },
-  {
-   "id": "D24",
-   "path": "packages/core/src/briefs/index.ts",
-   "change": "barrel; exports no send/export/file function",
-   "requirements": [
-    "R13"
-   ]
-  },
-  {
-   "id": "D25",
-   "path": "packages/core/src/jobs/definitions/brief-refresh.ts",
-   "change": "defineJob 'brief.refresh' ({workspaceId, listingId}, singleton per listing) and a scheduled sweep job using app_brief_refresh_targets() (pattern: portfolio-alert-scan.ts)",
-   "requirements": [
-    "R10",
-    "R11"
-   ]
-  },
-  {
-   "id": "D26",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "register the brief jobs (imports, list and type list)",
-   "requirements": [
-    "R10",
-    "R11"
-   ]
-  },
-  {
-   "id": "D27",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "add the new job names",
-   "requirements": [
-    "R11"
-   ]
-  },
-  {
-   "id": "D28",
-   "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "add the scheduled sweep job name",
-   "requirements": [
-    "R11"
-   ]
-  },
-  {
-   "id": "D29",
-   "path": "packages/core/src/index.ts",
-   "change": "re-export briefs barrel (check name clashes with other domains)",
+   "id": "D15",
+   "path": "apps/web/__tests__/whatsapp-link-card.test.tsx",
+   "change": "new jsdom test of the card: request, verify, set categories, unlink, error states, en/ta/kn strings",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D30",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "add briefs domain deps: workspaces, audit, matter-graph, court-day, ai (index.ts imports only)",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D31",
-   "path": "docs/engineering/core-domains.md",
-   "change": "document the briefs domain and its allowed imports",
-   "requirements": [
-    "R12"
-   ]
-  },
-  {
-   "id": "D32",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "real B-on-A cases for the briefs services",
-   "requirements": [
-    "R14"
-   ]
-  },
-  {
-   "id": "D33",
-   "path": "packages/core/src/briefs/__tests__/assemble.test.ts",
-   "change": "tests for R1,R2,R3,R4,R6,R9,R12,R13 (provenance drop, Unconfirmed label, date-in-source, obligation ordering/phrase, carry union, context limit, sensitive path, gateway/ai_call, barrel has no send/export/file)",
-   "requirements": [
-    "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R6",
-    "R9",
-    "R12",
-    "R13"
-   ]
-  },
-  {
-   "id": "D34",
-   "path": "packages/core/src/briefs/__tests__/readiness.test.ts",
-   "change": "readiness score, segments, reasons",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D35",
-   "path": "packages/core/src/briefs/__tests__/state.test.ts",
-   "change": "markPrepared who/when, clear + brief.stale, carry add/remove/tick persistence across re-assembly, refresh idempotence and sweep selection, deterministic-path CPU-time budget",
-   "requirements": [
-    "R4",
-    "R8",
-    "R10",
-    "R11"
-   ]
-  },
-  {
-   "id": "D36",
-   "path": "packages/core/src/briefs/__tests__/permissions.test.ts",
-   "change": "clerk omits synopsis strategy and M4 notes; M4 private to author; second matter never leaks",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D37",
-   "path": "packages/core/src/briefs/__tests__/cross-tenant.test.ts",
-   "change": "workspace A vs B (and a user in both) via service and SQL",
-   "requirements": [
-    "R14",
-    "R15"
-   ]
-  },
-  {
-   "id": "D38",
-   "path": "docs/adr/0038-brief-as-derived-view.md",
-   "change": "ADR: brief is a derived view, anchor-or-drop, memory provider port, full-text context",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D39",
-   "path": "docs/adr/README.md",
-   "change": "index the new ADR (pnpm adr:lint)",
+   "id": "D16",
+   "path": "apps/web/__tests__/notification-preferences.test.tsx",
+   "change": "only if the page test breaks: mock getWhatsAppLink/inWorkspace for the page render",
    "requirements": [
     "R1"
    ]
@@ -450,87 +165,65 @@
  "preserve": [
   {
    "id": "P1",
-   "what": "court-day exports and behaviour, including CourtDayEvent court_day.list_changed (packages/core/src/court-day/*); no renamed or removed exports"
+   "what": "Existing notification preference actions and exports in apps/web/app/(app)/w/[slug]/settings/notifications/actions.ts (names, inputs, behaviour) and the PushPermissionCard placement on that page"
   },
   {
    "id": "P2",
-   "what": "runOrderExtraction and the extraction.extract-order job contract (packages/core/src/extraction/run.ts, jobs/definitions/extraction-extract-order.ts); briefs only read extraction/order output"
+   "what": "@causedeck/core/whatsapp-link public API and D-029 rule: a message target is only ever the owner's verified number (packages/core/src/whatsapp-link/link.ts); do not change core, db or the notification sender"
   },
   {
    "id": "P3",
-   "what": "the policy matrix and closed action list (packages/auth/src/policy/matrix.ts, actions.ts): no new action; reuse listing.read, memory.read, strategy.read, matter.write"
-  },
-  {
-   "id": "P4",
-   "what": "existing migrations and their snapshots (packages/db/migrations/*): only append"
-  },
-  {
-   "id": "P5",
-   "what": "existing names exported from @causedeck/core root: new briefs exports must not collide (packages/core/src/index.ts)"
+   "what": "No full phone number is returned to the client: only WhatsAppLinkView.maskedNumber"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/briefs src/jobs/registry.test.ts src/court-day src/extraction --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/whatsapp-link-actions.test.ts __tests__/whatsapp-link-card.test.tsx __tests__/notification-preferences.test.tsx __tests__/notification-preferences-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/brief.test.ts src/index.test.ts"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/web exec vitest run --config vitest.tenancy.config.ts __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V5",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
-  },
-  {
-   "id": "V6",
-   "command": "pnpm adr:lint"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/instant-gtm-adoption"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "MemoryProvider port with an empty default instead of reading memory tables",
-   "justification": "#72 is open and no memory_item table exists (packages/core/src/lifecycle/deletion/memory.ts:23); the issue itself says 'until then an empty provider'. Role gating uses existing memory.read/strategy.read (packages/auth/src/policy/matrix.ts:22-24).",
-   "source": "spec"
+   "choice": "Put the card on the existing notifications settings page instead of a new settings section",
+   "justification": "settings-nav.ts has fixed section lists plus nav i18n and shell tests; the push card already sits on this page (settings/notifications/page.tsx), so no nav change is needed",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Document context by full-text over document_page.search_tsv, not pgvector",
-   "justification": "No document embedding table exists; document_page has a GIN tsvector (packages/db/src/schema/documents.ts:158,166); the AC allows 'pgvector or full-text'.",
-   "source": "spec"
+   "choice": "Actions live in a separate whatsapp-actions.ts next to the page",
+   "justification": "A 'use server' module exports only async functions; nested per-feature action files exist (settings/integrations/email/actions.ts); cross-tenant test imports each module",
+   "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "brief.refresh and the sweep live in packages/core/src/jobs/definitions/, not apps/worker/src/jobs/",
-   "justification": "apps/worker/src/jobs does not exist; every job is a defineJob in core and registered in jobs/registry.ts (extraction-extract-order.ts, portfolio-alert-scan.ts).",
-   "source": "precedent"
+   "choice": "Request action passes no sendOtp; OTP delivery deferred (R5)",
+   "justification": "link.ts:32 makes sendOtp optional; channels/whatsapp.ts:18 has no OTP template",
+   "source": "spec"
   },
   {
    "id": "K4",
-   "choice": "Owner-defined SQL function app_brief_refresh_targets() for the cross-workspace sweep",
-   "justification": "Tenant tables are under FORCE RLS so a system job cannot list workspaces directly; same pattern as app_portfolio_alert_targets (packages/core/src/jobs/definitions/portfolio-alert-scan.ts:48-52).",
-   "source": "precedent"
+   "choice": "Use new namespace whatsapp-link with top-level key whatsappLink",
+   "justification": "catalog.ts:7 NAMESPACES convention (whatsapp-import -> whatsappImport); mergeNamespaces rejects duplicate top-level keys",
+   "source": "doc"
   },
   {
    "id": "K5",
-   "choice": "Events (brief.stale) through an injected port, not a bus",
-   "justification": "court-day does the same and emits only after the scope resolves (packages/core/src/court-day/scope.ts:30-45).",
+   "choice": "No new workspace package dependency: apps/web already depends on @causedeck/core and @causedeck/notifications",
+   "justification": "existing imports in settings/notifications/actions.ts and page.tsx",
    "source": "precedent"
-  },
-  {
-   "id": "K6",
-   "choice": "Migration under packages/db/migrations with a timestamp name; seeds under packages/db/src/seed; ADR 0038",
-   "justification": "Repo layout differs from the issue's paths (latest migration 20261024170000_court_day.sql; docs/adr ends at 0037).",
-   "source": "doc"
   }
  ]
 }

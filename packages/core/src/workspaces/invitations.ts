@@ -11,6 +11,7 @@ import { schema, withWorkspace, type Database, type Transaction } from '@causede
 import { InviteInput } from '@causedeck/validators/workspace';
 import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 
+import { recordActivation } from '../activation/index.ts';
 import {
   conflict,
   forbidden,
@@ -136,6 +137,11 @@ export interface InviteMemberRequest extends SendOptions {
   workspaceId: string;
   actorUserId: string;
   input: InviteInput;
+  /**
+   * Skip the per-actor hourly cap (`INVITE_RATE_LIMIT`). Only for bulk callers that cap their own
+   * batch (CSV provisioning, #684); the role and seat checks still apply.
+   */
+  bypassRateLimit?: boolean | undefined;
 }
 
 /**
@@ -154,12 +160,14 @@ export async function inviteMember(
 
   const issued = await db.transaction(async (tx) => {
     await requireInviter(tx, request.workspaceId, request.actorUserId, role);
-    await withinLimit(
-      tx,
-      `invite:${request.workspaceId}:${request.actorUserId}`,
-      INVITE_RATE_LIMIT,
-      now,
-    );
+    if (request.bypassRateLimit !== true) {
+      await withinLimit(
+        tx,
+        `invite:${request.workspaceId}:${request.actorUserId}`,
+        INVITE_RATE_LIMIT,
+        now,
+      );
+    }
     await entitlements.assertCanAddSeat(tx, request.workspaceId, role);
 
     const token = generateInvitationToken();
@@ -199,6 +207,8 @@ export async function inviteMember(
   });
 
   await sendInvitation(request, issued);
+  // The inviter's `invite_sent` step (#509); measurement never fails the invitation.
+  await recordActivation(db, { userId: request.actorUserId, step: 'invite_sent', at: now });
   return issued;
 }
 

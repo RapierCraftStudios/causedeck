@@ -40,7 +40,7 @@ describe('adminEnvLabel', () => {
 });
 
 describe('ConsoleNav', () => {
-  it('has the eleven console areas in order', () => {
+  it('has the thirteen console areas in order', () => {
     expect(CONSOLE_NAV.map((item) => item.label)).toEqual([
       'Overview',
       'Adapters',
@@ -53,6 +53,8 @@ describe('ConsoleNav', () => {
       'Support sessions',
       'Audit',
       'Business',
+      'Growth',
+      'Migrations',
     ]);
   });
 
@@ -75,6 +77,8 @@ describe('ConsoleNav', () => {
       'Support sessions',
       'Audit',
       'Business',
+      'Growth',
+      'Migrations',
     ]);
   });
 
@@ -94,6 +98,8 @@ describe('ConsoleNav', () => {
       '/coverage',
       '/flags',
       '/audit',
+      '/growth',
+      '/migrations',
     ]);
   });
 });

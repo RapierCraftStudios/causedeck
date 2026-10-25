@@ -45,6 +45,8 @@ export const WORKSPACE_KINDS = ['solo', 'chamber', 'institution'] as const;
 
 /** Membership lifecycle; only `active` members see the workspace or count as seats. */
 export const MEMBER_STATUSES = ['active', 'suspended', 'removed'] as const;
+/** A clerk's setup of the practice: waiting for a senior's one-tap approval, or approved (#505). */
+export const CLERK_SETUP_STATUSES = ['pending', 'approved'] as const;
 
 export const inList = (values: readonly string[]) =>
   sql.raw(`(${values.map((v) => `'${v}'`).join(', ')})`);
@@ -58,6 +60,9 @@ export const user = pgTable(
     name: text('name').notNull(),
     email: text('email').notNull().unique('user_email_uq'),
     emailVerified: boolean('email_verified').notNull().default(false),
+    /** E.164, set when the user signs up or in with a phone OTP (#503); unique when present. */
+    phoneNumber: text('phone_number').unique('user_phone_number_uq'),
+    phoneNumberVerified: boolean('phone_number_verified').notNull().default(false),
     image: text('image'),
     twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
     locale: text('locale').notNull().default('en'),
@@ -207,6 +212,9 @@ export const member = pgTable(
     joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
     /** When the current `role` was granted; starts the owner 2FA grace (#290). */
     roleGrantedAt: timestamp('role_granted_at', { withTimezone: true }).notNull().defaultNow(),
+    /** Clerk-led onboarding (#505): null until the clerk asks for approval; set only on clerks. */
+    clerkSetupStatus: text('clerk_setup_status'),
+    clerkSetupDecidedAt: timestamp('clerk_setup_decided_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -217,6 +225,10 @@ export const member = pgTable(
     index('member_user_id_idx').on(t.userId),
     check('member_role_chk', sql`role in ${inList(WORKSPACE_ROLES)}`),
     check('member_status_chk', sql`status in ${inList(MEMBER_STATUSES)}`),
+    check(
+      'member_clerk_setup_status_chk',
+      sql`clerk_setup_status is null or clerk_setup_status in ${inList(CLERK_SETUP_STATUSES)}`,
+    ),
   ],
 );
 

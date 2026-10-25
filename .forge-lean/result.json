@@ -1,17 +1,276 @@
-{"status":"fixed","summary":"WhatsApp link + OTP tables, core service, enum/channel, registrations delivered and validated","requirements":[
-{"id":"R1","status":"implemented","evidence":"packages/db/src/schema/whatsapp-link.ts"},
-{"id":"R2","status":"implemented","evidence":"packages/db/migrations/20261025000503_whatsapp_link.sql"},
-{"id":"R3","status":"implemented","evidence":"packages/core/src/whatsapp-link/link.ts"},
-{"id":"R4","status":"implemented","evidence":"packages/core/src/whatsapp-link/link.ts getWhatsAppSendTarget"},
-{"id":"R5","status":"implemented","evidence":"packages/db/src/testing/cross-tenant-registry.ts"},
-{"id":"R6","status":"implemented","evidence":"packages/notifications/src/categories.ts"},
-{"id":"R7","status":"implemented","evidence":"packages/core/src/whatsapp-link/__tests__/whatsapp-link.test.ts"}],
-"validation":[{"id":"V1","command":"core vitest","exit":0},{"id":"V2","command":"db vitest","exit":0},{"id":"V3","command":"notifications vitest","exit":0}],
-"tests":[{"command":"core whatsapp-link tests","result":"pass","fails_without_fix":"unknown"}],
-"self_review":[{"question":"1","answer":"yes","evidence":"R1-R7 mapped above"},{"question":"2","answer":"yes","evidence":"tsc clean, V1-V3 pass"},{"question":"3","answer":"yes","evidence":"forgedock check PASS"},{"question":"4","answer":"yes","evidence":"extra paths declared via amendments"}],
-"amendments":[
-{"kind":"add-deliverable","path":"packages/config/eslint/core-domains.js","why":"CORE_DOMAIN_DEPENDENCIES lives here; whatsapp-link depends on workspaces"},
-{"kind":"add-deliverable","path":"packages/notifications/src/service.ts","why":"DeliveryJob channel type must exclude whatsapp after CHANNELS widened; no behaviour change"},
-{"kind":"add-deliverable","path":"apps/web/app/(app)/w/[slug]/settings/notifications/preferences-form.tsx","why":"Typecheck: Channel gained whatsapp; matrix excludes it"},
-{"kind":"add-deliverable","path":"apps/web/app/(app)/w/[slug]/portfolio/page.tsx","why":"Typecheck: skip whatsapp preference cells in portfolio alerts"},
-{"kind":"add-deliverable","path":"packages/core/src/lifecycle/export/registry.ts","why":"Register the whatsapp_link exporter"}]}
+{
+ "status": "fixed",
+ "summary": "WhatsApp link + OTP tables, core service, enum/channel, registrations delivered and validated",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/db/src/schema/whatsapp-link.ts"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/db/migrations/20261025000503_whatsapp_link.sql"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/core/src/whatsapp-link/link.ts"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "packages/core/src/whatsapp-link/link.ts getWhatsAppSendTarget"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "packages/db/src/testing/cross-tenant-registry.ts"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "packages/notifications/src/categories.ts"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "packages/core/src/whatsapp-link/__tests__/whatsapp-link.test.ts"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "core vitest",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "db vitest",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "notifications vitest",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "core whatsapp-link tests",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R7 mapped above"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "tsc clean, V1-V3 pass"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "forgedock check PASS"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "extra paths declared via amendments"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "packages/config/eslint/core-domains.js",
+   "why": "CORE_DOMAIN_DEPENDENCIES lives here; whatsapp-link depends on workspaces"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/notifications/src/service.ts",
+   "why": "DeliveryJob channel type must exclude whatsapp after CHANNELS widened; no behaviour change"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(app)/w/[slug]/settings/notifications/preferences-form.tsx",
+   "why": "Typecheck: Channel gained whatsapp; matrix excludes it"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(app)/w/[slug]/portfolio/page.tsx",
+   "why": "Typecheck: skip whatsapp preference cells in portfolio alerts"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/lifecycle/export/registry.ts",
+   "why": "Register the whatsapp_link exporter"
+  }
+ ],
+ "not_members": [
+  {
+   "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its @causedeck/db mock is a stub for the audit path, not a list of schema exports"
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its @causedeck/db mock is a stub for the audit path, not a list of schema exports"
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its @causedeck/db mock is a stub for the audit path, not a list of schema exports"
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its @causedeck/db mock is a stub for the audit path, not a list of schema exports"
+  },
+  {
+   "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "its @causedeck/db mock provides only db and withWorkspace, not schema exports"
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "its @causedeck/db mock provides only db and withWorkspace, not schema exports"
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "its @causedeck/db mock provides only db and withWorkspace, not schema exports"
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "its @causedeck/db mock provides only db and withWorkspace, not schema exports"
+  },
+  {
+   "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "the test mocks other modules and has no list of @causedeck/db schema exports; the flagged line is unrelated"
+  },
+  {
+   "symbol": "WHATSAPP_E164_PATTERN",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "it spreads the real @causedeck/db module; its lists enumerate server actions, not schema exports"
+  },
+  {
+   "symbol": "WHATSAPP_OTP_MAX_ATTEMPTS",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "it spreads the real @causedeck/db module; its lists enumerate server actions, not schema exports"
+  },
+  {
+   "symbol": "whatsappLink",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "it spreads the real @causedeck/db module; its lists enumerate server actions, not schema exports"
+  },
+  {
+   "symbol": "whatsappOtpChallenge",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "it spreads the real @causedeck/db module; its lists enumerate server actions, not schema exports"
+  }
+ ]
+}

@@ -17,3 +17,6 @@ Resumed the earlier run; verified the branch against the contract, ran all valid
 V1, V2, V3 pass (forgedock check PASS). tsc clean for db, notifications, core, web. Prettier clean. An earlier V1 failure at 14 workers was a load flake; it passes at 2 workers. Regression tests were not run against a reverted fix.
 ### Notes
 No env vars. No messages are sent (P1). No devdocs freshness script in repo.
+
+## Stale-list follow-up
+Checked the 8 flagged tests: none enumerates @causedeck/db schema exports (they mock other modules or the db wholesale). Recorded all as not_members in result.json; no code change.

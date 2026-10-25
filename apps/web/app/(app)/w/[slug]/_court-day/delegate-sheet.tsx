@@ -86,8 +86,10 @@ export function DelegatePlan({
     (id: string) => members.find((m) => m.id === id)?.name ?? '',
     [members],
   );
-  const capacityOf = (listingId: string) =>
-    rows.find((r) => r.listingId === listingId)?.capacity ?? 'arguing';
+  const capacityOf = useCallback(
+    (listingId: string) => rows.find((r) => r.listingId === listingId)?.capacity ?? 'arguing',
+    [rows],
+  );
 
   const send = useCallback(
     async (listingId: string, memberId: string) => {
@@ -113,7 +115,7 @@ export function DelegatePlan({
       }
       toast.success(t('assigned', { name: nameOf(memberId) }));
     },
-    [actions, workspaceId, rows, members],
+    [actions, workspaceId, rows, capacityOf, nameOf, t],
   );
 
   const assign = (listingId: string, memberId: string) => {

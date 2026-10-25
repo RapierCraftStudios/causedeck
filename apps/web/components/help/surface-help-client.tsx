@@ -15,7 +15,7 @@ const Coachmark = dynamic(() => import('./contextual-tip.tsx').then((m) => m.Coa
 });
 
 export interface SurfaceHelpClientProps {
-  surface: HelpSurface;
+  surface: Exclude<HelpSurface, 'general'>;
   workspaceId: string;
   role: Role;
   dismissed: boolean;

@@ -74,7 +74,7 @@ export function HelpArticles({ selected, onSelect, columns = false }: HelpArticl
 
   if (load.status === 'loading') {
     return (
-      <SkeletonGroup label={t('search.loading')}>
+      <SkeletonGroup labels={{ loading: t('search.loading') }}>
         <Skeleton className="h-10 w-full" />
         <Skeleton className="mt-3 h-16 w-full" />
         <Skeleton className="mt-3 h-16 w-full" />

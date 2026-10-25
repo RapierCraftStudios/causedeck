@@ -5,8 +5,9 @@ import { HELP_SOURCES } from '../../content/help/sources.generated.ts';
 
 export const HELP_FOOTER = 'This is software documentation, not legal advice.';
 
-export const HELP_SURFACES = ['today', 'inbox', 'obligations', 'briefs', 'memory', 'general'] as const;
-export type HelpSurface = (typeof HELP_SURFACES)[number];
+import { HELP_SURFACES, articleSlugForSurface, type HelpSurface } from './surfaces.ts';
+
+export { HELP_SURFACES, type HelpSurface };
 
 export interface HelpArticle {
   slug: string;
@@ -126,10 +127,16 @@ export function searchHelp(
       if (!token.startsWith(word)) continue;
       for (const [at, weight] of entry) wordScores.set(at, (wordScores.get(at) ?? 0) + weight);
     }
-    scores =
-      scores === null
-        ? wordScores
-        : new Map([...scores].flatMap(([at, s]) => (wordScores.has(at) ? [[at, s + (wordScores.get(at) ?? 0)] as [number, number]] : [])));
+    if (scores === null) {
+      scores = wordScores;
+    } else {
+      const next = new Map<number, number>();
+      for (const [at, score] of scores) {
+        const more = wordScores.get(at);
+        if (more !== undefined) next.set(at, score + more);
+      }
+      scores = next;
+    }
   }
   return [...(scores ?? [])]
     .sort((a, b) => b[1] - a[1] || a[0] - b[0])
@@ -155,14 +162,5 @@ export function getArticle(slug: string): HelpArticle | undefined {
 
 /** The article that explains a surface (the contextual `?` tip), if any. */
 export function articleForSurface(surface: HelpSurface): HelpArticle | undefined {
-  return helpIndex().articles.find((article) => article.slug === SURFACE_ARTICLE[surface]);
+  return helpIndex().articles.find((article) => article.slug === articleSlugForSurface(surface));
 }
-
-const SURFACE_ARTICLE: Record<HelpSurface, string> = {
-  today: 'first-court-day-view',
-  inbox: 'capture-inbox',
-  obligations: 'obligations',
-  briefs: 'briefs',
-  memory: 'memory-review',
-  general: 'keyboard-shortcuts',
-};

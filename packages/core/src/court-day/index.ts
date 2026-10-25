@@ -8,7 +8,14 @@ export * from './bench-card.ts';
 // matter-graph `proposeNextDate` (both barrels are re-exported from the package root).
 export * from './query.ts';
 export { detectClashes, type ClashCandidate } from './clashes.ts';
-export { diffLists, hashRows, snapshotList, type DiffSide, type SnapshotResult } from './diff.ts';
+export {
+  diffLists,
+  getListDiffs,
+  hashRows,
+  snapshotList,
+  type DiffSide,
+  type SnapshotResult,
+} from './diff.ts';
 export { clearCurrentItem, setCurrentItem, type MarkerRow } from './markers.ts';
 export type { CourtDayActor, CourtDayDeps, CourtDayEvent, CourtDayEvents } from './scope.ts';
 export { getCalendarRange } from './calendar.ts';

@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { schema } from '@causedeck/db';
 import {
   type ListDiff,
+  CourtDayQuery,
   SnapshotListInput,
   type ListDiffEntry,
   type SnapshotRow,
@@ -216,5 +217,49 @@ export async function snapshotList(
       });
     }
     return { snapshotId: created.id, contentHash, created: true, diff };
+  });
+}
+
+/**
+ * The latest list change of each forum on `date`: its newest snapshot diffed against the one before
+ * it (a supplementary list against the daily one). A forum with a single snapshot, or whose two
+ * newest are identical in content, has no entry. Needs `listing.read`; the rows stay inside the
+ * workspace, and a member without `court_day.view_all` is shown only the entries for their own items
+ * (the caller filters).
+ */
+export async function getListDiffs(
+  deps: CourtDayDeps,
+  actor: CourtDayActor,
+  input: { date: string },
+): Promise<ListDiff[]> {
+  const { date } = parseCourtDayInput(CourtDayQuery.pick({ date: true }), input);
+  return inCourtDayScope(deps, actor, async (scope) => {
+    requireAction(scope, 'listing.read', await scope.settings(), 'You cannot read the court day');
+    const snapshots = await scope.tx
+      .select({
+        forumId: listSnapshot.forumId,
+        rows: listSnapshot.rows,
+        listType: listSnapshot.listType,
+      })
+      .from(listSnapshot)
+      .where(
+        and(eq(listSnapshot.workspaceId, scope.actor.workspaceId), eq(listSnapshot.listDate, date)),
+      )
+      .orderBy(desc(listSnapshot.createdAt), desc(listSnapshot.id));
+    const newest = new Map<string, (typeof snapshots)[number][]>();
+    for (const snapshot of snapshots) {
+      const own = newest.get(snapshot.forumId) ?? [];
+      if (own.length < 2) newest.set(snapshot.forumId, [...own, snapshot]);
+    }
+    const diffs: ListDiff[] = [];
+    for (const [next, previous] of newest.values()) {
+      if (next === undefined || previous === undefined) continue;
+      const diff = diffLists(
+        { rows: previous.rows, listType: previous.listType },
+        { rows: next.rows, listType: next.listType },
+      );
+      if (diff.entries.length > 0) diffs.push(diff);
+    }
+    return diffs;
   });
 }

@@ -1,23 +1,26 @@
-// `/w/[slug]/tomorrow` (#63): the tomorrow plan. Every appearance of the next court day with an
+// `/w/[slug]/tomorrow` (#59, #63): the court-day board for the next IST day, with the tomorrow
+// plan (#63) as a section under it. The plan lists every appearance of the next court day with an
 // assignee picker, unassigned and clashing items first, the engine's suggestions (proposals the
 // owner accepts, never written by the read) and, for the owner, the live outcome strip.
 //
-// States: loading (route skeleton), error (`Try again`), denied, empty and offline (in the client
-// view). `?__state=loading|error` previews the first two in development.
+// The plan needs `court_day.view_all`; a member without it sees the board alone. States: the
+// board's own, plus the plan's error (`Try again`), empty and offline. `?__state=loading|error`
+// shows the placeholder page's preview of those states in development, as before the board.
 import { EmptyState } from '@causedeck/ui/empty-state';
 import type { Suggestion } from '@causedeck/validators';
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
-import { PermissionDeniedPage } from '../../../../../components/shell/permission-denied-page.tsx';
 import { ShellOfflineBanner } from '../../../../../components/shell/offline-banner.tsx';
-import { RouteSkeleton } from '../../../../../components/shell/route-skeleton.tsx';
-import { isDev } from '../../../../../lib/env.ts';
+import {
+  placeholderPage,
+  type WorkspacePageProps,
+} from '../../../../../components/shell/placeholder-page.tsx';
 import { can } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../src/health.ts';
 
+import { renderBoard } from '../_court-day/render-board.tsx';
 import { DelegatePlan, OutcomesLiveStrip, type PlanRow } from '../_court-day/delegate-sheet.tsx';
 
 import {
@@ -27,12 +30,7 @@ import {
   type OutcomesLiveView,
 } from './plan/actions.ts';
 
-type SearchParams = Record<string, string | string[] | undefined>;
-
-interface TomorrowPageProps {
-  params: Promise<{ slug: string }>;
-  searchParams: Promise<SearchParams>;
-}
+const Placeholder = placeholderPage('tomorrow');
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('delegation');
@@ -119,60 +117,70 @@ async function loadPlan(
   };
 }
 
-export default async function TomorrowPage({ params, searchParams }: TomorrowPageProps) {
-  const [{ slug }, query] = await Promise.all([params, searchParams]);
+export default async function TomorrowPage(props: WorkspacePageProps) {
+  // The placeholder's guards run first (membership, flag, dev states); the board replaces its body.
+  const { base, board } = await renderBoard(props, 'tomorrow', Placeholder);
+  if (board === null) return base;
+  const { slug } = await props.params;
   const context = await getWorkspaceContext(slug);
-  if (!context) notFound();
-  if (!can(context.role, 'court_day.view_all')) return <PermissionDeniedPage />;
-
-  const preview = isDev() ? query.__state : undefined;
-  if (preview === 'loading') return <RouteSkeleton />;
+  if (!context || !can(context.role, 'court_day.view_all')) return board;
 
   const t = await getTranslations('delegation');
   const canAssign = can(context.role, 'appearance.assign');
   const date = tomorrowIst(new Date());
   let plan: Awaited<ReturnType<typeof loadPlan>>;
   try {
-    if (preview === 'error') throw new Error('Tomorrow plan error state (dev toggle)');
     plan = await loadPlan(context.workspace.id, context.user.id, date, context.role === 'owner');
   } catch (error) {
-    if (preview !== 'error') logger.error({ err: error }, 'tomorrow plan: could not load');
+    logger.error({ err: error }, 'tomorrow plan: could not load');
     return (
-      <div role="alert" data-pattern-state="error" className="flex flex-col gap-2">
-        <p>{t('error')}</p>
-        <a href="" className="underline">
-          {t('retry')}
-        </a>
+      <div className="flex flex-col gap-6">
+        {board}
+        <div role="alert" data-pattern-state="error" className="flex flex-col gap-2">
+          <p>{t('error')}</p>
+          <a href="" className="underline">
+            {t('retry')}
+          </a>
+        </div>
       </div>
     );
   }
 
   return (
-    <div data-route="tomorrow" className="flex flex-col gap-6">
-      <ShellOfflineBanner />
-      <header className="flex flex-col gap-1">
-        <h1 className="font-serif text-2xl font-medium">{t('title')}</h1>
-        <p className="text-ink-muted text-sm">{t('description')}</p>
-      </header>
-      {plan.outcomes === null ? null : (
-        <OutcomesLiveStrip
-          workspaceId={context.workspace.id}
-          date={date}
-          initial={plan.outcomes}
-          poll={outcomesLiveAction}
-        />
-      )}
-      {plan.rows.length === 0 ? (
-        <EmptyState data-pattern-state="empty" title={t('empty')} />
-      ) : (
-        <DelegatePlan
-          workspaceId={context.workspace.id}
-          rows={plan.rows}
-          members={plan.members}
-          canAssign={canAssign}
-          actions={{ assign: assignAppearanceAction, acceptAll: acceptAllSuggestionsAction }}
-        />
-      )}
+    <div className="flex flex-col gap-6">
+      {board}
+      <section
+        data-section="tomorrow-plan"
+        aria-labelledby="tomorrow-plan-title"
+        className="flex flex-col gap-4"
+      >
+        <ShellOfflineBanner />
+        <header className="flex flex-col gap-1">
+          <h2 id="tomorrow-plan-title" className="font-serif text-xl font-medium">
+            {t('title')}
+          </h2>
+          <p className="text-ink-muted text-sm">{t('description')}</p>
+        </header>
+        {plan.outcomes === null ? null : (
+          <OutcomesLiveStrip
+            workspaceId={context.workspace.id}
+            date={date}
+            initial={plan.outcomes}
+            poll={outcomesLiveAction}
+          />
+        )}
+        {plan.rows.length === 0 ? (
+          <EmptyState data-pattern-state="empty" title={t('empty')} />
+        ) : (
+          <DelegatePlan
+            workspaceId={context.workspace.id}
+            rows={plan.rows}
+            members={plan.members}
+            canAssign={canAssign}
+            actions={{ assign: assignAppearanceAction, acceptAll: acceptAllSuggestionsAction }}
+          />
+        )}
+      </section>
     </div>
   );
 }

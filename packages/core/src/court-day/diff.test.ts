@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { newWorkspace } from '../__tests__/fixtures.ts';
 
-import { diffLists, hashRows, itemOrdinal, snapshotList } from './diff.ts';
+import { diffLists, getListDiffs, hashRows, itemOrdinal, snapshotList } from './diff.ts';
 import type { CourtDayEvent } from './scope.ts';
 
 const row = (
@@ -155,6 +155,33 @@ describe('snapshotList (R6, R7)', () => {
           },
         ),
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    });
+  });
+});
+
+describe('getListDiffs (#59)', () => {
+  it('diffs the two newest snapshots of a forum and date, and nothing for a single list', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const forum = await inWorkspace(tx, workspaceId, (s) => buildForum(s, workspaceId));
+      const deps = { db: tx };
+      const actor = { userId: ownerId, workspaceId };
+      const base = { forumId: forum.id, listDate: '2026-11-02' };
+      const daily = [row('WP/1/2026', '3', '2'), row('WP/2/2026', '3', '3')];
+      expect(await getListDiffs(deps, actor, { date: '2026-11-02' })).toEqual([]);
+      await snapshotList(deps, actor, { ...base, listType: 'daily', rows: daily });
+      expect(await getListDiffs(deps, actor, { date: '2026-11-02' })).toEqual([]);
+      await snapshotList(deps, actor, {
+        ...base,
+        listType: 'supplementary',
+        rows: [daily[0] as SnapshotRow, row('WP/2/2026', '5', '3'), row('WP/9/2026', '4', '31')],
+      });
+      const [diff, ...rest] = await getListDiffs(deps, actor, { date: '2026-11-02' });
+      expect(rest).toEqual([]);
+      expect(diff?.label).toBe('supplementary');
+      expect(diff?.added.map((e) => e.proceedingKey)).toEqual(['WP/9/2026']);
+      expect(diff?.moved.map((e) => e.proceedingKey)).toEqual(['WP/2/2026']);
+      expect(await getListDiffs(deps, actor, { date: '2026-11-03' })).toEqual([]);
     });
   });
 });

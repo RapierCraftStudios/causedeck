@@ -48,3 +48,8 @@ The `turbo: command not found` (exit 127) was an environment PATH issue, not a c
 - Re-run again: `pnpm exec turbo run typecheck` passes 24/24; `turbo` is only missing from bare PATH. No code change.
 - Re-run (4th): `pnpm exec turbo run typecheck --filter='...[base]'` passes 24/24. Failure is bare `turbo` missing from PATH; no code change.
 - Tenancy CI fix: apps/api cross-tenant.test.ts ROUTES must list every built-in /v1 route; added `POST /v1/csp-report` (public, no tenant data). `vitest run src/__tests__/cross-tenant.test.ts` passes 12/12.
+
+## Lint fix
+- eslint.config.js: ignore infra/security/semgrep/fixtures/** (outside every tsconfig, deliberately unsafe snippets).
+- csp-report.test.ts: typed JSON.parse result (no-unsafe-assignment).
+- Linted the changed files directly with eslint (lane-check.sh absent on this host); all clean.

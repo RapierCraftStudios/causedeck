@@ -152,7 +152,7 @@ describe('sanitising', () => {
   });
 
   it('caps a Reporting API batch', () => {
-    const entry = JSON.parse(reporting)[0];
+    const entry = (JSON.parse(reporting) as unknown[])[0];
     const reports = parseCspReports(
       'application/reports+json',
       JSON.stringify(Array(50).fill(entry)),

@@ -14,6 +14,8 @@ export default [
       'research/**',
       // Node-test files run with --experimental-strip-types and sit outside every tsconfig (#102).
       'infra/monitoring/test/**',
+      // Semgrep rule fixtures are deliberately unsafe snippets outside every tsconfig (#104).
+      'infra/security/semgrep/fixtures/**',
     ],
   },
   {

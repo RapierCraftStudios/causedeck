@@ -1,34 +1,36 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield infra feature; dev-grade Dockerfiles exist, no prod stack)
+**Severity**: medium (greenfield Stage A monitoring; CERT-In 180-day log retention is a compliance obligation)
 **Task Type**: feature
 
 ### What Was Claimed
-Production-grade images for web/api/worker/admin and `infra/docker/compose.prod.yml` for a single India VPS (Caddy, web x2, api, worker x2, admin, Postgres 17 + pgvector + WAL-G, MinIO), plus migrate/healthcheck/bootstrap scripts, an images workflow (multi-arch, GHCR, Trivy, SBOM, cosign), a compose smoke test, env examples and docs. 13 acceptance criteria (R1-R13).
+Add an India-resident monitoring stack (Prometheus, Grafana, Loki, Alertmanager, OTel Collector, cAdvisor, node_exporter, blackbox) with promtool-tested alerts, 180-day tamper-resistant log retention, content redaction, court-day dashboards/thresholds, on-call routing, optional Sentry, adapter-health metrics and capacity docs (13 acceptance criteria).
 
 ### What We Found
-- Base `origin/milestone/production-infra-scale` has only dev-grade Dockerfiles: `infra/docker/{web,api,worker,admin}.Dockerfile` (e.g. `api.Dockerfile:3` says "Production hardening ... arrives with #97"), `infra/docker/compose.dev.yml`, and `infra/docker/postgres/init/{01-extensions,02-roles}.sql`.
-- Base images are tag-pinned (`node:22.23.0-bookworm-slim`, `api.Dockerfile:5`), not digest-pinned; no `tini`; `USER node` (non-root, named not numeric); no TZ/UTC; no `.dockerignore` in `infra/docker`.
-- No `compose.prod.yml`, `postgres/Dockerfile`, `postgresql.conf`, `env/*.env.example`, `infra/scripts/{migrate,healthcheck,bootstrap-vps}.sh`, `infra/docker/test/`, `infra/caddy/` (owned by #98), or `.github/workflows/images.yml`.
-- Existing static-lint precedent: `infra/scripts/compose-dev.test.mjs` (node test over compose YAML).
-- Health: `packages/observability/src/health.ts:80` `createHealthHandlers` (checks registry, 2 s timeout `:36`); web `apps/web/src/health.ts:7` registers no checks; worker `apps/worker/src/health.ts:29`; api `apps/api/src/app.ts:90`; admin has `apps/admin/app/healthz` only (no /readyz).
-- Owner-role migrations: `packages/db/scripts/migrate.ts`; role split in `infra/docker/postgres/init/02-roles.sql`.
-- The issue already carries a frozen builder contract (FORGE:CONTRACT, sha e600d311805c) with 13 requirements; its D11 references a nonexistent R14 (should be R13) and D17 omits the exact app health files, corrected here. Stale `.forge-lean/*` files in the tree belong to another issue (WhatsApp link) and are overwritten.
+- `infra/monitoring/` does not exist on base; `infra/runbooks/` holds only `data-ops/` and `workspace-deletion.md` (no `on-call.md`).
+- `infra/docker/compose.prod.yml:16-21` defines networks `edge` and `data` (internal); no monitoring services, no log driver config. Caddy is a placeholder owned by #98 (`infra/caddy/Caddyfile:1-3`, no log directive).
+- `packages/observability/src/redact.ts:12-19` `CONTENT_KEYS` = content,text,body,quote,prompt,memoryValue: missing `title`, `filename`, `email`; secret pattern `:9` already covers token/authorization.
+- `packages/observability/src/logger.ts:96-123`: base fields `service`, `env`; mixin emits camelCase `requestId`, `workspaceId` (no `request_id`/`workspace_id`, no trace/span ids).
+- `packages/observability/src/otel.ts` exports OTLP over HTTP (`exporter-*-otlp-http`); no adapter metrics exist anywhere (`adapter_parse_success_ratio` / `adapter_last_success_timestamp` grep: none).
+- `packages/observability/src/sentry.ts:29-41` `beforeSend` already scrubs request data/user email; Sentry inert without DSN (`:20-24`).
+- `packages/observability/src/health.ts:106-152` already has a clock-drift readiness check (`createClockDriftCheck`, 1 s), so only the host-level alert (node_exporter `node_timex_offset_seconds`) and chrony/NTP guarantee are missing.
+- Test precedent: node tests over compose text `infra/scripts/compose-dev.test.mjs`, `compose-prod.test.mjs`, run by `package.json:31` `test:ci-scripts`. `promtool` is not installed locally.
+- Stale `.forge-lean/*` files from other issues were replaced.
 
 ### Root Cause
-Greenfield: Stage A production packaging was never built; only dev Dockerfiles/compose exist.
+Greenfield: Stage A observability collection/alerting/retention was specified (spike §1, §6) but never built; instrumentation (#13) and prod compose (#97) exist but nothing collects them.
 
 ### Affected Files
-All new or hardened under `infra/docker/**`, `infra/scripts/**`, `.github/workflows/images.yml`, plus a clock-drift readiness check in `packages/observability/src/health.ts` wired into `apps/{web,api,worker}` health modules. See contract.json deliverables.
+New: `infra/monitoring/**` (compose, prometheus + rules + promtool tests, alertmanager, loki, otel-collector, blackbox, grafana provisioning/dashboards, log-retention, tests, README with limits and growth model), `infra/runbooks/on-call.md`. Changed: `packages/observability/src/redact.ts` (+test), `logger.ts` (snake_case + trace ids), new `adapter-metrics.ts`, `package.json` (`test:ci-scripts` already globs `infra/scripts` only; add monitoring test script).
 
 ### Sibling Sweep
-`.github/workflows/*` all pin actions by SHA and are checked by lint-workflows; images.yml must follow. Caddyfile is #98's (no `infra/caddy` yet), so compose mounts a path with a minimal placeholder. Admin lacks `/readyz`; drift check is not wired there (healthz only).
+Same content-leak class: `sentry.ts` and `otel.ts` share `redact.ts`, so new content keys cover all three. OTel Collector redaction processor must mirror `CONTENT_KEYS`; a test should assert the lists match. Caddy JSON access logs must drop `Authorization`/`Cookie` headers and URL query.
 
 ### History
-Dev Dockerfiles from #10/#14/#15; dev compose from ad0a831 (#5). No prior prod attempt merged.
+`redact.ts` from the observability foundation (#13); prod compose from #97 (b210fd3a). No prior monitoring attempt.
 
 ### Recommendation
-Implement per contract.json in one lane (infra files mostly independent, ~25 files, well under split threshold). Static compose lint test and observability unit test are the in-lane checks; image size, smoke, Trivy/cosign, bootstrap idempotence are CI/out-of-band.
+Single lane (~35 mostly independent config files, under split threshold). In-lane checks: node tests that parse configs (retention >= 4320h, India endpoint, rule coverage, route wiring), vitest for redaction/logger/adapter metrics, `verify-retention.sh` against a fixture/mock mode. promtool, e2e leak run, Grafana-behind-admin and live delivery are CI/out-of-band (promtool via pinned prom image in CI).
 
 ### Related Issues
-#1 (parent), #10, #14, #15 (done); #98 Caddy, #99 Terraform, #100 deploy, #101 backups, #102 monitoring, #108 VPS, #116 secrets (out of scope / external).
+#1 (parent), #13 and #97 (deps, done), #96 (status page, closed not_planned), #98 Caddy, #101 backups (metrics source), #103 runbooks, #115 Sentry DSN (human).

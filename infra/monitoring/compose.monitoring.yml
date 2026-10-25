@@ -1,0 +1,261 @@
+# Monitoring stack for Stage A (#102): metrics, logs, alerting and dashboards, all in India on the
+# same VPS (or a small monitoring VPS next to it). No telemetry leaves the host: log shipping to a
+# SaaS outside India is prohibited (CERT-In, spike §3, §6).
+#
+#   docker compose -f infra/monitoring/compose.monitoring.yml --env-file "$CAUSEDECK_ENV_FILE" up -d --wait
+#
+# Rules this file keeps (asserted by infra/monitoring/test/config.test.ts):
+#   - nothing is published except on 127.0.0.1; Grafana is reached through the admin gate (Caddy,
+#     #98) by proxying to 127.0.0.1:3030, never publicly;
+#   - every service has memory and CPU limits (README table) and a restart policy;
+#   - third-party images are pinned to a version, never latest;
+#   - containers run in UTC and the host must run chrony (README); node_exporter reports the offset.
+# Receivers come from env (alertmanager.yml is rendered by the container entrypoint).
+name: causedeck-monitoring
+
+networks:
+  monitoring:
+    internal: true
+  # The app stack's edge network (compose.prod.yml), joined to scrape and probe services.
+  app:
+    external: true
+    name: ${APP_NETWORK:-causedeck-prod_edge}
+  # The app stack's internal data network: Loki reaches MinIO (India object storage) through it.
+  data:
+    external: true
+    name: ${DATA_NETWORK:-causedeck-prod_data}
+  # Egress for alert delivery (email, webhooks) only.
+  egress:
+
+volumes:
+  prometheus_data:
+  loki_data:
+  grafana_data:
+  alertmanager_data:
+  otelcol_storage:
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+x-hardening: &hardening
+  restart: unless-stopped
+  cap_drop: [ALL]
+  security_opt: ['no-new-privileges:true']
+  logging: *logging
+
+services:
+  prometheus:
+    <<: *hardening
+    image: prom/prometheus:v3.5.0
+    read_only: true
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-30d}
+      - --storage.tsdb.retention.size=${PROMETHEUS_RETENTION_SIZE:-8GB}
+      - --web.listen-address=:9090
+    environment:
+      TZ: UTC
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - ./prometheus/targets:/etc/prometheus/targets:ro
+      - prometheus_data:/prometheus
+    ports:
+      - '127.0.0.1:9090:9090'
+    networks: [monitoring, app]
+    deploy:
+      resources:
+        limits:
+          memory: ${PROMETHEUS_MEM:-768m}
+          cpus: '${PROMETHEUS_CPUS:-0.5}'
+
+  alertmanager:
+    <<: *hardening
+    image: prom/alertmanager:v0.28.1
+    read_only: true
+    # Alertmanager does not expand env vars: render the receivers from env, then exec.
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - >-
+        sed -e "s|__ONCALL_WEBHOOK_URL__|$${ONCALL_WEBHOOK_URL}|g"
+        -e "s|__FALLBACK_WEBHOOK_URL__|$${FALLBACK_WEBHOOK_URL}|g"
+        -e "s|__TICKET_WEBHOOK_URL__|$${TICKET_WEBHOOK_URL}|g"
+        -e "s|__ALERT_EMAIL_TO__|$${ALERT_EMAIL_TO}|g"
+        -e "s|__ALERT_EMAIL_FROM__|$${ALERT_EMAIL_FROM}|g"
+        -e "s|__SMTP_SMARTHOST__|$${SMTP_SMARTHOST}|g"
+        /etc/alertmanager/alertmanager.yml > /tmp/alertmanager.yml &&
+        exec /bin/alertmanager --config.file=/tmp/alertmanager.yml
+        --storage.path=/alertmanager --web.listen-address=:9093
+    environment:
+      TZ: UTC
+      ONCALL_WEBHOOK_URL: ${ONCALL_WEBHOOK_URL:-http://webhook-mock:9095/oncall}
+      FALLBACK_WEBHOOK_URL: ${FALLBACK_WEBHOOK_URL:-http://webhook-mock:9095/fallback}
+      TICKET_WEBHOOK_URL: ${TICKET_WEBHOOK_URL:-http://webhook-mock:9095/ticket}
+      ALERT_EMAIL_TO: ${ALERT_EMAIL_TO:-oncall@localhost}
+      ALERT_EMAIL_FROM: ${ALERT_EMAIL_FROM:-alerts@localhost}
+      SMTP_SMARTHOST: ${SMTP_SMARTHOST:-mailpit:1025}
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - '127.0.0.1:9093:9093'
+    networks: [monitoring, egress]
+    deploy:
+      resources:
+        limits:
+          memory: ${ALERTMANAGER_MEM:-128m}
+          cpus: '${ALERTMANAGER_CPUS:-0.15}'
+
+  loki:
+    <<: *hardening
+    image: grafana/loki:3.5.1
+    read_only: true
+    command: ['-config.file=/etc/loki/loki-config.yml', '-config.expand-env=true']
+    environment:
+      TZ: UTC
+      LOKI_S3_ENDPOINT: ${LOKI_S3_ENDPOINT:-minio:9000}
+      LOKI_S3_BUCKET: ${LOKI_S3_BUCKET:-causedeck-logs}
+      LOKI_S3_ACCESS_KEY: ${LOKI_S3_ACCESS_KEY:?set LOKI_S3_ACCESS_KEY}
+      LOKI_S3_SECRET_KEY: ${LOKI_S3_SECRET_KEY:?set LOKI_S3_SECRET_KEY}
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    tmpfs:
+      - /tmp
+    networks: [monitoring, data]
+    deploy:
+      resources:
+        limits:
+          memory: ${LOKI_MEM:-768m}
+          cpus: '${LOKI_CPUS:-0.5}'
+
+  otel-collector:
+    <<: *hardening
+    image: otel/opentelemetry-collector-contrib:0.130.0
+    read_only: true
+    command: ['--config=/etc/otelcol/otel-collector.yml']
+    # Root only to read Docker's 0640 root-owned log files; every capability is dropped.
+    user: '0:0'
+    environment:
+      TZ: UTC
+    volumes:
+      - ./otel-collector.yml:/etc/otelcol/otel-collector.yml:ro
+      # Docker json-file logs of every container (services and Caddy), read-only.
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - otelcol_storage:/var/lib/otelcol
+    networks: [monitoring, app]
+    deploy:
+      resources:
+        limits:
+          memory: ${OTELCOL_MEM:-256m}
+          cpus: '${OTELCOL_CPUS:-0.25}'
+
+  cadvisor:
+    <<: *hardening
+    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    read_only: true
+    # cAdvisor needs host read access; it publishes nothing.
+    cap_drop: [ALL]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    command: ['--docker_only=true', '--housekeeping_interval=30s', '--store_container_labels=false']
+    networks: [monitoring]
+    deploy:
+      resources:
+        limits:
+          memory: ${CADVISOR_MEM:-192m}
+          cpus: '${CADVISOR_CPUS:-0.25}'
+
+  node-exporter:
+    <<: *hardening
+    image: prom/node-exporter:v1.9.1
+    read_only: true
+    command:
+      - --path.rootfs=/host
+      - --collector.timex
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+)($$|/)
+    volumes:
+      - /:/host:ro,rslave
+    networks: [monitoring]
+    deploy:
+      resources:
+        limits:
+          memory: ${NODE_EXPORTER_MEM:-64m}
+          cpus: '${NODE_EXPORTER_CPUS:-0.1}'
+
+  blackbox:
+    <<: *hardening
+    image: prom/blackbox-exporter:v0.27.0
+    read_only: true
+    command: ['--config.file=/etc/blackbox/blackbox.yml']
+    volumes:
+      - ./blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    networks: [monitoring, app, egress]
+    deploy:
+      resources:
+        limits:
+          memory: ${BLACKBOX_MEM:-64m}
+          cpus: '${BLACKBOX_CPUS:-0.1}'
+
+  grafana:
+    <<: *hardening
+    image: grafana/grafana:12.1.0
+    read_only: true
+    environment:
+      TZ: UTC
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://127.0.0.1:3030/}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_AUTH_ANONYMOUS_ENABLED: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+      GF_DATE_FORMATS_DEFAULT_TIMEZONE: Asia/Kolkata
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    tmpfs:
+      - /tmp
+    # Loopback only: Caddy's admin-gated route (#98) is the sole way in.
+    ports:
+      - '127.0.0.1:3030:3000'
+    networks: [monitoring]
+    deploy:
+      resources:
+        limits:
+          memory: ${GRAFANA_MEM:-256m}
+          cpus: '${GRAFANA_CPUS:-0.25}'
+
+  # CI only: records webhook deliveries so the synthetic-alert test can assert routing.
+  webhook-mock:
+    image: node:22.23.0-bookworm-slim
+    profiles: [ci]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    command:
+      - node
+      - -e
+      - |
+        const http = require('node:http');
+        const seen = [];
+        http.createServer((req, res) => {
+          if (req.method === 'GET') { res.end(JSON.stringify(seen)); return; }
+          let body = '';
+          req.on('data', (c) => (body += c));
+          req.on('end', () => { seen.push({ path: req.url, body: JSON.parse(body || '{}') }); res.end('ok'); });
+        }).listen(9095);
+    networks: [monitoring]
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+          cpus: '0.1'

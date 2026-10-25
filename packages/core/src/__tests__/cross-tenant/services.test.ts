@@ -30,6 +30,7 @@ import {
   invalidateEntitlements,
 } from '../../billing/index.ts';
 import * as core from '../../index.ts';
+import { composeUpdate, recordCopied, recordShared, saveEdit } from '../../outward/index.ts';
 
 const THIS_FILE = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
 const mailer: Mailer = { send: () => Promise.resolve() };
@@ -3523,6 +3524,49 @@ describe('cross-tenant tracked-case metering: ub on workspace B against A', () =
       expect(naming.chargePaise).toBe(0);
       // A is untouched and still counts its own.
       expect(await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId))).toBe(aSeeded + 5);
+    });
+  });
+});
+
+// Outward update drafts (#735) live in the `@causedeck/core/outward` subpath, not the root index,
+// so the registry does not list them; they hold the same B-on-A contract.
+describe('cross-tenant outward drafts: ub on workspace B against A', () => {
+  it("denies B on A's draft and matter, and leaves A unchanged", async () => {
+    await withTestDb(async (tx) => {
+      const seeded = await seedTwoTenants(tx);
+      const draftId = seeded.a.rows.outward_draft?.draftId;
+      const matterId = seeded.a.rows.matter?.matterId;
+      if (typeof draftId !== 'string' || typeof matterId !== 'string') {
+        throw new TypeError('two-tenant outward seed rows missing');
+      }
+      const asBActor = { userId: seeded.ub, workspaceId: seeded.b.id };
+      const read = () =>
+        inWorkspace(tx, seeded.a.id, async (s) => ({
+          drafts: await s.select().from(schema.outwardDraft),
+          versions: await s.select().from(schema.outwardDraftVersion),
+          logs: await s.select().from(schema.outwardShareLog),
+        }));
+      const before = await read();
+      const deps = { db: tx };
+      await expect(
+        composeUpdate(deps, asBActor, {
+          matterId,
+          audience: 'senior_counsel',
+        }),
+      ).rejects.toBeDefined();
+      await expect(saveEdit(deps, asBActor, { draftId, body: 'x' })).rejects.toBeDefined();
+      await expect(
+        recordShared(deps, asBActor, { draftId, channel: 'download' }),
+      ).rejects.toBeDefined();
+      await expect(recordCopied(deps, asBActor, { draftId })).rejects.toBeDefined();
+      expect(await read()).toEqual(before);
+      const seenByB = await inWorkspace(
+        tx,
+        seeded.b.id,
+        (s) => s.select().from(schema.outwardDraft).where(eq(schema.outwardDraft.id, draftId)),
+        seeded.ub,
+      );
+      expect(seenByB).toEqual([]);
     });
   });
 });

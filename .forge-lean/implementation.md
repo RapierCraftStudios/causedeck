@@ -29,3 +29,6 @@ Checked the four listed tests (admin headers, server-actions-audit, sources-acti
 
 ## Export-collision follow-up
 Renamed outward/context.ts exports `requireMatterFor` -> `requireOutwardMatter` and `audit` -> `auditOutward` (they collided with obligations/context.ts); updated diff.ts, compose.ts and share.ts. No registry or test keyed by those names. Core tsc clean; vitest on src/outward and domains.test.ts passes (27 tests).
+
+## Fix: D20 cross-tenant case
+Added a real B-on-A outward describe (composeUpdate/saveEdit/recordShared/recordCopied) to packages/core/src/__tests__/cross-tenant/services.test.ts. Outward is a subpath export, not in the root index, so no SERVICE_TESTS entries apply (same as billing).

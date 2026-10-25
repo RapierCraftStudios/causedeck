@@ -6,6 +6,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { ClashCard } from './clash-card.tsx';
 import { CourtIsAtMarker } from './court-is-at-marker.tsx';
+import { HallBench } from './hall-bench.tsx';
 import { changeOf, ItemCard, ordinalOf } from './item-card.tsx';
 
 export interface HallColumnProps {
@@ -22,6 +23,13 @@ export interface HallColumnProps {
   /** Shown on a phone; hidden there when another hall is selected. */
   selected: boolean;
   tabStopListingId: string | null;
+  /** The `bench_facts` flag is on: the bench line may show (D-050). */
+  showBench: boolean;
+}
+
+/** The distinct benches the hall's listings are before, as the cause list published them. */
+function benchOf(items: readonly { bench: readonly string[] }[]): string[] {
+  return [...new Set(items.flatMap((item) => item.bench))];
 }
 
 export async function HallColumn(props: HallColumnProps) {
@@ -32,8 +40,6 @@ export async function HallColumn(props: HallColumnProps) {
   const own = clashes.filter((c) =>
     c.items.some((i) => items.some((x) => x.listingId === i.listingId)),
   );
-  // The bench a listing is before is cause-list content; nothing here counts or rates a judge.
-  const benchNames = [...new Set(items.flatMap((item) => item.bench))];
   const marker = hall.marker?.currentItem ?? null;
   const title =
     hall.hallNo === null ? t('hall.unassigned') : t('hall.name', { hallNo: hall.hallNo });
@@ -59,11 +65,7 @@ export async function HallColumn(props: HallColumnProps) {
           <>
             {props.forum} · {t('hall.count', { count: items.length })}
             {marker === null ? '' : ` · ${t('hall.courtIsAt', { item: marker })}`}
-            {benchNames.length === 0 ? null : (
-              <span data-hall-bench className="block [font-variant-caps:all-small-caps]">
-                {t('hall.bench', { judges: benchNames.join(', ') })}
-              </span>
-            )}
+            {props.showBench ? <HallBench names={benchOf(items)} /> : null}
           </>
         }
         actions={

@@ -3,10 +3,12 @@
 // sets the viewport it needs, so it runs the same in each Playwright project. `@a11y` runs axe
 // after the test with zero serious or critical violations allowed (R19).
 import type { Locator, Page } from '@playwright/test';
+import postgres from 'postgres';
 
 import { COURT_DAY, seedCourtDay, type CourtDayOptions } from '../../fixtures/court-day-data.ts';
 import { expect as baseExpect, test } from '../../fixtures/index.ts';
-import { contentReady } from '../shell/helpers.ts';
+import { databaseUrl } from '../../support/db-reset.ts';
+import { SHELL_WORKSPACE, contentReady } from '../shell/helpers.ts';
 
 // Client navigations render a dynamic route and a server action writes to Postgres: allow for a
 // busy runner.
@@ -15,6 +17,22 @@ const expect = baseExpect.configure({ timeout: 15_000 });
 const PHONE = { width: 360, height: 780 };
 const TABLET = { width: 768, height: 1024 };
 const DESKTOP = { width: 1280, height: 800 };
+
+/** Turn `bench_facts` on for the shell workspace (a workspace override row; off in the seed). */
+async function enableBenchFacts(database: string): Promise<void> {
+  const sql = postgres(databaseUrl(database, 'superuser'), { max: 1, onnotice: () => undefined });
+  try {
+    await sql`
+      insert into workspace_feature_flag (workspace_id, key, enabled, updated_by)
+      select o.id, 'bench_facts', true, m.user_id
+        from organization o
+        join member m on m.workspace_id = o.id and m.role = 'owner'
+       where o.slug = ${SHELL_WORKSPACE}
+       limit 1`;
+  } finally {
+    await sql.end();
+  }
+}
 
 async function openBoard(
   page: Page,
@@ -25,14 +43,18 @@ async function openBoard(
     path = '/today',
     size = DESKTOP,
     seed,
+    benchFacts = false,
   }: {
     role?: 'owner' | 'advocate' | 'clerk' | 'viewer';
     path?: string;
     size?: { width: number; height: number };
     seed?: CourtDayOptions;
+    /** The `bench_facts` flag is on (off by default, as in the seed). */
+    benchFacts?: boolean;
   } = {},
 ): Promise<{ today: string; tomorrow: string }> {
   const days = await seedCourtDay(db, seed);
+  if (benchFacts) await enableBenchFacts(db.name);
   await page.setViewportSize(size);
   await asUser(role, { path });
   await contentReady(page);
@@ -710,14 +732,22 @@ test.describe('court-day board', () => {
     asUser,
     db,
   }) => {
-    await openBoard(page, asUser, db);
+    await openBoard(page, asUser, db, { benchFacts: true });
     const board = page.locator('[data-court-day-board]');
     const text = await board.innerText();
-    // The bench a listing is before is cause-list content and may show.
+    // With `bench_facts` on, the bench a listing is before shows, as cause-list content.
     await expect(hall(page, '3')).toContainText(COURT_DAY.judge);
     expect(text).not.toMatch(
       /likely|probab|predict|estimat|expected to be (called|heard)|rating|win rate|grant rate|success rate|average|analytics|statistic/i,
     );
     expect(text).not.toMatch(/\b\d{1,3}\s?%/);
+  });
+
+  // D-050: who sat is a bench fact, behind `bench_facts` (off until counsel clears it, #118).
+  test('with bench_facts off the board names no judge', async ({ page, asUser, db }) => {
+    await openBoard(page, asUser, db);
+    await expect(hall(page, '3')).toBeVisible();
+    await expect(page.locator('[data-hall-bench]')).toHaveCount(0);
+    expect(await page.locator('[data-court-day-board]').innerText()).not.toContain(COURT_DAY.judge);
   });
 });

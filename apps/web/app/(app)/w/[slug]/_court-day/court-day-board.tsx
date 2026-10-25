@@ -21,6 +21,8 @@ export interface CourtDayBoardProps {
   locale: string;
   canWrite: boolean;
   board: BoardData;
+  /** The `bench_facts` flag is on for the workspace: halls may show their bench (D-050). */
+  showBench: boolean;
   /** The `?hall=` value: a hall id, or a hall number for a hall without an id. */
   selectedHall: string | undefined;
 }
@@ -109,6 +111,7 @@ export async function CourtDayBoard(props: CourtDayBoardProps) {
                     diffs={diffs}
                     selected={key === selected}
                     tabStopListingId={firstItem}
+                    showBench={props.showBench}
                   />
                 ))}
               </div>

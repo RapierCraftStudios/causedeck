@@ -8,6 +8,7 @@ import type {
   PlaceholderRoute,
   WorkspacePageProps,
 } from '../../../../../components/shell/placeholder-page.tsx';
+import { workspaceFlagCheck } from '../../../../../lib/flags.ts';
 import { can } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 
@@ -39,6 +40,8 @@ export async function renderBoard(
     }
     throw error;
   }
+  // Who sat is a bench fact, behind the legal-gated flag (D-050); resolved here, on the server.
+  const showBench = (await workspaceFlagCheck(context))('bench_facts');
   const hall = query.hall;
   return {
     base,
@@ -50,6 +53,7 @@ export async function renderBoard(
         locale={await getLocale()}
         canWrite={can(context.role, 'matter.write')}
         board={data}
+        showBench={showBench}
         selectedHall={Array.isArray(hall) ? hall[0] : hall}
       />
     ),

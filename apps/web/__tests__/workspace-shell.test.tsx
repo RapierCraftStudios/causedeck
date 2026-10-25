@@ -182,6 +182,8 @@ const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
 );
 const FLAGGED = new Set(['invoices', 'limitation']);
+/** A placeholder page that renders unflagged, derived so it cannot go stale when one graduates. */
+const OFFLINE_ROUTE = PLACEHOLDER_ROUTES.find((route) => !FLAGGED.has(route)) ?? 'briefs';
 
 /** Flagged pages rebuilt with the flag on, so every route can be rendered. */
 function pageFor(route: PlaceholderId): PageComponent {
@@ -595,7 +597,7 @@ describe('placeholder pages', () => {
 
   it('shows the offline banner only while navigator.onLine is false', async () => {
     online = false;
-    withIntl(await PAGES.calendar(props('demo')));
+    withIntl(await PAGES[OFFLINE_ROUTE](props('demo')));
     const banner = () => document.querySelector('[data-pattern-state="offline"]');
     expect(banner()?.textContent).toContain('You are offline.');
 
@@ -613,7 +615,7 @@ describe('placeholder pages', () => {
   });
 
   it('renders no offline banner when online', async () => {
-    withIntl(await PAGES.calendar(props('demo')));
+    withIntl(await PAGES[OFFLINE_ROUTE](props('demo')));
     expect(document.querySelector('[data-pattern-state="offline"]')).toBeNull();
   });
 });

@@ -14,6 +14,7 @@
     "lhci": "lhci autorun --config=lighthouserc.json",
     "lhci:courts": "node support/lighthouse-courts.mjs",
     "lhci:calendar": "node support/lighthouse-courts.mjs lighthouserc.calendar.json",
+    "lhci:court-day": "node support/lighthouse-courts.mjs lighthouserc.court-day.json /w/chennai-solo/today",
     "lhci:matters": "node --experimental-strip-types --no-warnings support/lighthouse-matters.mjs"
   },
   "devDependencies": {

@@ -175,7 +175,7 @@ function readIfExists(file: string): string | undefined {
 const isSource = (file: string): boolean =>
   /\.(ts|tsx)$/.test(file) && !/(__tests__|\.test\.|\.spec\.|fixtures|\.d\.ts)/.test(file);
 
-export function runChecks(root: string): Finding[] {
+export function runScaleReadinessChecks(root: string): Finding[] {
   const compose = readIfExists(path.join(root, 'infra/docker/compose.prod.yml')) ?? '';
   const sources: Record<string, string> = {};
   for (const dir of [
@@ -203,7 +203,7 @@ export function runChecks(root: string): Finding[] {
 
 function main(): void {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-  const findings = runChecks(root);
+  const findings = runScaleReadinessChecks(root);
   for (const finding of findings) console.error(`✗ [${finding.rule}] ${finding.detail}`);
   if (findings.length > 0) {
     console.error(`\nscale-readiness: ${String(findings.length)} finding(s).`);

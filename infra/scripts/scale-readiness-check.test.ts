@@ -13,7 +13,7 @@ import {
   checkMigrations,
   checkStatelessServices,
   parseComposeServices,
-  runChecks,
+  runScaleReadinessChecks,
 } from './scale-readiness-check.ts';
 
 const service = (name: string, extra = ''): string =>
@@ -84,6 +84,6 @@ describe('scale-readiness rules', () => {
 
   it('holds on the repository itself', () => {
     const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-    assert.deepEqual(runChecks(root), []);
+    assert.deepEqual(runScaleReadinessChecks(root), []);
   });
 });

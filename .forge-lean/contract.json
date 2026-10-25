@@ -2,37 +2,107 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Build validators `outward-draft.ts` (DraftRequest, DraftEdit, ShareRecord, Audience, Language), tables `outward_draft`, `outward_draft_version`, `outward_share_log` with RLS and migration",
+   "quote": "The queue groups obligations as Overdue, Today, This week, Later, Undated, each group collapsible with a count, overdue first and sorted by age; group state persists per member.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "AI task `outward_update` (packages/ai/src/tasks, mock fixtures EN/TA/KN, drafting tier)",
+   "quote": "Each row shows description, matter and case number, owner avatar, due label with relative text ('due Fri 23 Oct, 3 days'), kind icon, status and a Provenance Chip to the source line; overdue uses an icon plus text, not colour alone.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/core/src/outward/{compose,guard,diff,share,templates/en|ta|kn}.ts`, audit events for prepared/edited/shared, `outward.shared` event",
+   "quote": "Closing an obligation always opens the close dialog requiring a reason (completed task, lawyer action, not applicable plus text); there is no one-tap silent close, including via swipe or keyboard.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "ADR 0038 (no send path), core-domains entry, and registries (cross-tenant registry, db index test, RLS catalog)",
+   "quote": "On touch devices, swipe right opens 'Done' (which opens the close dialog) and swipe left opens 'Reschedule' (date picker plus mandatory reason); a visible button and keyboard shortcut provide the same actions.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Tests: compose, guard (30+ phrases per language set), diff, share, no-send static test, cross-tenant, sensitive-matter template-only, India-only AI, client_contact requirement.",
+   "quote": "Each item shows one drafted next step (task, reminder to the clerk, or letter to the client) as a collapsed card; 'Use' creates a task or an internal reminder immediately and a client letter as a draft that is never sent.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Acceptance criteria of #69 marked [type:unit] and [type:api] that concern core and db.",
+   "quote": "Filters (matter, owner, kind, source, group) and a text search narrow the queue within 100 ms client-side and are reflected in the URL.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "Defects tab lists registry defects with cure-by dates and proceeding state; Certified copies tab shows applied, ready and collected with next action.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "Reorder and group changes animate with layout animation (220 ms) and reduced motion disables them.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "States: empty ('Nothing outstanding. Orders you confirm will add obligations here'), skeleton, error with retry, offline (read from cache; mutations queue and show 'Will sync'), permission-denied (viewer read-only, clerk without strategy text).",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "Keyboard: `j`/`k` move, `x` select, `d` done (dialog), `r` reschedule, `a` add, `o` open detail, `/` search, `g o` go to queue, `?` help; all are listed in the shortcut sheet.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "Light and dark themes meet AA; visual baselines at 360, 768, 1280 px.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "e2e workflow update_snapshots and visual job generate and compare baselines in CI"
+  },
+  {
+   "id": "R12",
+   "quote": "Initial JS \u003c= 180 KB gzip, Lighthouse performance and accessibility >= 95, p95 server action \u003c 300 ms.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Lighthouse CI (e2e/lighthouserc.json, add an obligations config) and next build bundle check run only in CI"
+  },
+  {
+   "id": "R13",
+   "quote": "The surface never auto-sends anything; letter and reminder next steps only create drafts or internal tasks.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "Storybook stories exist for every new component with all states (default, empty, loading, error, offline, denied) and interaction tests.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "Playwright visual baselines exist for light and dark themes at 360, 768 and 1280 px.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "Baselines are generated only by the e2e workflow update_snapshots (CLAUDE.md: no Playwright locally); the visual spec is delivered here"
+  },
+  {
+   "id": "R16",
+   "quote": "axe reports zero serious or critical violations on every state of the surface, and the full flow is operable by keyboard alone.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "e2e a11y job (e2e/tests/a11y) runs axe in CI; the spec is delivered here"
+  },
+  {
+   "id": "R17",
+   "quote": "All user-facing strings come from `next-intl` catalogs (`en` complete, `ta`/`kn` keys stubbed); no hard-coded copy.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -40,284 +110,363 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/validators/src/outward-draft.ts",
-   "change": "zod DraftRequest, DraftEdit, ShareRecord, Audience (client|senior_counsel|briefing_counsel), Language (en|ta|kn), Tone (formal|brief|warm), share channels (clipboard|whatsapp_link|mailto|download); export from packages/validators/src/index.ts; add outward-draft.test.ts",
+   "path": "packages/core/src/obligations/views.ts",
+   "change": "New read models: listDefects, listCertifiedCopies and a queue hydration (matter title and case number, owner name, source quote anchor) scoped by inObligationScope and visibleMatters; export from index.ts",
    "requirements": [
-    "R1",
-    "R6"
+    "R2",
+    "R7"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/outward-draft.ts",
-   "change": "tenantTable() outward_draft, outward_draft_version, outward_share_log per #69 data contract (workspace_id, FORCE RLS, composite FKs like obligation-tracking.ts); export in schema/index.ts",
+   "path": "packages/core/src/obligations/index.ts",
+   "change": "Export the views",
    "requirements": [
-    "R1",
-    "R6"
+    "R7"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/db/migrations/20261025120000_outward_drafts.sql",
-   "change": "CREATE TABLEs, RLS policies on app.workspace_id, plus regenerated drizzle snapshot/journal entry under packages/db/migrations/meta (pick a timestamp later than 20261025095244, or the next free one on the base)",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register new core runtime exports under SERVICE_TESTS (cases in packages/core/src/__tests__/cross-tenant/services.test.ts)",
    "requirements": [
-    "R1",
-    "R6"
+    "R7"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/ai/src/tasks/outward-update.ts",
-   "change": "TaskDef `outward_update` (tier 'drafting', providers bedrock+sarvam, zod narrative-blocks output, promptId outward_update.v1); add id to TASK_IDS in packages/ai/src/types.ts and TASKS in tasks/registry.ts; add EN/TA/KN fixtures under packages/ai/fixtures/mock/outward_update/\u003cinputHash>.json (hashes via inputHash from packages/ai/src/hash.ts) and a task test",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Cases: tenant B listing defects/copies/hydrated queue sees nothing of A; A unchanged",
    "requirements": [
-    "R2",
-    "R6"
+    "R7"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/outward/compose.ts",
-   "change": "composeUpdate: reads confirmed hearing/order/obligation facts with provenance, unconfirmed => 'to be confirmed' flagged line, narrative via the AI gateway (task outward_update), template-only when matter.sensitive, audience client requires a client person, creates draft + system version, audits outward.prepared",
+   "path": "packages/ui/src/patterns/obligation-row/obligation-row.tsx",
+   "change": "Swipe right=Done (opens dialog), left=Reschedule, threshold 72 px; labels reschedule not snooze; kind icon, status; 220 ms layout animation with reduced-motion fade; keep existing props working",
    "requirements": [
-    "R3",
-    "R6"
+    "R2",
+    "R4",
+    "R8"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/outward/templates/en.ts",
-   "change": "structured fact blocks per audience and tone in English (templates/ta.ts and templates/kn.ts likewise)",
+   "path": "packages/ui/src/patterns/obligation-row/obligation-row.stories.tsx",
+   "change": "Stories for default, empty, loading, error, offline, denied with play tests",
    "requirements": [
-    "R3",
-    "R6"
+    "R14"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/src/outward/templates/ta.ts",
-   "change": "Tamil fact blocks per audience and tone",
+   "path": "packages/ui/src/patterns/obligation-row/obligation-row.test.tsx",
+   "change": "Update tests for swipe directions and labels",
    "requirements": [
-    "R3",
-    "R6"
+    "R4"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/core/src/outward/templates/kn.ts",
-   "change": "Kannada fact blocks per audience and tone",
+   "path": "packages/ui/src/patterns/index.ts",
+   "change": "Export any new pattern parts (DueLabel, GroupHeader)",
    "requirements": [
-    "R3",
-    "R6"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/core/src/outward/guard.ts",
-   "change": "guardOutward: reject/strip advice, commitments, fee terms, outcome predictions, citations/authorities, for en, ta and kn phrase sets",
+   "path": "packages/i18n/src/messages/en/obligations.json",
+   "change": "Complete en catalog for the surface",
    "requirements": [
-    "R3",
-    "R6"
+    "R17",
+    "R9",
+    "R10"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/core/src/outward/diff.ts",
-   "change": "diffDraft word-level diff (Indic-safe tokenising) plus saveEdit creating outward_draft_version rows and audit outward.edited (keep in diff.ts or a sibling file under outward/)",
+   "path": "packages/i18n/src/messages/ta/obligations.json",
+   "change": "Stub keys",
    "requirements": [
-    "R3",
-    "R6"
+    "R17"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/core/src/outward/share.ts",
-   "change": "recordShared and recordCopied: explicit member action only, writes outward_share_log with channel and final_version_id, sets draft status, audit outward.shared; no job/system path",
+   "path": "packages/i18n/src/messages/kn/obligations.json",
+   "change": "Stub keys",
    "requirements": [
-    "R3",
-    "R6"
+    "R17"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/core/src/outward/index.ts",
-   "change": "public barrel plus internal context.ts (scope, can('draft.write'), matter access like obligations/context.ts)",
+   "path": "packages/i18n/src/catalog.ts",
+   "change": "Add 'obligations' to NAMESPACES",
    "requirements": [
-    "R3",
-    "R6"
+    "R17"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/core/package.json",
-   "change": "add \"./outward\": \"./src/outward/index.ts\" export",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Add obligations to the expected namespace list",
    "requirements": [
-    "R3"
+    "R17"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/core/src/audit/events.ts",
-   "change": "declare outward.prepared, outward.edited, outward.shared (security:false)",
+   "path": "apps/web/lib/obligations/queue-state.ts",
+   "change": "URL param parse/serialise for filters, search, tab; client-side filter and next-step suggestion (deterministic, no send)",
    "requirements": [
-    "R3",
+    "R5",
     "R6"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "add `outward` domain to CORE_DOMAIN_DEPENDENCIES (workspaces, audit, matter-graph, obligations, ai gateway adapters as needed) and the domain list",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/page.tsx",
+   "change": "Server page: load queue/defects/copies via core, permission-denied and dev __state previews",
    "requirements": [
-    "R4"
+    "R1",
+    "R9"
    ]
   },
   {
    "id": "D16",
-   "path": "docs/engineering/core-domains.md",
-   "change": "add the outward row",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/loading.tsx",
+   "change": "Skeleton",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/error.tsx",
+   "change": "Error with Retry",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/actions.ts",
+   "change": "closeObligationAction, rescheduleAction, reassignAction, addObligationAction (+ use-next-step) via workspaceAction, strict zod, can() checked, revalidatePath; no send path",
+   "requirements": [
+    "R3",
+    "R4",
+    "R5",
+    "R13"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Add the new actions to ACTIONS with probe inputs",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-view.tsx",
+   "change": "Client queue: groups, selection, shortcuts (j k x d r a o / g o ?), shortcut sheet, offline queue 'Will sync', group collapse persisted per member",
+   "requirements": [
+    "R1",
+    "R6",
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-group.tsx",
+   "change": "Collapsible group with count and sticky header",
+   "requirements": [
+    "R1",
+    "R8"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/close-dialog.tsx",
+   "change": "Reason-required close dialog",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/reschedule-popover.tsx",
+   "change": "Date picker plus mandatory reason",
    "requirements": [
     "R4"
    ]
   },
   {
-   "id": "D17",
-   "path": "docs/adr/0038-outward-drafts-no-send-path.md",
-   "change": "ADR (Status/Date/Context/Decision/Consequences per adr:lint): L4 only, no transport, share = clipboard/user-initiated links/download, guard, sensitive template-only; update docs/adr/README.md index",
-   "requirements": [
-    "R4",
-    "R6"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "register outward_draft, outward_draft_version, outward_share_log (DB_TABLES_TEST) and SERVICE_TESTS entries for the new outward exports (or NOT_A_SERVICE with reason for pure helpers such as guardOutward/diffDraft)",
-   "requirements": [
-    "R4",
-    "R6"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/db/src/index.test.ts",
-   "change": "add the three tables to the root table list; also add them to packages/db/src/__tests__/rls/sql.test.ts RLS catalog and TABLE_TESTS/two-tenant seeders",
-   "requirements": [
-    "R4",
-    "R6"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "real cases for composeUpdate/saveEdit/recordShared/recordCopied: B on A is denied or sees nothing, A unchanged",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "packages/core/src/outward/__tests__/compose.test.ts",
-   "change": "tests compose.test.ts, guard.test.ts (30+ phrases per language set), diff.test.ts, share.test.ts, no-send.test.ts (static import/job/endpoint scan), cross-tenant.test.ts, sensitive template-only, India-only AI, client requirement, tone",
+   "id": "D24",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/next-step-card.tsx",
+   "change": "Collapsed drafted next step with Use",
    "requirements": [
     "R5",
+    "R13"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/queue-filters.tsx",
+   "change": "Matter, owner, kind, source, group filters and search",
+   "requirements": [
     "R6"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/defects-tab.tsx",
+   "change": "Defects list",
+   "requirements": [
+    "R7"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/copies-tab.tsx",
+   "change": "Certified copies list",
+   "requirements": [
+    "R7"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/detail-sheet.tsx",
+   "change": "Detail with source quote, history, next step",
+   "requirements": [
+    "R2",
+    "R5"
+   ]
+  },
+  {
+   "id": "D29",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/use-swipe.ts",
+   "change": "Pointer swipe hook with keyboard parity",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D30",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/swipe-row.tsx",
+   "change": "Swipe wrapper using use-swipe",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D31",
+   "path": "apps/web/app/(app)/w/[slug]/obligations/_components/obligation-row.tsx",
+   "change": "Row adapter over the ui pattern",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D32",
+   "path": "e2e/tests/obligations/obligation-queue.spec.ts",
+   "change": "Product e2e journeys (CI only)",
+   "requirements": [
+    "R1",
+    "R3",
+    "R4",
+    "R6",
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D33",
+   "path": "e2e/tests/obligations/obligation-queue.visual.spec.ts",
+   "change": "Visual and axe spec for light/dark at 360, 768, 1280",
+   "requirements": [
+    "R11",
+    "R15",
+    "R16"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Policy matrix and snapshot unchanged: use existing `draft.write` (packages/auth/src/policy/actions.ts:15, matrix.ts:33); do not add policy actions"
+   "what": "@causedeck/core/obligations service behaviour and signatures (queryQueue, closeObligation, updateObligation, createObligation) in packages/core/src/obligations/*; the UI only calls them"
   },
   {
    "id": "P2",
-   "what": "No new job, schedule or worker registration: apps/worker/src/__tests__/registry.test.ts and schedules.test.ts stay unchanged (no auto-share job)"
+   "what": "The DB closure check obligation_closure_chk and enum names (done, task_completed, source) in packages/db/src/schema/docket.ts; no schema or migration change"
   },
   {
    "id": "P3",
-   "what": "AI gateway behaviour (packages/ai/src/gateway.ts sensitive block, India-only residency, ai_call audit) and existing task ids/fixtures unchanged"
+   "what": "Other consumers of the ui patterns index (packages/ui/src/patterns/index.ts) and the ObligationRow public props"
   },
   {
    "id": "P4",
-   "what": "Existing obligation, hearing and order tables and the obligations service (packages/core/src/obligations, packages/db/src/schema/docket.ts) are read only, never altered"
-  },
-  {
-   "id": "P5",
-   "what": "Migration numbering stays contiguous: use the next free timestamp after the base's latest (packages/db/migrations)"
+   "what": "No outward send path: nothing on the page may call a mail, WhatsApp or filing provider"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/outward-draft.test.ts src/index.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/ai exec vitest run src/tasks src/__tests__ src/index.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts src/obligations"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/outward src/domains.test.ts src/index.test.ts src/__tests__/cross-tenant/services.test.ts src/audit"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
+   "command": "pnpm --filter @causedeck/ui exec vitest run src/patterns/obligation-row src/patterns/boundaries.test.ts src/patterns/motion.test.ts"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/config exec vitest run test/core-domain-boundaries.test.ts test/eslint-boundaries.test.ts"
-  },
-  {
-   "id": "V6",
-   "command": "pnpm adr:lint"
-  },
-  {
-   "id": "V7",
-   "command": "bash /home/dev/.forge/causedeck-chain/lane-check.sh typecheck"
+   "command": "pnpm --filter @causedeck/web exec vitest run lib/obligations"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Reuse the existing `draft.write` policy action instead of a new `outward.*` action",
-   "justification": "actions.ts:15 and matrix.ts:33 already gate drafting at junior; avoids a policy snapshot change",
-   "source": "precedent"
+   "choice": "Keep existing enum and column names (source as kind, done as closed) in the UI and map to issue wording in i18n",
+   "justification": "packages/db/src/schema/enums.ts:66-77 and docket.ts:227; ADR docs/adr/0037-obligation-model.md",
+   "source": "doc"
   },
   {
    "id": "K2",
-   "choice": "Model the contract on packages/core/src/obligations (context.ts scope/can/record, tenantTable schema in obligation-tracking.ts)",
-   "justification": "Same-shape domain merged in #725; its CI misses were registry items",
-   "source": "precedent"
+   "choice": "Client letter next step creates an internal task via createObligation(source 'internal') until #69 lands",
+   "justification": "Issue 'Data and API contracts' says so; #69 is open; core/obligations/create.ts:95",
+   "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "`outward.shared` is emitted as an audit event (events.ts) which the activity feed and #86 read, not a new event bus",
-   "justification": "obligation.* events in audit/events.ts:325-336 are the existing pattern; no separate outward bus exists",
+   "choice": "New core read models for defects and copies instead of querying the db from apps/web",
+   "justification": "core/obligations has only writers (defects.ts:52, certified-copies.ts:33); apps/web reaches data through core services (inbox/actions.ts pattern); new core exports need cross-tenant registry entries (CLAUDE.md)",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Minimal client contact reference is a `person` of kind `client` (db/schema/people.ts) because no client_contact table exists",
-   "justification": "The issue allows a minimal contact reference until #82; people.ts:39-58 holds client contact data",
-   "source": "spec"
-  },
-  {
-   "id": "K5",
-   "choice": "AI prompt lives in the task file (promptId outward_update.v1), not packages/ai/src/prompts/",
-   "justification": "No prompts directory exists; tasks/summarise.ts uses promptId only",
+   "choice": "Reuse and adapt packages/ui/src/patterns/obligation-row rather than create patterns/obligation/",
+   "justification": "obligation-row.tsx already has swipe, due state, ProvenanceChip; the issue path is outdated",
    "source": "precedent"
   },
   {
-   "id": "K6",
-   "choice": "Language default falls back to the request language then 'en' until #72/#82 supply M6/M2 data",
-   "justification": "No preferred-language columns exist in db/schema; #72 and #82 are open",
-   "source": "spec"
-  },
-  {
-   "id": "K7",
-   "choice": "The #69 criteria in scope are its [type:unit]/[type:api] ones for core and db (compose from confirmed facts with provenance; EN/TA/KN; guard 30+ phrases per language set; unconfirmed => 'to be confirmed'; versions + word diff; action log with lawyer-only shared; no-send static test; India-only AI and sensitive template-only; client requires contact; tone formal/brief/warm; cross-tenant; RLS on new tables; zod inputs). The [type:e2e] criteria and Storybook, i18n catalog, visual and axe ones belong to #736/#737 and are not requirements of this issue",
-   "justification": "#735 body scopes itself to 'Part 1 of #69' backend and names siblings #736 (web) and #737 (e2e)",
-   "source": "spec"
+   "id": "K5",
+   "choice": "Group-collapse persistence per member via client storage keyed by member id, no new table",
+   "justification": "No member-preferences store found; a table would need RLS catalog and migration registries",
+   "source": "precedent"
   }
  ]
 }

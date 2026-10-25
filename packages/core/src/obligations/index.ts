@@ -21,3 +21,4 @@ export * from './queue.ts';
 export * from './reconcile.ts';
 export * from './reminders.ts';
 export * from './update.ts';
+export * from './views.ts';

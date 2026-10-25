@@ -11,7 +11,11 @@ import { WorkspaceError } from '../../index.ts';
 import {
   closeObligation,
   cureDefect,
+  listCertifiedCopies,
+  listDefects,
+  obligationOptions,
   queryQueue,
+  queryQueueView,
   reopenObligation,
   transitionCertifiedCopy,
   updateObligation,
@@ -70,6 +74,18 @@ describe('cross-tenant: obligations (#67)', () => {
           .flat()
           .map((row) => row.id);
         expect(ids).not.toContain(aObligation);
+
+        // The read models of the queue screen (#68) show none of A's rows either.
+        const view = await queryQueueView(deps(tx), actor);
+        expect(
+          Object.values(view)
+            .flat()
+            .map((row) => row.id),
+        ).not.toContain(aObligation);
+        expect((await listDefects(deps(tx), actor)).map((d) => d.id)).not.toContain(aDefect);
+        expect((await listCertifiedCopies(deps(tx), actor)).map((c) => c.id)).not.toContain(aCopy);
+        const options = await obligationOptions(deps(tx), actor);
+        expect(options.matters.map((m) => m.id)).not.toContain(t.a.rows.matter?.matterId ?? 'none');
 
         // Direct SQL from B's scope sees none of A's rows and changes none.
         const seen = await inWorkspace(tx, t.b.id, (s) =>

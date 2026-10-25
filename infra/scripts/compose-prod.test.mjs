@@ -46,7 +46,10 @@ describe('compose.prod.yml services', () => {
       assert.match(block, /cap_drop: \[ALL\]/, `${name} must cap_drop ALL`);
       assert.match(block, /no-new-privileges:true/, `${name} needs no-new-privileges`);
       assert.match(block, /^ {4}read_only: true$/m, `${name} needs a read-only root filesystem`);
-      assert.doesNotMatch(block, /network_mode:\s*host|pid:\s*host|cap_add: \[(?!NET_BIND_SERVICE)/);
+      assert.doesNotMatch(
+        block,
+        /network_mode:\s*host|pid:\s*host|cap_add: \[(?!NET_BIND_SERVICE)/,
+      );
     }
     assert.match(services.caddy, /cap_add: \[NET_BIND_SERVICE\]/);
   });
@@ -85,7 +88,10 @@ describe('compose.prod.yml services', () => {
     for (const image of images) {
       assert.doesNotMatch(image, /:latest$|^[^:]+$/, `${image} must be pinned`);
       if (image.startsWith('ghcr.io/')) {
-        assert.match(image, /^ghcr\.io\/\$\{IMAGE_ORG:\?[^}]+\}\/causedeck-[a-z]+:sha-\$\{GIT_SHA:\?[^}]+\}$/);
+        assert.match(
+          image,
+          /^ghcr\.io\/\$\{IMAGE_ORG:\?[^}]+\}\/causedeck-[a-z]+:sha-\$\{GIT_SHA:\?[^}]+\}$/,
+        );
       } else {
         assert.match(image.split(':')[1] ?? '', /^\d+\.\d+|^RELEASE\./, `${image} needs a version`);
       }
@@ -103,7 +109,11 @@ describe('compose.prod.yml services', () => {
     for (const name of names) assert.match(services[name], /TZ: UTC/, `${name} must log in UTC`);
     for (const name of ['web', 'api', 'worker', 'admin']) {
       assert.match(services[name], /DATABASE_URL: postgres:\/\/causedeck_app:/);
-      assert.doesNotMatch(services[name], /DATABASE_URL_OWNER/, `${name} must not see the owner role`);
+      assert.doesNotMatch(
+        services[name],
+        /DATABASE_URL_OWNER/,
+        `${name} must not see the owner role`,
+      );
     }
     assert.match(services.migrate, /DATABASE_URL_OWNER: postgres:\/\/causedeck_owner:/);
   });
@@ -172,8 +182,7 @@ describe('postgres image and config', () => {
 });
 
 describe('env examples', () => {
-  const keys = (text) =>
-    new Set([...text.matchAll(/^#? ?([A-Z][A-Z0-9_]*)=/gm)].map((m) => m[1]));
+  const keys = (text) => new Set([...text.matchAll(/^#? ?([A-Z][A-Z0-9_]*)=/gm)].map((m) => m[1]));
   const prod = read('env/prod.env.example');
   const staging = read('env/staging.env.example');
 

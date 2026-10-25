@@ -129,7 +129,10 @@ export function createClockDriftCheck(options: ClockDriftOptions): HealthCheck {
 }
 
 /** Reference time from the `Date` header of a HEAD request to `url`. */
-export function httpDateReference(url: string, fetchFn: typeof fetch = fetch): () => Promise<number> {
+export function httpDateReference(
+  url: string,
+  fetchFn: typeof fetch = fetch,
+): () => Promise<number> {
   return async () => {
     const response = await fetchFn(url, { method: 'HEAD', signal: AbortSignal.timeout(1500) });
     const parsed = Date.parse(response.headers.get('date') ?? '');
@@ -143,6 +146,7 @@ export function httpDateReference(url: string, fetchFn: typeof fetch = fetch): (
  * Production sets it so a host with a broken NTP leaves the load balancer rotation.
  */
 export function clockDriftCheckFromEnv(
+  // eslint-disable-next-line no-process-env -- optional host-level probe, not validated app config.
   env: Record<string, string | undefined> = process.env,
 ): HealthCheck | undefined {
   const url = env.CLOCK_DRIFT_REFERENCE_URL;

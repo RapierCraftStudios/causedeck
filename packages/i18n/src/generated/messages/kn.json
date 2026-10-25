@@ -4863,135 +4863,135 @@
     "delegated": "The matter owner is notified."
   },
   "brief": {
-    "metaTitle": "Brief",
-    "printTitle": "Brief - {caseNo} - {date}",
+    "metaTitle": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ",
+    "printTitle": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ - {caseNo} - {date}",
     "masthead": {
-      "listedOn": "Listed {date}",
-      "hall": "Court {hall}",
-      "item": "Item {item}",
-      "assembled": "Assembled {time}",
-      "openMatter": "Open matter"
+      "listedOn": "{date} ರಂದು ಪಟ್ಟಿಯಾಗಿದೆ",
+      "hall": "ನ್ಯಾಯಾಲಯ ಸಭಾಂಗಣ {hall}",
+      "item": "ಕ್ರಮ ಸಂಖ್ಯೆ {item}",
+      "assembled": "{time}ಕ್ಕೆ ಸಿದ್ಧಪಡಿಸಲಾಗಿದೆ",
+      "openMatter": "ಪ್ರಕರಣ ತೆರೆಯಿರಿ"
     },
     "sections": {
-      "stage": "Stage",
-      "lastOrder": "Last order",
-      "obligations": "Open obligations",
-      "carry": "Carry",
-      "synopsis": "Synopsis",
-      "lastHearing": "Last hearing",
-      "courtNotes": "Court notes",
-      "context": "From the file"
+      "stage": "ಹಂತ",
+      "lastOrder": "ಕೊನೆಯ ಆದೇಶ",
+      "obligations": "ಬಾಕಿ ಇರುವ ಬಾಧ್ಯತೆಗಳು",
+      "carry": "ಕೊಂಡೊಯ್ಯಬೇಕಾದವು",
+      "synopsis": "ಸಾರಾಂಶ",
+      "lastHearing": "ಕೊನೆಯ ವಿಚಾರಣೆ",
+      "courtNotes": "ನ್ಯಾಯಾಲಯ ಟಿಪ್ಪಣಿಗಳು",
+      "context": "ಕಡತದಿಂದ"
     },
     "empty": {
-      "title": "Nothing on record yet",
-      "body": "This listing has no stage, orders or obligations yet. Add them to the matter and the brief fills in.",
-      "section": "Nothing to show"
+      "title": "ಇನ್ನೂ ಯಾವುದೇ ದಾಖಲೆ ಇಲ್ಲ",
+      "body": "ಈ ಪಟ್ಟಿಯಲ್ಲಿ ಇನ್ನೂ ಹಂತ, ಆದೇಶ ಅಥವಾ ಬಾಧ್ಯತೆಗಳಿಲ್ಲ. ಅವುಗಳನ್ನು ಪ್ರಕರಣಕ್ಕೆ ಸೇರಿಸಿದರೆ ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ತುಂಬುತ್ತದೆ.",
+      "section": "ತೋರಿಸಲು ಏನೂ ಇಲ್ಲ"
     },
     "line": {
-      "unconfirmed": "Unconfirmed",
-      "overdue": "Overdue",
-      "dueOn": "Due {date}",
-      "closedCount": "{count, plural, =0 {No closed obligations} one {# closed obligation} other {# closed obligations}}",
-      "page": "Page {page}"
+      "unconfirmed": "ದೃಢೀಕರಿಸಿಲ್ಲ",
+      "overdue": "ಅವಧಿ ಮೀರಿದೆ",
+      "dueOn": "{date} ರೊಳಗೆ ಮುಗಿಸಬೇಕು",
+      "closedCount": "{count, plural, =0 {ಮುಕ್ತಾಯಗೊಂಡ ಬಾಧ್ಯತೆಗಳಿಲ್ಲ} one {# ಮುಕ್ತಾಯಗೊಂಡ ಬಾಧ್ಯತೆ} other {# ಮುಕ್ತಾಯಗೊಂಡ ಬಾಧ್ಯತೆಗಳು}}",
+      "page": "ಪುಟ {page}"
     },
     "provenance": {
-      "openPage": "Open page",
-      "source": "Source",
-      "confidence": "Confidence {value}"
+      "openPage": "ಪುಟ ತೆರೆಯಿರಿ",
+      "source": "ಮೂಲ",
+      "confidence": "ವಿಶ್ವಾಸಾರ್ಹತೆ {value}"
     },
     "readiness": {
-      "label": "Ready {score} of 100",
-      "stage_known": "Stage known",
-      "last_order_confirmed": "Last order confirmed",
-      "obligations_reconciled": "Obligations reconciled",
-      "carry_reviewed": "Carry reviewed"
+      "label": "ಸಿದ್ಧತೆ 100ರಲ್ಲಿ {score}",
+      "stage_known": "ಹಂತ ತಿಳಿದಿದೆ",
+      "last_order_confirmed": "ಕೊನೆಯ ಆದೇಶ ದೃಢೀಕರಿಸಲಾಗಿದೆ",
+      "obligations_reconciled": "ಬಾಧ್ಯತೆಗಳನ್ನು ತಾಳೆ ಮಾಡಲಾಗಿದೆ",
+      "carry_reviewed": "ಕೊಂಡೊಯ್ಯುವ ಪಟ್ಟಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ"
     },
     "prepared": {
-      "mark": "Mark prepared",
-      "unmark": "Prepared. Undo",
-      "by": "Prepared by {name}, {when}",
-      "byUnknown": "Prepared {when}",
-      "stale": "Brief changed since you marked it prepared",
-      "saving": "Saving",
-      "error": "Could not save. Try again."
+      "mark": "ಸಿದ್ಧವೆಂದು ಗುರುತಿಸಿ",
+      "unmark": "ಸಿದ್ಧವಾಗಿದೆ. ರದ್ದುಮಾಡಿ",
+      "by": "{name} ಸಿದ್ಧಪಡಿಸಿದ್ದಾರೆ, {when}",
+      "byUnknown": "ಸಿದ್ಧಪಡಿಸಿದ್ದು {when}",
+      "stale": "ಸಿದ್ಧವೆಂದು ಗುರುತಿಸಿದ ನಂತರ ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಬದಲಾಗಿದೆ",
+      "saving": "ಉಳಿಸಲಾಗುತ್ತಿದೆ",
+      "error": "ಉಳಿಸಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
     },
     "carry": {
-      "add": "Add item",
-      "addLabel": "New carry item",
-      "addPlaceholder": "A document or thing to carry",
-      "remove": "Remove {label}",
-      "tick": "Packed: {label}",
+      "add": "ವಸ್ತು ಸೇರಿಸಿ",
+      "addLabel": "ಹೊಸ ವಸ್ತು",
+      "addPlaceholder": "ಕೊಂಡೊಯ್ಯಬೇಕಾದ ದಾಖಲೆ ಅಥವಾ ವಸ್ತು",
+      "remove": "{label} ತೆಗೆದುಹಾಕಿ",
+      "tick": "ಪ್ಯಾಕ್ ಮಾಡಲಾಗಿದೆ: {label}",
       "kind": {
-        "document": "Document",
-        "rule": "Always carry",
-        "manual": "Added by you"
+        "document": "ದಾಖಲೆ",
+        "rule": "ಯಾವಾಗಲೂ ಕೊಂಡೊಯ್ಯಿರಿ",
+        "manual": "ನೀವು ಸೇರಿಸಿದ್ದು"
       },
-      "willSync": "Will sync",
-      "reviewed": "Mark list reviewed",
-      "empty": "Nothing to carry."
+      "willSync": "ಸಿಂಕ್ ಆಗುತ್ತದೆ",
+      "reviewed": "ಪಟ್ಟಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ ಎಂದು ಗುರುತಿಸಿ",
+      "empty": "ಕೊಂಡೊಯ್ಯಲು ಏನೂ ಇಲ್ಲ."
     },
     "synopsis": {
-      "edit": "Edit synopsis",
-      "label": "Your correction",
-      "save": "Save correction",
-      "cancel": "Cancel",
-      "hint": "Saved as a matter note. The synopsis itself changes only when you confirm a memory proposal.",
-      "strategy": "Strategy",
-      "note": "Your note"
+      "edit": "ಸಾರಾಂಶ ಸಂಪಾದಿಸಿ",
+      "label": "ನಿಮ್ಮ ತಿದ್ದುಪಡಿ",
+      "save": "ತಿದ್ದುಪಡಿ ಉಳಿಸಿ",
+      "cancel": "ರದ್ದುಮಾಡಿ",
+      "hint": "ಪ್ರಕರಣದ ಟಿಪ್ಪಣಿಯಾಗಿ ಉಳಿಸಲಾಗುತ್ತದೆ. ನೀವು ಮೆಮೊರಿ ಪ್ರಸ್ತಾವನೆಯನ್ನು ದೃಢೀಕರಿಸಿದಾಗ ಮಾತ್ರ ಸಾರಾಂಶ ಬದಲಾಗುತ್ತದೆ.",
+      "strategy": "ತಂತ್ರ",
+      "note": "ನಿಮ್ಮ ಟಿಪ್ಪಣಿ"
     },
     "courtNotes": {
-      "private": "Private to you",
-      "shared": "Shared in chamber",
-      "printToggle": "Include private notes when printing",
-      "hiddenInPrint": "Court notes are left out of the printout"
+      "private": "ನಿಮಗೆ ಮಾತ್ರ",
+      "shared": "ಚೇಂಬರ್‌ನಲ್ಲಿ ಹಂಚಲಾಗಿದೆ",
+      "printToggle": "ಮುದ್ರಿಸುವಾಗ ಖಾಸಗಿ ಟಿಪ್ಪಣಿಗಳನ್ನೂ ಸೇರಿಸಿ",
+      "hiddenInPrint": "ನ್ಯಾಯಾಲಯ ಟಿಪ್ಪಣಿಗಳನ್ನು ಮುದ್ರಣದಲ್ಲಿ ಸೇರಿಸಿಲ್ಲ"
     },
     "actions": {
-      "print": "Print / Save as PDF",
-      "share": "Share inside workspace",
-      "shared": "Link copied. Members of this workspace can open it.",
-      "jump": "Jump to section",
-      "shortcuts": "Keyboard shortcuts",
-      "refresh": "Refresh brief",
-      "bar": "Brief actions"
+      "print": "ಮುದ್ರಿಸಿ / PDF ಆಗಿ ಉಳಿಸಿ",
+      "share": "ವರ್ಕ್‌ಸ್ಪೇಸ್ ಒಳಗೆ ಹಂಚಿ",
+      "shared": "ಲಿಂಕ್ ನಕಲಿಸಲಾಗಿದೆ. ಈ ವರ್ಕ್‌ಸ್ಪೇಸ್‌ನ ಸದಸ್ಯರು ತೆರೆಯಬಹುದು.",
+      "jump": "ವಿಭಾಗಕ್ಕೆ ಹೋಗಿ",
+      "shortcuts": "ಕೀಬೋರ್ಡ್ ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು",
+      "refresh": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ರಿಫ್ರೆಶ್ ಮಾಡಿ",
+      "bar": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಕ್ರಿಯೆಗಳು"
     },
     "shortcuts": {
-      "title": "Brief shortcuts",
-      "print": "Print",
-      "prev": "Previous section",
-      "next": "Next section",
-      "carry": "Go to carry",
-      "notes": "Go to court notes",
-      "edit": "Edit synopsis",
-      "section": "Jump to section 1 to 9",
-      "close": "Close popover or editor",
-      "help": "Show this help"
+      "title": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು",
+      "print": "ಮುದ್ರಿಸಿ",
+      "prev": "ಹಿಂದಿನ ವಿಭಾಗ",
+      "next": "ಮುಂದಿನ ವಿಭಾಗ",
+      "carry": "ಕೊಂಡೊಯ್ಯುವವುಗಳಿಗೆ ಹೋಗಿ",
+      "notes": "ನ್ಯಾಯಾಲಯ ಟಿಪ್ಪಣಿಗಳಿಗೆ ಹೋಗಿ",
+      "edit": "ಸಾರಾಂಶ ಸಂಪಾದಿಸಿ",
+      "section": "1 ರಿಂದ 9ನೇ ವಿಭಾಗಕ್ಕೆ ಹೋಗಿ",
+      "close": "ಪಾಪ್‌ಓವರ್ ಅಥವಾ ಸಂಪಾದಕವನ್ನು ಮುಚ್ಚಿ",
+      "help": "ಈ ಸಹಾಯವನ್ನು ತೋರಿಸಿ"
     },
     "offline": {
-      "banner": "Offline. Brief saved at {time}",
-      "notSaved": "Not saved offline"
+      "banner": "ಆಫ್‌ಲೈನ್. ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿಯನ್ನು {time}ಕ್ಕೆ ಉಳಿಸಲಾಗಿದೆ",
+      "notSaved": "ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಉಳಿಸಿಲ್ಲ"
     },
     "denied": {
-      "title": "You cannot open this brief",
-      "body": "This matter is restricted. Ask its owner for access.",
-      "request": "Request access"
+      "title": "ಈ ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿಯನ್ನು ತೆರೆಯಲು ನಿಮಗೆ ಅನುಮತಿ ಇಲ್ಲ",
+      "body": "ಈ ಪ್ರಕರಣಕ್ಕೆ ನಿರ್ಬಂಧವಿದೆ. ಅದರ ಮಾಲೀಕರಲ್ಲಿ ಪ್ರವೇಶ ಕೇಳಿ.",
+      "request": "ಪ್ರವೇಶ ವಿನಂತಿಸಿ"
     },
     "viewer": {
-      "readOnly": "You can read this brief but not change it."
+      "readOnly": "ನೀವು ಈ ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿಯನ್ನು ಓದಬಹುದು, ಬದಲಾಯಿಸಲಾಗದು."
     },
     "error": {
-      "title": "The brief could not load",
-      "retry": "Retry",
-      "openMatter": "Open matter",
-      "section": "This section could not load",
-      "sectionRetry": "Retry section"
+      "title": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಲೋಡ್ ಆಗಲಿಲ್ಲ",
+      "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+      "openMatter": "ಪ್ರಕರಣ ತೆರೆಯಿರಿ",
+      "section": "ಈ ವಿಭಾಗ ಲೋಡ್ ಆಗಲಿಲ್ಲ",
+      "sectionRetry": "ವಿಭಾಗವನ್ನು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
     },
     "notFound": {
-      "title": "Brief not found",
-      "body": "The listing does not exist or you do not have access to it.",
-      "request": "Request access",
-      "back": "Back to briefs"
+      "title": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಸಿಗಲಿಲ್ಲ",
+      "body": "ಈ ಪಟ್ಟಿ ಅಸ್ತಿತ್ವದಲ್ಲಿಲ್ಲ ಅಥವಾ ಅದಕ್ಕೆ ನಿಮಗೆ ಪ್ರವೇಶವಿಲ್ಲ.",
+      "request": "ಪ್ರವೇಶ ವಿನಂತಿಸಿ",
+      "back": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿಗಳಿಗೆ ಹಿಂತಿರುಗಿ"
     },
-    "loading": "Loading brief"
+    "loading": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ"
   },
   "share": {
     "metaTitle": "ಹಂಚಿಕೊಂಡ ಬ್ರೀಫ್",

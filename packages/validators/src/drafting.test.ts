@@ -115,6 +115,7 @@ describe('other drafting schemas', () => {
       pageNumbering: 'footer_center',
     };
     expect(FormatPresetSchema.safeParse(preset).success).toBe(true);
+    expect(FormatPresetSchema.safeParse({ ...preset, key: 'karnataka_hc' }).success).toBe(true);
     expect(FormatPresetSchema.safeParse({ ...preset, fontSizePt: 2 }).success).toBe(false);
   });
 });

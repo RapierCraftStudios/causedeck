@@ -12,10 +12,21 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@causedeck/ai": "workspace:*",
+    "@causedeck/validators": "workspace:*",
+    "@pdf-lib/fontkit": "catalog:",
+    "docx": "catalog:",
+    "pdf-lib": "catalog:",
+    "regenerator-runtime": "catalog:"
+  },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
+    "@fontsource/noto-sans-kannada": "catalog:",
+    "@fontsource/noto-sans-tamil": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "fflate": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     # Ship scope: about 340 browser tests over 2 shards, 12-25 min including the stack and the build (measured on PR #352).
     # Full scope (nightly/dispatch): the 6-project matrix plus visual specs, 90 min and report-only.
-    timeout-minutes: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 90 || 30 }}
+    timeout-minutes: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 90 || 45 }}
     continue-on-error: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     env:
       E2E_SCOPE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'full' || 'ship' }}

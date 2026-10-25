@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/filename-case -- the route segment `[listingId]` is fixed by the issue's path */
 'use client';
 
 import { Skeleton, SkeletonGroup } from '@causedeck/ui/skeleton';

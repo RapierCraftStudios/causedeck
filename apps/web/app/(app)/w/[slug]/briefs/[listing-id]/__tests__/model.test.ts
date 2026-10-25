@@ -43,9 +43,7 @@ describe('brief sheet model (#61)', () => {
 
   it('shows the stale note only while cleared and not re-marked', () => {
     expect(showStaleNote(true, null)).toBe(true);
-    expect(showStaleNote(true, { by: null, at: '2026-10-25T00:00:00Z' } as Brief['prepared'])).toBe(
-      false,
-    );
+    expect(showStaleNote(true, { by: null, at: '2026-10-25T00:00:00Z' })).toBe(false);
     expect(showStaleNote(false, null)).toBe(false);
   });
 

@@ -1,4 +1,4 @@
-// Brief Sheet journeys (#61) on `/w/chennai-solo/briefs/[listingId]`: sections and chips, the
+// Brief Sheet journeys (#61) on `/w/chennai-solo/briefs/[listing-id]`: sections and chips, the
 // Prepared mark, carry items, keyboard, viewer, three viewports and axe (zero serious or critical).
 import AxeBuilder from '@axe-core/playwright';
 

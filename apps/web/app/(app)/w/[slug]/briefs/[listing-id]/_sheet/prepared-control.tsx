@@ -4,11 +4,13 @@
 import { Button } from '@causedeck/ui/button';
 import type { Brief } from '@causedeck/validators';
 import { useFormatter, useTranslations } from 'next-intl';
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useState, useSyncExternalStore, useTransition } from 'react';
 
 import { markPreparedAction } from '../actions.ts';
 
 import { showStaleNote } from './model.ts';
+
+const subscribeNever = () => () => {};
 
 export interface PreparedControlProps {
   workspaceId: string;
@@ -32,19 +34,25 @@ export function PreparedControl({
   const t = useTranslations('brief.prepared');
   const format = useFormatter();
   const [mark, setMark] = useState<Brief['prepared']>(prepared);
-  const [stale, setStale] = useState(showStaleNote(staleCleared, prepared));
+  const [dismissed, setDismissed] = useState(false);
   const [error, setError] = useState(false);
   const [pending, start] = useTransition();
 
   // The refresh clears the mark once; the note stays across a reload until the brief is marked again.
   const staleKey = `brief-stale:${listingId}`;
+  // The stored flag is external state, read per render (server render and hydration see false).
+  const storedStale = useSyncExternalStore(
+    subscribeNever,
+    () => localStorage.getItem(staleKey) === '1',
+    () => false,
+  );
+  const stale =
+    !dismissed && (showStaleNote(staleCleared, prepared) || (mark === null && storedStale));
   useEffect(() => {
     if (mark !== null) {
       localStorage.removeItem(staleKey);
     } else if (showStaleNote(staleCleared, prepared)) {
       localStorage.setItem(staleKey, '1');
-    } else if (localStorage.getItem(staleKey) === '1') {
-      setStale(true);
     }
   }, [mark, staleCleared, prepared, staleKey]);
 
@@ -57,7 +65,7 @@ export function PreparedControl({
         setError(true);
         return;
       }
-      setStale(false);
+      setDismissed(true);
       setMark(
         result.data.prepared_at === null
           ? null

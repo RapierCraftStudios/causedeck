@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/filename-case -- the route segment `[listingId]` is fixed by the issue's path */
 'use client';
 
 import { Button } from '@causedeck/ui/button';

@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/filename-case -- the route segment `[listingId]` is fixed by the issue's path */
 import { Button } from '@causedeck/ui/button';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';

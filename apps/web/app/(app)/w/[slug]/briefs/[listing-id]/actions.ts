@@ -1,4 +1,3 @@
-/* eslint-disable unicorn/filename-case -- the route segment `[listingId]` is fixed by the issue's path */
 'use server';
 // Brief sheet server actions (#61, PRD PR-1). Each goes through `workspaceAction` (zod input,
 // session, membership, `matter.write`) and the core brief services on the workspace transaction.
@@ -40,7 +39,7 @@ export interface BriefStateResult {
 }
 
 function revalidateBrief(): void {
-  revalidatePath('/w/[slug]/briefs/[listingId]', 'page');
+  revalidatePath('/w/[slug]/briefs/[listing-id]', 'page');
 }
 
 /** A domain refusal keeps its code; anything else is rethrown for the generic mapping. */

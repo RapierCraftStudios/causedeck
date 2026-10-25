@@ -7,7 +7,7 @@ import { Checkbox } from '@causedeck/ui/checkbox';
 import { Input } from '@causedeck/ui/input';
 import type { CarryItem } from '@causedeck/validators';
 import { useTranslations } from 'next-intl';
-import { useEffect, useId, useState, useTransition } from 'react';
+import { useId, useState, useTransition } from 'react';
 
 import { setCarryItemAction } from '../actions.ts';
 
@@ -38,9 +38,11 @@ export function CarrySection({
   const inputId = useId();
 
   // A refresh brings the stored list: it wins over the local copy.
-  useEffect(() => {
+  const [seenItems, setSeenItems] = useState(items);
+  if (seenItems !== items) {
+    setSeenItems(items);
     setList(items);
-  }, [items]);
+  }
 
   function save(
     input: Record<string, unknown>,

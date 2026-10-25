@@ -122,7 +122,7 @@ const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/act
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
-const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listingId]/actions.ts');
+const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');

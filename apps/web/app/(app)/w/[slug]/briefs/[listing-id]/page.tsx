@@ -1,5 +1,4 @@
-/* eslint-disable unicorn/filename-case -- the route segment `[listingId]` is fixed by the issue's path */
-// `/w/[slug]/briefs/[listingId]` (#61, PRD PR-1): the Brief Sheet. The brief is derived on the server
+// `/w/[slug]/briefs/[listing-id]` (#61, PRD PR-1): the Brief Sheet. The brief is derived on the server
 // (`assembleBrief`, `computeReadiness`) in the member's workspace transaction; the payload is the
 // service's, so a clerk never receives court notes (they are null without `memory.read`). A refresh
 // first clears a stale prepared mark. States: loading (`loading.tsx`), error with retry
@@ -19,7 +18,7 @@ import { BriefSheet } from './_sheet/brief-sheet.tsx';
 import type { SheetMasthead, SheetViewModel } from './_sheet/model.ts';
 
 interface BriefPageProps {
-  params: Promise<{ slug: string; listingId: string }>;
+  params: Promise<{ slug: string; 'listing-id': string }>;
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BriefPage({ params }: BriefPageProps) {
-  const { slug, listingId } = await params;
+  const { slug, 'listing-id': listingId } = await params;
   const context = await getWorkspaceContext(slug);
   if (!context) notFound();
   if (!can(context.role, 'listing.read')) return <PermissionDenied />;

@@ -43,6 +43,27 @@ test.describe('hearing outcome', () => {
     test.info().annotations.push({ type: 'taps', description: String(steps.taps) });
   });
 
+  test('performance: the confirm server action answers in under 300 ms on seeded data', async ({
+    page,
+    asUser,
+    db,
+  }) => {
+    const { hearingId } = await seedHearing(db.name, { proposals: true });
+    await openOutcome(page, asUser, hearingId);
+    await page.getByRole('button', { name: `Confirm ${PROPOSED_DATE}` }).click();
+    for (const title of ['File reply', 'Serve the respondent', 'Produce the lease']) {
+      await page
+        .getByRole('listitem', { name: title })
+        .getByRole('button', { name: 'Confirm' })
+        .click();
+    }
+    const response = page.waitForResponse((r) => r.request().method() === 'POST' && r.ok());
+    await page.getByRole('button', { name: 'Confirm outcome' }).click();
+    const started = Date.now();
+    await response;
+    expect(Date.now() - started).toBeLessThan(300);
+  });
+
   test('keyboard path: a, a, a on the rows and Ctrl+Enter confirm', async ({
     page,
     asUser,

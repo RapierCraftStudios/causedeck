@@ -49,7 +49,7 @@ export const kn: FactTemplate = {
   closing: (_audience, tone) => CLOSING[tone],
   date(iso) {
     const { day, month, year } = dateParts(iso);
-    return `${day} ${MONTHS[month] ?? ''} ${year}`;
+    return `${String(day)} ${MONTHS[month] ?? ''} ${String(year)}`;
   },
   nextDate(iso, confirmed) {
     return `ಮುಂದಿನ ದಿನಾಂಕ ${this.date(iso)}${tbc(confirmed)}.`;

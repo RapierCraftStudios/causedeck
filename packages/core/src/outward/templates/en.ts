@@ -67,7 +67,7 @@ export const en: FactTemplate = {
   closing: (_audience, tone) => CLOSING[tone],
   date(iso) {
     const { day, month, year } = dateParts(iso);
-    return `${day} ${MONTHS[month] ?? ''} ${year}`;
+    return `${String(day)} ${MONTHS[month] ?? ''} ${String(year)}`;
   },
   nextDate(iso, confirmed) {
     return `The next date is ${this.date(iso)}${tbc(confirmed)}.`;

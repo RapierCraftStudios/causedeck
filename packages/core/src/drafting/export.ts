@@ -72,7 +72,11 @@ export interface DraftingExportResult {
 }
 
 /** A readable file name: ASCII words of the title, the version and the extension. */
-export function exportFilename(title: string, versionNo: number, format: ExportFormat): string {
+export function draftExportFilename(
+  title: string,
+  versionNo: number,
+  format: ExportFormat,
+): string {
   const slug = title
     .normalize('NFKD')
     .replace(/[^A-Za-z0-9]+/g, '-')
@@ -155,7 +159,7 @@ export async function runDraftingExport(
   const render = format === 'docx' ? renderDocx : renderPdf;
   const bytes = await render(blocks, preset, facts, { narratives });
 
-  const filename = exportFilename(source.draft.title, source.version.versionNo, format);
+  const filename = draftExportFilename(source.draft.title, source.version.versionNo, format);
   const file = await storeSystemBlob(
     { db: ctx.db, store: ctx.store, keys: ctx.keys, workspaceId, now },
     { kind: 'export', filename, mime: EXPORT_MIME[format], bytes },

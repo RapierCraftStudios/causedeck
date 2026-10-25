@@ -46,13 +46,13 @@ const NO_EVENTS: GraphEvents = {
 };
 
 /** Keys sorted at every level, so equal content hashes equal whatever the key order. */
-export function canonicalJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+export function canonicalDraftJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalDraftJson).join(',')}]`;
   if (value !== null && typeof value === 'object') {
     const entries = Object.entries(value as Record<string, unknown>)
       .filter(([, v]) => v !== undefined)
       .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-    return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalJson(v)}`).join(',')}}`;
+    return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalDraftJson(v)}`).join(',')}}`;
   }
   if (value === undefined || typeof value === 'function' || typeof value === 'symbol')
     return 'null';
@@ -60,7 +60,7 @@ export function canonicalJson(value: unknown): string {
 }
 
 export const contentHash = (blocks: readonly Block[]): string =>
-  createHash('sha256').update(canonicalJson(blocks)).digest('hex');
+  createHash('sha256').update(canonicalDraftJson(blocks)).digest('hex');
 
 export interface DraftVersionSummary {
   id: string;

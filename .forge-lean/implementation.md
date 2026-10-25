@@ -35,3 +35,6 @@ Share page exported `metadata`, colliding with apps/web/app/layout.tsx; replaced
 - D4 i18n: `packages/i18n/src/messages/{en,ta,kn}/share.json`, `NAMESPACES`, catalog test, translation-status (ta/kn draft); share page and import form use `share` messages.
 - Verification: V1 35 pass, V2 394 pass, V3 18 pass, V4 27 pass; admin growth/audit tests 45 pass; i18n 78 pass; admin and web tsc clean. The new growth and catalog tests fail without the change (missing section/namespace). Lint not run: lane-check.sh is absent and eslint OOMs here.
 - Files outside the deliverable list are required by CI guards and declared as amendments: export maps in billing/core package.json, core-domains.js, db conventions.ts, erase.ts, exporters.ts, seed/e2e.ts, e2e spec, i18n and admin wiring.
+
+## Stale-list follow-up
+Flagged tests do not enumerate the new schema symbols or growthReferralFunnel; recorded as not_members in result.json (no test edits needed).

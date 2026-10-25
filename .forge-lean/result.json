@@ -1,1 +1,322 @@
-{"status":"fixed","summary":"Brief share link with public view, claim/import action, referral credit policy, funnel and e2e instrumentation.","requirements":[{"id":"R1","status":"implemented","evidence":"apps/web/app/(public)/share/[token]/actions.ts:1; page.tsx"},{"id":"R2","status":"implemented","evidence":"packages/billing/src/referral.ts:44"},{"id":"R3","status":"implemented","evidence":"packages/core/src/activation/funnel.ts:136"},{"id":"R4","status":"implemented","evidence":"e2e/tests/workspaces/share.spec.ts; packages/core/src/shares/__tests__/shares.test.ts:70","instrumented":true},{"id":"R5","status":"implemented","evidence":"packages/core/src/shares/__tests__/shares.test.ts:18"}],"validation":[{"id":"V1","command":"pnpm --filter @causedeck/core exec vitest run src/shares src/activation src/briefs --maxWorkers=${FORGE_HOST_PARALLELISM:-1}","exit":0},{"id":"V2","command":"pnpm --filter @causedeck/billing exec vitest run src/__tests__ --maxWorkers=${FORGE_HOST_PARALLELISM:-1}","exit":0},{"id":"V3","command":"pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts","exit":0},{"id":"V4","command":"pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts","exit":0}],"tests":[{"command":"pnpm --filter @causedeck/core exec vitest run src/shares","result":"pass","fails_without_fix":true}],"self_review":[{"question":"1","answer":"yes","evidence":"R1-R5 delivered; e2e spec and seed committed for R4"},{"question":"2","answer":"yes","evidence":"V1-V4 pass; new tables/function only"},{"question":"3","answer":"yes","evidence":"V1-V4 exit 0"},{"question":"4","answer":"yes","evidence":"extra paths are declared as add-deliverable amendments"}],"amendments":[{"kind":"add-deliverable","path":"apps/web/app/(public)/share/[token]/actions.ts","why":"R1 needs a server action so a signed-in recipient can claim the link and import the matter."},{"kind":"add-deliverable","path":"apps/web/app/(public)/share/[token]/import-form.tsx","why":"Client form that calls the import action from the share page (R1)."},{"kind":"add-deliverable","path":"packages/db/src/seed/e2e.ts","why":"R4 e2e instrumentation needs seeded valid, expired and revoked shares with fixed tokens."},{"kind":"add-deliverable","path":"e2e/tests/workspaces/share.spec.ts","why":"R4 is verified out of band by a Playwright spec, committed here and run in CI."}]}
+{
+ "status": "fixed",
+ "summary": "Brief share links, referral credit, funnel metrics (now on admin growth page) and share i18n delivered.",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "apps/web/app/(public)/share/[token]/page.tsx"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/billing/src/referral.ts"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/core/src/activation/funnel.ts; apps/admin/app/(console)/growth/page.tsx"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "e2e/tests/workspaces/share.spec.ts; packages/core/src/shares/__tests__/shares.test.ts",
+   "instrumented": true
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "packages/core/src/shares/__tests__/shares.test.ts"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "core vitest shares/activation/briefs",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "billing vitest src/__tests__",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "db vitest index+rls sql",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "web vitest cross-tenant-actions",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "admin vitest growth-page + server-actions-audit",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "i18n vitest src/__tests__",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R5 see requirements; admin growth page.tsx referral dl"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "V1-V4 pass; admin/web tsc clean; i18n 78 pass"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "forgedock check PASS; P1-P3 untouched"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "non-listed paths declared via add-deliverable amendments"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "packages/billing/package.json",
+   "why": "export map entry ./referral so core can import grantReferralCredit"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/package.json",
+   "why": "export map entry ./shares for apps/web"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/config/eslint/core-domains.js",
+   "why": "CORE_DOMAIN_DEPENDENCIES entry for the new shares domain (guard test)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/conventions.ts",
+   "why": "referral and referral_credit are global tables (guard test)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/lifecycle/deletion/erase.ts",
+   "why": "brief_share must be in PURGE_ORDER (deletion guard test)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/lifecycle/export/exporters.ts",
+   "why": "brief_share must be exported (export guard test)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/seed/e2e.ts",
+   "why": "seed shares for the R4 e2e spec"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "e2e/tests/workspaces/share.spec.ts",
+   "why": "R4 e2e instrumentation (runs in CI)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(public)/share/[token]/actions.ts",
+   "why": "owner/recipient share, claim and import server actions (D4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/web/app/(public)/share/[token]/import-form.tsx",
+   "why": "import offer after sign-in (D4)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/admin/lib/data/index.ts",
+   "why": "growthReferralFunnel staff read feeding the growth page (D5)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "test for referral funnel surface"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "guard enumerates admin data reads"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/messages/en/share.json",
+   "why": "share i18n namespace (also kn/ta, catalog.ts, generated, translation-status, catalog test)"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "why": "two-tenant seeder for brief_share"
+  }
+ ],
+ "not_members": [
+  {
+   "symbol": "growthReferralFunnel",
+   "test": "apps/admin/__tests__/migrations-page.test.tsx",
+   "why": "Mocks lib/data/index.ts for the migrations page only; the page never calls the growth reads."
+  },
+  {
+   "symbol": "briefShare",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referral",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referralCredit",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "briefShare",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referral",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referralCredit",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "briefShare",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referral",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referralCredit",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "briefShare",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referral",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referralCredit",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "briefShare",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referral",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referralCredit",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "briefShare",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referral",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referralCredit",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "briefShare",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referral",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referralCredit",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "briefShare",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referral",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referralCredit",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "briefShare",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referral",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referralCredit",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "briefShare",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referral",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  },
+  {
+   "symbol": "referralCredit",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "Test does not enumerate @causedeck/db schema exports; it mocks only what it uses or spreads the real module, so a new table needs no entry."
+  }
+ ]
+}

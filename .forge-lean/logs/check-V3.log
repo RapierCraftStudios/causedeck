@@ -43,8 +43,8 @@ Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwrigh
  Test Files   (4)
       Tests  no tests
      Errors  1 error
-   Start at  07:51:43
-   Duration  2.60s (transform 383ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 0ms)
+   Start at  07:54:40
+   Duration  2.77s (transform 239ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 0ms)
 
 error during close Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1223/chrome-headless-shell-linux64/chrome-headless-shell
 ╔════════════════════════════════════════════════════════════╗

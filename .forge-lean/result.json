@@ -1,58 +1,53 @@
 {
  "status": "fixed",
- "summary": "WhatsApp link card, five server actions, whatsappLink i18n namespace and cross-tenant entries on the notifications settings page; OTP delivery deferred (R5).",
+ "summary": "Court-day board on /today and /tomorrow delivered and committed; V3 passes on the unit project, its Storybook browser projects need Chromium (CI-only).",
  "requirements": [
   {
-   "id": "R1",
+   "id": "R15",
    "status": "implemented",
-   "evidence": "apps/web/components/notifications/whatsapp-link-card.tsx:57; page.tsx WhatsAppSection"
+   "evidence": "apps/web/app/(app)/w/[slug]/_court-day/item-card.tsx"
   },
   {
-   "id": "R2",
+   "id": "R17",
    "status": "implemented",
-   "evidence": "apps/web/app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts:113"
+   "evidence": "packages/ui/src/patterns/court-day/court-day.stories.tsx"
   },
   {
-   "id": "R3",
+   "id": "R20",
    "status": "implemented",
-   "evidence": "packages/i18n/src/messages/en/whatsapp-link.json:1; catalog.ts:33"
-  },
-  {
-   "id": "R4",
-   "status": "implemented",
-   "evidence": "apps/web/__tests__/cross-tenant-actions.test.ts:153"
+   "evidence": "packages/i18n/src/messages/en/court-day.json"
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "web vitest whatsapp-link-actions, whatsapp-link-card, notification-preferences(.actions)",
+   "command": "cross-tenant-actions",
    "exit": 0
   },
   {
    "id": "V2",
-   "command": "i18n vitest catalog, check-catalogs",
+   "command": "i18n catalog",
    "exit": 0
   },
   {
    "id": "V3",
-   "command": "web vitest tenancy cross-tenant-actions",
-   "exit": 0
+   "command": "ui vitest court-day + boundaries (--project unit: 34 pass; full command also starts the Storybook browser projects, which need Chromium, not installable here)",
+   "exit": 1
   },
   {
    "id": "V4",
-   "command": "checks.mjs --base origin/milestone/instant-gtm-adoption",
-   "exit": 0
-  },
-  {
-   "id": "V5",
-   "command": "pnpm turbo run typecheck --filter=...[722c3900] (merged tree)",
+   "command": "web _court-day",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "web whatsapp-link-actions + whatsapp-link-card + cross-tenant-actions",
+   "command": "web _court-day + cross-tenant-actions",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm --filter @causedeck/ui exec vitest run --project unit src/patterns/court-day src/patterns/boundaries.test.ts",
    "result": "pass",
    "fails_without_fix": true
   }
@@ -61,175 +56,23 @@
   {
    "question": "1",
    "answer": "yes",
-   "evidence": "R1-R4 delivered per implementation.md; R5 is a contract-deferred item"
+   "evidence": "court-day-board.tsx, pages wired"
   },
   {
    "question": "2",
    "answer": "yes",
-   "evidence": "V1-V3 pass; tsc --noEmit in apps/web clean"
+   "evidence": "web tsc clean, V1 and V4 pass"
   },
   {
    "question": "3",
-   "answer": "yes",
-   "evidence": "forgedock check PASS; preserve items untouched (git diff touches no core/db/notifications)"
+   "answer": "no",
+   "evidence": "V3 as written exits 1 here only because its Storybook projects need Chromium (CLAUDE.md: Storybook runs in CI); the unit project passes (34 tests). All deliverables changed, preserve items intact."
   },
   {
    "question": "4",
    "answer": "yes",
-   "evidence": "git diff --stat lists only deliverable paths and tests"
+   "evidence": "only deliverable paths and tests changed"
   }
  ],
- "amendments": [],
- "not_members": [
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/nav.test.ts",
-   "why": "lists workspace-scoped route ids, not i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/settings-shell.test.tsx",
-   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/shortcuts.test.tsx",
-   "why": "lists nav chord ids, unrelated to i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/static-guards.test.ts",
-   "why": "lists app/api route directories; no API route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/__tests__/workspace-shell.test.tsx",
-   "why": "lists placeholder page routes; no route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-   "why": "lists mobile nav item ids; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "e2e/tests/courts/courts.spec.ts",
-   "why": "courts page e2e assertions, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-   "why": "delete-workspace e2e helpers, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/en)",
-   "test": "e2e/tests/settings/shell.spec.ts",
-   "why": "lists settings nav labels; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/nav.test.ts",
-   "why": "lists workspace-scoped route ids, not i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/settings-shell.test.tsx",
-   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/shortcuts.test.tsx",
-   "why": "lists nav chord ids, unrelated to i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/static-guards.test.ts",
-   "why": "lists app/api route directories; no API route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/__tests__/workspace-shell.test.tsx",
-   "why": "lists placeholder page routes; no route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-   "why": "lists mobile nav item ids; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "e2e/tests/courts/courts.spec.ts",
-   "why": "courts page e2e assertions, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-   "why": "delete-workspace e2e helpers, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/kn)",
-   "test": "e2e/tests/settings/shell.spec.ts",
-   "why": "lists settings nav labels; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "snapshotA lists tables/rows of workspace A, not i18n namespace files; whatsapp tables are already added there"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/nav.test.ts",
-   "why": "lists workspace-scoped route ids, not i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/settings-shell.test.tsx",
-   "why": "lists settings nav section ids; the card lives on the existing notifications section (K1)"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/shortcuts.test.tsx",
-   "why": "lists nav chord ids, unrelated to i18n namespaces"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/static-guards.test.ts",
-   "why": "lists app/api route directories; no API route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/__tests__/workspace-shell.test.tsx",
-   "why": "lists placeholder page routes; no route added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
-   "why": "lists mobile nav item ids; no nav item added"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "e2e/tests/courts/courts.spec.ts",
-   "why": "courts page e2e assertions, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
-   "why": "delete-workspace e2e helpers, not a namespace list"
-  },
-  {
-   "symbol": "whatsapp-link (packages/i18n/src/messages/ta)",
-   "test": "e2e/tests/settings/shell.spec.ts",
-   "why": "lists settings nav labels; no nav item added"
-  }
- ]
+ "amendments": []
 }

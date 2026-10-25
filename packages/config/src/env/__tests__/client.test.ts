@@ -28,7 +28,7 @@ describe('client env', () => {
       BETTER_AUTH_SECRET: 'x'.repeat(40),
     });
 
-    expect(Object.keys(env)).toEqual(['NEXT_PUBLIC_APP_URL']);
+    expect(Object.keys(env)).toEqual(['NEXT_PUBLIC_APP_URL', 'NEXT_PUBLIC_SUPPORT_WHATSAPP']);
     expect(env.NEXT_PUBLIC_APP_URL).toBe('https://app.causedeck.in');
   });
 

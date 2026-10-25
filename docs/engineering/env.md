@@ -147,4 +147,5 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `SENTRY_ENABLED` | boolean | `false` | never (defaults to false) | #13 | — |
 | `SENTRY_DSN` | url | — | SENTRY_ENABLED=true | #13 | #115 |
 | `NEXT_PUBLIC_APP_URL` | url | `http://localhost:3000` (non-prod only) | NODE_ENV=production | #10 | — |
+| `NEXT_PUBLIC_SUPPORT_WHATSAPP` | string (E.164) | — | never | #94 | — |
 | `KILL_*` | boolean | — | never | #22 | — |

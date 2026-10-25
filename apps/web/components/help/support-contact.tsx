@@ -3,6 +3,7 @@
 // The Contact tab (#94): the support WhatsApp number from `NEXT_PUBLIC_SUPPORT_WHATSAPP` with the
 // court-day hours, an email fallback when it is unset, and the owner's `Request support session`
 // (a time-boxed, metadata-only request; staff see no content by default).
+import { clientEnv } from '@causedeck/config/env/client';
 import { Button } from '@causedeck/ui/button';
 import { Textarea } from '@causedeck/ui/textarea';
 import { useTranslations } from 'next-intl';
@@ -39,8 +40,7 @@ export interface SupportContactProps {
 export function SupportContact({
   workspaceId,
   isOwner,
-  // eslint-disable-next-line no-process-env -- NEXT_PUBLIC_ values are inlined at build time; this is the documented support line.
-  whatsapp = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP,
+  whatsapp = clientEnv.NEXT_PUBLIC_SUPPORT_WHATSAPP,
 }: SupportContactProps) {
   const t = useTranslations('help.contact');
   const channel = supportChannel(whatsapp);

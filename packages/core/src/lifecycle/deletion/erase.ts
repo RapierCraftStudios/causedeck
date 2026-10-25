@@ -175,6 +175,13 @@ export const PURGE_ORDER = [
   'workspace_settings',
   // AI gateway retry cache (#44): holds model output, unlike the append-only ai_call it points at.
   'ai_call_result',
+  // Lawyer memory (#72): usage, embeddings and proposals before the items they cite; the pause row
+  // cites the member's user only.
+  'memory_usage',
+  'memory_embedding',
+  'memory_proposal',
+  'memory_item',
+  'memory_pause',
   'job_effect',
   'member',
 ] as const;

@@ -57,3 +57,6 @@ V1 (17 files, 398 passed), V2, V3, V4 pass; V5 widened to full monorepo, so tsc 
 
 ## Stale-list follow-up
 The 30 memory schema symbols flagged against three admin tests are not members of any list there (those tests mock modules, not schema exports); recorded in result.json not_members. No code change.
+
+## CI purge-coverage fix
+`purge-coverage.test.ts` failed: the five memory tables were in neither `PURGE_ORDER` nor `FINALIZE_TABLES`, so workspace erasure would have skipped them. Added `memory_usage`, `memory_embedding`, `memory_proposal`, `memory_item`, `memory_pause` to `PURGE_ORDER` (`packages/core/src/lifecycle/deletion/erase.ts`), embeddings before items (FK). `src/lifecycle` tests pass (15 files).

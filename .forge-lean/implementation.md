@@ -25,3 +25,6 @@ Exit 127 was an environment problem, not a code conflict: `turbo` is in node_mod
 Base merged (809117c8). `turbo run typecheck` exit 127 was a missing `turbo` binary on PATH (environment), not a code error; no sibling symbol/key collisions found. Ran `pnpm turbo run typecheck` filtered to core, storage, db, config, i18n, billing, worker (+dependents): 17/17 pass. Post-merge vitest: core status/domains and storage index/keys pass.
 
 Re-verified: with node_modules/.bin on PATH, scoped turbo typecheck (core, db, storage, config, i18n, worker) passes 17/17. lane-check.sh does not exist on this host. No code change.
+
+### Re-check (turbo exit 127)
+Again environmental: `turbo` lives in node_modules/.bin, not on PATH. With PATH set, scoped typecheck (core, db, storage, config, i18n, worker) passes 17/17. No code change.

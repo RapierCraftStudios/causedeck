@@ -342,5 +342,10 @@
    "test": "apps/web/__tests__/conflicts-action.test.ts",
    "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
   }
- ]
+ ],
+ "facts": {
+  "decisions": [
+   "Check 'turbo run typecheck' exit 127 is a toolchain/environment problem (bare turbo not on PATH); pnpm turbo typecheck passes 17/17 on the merged tree. No code collision exists, so no rename was needed."
+  ]
+ }
 }

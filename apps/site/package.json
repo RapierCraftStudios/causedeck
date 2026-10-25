@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack -p 3200",
-    "build": "tsx scripts/legal-status.ts && tsx scripts/rule36-lint.ts && next build && tsx scripts/write-feeds.ts && tsx scripts/write-headers.ts",
+    "build": "tsx scripts/legal-status.ts && tsx scripts/rule36-lint.ts && next build && tsx scripts/write-headers.ts",
     "lint": "eslint .",
     "lint:rule36": "tsx scripts/rule36-lint.ts",
     "lint:legal": "tsx scripts/legal-status.ts",

@@ -180,5 +180,162 @@
    "path": "packages/i18n/translation-status.json",
    "why": "register status keys (D18)"
   }
+ ],
+ "not_members": [
+  {
+   "symbol": "STATUS_PUBLISH_CRON",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "a SERVICE_TESTS case table keyed by tenant-scoped services (runJob probe at :1498 exercises a probe job); it lists no job definitions, crons or system job bodies. Those are registered in NOT_A_SERVICE in cross-tenant-registry.ts, which already names them."
+  },
+  {
+   "symbol": "runStatusPublish",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "a SERVICE_TESTS case table keyed by tenant-scoped services (runJob probe at :1498 exercises a probe job); it lists no job definitions, crons or system job bodies. Those are registered in NOT_A_SERVICE in cross-tenant-registry.ts, which already names them."
+  },
+  {
+   "symbol": "statusPublish",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "a SERVICE_TESTS case table keyed by tenant-scoped services (runJob probe at :1498 exercises a probe job); it lists no job definitions, crons or system job bodies. Those are registered in NOT_A_SERVICE in cross-tenant-registry.ts, which already names them."
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_SEVERITIES",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "INCIDENT_STATES",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incident",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  },
+  {
+   "symbol": "incidentUpdate",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "vi.mock/hoisted fixture for an unrelated module; it does not enumerate @causedeck/db schema exports, and incident tables are global platform tables the test never touches"
+  }
  ]
 }

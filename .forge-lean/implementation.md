@@ -14,3 +14,6 @@ Rerun recovery: CI test failure was the billing production env fixture missing t
 V1-V6 vitest commands: exit 0. V7 checks.mjs: PASS. billing provider-select test: 7 pass (fails without the fixture fix, as seen in CI). forgedock check: PASS.
 ### Notes
 STATUS_SIGNING_KEY required in production (>=32 chars); any production env fixture needs it.
+
+## Stale-list follow-up
+Checked the flagged tests: none enumerate job definitions or db schema exports, so every symbol is recorded under not_members in result.json. No code change needed.

@@ -37,3 +37,6 @@ Renamed notes-list story exports to NotesEmpty/NotesLoading/NotesErrorState/Note
 
 ## Lint fix
 CI lint failed on two `@typescript-eslint/no-base-to-string` errors (`String(FormData.get(..) ?? "")`) in settings/research/provider-form.tsx and components/research/note-editor.tsx. Narrowed with `typeof value === "string"`. ESLint on all changed files is now clean (core/db/validators/i18n had no errors).
+
+## CI lint fix
+CI lint failed with no log. Removed committed .eslintcache files (apps/web, core, db, i18n, validators) and applied prettier to 4 files (core cross-tenant services.test.ts, db schema/index.ts, validators research.ts + test). eslint on changed files passes.

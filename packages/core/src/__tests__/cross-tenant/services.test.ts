@@ -261,7 +261,10 @@ const aNote = (f: Fixture) => ({
 });
 const aNotes = (f: Fixture) =>
   inWorkspace(f.tx, f.a.id, (s) =>
-    s.select().from(schema.researchNote).where(eq(schema.researchNote.id, aNote(f).id)),
+    s
+      .select()
+      .from(schema.researchNote)
+      .where(eq(schema.researchNote.id, aNote(f).id)),
   );
 
 const PROBE_PROVENANCE = { sourceType: 'manual' } as const;

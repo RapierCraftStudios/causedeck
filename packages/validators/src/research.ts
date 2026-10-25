@@ -38,10 +38,16 @@ export const researchNoteInput = z.object({
 export type ResearchNoteInput = z.infer<typeof researchNoteInput>;
 
 export const providerTemplateInput = z.object({
-  key: z.string().trim().regex(/^[a-z][a-z0-9-]{0,39}$/, 'Use lowercase letters, digits and hyphens'),
+  key: z
+    .string()
+    .trim()
+    .regex(/^[a-z][a-z0-9-]{0,39}$/, 'Use lowercase letters, digits and hyphens'),
   label: z.string().trim().min(1).max(80),
   /** `https://host/path?q={q}`: the query is placed where `{q}` stands. */
-  urlTemplate: httpsUrl.refine((value) => value.includes('{q}'), 'Include {q} where the query goes'),
+  urlTemplate: httpsUrl.refine(
+    (value) => value.includes('{q}'),
+    'Include {q} where the query goes',
+  ),
   enabled: z.boolean().default(true),
 });
 export type ProviderTemplateInput = z.infer<typeof providerTemplateInput>;

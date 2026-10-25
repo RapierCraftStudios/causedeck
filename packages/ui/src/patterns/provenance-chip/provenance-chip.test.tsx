@@ -132,6 +132,25 @@ describe('ProvenanceChip', () => {
     expect(onOpenSource).toHaveBeenCalledOnce();
   });
 
+  it('shows the cropped photo region with the line outlined for an image anchor (#52)', async () => {
+    device('pointer');
+    render(
+      <ProvenanceChip
+        source={SOURCES.confirmed}
+        anchor={{
+          ...ANCHORS.madras,
+          imageRegion: { src: '/page-1.webp', bbox: [0.1, 0.4, 0.9, 0.5], alt: 'Diary line' },
+        }}
+      />,
+    );
+    fireEvent.pointerEnter(screen.getByRole('button'), { pointerType: 'mouse' });
+    const card = await screen.findByRole('tooltip');
+    const region = card.querySelector('[data-slot="provenance-image-region"]');
+    expect(region).toHaveAttribute('aria-label', 'Diary line');
+    expect(region?.querySelector('img')).toHaveAttribute('src', '/page-1.webp');
+    expect(region?.querySelector('[data-slot="provenance-image-highlight"]')).not.toBeNull();
+  });
+
   it('closes after the pointer leaves, unless it moves into the card', () => {
     device('pointer');
     vi.useFakeTimers();

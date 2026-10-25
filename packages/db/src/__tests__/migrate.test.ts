@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -150,12 +151,19 @@ describe('runMigrations', () => {
     const [u] = await owner.execute<{ id: string }>(
       sql`insert into "user" (name, email) values ('A', 'a@example.com') returning id`,
     );
-    const [org] = await owner.execute<{ id: string }>(
-      sql`insert into organization (name, slug) values ('Chambers', 'chambers') returning id`,
+    // FORCE RLS (0005) binds the owner too: tenant rows are written inside their workspace.
+    const orgId = randomUUID();
+    const inWorkspace = (statement: ReturnType<typeof sql>) =>
+      owner.transaction(async (tx) => {
+        await tx.execute(sql`select set_config('app.workspace_id', ${orgId}, true)`);
+        return tx.execute(statement);
+      });
+    await inWorkspace(
+      sql`insert into organization (id, name, slug) values (${orgId}, 'Chambers', 'chambers')`,
     );
     const addMember = (role: string) =>
-      owner.execute(
-        sql`insert into member (workspace_id, user_id, role) values (${org?.id}, ${u?.id}, ${role})`,
+      inWorkspace(
+        sql`insert into member (workspace_id, user_id, role) values (${orgId}, ${u?.id}, ${role})`,
       );
     await expect(addMember('admin')).rejects.toThrow();
     await expect(addMember('advocate')).resolves.toBeDefined();
@@ -218,6 +226,7 @@ describe('runMigrations', () => {
         db.owner,
         sql`
         select exists (select 1 from pg_locks where locktype = 'advisory'
+          and database = (select oid from pg_database where datname = current_database())
           and ((classid::bigint << 32) | objid::bigint) = ${MIGRATION_LOCK_KEY}) as held`,
       );
       seen = row?.held === true;
@@ -228,7 +237,8 @@ describe('runMigrations', () => {
     const [after] = await query<{ held: boolean }>(
       db.owner,
       sql`
-      select exists (select 1 from pg_locks where locktype = 'advisory') as held`,
+      select exists (select 1 from pg_locks where locktype = 'advisory'
+        and database = (select oid from pg_database where datname = current_database())) as held`,
     );
     expect(after?.held).toBe(false);
   });

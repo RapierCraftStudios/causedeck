@@ -22,8 +22,10 @@ const subscribe = (onChange: () => void) => {
  * `data-focus-key` moves to its replacement.
  */
 function restoreFocus(key: string | undefined) {
-  if (key === undefined) return;
+  if (key === undefined || typeof requestAnimationFrame !== 'function') return;
   requestAnimationFrame(() => {
+    // The page (or a test's DOM) can be gone by the next frame.
+    if (typeof document === 'undefined') return;
     const active = document.activeElement;
     if (active !== null && active !== document.body && active.isConnected) return;
     const replacement = [...document.querySelectorAll<HTMLElement>('[data-focus-key]')].find(
@@ -33,16 +35,32 @@ function restoreFocus(key: string | undefined) {
   });
 }
 
-/** Load the overlay chunk (once) and re-render every shell component waiting for it. */
+/** The `data-focus-key` of the focused element, if there is still a DOM to ask. */
+function focusedKey(): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+  const active = document.activeElement;
+  return active instanceof HTMLElement ? active.dataset.focusKey : undefined;
+}
+
+/**
+ * Load the overlay chunk (once) and re-render every shell component waiting for it. The chunk can
+ * arrive after the DOM is gone (a test environment torn down mid-load), so focus is only carried
+ * over while a document exists. A failed load is forgotten, so the next trigger tries again.
+ */
 export function loadShellOverlays(): Promise<ShellOverlays> {
-  pending ??= import('./shell-overlays.tsx').then((mod) => {
-    const active = document.activeElement;
-    const key = active instanceof HTMLElement ? active.dataset.focusKey : undefined;
-    loaded = mod;
-    for (const notify of listeners) notify();
-    restoreFocus(key);
-    return mod;
-  });
+  pending ??= import('./shell-overlays.tsx').then(
+    (mod) => {
+      const key = focusedKey();
+      loaded = mod;
+      for (const notify of listeners) notify();
+      restoreFocus(key);
+      return mod;
+    },
+    (error: unknown) => {
+      pending = null;
+      throw error;
+    },
+  );
   return pending;
 }
 
@@ -68,7 +86,8 @@ export function useShellOverlays(): ShellOverlays | null {
   useEffect(
     () =>
       whenIdle(() => {
-        void loadShellOverlays();
+        // A prefetch that fails is not an error: opening a trigger loads the chunk again.
+        loadShellOverlays().catch(() => undefined);
       }),
     [],
   );

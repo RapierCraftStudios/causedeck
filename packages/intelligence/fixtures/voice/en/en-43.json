@@ -1,0 +1,19 @@
+{
+  "id": "en-43",
+  "language": "en",
+  "hearingDate": "2025-06-05",
+  "text": "In case 83398 of 2026 today. Arguments were heard and the matter stands adjourned. Pleadings are incomplete. Next hearing on June 20th. The court directed the petitioner to file the rejoinder after two weeks. Remind me to update the junior on the listing.",
+  "expected": {
+    "nextDate": {
+      "date": "2025-06-20",
+      "phrase": "June 20th"
+    },
+    "directions": [
+      {
+        "text": "The court directed the petitioner to file the rejoinder after two weeks.",
+        "dueDate": "2025-06-19"
+      }
+    ],
+    "tasks": ["update the junior on the listing"]
+  }
+}

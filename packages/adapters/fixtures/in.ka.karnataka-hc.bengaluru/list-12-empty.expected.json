@@ -1,0 +1,35 @@
+{
+  "adapterId": "in.ka.karnataka-hc.bengaluru",
+  "adapterVersion": "1.1.0",
+  "forumCode": "in.ka.karnataka-hc.bengaluru",
+  "listDate": "2026-10-30",
+  "rows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["12"],
+    "hallsUnreadable": []
+  },
+  "halls": [
+    {
+      "hallNo": "12",
+      "bench": "HON'BLE MS. JUSTICE D. PRETEND",
+      "lists": [
+        {
+          "rows": []
+        }
+      ]
+    }
+  ],
+  "unparsedRows": [],
+  "status": "empty",
+  "listType": "daily",
+  "source": "html",
+  "publishedAt": "2026-10-29T18:30:00+05:30",
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "DAILY CAUSE LIST FOR 30-10-2026",
+    "rowIndex": 0
+  }
+}

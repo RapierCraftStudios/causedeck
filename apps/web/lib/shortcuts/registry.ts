@@ -15,7 +15,8 @@ export const SHORTCUT_GROUPS = ['navigation', 'actions', 'help'] as const;
 
 export type ShortcutGroupId = (typeof SHORTCUT_GROUPS)[number];
 
-export type ShortcutAction = 'capture' | 'palette' | 'sidebar' | 'search' | 'help';
+export type ShortcutAction =
+  'capture' | 'palette' | 'sidebar' | 'search' | 'notifications' | 'help';
 
 export interface ShortcutDefinition {
   id: string;
@@ -51,11 +52,12 @@ const action = (
   id: ShortcutAction,
   keys: string,
   group: ShortcutGroupId = 'actions',
+  labelKey = `shortcuts.actions.${id}`,
 ): ShortcutDefinition => ({
   id: `action.${id}`,
   keys,
   group,
-  labelKey: `shortcuts.actions.${id}`,
+  labelKey,
   action: id,
 });
 
@@ -71,6 +73,8 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
   action('palette', 'mod+k'),
   action('sidebar', '['),
   action('search', '/'),
+  // The bell's panel (#198); its label lives with the rest of the notifications copy.
+  action('notifications', 'shift+n', 'actions', 'notifications.shortcut'),
   action('help', '?', 'help'),
 ];
 

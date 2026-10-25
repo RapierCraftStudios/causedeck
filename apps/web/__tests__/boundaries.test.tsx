@@ -128,11 +128,16 @@ describe('app/loading.tsx', () => {
 });
 
 describe('app/(public)/offline/page.tsx', () => {
-  it('shows the designed offline copy and a link back', async () => {
-    render(await OfflinePage());
+  it('says what works offline and what does not, and links back (#50)', () => {
+    withIntl(<OfflinePage />);
 
-    expect(screen.getByText(catalogs.en.offline.body)).toBeTruthy();
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Offline');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
+      catalogs.en.pwa.offline.title,
+    );
+    expect(screen.getByText(catalogs.en.pwa.offline.works.saved)).toBeTruthy();
+    expect(screen.getByText(catalogs.en.pwa.offline.works.capture)).toBeTruthy();
+    expect(screen.getByText(catalogs.en.pwa.offline.doesNot.items)).toBeTruthy();
+    expect(screen.getByText(catalogs.en.pwa.offline.outbox.none)).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Go to Today' }).getAttribute('href')).toBe('/');
   });
 });

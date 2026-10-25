@@ -1,0 +1,75 @@
+{
+  "workspace": {
+    "onboarding": {
+      "metaTitle": "Create a workspace",
+      "title": "Create your workspace",
+      "description": "Your matters, court days and people live in a workspace. You can belong to several and switch any time.",
+      "kindLabel": "Who is this workspace for?",
+      "kind": {
+        "solo": "Just me",
+        "chamber": "A chamber"
+      },
+      "kindHint": {
+        "solo": "Your own practice. Invite juniors or clerks later if you need to.",
+        "chamber": "A shared workspace for an advocate's chamber, with seats for each member."
+      },
+      "nameLabel": "Workspace name",
+      "namePlaceholder": {
+        "solo": "e.g. Meenakshi Iyer Law Practice",
+        "chamber": "e.g. Hebbal Chambers"
+      },
+      "submit": "Create workspace",
+      "creating": "Creating workspace",
+      "errors": {
+        "nameRequired": "Enter a name for the workspace.",
+        "nameTooLong": "Use {max} characters or fewer.",
+        "nameInvalid": "Use a name with at least one letter or digit.",
+        "offline": "You are offline. Connect to create a workspace.",
+        "signedOut": "Your session ended. Sign in again to continue.",
+        "generic": "Could not create the workspace. Please try again."
+      }
+    },
+    "welcome": {
+      "metaTitle": "Set up the practice",
+      "title": "Set up {workspace}",
+      "clerkIntro": "You are setting this practice up for your senior. Do the three steps, then ask for their approval.",
+      "steps": {
+        "language": {
+          "title": "Choose your language",
+          "body": "The whole app switches to the language you pick."
+        },
+        "import": {
+          "title": "Bring in the cases",
+          "body": "Import the diary from a photo, a file or WhatsApp, then confirm the listings it finds.",
+          "action": "Open import"
+        },
+        "today": {
+          "title": "See the court day",
+          "body": "Check today’s listings and where each item stands.",
+          "action": "Open court day"
+        }
+      },
+      "approval": {
+        "title": "Your senior’s approval",
+        "body": "When the setup looks right, ask your senior to approve it. They need one tap.",
+        "request": "Ask for approval",
+        "requesting": "Asking",
+        "pending": "Waiting for your senior. Ask them to open {path} and tap Approve.",
+        "approved": "Your senior approved this setup."
+      },
+      "senior": {
+        "title": "Clerk setups waiting for you",
+        "empty": "No clerk setup is waiting for approval.",
+        "item": "{name} has finished setting up the practice.",
+        "approve": "Approve",
+        "approving": "Approving",
+        "approved": "Approved"
+      },
+      "notForRole": "This page is for clerks, and for the people who run the practice.",
+      "errors": {
+        "offline": "You are offline. Connect and try again.",
+        "generic": "That did not work. Try again."
+      }
+    }
+  }
+}

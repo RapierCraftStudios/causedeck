@@ -1,0 +1,219 @@
+{
+  "invite": {
+    "metaTitle": "Invitation",
+    "valid": {
+      "title": "Join {workspace}",
+      "body": "You have been invited to join {workspace} as {role}.",
+      "roleLabel": "Your role"
+    },
+    "states": {
+      "expired": {
+        "title": "This invitation has expired",
+        "body": "Invitations last 7 days. Ask the person who invited you to send a new one."
+      },
+      "revoked": {
+        "title": "This invitation was withdrawn",
+        "body": "The workspace withdrew this invitation. Ask the person who invited you if you still need access."
+      },
+      "used": {
+        "title": "This invitation has already been used",
+        "body": "Each invitation link works once. If it was you, the workspace is already in your switcher."
+      },
+      "invalid": {
+        "title": "This invitation link is not valid",
+        "body": "Check that you opened the full link from the email, or ask for a new invitation."
+      },
+      "emailMismatch": {
+        "title": "This invitation is for a different email",
+        "body": "You are signed in as {email}, but this invitation was sent to another address. Sign in with the invited email to accept it."
+      },
+      "alreadyMember": {
+        "title": "You are already a member",
+        "body": "You already belong to {workspace}."
+      },
+      "seatLimit": {
+        "title": "No seats left in this workspace",
+        "body": "The workspace's plan has no free seat for you. Ask the person who invited you to add a seat."
+      }
+    },
+    "accept": "Accept invitation",
+    "accepting": "Joining workspace",
+    "differentAccount": "Sign in with a different account",
+    "openWorkspace": "Open {workspace}",
+    "goHome": "Go to CauseDeck",
+    "errors": {
+      "offline": "You are offline. Connect to accept the invitation.",
+      "signedOut": "Your session ended. Sign in again to continue.",
+      "generic": "Could not accept the invitation. Please try again."
+    }
+  },
+  "members": {
+    "metaTitle": "Members",
+    "title": "Members",
+    "description": "People in {workspace} and what they can do.",
+    "loading": "Loading members",
+    "you": "You",
+    "inviteButton": "Invite member",
+    "needsConnection": "Needs a connection",
+    "readOnly": {
+      "viewer": "You can view members but not change them.",
+      "member": "Only owners can change roles or remove members."
+    },
+    "empty": "It is just you for now. Invite juniors, clerks or co-counsel when you are ready.",
+    "error": {
+      "title": "Could not load members.",
+      "retry": "Try again"
+    },
+    "tableCaption": "Members of {workspace}",
+    "columns": {
+      "member": "Member",
+      "role": "Role",
+      "status": "Status",
+      "lastActive": "Last active",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "invited": "Invited"
+    },
+    "lastActive": {
+      "never": "Not yet"
+    },
+    "invitedOn": "Invited {date}",
+    "roles": {
+      "owner": "Owner",
+      "advocate": "Advocate",
+      "junior": "Junior",
+      "clerk": "Clerk",
+      "viewer": "Viewer"
+    },
+    "roleDescriptions": {
+      "owner": "Everything, including billing, members and deleting the workspace.",
+      "advocate": "Full practice access. Can invite juniors, clerks and viewers.",
+      "junior": "Works on assigned matters and shared chamber matters.",
+      "clerk": "Listings, tasks and documents. No strategy notes or matter memory.",
+      "viewer": "Can read, but not change anything."
+    },
+    "rolesPanel": {
+      "title": "Roles",
+      "description": "What each person can see and do in this workspace.",
+      "clerkNote": "Clerks never see strategy notes or matter memory, even on matters they work on."
+    },
+    "menu": {
+      "label": "Actions for {name}",
+      "changeRole": "Change role",
+      "transferOwnership": "Transfer ownership",
+      "resend": "Resend invitation",
+      "revoke": "Revoke",
+      "remove": "Remove from workspace"
+    },
+    "invite": {
+      "title": "Invite members",
+      "description": "They get an email with a link to join {workspace}. The link works for 7 days.",
+      "emailsLabel": "Email addresses",
+      "emailsHint": "Paste several addresses at once. Separate them with commas or spaces.",
+      "emailsPlaceholder": "name@example.com",
+      "removeEmail": "Remove {email}",
+      "invalidChip": "{email} is not a valid email address",
+      "roleLabel": "Role",
+      "noteLabel": "Note (optional)",
+      "noteHint": "A short line for the people you invite.",
+      "cancel": "Cancel",
+      "submit": "Send invitation",
+      "sending": "Sending",
+      "copyLink": "Copy link",
+      "linkCopied": "Invitation link copied",
+      "sent": "Invitation sent to {email}",
+      "resent": "Invitation sent again to {email}",
+      "revoked": "Invitation to {email} revoked",
+      "errors": {
+        "emailsRequired": "Add at least one email address.",
+        "invalidEmails": "Fix or remove the addresses marked as not valid.",
+        "tooMany": "Invite at most {max} people at a time.",
+        "forbidden": "You cannot invite {email} with this role.",
+        "rateLimited": "Too many invitations for now. Try {email} again later.",
+        "invalid": "{email} could not be invited. Check the address.",
+        "conflict": "{email} could not be invited: the workspace has no seat left for this role.",
+        "failed": "Could not invite {email}. Please try again."
+      },
+      "seatLimit": {
+        "message": "Your plan includes {seats} seats. Add a seat to invite more people.",
+        "managePlan": "Manage plan"
+      }
+    },
+    "changeRole": {
+      "title": "Change role",
+      "description": "Choose what {name} can do in {workspace}.",
+      "label": "Role for {name}",
+      "ownerHint": "Making someone the owner is an ownership transfer. You confirm it on the next step.",
+      "cancel": "Cancel",
+      "submit": "Save role",
+      "saving": "Saving",
+      "continue": "Continue",
+      "success": "{name} is now {role}."
+    },
+    "transfer": {
+      "title": "Transfer ownership to {name}?",
+      "description": "{name} becomes the owner of {workspace}.",
+      "consequences": {
+        "newOwner": "{name} gets billing, member management and workspace deletion.",
+        "you": "You become an advocate and keep full practice access.",
+        "undo": "Only the new owner can transfer ownership back."
+      },
+      "confirmLabel": "Type {slug} to confirm",
+      "confirmMismatch": "Type the workspace address exactly as shown.",
+      "back": "Back",
+      "submit": "Transfer ownership",
+      "transferring": "Transferring",
+      "success": "{name} now owns {workspace}."
+    },
+    "remove": {
+      "title": "Remove {name} from {workspace}?",
+      "consequencesTitle": "What happens next",
+      "access": "{name} loses access to {workspace} straight away.",
+      "sessions": "Their sessions in this workspace end.",
+      "otherWorkspaces": "Their other workspaces are not affected.",
+      "openWork": "{count, plural, one {# open task or obligation moves} other {# open tasks and obligations move}} to the member you choose.",
+      "checking": "Checking for open tasks and obligations",
+      "reassignLabel": "Hand open work to",
+      "reassignPlaceholder": "Choose a member",
+      "reassignRequired": "Choose who takes over the open work.",
+      "cancel": "Cancel",
+      "submit": "Remove from workspace",
+      "removing": "Removing",
+      "success": "{name} was removed from {workspace}."
+    },
+    "errors": {
+      "lastOwner": "A workspace always needs an owner. Transfer ownership first.",
+      "forbidden": "You do not have permission to do this.",
+      "notFound": "This member or invitation is no longer here. Reload to see the latest list.",
+      "validation": "Some details need attention. Check and try again.",
+      "signedOut": "Your session ended. Sign in again to continue.",
+      "offline": "You are offline. Connect to make changes.",
+      "generic": "Something went wrong. Please try again."
+    },
+    "rolesLink": "How roles work",
+    "tabs": {
+      "label": "Members and invitations",
+      "members": "Members ({count})",
+      "invitations": "Pending invitations ({count})"
+    },
+    "invitationsEmpty": "No pending invitations.",
+    "seats": {
+      "title": "Seats",
+      "used": "{used} of {granted} seats in use",
+      "clerk": "{used} of {granted} clerk seats in use",
+      "overLimit": "Over plan limit",
+      "note": "Invitations take a seat when they are accepted."
+    },
+    "aboutRoles": "About roles",
+    "transferPicker": {
+      "title": "Transfer ownership",
+      "description": "Choose the member who will become the owner of {workspace}.",
+      "label": "New owner",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "none": "Invite another member before you transfer ownership."
+    }
+  }
+}

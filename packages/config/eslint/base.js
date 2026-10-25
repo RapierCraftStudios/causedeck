@@ -6,7 +6,38 @@ import unicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-import { APP_NAMES, boundaries } from './boundaries.js';
+import { causedeck } from './authorization.js';
+import {
+  APP_NAMES,
+  appDbImportBlocks,
+  boundaries,
+  withoutWorkspaceImportBan,
+} from './boundaries.js';
+
+/** The AlterLab SDK is imported only by `packages/fetch` (#479, D-048); everything else uses its fetcher. */
+export const alterlabImportPattern = {
+  group: ['alterlab', 'alterlab/**'],
+  message:
+    'Read external sources through `@causedeck/fetch`; only packages/fetch imports `alterlab`.',
+};
+
+/** The governed fetch layer is the one place that talks to AlterLab (#479, D-048). */
+export function fetchLayerOverride(files) {
+  return {
+    files,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            ...deepImportPatterns.filter((pattern) => pattern !== alterlabImportPattern),
+            appImportPattern,
+          ],
+        },
+      ],
+    },
+  };
+}
 
 /** Deep imports into another workspace's sources bypass its public `exports`. */
 export const deepImportPatterns = [
@@ -18,6 +49,7 @@ export const deepImportPatterns = [
     group: ['**/apps/*/src/**', '**/packages/*/src/**'],
     message: 'Import other workspaces by name (`@causedeck/<pkg>`), not by relative path.',
   },
+  alterlabImportPattern,
 ];
 
 /** Packages never import apps (spike §2), including by workspace name. */
@@ -47,15 +79,44 @@ const loggerCalls = [
 const LOG_CONTENT_MESSAGE =
   'Do not log request bodies or matter content; log ids and lengths instead (docs/engineering/observability.md).';
 
-export const loggerContentRestrictions = loggerCalls.flatMap((call) =>
-  [
-    `${call} > MemberExpression.arguments[property.name=${CONTENT_NAMES}]`,
-    `${call} > Identifier.arguments[name=${CONTENT_NAMES}]`,
-    `${call} > ObjectExpression.arguments > SpreadElement > MemberExpression.argument[property.name=${CONTENT_NAMES}]`,
-    `${call} > ObjectExpression.arguments > SpreadElement > Identifier.argument[name=${CONTENT_NAMES}]`,
-    `${call} > ObjectExpression.arguments > Property > MemberExpression.value[property.name=${CONTENT_NAMES}]`,
-  ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
-);
+const EXTERNAL_FETCH_MESSAGE =
+  'Read external sources through `@causedeck/fetch` (governed fetch layer, D-048), not a direct `fetch` of an external host.';
+
+/**
+ * `fetch('https://…')` of a literal external host (#479); relative and variable URLs are not flagged,
+ * nor is loopback (`localhost`, `127.0.0.1`, `[::1]`), which tests use to reach their own servers.
+ * esquery regexes cannot contain `/`, so `..` stands for the `//` after the scheme.
+ */
+const EXTERNAL_URL = String.raw`/^https?:..(?!localhost|127\.0\.0\.1|\[::1\])/`;
+const externalFetchRestrictions = [
+  `CallExpression[callee.name='fetch'] > Literal.arguments:first-child[value=${EXTERNAL_URL}]`,
+  `CallExpression[callee.name='fetch'] > TemplateLiteral.arguments:first-child > TemplateElement.quasis:first-child[value.raw=${EXTERNAL_URL}]`,
+].map((selector) => ({ selector, message: EXTERNAL_FETCH_MESSAGE }));
+
+// The shared `no-restricted-syntax` list: the logger rules below (#13) plus the external-fetch ban,
+// so `next.js` and the other configs that spread it keep both.
+export const loggerContentRestrictions = loggerCalls
+  .flatMap((call) =>
+    [
+      `${call} > MemberExpression.arguments[property.name=${CONTENT_NAMES}]`,
+      `${call} > Identifier.arguments[name=${CONTENT_NAMES}]`,
+      `${call} > ObjectExpression.arguments > SpreadElement > MemberExpression.argument[property.name=${CONTENT_NAMES}]`,
+      `${call} > ObjectExpression.arguments > SpreadElement > Identifier.argument[name=${CONTENT_NAMES}]`,
+      `${call} > ObjectExpression.arguments > Property > MemberExpression.value[property.name=${CONTENT_NAMES}]`,
+    ].map((selector) => ({ selector, message: LOG_CONTENT_MESSAGE })),
+  )
+  .concat(externalFetchRestrictions);
+
+/** `withoutWorkspace` (#19) import ban; defined in boundaries.js so the app→db blocks reuse it. */
+export { withoutWorkspaceImportBan };
+
+/** Where `withoutWorkspace` may be imported. */
+export const WITHOUT_WORKSPACE_ALLOWED_GLOBS = [
+  '**/packages/db/**',
+  // The audited admin data layer (#309); the rest of apps/admin goes through it.
+  '**/apps/admin/lib/data/**',
+  '**/migrations/**',
+];
 
 /** Files treated as client modules (browser bundles). */
 export const CLIENT_FILE_GLOBS = [
@@ -119,6 +180,7 @@ export const base = tseslint.config(
       '@typescript-eslint/no-unsafe-unary-minus': 'error',
       '@typescript-eslint/consistent-type-imports': 'error',
       'no-restricted-imports': ['error', { patterns: deepImportPatterns }],
+      '@typescript-eslint/no-restricted-imports': ['error', withoutWorkspaceImportBan],
       // Read configuration through `@causedeck/config/env` (spike §3.2), never `process.env`.
       'no-process-env': 'error',
       'no-restricted-syntax': ['error', ...loggerContentRestrictions],
@@ -170,15 +232,31 @@ export const base = tseslint.config(
       ],
     },
   },
+  fetchLayerOverride(['**/packages/fetch/**']),
   {
     files: PROCESS_ENV_ALLOWED_GLOBS,
     rules: { 'no-process-env': 'off' },
   },
   {
+    files: WITHOUT_WORKSPACE_ALLOWED_GLOBS.filter((glob) => !glob.includes('/apps/')),
+    rules: { '@typescript-eslint/no-restricted-imports': 'off' },
+  },
+  // apps/admin, like every app, imports no `@causedeck/db` value (#299). Only its audited data
+  // layer (`apps/admin/lib/data`, #309) may import `withoutWorkspace`; the later blocks win there.
+  ...appDbImportBlocks('**/apps/admin', { withoutWorkspace: true }),
+  ...appDbImportBlocks('**/apps/admin/lib/data', { withoutWorkspace: false }),
+  {
     // Plain JS config files and root-level TS config files are not part of any tsconfig project.
     files: ['**/*.{js,mjs,cjs}', 'vitest.workspace.ts'],
     extends: [tseslint.configs.disableTypeChecked],
     languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    // Core domains import one another only through `index.ts` along the declared map (#293,
+    // docs/engineering/core-domains.md).
+    files: ['**/packages/core/src/**/*.{ts,tsx,js,mjs}'],
+    plugins: { causedeck },
+    rules: { 'causedeck/core-domain-boundaries': 'error' },
   },
 );
 

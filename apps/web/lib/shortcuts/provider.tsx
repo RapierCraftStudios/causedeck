@@ -1,5 +1,6 @@
 'use client';
 
+import { useIsEnabled } from '@causedeck/flags/react';
 import { useIsMac } from '@causedeck/ui/hooks';
 import { useRouter } from 'next/navigation';
 import {
@@ -13,9 +14,10 @@ import {
   type ReactNode,
 } from 'react';
 
+import { openNotifications } from '../../components/notifications/use-notifications.ts';
 import { useCapture } from '../../components/shell/capture-fab.tsx';
 import { useSidebar } from '../../components/shell/sidebar-collapse.tsx';
-import { registerCommands } from '../commands/registry.ts';
+import { getCommands, registerCommands } from '../commands/registry.ts';
 import { getNavItem } from '../nav.ts';
 import type { FlagKey, Role } from '../workspace-context.ts';
 
@@ -24,6 +26,7 @@ import {
   createShortcutDispatcher,
   visibleShortcuts,
   type ShortcutDefinition,
+  type VisibleShortcutsOptions,
 } from './registry.ts';
 import type * as DialogModule from './shortcuts-dialog.tsx';
 
@@ -63,6 +66,29 @@ function useShortcutsDialog(): { Dialog: ShortcutsDialogComponent | null } {
 /** The in-page search field `/` focuses. Pages mark theirs with `data-page-search`. */
 export const PAGE_SEARCH_SELECTOR = '[data-page-search]';
 
+/**
+ * Shortcuts that pages register with their palette commands (`n` for New matter on the matters
+ * list): listed in the `?` dialog under Actions, unless the registry already has those keys.
+ */
+function pageShortcuts(
+  known: readonly ShortcutDefinition[],
+  options: VisibleShortcutsOptions,
+): ShortcutDefinition[] {
+  const keys = new Set(known.map((shortcut) => shortcut.keys));
+  return getCommands(options).flatMap((command) =>
+    command.shortcut === undefined || command.labelKey === undefined || keys.has(command.shortcut)
+      ? []
+      : [
+          {
+            id: `page.${command.id}`,
+            keys: command.shortcut,
+            group: 'actions' as const,
+            labelKey: command.labelKey,
+          },
+        ],
+  );
+}
+
 export interface ShortcutsApi {
   /** Shortcuts this user can use (chords to hidden destinations are left out). */
   shortcuts: readonly ShortcutDefinition[];
@@ -86,18 +112,22 @@ export interface ShortcutsProviderProps {
 
 /**
  * The shell's keyboard shortcuts: `g` chords to destinations, `c` capture, `[` sidebar, `/` page
- * search and `?` help, through one document listener. `mod+k` is listed here but bound by the
- * palette itself (use-command-palette.ts). Also adds the capture, sidebar and help actions to the
- * command palette with their key hints. Needs `<CaptureProvider>` and `<SidebarProvider>` above.
+ * search, `Shift+N` notifications and `?` help, through one document listener. `mod+k` is listed
+ * here but bound by the palette itself (use-command-palette.ts). Also adds the capture, sidebar,
+ * notifications and help actions to the command palette with their key hints. Needs
+ * `<CaptureProvider>` and `<SidebarProvider>` above.
  */
 export function ShortcutsProvider({ slug, role, isEnabled, children }: ShortcutsProviderProps) {
+  // Flag-gated chords follow the server-evaluated snapshot unless a caller overrides it.
+  const fromFlags = useIsEnabled();
+  const enabled = isEnabled ?? fromFlags;
   const router = useRouter();
   const sidebar = useSidebar();
   const capture = useCapture();
   const mac = useIsMac();
   const [helpOpen, setHelpOpen] = useState(false);
   const { Dialog } = useShortcutsDialog();
-  const shortcuts = useMemo(() => visibleShortcuts({ role, isEnabled }), [role, isEnabled]);
+  const shortcuts = useMemo(() => visibleShortcuts({ role, isEnabled: enabled }), [role, enabled]);
 
   const openHelp = () => {
     void loadShortcutsDialog();
@@ -122,6 +152,9 @@ export function ShortcutsProvider({ slug, role, isEnabled, children }: Shortcuts
         field?.focus();
         return field !== null;
       }
+      case 'notifications':
+        openNotifications();
+        return true;
       case 'help':
         void loadShortcutsDialog();
         setHelpOpen((open) => !open);
@@ -167,6 +200,15 @@ export function ShortcutsProvider({ slug, role, isEnabled, children }: Shortcuts
           perform: perform('capture'),
         },
       ]),
+      registerCommands('goTo', [
+        {
+          id: 'notifications.open',
+          labelKey: 'notifications.shortcut',
+          keywords: ['notifications', 'bell', 'unread'],
+          shortcut: actionKeys('notifications'),
+          perform: perform('notifications'),
+        },
+      ]),
       registerCommands('settings', [
         {
           id: 'view.toggleSidebar',
@@ -205,7 +247,17 @@ export function ShortcutsProvider({ slug, role, isEnabled, children }: Shortcuts
   return (
     <ShortcutsContext.Provider value={api}>
       {children}
-      {Dialog ? <Dialog open={helpOpen} onOpenChange={setHelpOpen} shortcuts={shortcuts} /> : null}
+      {Dialog ? (
+        <Dialog
+          open={helpOpen}
+          onOpenChange={setHelpOpen}
+          shortcuts={
+            helpOpen
+              ? [...shortcuts, ...pageShortcuts(shortcuts, { role, isEnabled: enabled })]
+              : shortcuts
+          }
+        />
+      ) : null}
     </ShortcutsContext.Provider>
   );
 }

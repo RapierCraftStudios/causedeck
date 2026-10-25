@@ -1,0 +1,28 @@
+{
+  "template": "drt",
+  "status": "ok",
+  "cnr": null,
+  "caseNumber": "OA/412/2025",
+  "nextHearingDate": "2026-11-14",
+  "lastHearingDate": "2026-09-21",
+  "stage": {
+    "raw": "Evidence of Applicant Bank",
+    "norm": "evidence"
+  },
+  "bench": "DRT-1 Bengaluru (FICTIONAL)",
+  "orders": [
+    {
+      "date": "2026-09-21",
+      "number": "1",
+      "summary": "Hearing order (FICTIONAL)",
+      "href": null
+    }
+  ],
+  "quotes": {
+    "caseNumber": "OA/412/2025",
+    "stage": "Evidence of Applicant Bank",
+    "bench": "DRT-1 Bengaluru (FICTIONAL)",
+    "nextHearingDate": "14-11-2026",
+    "lastHearingDate": "21-09-2026"
+  }
+}

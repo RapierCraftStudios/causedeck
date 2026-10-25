@@ -3,8 +3,60 @@
 import type { SendOptions } from 'pg-boss';
 import type { z } from 'zod';
 
+import { accountDelete } from './definitions/account-delete.ts';
+import {
+  activityDigest,
+  activityDigestMember,
+  activityDigestSchedule,
+} from './definitions/activity-digest.ts';
+import { courtDataRetention } from './definitions/court-data-retention.ts';
+import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
+import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
+import { auditRetention } from './definitions/audit-retention.ts';
+import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
+import { systemDataOpsEvaluate } from './definitions/data-ops-evaluate.ts';
+import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
+import { billingInvoiceNotice } from './definitions/billing-invoice-notice.ts';
+import { billingInvoiceRender } from './definitions/billing-invoice-render.ts';
+import { billingProcessEvent } from './definitions/billing-process-event.ts';
+import { billingReconcile } from './definitions/billing-reconcile.ts';
+import { businessCostAlert } from './definitions/business-cost-alert.ts';
+import { businessDigest } from './definitions/business-digest.ts';
+import { coverageWeekly } from './definitions/coverage-weekly.ts';
+import { captureProcess } from './definitions/capture-process.ts';
+import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
+import { captureScan } from './definitions/capture-scan.ts';
+import { corpusPoll } from './definitions/corpus-poll.ts';
+import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
+import { portfolioAlertScan } from './definitions/portfolio-alert-scan.ts';
+import { ordersPoll } from './definitions/orders-poll.ts';
+import { statusPoll } from './definitions/status-poll.ts';
+import { webhookDeliver } from './definitions/webhook-deliver.ts';
+import { systemWebhookSweep } from './definitions/webhook-sweep.ts';
+import { extractOrder } from './definitions/extraction-extract-order.ts';
+import { importBatch, importFile } from './definitions/import-batch.ts';
+import { voiceProcess } from './definitions/voice-process.ts';
+import { whatsappImport } from './definitions/whatsapp-import.ts';
+import { whatsappIntake } from './definitions/whatsapp-intake.ts';
+import { emailIntake } from './definitions/email-intake.ts';
+import { emailRawExpire } from './definitions/email-raw-expire.ts';
+import { deletionErase } from './definitions/deletion-erase.ts';
+import { deletionTick } from './definitions/deletion-tick.ts';
+import { boardPoll } from './definitions/board-poll.ts';
+import { causelistPoll } from './definitions/causelist-poll.ts';
+import { noticesPoll } from './definitions/notices-poll.ts';
+import { exportBuild } from './definitions/export-build.ts';
+import { exportExpire } from './definitions/export-expire.ts';
+import { memoryErase } from './definitions/memory-erase.ts';
+import { notificationDeliver } from './definitions/notification-deliver.ts';
+import {
+  notificationDigest,
+  notificationDigestSchedule,
+} from './definitions/notification-digest.ts';
 import { retentionSweep } from './definitions/retention-sweep.ts';
+import { supportSessionExpire } from './definitions/support-session-expire.ts';
 import { systemPing } from './definitions/system-ping.ts';
+import { usageRollup } from './definitions/usage-rollup.ts';
 import type { AnyJobDefinition, JobPayloadBase } from './define.ts';
 import { getProducer, type JobSender } from './producer.ts';
 
@@ -105,9 +157,125 @@ export function createRegistry<const D extends readonly AnyJobDefinition[]>(
 }
 
 /** Every job the platform runs. */
-export const registry = createRegistry([systemPing, retentionSweep] as const);
+export const registry = createRegistry([
+  systemPing,
+  retentionSweep,
+  courtDataRetention,
+  billingReconcile,
+  billingDunningTick,
+  billingProcessEvent,
+  billingInvoiceRender,
+  billingInvoiceNotice,
+  notificationDeliver,
+  notificationDigestSchedule,
+  notificationDigest,
+  activityDigestSchedule,
+  activityDigest,
+  activityDigestMember,
+  newsDigestSchedule,
+  newsDigest,
+  newsDigestMember,
+  systemNewsPoll,
+  newsPoll,
+  usageRollup,
+  businessCostAlert,
+  businessDigest,
+  coverageWeekly,
+  systemAuditVerify,
+  auditVerify,
+  auditRetention,
+  exportBuild,
+  exportExpire,
+  supportSessionExpire,
+  deletionTick,
+  deletionErase,
+  accountDelete,
+  memoryErase,
+  captureScan,
+  captureProcess,
+  systemCaptureRetention,
+  captureRetention,
+  whatsappImport,
+  voiceProcess,
+  emailIntake,
+  whatsappIntake,
+  emailRawExpire,
+  extractOrder,
+  importBatch,
+  importFile,
+  systemDataOpsEvaluate,
+  corpusPoll,
+  causelistPoll,
+  boardPoll,
+  noticesPoll,
+  judgmentAlertScan,
+  portfolioAlertScan,
+  statusPoll,
+  webhookDeliver,
+  systemWebhookSweep,
+  ordersPoll,
+] as const);
 
-export type JobMap = RegistryMap<readonly [typeof systemPing, typeof retentionSweep]>;
+export type JobMap = RegistryMap<
+  readonly [
+    typeof systemPing,
+    typeof retentionSweep,
+    typeof courtDataRetention,
+    typeof billingReconcile,
+    typeof billingDunningTick,
+    typeof billingProcessEvent,
+    typeof billingInvoiceRender,
+    typeof billingInvoiceNotice,
+    typeof notificationDeliver,
+    typeof notificationDigestSchedule,
+    typeof notificationDigest,
+    typeof activityDigestSchedule,
+    typeof activityDigest,
+    typeof activityDigestMember,
+    typeof newsDigestSchedule,
+    typeof newsDigest,
+    typeof newsDigestMember,
+    typeof systemNewsPoll,
+    typeof newsPoll,
+    typeof usageRollup,
+    typeof businessCostAlert,
+    typeof businessDigest,
+    typeof coverageWeekly,
+    typeof systemAuditVerify,
+    typeof auditVerify,
+    typeof auditRetention,
+    typeof exportBuild,
+    typeof exportExpire,
+    typeof supportSessionExpire,
+    typeof deletionTick,
+    typeof deletionErase,
+    typeof accountDelete,
+    typeof memoryErase,
+    typeof captureScan,
+    typeof captureProcess,
+    typeof systemCaptureRetention,
+    typeof captureRetention,
+    typeof whatsappImport,
+    typeof voiceProcess,
+    typeof emailIntake,
+    typeof whatsappIntake,
+    typeof emailRawExpire,
+    typeof extractOrder,
+    typeof importBatch,
+    typeof importFile,
+    typeof systemDataOpsEvaluate,
+    typeof corpusPoll,
+    typeof causelistPoll,
+    typeof boardPoll,
+    typeof noticesPoll,
+    typeof judgmentAlertScan,
+    typeof portfolioAlertScan,
+    typeof statusPoll,
+    typeof webhookDeliver,
+    typeof systemWebhookSweep,
+    typeof ordersPoll,
+  ]
+>;
 export type JobName = keyof JobMap;
 export type PayloadOf<N extends JobName> = z.input<JobMap[N]['schema']>;
 
@@ -125,4 +293,15 @@ export async function enqueue<N extends JobName>(
   // Validate before connecting, so a bad payload fails fast even without a database.
   registry.get(name)?.schema.parse(payload);
   return registry.enqueue(sender ?? (await getProducer()), name, payload, options);
+}
+
+/**
+ * `NotifyContext.enqueueDelivery` for `notify()` (`@causedeck/notifications`): one
+ * `notification.deliver` job per notification and channel.
+ */
+export function enqueueNotificationDelivery(
+  job: PayloadOf<'notification.deliver'>,
+  options: ProducerEnqueueOptions = {},
+): Promise<string | null> {
+  return enqueue('notification.deliver', job, options);
 }

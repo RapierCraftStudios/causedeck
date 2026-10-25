@@ -2,7 +2,7 @@
 // handling (`handleShutdownSignals`). Prints `ready`, `started` and `finished` lines on stdout.
 import { Secret } from '@causedeck/config/env';
 import { defineJob } from '@causedeck/core/jobs';
-import { createDb } from '@causedeck/db';
+import { createDb } from '@causedeck/db/testing/client';
 import { createLogger } from '@causedeck/observability';
 import { z } from 'zod';
 

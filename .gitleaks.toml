@@ -1,0 +1,11 @@
+# Gitleaks configuration: the default rules plus narrow allowlists for known false positives.
+# The CI scan reads every branch's history (.github/workflows/security.yml), so a false positive on
+# one open lane branch fails every pull request until it is allowlisted here.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Court case numbers in adapter fixtures (\"matchKey\": \"CC/9173/2019\"), not secrets"
+regexTarget = "line"
+regexes = ['''"matchKey": "[A-Z][A-Z.()]*/\d+/\d{4}"''']

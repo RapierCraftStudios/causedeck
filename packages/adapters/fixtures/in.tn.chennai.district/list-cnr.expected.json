@@ -1,0 +1,180 @@
+{
+  "adapterId": "in.tn.chennai.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.chennai.city-civil-court",
+  "listDate": "2026-07-19",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. M.V.C. No. 704/2019    Sample Bank Ltd vs Fictional Traders Pvt Ltd    CNR: TNCH030092632019",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "22",
+      "itemNo": "1",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "704",
+      "caseYear": 2019,
+      "matchKey": "MVC/704/2019",
+      "parties": "Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. C.C. No. 6903/2026    Made-up Farmer vs Imaginary Textiles    CNR: TNCH024786702026",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "22",
+      "itemNo": "2",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "6903",
+      "caseYear": 2026,
+      "matchKey": "CC/6903/2026",
+      "parties": "Made-up Farmer vs Imaginary Textiles",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. Crl.Misc. No. 404/2025    Pretend Housing Society vs Fictional Traders Pvt Ltd    CNR: TNCH023108282025",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "22",
+      "itemNo": "3",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "404",
+      "caseYear": 2025,
+      "matchKey": "CRLMISC/404/2025",
+      "parties": "Pretend Housing Society vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. C.C. No. 7141/2024    Made-up Farmer vs Invented Motors    CNR: TNCH075176782024",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "22",
+      "itemNo": "4",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "7141",
+      "caseYear": 2024,
+      "matchKey": "CC/7141/2024",
+      "parties": "Made-up Farmer vs Invented Motors",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. Ex.P. No. 8654/2024    Fictional Traders Pvt Ltd vs Made-up Farmer    CNR: TNCH070162322024",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "22",
+      "itemNo": "5",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "8654",
+      "caseYear": 2024,
+      "matchKey": "EXP/8654/2024",
+      "parties": "Fictional Traders Pvt Ltd vs Made-up Farmer",
+      "stageRaw": "FOR EVIDENCE",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. CCCA No. 4740/2021    Imaginary Textiles vs Fictional Traders Pvt Ltd    CNR: TNCH032286852021",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "35",
+      "itemNo": "6",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "4740",
+      "caseYear": 2021,
+      "matchKey": "CCCA/4740/2021",
+      "parties": "Imaginary Textiles vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. Crl.Misc. No. 2664/2025    Pretend Housing Society vs Sample Bank Ltd    CNR: TNCH029722762025",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "35",
+      "itemNo": "7",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "2664",
+      "caseYear": 2025,
+      "matchKey": "CRLMISC/2664/2025",
+      "parties": "Pretend Housing Society vs Sample Bank Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. C.C. No. 9836/2019    Pretend Housing Society vs Made-up Farmer    CNR: TNCH052449982019",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "35",
+      "itemNo": "8",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "9836",
+      "caseYear": 2019,
+      "matchKey": "CC/9836/2019",
+      "parties": "Pretend Housing Society vs Made-up Farmer",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. O.S. No. 2100/2023    Imaginary Textiles vs Fictional Traders Pvt Ltd    CNR: TNCH082482062023",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "35",
+      "itemNo": "9",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "2100",
+      "caseYear": 2023,
+      "matchKey": "OS/2100/2023",
+      "parties": "Imaginary Textiles vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "19.07.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["22", "35"],
+    "hallsUnreadable": []
+  }
+}

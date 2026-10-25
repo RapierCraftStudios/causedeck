@@ -129,6 +129,40 @@ describe('DataTable', () => {
     expect(second).toHaveAttribute('aria-selected', 'false');
   });
 
+  it('opens a row on click and on Enter, and reports the focused row', async () => {
+    const onRowActivate = vi.fn();
+    const onActiveRowChange = vi.fn();
+    renderTable({
+      onRowActivate,
+      onActiveRowChange,
+      getRowClassName: (row) => (row.id === 'm-2' ? 'bg-warning-soft' : undefined),
+    });
+    const [first, second] = bodyRows();
+    expect(second).toHaveClass('bg-warning-soft');
+    expect(first).not.toHaveClass('bg-warning-soft');
+
+    first?.focus();
+    expect(onActiveRowChange).toHaveBeenLastCalledWith(MATTER_ROWS[0], 0);
+    await userEvent.keyboard('{ArrowDown}');
+    expect(second).toHaveFocus();
+    expect(onActiveRowChange).toHaveBeenLastCalledWith(MATTER_ROWS[1], 1);
+    await userEvent.keyboard('{Enter}');
+    expect(onRowActivate).toHaveBeenLastCalledWith(MATTER_ROWS[1], 1);
+
+    await userEvent.click(within(first as HTMLElement).getAllByRole('cell')[0] as HTMLElement);
+    expect(onRowActivate).toHaveBeenLastCalledWith(MATTER_ROWS[0], 0);
+    expect(onRowActivate).toHaveBeenCalledTimes(2);
+  });
+
+  it('leaves Enter and clicks alone without onRowActivate', async () => {
+    renderTable();
+    const [first] = bodyRows();
+    expect(first).not.toHaveClass('cursor-pointer');
+    first?.focus();
+    await userEvent.keyboard('{Enter}');
+    expect(first).toHaveFocus();
+  });
+
   it('Shift+arrows extend the selection and shrink it again', async () => {
     renderTable({ enableRowSelection: true });
     const rows = bodyRows();

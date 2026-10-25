@@ -1,0 +1,162 @@
+{
+  "adapterId": "in.tn.chennai.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.tn.chennai.city-civil-court",
+  "listDate": "2026-10-13",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1 Com.O.S. No. 3375/2026 மாதிரி வங்கி எதிர் புனைவு ஜவுளி சாட்சியத்திற்காக",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "1",
+      "caseTypeRaw": "Com.O.S.",
+      "caseType": "COMOS",
+      "caseNumber": "3375",
+      "caseYear": 2026,
+      "matchKey": "COMOS/3375/2026",
+      "parties": "மாதிரி வங்கி எதிர் புனைவு ஜவுளி",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2 Com.O.S. No. 6057/2022 போலி விவசாயி எதிர் புனைவு ஜவுளி ஆணைக்காக",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "2",
+      "caseTypeRaw": "Com.O.S.",
+      "caseType": "COMOS",
+      "caseNumber": "6057",
+      "caseYear": 2022,
+      "matchKey": "COMOS/6057/2022",
+      "parties": "போலி விவசாயி எதிர் புனைவு ஜவுளி",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3 Com.Misc. No. 5591/2025 புனைவு ஜவுளி எதிர் கற்பனை வணிகர்கள் நிறுவனம் ஆணைக்காக",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "3",
+      "caseTypeRaw": "Com.Misc.",
+      "caseType": "COMMISC",
+      "caseNumber": "5591",
+      "caseYear": 2025,
+      "matchKey": "COMMISC/5591/2025",
+      "parties": "புனைவு ஜவுளி எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4 Com.Misc. No. 2249/2022 கற்பனை வணிகர்கள் நிறுவனம் எதிர் கற்பனை வணிகர்கள் நிறுவனம் ஆணைக்காக",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "4",
+      "caseTypeRaw": "Com.Misc.",
+      "caseType": "COMMISC",
+      "caseNumber": "2249",
+      "caseYear": 2022,
+      "matchKey": "COMMISC/2249/2022",
+      "parties": "கற்பனை வணிகர்கள் நிறுவனம் எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5 Com.O.S. No. 6277/2019 புனைவு ஜவுளி எதிர் கற்பனை குடியிருப்போர் சங்கம் வாதத்திற்காக",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "5",
+      "caseTypeRaw": "Com.O.S.",
+      "caseType": "COMOS",
+      "caseNumber": "6277",
+      "caseYear": 2019,
+      "matchKey": "COMOS/6277/2019",
+      "parties": "புனைவு ஜவுளி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "6 Com.FDP No. 9153/2023 புனைவு ஜவுளி எதிர் மாதிரி வங்கி சாட்சியத்திற்காக",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "6",
+      "caseTypeRaw": "Com.FDP",
+      "caseType": "COMFDP",
+      "caseNumber": "9153",
+      "caseYear": 2023,
+      "matchKey": "COMFDP/9153/2023",
+      "parties": "புனைவு ஜவுளி எதிர் மாதிரி வங்கி",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "7 Com.A.A. No. 7666/2021 கற்பனை மோட்டார்ஸ் எதிர் கற்பனை குடியிருப்போர் சங்கம் வாதத்திற்காக",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "7",
+      "caseTypeRaw": "Com.A.A.",
+      "caseType": "COMAA",
+      "caseNumber": "7666",
+      "caseYear": 2021,
+      "matchKey": "COMAA/7666/2021",
+      "parties": "கற்பனை மோட்டார்ஸ் எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+      "stageRaw": null,
+      "stageNorm": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "8 Com.A.A. No. 2856/2024 கற்பனை குடியிருப்போர் சங்கம் எதிர் கற்பனை வணிகர்கள் நிறுவனம் வாதத்திற்காக",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "7",
+      "itemNo": "8",
+      "caseTypeRaw": "Com.A.A.",
+      "caseType": "COMAA",
+      "caseNumber": "2856",
+      "caseYear": 2024,
+      "matchKey": "COMAA/2856/2024",
+      "parties": "கற்பனை குடியிருப்போர் சங்கம் எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+      "stageRaw": null,
+      "stageNorm": null
+    }
+  ],
+  "source": "pdf",
+  "listDateAnchor": { "page": 1, "quote": "௧௩.௧௦.௨௦௨௬", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["7"],
+    "hallsUnreadable": []
+  }
+}

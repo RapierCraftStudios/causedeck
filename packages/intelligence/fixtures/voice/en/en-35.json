@@ -1,0 +1,19 @@
+{
+  "id": "en-35",
+  "language": "en",
+  "hearingDate": "2026-02-13",
+  "text": "In case 38135 of 2026 today. Arguments were heard and the matter stands adjourned. The bench was not available. Next hearing next tuesday. The court directed the State to produce the original records.",
+  "expected": {
+    "nextDate": {
+      "date": "2026-02-17",
+      "phrase": "next tuesday"
+    },
+    "directions": [
+      {
+        "text": "The court directed the State to produce the original records.",
+        "dueDate": null
+      }
+    ],
+    "tasks": []
+  }
+}

@@ -5,6 +5,8 @@ import { and, eq, sql } from 'drizzle-orm';
 
 import { forbidden } from '../shared/errors.ts';
 
+import { matchingWeeks, type MatchingWeek } from './metrics.ts';
+
 import {
   canWriteMemory,
   inScope,
@@ -40,6 +42,8 @@ export interface TenureMetrics {
   weeks: TenureWeek[];
   /** Briefs that used memory and were not edited into a proposed pattern; null with no briefs. */
   briefAcceptedUnedited: { briefs: number; unedited: number; rate: number | null };
+  /** Match corrections against memory-assisted matches by tenure week (#74). */
+  matching: MatchingWeek[];
 }
 
 const rate = (part: number, whole: number): number | null =>
@@ -128,6 +132,7 @@ async function computeMetrics(db: Db, workspaceId: string): Promise<TenureMetric
     return {
       weeks,
       briefAcceptedUnedited: { briefs: total, unedited, rate: rate(unedited, total) },
+      matching: await matchingWeeks(tx, workspaceId, week),
     };
   });
 }

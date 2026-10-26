@@ -2,6 +2,7 @@
 export const packageName: string = '@causedeck/core';
 
 export * from './api-keys/index.ts';
+export * from './attention/index.ts';
 export * from './audit/index.ts';
 export * from './automation/index.ts';
 export * from './business/index.ts';
@@ -20,6 +21,7 @@ export * from './jobs/index.ts';
 export * from './lifecycle/index.ts';
 export * from './matter-graph/index.ts';
 export * from './matters/index.ts';
+export * from './matching/index.ts';
 export * from './memory/index.ts';
 export * from './news/index.ts';
 export * from './network/index.ts';

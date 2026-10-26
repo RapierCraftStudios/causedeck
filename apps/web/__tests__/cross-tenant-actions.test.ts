@@ -125,6 +125,7 @@ const hearingOutcome =
 const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const obligations = await import('../app/(app)/w/[slug]/obligations/actions.ts');
+const attention = await import('../app/(app)/w/[slug]/matters/_components/attention-actions.ts');
 const memory = await import('../app/(app)/w/[slug]/memory/actions.ts');
 const outward = await import('../app/(app)/w/[slug]/_outward/actions.ts');
 const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
@@ -300,6 +301,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   outcomesLiveAction: planActions,
   typeKeyLineAction: inbox,
   markSentAction: inbox,
+  snoozeFlagAction: attention,
+  dismissFlagAction: attention,
+  liftSnoozeAction: attention,
   closeObligationAction: obligations,
   rescheduleAction: obligations,
   reassignAction: obligations,
@@ -820,6 +824,20 @@ function inputs(workspaceId: string): Record<string, unknown> {
     keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
     typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
     markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
+    // Stale-matter attention (#70): ub may not snooze, dismiss or lift on A's matters.
+    snoozeFlagAction: {
+      workspaceId,
+      matterId: t.a.rows.attention_snooze?.matterId ?? XT_ID,
+      rule: null,
+      until: '2099-01-01',
+      reason: 'Cross-tenant probe',
+    },
+    dismissFlagAction: {
+      workspaceId,
+      matterId: t.a.rows.attention_snooze?.matterId ?? XT_ID,
+      rule: null,
+    },
+    liftSnoozeAction: { workspaceId, snoozeId: t.a.rows.attention_snooze?.snoozeId ?? XT_ID },
     // Obligation queue (#68): ub may not close, reschedule, reassign or add to A's obligations.
     closeObligationAction: {
       workspaceId,

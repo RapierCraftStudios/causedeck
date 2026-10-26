@@ -737,6 +737,7 @@ export type Messages = {
         heading: string;
         applied: string;
         pending: string;
+        attention: string;
         matters: string;
         activityCta: string;
         inboxCta: string;
@@ -4308,6 +4309,16 @@ export type Messages = {
       };
     };
   };
+  memoryCitations: {
+    carryRule: string;
+    chipLabel: string;
+    usedMemory: string;
+    draftTitle: string;
+    draftTone: string;
+    draftLanguage: string;
+    draftOther: string;
+    noteDate: string;
+  };
   whatsappLink: {
     title: string;
     description: string;
@@ -4777,6 +4788,50 @@ export type Messages = {
       full: string;
     };
   };
+  attention: {
+    title: string;
+    badge: string;
+    badgeLabel: string;
+    loading: string;
+    empty: string;
+    error: string;
+    retry: string;
+    offline: string;
+    denied: string;
+    readOnly: string;
+    close: string;
+    openEvidence: string;
+    since: string;
+    rules: {
+      no_next_date: string;
+      past_date_no_outcome: string;
+      no_recent_update: string;
+      obligation_overdue_unowned: string;
+    };
+    groupCount: string;
+    actions: {
+      record_outcome: string;
+      set_next_date: string;
+      ask_junior: string;
+    };
+    snooze: {
+      action: string;
+      until: string;
+      reason: string;
+      submit: string;
+      dismiss: string;
+      lift: string;
+      hint: string;
+    };
+    snoozes: {
+      title: string;
+      empty: string;
+      until: string;
+      dismissed: string;
+      allRules: string;
+      reason: string;
+    };
+  };
   obligations: {
     metaTitle: string;
     title: string;
@@ -5221,6 +5276,14 @@ export type Messages = {
     offline: {
       banner: string;
       queued: string;
+      conflict: {
+        title: string;
+        server: string;
+        none: string;
+        mine: string;
+        keepServer: string;
+        useMine: string;
+      };
     };
     summary: {
       label: string;
@@ -5364,6 +5427,11 @@ export type Messages = {
       willSync: string;
       reviewed: string;
       empty: string;
+      suggested: string;
+      suggestAdd: string;
+      suggestAddLabel: string;
+      suggestSkip: string;
+      suggestSkipLabel: string;
     };
     synopsis: {
       edit: string;

@@ -5,6 +5,8 @@
 // bench, is rejected, because memory never profiles the bench (permanent guardrail).
 import { z } from 'zod';
 
+import { BRIEF_SECTION_KEYS } from './brief';
+
 export const MEMORY_LAYERS = ['M1', 'M2', 'M3', 'M4', 'M6', 'M7'] as const;
 export const MemoryLayer = z.enum(MEMORY_LAYERS);
 export type MemoryLayer = z.output<typeof MemoryLayer>;
@@ -303,3 +305,136 @@ export const MemoryCorrectionInput = z.strictObject({
   target: z.enum(['party', 'matter']).default('party'),
 });
 export type MemoryCorrectionInput = z.input<typeof MemoryCorrectionInput>;
+
+// How memory values steer outputs (#74). A stored value is free-form (`MemoryValue`); the exported
+// zod schemas below describe each readable shape, and the `read*` helpers give the consumers one
+// typed view and ignore what they cannot read, so a malformed value falls
+// back to the default rather than breaking a brief or a draft.
+
+export type BriefSectionKey = (typeof BRIEF_SECTION_KEYS)[number];
+export const BRIEF_VERBOSITIES = ['short', 'full'] as const;
+export type BriefVerbosity = (typeof BRIEF_VERBOSITIES)[number];
+
+/** The member's M2 brief format: section order (listed sections first) and verbosity. */
+export interface BriefFormat {
+  order: BriefSectionKey[];
+  verbosity: BriefVerbosity;
+}
+
+export const DEFAULT_BRIEF_FORMAT: BriefFormat = {
+  order: [...BRIEF_SECTION_KEYS],
+  verbosity: 'full',
+};
+
+const isSection = (v: string): v is BriefSectionKey =>
+  (BRIEF_SECTION_KEYS as readonly string[]).includes(v);
+
+const BriefVerbositySchema = z.enum(BRIEF_VERBOSITIES);
+export const BriefFormatValue = z.union([
+  z
+    .string()
+    .transform((v) => v.trim().toLowerCase())
+    .pipe(BriefVerbositySchema),
+  z.looseObject({
+    order: z.string().optional().catch(undefined),
+    verbosity: BriefVerbositySchema.optional().catch(undefined),
+  }),
+]);
+
+/** `M2.brief_format`: 'short' | 'full', or {order: 'carry,stage,...', verbosity}; null if unreadable. */
+export function readBriefFormat(value: MemoryValue): BriefFormat | null {
+  const parsed = BriefFormatValue.safeParse(value);
+  if (!parsed.success) return null;
+  if (typeof parsed.data === 'string') return { ...DEFAULT_BRIEF_FORMAT, verbosity: parsed.data };
+  const first = (parsed.data.order?.split(',') ?? []).map((s) => s.trim()).filter(isSection);
+  if (first.length === 0 && parsed.data.verbosity === undefined) return null;
+  return {
+    order: [...new Set([...first, ...BRIEF_SECTION_KEYS])],
+    verbosity: parsed.data.verbosity ?? 'full',
+  };
+}
+
+export const AlwaysCarryRule = z.strictObject({
+  label: z.string().trim().min(1),
+  /** 'first_hearing': only on the first listing of a proceeding; 'always' otherwise. */
+  when: z.enum(['always', 'first_hearing']).default('always'),
+});
+export type AlwaysCarryRule = z.output<typeof AlwaysCarryRule>;
+
+export const AlwaysCarryValue = z.union([
+  z.string().transform((label) => [{ label, when: 'always' as const }]),
+  z
+    .array(z.string())
+    .transform((labels) => labels.map((label) => ({ label, when: 'always' as const }))),
+  z
+    .looseObject({ label: z.string().trim().min(1), when: z.unknown().optional() })
+    .transform(({ label, when }) => [
+      { label, when: when === 'first_hearing' ? ('first_hearing' as const) : ('always' as const) },
+    ]),
+]);
+
+/** `M2.always_carry`: a label, a list of labels, or {label, when}; unreadable gives no rule. */
+export function readAlwaysCarry(value: MemoryValue): AlwaysCarryRule[] {
+  const parsed = AlwaysCarryValue.safeParse(value);
+  return parsed.success ? parsed.data : [];
+}
+
+export const OUTWARD_TONE_VALUES = ['formal', 'brief', 'warm'] as const;
+export const OUTWARD_LANGUAGE_VALUES = ['en', 'ta', 'kn'] as const;
+export const OutwardTone = z.string().trim().toLowerCase().pipe(z.enum(OUTWARD_TONE_VALUES));
+/** `M6.client_language`: 'en' | 'ta' | 'kn' or the English name of one of them. */
+export const OutwardLanguage = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .transform((v) => ({ english: 'en', tamil: 'ta', kannada: 'kn' })[v] ?? v)
+  .pipe(z.enum(OUTWARD_LANGUAGE_VALUES));
+
+export const ClientUpdateStyleValue = z.union([
+  OutwardTone.transform((tone) => ({ tone })),
+  z.looseObject({
+    tone: OutwardTone.optional().catch(undefined),
+    sign_off: z.string().trim().min(1).optional().catch(undefined),
+  }),
+]);
+
+/** `M2.client_update_tone`: a tone, or {tone, sign_off}; fields that cannot be read are absent. */
+export function readClientUpdateStyle(value: MemoryValue): {
+  tone?: (typeof OUTWARD_TONE_VALUES)[number];
+  signOff?: string;
+} {
+  const parsed = ClientUpdateStyleValue.safeParse(value);
+  if (!parsed.success) return {};
+  const data = parsed.data as { tone?: (typeof OUTWARD_TONE_VALUES)[number]; sign_off?: string };
+  return {
+    ...(data.tone === undefined ? {} : { tone: data.tone }),
+    ...(data.sign_off === undefined ? {} : { signOff: data.sign_off }),
+  };
+}
+
+/** `M6.client_language`: 'en' | 'ta' | 'kn' or the English name of one of them. */
+export function readClientLanguage(
+  value: MemoryValue,
+): (typeof OUTWARD_LANGUAGE_VALUES)[number] | null {
+  const parsed = OutwardLanguage.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
+export const AliasValue = z.looseObject({
+  alias: z.string().min(1),
+  canonical: z.string().min(1),
+});
+
+/** An `M7` alias value: what was typed and what it stands for. */
+export function readAlias(value: MemoryValue): { alias: string; canonical: string } | null {
+  const parsed = AliasValue.safeParse(value);
+  return parsed.success ? { alias: parsed.data.alias, canonical: parsed.data.canonical } : null;
+}
+
+/** A matching hint input (#74): an M7 alias only ever raises or lowers ranking, never auto-applies. */
+export const MatchingHintInput = z.strictObject({
+  alias: z.string().min(1),
+  canonical: z.string().min(1),
+  target: z.enum(['party', 'matter']).default('party'),
+});
+export type MatchingHintInput = z.input<typeof MatchingHintInput>;

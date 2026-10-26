@@ -39,13 +39,13 @@ export function DraftList({
         <li key={draft.id}>
           <button
             type="button"
-            aria-label={t('list.open', { matter: draft.matterTitle })}
             aria-current={draft.id === activeId}
             onClick={() => {
               onOpen(draft.id);
             }}
             className="bg-surface-raised border-line focus-visible:ring-focus grid w-full gap-2 rounded-xl border p-4 text-start focus-visible:ring-2 pointer-coarse:min-h-11"
           >
+            <span className="sr-only">{t('list.open', { matter: draft.matterTitle })}. </span>
             <span className="flex flex-wrap items-center gap-2 text-xs">
               <span className="bg-surface-sunken rounded-full px-2 py-0.5">
                 {t(`audience.${draft.audience}`)}

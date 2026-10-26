@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  AlwaysCarryValue,
   assertNotBench,
+  BriefFormatValue,
+  ClientUpdateStyleValue,
+  MatchingHintInput,
+  OutwardLanguage,
+  readAlias,
+  readAlwaysCarry,
+  readBriefFormat,
+  readClientLanguage,
+  readClientUpdateStyle,
   isMemoryKey,
   isStrategyKey,
   layerOfKey,
@@ -103,5 +113,58 @@ describe('M1.last_memory_review (#73)', () => {
         scope: 'workspace',
       }).success,
     ).toBe(true);
+  });
+});
+
+describe('memory value readers (#74)', () => {
+  it('reads a brief format and falls back on garbage', () => {
+    expect(readBriefFormat('short')?.verbosity).toBe('short');
+    expect(readBriefFormat({ order: 'carry, obligations' })?.order.slice(0, 2)).toEqual([
+      'carry',
+      'obligations',
+    ]);
+    expect(readBriefFormat('one page')).toBeNull();
+    expect(readBriefFormat(['x'])).toBeNull();
+  });
+
+  it('reads always-carry rules, tone, language and aliases', () => {
+    expect(readAlwaysCarry({ label: 'vakalat copy', when: 'first_hearing' })).toEqual([
+      { label: 'vakalat copy', when: 'first_hearing' },
+    ]);
+    expect(readAlwaysCarry({ nope: 1 })).toEqual([]);
+    expect(readClientUpdateStyle({ tone: 'Warm', sign_off: ' Regards ' })).toEqual({
+      tone: 'warm',
+      signOff: 'Regards',
+    });
+    expect(readClientLanguage('Tamil')).toBe('ta');
+    expect(readClientLanguage('french')).toBeNull();
+    expect(readAlias({ alias: 'Rajan', canonical: 'M. Rajan' })).toEqual({
+      alias: 'Rajan',
+      canonical: 'M. Rajan',
+    });
+    expect(readAlias('Rajan')).toBeNull();
+  });
+});
+
+describe('memory value schemas (#74, R14)', () => {
+  it('parses each readable shape with the exported zod schemas', () => {
+    expect(BriefFormatValue.safeParse(' Short ').data).toBe('short');
+    expect(BriefFormatValue.safeParse('one page').success).toBe(false);
+    expect(AlwaysCarryValue.safeParse(['a', 'b']).data).toEqual([
+      { label: 'a', when: 'always' },
+      { label: 'b', when: 'always' },
+    ]);
+    expect(ClientUpdateStyleValue.safeParse('formal').data).toEqual({ tone: 'formal' });
+    expect(ClientUpdateStyleValue.safeParse(42).success).toBe(false);
+    expect(OutwardLanguage.safeParse('Kannada').data).toBe('kn');
+    expect(OutwardLanguage.safeParse('french').success).toBe(false);
+  });
+
+  it('validates a matching hint input strictly', () => {
+    expect(MatchingHintInput.parse({ alias: 'Rajan', canonical: 'M. Rajan' }).target).toBe('party');
+    expect(MatchingHintInput.safeParse({ alias: '', canonical: 'x' }).success).toBe(false);
+    expect(MatchingHintInput.safeParse({ alias: 'a', canonical: 'b', extra: 1 }).success).toBe(
+      false,
+    );
   });
 });

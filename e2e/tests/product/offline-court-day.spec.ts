@@ -5,7 +5,9 @@
 //   - an uncached route lands on the branded /offline page;
 //   - the store belongs to one user and one workspace; access revoked on the server is purged on
 //     the next online prefetch;
-//   - axe and a keyboard-only pass on the offline board.
+//   - axe and a keyboard-only pass on the offline board;
+//   - edits made offline (carry items, a next date) sit in the outbox and replay on reconnect; a
+//     next date the server changed meanwhile stops as a conflict card.
 import postgres from 'postgres';
 
 import { COURT_DAY, seedCourtDay } from '../../fixtures/court-day-data.ts';
@@ -18,6 +20,7 @@ import {
   expectOfflineBoard,
   goOffline,
   offlineDbNames,
+  reconnect,
   savedRows,
   waitForPrefetch,
 } from './offline-helpers.ts';
@@ -186,15 +189,105 @@ test.describe('offline court day', () => {
       .toBeLessThan(before);
   });
 
-  // Not reachable from the UI yet: `enqueueEdit` and `drainOutbox` (apps/web/lib/offline/sync.ts)
-  // have no caller outside lib/offline, so no click while offline writes to the outbox. Their
-  // behaviour is covered by apps/web/__tests__/offline/sync.test.ts; the e2e cases follow once the
-  // brief sheet and the next-date control enqueue (tracked by the #747 deferral).
-  test.fixme('carry ticks, notes and captures made offline replay in order once online', () => {
-    // Offline: tick a carry item, edit a note; online: the outbox drains once, no duplicates.
+  // The outbox (#851): edits made while offline are sealed on the device and replayed by the shell
+  // on reconnect (apps/web/lib/offline/use-outbox.ts, components/pwa/offline-sync.tsx).
+  test('carry items added offline replay in order once online, with no duplicates', async ({
+    page,
+    context,
+  }) => {
+    const items = ['Vakalatnama', 'Affidavit of service'];
+    await goOffline(page, context);
+    await page.goto(`/w/${SHELL_WORKSPACE}/today`);
+    await expectOfflineBoard(page);
+    const href = await briefHref(page, COURT_DAY.sharedTitle);
+    await page.goto(href);
+    const sheet = page.locator('[data-brief-sheet]:visible');
+    await expect(sheet).toHaveCount(1);
+    await expect(sheet).toContainText(/offline/i);
+    const list = sheet.locator('[data-carry-list]');
+    for (const label of items) {
+      await list.getByRole('textbox').fill(label);
+      await list.getByRole('button', { name: /add/i }).click();
+      await expect(list.getByText(label)).toBeVisible();
+    }
+    // Both edits are sealed in the outbox, nothing has reached the server.
+    await expect.poll(() => savedRows(page, 'outbox')).toBe(items.length);
+
+    await reconnect(page, context);
+    await expect.poll(() => savedRows(page, 'outbox'), { timeout: 30_000 }).toBe(0);
+
+    // The server now holds the items: once each, in the order they were made.
+    await expect(async () => {
+      await page.goto(href);
+      const labels = await page.locator('[data-carry-item]:visible').allTextContents();
+      for (const label of items) {
+        expect(labels.filter((text) => text.includes(label))).toHaveLength(1);
+      }
+      expect(labels.findIndex((text) => text.includes(items[0] as string))).toBeLessThan(
+        labels.findIndex((text) => text.includes(items[1] as string)),
+      );
+    }).toPass({ timeout: 30_000 });
   });
 
-  test.fixme('a next-date edit made offline surfaces a conflict card when the server changed', () => {
-    // Offline edit becomes a proposal; the server value changes; reconnect shows the conflict card.
+  test('a next-date edit made offline surfaces a conflict card when the server changed', async ({
+    page,
+    context,
+    asUser,
+    db,
+  }) => {
+    // The shared item's hearing (the owner appears in it) and proceeding, from the seed.
+    const sql = postgres(databaseUrl(db.name, 'owner'), { max: 1, onnotice: () => undefined });
+    const serverDate = '2099-03-02';
+    let seeded: { hearing_id: string; workspace_id: string; proceeding_id: string };
+    try {
+      const [row] = await sql<
+        { hearing_id: string; workspace_id: string; proceeding_id: string }[]
+      >`
+        select h.id as hearing_id, h.workspace_id, p.id as proceeding_id
+          from hearing h
+          join listing l on l.id = h.listing_id
+          join proceeding p on p.id = l.proceeding_id
+          join matter m on m.id = p.matter_id
+         where m.title = ${COURT_DAY.sharedTitle}`;
+      if (row === undefined) throw new Error('e2e: no hearing for the shared matter');
+      seeded = row;
+    } finally {
+      await sql.end();
+    }
+
+    // Open the outcome form online (it loads the proposal), then lose the network and choose a
+    // date: with no date on file the edit is queued against "none".
+    await asUser('owner', { path: `hearings/${seeded.hearing_id}/outcome` });
+    await contentReady(page);
+    await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined));
+    await context.setOffline(true);
+    await page.getByLabel('What happened').fill('Adjourned, reply to be filed');
+    await page.getByLabel('Enter a date').fill('15/04/2026');
+    await page.getByRole('button', { name: 'Confirm outcome' }).click();
+    await expect(page.getByText('Saved on this device').first()).toBeVisible();
+    await expect.poll(() => savedRows(page, 'outbox')).toBe(1);
+
+    // Meanwhile the server gets a confirmed canonical date for the proceeding.
+    const writer = postgres(databaseUrl(db.name, 'owner'), { max: 1, onnotice: () => undefined });
+    try {
+      await writer.begin(async (tx) => {
+        await tx`select set_config('app.workspace_id', ${seeded.workspace_id}, true)`;
+        await tx`
+          insert into listing (workspace_id, proceeding_id, list_date, list_type, stage_raw,
+            canonical, source_type, confirmation_state)
+          values (${seeded.workspace_id}, ${seeded.proceeding_id}, ${serverDate}, 'daily',
+                  'For hearing', true, 'manual', 'confirmed')`;
+      });
+    } finally {
+      await writer.end();
+    }
+
+    await reconnect(page, context);
+    await expect(page.getByText('The next date changed while you were offline')).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByText('02/03/2099').first()).toBeVisible();
+    // A conflict is never applied blindly: the edit stays on the device until the member chooses.
+    expect(await savedRows(page, 'outbox')).toBe(1);
   });
 });

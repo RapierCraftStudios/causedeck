@@ -736,6 +736,7 @@
         "heading": "What CauseDeck did today",
         "applied": "{count, plural, =0 {CauseDeck applied nothing on its own today.} one {CauseDeck applied # change on its own today. You can undo it for 7 days.} other {CauseDeck applied # changes on its own today. You can undo them for 7 days.}}",
         "pending": "{count, plural, =0 {Nothing is waiting for your confirmation.} one {# proposal is waiting for your confirmation.} other {# proposals are waiting for your confirmation.}}",
+        "attention": "{count, plural, one {# matter to check.} other {# matters to check.}}",
         "matters": "Matters touched today",
         "activityCta": "Review today's activity",
         "inboxCta": "Open your inbox",
@@ -4307,6 +4308,16 @@
       }
     }
   },
+  "memoryCitations": {
+    "carryRule": "because you usually carry this",
+    "chipLabel": "From your memory: {reason}",
+    "usedMemory": "Used memory: {reason}",
+    "draftTitle": "From your memory",
+    "draftTone": "your usual tone and sign-off",
+    "draftLanguage": "the language you use with this client",
+    "draftOther": "a saved memory",
+    "noteDate": "Saved {date}"
+  },
   "whatsappLink": {
     "title": "WhatsApp",
     "description": "Get court-day alerts and your evening summary on your own WhatsApp. Messages go only to the number you verify here, never to clients.",
@@ -4776,6 +4787,50 @@
       "full": "The device outbox is full. Let uploads finish, then try again."
     }
   },
+  "attention": {
+    "title": "Needs you",
+    "badge": "{count, plural, =0 {No matters need attention} one {# matter needs attention} other {# matters need attention}}",
+    "badgeLabel": "Attention: {count}",
+    "loading": "Loading what needs you",
+    "empty": "Nothing needs you right now.",
+    "error": "Could not load what needs you. Try again.",
+    "retry": "Try again",
+    "offline": "You are offline. Showing the last loaded flags.",
+    "denied": "You do not have access to these flags in this workspace.",
+    "readOnly": "View only",
+    "close": "Close",
+    "openEvidence": "Open evidence",
+    "since": "Since {date}",
+    "rules": {
+      "no_next_date": "No next date",
+      "past_date_no_outcome": "Past date, no outcome",
+      "no_recent_update": "No recent update",
+      "obligation_overdue_unowned": "Overdue obligation, no owner"
+    },
+    "groupCount": "{rule}: {count}",
+    "actions": {
+      "record_outcome": "Record the outcome",
+      "set_next_date": "Set the next date",
+      "ask_junior": "Ask the junior"
+    },
+    "snooze": {
+      "action": "Snooze",
+      "until": "Snooze until",
+      "reason": "Reason",
+      "submit": "Snooze flag",
+      "dismiss": "Dismiss as intentionally dormant",
+      "lift": "Lift snooze",
+      "hint": "Press s to snooze, Enter to open the evidence, Esc to close."
+    },
+    "snoozes": {
+      "title": "Snoozes and dismissals",
+      "empty": "No snoozes or dismissals on this matter.",
+      "until": "Snoozed until {date}",
+      "dismissed": "Dismissed as intentionally dormant",
+      "allRules": "All flags",
+      "reason": "Reason: {reason}"
+    }
+  },
   "obligations": {
     "metaTitle": "Obligations",
     "title": "Obligations",
@@ -5219,7 +5274,15 @@
     "loading": "Loading the hearing outcome",
     "offline": {
       "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
-      "queued": "Saved on this device. It will be applied when you are back online."
+      "queued": "Saved on this device. It will be applied when you are back online.",
+      "conflict": {
+        "title": "The next date changed while you were offline",
+        "server": "On file now",
+        "none": "No date",
+        "mine": "Your offline date",
+        "keepServer": "Keep the date on file",
+        "useMine": "Propose my date"
+      }
     },
     "summary": {
       "label": "What happened",
@@ -5362,7 +5425,12 @@
       },
       "willSync": "Will sync",
       "reviewed": "Mark list reviewed",
-      "empty": "Nothing to carry."
+      "empty": "Nothing to carry.",
+      "suggested": "Suggested from your memory: {label}",
+      "suggestAdd": "Add",
+      "suggestAddLabel": "Add {label} to the carry list",
+      "suggestSkip": "Not now",
+      "suggestSkipLabel": "Not now: {label}"
     },
     "synopsis": {
       "edit": "Edit synopsis",

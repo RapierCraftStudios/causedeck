@@ -10,6 +10,7 @@
 // empty cards, offline (banner, mutations off), permission-denied, and not-found (another
 // workspace, a restricted matter or an unknown id). In development
 // `?__state=loading|error|denied|offline|empty` previews them.
+import type { SnoozeRecord } from '@causedeck/validators/attention';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -44,6 +45,7 @@ import {
   reportRecordErrorAction,
   updateMatterAction,
 } from './actions.ts';
+import { AttentionSnoozes } from '../_components/attention-snoozes.tsx';
 import { createBriefShareAction, revokeBriefShareAction } from '../../briefs/actions.ts';
 import { HandoverSheet } from './_continuity/handover-sheet.tsx';
 import { WhatChangedCard } from './_continuity/what-changed-card.tsx';
@@ -128,6 +130,22 @@ async function loadBenchNotices(
   }
 }
 
+/** The snoozes and dismissals on the matter (#70). A failed read hides the card, never breaks the page. */
+async function loadMatterSnoozes(
+  context: WorkspaceContext,
+  matterId: string,
+): Promise<SnoozeRecord[] | null> {
+  try {
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { listSnoozes } = await import('@causedeck/core/attention');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    return await inWorkspace(actor, (tx) => listSnoozes({ db: tx }, actor, matterId));
+  } catch (error) {
+    logger.error({ err: error }, 'matter overview: could not load the attention snoozes');
+    return null;
+  }
+}
+
 /** The owner's brief-sharing panel data (#507). A failed read hides the panel, never breaks the page. */
 async function loadBriefSharing(
   context: WorkspaceContext,
@@ -197,6 +215,7 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   const locale = await pageLocale();
   const benchNotices = dev === 'empty' ? [] : await loadBenchNotices(context, id);
   const sharing = dev === 'empty' ? null : await loadBriefSharing(context, id);
+  const snoozes = dev === 'empty' ? null : await loadMatterSnoozes(context, id);
   const view = toOverviewView(loaded.overview, { locale, now: new Date() });
   const proceedingId = view.nextDate?.proceedingId;
   const corrections =
@@ -238,6 +257,13 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
           updateMatter: updateMatterAction,
         }}
       />
+      {snoozes === null ? null : (
+        <AttentionSnoozes
+          workspaceId={context.workspace.id}
+          snoozes={snoozes}
+          canWrite={can(context.role, 'matter.write')}
+        />
+      )}
       {sharing === null ? null : (
         <BriefSharePanel
           workspaceId={context.workspace.id}

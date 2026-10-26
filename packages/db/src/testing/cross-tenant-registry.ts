@@ -151,6 +151,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   review_correction: DB_TABLES_TEST,
   // A0 corrections (#558).
   correction: DB_TABLES_TEST,
+  // Stale-matter attention snoozes (#70).
+  attention_snooze: DB_TABLES_TEST,
 
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,
@@ -241,6 +243,15 @@ const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  // Stale-matter attention (#70).
+  detectAttention: empty,
+  countAttention: denies,
+  scanWorkspaceAttention: empty,
+  snoozeFlag: denies,
+  dismissFlag: denies,
+  liftSnooze: denies,
+  listSnoozes: denies,
+  setStaleDays: denies,
   listMemberships: empty,
   listWorkspacesForUser: empty,
   memberRole: empty,
@@ -989,6 +1000,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // Stale-matter attention (#70): the rules are pure functions over loaded facts.
+  evaluateRules: 'pure',
+  noNextDate: 'pure',
+  pastDateNoOutcome: 'pure',
+  noRecentUpdate: 'pure',
+  obligationOverdueUnowned: 'pure',
+  HEARING_WINDOW_DAYS: 'constant',
   // WhatsApp OTP (#711): rate-limit constants and the env-selected sender factory (no workspace data).
   WHATSAPP_OTP_NUMBER_LIMIT: 'constant',
   WHATSAPP_OTP_MEMBER_LIMIT: 'constant',
@@ -998,6 +1016,23 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // briefs (#60): pure scoring, the empty memory port, and the system sweep
   computeReadiness: 'pure',
   emptyMemoryProvider: 'constant: the default memory port returns nothing',
+  // brief memory and recognition-based matching (#74): every read goes through memoryFor / recordUsage
+  // (memoryDenies above); the cross-tenant brief case is briefs/__tests__/memory-wiring.test.ts
+  createBriefMemoryProvider:
+    'factory: every method reads through memoryFor and cites through recordUsage, both tenant-checked (memoryDenies); briefs/__tests__/memory-wiring.test.ts shows workspace B sees none of A',
+  applyBriefFormat: 'pure',
+  ALIAS_BOOST: 'constant',
+  ALIAS_PENALTY: 'constant',
+  CONFIDENT_MARGIN: 'constant',
+  needsConfirmation: 'pure',
+  rankCandidates: 'pure',
+  recognitionHints:
+    'reads only through memoryFor (memoryDenies): the actor workspace and own aliases',
+  rankWithMemory: 'reads through memoryFor and cites through recordUsage (memoryDenies)',
+  learnFromCorrection: 'delegates to proposeFromCorrection (memoryDenies)',
+  correctionRate: 'pure',
+  matchingWeeks:
+    'aggregate counts filtered by the caller workspace_id inside the scoped transaction of tenureMetrics (memory/review.ts)',
   onCourtDayListChanged:
     "trigger consumer: lists the changed list's listings inside the event's own workspace scope and enqueues a refresh each; covered by briefs/__tests__/state.test.ts",
   refreshBriefTargets:

@@ -1,6 +1,6 @@
 {
-  "id": "5917fe10-a4a4-452a-9368-a870668b963e",
-  "prevId": "bd2a2f60-aae1-414c-89ba-c17a347657d0",
+  "id": "ddc8ad75-e315-4302-a26a-56b41030ad67",
+  "prevId": "ed5b002c-a742-4c57-b020-c1b8b9082626",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2158,6 +2158,151 @@
       },
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.attention_snooze": {
+      "name": "attention_snooze",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "matter_id": {
+          "name": "matter_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rule": {
+          "name": "rule",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "until": {
+          "name": "until",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dismissed": {
+          "name": "dismissed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "attention_snooze_workspace_id_idx": {
+          "name": "attention_snooze_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "attention_snooze_workspace_matter_idx": {
+          "name": "attention_snooze_workspace_matter_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "matter_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "attention_snooze_workspace_id_fk": {
+          "name": "attention_snooze_workspace_id_fk",
+          "tableFrom": "attention_snooze",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "attention_snooze_matter_fk": {
+          "name": "attention_snooze_matter_fk",
+          "tableFrom": "attention_snooze",
+          "tableTo": "matter",
+          "columnsFrom": [
+            "workspace_id",
+            "matter_id"
+          ],
+          "columnsTo": [
+            "workspace_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "attention_snooze_rule_chk": {
+          "name": "attention_snooze_rule_chk",
+          "value": "rule is null or rule in ('no_next_date', 'past_date_no_outcome', 'no_recent_update', 'obligation_overdue_unowned')"
+        },
+        "attention_snooze_shape_chk": {
+          "name": "attention_snooze_shape_chk",
+          "value": "(dismissed and until is null) or (not dismissed and until is not null and reason is not null and btrim(reason) <> '')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.audit_actor_salt": {
@@ -23381,6 +23526,13 @@
           "notNull": true,
           "default": false
         },
+        "attention_stale_days": {
+          "name": "attention_stale_days",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 30
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -23434,6 +23586,10 @@
         "workspace_settings_retention_audio_days_chk": {
           "name": "workspace_settings_retention_audio_days_chk",
           "value": "retention_audio_days in (7, 14, 30)"
+        },
+        "workspace_settings_attention_stale_days_chk": {
+          "name": "workspace_settings_attention_stale_days_chk",
+          "value": "attention_stale_days between 7 and 180"
         }
       },
       "isRLSEnabled": false

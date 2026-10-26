@@ -1,7 +1,7 @@
 // Outward drafts (#736): a story per component and per state, with play-function interaction
 // tests. Fictional data only; handlers are mocks, so nothing is sent or saved.
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { expect, fn, userEvent, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 
 import { DiffView } from './diff-view.tsx';
 import { DraftEditor, type DraftView } from './draft-editor.tsx';
@@ -20,6 +20,10 @@ const draft: DraftView = {
   facts: [
     { kind: 'next_date', text: '12 Dec 2026', confirmed: true, source: 'hearing · cause_list' },
     { kind: 'outcome', text: 'Adjourned', confirmed: false, source: 'hearing · manual' },
+  ],
+  memoryCitations: [
+    { key: 'M2.client_update_tone', date: '2026-08-12' },
+    { key: 'M6.client_language', date: '2026-09-02' },
   ],
 };
 const card: DraftCardView = {
@@ -50,9 +54,10 @@ export const Editor: Story = {
   render: () => <DraftEditor {...editorProps} />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(canvas.getByText(/does not send messages/)).toBeVisible();
+    // The editor fades in (180 ms); wait for it rather than asserting on the first frame.
+    await waitFor(() => expect(canvas.getByText(/does not send messages/)).toBeVisible());
     await userEvent.click(canvas.getByRole('button', { name: /Compare/ }));
-    await expect(canvas.getByRole('group', { name: /Changes/ })).toBeVisible();
+    await waitFor(() => expect(canvas.getByRole('group', { name: /Changes/ })).toBeVisible());
   },
 };
 export const EditorOffline: Story = { render: () => <DraftEditor {...editorProps} offline /> };

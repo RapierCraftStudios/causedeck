@@ -347,6 +347,17 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: "A capture's results were moved to another matter",
   },
+  // Stale-matter attention (#70). Ids, the rule and the day only, never the reason.
+  'attention.snoozed': { security: false, description: 'A stale-matter flag was snoozed' },
+  'attention.dismissed': {
+    security: false,
+    description: 'A stale-matter flag was dismissed as intentionally dormant',
+  },
+  'attention.lifted': { security: false, description: 'A snooze or dismissal was lifted' },
+  'attention.threshold_changed': {
+    security: false,
+    description: 'The workspace stale-matter threshold was changed',
+  },
   // Obligation service (#67). Ids and flags only, never the description.
   'obligation.created': { security: false, description: 'An obligation was created' },
   'obligation.updated': { security: false, description: 'An obligation was edited' },

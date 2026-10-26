@@ -19,6 +19,7 @@ const draft: DraftView = {
   body: 'Next date: 12 Dec 2026.',
   systemBody: 'Next date: 12 Dec 2026.',
   facts: [{ kind: 'next_date', text: '12 Dec 2026', confirmed: false, source: 'hearing' }],
+  memoryCitations: [],
 };
 
 const wrap = (node: React.ReactNode) => (
@@ -51,6 +52,33 @@ describe('outward drafts UI', () => {
     editor();
     expect(screen.getByText(t.banner)).toBeTruthy();
     expect(screen.getByText(t.editor.factToConfirm)).toBeTruthy();
+  });
+
+  it('cites the memory a draft used on the facts rail (R4)', () => {
+    editor({
+      draft: {
+        ...draft,
+        memoryCitations: [
+          { key: 'M2.client_update_tone', date: '2026-08-12' },
+          { key: 'M6.client_language', date: '2026-09-02' },
+        ],
+      },
+    });
+    expect(screen.getByText(catalogs.en.memoryCitations.draftTitle)).toBeTruthy();
+    expect(
+      screen.getByLabelText(
+        catalogs.en.memoryCitations.chipLabel.replace(
+          '{reason}',
+          catalogs.en.memoryCitations.draftTone,
+        ),
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText('Saved 2026-09-02')).toBeTruthy();
+  });
+
+  it('shows no memory block when the draft used none', () => {
+    editor();
+    expect(screen.queryByText(catalogs.en.memoryCitations.draftTitle)).toBeNull();
   });
 
   it('copies with Ctrl+Enter, cycles the language with l, shows changes with d, closes with Esc', async () => {

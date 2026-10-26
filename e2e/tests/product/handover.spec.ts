@@ -2,7 +2,9 @@
 // screens at 360 px, the states, keyboard-only operation and axe (zero serious or critical).
 // Runs in CI only.
 import AxeBuilder from '@axe-core/playwright';
+import type { Page } from '@playwright/test';
 
+import type { AsUser } from '../../fixtures/auth.ts';
 import { expect, test } from '../../fixtures/index.ts';
 import { MATTERS, MATTERS_WORKSPACE } from '../../fixtures/matters-data.ts';
 import { contentReady } from '../shell/helpers.ts';
@@ -17,8 +19,8 @@ const FIVE_QUESTIONS = [
 ];
 
 async function openHandover(
-  page: import('@playwright/test').Page,
-  asUser: import('../../fixtures/auth.ts').AsUser,
+  page: Page,
+  asUser: AsUser,
   size = PHONE,
 ) {
   await page.setViewportSize(size);

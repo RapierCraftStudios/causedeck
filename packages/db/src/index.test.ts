@@ -57,6 +57,7 @@ describe('@causedeck/db root entry point', () => {
       'api_idempotency_key',
       'api_key',
       'appearance',
+      'attention_snooze',
       'audit_actor_salt',
       'audit_event',
       'automation_preference',

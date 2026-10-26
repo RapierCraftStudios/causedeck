@@ -13,6 +13,7 @@ import {
   obligationReminders,
   obligationRemindersSchedule,
 } from './definitions/obligation-reminders.ts';
+import { attentionScan, attentionScanSchedule } from './definitions/attention-scan.ts';
 import {
   reminderEvening,
   reminderMorning,
@@ -236,6 +237,8 @@ export const registry = createRegistry([
   ordersPoll,
   obligationRemindersSchedule,
   obligationReminders,
+  attentionScanSchedule,
+  attentionScan,
   briefRefresh,
   briefRefreshSweep,
   reminderSchedule,
@@ -308,6 +311,8 @@ export type JobMap = RegistryMap<
     typeof ordersPoll,
     typeof obligationRemindersSchedule,
     typeof obligationReminders,
+    typeof attentionScanSchedule,
+    typeof attentionScan,
     typeof briefRefresh,
     typeof briefRefreshSweep,
     typeof reminderSchedule,

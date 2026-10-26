@@ -241,6 +241,11 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('review_correction'),
   // A0 grid corrections (#558): customer content, exported with the workspace.
   ws('correction'),
+  ws('attention_snooze'),
+  // Continuity (#71): saved handover versions are workspace content (addressed to members, so no
+  // single user column) and each member's last-opened time per matter is exported with the workspace.
+  ws('handover_note'),
+  ws('matter_view'),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [

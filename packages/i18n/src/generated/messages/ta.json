@@ -736,6 +736,7 @@
         "heading": "இன்று CauseDeck செய்தவை",
         "applied": "{count, plural, =0 {இன்று CauseDeck தானாக எதையும் பயன்படுத்தவில்லை.} one {இன்று CauseDeck தானாக # மாற்றத்தைப் பயன்படுத்தியது. 7 நாட்களுக்கு செயல்தவிர்க்கலாம்.} other {இன்று CauseDeck தானாக # மாற்றங்களைப் பயன்படுத்தியது. 7 நாட்களுக்கு செயல்தவிர்க்கலாம்.}}",
         "pending": "{count, plural, =0 {உங்கள் உறுதிப்படுத்தலுக்காக எதுவும் காத்திருக்கவில்லை.} one {# பரிந்துரை உங்கள் உறுதிப்படுத்தலுக்காக காத்திருக்கிறது.} other {# பரிந்துரைகள் உங்கள் உறுதிப்படுத்தலுக்காக காத்திருக்கின்றன.}}",
+        "attention": "{count, plural, one {# வழக்கைச் சரிபார்க்கவும்.} other {# வழக்குகளைச் சரிபார்க்கவும்.}}",
         "matters": "இன்று தொடப்பட்ட வழக்குகள்",
         "activityCta": "இன்றைய செயல்பாட்டைப் பார்",
         "inboxCta": "உங்கள் இன்பாக்ஸைத் திற",
@@ -4307,6 +4308,16 @@
       }
     }
   },
+  "memoryCitations": {
+    "carryRule": "இதை நீங்கள் வழக்கமாக எடுத்துச் செல்வதால்",
+    "chipLabel": "உங்கள் நினைவகத்திலிருந்து: {reason}",
+    "usedMemory": "நினைவகம் பயன்படுத்தப்பட்டது: {reason}",
+    "draftTitle": "உங்கள் நினைவகத்திலிருந்து",
+    "draftTone": "உங்கள் வழக்கமான தொனியும் கையொப்பமும்",
+    "draftLanguage": "இந்த கட்சிக்காரரிடம் நீங்கள் பயன்படுத்தும் மொழி",
+    "draftOther": "சேமிக்கப்பட்ட நினைவகம்",
+    "noteDate": "சேமிக்கப்பட்டது {date}"
+  },
   "whatsappLink": {
     "title": "வாட்ஸ்அப்",
     "description": "நீதிமன்ற நாள் அறிவிப்புகளையும் மாலைச் சுருக்கத்தையும் உங்கள் சொந்த வாட்ஸ்அப்பில் பெறுங்கள். இங்கே சரிபார்க்கும் எண்ணுக்கு மட்டுமே செய்திகள் செல்லும்; வாடிக்கையாளர்களுக்கு ஒருபோதும் செல்லாது.",
@@ -4776,6 +4787,50 @@
       "full": "சாதன அவுட்பாக்ஸ் நிறைந்துள்ளது. பதிவேற்றம் முடிந்ததும் மீண்டும் முயலுங்கள்."
     }
   },
+  "attention": {
+    "title": "Needs you",
+    "badge": "{count, plural, =0 {No matters need attention} one {# matter needs attention} other {# matters need attention}}",
+    "badgeLabel": "Attention: {count}",
+    "loading": "Loading what needs you",
+    "empty": "Nothing needs you right now.",
+    "error": "Could not load what needs you. Try again.",
+    "retry": "Try again",
+    "offline": "You are offline. Showing the last loaded flags.",
+    "denied": "You do not have access to these flags in this workspace.",
+    "readOnly": "View only",
+    "close": "Close",
+    "openEvidence": "Open evidence",
+    "since": "Since {date}",
+    "rules": {
+      "no_next_date": "No next date",
+      "past_date_no_outcome": "Past date, no outcome",
+      "no_recent_update": "No recent update",
+      "obligation_overdue_unowned": "Overdue obligation, no owner"
+    },
+    "groupCount": "{rule}: {count}",
+    "actions": {
+      "record_outcome": "Record the outcome",
+      "set_next_date": "Set the next date",
+      "ask_junior": "Ask the junior"
+    },
+    "snooze": {
+      "action": "Snooze",
+      "until": "Snooze until",
+      "reason": "Reason",
+      "submit": "Snooze flag",
+      "dismiss": "Dismiss as intentionally dormant",
+      "lift": "Lift snooze",
+      "hint": "Press s to snooze, Enter to open the evidence, Esc to close."
+    },
+    "snoozes": {
+      "title": "Snoozes and dismissals",
+      "empty": "No snoozes or dismissals on this matter.",
+      "until": "Snoozed until {date}",
+      "dismissed": "Dismissed as intentionally dormant",
+      "allRules": "All flags",
+      "reason": "Reason: {reason}"
+    }
+  },
   "obligations": {
     "metaTitle": "கடமைகள்",
     "title": "கடமைகள்",
@@ -5219,7 +5274,15 @@
     "loading": "Loading the hearing outcome",
     "offline": {
       "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
-      "queued": "Saved on this device. It will be applied when you are back online."
+      "queued": "Saved on this device. It will be applied when you are back online.",
+      "conflict": {
+        "title": "The next date changed while you were offline",
+        "server": "On file now",
+        "none": "No date",
+        "mine": "Your offline date",
+        "keepServer": "Keep the date on file",
+        "useMine": "Propose my date"
+      }
     },
     "summary": {
       "label": "What happened",
@@ -5362,7 +5425,12 @@
       },
       "willSync": "ஒத்திசைக்கப்படும்",
       "reviewed": "பட்டியலைப் பார்த்ததாகக் குறி",
-      "empty": "எடுத்துச் செல்ல எதுவும் இல்லை."
+      "empty": "எடுத்துச் செல்ல எதுவும் இல்லை.",
+      "suggested": "உங்கள் நினைவகத்திலிருந்து பரிந்துரை: {label}",
+      "suggestAdd": "சேர்",
+      "suggestAddLabel": "{label} ஐ எடுத்துச் செல்லும் பட்டியலில் சேர்",
+      "suggestSkip": "இப்போது வேண்டாம்",
+      "suggestSkipLabel": "இப்போது வேண்டாம்: {label}"
     },
     "synopsis": {
       "edit": "சுருக்கக் குறிப்பைத் திருத்து",

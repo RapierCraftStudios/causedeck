@@ -55,7 +55,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The derived listing brief (#60, ADR 0038): the scope and member role through workspaces, the
   // sensitive-matter-safe `summarise` call through ai, graph reads through matter-graph and court-day
   // (imports `index.ts` only).
-  briefs: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day', 'ai']),
+  briefs: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day', 'ai', 'memory']),
   // Continuity (#71): handover notes and what-changed; the scope and role through workspaces, access
   // audit through audit, graph reads through matter-graph, the memory port type through briefs
   // (imports `index.ts` only).
@@ -162,15 +162,22 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The obligation service (#67): roles through workspaces, audit events through audit, defect
   // transitions through the matter-graph state machine (imports `index.ts` only).
   obligations: Object.freeze(['workspaces', 'audit', 'matter-graph']),
+  // Stale-matter attention (#70): roles and the threshold through workspaces, audit events through
+  // audit, date arithmetic through the obligations index.
+  attention: Object.freeze(['workspaces', 'audit', 'obligations']),
   // A0 grid corrections (#558): roles and the owner's eval-reuse switch through workspaces.
   corrections: Object.freeze(['workspaces']),
   // Outward update drafts (#735, ADR 0045): roles through workspaces, audit events through audit,
   // the narrative through the AI gateway wiring in ai; reads graph rows from the tables.
-  outward: Object.freeze(['workspaces', 'audit', 'matter-graph', 'ai']),
+  outward: Object.freeze(['workspaces', 'audit', 'matter-graph', 'ai', 'memory']),
+  // Recognition-based matching (#74): M7 aliases rank candidates and a correction files an alias
+  // proposal, both through memory's index (a hint only, never an auto-apply).
+  matching: Object.freeze(['memory']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([
     'obligations',
+    'attention',
     'ai',
     'audit',
     'billing',

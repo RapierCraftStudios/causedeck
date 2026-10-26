@@ -254,6 +254,63 @@ async function expectGraphDenied(
   expect(await aGraph(f)).toEqual(before);
 }
 
+/** People (#82): the deps of the contact services, with the events they emit. */
+function peopleDeps(db: Database | Transaction) {
+  const events: core.PeopleEvent[] = [];
+  const graphEvents: core.GraphEvent[] = [];
+  return {
+    deps: {
+      db,
+      events: { emit: (e: core.PeopleEvent) => events.push(e) },
+      graphEvents: { emit: (e: core.GraphEvent) => graphEvents.push(e) },
+    },
+    events,
+    graphEvents,
+  };
+}
+
+/** Everything the contact services can change in a workspace. */
+async function aContacts(f: Fixture, workspaceId = f.a.id) {
+  return inWorkspace(f.tx, workspaceId, async (s) => ({
+    contacts: await s.select().from(schema.clientContact).orderBy(schema.clientContact.id),
+    activities: await s
+      .select()
+      .from(schema.activity)
+      .where(eq(schema.activity.kind, 'contact_detail'))
+      .orderBy(schema.activity.id),
+    roleEdges: await s.select().from(schema.roleEdge).orderBy(schema.roleEdge.id),
+  }));
+}
+
+/** A client person (the only kind a contact can belong to) of A or B, besides the seeded party. */
+async function clientPersonOf(f: Fixture, workspaceId: string): Promise<string> {
+  const [row] = await inWorkspace(f.tx, workspaceId, (s) =>
+    s
+      .insert(schema.person)
+      .values({
+        workspaceId,
+        name: 'Client (fictional)',
+        kind: 'client',
+        sourceType: 'manual',
+      })
+      .returning({ id: schema.person.id }),
+  );
+  if (!row) throw new Error('client person insert returned no row');
+  return row.id;
+}
+
+/** Runs `call` as ub claiming A (no scope and from B's scope) and as ub in B with A's ids. */
+async function expectContactsDenied(
+  f: Fixture,
+  call: (db: Database | Transaction, workspaceId: string) => Promise<unknown>,
+): Promise<void> {
+  const before = await aContacts(f);
+  await expectDenied(call(f.tx, f.a.id));
+  await expectDenied(f.asB((s) => call(s, f.a.id)));
+  await expectDenied(call(f.tx, f.b.id));
+  expect(await aContacts(f)).toEqual(before);
+}
+
 const PROBE_ID = '00000000-0000-4000-8000-0000000000aa';
 const PROBE_PROVENANCE = { sourceType: 'manual' } as const;
 
@@ -2871,6 +2928,142 @@ const CASES: Record<string, Case> = {
     }
     expect(await aGraph(f, f.b.id)).toEqual(bBefore);
     expect(events).toEqual([]);
+  },
+  // people (#82): B reading, changing, linking or archiving A's contacts is denied (NOT_FOUND) and
+  // A's contacts, their activity and role edges are unchanged; B's own list never holds A's rows
+  listContacts: async (f) => {
+    const { deps } = peopleDeps(f.tx);
+    const aId = f.a.rows.client_contact?.id ?? '';
+    const bId = f.b.rows.client_contact?.id ?? '';
+    const before = await aContacts(f);
+    const call = (db: Database | Transaction, workspaceId: string) =>
+      core.listContacts({ ...deps, db }, { userId: f.ub, workspaceId });
+    // ub claiming A, with no scope and from B's scope. (ub in B itself is a member there: below.)
+    await expectDenied(call(f.tx, f.a.id));
+    await expectDenied(f.asB((s) => call(s, f.a.id)));
+    expect(await aContacts(f)).toEqual(before);
+    // A's owner does read it: the probe itself is sound.
+    const own = await core.listContacts(deps, { userId: f.ua, workspaceId: f.a.id });
+    expect(own.map((c) => c.id)).toContain(aId);
+    for (const input of [
+      {},
+      { includeArchived: true },
+      { personId: f.a.rows.client_contact?.personId },
+    ]) {
+      const asB = await core.listContacts(deps, { userId: f.ub, workspaceId: f.b.id }, input);
+      expect(asB.map((c) => c.id)).not.toContain(aId);
+    }
+    const all = await core.listContacts(deps, { userId: f.ub, workspaceId: f.b.id });
+    expect(all.map((c) => c.id)).toContain(bId);
+  },
+  createContact: async (f) => {
+    const { deps, events, graphEvents } = peopleDeps(f.tx);
+    const aPerson = await clientPersonOf(f, f.a.id);
+    const bPerson = await clientPersonOf(f, f.b.id);
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const input = { personId: aPerson, kind: 'accounts' as const, phone: '+919876543299' };
+    await expectContactsDenied(f, (db, workspaceId) =>
+      core.createContact({ ...deps, db }, { userId: f.ub, workspaceId }, input),
+    );
+    await expectContactsDenied(f, (db, workspaceId) =>
+      core.createContact(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { ...input, matterId: aMatter },
+      ),
+    );
+    // B's own owner cannot attach a contact to A's client or A's matter either.
+    const bBefore = await aContacts(f, f.b.id);
+    await expectDenied(core.createContact(deps, { userId: f.ub, workspaceId: f.b.id }, input));
+    await expectDenied(
+      core.createContact(
+        deps,
+        { userId: f.ub, workspaceId: f.b.id },
+        { ...input, personId: bPerson, matterId: aMatter },
+      ),
+    );
+    expect(await aContacts(f, f.b.id)).toEqual(bBefore);
+    expect(events).toEqual([]);
+    expect(graphEvents).toEqual([]);
+    // A's owner can: the probe itself is sound.
+    await core.createContact(deps, { userId: f.ua, workspaceId: f.a.id }, input);
+  },
+  updateContact: async (f) => {
+    const { deps, events } = peopleDeps(f.tx);
+    const contactId = f.a.rows.client_contact?.id ?? '';
+    for (const input of [
+      { phone: '+919876543298' },
+      { email: 'probe@example.test' },
+      { languagePref: 'ta' as const },
+    ]) {
+      await expectContactsDenied(f, (db, workspaceId) =>
+        core.updateContact({ ...deps, db }, { userId: f.ub, workspaceId }, { contactId, ...input }),
+      );
+    }
+    expect(events).toEqual([]);
+    // A's owner can: the probe itself is sound.
+    await core.updateContact(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { contactId, languagePref: 'ta' },
+    );
+  },
+  undoContactChange: async (f) => {
+    const { deps } = peopleDeps(f.tx);
+    const contactId = f.a.rows.client_contact?.id ?? '';
+    const ownerA = { userId: f.ua, workspaceId: f.a.id };
+    await core.updateContact(deps, ownerA, { contactId, phone: '+919876543297' });
+    const [act] = (await aContacts(f)).activities;
+    if (!act) throw new Error('the phone change recorded no activity');
+    await expectContactsDenied(f, (db, workspaceId) =>
+      core.undoContactChange(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { activityId: act.id },
+      ),
+    );
+    // A's owner can: the probe itself is sound.
+    const undone = await core.undoContactChange(deps, ownerA, { activityId: act.id });
+    expect(undone.phone).toBe('+919876543210');
+  },
+  linkToMatter: async (f) => {
+    const { deps, graphEvents } = peopleDeps(f.tx);
+    const aContact = f.a.rows.client_contact?.id ?? '';
+    const bContact = f.b.rows.client_contact?.id ?? '';
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    await expectContactsDenied(f, (db, workspaceId) =>
+      core.linkToMatter(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { contactId: aContact, matterId: aMatter },
+      ),
+    );
+    // One id of each workspace, as ub in B: NOT_FOUND, and neither side gains a role edge.
+    const before = [await aContacts(f), await aContacts(f, f.b.id)];
+    for (const input of [
+      { contactId: aContact, matterId: f.b.rows.matter?.matterId ?? '' },
+      { contactId: bContact, matterId: aMatter },
+    ]) {
+      await expectDenied(core.linkToMatter(deps, { userId: f.ub, workspaceId: f.b.id }, input));
+    }
+    expect([await aContacts(f), await aContacts(f, f.b.id)]).toEqual(before);
+    expect(graphEvents).toEqual([]);
+  },
+  archiveContact: async (f) => {
+    const { deps } = peopleDeps(f.tx);
+    const contactId = f.a.rows.client_contact?.id ?? '';
+    for (const purge of [false, true]) {
+      await expectContactsDenied(f, (db, workspaceId) =>
+        core.archiveContact({ ...deps, db }, { userId: f.ub, workspaceId }, { contactId, purge }),
+      );
+    }
+    // A's owner can: the probe itself is sound.
+    const row = await core.archiveContact(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { contactId },
+    );
+    expect(row.archivedAt).not.toBeNull();
   },
   setSensitive: async (f) => {
     const { deps, events } = graphDeps(f.tx);

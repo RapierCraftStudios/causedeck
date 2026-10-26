@@ -282,6 +282,8 @@ export const mattersExporter = tablesExporter('matters', [
   ws('obligation'),
   ws('task'),
   ws('person'),
+  // Client contacts (#82): phone, email and language of a client; personal data the workspace owns.
+  ws('client_contact'),
   ws('organisation'),
   ws('role_edge'),
   ws('document', { exclude: ['storage_key'] }),

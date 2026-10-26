@@ -114,6 +114,8 @@ export const PURGE_ORDER = [
   'bench_roster_entry',
   'bench_roster',
   'role_edge',
+  // Client contacts (#82) cite their person (composite FK); before it.
+  'client_contact',
   'person',
   'organisation',
   // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.

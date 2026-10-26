@@ -1,15 +1,24 @@
 'use client';
 // The carry list (#61, R4): tick, add and remove inline. Each change is saved through
 // `setCarryItemAction` (persisted in `brief_state`, so it survives a reload and a brief refresh);
-// the list updates at once and rolls back when the save fails.
+// the list updates at once and rolls back when the save fails. Offline, the change is sealed into
+// the device's outbox (#851) and replays on reconnect.
 import { Button } from '@causedeck/ui/button';
 import { Checkbox } from '@causedeck/ui/checkbox';
 import { Input } from '@causedeck/ui/input';
-import type { CarryItem } from '@causedeck/validators';
+import type { CarryItem, SetCarryItemInput } from '@causedeck/validators';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useId, useState, useTransition } from 'react';
 
+import { useOfflineEdits } from '../../../../../../../lib/offline/use-outbox.ts';
 import { setCarryItemAction } from '../actions.ts';
+
+type CarryEdit = SetCarryItemInput extends infer T
+  ? T extends unknown
+    ? Omit<T, 'listingId'>
+    : never
+  : never;
 
 export interface CarrySectionProps {
   workspaceId: string;
@@ -36,6 +45,8 @@ export function CarrySection({
   const [error, setError] = useState(false);
   const [pending, start] = useTransition();
   const inputId = useId();
+  const { slug } = useParams<{ slug: string }>();
+  const { enqueue } = useOfflineEdits(slug, workspaceId);
 
   // A refresh brings the stored list: it wins over the local copy.
   const [seenItems, setSeenItems] = useState(items);
@@ -44,14 +55,20 @@ export function CarrySection({
     setList(items);
   }
 
-  function save(
-    input: Record<string, unknown>,
-    rollback: readonly CarryItem[],
-    key: string | null,
-  ) {
+  function save(input: CarryEdit, rollback: readonly CarryItem[], key: string | null) {
     setError(false);
     if (offline) {
-      if (key) setQueued((q) => new Set(q).add(key));
+      void enqueue({
+        kind: 'carry_item',
+        carry: { listingId, ...input },
+      }).then((saved) => {
+        if (saved) {
+          if (key) setQueued((q) => new Set(q).add(key));
+        } else {
+          setList(rollback);
+          setError(true);
+        }
+      });
       return;
     }
     start(async () => {

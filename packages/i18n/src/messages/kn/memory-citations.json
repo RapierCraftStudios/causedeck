@@ -2,6 +2,11 @@
   "memoryCitations": {
     "carryRule": "ನೀವು ಇದನ್ನು ಸಾಮಾನ್ಯವಾಗಿ ಒಯ್ಯುವುದರಿಂದ",
     "chipLabel": "ನಿಮ್ಮ ಸ್ಮರಣೆಯಿಂದ: {reason}",
-    "usedMemory": "ಸ್ಮರಣೆ ಬಳಸಲಾಗಿದೆ: {reason}"
+    "usedMemory": "ಸ್ಮರಣೆ ಬಳಸಲಾಗಿದೆ: {reason}",
+    "draftTitle": "ನಿಮ್ಮ ಸ್ಮರಣೆಯಿಂದ",
+    "draftTone": "ನಿಮ್ಮ ಸಾಮಾನ್ಯ ಧ್ವನಿ ಮತ್ತು ಸಹಿ",
+    "draftLanguage": "ಈ ಕಕ್ಷಿದಾರರೊಂದಿಗೆ ನೀವು ಬಳಸುವ ಭಾಷೆ",
+    "draftOther": "ಉಳಿಸಿದ ಸ್ಮರಣೆ",
+    "noteDate": "ಉಳಿಸಿದ್ದು {date}"
   }
 }

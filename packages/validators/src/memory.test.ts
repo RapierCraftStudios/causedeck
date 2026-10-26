@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  AlwaysCarryValue,
   assertNotBench,
+  BriefFormatValue,
+  ClientUpdateStyleValue,
+  MatchingHintInput,
+  OutwardLanguage,
   readAlias,
   readAlwaysCarry,
   readBriefFormat,
@@ -138,5 +143,28 @@ describe('memory value readers (#74)', () => {
       canonical: 'M. Rajan',
     });
     expect(readAlias('Rajan')).toBeNull();
+  });
+});
+
+describe('memory value schemas (#74, R14)', () => {
+  it('parses each readable shape with the exported zod schemas', () => {
+    expect(BriefFormatValue.safeParse(' Short ').data).toBe('short');
+    expect(BriefFormatValue.safeParse('one page').success).toBe(false);
+    expect(AlwaysCarryValue.safeParse(['a', 'b']).data).toEqual([
+      { label: 'a', when: 'always' },
+      { label: 'b', when: 'always' },
+    ]);
+    expect(ClientUpdateStyleValue.safeParse('formal').data).toEqual({ tone: 'formal' });
+    expect(ClientUpdateStyleValue.safeParse(42).success).toBe(false);
+    expect(OutwardLanguage.safeParse('Kannada').data).toBe('kn');
+    expect(OutwardLanguage.safeParse('french').success).toBe(false);
+  });
+
+  it('validates a matching hint input strictly', () => {
+    expect(MatchingHintInput.parse({ alias: 'Rajan', canonical: 'M. Rajan' }).target).toBe('party');
+    expect(MatchingHintInput.safeParse({ alias: '', canonical: 'x' }).success).toBe(false);
+    expect(MatchingHintInput.safeParse({ alias: 'a', canonical: 'b', extra: 1 }).success).toBe(
+      false,
+    );
   });
 });

@@ -15,7 +15,7 @@ import { describe, expect, it } from 'vitest';
 import { newWorkspace } from '../../__tests__/fixtures.ts';
 import { keys } from '../../__tests__/memory-world.ts';
 import { createMemoryNote, setMemoryPauseAll } from '../../memory/index.ts';
-import { composeUpdate } from '../index.ts';
+import { composeUpdate, getDraft } from '../index.ts';
 
 const SIGN_OFF = 'Warm regards, Adv. Priya';
 
@@ -76,6 +76,21 @@ describe('outward drafts with memory', () => {
         s.select().from(schema.memoryUsage),
       );
       expect(usage.filter((u) => u.usedIn === 'draft')).toHaveLength(2);
+    });
+  });
+
+  it('reads the cited memory back with the draft for the facts rail (R4)', async () => {
+    await withTestDb(async (tx) => {
+      const w = await setup(tx);
+      await w.teach();
+      const draft = await composeUpdate(w.deps, w.owner, w.request);
+      const detail = await getDraft(w.deps, w.owner, draft.draftId);
+      expect(detail.memoryCitations.map((c) => c.key).sort()).toEqual([
+        'M2.client_update_tone',
+        'M6.client_language',
+      ]);
+      const plain = await composeUpdate({ db: tx }, w.owner, w.request);
+      expect((await getDraft({ db: tx }, w.owner, plain.draftId)).memoryCitations).toEqual([]);
     });
   });
 

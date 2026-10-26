@@ -4310,7 +4310,12 @@
   "memoryCitations": {
     "carryRule": "because you usually carry this",
     "chipLabel": "From your memory: {reason}",
-    "usedMemory": "Used memory: {reason}"
+    "usedMemory": "Used memory: {reason}",
+    "draftTitle": "From your memory",
+    "draftTone": "your usual tone and sign-off",
+    "draftLanguage": "the language you use with this client",
+    "draftOther": "a saved memory",
+    "noteDate": "Saved {date}"
   },
   "whatsappLink": {
     "title": "WhatsApp",
@@ -5224,7 +5229,15 @@
     "loading": "Loading the hearing outcome",
     "offline": {
       "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
-      "queued": "Saved on this device. It will be applied when you are back online."
+      "queued": "Saved on this device. It will be applied when you are back online.",
+      "conflict": {
+        "title": "The next date changed while you were offline",
+        "server": "On file now",
+        "none": "No date",
+        "mine": "Your offline date",
+        "keepServer": "Keep the date on file",
+        "useMine": "Propose my date"
+      }
     },
     "summary": {
       "label": "What happened",
@@ -5367,7 +5380,12 @@
       },
       "willSync": "Will sync",
       "reviewed": "Mark list reviewed",
-      "empty": "Nothing to carry."
+      "empty": "Nothing to carry.",
+      "suggested": "Suggested from your memory: {label}",
+      "suggestAdd": "Add",
+      "suggestAddLabel": "Add {label} to the carry list",
+      "suggestSkip": "Not now",
+      "suggestSkipLabel": "Not now: {label}"
     },
     "synopsis": {
       "edit": "Edit synopsis",

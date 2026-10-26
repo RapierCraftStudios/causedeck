@@ -4,8 +4,8 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { catalogs } from '../../../../../../../__tests__/helpers/intl.ts';
-import { MemoryCitation } from '../_sheet/memory-citation.tsx';
+import { catalogs } from './helpers/intl.ts';
+import { MemoryCitation } from '../app/(app)/w/[slug]/briefs/[listing-id]/_sheet/memory-citation.tsx';
 
 afterEach(cleanup);
 

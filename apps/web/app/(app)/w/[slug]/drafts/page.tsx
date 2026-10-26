@@ -71,6 +71,7 @@ export default async function DraftsPage({ params, searchParams }: DraftsPagePro
               language: open.language,
               body: open.body,
               systemBody: open.systemBody,
+              memoryCitations: open.memoryCitations,
               facts: open.facts.map((f) => ({
                 kind: f.kind,
                 text: f.text,

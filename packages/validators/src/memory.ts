@@ -306,8 +306,9 @@ export const MemoryCorrectionInput = z.strictObject({
 });
 export type MemoryCorrectionInput = z.input<typeof MemoryCorrectionInput>;
 
-// How memory values steer outputs (#74). A stored value is free-form (`MemoryValue`); these readers
-// give the consumers one typed view and ignore what they cannot read, so a malformed value falls
+// How memory values steer outputs (#74). A stored value is free-form (`MemoryValue`); the exported
+// zod schemas below describe each readable shape, and the `read*` helpers give the consumers one
+// typed view and ignore what they cannot read, so a malformed value falls
 // back to the default rather than breaking a brief or a draft.
 
 export type BriefSectionKey = (typeof BRIEF_SECTION_KEYS)[number];
@@ -329,7 +330,7 @@ const isSection = (v: string): v is BriefSectionKey =>
   (BRIEF_SECTION_KEYS as readonly string[]).includes(v);
 
 const BriefVerbositySchema = z.enum(BRIEF_VERBOSITIES);
-const BriefFormatValue = z.union([
+export const BriefFormatValue = z.union([
   z
     .string()
     .transform((v) => v.trim().toLowerCase())
@@ -360,7 +361,7 @@ export const AlwaysCarryRule = z.strictObject({
 });
 export type AlwaysCarryRule = z.output<typeof AlwaysCarryRule>;
 
-const AlwaysCarryValue = z.union([
+export const AlwaysCarryValue = z.union([
   z.string().transform((label) => [{ label, when: 'always' as const }]),
   z
     .array(z.string())
@@ -380,15 +381,16 @@ export function readAlwaysCarry(value: MemoryValue): AlwaysCarryRule[] {
 
 export const OUTWARD_TONE_VALUES = ['formal', 'brief', 'warm'] as const;
 export const OUTWARD_LANGUAGE_VALUES = ['en', 'ta', 'kn'] as const;
-const OutwardTone = z.string().trim().toLowerCase().pipe(z.enum(OUTWARD_TONE_VALUES));
-const OutwardLanguage = z
+export const OutwardTone = z.string().trim().toLowerCase().pipe(z.enum(OUTWARD_TONE_VALUES));
+/** `M6.client_language`: 'en' | 'ta' | 'kn' or the English name of one of them. */
+export const OutwardLanguage = z
   .string()
   .trim()
   .toLowerCase()
   .transform((v) => ({ english: 'en', tamil: 'ta', kannada: 'kn' })[v] ?? v)
   .pipe(z.enum(OUTWARD_LANGUAGE_VALUES));
 
-const ClientUpdateStyleValue = z.union([
+export const ClientUpdateStyleValue = z.union([
   OutwardTone.transform((tone) => ({ tone })),
   z.looseObject({
     tone: OutwardTone.optional().catch(undefined),

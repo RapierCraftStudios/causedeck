@@ -86,3 +86,12 @@ export async function briefHref(page: Page, title: string): Promise<string> {
   if (href === null) throw new Error(`e2e: no saved brief link for "${title}"`);
   return href;
 }
+
+/**
+ * Come back online the way a reconnect does: lift the network block and fire `online`, which makes
+ * the shell drain the outbox (apps/web/components/pwa/offline-sync.tsx) and run a prefetch.
+ */
+export async function reconnect(page: Page, context: BrowserContext): Promise<void> {
+  await context.setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+}

@@ -4310,7 +4310,12 @@
   "memoryCitations": {
     "carryRule": "ನೀವು ಇದನ್ನು ಸಾಮಾನ್ಯವಾಗಿ ಒಯ್ಯುವುದರಿಂದ",
     "chipLabel": "ನಿಮ್ಮ ಸ್ಮರಣೆಯಿಂದ: {reason}",
-    "usedMemory": "ಸ್ಮರಣೆ ಬಳಸಲಾಗಿದೆ: {reason}"
+    "usedMemory": "ಸ್ಮರಣೆ ಬಳಸಲಾಗಿದೆ: {reason}",
+    "draftTitle": "ನಿಮ್ಮ ಸ್ಮರಣೆಯಿಂದ",
+    "draftTone": "ನಿಮ್ಮ ಸಾಮಾನ್ಯ ಧ್ವನಿ ಮತ್ತು ಸಹಿ",
+    "draftLanguage": "ಈ ಕಕ್ಷಿದಾರರೊಂದಿಗೆ ನೀವು ಬಳಸುವ ಭಾಷೆ",
+    "draftOther": "ಉಳಿಸಿದ ಸ್ಮರಣೆ",
+    "noteDate": "ಉಳಿಸಿದ್ದು {date}"
   },
   "whatsappLink": {
     "title": "ವಾಟ್ಸಾಪ್",
@@ -5224,7 +5229,15 @@
     "loading": "Loading the hearing outcome",
     "offline": {
       "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
-      "queued": "Saved on this device. It will be applied when you are back online."
+      "queued": "Saved on this device. It will be applied when you are back online.",
+      "conflict": {
+        "title": "The next date changed while you were offline",
+        "server": "On file now",
+        "none": "No date",
+        "mine": "Your offline date",
+        "keepServer": "Keep the date on file",
+        "useMine": "Propose my date"
+      }
     },
     "summary": {
       "label": "What happened",
@@ -5367,7 +5380,12 @@
       },
       "willSync": "ಸಿಂಕ್ ಆಗುತ್ತದೆ",
       "reviewed": "ಪಟ್ಟಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ ಎಂದು ಗುರುತಿಸಿ",
-      "empty": "ಕೊಂಡೊಯ್ಯಲು ಏನೂ ಇಲ್ಲ."
+      "empty": "ಕೊಂಡೊಯ್ಯಲು ಏನೂ ಇಲ್ಲ.",
+      "suggested": "ನಿಮ್ಮ ಸ್ಮರಣೆಯಿಂದ ಸಲಹೆ: {label}",
+      "suggestAdd": "ಸೇರಿಸಿ",
+      "suggestAddLabel": "{label} ಅನ್ನು ಒಯ್ಯುವ ಪಟ್ಟಿಗೆ ಸೇರಿಸಿ",
+      "suggestSkip": "ಈಗ ಬೇಡ",
+      "suggestSkipLabel": "ಈಗ ಬೇಡ: {label}"
     },
     "synopsis": {
       "edit": "ಸಾರಾಂಶ ಸಂಪಾದಿಸಿ",

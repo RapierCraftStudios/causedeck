@@ -2,6 +2,11 @@
   "memoryCitations": {
     "carryRule": "because you usually carry this",
     "chipLabel": "From your memory: {reason}",
-    "usedMemory": "Used memory: {reason}"
+    "usedMemory": "Used memory: {reason}",
+    "draftTitle": "From your memory",
+    "draftTone": "your usual tone and sign-off",
+    "draftLanguage": "the language you use with this client",
+    "draftOther": "a saved memory",
+    "noteDate": "Saved {date}"
   }
 }

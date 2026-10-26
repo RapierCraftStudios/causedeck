@@ -4312,6 +4312,11 @@ export type Messages = {
     carryRule: string;
     chipLabel: string;
     usedMemory: string;
+    draftTitle: string;
+    draftTone: string;
+    draftLanguage: string;
+    draftOther: string;
+    noteDate: string;
   };
   whatsappLink: {
     title: string;
@@ -5226,6 +5231,14 @@ export type Messages = {
     offline: {
       banner: string;
       queued: string;
+      conflict: {
+        title: string;
+        server: string;
+        none: string;
+        mine: string;
+        keepServer: string;
+        useMine: string;
+      };
     };
     summary: {
       label: string;
@@ -5369,6 +5382,11 @@ export type Messages = {
       willSync: string;
       reviewed: string;
       empty: string;
+      suggested: string;
+      suggestAdd: string;
+      suggestAddLabel: string;
+      suggestSkip: string;
+      suggestSkipLabel: string;
     };
     synopsis: {
       edit: string;

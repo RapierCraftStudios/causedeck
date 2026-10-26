@@ -58,7 +58,8 @@ export async function withIntake<T>(
   return withWorkspace(deps.db, actor, async (tx) => {
     const role = await memberRole(tx, actor.userId, actor.workspaceId);
     if (role === null || !isRole(role)) throw notFound('Enquiry not found');
-    const settings = deps.settings ?? toPolicySettings(await getRoleSettings(tx, actor.workspaceId));
+    const settings =
+      deps.settings ?? toPolicySettings(await getRoleSettings(tx, actor.workspaceId));
     const who: Actor = { ...actor, role };
     if (!can(who, action, undefined, settings).allow) {
       throw forbidden('You cannot use the enquiry log');

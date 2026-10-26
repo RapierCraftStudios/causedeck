@@ -19,6 +19,7 @@ import { courtDataRetention } from './definitions/court-data-retention.ts';
 import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
 import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
+import { enquiryRetention } from './definitions/enquiry-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { systemDataOpsEvaluate } from './definitions/data-ops-evaluate.ts';
 import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
@@ -191,6 +192,7 @@ export const registry = createRegistry([
   systemAuditVerify,
   auditVerify,
   auditRetention,
+  enquiryRetention,
   exportBuild,
   exportExpire,
   supportSessionExpire,
@@ -257,6 +259,7 @@ export type JobMap = RegistryMap<
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,
+    typeof enquiryRetention,
     typeof exportBuild,
     typeof exportExpire,
     typeof supportSessionExpire,

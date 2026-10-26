@@ -80,6 +80,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   'public-api': Object.freeze(['sources']),
   // Conflict-of-interest checks (#500, D-048): each check is audited; party rows are read directly.
   conflicts: Object.freeze(['audit']),
+  // The enquiry log (#87): the flag-gated enquiry services over the conflict check, the automation
+  // engine's `new_matter` proposals, audit events and membership roles.
+  intake: Object.freeze(['audit', 'automation', 'conflicts', 'workspaces']),
   // Cross-checked facts (#499): source agreement and confidence over listing provenance; tables only.
   facts: Object.freeze([]),
   // The review and correction queue (#518, D-049): every staff read of an item's record is audited.
@@ -156,6 +159,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([
     'ai',
+    'intake',
     'audit',
     'billing',
     'usage',

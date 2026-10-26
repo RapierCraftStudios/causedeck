@@ -58,7 +58,9 @@ export function MobileNav({ slug, role, isEnabled: isEnabledProp }: MobileNavPro
 
   const items = visibleNavItems({ role, isEnabled });
   const primary = BOTTOM_NAV_ROUTES.flatMap((id) => items.filter((entry) => entry.id === id));
-  const rest = items.filter((entry) => !(BOTTOM_NAV_ROUTES as readonly string[]).includes(entry.id));
+  const rest = items.filter(
+    (entry) => !(BOTTOM_NAV_ROUTES as readonly string[]).includes(entry.id),
+  );
   const active = activeNavItem(items, slug, pathname);
   const moreActive = active !== undefined && rest.includes(active);
 

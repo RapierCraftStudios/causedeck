@@ -77,9 +77,7 @@ export function toConflictCheckView(check: EnquiryConflictCheck): ConflictCheckV
 }
 
 export type EnquiriesLoad =
-  | { kind: 'list'; enquiries: EnquiryView[] }
-  | { kind: 'denied' }
-  | { kind: 'error' };
+  { kind: 'list'; enquiries: EnquiryView[] } | { kind: 'denied' } | { kind: 'error' };
 
 function codeOf(error: unknown): string | undefined {
   return error instanceof Error && 'code' in error && typeof error.code === 'string'

@@ -18,7 +18,14 @@ export const SETTINGS_SECTIONS = [
   'danger',
 ] as const;
 
-export const SETTINGS_EXTRAS = ['usage', 'audit', 'support', 'court-watch', 'research', 'sso'] as const;
+export const SETTINGS_EXTRAS = [
+  'usage',
+  'audit',
+  'support',
+  'court-watch',
+  'research',
+  'sso',
+] as const;
 
 export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number];
 export type SettingsItemId = SettingsSectionId | (typeof SETTINGS_EXTRAS)[number];

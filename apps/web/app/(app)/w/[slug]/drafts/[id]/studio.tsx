@@ -13,11 +13,8 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { FactsPanel, type DraftFact } from '../../../../../../components/drafting/facts-panel.tsx';
-import {
-  VersionDrawer,
-  type DraftVersionView,
-} from '../../../../../../components/drafting/version-drawer.tsx';
+import type { DraftFact } from '../../../../../../components/drafting/facts-panel.tsx';
+import type { DraftVersionView } from '../../../../../../components/drafting/version-drawer.tsx';
 import { registerCommands } from '../../../../../../lib/commands/registry.ts';
 import {
   hasMissing,
@@ -37,14 +34,34 @@ import {
 } from '../../../../../../lib/pwa/outbox/draft-edits.ts';
 import { DRAFT_STUDIO_SHORTCUTS } from '../../../../../../lib/shortcuts/registry.ts';
 
-import { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
+import type { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
 
+// Heavy parts load on demand so the route's initial JS stays under its 40 KB budget: the editor,
+// the facts panel (Provenance Chips pull in popover/tooltip code) and the version drawer (diff).
+const panelLoading = () => <div aria-hidden="true" className="bg-surface-sunken h-40 rounded-md" />;
+const FactsPanel = dynamic(
+  () => import('../../../../../../components/drafting/facts-panel.tsx').then((m) => m.FactsPanel),
+  { ssr: false, loading: panelLoading },
+);
+const VersionDrawer = dynamic(
+  () =>
+    import('../../../../../../components/drafting/version-drawer.tsx').then((m) => m.VersionDrawer),
+  { ssr: false, loading: panelLoading },
+);
 const DraftEditor = dynamic(() => import('../../../../../../components/drafting/editor.tsx'), {
   ssr: false,
   loading: () => <div aria-hidden="true" className="bg-surface-sunken h-64 rounded-md" />,
 });
 
 export interface StudioProps {
+  /**
+   * The server actions, bound by page.tsx. Passed in (not imported) so the studio stays free of
+   * server-only code and Storybook can render it with stand-ins.
+   */
+  actions: {
+    save: typeof saveDraftAction;
+    restore: typeof restoreDraftVersionAction;
+  };
   workspaceId: string;
   draftId: string;
   title: string;
@@ -123,15 +140,21 @@ export function DraftStudio(props: StudioProps) {
     })().catch(() => undefined);
   }, [workspaceId, draftId, title, versionNo, initial, refreshPending]);
 
-  const send = useCallback(async (edit: QueuedDraftEdit) => {
-    const result = await saveDraftAction({
-      workspaceId: edit.workspaceId,
-      draftId: edit.draftId,
-      baseVersionNo: edit.baseVersionNo,
-      blocks: edit.blocks,
-    });
-    return result.ok ? ({ ok: true } as const) : ({ ok: false, code: result.error.code } as const);
-  }, []);
+  const saveAction = props.actions.save;
+  const send = useCallback(
+    async (edit: QueuedDraftEdit) => {
+      const result = await saveAction({
+        workspaceId: edit.workspaceId,
+        draftId: edit.draftId,
+        baseVersionNo: edit.baseVersionNo,
+        blocks: edit.blocks,
+      });
+      return result.ok
+        ? ({ ok: true } as const)
+        : ({ ok: false, code: result.error.code } as const);
+    },
+    [saveAction],
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the browser's connectivity once on mount
@@ -180,7 +203,7 @@ export function DraftStudio(props: StudioProps) {
     if (!navigator.onLine) return queue();
     setState('saving');
     try {
-      const result = await saveDraftAction({
+      const result = await saveAction({
         workspaceId: edit.workspaceId,
         draftId: edit.draftId,
         baseVersionNo: edit.baseVersionNo,
@@ -206,6 +229,7 @@ export function DraftStudio(props: StudioProps) {
     dirty,
     props.workspaceId,
     props.draftId,
+    saveAction,
     baseNo,
     blocks,
     refreshPending,
@@ -214,7 +238,7 @@ export function DraftStudio(props: StudioProps) {
   ]);
 
   async function restore(versionNo: number) {
-    const result = await restoreDraftVersionAction({
+    const result = await props.actions.restore({
       workspaceId: props.workspaceId,
       draftId: props.draftId,
       versionNo,

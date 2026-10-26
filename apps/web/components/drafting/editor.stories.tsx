@@ -77,6 +77,12 @@ export const DraftVersionDrawer: Story = {
 };
 
 const STUDIO = {
+  actions: {
+    save: fn(() => Promise.resolve({ ok: true as const, data: { versionNo: 3, versionId: 'v3' } })),
+    restore: fn(() =>
+      Promise.resolve({ ok: true as const, data: { versionNo: 3, versionId: 'v3' } }),
+    ),
+  },
   workspaceId: 'w1',
   draftId: 'd1',
   title: 'Writ petition',

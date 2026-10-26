@@ -67,10 +67,11 @@ export const TIMELINE_ROUTE_MANIFEST =
   'server/app/(app)/w/[slug]/matters/[id]/timeline/page_client-reference-manifest.js';
 
 /**
- * The drafting studio route (#827): the editor is a lazy chunk, so the route's initial JS beyond
+ * The drafting studio route (#827): same 40 KB as the Court-Day Board. Editor, facts panel and version
+ * drawer are lazy chunks, so the route's initial JS beyond
  * shared code stays small (#40: editor chunk lazy-loaded).
  */
-export const DRAFTS_ROUTE_BUDGET_BYTES = 60 * 1024;
+export const DRAFTS_ROUTE_BUDGET_BYTES = ROUTE_CHUNK_BUDGET_BYTES;
 export const DRAFTS_ROUTE_MANIFEST =
   'server/app/(app)/w/[slug]/drafts/[id]/page_client-reference-manifest.js';
 

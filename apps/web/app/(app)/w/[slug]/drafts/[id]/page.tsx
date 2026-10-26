@@ -11,6 +11,7 @@ import { domainErrorCode } from '../../../../../../lib/matters/graph-deps.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
 
+import { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
 import { DraftStudio } from './studio.tsx';
 
 interface DraftPageProps {
@@ -83,6 +84,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
 
   return (
     <DraftStudio
+      actions={{ save: saveDraftAction, restore: restoreDraftVersionAction }}
       workspaceId={context.workspace.id}
       draftId={detail.draft.id}
       title={detail.draft.title}

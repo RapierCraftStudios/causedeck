@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Citation checker implemented; fixture split into compact jsonl (310 lines); V1-V8 exit 0; forgedock check still times out (300s) on V3/V4 under host load, both pass standalone",
+ "summary": "Citation checker implemented; fixture split into compact jsonl (310 lines); V1-V8 exit 0; forgedock check still times out (300s) on V3/V4 under host load, both pass standalone; CI fix: lint errors (drafting citations tests/normalize) fixed; tenancy suites all pass locally, CI cause unconfirmed (no log); round 3: @causedeck/intelligence#test CI failure not reproducible (39 files, 318 tests pass locally; package has no diff and no dependency on drafting/citations), treated as load flake; fixed stale migration header name; db:check, lint-migrations, drizzle-kit check pass",
  "requirements": [
   {
    "id": "R1",

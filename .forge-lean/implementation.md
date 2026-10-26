@@ -36,3 +36,7 @@ Stale-list follow-up: AUTHORITY_KINDS, AUTHORITY_STATUSES and authority recorded
 ## CI fix (lint, tenancy)
 - lint: three errors in packages/drafting/src/citations (`__dirname` in citations.test.ts now `import.meta.url`; two unnecessary type assertions in no-ai.test.ts and normalize.ts). eslint on all changed files is clean.
 - tenancy: no failing case reproduced locally. core cross-tenant (12 files), db cross-tenant + rls (10 files), web tenancy and the migration policy check all pass; CI log was unavailable, so the cause there is unconfirmed (possibly the same run's lint/infra flake).
+
+## CI round 3
+- intelligence#test failed in CI only; passes locally (318 tests). No diff in that package; likely load flake. Tenancy log unavailable; db:check passes.
+- Migration header now names 20261026030926_authority.

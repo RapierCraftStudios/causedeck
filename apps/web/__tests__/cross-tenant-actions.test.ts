@@ -134,6 +134,9 @@ const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calen
 const courtDay = await import('../app/(app)/w/[slug]/_court-day/actions.ts');
 const offlineActions = await import('../app/(app)/w/[slug]/_offline/actions.ts');
 const shareActions = await import('../app/(public)/share/[token]/actions.ts');
+const continuityActions = await import(
+  '../app/(app)/w/[slug]/matters/[id]/_continuity/actions.ts'
+);
 const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
@@ -238,6 +241,12 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   addTagAction: research,
   confirmOutcomeAction: hearingOutcome,
   markPreparedAction: briefSheet,
+  generateHandoverAction: continuityActions,
+  saveHandoverAction: continuityActions,
+  listHandoversAction: continuityActions,
+  acknowledgeHandoverAction: continuityActions,
+  recordViewAction: continuityActions,
+  whatChangedAction: continuityActions,
   setCarryItemAction: briefSheet,
   setBriefNoteAction: briefSheet,
   setPrintNotesAction: briefSheet,
@@ -931,6 +940,21 @@ function inputs(workspaceId: string): Record<string, unknown> {
       hearingId: t.a.rows.hearing?.hearingId,
       outcome: 'Cross-tenant probe outcome',
       nextDate: { kind: 'none' },
+    },
+    // Continuity (#71): ub may not read, save, acknowledge or record views on A's matter or handover.
+    generateHandoverAction: { workspaceId, matterId: t.a.rows.handover_note?.matterId },
+    saveHandoverAction: {
+      workspaceId,
+      matterId: t.a.rows.handover_note?.matterId,
+      recipientMemberId: t.a.rows.handover_note?.matterId,
+    },
+    listHandoversAction: { workspaceId, matterId: t.a.rows.handover_note?.matterId },
+    acknowledgeHandoverAction: { workspaceId, handoverId: t.a.rows.handover_note?.id },
+    recordViewAction: { workspaceId, matterId: t.a.rows.handover_note?.matterId },
+    whatChangedAction: {
+      workspaceId,
+      matterId: t.a.rows.handover_note?.matterId,
+      since: '2026-01-01T00:00:00.000Z',
     },
     // Brief sheet (#61): ub may not mark, tick or note A's listing.
     markPreparedAction: { workspaceId, listingId: t.a.rows.listing?.listingId, prepared: true },

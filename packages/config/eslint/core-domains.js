@@ -56,6 +56,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // sensitive-matter-safe `summarise` call through ai, graph reads through matter-graph and court-day
   // (imports `index.ts` only).
   briefs: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day', 'ai']),
+  // Continuity (#71): handover notes and what-changed; the scope and role through workspaces, access
+  // audit through audit, graph reads through matter-graph, the memory port type through briefs
+  // (imports `index.ts` only).
+  continuity: Object.freeze(['workspaces', 'audit', 'matter-graph', 'briefs']),
   // Chamber delegation (#63): the member role and the offboarding provider through workspaces,
   // assignment audit through audit, the day and its clashes through court-day (imports `index.ts` only).
   delegation: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day']),

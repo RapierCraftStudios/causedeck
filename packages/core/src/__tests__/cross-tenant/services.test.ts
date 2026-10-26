@@ -265,6 +265,16 @@ async function expectGraphDenied(
 const PROBE_ID = '00000000-0000-4000-8000-0000000000aa';
 const PROBE_PROVENANCE = { sourceType: 'manual' } as const;
 
+const asBInA = (f: Fixture) => ({ userId: f.ub, workspaceId: f.a.id });
+const asBInB = (f: Fixture) => ({ userId: f.ub, workspaceId: f.b.id });
+const aContinuityMatter = (f: Fixture) => f.a.rows.handover_note?.matterId ?? '';
+async function continuityRows(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => [
+    await s.select().from(schema.handoverNote),
+    await s.select().from(schema.matterView),
+  ]);
+}
+
 /** A's seeded listing (canonical) and its proceeding. */
 async function aListing(f: Fixture): Promise<{ listingId: string; proceedingId: string }> {
   const listingId = f.a.rows.listing?.listingId ?? '';
@@ -2227,6 +2237,55 @@ const CASES: Record<string, Case> = {
       ),
     ).rejects.toBeDefined();
     expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing))).toEqual(before);
+  },
+  // continuity (#71): B acting on A's matter or handover is denied; A's handovers and views are unchanged.
+  generateHandover: async (f) => {
+    await expectDenied(core.generateHandover({ db: f.tx }, asBInA(f), aContinuityMatter(f)));
+    await expectDenied(core.generateHandover({ db: f.tx }, asBInB(f), aContinuityMatter(f)));
+  },
+  saveHandover: async (f) => {
+    const before = await continuityRows(f);
+    const input = { matterId: aContinuityMatter(f), recipientMemberId: PROBE_ID };
+    await expectDenied(core.saveHandover({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.saveHandover({ db: f.tx }, asBInB(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  listHandovers: async (f) => {
+    const input = { matterId: aContinuityMatter(f) };
+    await expectDenied(core.listHandovers({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.listHandovers({ db: f.tx }, asBInB(f), input));
+  },
+  acknowledgeHandover: async (f) => {
+    const before = await continuityRows(f);
+    const input = { handoverId: f.a.rows.handover_note?.id ?? '' };
+    await expectDenied(core.acknowledgeHandover({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.acknowledgeHandover({ db: f.tx }, asBInB(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  generateHandoversForMember: async (f) => {
+    const before = await continuityRows(f);
+    const input = { fromMemberId: PROBE_ID, toMemberId: PROBE_ID };
+    await expectDenied(core.generateHandoversForMember({ db: f.tx }, asBInA(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  recordView: async (f) => {
+    const before = await continuityRows(f);
+    const input = { matterId: aContinuityMatter(f) };
+    await expectDenied(core.recordView({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.recordView({ db: f.tx }, asBInB(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  whatChangedSince: async (f) => {
+    await expectDenied(
+      core.whatChangedSince({ db: f.tx }, asBInA(f), aContinuityMatter(f), new Date(0)),
+    );
+  },
+  changesForViewer: async (f) => {
+    const before = await continuityRows(f);
+    await expectDenied(
+      core.changesForViewer({ db: f.tx }, asBInA(f), { matterId: aContinuityMatter(f) }),
+    );
+    expect(await continuityRows(f)).toEqual(before);
   },
   // briefs (#60): B acting on A's listing is denied and A's brief state is unchanged.
   assembleBrief: async (f) => {

@@ -549,6 +549,15 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmOutcome: denies,
   recordManualOutcome: denies,
   // briefs (#60): B acting on A's listing is denied (NOT_FOUND), A's brief state is unchanged
+  // continuity (#71): B acting on A's matter or handover is denied, A's handovers and views are unchanged
+  generateHandover: denies,
+  saveHandover: denies,
+  listHandovers: denies,
+  acknowledgeHandover: denies,
+  generateHandoversForMember: denies,
+  recordView: denies,
+  whatChangedSince: denies,
+  changesForViewer: denies,
   assembleBrief: denies,
   markPrepared: denies,
   unmarkPrepared: denies,

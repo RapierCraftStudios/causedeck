@@ -96,6 +96,13 @@ the matrix, before the resource checks below.
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `appearance.assign` | ✓     | ✓        | —      | —     | —      |
 
+## contact
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `contact.read` | ✓     | ✓        | ✓      | ✓     | ✓      |
+| `contact.write` | ✓     | ✓        | —      | —     | —      |
+
 ## export
 
 | Action | owner | advocate | junior | clerk | viewer |

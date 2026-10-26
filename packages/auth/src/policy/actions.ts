@@ -17,6 +17,9 @@ export const ACTIONS = {
   court_day: ['court_day.view_all'],
   // Chamber delegation of appearances (#63).
   appearance: ['appearance.assign'],
+  // Client contacts (#82): `contact.write` is the owner/advocate manage; a junior writes through
+  // `matter.write` on an assigned matter (`@causedeck/core/people`).
+  contact: ['contact.read', 'contact.write'],
   export: ['export.run'],
   support: ['support.manage'],
   // Shell surfaces gated in apps/web/lib/workspace-context.ts.

@@ -3,6 +3,7 @@
 // through a presigned download, the audit event, blocked slots and no draft text in logs.
 import { randomBytes, randomUUID } from 'node:crypto';
 
+import { ResidencyViolationError, type Provider } from '@causedeck/ai';
 import { Secret } from '@causedeck/config/env';
 import { schema } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
@@ -13,6 +14,7 @@ import { createMemoryObjectStore, EnvKeyProvider } from '@causedeck/storage';
 import { and, eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
+import { createCoreAiGateway } from '../../ai/index.ts';
 import { WorkspaceError } from '../../shared/errors.ts';
 import {
   createDraft,
@@ -149,6 +151,80 @@ describe('drafting service and export', () => {
       expect(link.filename.endsWith('-v2.docx')).toBe(true);
 
       expect(JSON.stringify(logs)).not.toContain(SECRET_TEXT);
+    });
+  });
+
+  it('denies a clerk on export and on download', async () => {
+    await withTestDb(async (tx) => {
+      const { seeded, actor, created, workspaceId, log } = await setup(tx);
+      const v = await saveVersion({ db: tx }, actor, {
+        draftId: created.draft.id,
+        content: content('Body'),
+      });
+      const store = createMemoryObjectStore();
+      const done = await runDraftingExport(
+        { db: tx, store, keys, log, now },
+        { workspaceId, draftVersionId: v.id, format: 'pdf', userId: seeded.ua },
+      );
+      const clerkId = seeded.a.rows.member?.userId ?? '';
+      await tx
+        .update(schema.member)
+        .set({ role: 'clerk' })
+        .where(eq(schema.member.userId, clerkId));
+      const clerk = { workspaceId, userId: clerkId };
+      await expect(
+        exportDraft({ db: tx, enqueue: vi.fn() }, clerk, {
+          draftId: created.draft.id,
+          format: 'docx',
+        }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      await expect(
+        createDraftExportDownload({ db: tx, store, now }, clerk, done.export.id),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    });
+  });
+
+  it('writes an ai_call row for a refused non-India narrative call', async () => {
+    await withTestDb(async (tx) => {
+      const { seeded, actor, created, workspaceId, log } = await setup(tx);
+      const callSpy = vi.fn(() => Promise.reject(new Error('must not be called')));
+      const abroad: Provider = {
+        id: 'bedrock',
+        region: 'us-east-1',
+        dataResidency: 'other',
+        supports: ['draft_narrative'],
+        modelFor: () => 'm',
+        call: callSpy,
+      };
+      const v = await saveVersion({ db: tx }, actor, {
+        draftId: created.draft.id,
+        content: [{ type: 'narrative', id: 'n1', prompt: 'Summarise the facts', maxChars: 500 }],
+      });
+      await expect(
+        runDraftingExport(
+          {
+            db: tx,
+            store: createMemoryObjectStore(),
+            keys,
+            log,
+            now,
+            narrativePort: createCoreAiGateway(tx, { now, providers: [abroad] }),
+          },
+          { workspaceId, draftVersionId: v.id, format: 'docx', userId: seeded.ua },
+        ),
+      ).rejects.toBeInstanceOf(ResidencyViolationError);
+      expect(callSpy).not.toHaveBeenCalled();
+      const rows = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.aiCall).where(eq(schema.aiCall.workspaceId, workspaceId)),
+      );
+      // The seeded workspace already holds an unrelated ai_call row: look at the narrative task only.
+      expect(rows.filter((r) => r.task === 'draft_narrative').map((r) => r.status)).toEqual([
+        'residency_violation',
+      ]);
+      const exported = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.draftExport).where(eq(schema.draftExport.draftVersionId, v.id)),
+      );
+      expect(exported).toEqual([]);
     });
   });
 

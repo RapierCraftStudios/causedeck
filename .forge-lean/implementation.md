@@ -39,3 +39,7 @@ The 20 flagged (symbol, test) pairs for DRAFT_EXPORT_FORMATS and draftExport are
 
 ## Name-collision follow-up
 Renamed drafting's `exportFilename` to `draftExportFilename` (export.ts) and `canonicalJson` to `canonicalDraftJson` (service.ts); neither is exported from the drafting index or core index, so the existing lifecycle registry entries stay unchanged. Core typecheck clean; domains test run.
+
+## Conformance fix (R5, R9)
+- Integration test: refused non-India narrative call (`ResidencyViolationError`, `ai_call` row with status `residency_violation`, no export row); clerk denied on `exportDraft` and `createDraftExportDownload` (FORBIDDEN).
+- New `packages/core/src/drafting/__tests__/policy.test.ts`: role matrix for `draft.read/write/export` and the matter-less path.

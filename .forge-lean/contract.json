@@ -2,50 +2,43 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "apps/web/app/(app)/w/[slug]/drafts/[id]/{page.tsx,studio.tsx,actions.ts(save, restore)}: RSC shell and data load, client editor over the block tree (editorial serif, slot underline, narrative left rule, [[missing]] warning markers, AI-drafted marker cleared on edit with an edit diff recorded)",
+   "quote": "Replace the placeholder at apps/web/app/(app)/w/[slug]/drafts/page.tsx with an RSC list (title, matter, template, last edited, citation and consistency summary chips; matter filter)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "components/drafting/facts-panel.tsx (Provenance Chips insert into slots) and version-drawer.tsx (restore with diff preview)",
+   "quote": "components/drafting/template-picker.tsx",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "three-column at 1280, single drawer at 768, bottom sheet with tabs at 360, reduced-motion",
+   "quote": "loading.tsx, error.tsx (request id), empty, offline and permission-denied states",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Cmd/Ctrl+S, Cmd/Ctrl+K draft actions, ] and [ finding navigation with a live region, Esc, shortcut sheet entries",
+   "quote": "a create-draft server action (drafts/actions.ts) listed in ACTIONS in apps/web/__tests__/cross-tenant-actions.test.ts",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "offline read-only cache plus edits queued in the outbox (apps/web/lib/pwa/outbox) with an 'Offline, changes queued' state.",
+   "quote": "stories for every component and state",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Editor chunk lazy-loaded; initial JS at most 180 KB gzip.",
-   "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "CI bundle budget check (apps/web/scripts/check-bundle-budget.mjs, run after next build in CI); locally only the editor dynamic import and the budget unit test are checkable"
-  },
-  {
-   "id": "R7",
-   "quote": "Stories for each component.",
+   "quote": "Strings from next-intl.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
-   "id": "R8",
-   "quote": "New actions listed in cross-tenant-actions.test.ts.",
+   "id": "R7",
+   "quote": "Never send, share or file.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -53,232 +46,207 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/drafts/[id]/actions.ts",
-   "change": "'use server' saveDraftAction and restoreDraftVersionAction via workspaceAction (action draft.write), dynamic import of @causedeck/core/drafting, deps {db: ctx.tx}; return the new version summary",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/page.tsx",
+   "change": "RSC list modelled on notices/page.tsx and matters/page.tsx: getWorkspaceContext, dev ?__state=loading|error|denied|offline, matter filter from validated ?matter= UUID, loads listDrafts + listTemplates via lib/drafting loader inside inWorkspace; FORBIDDEN or no draft.read renders PermissionDeniedPage; empty state; rows link to /w/{slug}/drafts/{id}.",
    "requirements": [
     "R1",
-    "R8"
+    "R3",
+    "R6"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/app/(app)/w/[slug]/drafts/[id]/page.tsx",
-   "change": "RSC: resolve workspace, load getDraft as the member, notFound() on NOT_FOUND, render Studio with lazy editor; add loading.tsx and error.tsx beside it",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/loading.tsx",
+   "change": "Skeleton loading state (copy notices/loading.tsx) with translated label.",
    "requirements": [
-    "R1",
-    "R6"
+    "R3"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/drafts/[id]/studio.tsx",
-   "change": "Client shell: layouts (3-col/drawer/bottom-sheet tabs), editor via next/dynamic, save state, shortcuts, finding navigation live region, offline banner; slots for #828 panels",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/error.tsx",
+   "change": "Route error boundary showing translated copy and the request id (error.digest) with copy/retry, never error.message; copy [slug]/error.tsx:29-50 and reportError.",
    "requirements": [
-    "R1",
-    "R3",
-    "R4",
-    "R5",
-    "R6"
+    "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "apps/web/components/drafting/editor.tsx",
-   "change": "Block-tree editor (serif, slot underline, narrative rule, [[missing]] markers, AI-drafted marker cleared on edit with {blockKey,before,after} diff recorded) plus pure helpers in apps/web/lib/drafting/blocks-edit.ts with unit tests",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/actions.ts",
+   "change": "'use server' createDraftAction via workspaceAction + WorkspaceScoped (input workspaceId, templateId uuid, matterId uuid|null, title 1..200); calls core createDraft with {db: ctx.tx} and actor from ctx; maps WorkspaceError FORBIDDEN/NOT_FOUND/VALIDATION to ActionError; returns draft id and slug-relative href only; async wrapper export like news/actions.ts. No enqueue, send, share or file.",
    "requirements": [
-    "R1"
+    "R4",
+    "R7"
    ]
   },
   {
    "id": "D5",
-   "path": "apps/web/components/drafting/facts-panel.tsx",
-   "change": "Facts list rendered as Provenance Chips; activating one inserts its value into the focused slot",
+   "path": "apps/web/lib/drafting/list.ts",
+   "change": "Server loader and view mapping: listDrafts/listTemplates via inWorkspace returning {kind:'page'|'denied'}; DraftRowView (title, matter, template, updatedAt formatted, citation counts, consistency counts or null); parseMatterParam.",
    "requirements": [
-    "R2"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/web/components/drafting/version-drawer.tsx",
-   "change": "Version list with restore and a diff preview before confirming restore",
+   "path": "apps/web/components/drafting/drafts-list.tsx",
+   "change": "List of rows with citation chips (use CitationStatus from @causedeck/ui/patterns) and consistency summary chips, matter filter select (URL-driven), empty and filtered-empty states.",
    "requirements": [
-    "R2"
+    "R1",
+    "R3",
+    "R6"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/web/lib/pwa/outbox/draft-edits.ts",
-   "change": "Encrypted draft-edit queue (reuse crypto.ts; separate Dexie table or db version bump) and read-only cache of the last loaded draft; flush through saveDraftAction on online via existing sync triggers; no draft text in logs",
+   "path": "apps/web/components/drafting/template-picker.tsx",
+   "change": "Client dialog/form: up to 5 suggested templates, title input, optional matter, submit calls createDraftAction then navigates to the new draft; hidden/disabled when offline; shows action error text.",
+   "requirements": [
+    "R2",
+    "R4",
+    "R6"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "apps/web/components/drafting/drafts-offline-banner.tsx",
+   "change": "Offline banner reusing useOnline/OfflineBanner pattern from components/matters/matters-offline-banner.tsx, drafting.offline strings.",
+   "requirements": [
+    "R3",
+    "R6"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "apps/web/components/drafting/drafts.stories.tsx",
+   "change": "Stories for drafts list (populated, filtered-empty, empty), template picker (idle, submitting, error), offline banner, loading, error and permission-denied states, in the repo story style (e.g. components/inbox/inbox.stories.tsx).",
    "requirements": [
     "R5"
    ]
   },
   {
-   "id": "D8",
-   "path": "apps/web/lib/shortcuts/registry.ts",
-   "change": "Add draft-studio shortcut entries (mod+s, mod+k draft actions, ], [, Esc) to the shortcut sheet with labelKeys under drafting.shortcuts",
-   "requirements": [
-    "R4"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/i18n/src/messages/en/drafting.json",
-   "change": "Add the keys the studio needs ('Offline, changes queued', finding navigation, diff preview, tabs, announcements); mirror in ta/kn drafting.json, packages/i18n/translation-status.json (draft entries) and regenerate src/generated via pnpm --filter @causedeck/i18n i18n:types",
-   "requirements": [
-    "R4",
-    "R5",
-    "R2"
-   ]
-  },
-  {
    "id": "D10",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Add saveDraftAction and restoreDraftVersionAction to ACTIONS and their probe inputs (B on A is FORBIDDEN/NOT_FOUND, A unchanged)",
+   "path": "packages/i18n/src/messages/en/drafting.json",
+   "change": "Add keys under drafting.list/states: matter filter label and all-matters, column/field labels (matter, template, lastEdited), citation and consistency chip text, permission denied, request id, picker title/field labels/errors. Keep single top-level 'drafting' key.",
    "requirements": [
-    "R8"
+    "R6"
    ]
   },
   {
    "id": "D11",
-   "path": "apps/web/components/drafting/editor.stories.tsx",
-   "change": "Stories for editor, facts-panel, version-drawer, studio shell states (unique export names across the stories corpus)",
+   "path": "packages/i18n/src/messages/ta/drafting.json",
+   "change": "Same keys as en with real Tamil text.",
    "requirements": [
-    "R7"
+    "R6"
    ]
   },
   {
    "id": "D12",
-   "path": "apps/web/scripts/check-bundle-budget.mjs",
-   "change": "add the drafts/[id] route manifest check beside MATTERS/TIMELINE so the editor chunk stays out of initial JS; extend bundle-budget.test.ts accordingly",
+   "path": "packages/i18n/src/messages/kn/drafting.json",
+   "change": "Same keys as en with real Kannada text.",
    "requirements": [
     "R6"
    ]
   },
   {
    "id": "D13",
-   "path": "apps/web/app/(app)/w/[slug]/drafts/[id]/loading.tsx",
-   "change": "Route loading skeleton beside page.tsx",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "apps/web/app/(app)/w/[slug]/drafts/[id]/error.tsx",
-   "change": "Route error boundary beside page.tsx",
-   "requirements": [
-    "R1"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "apps/web/lib/drafting/blocks-edit.ts",
-   "change": "Pure block-tree edit helpers (slot insert, narrative edit, AI-drafted marker clear, {blockKey,before,after} diff, [[missing]] findings)",
-   "requirements": [
-    "R1",
-    "R4"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "apps/web/__tests__/bundle-budget.test.ts",
-   "change": "Test for the drafts/[id] route manifest budget added in check-bundle-budget.mjs",
+   "path": "packages/i18n/translation-status.json",
+   "change": "Add 'draft' entries for each new ta/kn key.",
    "requirements": [
     "R6"
    ]
   },
   {
+   "id": "D14",
+   "path": "packages/i18n/src/generated/messages/en.json",
+   "change": "Regenerate with pnpm --filter @causedeck/i18n i18n:types (also ta.json, kn.json, messages.d.ts; add each as changed generated file).",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Import drafts/actions.ts, add createDraftAction to ACTIONS and its probe inputs (workspace B member cannot create a draft from A's matter/template; A unchanged).",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "apps/web/__tests__/workspace-shell.test.tsx",
+   "change": "Add 'drafts' to REAL_PAGES with a comment pointing at its own page test.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
    "id": "D17",
-   "path": "packages/i18n/src/messages/ta/drafting.json",
-   "change": "Mirror new keys (draft text, non-English)",
+   "path": "apps/web/components/drafting/__tests__/drafts-list.test.tsx",
+   "change": "Tests: rows render title, matter, template, chips with text labels; empty and filtered-empty; picker submits createDraftAction (mocked); offline disables create; denied page for FORBIDDEN loader result.",
    "requirements": [
-    "R4",
-    "R5",
-    "R2"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/i18n/src/messages/kn/drafting.json",
-   "change": "Mirror new keys (draft text, non-English)",
-   "requirements": [
-    "R4",
-    "R5",
-    "R2"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/i18n/translation-status.json",
-   "change": "draft entries for new ta/kn keys",
-   "requirements": [
-    "R4",
-    "R5",
-    "R2"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "Regenerated via pnpm --filter @causedeck/i18n i18n:types (plus generated/messages/{en,ta,kn}.json)",
-   "requirements": [
-    "R4",
-    "R5",
-    "R2"
+    "R1",
+    "R2",
+    "R3",
+    "R4"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "apps/web/app/(app)/w/[slug]/drafts/page.tsx (placeholder list page owned by #826) is not modified"
+   "what": "Core drafting exports and signatures in packages/core/src/drafting/index.ts and read.ts; no core changes."
   },
   {
    "id": "P2",
-   "what": "Core drafting API in packages/core/src/drafting/index.ts and block schema packages/validators/src/drafting.ts stay unchanged (blocks are .strict(); no new fields)"
+   "what": "Other workspace routes' placeholderPage behaviour and apps/web/__tests__/workspace-shell.test.tsx expectations for non-drafts routes; nav item 'drafts' in apps/web/lib/nav.ts unchanged."
   },
   {
    "id": "P3",
-   "what": "Existing outbox file uploads (apps/web/lib/pwa/outbox/{db,queue,sync,uploader}.ts) behave as before; existing outbox tests keep passing"
+   "what": "i18n catalog invariants in packages/i18n/src/__tests__/catalog.test.ts: single top-level key 'drafting', ta/kn key sets equal en, generated files in sync."
   },
   {
    "id": "P4",
-   "what": "Existing shortcuts and their help dialog (apps/web/lib/shortcuts/*) keep working; shortcuts registry tests pass"
+   "what": "Existing ACTIONS entries and the exported-actions equality check in apps/web/__tests__/cross-tenant-actions.test.ts."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research  # run the scoped typecheck/lint/test commands it prints; then rerun with --publish"
+   "command": "pnpm --filter @causedeck/web exec vitest run components/drafting __tests__/workspace-shell.test.tsx --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/web exec vitest run --maxWorkers=${FORGE_HOST_PARALLELISM:-1} __tests__/cross-tenant-actions.test.ts __tests__/bundle-budget.test.ts lib/drafting components/drafting lib/pwa lib/shortcuts"
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V4",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "AI-drafted marker and edit diff live in client state and the offline-queue payload; no schema/block change",
-   "justification": "BlockSchema is strict with no marker field (packages/validators/src/drafting.ts:79-124) and the issue lists no core/db change; immutable versions (service.ts:210-245) are the persisted diff",
-   "source": "spec"
+   "choice": "Copy the notices/matters page pattern (dev ?__state previews, PermissionDeniedPage, useOnline banner) and the news workspaceAction pattern; no new workspace package dependency.",
+   "justification": "apps/web/app/(app)/w/[slug]/notices/page.tsx:1-60 and news/actions.ts:1-45 are the established recipes; @causedeck/core and @causedeck/ui are already web dependencies.",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Draft edits queue in a new encrypted draft-edits store beside the outbox rather than as a file item",
-   "justification": "OutboxItem is a blob upload with presign/PUT states (apps/web/lib/pwa/outbox/db.ts:8-31); a JSON save does not fit that uploader, but crypto.ts and sync triggers (sync.ts) are reused",
+   "choice": "Matter filter lives in the URL (?matter=\u003cuuid>) so the RSC re-queries listDrafts with matterId; invalid UUID is ignored.",
+   "justification": "listDrafts accepts matterId and throws on non-UUID (packages/core/src/drafting/read.ts:116-123); matters list is URL-driven (matters/page.tsx header).",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Actions follow workspaceAction with dynamic core imports and action 'draft.write'",
-   "justification": "apps/web/app/(app)/w/[slug]/matters/actions.ts:30-52; policy matrix packages/auth/src/policy/matrix.ts:31",
-   "source": "precedent"
+   "choice": "Studio route drafts/[id] is not built here; rows link to it (owned by #827).",
+   "justification": "Issue scope is the list page only; #827 is the studio shell.",
+   "source": "spec"
   }
  ]
 }

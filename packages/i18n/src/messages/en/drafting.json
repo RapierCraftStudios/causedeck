@@ -6,7 +6,46 @@
       "pickTemplate": "Choose a template",
       "empty": "No drafts yet. Start one from a template.",
       "updated": "Updated {date}",
-      "untitled": "Untitled draft"
+      "untitled": "Untitled draft",
+      "metaTitle": "Drafts",
+      "description": "Drafts across your matters. Nothing is sent, shared or filed from here.",
+      "loading": "Loading drafts",
+      "matter": "Matter",
+      "template": "Template",
+      "lastEdited": "Last edited",
+      "noMatter": "No matter",
+      "filterLabel": "Matter",
+      "filterAll": "All matters",
+      "emptyFiltered": "No drafts for this matter.",
+      "open": "Open draft {title}",
+      "chips": {
+        "verified": "{count} verified",
+        "notFound": "{count} not found",
+        "unknown": "{count} unknown",
+        "consistencyError": "{count, plural, one {# error} other {# errors}}",
+        "consistencyWarn": "{count, plural, one {# warning} other {# warnings}}",
+        "consistencyInfo": "{count, plural, one {# note} other {# notes}}",
+        "consistencyClear": "Consistent",
+        "consistencyPending": "Consistency not checked"
+      },
+      "picker": {
+        "title": "New draft",
+        "description": "Pick a template, name the draft and optionally link it to a matter.",
+        "suggested": "Suggested templates",
+        "noTemplates": "No templates are available.",
+        "titleLabel": "Draft title",
+        "matterLabel": "Matter (optional)",
+        "noMatterOption": "No matter",
+        "submit": "Create draft",
+        "submitting": "Creating",
+        "offline": "You are offline. Reconnect to create a draft.",
+        "cancel": "Cancel",
+        "errors": {
+          "forbidden": "You cannot create drafts here.",
+          "validation": "Check the title and template, then try again.",
+          "generic": "The draft could not be created. Try again."
+        }
+      }
     },
     "states": {
       "loading": "Loading the draft",
@@ -19,7 +58,11 @@
       "conflict": "This draft changed elsewhere. Reload to see the latest version.",
       "saveFailed": "The draft could not be saved.",
       "unsaved": "Unsaved changes",
-      "cachedCopy": "Showing the copy saved on this device."
+      "cachedCopy": "Showing the copy saved on this device.",
+      "requestId": "Request ID: {digest}",
+      "copyId": "Copy request ID",
+      "copied": "Copied",
+      "listError": "Could not load drafts."
     },
     "panels": {
       "facts": {
@@ -97,7 +140,8 @@
     "offline": {
       "banner": "You are offline. Edits are saved on this device.",
       "queued": "{count, plural, one {# change waiting to sync} other {# changes waiting to sync}}",
-      "synced": "All changes synced"
+      "synced": "All changes synced",
+      "listBanner": "You are offline. This is the last saved list; new drafts cannot be created."
     },
     "editor": {
       "label": "Draft editor",

@@ -3430,6 +3430,87 @@
     },
     "scaffoldBanner": "Scaffold: review before use"
   },
+  "drafting": {
+    "list": {
+      "title": "Drafts",
+      "newDraft": "New draft",
+      "pickTemplate": "Choose a template",
+      "empty": "No drafts yet. Start one from a template.",
+      "updated": "Updated {date}",
+      "untitled": "Untitled draft"
+    },
+    "states": {
+      "loading": "Loading the draft",
+      "error": "The draft could not be loaded.",
+      "retry": "Try again",
+      "notFound": "This draft does not exist or you cannot open it.",
+      "saving": "Saving",
+      "saved": "Saved"
+    },
+    "panels": {
+      "facts": {
+        "title": "Facts",
+        "empty": "No facts are linked to this draft."
+      },
+      "citations": {
+        "title": "Citations",
+        "empty": "No citations found in the draft.",
+        "check": "Check citations",
+        "checkedAt": "Checked {date}",
+        "status": {
+          "verified": "Verified",
+          "notFound": "Not found",
+          "unknown": "Unknown"
+        }
+      },
+      "consistency": {
+        "title": "Consistency",
+        "empty": "No consistency findings."
+      },
+      "versions": {
+        "title": "Versions",
+        "current": "Current version",
+        "restore": "Restore this version",
+        "number": "Version {number}"
+      }
+    },
+    "findings": {
+      "count": "{count, plural, one {# finding} other {# findings}}",
+      "factMismatch": "A figure or date differs from the facts.",
+      "unsupported": "This statement has no source fact.",
+      "goTo": "Go to location"
+    },
+    "aiDrafted": {
+      "label": "AI-drafted",
+      "notice": "Parts of this draft were written by AI. Review every line before use."
+    },
+    "acknowledgement": {
+      "title": "Confirm your review",
+      "statement": "I have read this draft in full and checked its citations and facts. I take responsibility for its contents.",
+      "confirm": "I acknowledge",
+      "cancel": "Cancel"
+    },
+    "export": {
+      "title": "Export draft",
+      "docx": "Word document",
+      "pdf": "PDF",
+      "unverifiedWarning": "{count, plural, one {# citation is not verified.} other {# citations are not verified.}}",
+      "action": "Export",
+      "failed": "The export failed. Try again."
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "save": "Save",
+      "checkCitations": "Check citations",
+      "togglePanel": "Show or hide the side panel",
+      "export": "Export"
+    },
+    "offline": {
+      "banner": "You are offline. Edits are saved on this device.",
+      "queued": "{count, plural, one {# change waiting to sync} other {# changes waiting to sync}}",
+      "synced": "All changes synced"
+    }
+  },
   "calendar": {
     "metaTitle": "Calendar",
     "title": "Calendar",

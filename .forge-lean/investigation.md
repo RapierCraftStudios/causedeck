@@ -1,54 +1,33 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: medium (greenfield feature; no live defect, but PX-4 export gate is a guardrail)
+**Severity**: low (additive UI/i18n groundwork for the drafting studio, #79 part 1)
 **Task Type**: feature
 
 ### What Was Claimed
-#77 (parent #1, depends on #768 and #44, both closed): build the DR-2 citation checker. It extracts Indian neutral and reporter citations from a draft's block tree, resolves each one via an adapter (mock by default, Indian Kanoon when configured), and marks it `verified | not_found | unknown`. It stores only the citation string, status, canonical URL and short title. Export of a draft with a `not_found` citation needs a logged acknowledgement. False-verified rate must be at most 0.5%. The job is `drafting.citations.check`.
+Add a `CitationStatus` UI pattern (verified / not found / unknown; glyph plus text label, Provenance Chip conventions, story, test) exported from `patterns/index.ts`, and a `drafting` i18n namespace (en, ta, kn) with every studio key, registered in `catalog.ts` and `catalog.test.ts`.
 
 ### What We Found
-- No citation checker exists: no `authority` table (`packages/db/src/schema/` has only `research-note.ts`/`drafting.ts` etc.), no `packages/drafting/src/citations`, no `INDIAN_KANOON_API_TOKEN` or `CITATION_RESOLVER` in `packages/config/src/env/providers.ts`, and no `drafting.citations.check` job (`packages/core/src/jobs/definitions/` has only `drafting-export.ts`).
-- The issue's file paths do not match the repo layout. Jobs live in `packages/core/src/jobs/definitions/*.ts`, registered in `packages/core/src/jobs/registry.ts:48,189,250`, not in `apps/worker/src/jobs`. Migrations are `packages/db/migrations/<timestamp>_name.sql` plus `meta/<ts>_snapshot.json` and `meta/_journal.json` (latest `20261025225346_drafting_export.sql`), not `packages/db/drizzle/00xx`. Tests live in `src/__tests__` or beside the file, not `test/`.
-- `@causedeck/drafting` (`packages/drafting/package.json`) depends only on `ai` and `validators`, not `db`. A `checkDraft(tx, ...)` that reads or writes the DB cannot live there without a new workspace dependency. The DB orchestration belongs in the core drafting domain (`packages/core/src/drafting/`), the pure parts in `packages/drafting/src/citations/`.
-- The block tree: `packages/validators/src/drafting.ts:67-74`; `walkBlocks` and the stable block key (`block.id ?? 'b.1.0'`) are in `packages/drafting/src/blocks.ts:16-26`. Text-bearing blocks are `heading.text`, `paragraph.text` and `section.title`. Slot and narrative text only exists at render time (`packages/core/src/drafting/service.ts:344 renderDraft`).
-- `draft_version` is immutable (`packages/db/src/schema/drafting.ts:108-131`, trigger). So "editing a cited span invalidates its status" maps to a new version having no `authority` rows until it is checked. Statuses attach to `draft_version_id`, so a stale status can never be shown for a newer version. `saveVersion` (`service.ts:195`) and `restoreVersion` (`:229`) should enqueue a check.
-- Export gate points: `exportDraft` (`packages/core/src/drafting/service.ts:413`) enqueues; `runDraftingExport` (`packages/core/src/drafting/export.ts:110`) renders and writes. Job wrapper `packages/core/src/jobs/definitions/drafting-export.ts` maps `WorkspaceError` to `PermanentError`. Both need to refuse when a `not_found` citation has no acknowledgement.
-- Policy actions `draft.read`, `draft.write`, `draft.export` already exist (`packages/auth/src/policy/actions.ts:14`, `matrix.ts:30-32,54-56`). No new action is needed.
-- Audit actions are a registry in `packages/core/src/audit/events.ts` (`draft.exported` at :166). `draft.citations.checked` and `draft.citations.acknowledged` need adding.
-- Existing neighbour: `packages/core/src/citations/verify.ts` verifies neutral citations against the raw judgments corpus (`canonicalNeutralCitation` from `@causedeck/intelligence`, `packages/intelligence/src/corpus/header.ts:32`). It handles only INSC and MHC/KHC forms and has no reporter or case-name forms. It is a different mechanism (UNVERIFIED, not the three-state model) and is not the Indian Kanoon adapter.
-- Tenant table pattern with RLS: `draftExport` (`schema/drafting.ts:133+`) and migration `20261025225346_drafting_export.sql` (hand-written RLS block: enable, force, `ws_isolation` policy, workspace_id index).
-- Registries for a new table and exports: `packages/db/src/index.test.ts:146`, `packages/db/src/__tests__/rls/sql.test.ts:211`, `packages/db/src/testing/cross-tenant-registry.ts:84,173` (table map; `SERVICE_TESTS` at :218, `NOT_A_SERVICE` at :903). Job lists: `apps/worker/src/__tests__/registry.test.ts:146` and `schedules.test.ts`.
-- No existing per-workspace resolver rate limiter or daily budget helper fits (AI budgets are in `packages/ai`/`usage`, tied to LLM spend). A small in-package limiter plus a DB-counted daily budget is needed.
+- `packages/ui/src/patterns/index.ts:1-40` exports patterns per folder; no citation-status exists. Template to copy: `patterns/stage-badge/stage-badge.tsx` (icon + label capsule, `label` override prop for translations) and `provenance-chip/provenance-chip.tsx:55-70` (capsule classes, `forced-colors:border-current`, wrapping labels).
+- `packages/ui/src/patterns/boundaries.test.ts:5-13` restricts UI imports to react, radix-ui, vaul, lucide-react, cva, clsx, motion; the pattern must stay within these.
+- `packages/i18n/src/catalog.ts:6-42` `NAMESPACES` has no `drafting` (only `drafting-templates`, top-level key `draftingTemplates`). Top-level keys `offline` and `shortcuts` already exist (errors.json, shell/pwa), so the new file must use a single top-level key `drafting` containing nested `offline`, `shortcuts` etc. (mergeNamespaces throws on duplicates, catalog.ts:55-70).
+- `packages/i18n/src/__tests__/catalog.test.ts:64-70` requires one file per namespace per locale; `:78-120` asserts the exact sorted top-level key list (needs `'drafting'`); `:71-75` ta/kn key sets must equal en; `:77-82` committed `src/generated/messages/{en,ta,kn}.json` and `messages.d.ts` must match (`pnpm i18n:types`).
+- `packages/i18n/translation-status.json` lists every ta/kn key as `"draft"` (e.g. line 3283 for draftingTemplates); `scripts/check-catalogs.ts:1-30` fails on missing status, empty strings, ICU/arg mismatch, ta/kn equal to en (unless in `allowUntranslated`). "Stubs" therefore need real non-English text, marked draft.
+- Core `CitationStatus` exists in `packages/core/src/drafting/citations.ts`; UI must not import core, so define a local status union (`'verified'|'not_found'|'unknown'`) in the pattern.
 
 ### Root Cause
-Missing feature. The drafting engine (#767) and the core drafting domain (#768) exist, but nothing detects, verifies or labels citations, and the export path has no citation gate.
+Not a defect: the feature has not been built. #826-#828 (siblings) need these pieces.
 
 ### Affected Files
-- `packages/validators/src/citation.ts` (+ subpath export in `packages/validators/package.json`)
-- `packages/drafting/src/citations/*` (patterns, normalize, extract, match, resolvers, rate-limit) and `packages/drafting/src/index.ts`
-- `packages/db/src/schema/authority.ts`, `schema/index.ts`, a new migration, snapshot and journal
-- `packages/core/src/drafting/{citations,citation-ack,index,service,export}.ts`
-- `packages/core/src/jobs/definitions/drafting-citations-check.ts`, `jobs/registry.ts`
-- `packages/core/src/audit/events.ts`
-- `packages/config/src/env/providers.ts` (plus any generated env doc)
-- Registries: `packages/db/src/index.test.ts`, `__tests__/rls/sql.test.ts`, `testing/cross-tenant-registry.ts`, `packages/core/src/__tests__/cross-tenant/services.test.ts`, `apps/worker/src/__tests__/registry.test.ts`, `schedules.test.ts` if affected, `docs/engineering/core-domains.md` (only if imports change)
+packages/ui/src/patterns/citation-status/{citation-status.tsx,citation-status.stories.tsx,citation-status.test.tsx}; packages/ui/src/patterns/index.ts; packages/i18n/src/messages/{en,ta,kn}/drafting.json; packages/i18n/src/catalog.ts; packages/i18n/src/__tests__/catalog.test.ts; packages/i18n/translation-status.json; packages/i18n/src/generated/messages/{en,ta,kn}.json and messages.d.ts (regenerated).
 
 ### Sibling Sweep
-- Same hazard class (guardrail enforced by static grep): `packages/core/src/automation/no-l5.test.ts` is the precedent for a static "no AI call" test.
-- `packages/core/src/research/notes-service.ts` and the drafting `policy.ts` are the access-pattern precedents (`can`, matter visibility, `notFound`).
-- `packages/drafting/src/narrative.ts` is the only AI call in the drafting package. The `citations/` dir must never import it or `@causedeck/ai`.
-- Other places that print citation-like text (`packages/core/src/research/alerts.ts`, `automation/handlers/order-record.ts`) are not drafts and are unaffected.
+Each prior namespace (drafting-templates, research) followed the same checklist: file x3 locales, NAMESPACES, catalog.test top-level list, translation-status draft entries, regenerated outputs. CLAUDE.md requires `packages/i18n/src/__tests__/catalog.test.ts` update for a new namespace. No `'use server'` action, core export or table is added, so no cross-tenant registry changes.
 
 ### History
-- Drafting engine #767 (`d78af9e4`) and core domain #768 (merged, `ec1ced21` is HEAD) are the base. No prior citation-checker work in `packages/drafting`. `packages/core/src/citations` (#484) is the separate corpus verifier.
-- Stale `.forge-lean/*` files left in the worktree described #768. They have been replaced.
+`drafting-templates` namespace added with #76 (3917bf5f touched its ta file). No prior citation-status pattern.
 
 ### Recommendation
-Implement in three layers.
-1. Pure engine in `packages/drafting/src/citations/`. Extraction yields spans with block keys. A match function awards `verified` only on an exact normalised structured match plus title similarity at or above a configured threshold; everything ambiguous is `unknown`. Resolvers are mock (default) and Indian Kanoon, with a timeout, jittered retry and a rate limiter.
-2. A new `authority` tenant table (migration, RLS, registries) and core orchestration `checkDraft` plus `acknowledgeUnverified`, with audit events, in `packages/core/src/drafting`.
-3. The `drafting.citations.check` job, enqueued on version save and restore, and the export gate.
-UI is out of scope (#79). The real Indian Kanoon token and commercial-use confirmation are tracked in #114; the resolver ships mock-by-default.
+Implement against base `milestone/drafting-citations-research`: build the pattern (icons CheckCircle2 / CircleOff-or-SearchX / HelpCircle from lucide-react, per-status soft colour classes, `data-slot="citation-status"`, `data-status`, `label` prop defaulting to English, icon `aria-hidden`), then the three JSON files under a single `drafting` key, register, run `pnpm --filter @causedeck/i18n i18n:types`, then add ta/kn "draft" entries to translation-status.json (check `i18n:check --report` output).
 
 ### Related Issues
-#75 (parent, not_planned), #768 (dependency, merged), #44 (gateway and budget conventions), #78 (consistency checker), #79 (UI for statuses and acknowledgement dialog), #80 (research link-outs), #114 (Indian Kanoon token, human).
+Parent #79 (closed not_planned); siblings #824, #826, #827, #828, #829 consume these keys and the pattern.

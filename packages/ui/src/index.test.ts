@@ -166,6 +166,9 @@ describe('@causedeck/ui', () => {
       'MemoryCard',
       'MEMORY_SCOPES',
       'MEMORY_SCOPE_META',
+      'CitationStatus',
+      'CITATION_STATUS_MAP',
+      'CITATION_STATUS_ORDER',
     ]) {
       expect(ui, name).toHaveProperty(name);
       expect(patterns[name]).toBe((ui as Record<string, unknown>)[name]);

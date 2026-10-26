@@ -34,6 +34,14 @@ export {
   type LevelLegendLabels,
   type LevelLegendProps,
 } from './automation-level/level-legend';
+export {
+  CITATION_STATUS_MAP,
+  CITATION_STATUS_ORDER,
+  CitationStatus,
+  type CitationStatusKind,
+  type CitationStatusMeta,
+  type CitationStatusProps,
+} from './citation-status/citation-status';
 export { StageBadge, type StageBadgeProps } from './stage-badge/stage-badge';
 export { STAGE_MAP, STAGE_ORDER, type StageMeta } from './stage-badge/stage-map';
 export {

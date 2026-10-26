@@ -147,6 +147,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   review_correction: DB_TABLES_TEST,
   // A0 corrections (#558).
   correction: DB_TABLES_TEST,
+  // Stale-matter attention snoozes (#70).
+  attention_snooze: DB_TABLES_TEST,
 
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,

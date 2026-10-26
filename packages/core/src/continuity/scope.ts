@@ -46,7 +46,10 @@ export interface ContinuityScope {
 }
 
 /** The parsed input, or VALIDATION with the first issue's message. */
-export function parseInput<S extends z.ZodType>(schemaOf: S, input: unknown): z.output<S> {
+export function parseContinuityInput<S extends z.ZodType>(
+  schemaOf: S,
+  input: unknown,
+): z.output<S> {
   const parsed = schemaOf.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -92,7 +95,7 @@ export async function inContinuityScope<T>(
   });
 }
 
-export async function mayDo(
+export async function mayDoContinuity(
   scope: ContinuityScope,
   action: Parameters<typeof can>[1],
 ): Promise<boolean> {
@@ -100,12 +103,12 @@ export async function mayDo(
 }
 
 /** FORBIDDEN unless the actor's role may `action` (no resource). */
-export async function requireAction(
+export async function requireContinuityAction(
   scope: ContinuityScope,
   action: Parameters<typeof can>[1],
   message: string,
 ): Promise<void> {
-  if (!(await mayDo(scope, action))) throw forbidden(message);
+  if (!(await mayDoContinuity(scope, action))) throw forbidden(message);
 }
 
 /** The matter, or NOT_FOUND (RLS hides another workspace's). */
@@ -122,7 +125,7 @@ export async function loadMatter(scope: ContinuityScope, matterId: string) {
 }
 
 /** The provenance fields of a docket row, with the numeric confidence as a number. */
-export function provenanceOf(row: {
+export function continuityProvenanceOf(row: {
   sourceType: BriefLine['source_type'];
   sourceRef: string | null;
   anchorId: string | null;
@@ -157,25 +160,27 @@ export function documentLine(document: { id: string }, text: string): BriefLine 
 }
 
 /** Keep only lines that carry provenance: no provenance, no line. */
-export function withProvenance<L extends Parameters<typeof hasProvenance>[0]>(lines: L[]): L[] {
+export function withContinuityProvenance<L extends Parameters<typeof hasProvenance>[0]>(
+  lines: L[],
+): L[] {
   return lines.filter(hasProvenance);
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /** `2026-10-20` as `20 Oct`. */
-export function shortDate(date: string): string {
+export function continuityShortDate(date: string): string {
   const [, m, d] = date.split('-');
   return `${String(Number(d))} ${MONTHS[Number(m) - 1] ?? ''}`;
 }
 
 /** The India-time calendar day of `now`. */
-export function istDay(now: Date): string {
+export function continuityIstDay(now: Date): string {
   return new Date(now.getTime() + 330 * 60_000).toISOString().slice(0, 10);
 }
 
 /** One informational audit event: ids only, never note text. */
-export async function audit(
+export async function auditContinuity(
   scope: ContinuityScope,
   action: AuditAction,
   target: { kind: string; id: string },

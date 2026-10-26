@@ -27,17 +27,17 @@ import { and, asc, desc, eq, gte, inArray, isNull, or } from 'drizzle-orm';
 
 import { conflict, forbidden, invalid, notFound } from '../shared/errors.ts';
 import {
-  audit,
+  auditContinuity,
   documentLine,
   inContinuityScope,
-  istDay,
+  continuityIstDay,
   loadMatter,
-  mayDo,
-  parseInput,
-  provenanceOf,
-  requireAction,
-  shortDate,
-  withProvenance,
+  mayDoContinuity,
+  parseContinuityInput,
+  continuityProvenanceOf,
+  requireContinuityAction,
+  continuityShortDate,
+  withContinuityProvenance,
   type ContinuityActor,
   type ContinuityDeps,
   type ContinuityScope,
@@ -74,8 +74,14 @@ async function stagesOf(scope: ContinuityScope, proceedings: string[]) {
       .orderBy(desc(schema.listing.canonical), desc(schema.listing.listDate))
       .limit(1);
     if (row === undefined) continue;
-    const [line] = withProvenance<BriefLine>([
-      { text: row.stageRaw, label: null, page_no: null, quote: null, ...provenanceOf(row) },
+    const [line] = withContinuityProvenance<BriefLine>([
+      {
+        text: row.stageRaw,
+        label: null,
+        page_no: null,
+        quote: null,
+        ...continuityProvenanceOf(row),
+      },
     ]);
     if (line !== undefined) stages.push({ proceeding_id: proceedingId, line });
   }
@@ -127,13 +133,13 @@ async function lastOrdersOf(
         label: unconfirmed ? 'Unconfirmed' : null,
         page_no: anchor.pageNo,
         quote: anchor.quote,
-        ...provenanceOf({ ...order, anchorId: anchor.id }),
+        ...continuityProvenanceOf({ ...order, anchorId: anchor.id }),
       });
     }
     result.push({
       order_id: order.id,
       order_date: order.orderDate,
-      lines: withProvenance(lines),
+      lines: withContinuityProvenance(lines),
     });
   }
   return result;
@@ -151,17 +157,20 @@ async function obligationsOf(scope: ContinuityScope, matterId: string): Promise<
         eq(schema.obligation.status, 'open'),
       ),
     );
-  const today = istDay(scope.now);
+  const today = continuityIstDay(scope.now);
   const open: ObligationLine[] = rows.map((o) => ({
     obligation_id: o.id,
-    text: o.dueDate === null ? o.description : `${o.description}; due ${shortDate(o.dueDate)}`,
+    text:
+      o.dueDate === null
+        ? o.description
+        : `${o.description}; due ${continuityShortDate(o.dueDate)}`,
     owner_member_id: o.ownerMemberId,
     due_date: o.dueDate,
     status: 'open',
     overdue: o.dueDate !== null && o.dueDate < today,
-    ...provenanceOf(o),
+    ...continuityProvenanceOf(o),
   }));
-  return withProvenance(open).sort(
+  return withContinuityProvenance(open).sort(
     (a, b) =>
       Number(b.overdue) - Number(a.overdue) ||
       (a.due_date ?? '9999-12-31').localeCompare(b.due_date ?? '9999-12-31') ||
@@ -181,20 +190,20 @@ async function upcomingOf(
       and(
         eq(schema.listing.workspaceId, scope.actor.workspaceId),
         inArray(schema.listing.proceedingId, proceedings),
-        gte(schema.listing.listDate, istDay(scope.now)),
+        gte(schema.listing.listDate, continuityIstDay(scope.now)),
       ),
     )
     .orderBy(asc(schema.listing.listDate))
     .limit(MAX_UPCOMING);
   const items: HandoverListing[] = [];
   for (const row of rows) {
-    const [line] = withProvenance<BriefLine>([
+    const [line] = withContinuityProvenance<BriefLine>([
       {
-        text: `Listed ${shortDate(row.listDate)}: ${row.stageRaw}`,
+        text: `Listed ${continuityShortDate(row.listDate)}: ${row.stageRaw}`,
         label: null,
         page_no: null,
         quote: null,
-        ...provenanceOf(row),
+        ...continuityProvenanceOf(row),
       },
     ]);
     if (line !== undefined) items.push({ listing_id: row.id, list_date: row.listDate, line });
@@ -262,14 +271,14 @@ async function derive(
   const proceedings = await proceedingIds(scope, matter.id);
   const memory = scope.deps.memory;
   const synopsis =
-    memory !== undefined && (await mayDo(scope, 'memory.read'))
+    memory !== undefined && (await mayDoContinuity(scope, 'memory.read'))
       ? await memory.synopsis({
           workspaceId: scope.actor.workspaceId,
           matterId,
           userId: scope.actor.userId,
         })
       : null;
-  const [synopsisLine] = synopsis === null ? [] : withProvenance([toLine(synopsis.line)]);
+  const [synopsisLine] = synopsis === null ? [] : withContinuityProvenance([toLine(synopsis.line)]);
   const open_questions = questions ?? (await carriedQuestions(scope, matterId));
   return {
     matter_id: matterId,
@@ -305,11 +314,11 @@ export async function generateHandover(
   actor: ContinuityActor,
   matterId: string,
 ): Promise<HandoverBody> {
-  const input = parseInput(GenerateHandoverInput, { matterId });
+  const input = parseContinuityInput(GenerateHandoverInput, { matterId });
   return inContinuityScope(deps, actor, async (scope) => {
-    await requireAction(scope, 'matter.read', 'You cannot read this matter');
+    await requireContinuityAction(scope, 'matter.read', 'You cannot read this matter');
     const body = await derive(scope, input.matterId, null);
-    await audit(scope, 'handover.generated', { kind: 'matter', id: input.matterId });
+    await auditContinuity(scope, 'handover.generated', { kind: 'matter', id: input.matterId });
     return body;
   });
 }
@@ -319,7 +328,7 @@ type Row = typeof schema.handoverNote.$inferSelect;
 /** A stored note as the reader may see it: the synopsis (matter memory) only for `memory.read`. */
 async function present(scope: ContinuityScope, row: Row): Promise<HandoverNote> {
   const content = HandoverContent.parse(row.body);
-  const derived = (await mayDo(scope, 'memory.read'))
+  const derived = (await mayDoContinuity(scope, 'memory.read'))
     ? content.derived
     : { ...content.derived, synopsis: null };
   return HandoverNote.parse({
@@ -390,7 +399,7 @@ async function insertVersion(
     throw conflict('Another handover was saved at the same time; try again');
   }
   if (row === undefined) throw conflict('The handover was not saved');
-  await audit(scope, 'handover.saved', { kind: 'handover_note', id: row.id });
+  await auditContinuity(scope, 'handover.saved', { kind: 'handover_note', id: row.id });
   return present(scope, row);
 }
 
@@ -403,10 +412,10 @@ export async function saveHandover(
   actor: ContinuityActor,
   input: unknown,
 ): Promise<HandoverNote> {
-  const parsed = parseInput(SaveHandoverInput, input);
+  const parsed = parseContinuityInput(SaveHandoverInput, input);
   return inContinuityScope(deps, actor, async (scope) => {
-    await requireAction(scope, 'matter.read', 'You cannot read this matter');
-    await requireAction(scope, 'task.write', 'You cannot write a handover');
+    await requireContinuityAction(scope, 'matter.read', 'You cannot read this matter');
+    await requireContinuityAction(scope, 'task.write', 'You cannot write a handover');
     await loadMatter(scope, parsed.matterId);
     return insertVersion(scope, {
       matterId: parsed.matterId,
@@ -423,9 +432,9 @@ export async function listHandovers(
   actor: ContinuityActor,
   input: unknown,
 ): Promise<HandoverNote[]> {
-  const { matterId } = parseInput(ListHandoversInput, input);
+  const { matterId } = parseContinuityInput(ListHandoversInput, input);
   return inContinuityScope(deps, actor, async (scope) => {
-    await requireAction(scope, 'matter.read', 'You cannot read this matter');
+    await requireContinuityAction(scope, 'matter.read', 'You cannot read this matter');
     await loadMatter(scope, matterId);
     const rows = await scope.tx
       .select()
@@ -441,7 +450,7 @@ export async function listHandovers(
         ),
       )
       .orderBy(desc(schema.handoverNote.version));
-    await audit(scope, 'handover.read', { kind: 'matter', id: matterId });
+    await auditContinuity(scope, 'handover.read', { kind: 'matter', id: matterId });
     return Promise.all(rows.map((row) => present(scope, row)));
   });
 }
@@ -452,9 +461,9 @@ export async function acknowledgeHandover(
   actor: ContinuityActor,
   input: unknown,
 ): Promise<HandoverNote> {
-  const { handoverId } = parseInput(AcknowledgeHandoverInput, input);
+  const { handoverId } = parseContinuityInput(AcknowledgeHandoverInput, input);
   return inContinuityScope(deps, actor, async (scope) => {
-    await requireAction(scope, 'matter.read', 'You cannot read this matter');
+    await requireContinuityAction(scope, 'matter.read', 'You cannot read this matter');
     const [row] = await scope.tx
       .select()
       .from(schema.handoverNote)
@@ -479,7 +488,10 @@ export async function acknowledgeHandover(
         ),
       )
       .returning();
-    await audit(scope, 'handover.acknowledged', { kind: 'handover_note', id: handoverId });
+    await auditContinuity(scope, 'handover.acknowledged', {
+      kind: 'handover_note',
+      id: handoverId,
+    });
     return present(scope, updated ?? row);
   });
 }
@@ -493,9 +505,9 @@ export async function generateHandoversForMember(
   actor: ContinuityActor,
   input: unknown,
 ): Promise<HandoverNote[]> {
-  const { fromMemberId, toMemberId } = parseInput(HandoverBulkInput, input);
+  const { fromMemberId, toMemberId } = parseContinuityInput(HandoverBulkInput, input);
   return inContinuityScope(deps, actor, async (scope) => {
-    await requireAction(scope, 'matter.write', 'You cannot hand over matters');
+    await requireContinuityAction(scope, 'matter.write', 'You cannot hand over matters');
     const matters = await scope.tx
       .select({ id: schema.matter.id })
       .from(schema.matter)

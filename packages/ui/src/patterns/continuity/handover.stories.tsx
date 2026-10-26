@@ -43,6 +43,13 @@ const SECTIONS: HandoverSectionView[] = [
   { id: 'questions', title: 'Open questions', items: [], emptyLabel: 'None recorded' },
 ];
 
+const OPEN_QUESTIONS: HandoverSectionView = SECTIONS.find((s) => s.id === 'open_questions') ?? {
+  id: 'open_questions',
+  title: '',
+  emptyLabel: '',
+  items: [],
+};
+
 const meta = {
   title: 'Patterns/Continuity',
   component: HandoverView,
@@ -117,14 +124,26 @@ export const LongText: Story = {
 export const Tamil: Story = {
   args: {
     title: 'ஒப்படைப்பு குறிப்பு',
-    sections: [{ ...SECTIONS[3]!, title: 'திறந்த கேள்விகள்', emptyLabel: 'பதிவு இல்லை' }],
+    sections: [
+      {
+        ...OPEN_QUESTIONS,
+        title: 'திறந்த கேள்விகள்',
+        emptyLabel: 'பதிவு இல்லை',
+      },
+    ],
   },
 };
 
 export const Kannada: Story = {
   args: {
     title: 'ಹಸ್ತಾಂತರ ಟಿಪ್ಪಣಿ',
-    sections: [{ ...SECTIONS[3]!, title: 'ಬಾಕಿ ಪ್ರಶ್ನೆಗಳು', emptyLabel: 'ಯಾವುದೂ ದಾಖಲಾಗಿಲ್ಲ' }],
+    sections: [
+      {
+        ...OPEN_QUESTIONS,
+        title: 'ಬಾಕಿ ಪ್ರಶ್ನೆಗಳು',
+        emptyLabel: 'ಯಾವುದೂ ದಾಖಲಾಗಿಲ್ಲ',
+      },
+    ],
   },
 };
 
@@ -134,7 +153,7 @@ export const Empty: Story = {
   render: () => <EmptyState title="No handover yet" />,
 };
 
-export const ErrorStory: Story = {
+export const HandoverErrorStory: Story = {
   name: 'Error',
   render: () => <ErrorState title="Could not load the handover." onRetry={fn()} />,
 };

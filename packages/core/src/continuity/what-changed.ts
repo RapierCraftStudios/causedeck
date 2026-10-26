@@ -18,15 +18,15 @@ import {
 import { and, eq, gt, inArray } from 'drizzle-orm';
 
 import {
-  audit,
+  auditContinuity,
   documentLine,
   inContinuityScope,
   loadMatter,
-  parseInput,
-  provenanceOf,
-  requireAction,
-  shortDate,
-  withProvenance,
+  parseContinuityInput,
+  continuityProvenanceOf,
+  requireContinuityAction,
+  continuityShortDate,
+  withContinuityProvenance,
   type ContinuityActor,
   type ContinuityDeps,
   type ContinuityScope,
@@ -40,7 +40,7 @@ export async function recordView(
   actor: ContinuityActor,
   input: unknown,
 ): Promise<ViewMarker> {
-  const { matterId } = parseInput(RecordViewInput, input);
+  const { matterId } = parseContinuityInput(RecordViewInput, input);
   return inContinuityScope(deps, actor, (scope) => writeView(scope, matterId));
 }
 
@@ -60,7 +60,7 @@ async function readView(scope: ContinuityScope, matterId: string): Promise<Date 
 }
 
 async function writeView(scope: ContinuityScope, matterId: string) {
-  await requireAction(scope, 'matter.read', 'You cannot read this matter');
+  await requireContinuityAction(scope, 'matter.read', 'You cannot read this matter');
   await loadMatter(scope, matterId);
   const previous = await readView(scope, matterId);
   const fresh =
@@ -86,7 +86,7 @@ async function writeView(scope: ContinuityScope, matterId: string) {
   return ViewMarker.parse({
     matter_id: matterId,
     previous_viewed_at: previous?.toISOString() ?? null,
-    viewed_at: (fresh && previous !== null ? previous : scope.now).toISOString(),
+    viewed_at: (fresh ? previous : scope.now).toISOString(),
     recorded: !fresh,
   });
 }
@@ -111,12 +111,12 @@ async function collect(scope: ContinuityScope, matterId: string, since: Date): P
   const add = (kind: ChangeKind, at: Date, line: BriefLine, by: string | null = null) => {
     out.push({ kind, at, actor: by, line });
   };
-  const plain = (text: string, row: Parameters<typeof provenanceOf>[0]): BriefLine => ({
+  const plain = (text: string, row: Parameters<typeof continuityProvenanceOf>[0]): BriefLine => ({
     text,
     label: row.confirmationState === 'proposed' ? 'Unconfirmed' : null,
     page_no: null,
     quote: null,
-    ...provenanceOf(row),
+    ...continuityProvenanceOf(row),
   });
 
   if (proceedings.length > 0) {
@@ -131,12 +131,12 @@ async function collect(scope: ContinuityScope, matterId: string, since: Date): P
         ),
       );
     for (const o of orders) {
-      add('order', o.createdAt, plain(`New order of ${shortDate(o.orderDate)}`, o));
+      add('order', o.createdAt, plain(`New order of ${continuityShortDate(o.orderDate)}`, o));
       if (o.nextDate !== null) {
         add(
           'next_date',
           o.createdAt,
-          plain(`Next date ${shortDate(o.nextDate)} set by the order`, o),
+          plain(`Next date ${continuityShortDate(o.nextDate)} set by the order`, o),
         );
       }
     }
@@ -151,7 +151,11 @@ async function collect(scope: ContinuityScope, matterId: string, since: Date): P
         ),
       );
     for (const l of listings) {
-      add('listing', l.createdAt, plain(`Listed ${shortDate(l.listDate)}: ${l.stageRaw}`, l));
+      add(
+        'listing',
+        l.createdAt,
+        plain(`Listed ${continuityShortDate(l.listDate)}: ${l.stageRaw}`, l),
+      );
     }
     const hearings = await tx
       .select({ hearing: schema.hearing })
@@ -176,14 +180,14 @@ async function collect(scope: ContinuityScope, matterId: string, since: Date): P
           'hearing',
           h.createdAt,
           plain(
-            `Hearing on ${shortDate(h.heldOn)}${h.outcome === null ? '' : `: ${h.outcome}`}`,
+            `Hearing on ${continuityShortDate(h.heldOn)}${h.outcome === null ? '' : `: ${h.outcome}`}`,
             h,
           ),
         );
       }
       const next = h.nextDateConfirmed ?? h.nextDateProposed;
       if (next !== null) {
-        const line = plain(`Next date ${shortDate(next)}`, h);
+        const line = plain(`Next date ${continuityShortDate(next)}`, h);
         add(
           'next_date',
           h.updatedAt,
@@ -254,10 +258,10 @@ async function collect(scope: ContinuityScope, matterId: string, since: Date): P
 
 /** The summary of the matter's changes since `since`, in chronological day groups. */
 async function summarise(scope: ContinuityScope, matterId: string, since: Date) {
-  await requireAction(scope, 'matter.read', 'You cannot read this matter');
+  await requireContinuityAction(scope, 'matter.read', 'You cannot read this matter');
   await loadMatter(scope, matterId);
   const raw = (await collect(scope, matterId, since))
-    .filter((r) => withProvenance([r.line]).length === 1)
+    .filter((r) => withContinuityProvenance([r.line]).length === 1)
     .sort((a, b) => a.at.getTime() - b.at.getTime());
   const groups: { day: string; items: ChangeItem[] }[] = [];
   for (const r of raw) {
@@ -272,7 +276,7 @@ async function summarise(scope: ContinuityScope, matterId: string, since: Date) 
     if (last?.day === day) last.items.push(item);
     else groups.push({ day, items: [item] });
   }
-  await audit(scope, 'continuity.changes_read', { kind: 'matter', id: matterId });
+  await auditContinuity(scope, 'continuity.changes_read', { kind: 'matter', id: matterId });
   return ChangeSummary.parse({
     matter_id: matterId,
     since: since.toISOString(),
@@ -289,7 +293,7 @@ export async function whatChangedSince(
   matterId: string,
   since: Date,
 ): Promise<ChangeSummary> {
-  const input = parseInput(WhatChangedInput, { matterId, since });
+  const input = parseContinuityInput(WhatChangedInput, { matterId, since });
   return inContinuityScope(deps, actor, (scope) => summarise(scope, input.matterId, input.since));
 }
 
@@ -302,9 +306,9 @@ export async function changesForViewer(
   actor: ContinuityActor,
   input: unknown,
 ): Promise<{ summary: ChangeSummary | null; marker: ViewMarker }> {
-  const { matterId } = parseInput(RecordViewInput, input);
+  const { matterId } = parseContinuityInput(RecordViewInput, input);
   return inContinuityScope(deps, actor, async (scope) => {
-    await requireAction(scope, 'matter.read', 'You cannot read this matter');
+    await requireContinuityAction(scope, 'matter.read', 'You cannot read this matter');
     await loadMatter(scope, matterId);
     const previous = await readView(scope, matterId);
     const summary = previous === null ? null : await summarise(scope, matterId, previous);

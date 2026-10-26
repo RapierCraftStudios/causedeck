@@ -13,7 +13,7 @@ export interface EnquiryActions {
 export type EnquiryErrorKey = 'forbidden' | 'invalid' | 'conflict' | 'failed';
 
 /** The translation key for a failed action; the server's message never reaches the screen. */
-export function errorKeyFor(code: string): EnquiryErrorKey {
+export function enquiryErrorKey(code: string): EnquiryErrorKey {
   if (code === 'FORBIDDEN' || code === 'NOT_FOUND') return 'forbidden';
   if (code === 'VALIDATION') return 'invalid';
   if (code === 'CONFLICT') return 'conflict';

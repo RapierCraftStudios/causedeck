@@ -21,7 +21,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import { errorKeyFor, type EnquiryActions } from './enquiry-actions.ts';
+import { enquiryErrorKey, type EnquiryActions } from './enquiry-actions.ts';
 
 export interface EnquiryFormProps {
   workspaceId: string;
@@ -87,7 +87,7 @@ export function EnquiryForm({
         router.refresh();
         return;
       }
-      setError(t(`form.error.${errorKeyFor(result.error.code)}`));
+      setError(t(`form.error.${enquiryErrorKey(result.error.code)}`));
     } catch {
       setError(t('form.error.failed'));
     } finally {

@@ -25,7 +25,7 @@ import {
 } from '../../../../../../../components/matters/matters-offline-banner.tsx';
 
 import { ConflictPanel, type ConflictDecision } from './conflict-panel.tsx';
-import { errorKeyFor, type EnquiryActions } from './enquiry-actions.ts';
+import { enquiryErrorKey, type EnquiryActions } from './enquiry-actions.ts';
 import { EnquiryForm } from './enquiry-form.tsx';
 import { OutcomeDialog } from './outcome-dialog.tsx';
 
@@ -67,7 +67,7 @@ export function EnquiryList({
         setResults((prev) => ({ ...prev, [id]: result.data }));
         router.refresh();
       } else {
-        setError(t(`form.error.${errorKeyFor(result.error.code)}`));
+        setError(t(`form.error.${enquiryErrorKey(result.error.code)}`));
       }
     } catch {
       setError(t('form.error.failed'));
@@ -97,7 +97,7 @@ export function EnquiryList({
         setActive(null);
         router.refresh();
       } else {
-        setError(t(`form.error.${errorKeyFor(result.error.code)}`));
+        setError(t(`form.error.${enquiryErrorKey(result.error.code)}`));
       }
     } catch {
       setError(t('form.error.failed'));

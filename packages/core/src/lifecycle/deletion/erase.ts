@@ -142,6 +142,7 @@ export const PURGE_ORDER = [
   'matter_restriction',
   // Drafts (#766): the draft first (its versions are immutable and go with it by cascade), then
   // the workspace's own templates (the system catalogue, null workspace_id, is never matched).
+  'draft_export',
   'draft',
   'draft_version',
   'template',

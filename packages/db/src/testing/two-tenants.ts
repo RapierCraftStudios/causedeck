@@ -22,7 +22,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
-import { draft, draftVersion, template } from '../schema/drafting.ts';
+import { draft, draftExport, draftVersion, template } from '../schema/drafting.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
 import { reviewCorrection, reviewItem } from '../schema/review.ts';
 import { extraction } from '../schema/extraction.ts';
@@ -733,6 +733,29 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: draftVersion.id });
     return { draftId, id: first(rows, 'draft_version').id };
+  },
+  draft_export: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const contentSha256 = createHash('sha256').update(draftId).digest('hex');
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({ workspaceId, draftId, versionNo: 1, content: [], contentSha256 })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(draftExport)
+      .values({
+        workspaceId,
+        draftVersionId: version.id,
+        format: 'docx',
+        storageKey: `ws/${workspaceId}/export/2026/${draftId}`,
+        sizeBytes: 1,
+        contentSha256,
+      })
+      .returning({ id: draftExport.id });
+    return { draftId, draftVersionId: version.id, id: first(rows, 'draft_export').id };
   },
   forum: async (tx, { workspaceId, tag }) => ({ forumId: await seedForum(tx, workspaceId, tag) }),
   court_hall: async (tx, { workspaceId, tag }) => {

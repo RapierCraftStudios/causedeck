@@ -80,6 +80,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   template: DB_TABLES_TEST,
   draft: DB_TABLES_TEST,
   draft_version: DB_TABLES_TEST,
+  // Drafting exports (#768): one stored file per draft version and format.
+  draft_export: DB_TABLES_TEST,
   // Matter and documents (#345).
   matter: DB_TABLES_TEST,
   document: DB_TABLES_TEST,
@@ -852,6 +854,15 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmTag: denies,
   dismissTag: denies,
   listRelevantJudgments: denies,
+  // drafts (#768): B on A's draft, version or export is denied; A's rows are unchanged.
+  createDraft: denies,
+  renderDraft: denies,
+  saveVersion: denies,
+  listVersions: denies,
+  restoreVersion: denies,
+  exportDraft: denies,
+  runDraftingExport: denies,
+  createDraftExportDownload: denies,
   // research notes, facts and provider templates (#80)
   listNotes: denies,
   createNote: denies,

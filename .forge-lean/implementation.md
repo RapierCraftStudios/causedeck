@@ -1,39 +1,29 @@
 ### Approach
-Pure engine in `packages/drafting`: block-tree helpers, slot resolvers over a supplied `Facts` object, preset data, DOCX and PDF renderers, and a narrative function that talks to an injected port. The `draft_narrative` task, `karnataka_hc` and `hearing.bench` were added additively.
-
+Recovery pass for the red `build` check. Admin's Turbopack build failed on the templated `require.resolve` of the PDF fonts in `packages/drafting/src/render/pdf.ts`. The resolver is now a bound function, so the bundler no longer traces it. Everything else from earlier runs was verified against the contract.
 ### Changes
-- packages/drafting/src/blocks.ts, slots.ts: walk/validate/collect; `resolveSlot` returns `{value, provenance}`, unresolved gives `[[missing: <resolver>]]`, `exportBlockers`.
-- packages/drafting/src/presets/*: Madras (20 MB cap) and Karnataka presets, `getPreset`.
-- packages/drafting/src/render/docx.ts, pdf.ts, common.ts: DOCX with `AI-assisted` custom property; PDF with embedded Noto fonts and `PdfTooLargeError`.
-- packages/drafting/src/narrative.ts: `draftNarrative` (port, schema-validated, maxChars, indiaOnly default true).
-- packages/drafting/src/index.ts, vitest.config.ts (coverage lines 90), tsconfig.json (allowImportingTsExtensions, needed to typecheck the ai sources).
-- packages/drafting/src/__tests__/engine.test.ts (+ snapshot): tests.
-- packages/ai: `draft_narrative` task, TASK_IDS, registry, BEDROCK_TASKS, task test.
-- packages/validators: `karnataka_hc`, `hearing.bench`; test.
-- package.json, pnpm-lock.yaml: dependencies.
-
+- packages/drafting/src/render/pdf.ts: font path resolved through a bound `createRequire().resolve`.
+- Earlier commits (verified): core drafting service/policy/export/index, `drafting.export` job and registry, `draft_export` table with migration, `draft.read`/`draft.export` policy and matrix, audit action, core-domains config and docs, cross-tenant and worker registry tests, integration test.
 ### Acceptance Criteria Status
-- R1 ✅ packages/drafting/src/slots.ts:50, blocks.ts
-- R2 ✅ packages/drafting/src/presets/madras-hc.ts:10
-- R3 ✅ packages/drafting/src/render/docx.ts
-- R4 ✅ packages/drafting/src/render/pdf.ts
-- R5 ✅ packages/drafting/src/narrative.ts, packages/ai/src/tasks/draft-narrative.ts
-- R6 ✅ engine.test.ts "static API"
-- R7 ✅ packages/drafting/package.json
-- R8 ✅ coverage 100% on slots/presets; styles.xml snapshot; no `any` test
-
+- R1 ✅ packages/core/src/drafting/service.ts
+- R2 ✅ packages/core/src/drafting/policy.ts
+- R3 ✅ packages/core/src/jobs/definitions/drafting-export.ts
+- R4 ✅ packages/core/src/drafting/export.ts
+- R5 ✅ packages/core/src/drafting/export.ts
+- R6 ✅ packages/core/package.json
+- R7 ✅ packages/config/eslint/core-domains.js, docs/engineering/core-domains.md
+- R8 ✅ packages/db/src/testing/cross-tenant-registry.ts, packages/core/src/__tests__/cross-tenant/services.test.ts
+- R9 ✅ packages/core/src/drafting/__tests__/drafting.integration.test.ts
+- R10 ✅ service.ts and export.ts never log draft text
 ### Verification
-- V1 drafting vitest: pass (15 tests; new tests fail without the fix, the modules do not exist).
-- V2 ai tasks/policy/providers: pass.
-- V3 validators drafting.test.ts: pass.
-- V4 checks.mjs: pass. Also ran tsc --noEmit and eslint on packages/drafting: clean.
-
+- V1 checks.mjs: exit 0.
+- V2 core vitest: pass (services file run alone, 218 tests).
+- V3 db vitest: exit 0.
+- V4 auth vitest: exit 0.
+- V5 worker vitest: exit 0.
+- V6 schema conventions and migration lint: exit 0.
+- Drafting package vitest: 15 pass. The Next build is CI-only, so the build fix has no local test and fails_without_fix is unknown.
 ### Notes
-- PDFs use Noto Sans Latin/Tamil/Kannada (Times New Roman cannot be embedded); DOCX names Times New Roman.
-- `indiaOnly` is passed in the run context; the gateway's own residency policy remains authoritative.
+No behaviour change from the pdf.ts edit. The Security check fails on historical gitleaks findings in unrelated test files, not on this branch's changes.
 
-## Stale-list follow-up
-No edits to pricing.test.ts / providers.test.ts: neither enumerates the task registry (recorded in result.json not_members).
-
-## Duplicate export fix
-Preset data constants are now `madrasHcPreset` / `karnatakaHcPreset` in their own modules; `presets/index.ts` re-exports them under the public names `madrasHc` / `karnatakaHc`, so no two modules export the same name.
+## Stale-list fix
+The 20 flagged (symbol, test) pairs are not members: none of the 10 tests names the sibling exports (DRAFT_STATUSES, draft, draftVersion); the flagged lines are unrelated mock state or fixtures. Recorded in result.json `not_members`.

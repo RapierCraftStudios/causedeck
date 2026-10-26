@@ -111,7 +111,46 @@ export const draftVersion = tenantTable(
       foreignColumns: [draft.workspaceId, draft.id],
     }).onDelete('cascade'),
     unique('draft_version_draft_no_uq').on(t.draftId, t.versionNo),
+    unique('draft_version_workspace_id_id_uq').on(t.workspaceId, t.id),
     check('draft_version_no_chk', sql`version_no >= 1`),
     check('draft_version_sha256_chk', sql`content_sha256 ~ '^[0-9a-f]{64}$'`),
+  ],
+);
+
+export const DRAFT_EXPORT_FORMATS = ['docx', 'pdf'] as const;
+export type DraftExportFormat = (typeof DRAFT_EXPORT_FORMATS)[number];
+
+/**
+ * One stored export of a draft version (#768). `draft_version` is immutable, so the export record
+ * lives here: unique per `(draft_version_id, format)`, which makes the `drafting.export` job
+ * idempotent. `storage_key` is an encrypted object under the workspace's `ws/<id>/export/` prefix.
+ */
+export const draftExport = tenantTable(
+  'draft_export',
+  {
+    id: id(),
+    draftVersionId: uuid('draft_version_id').notNull(),
+    format: text('format').notNull(),
+    storageKey: text('storage_key').notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    /** sha256 hex of the version content this file was rendered from (also in the audit event). */
+    contentSha256: text('content_sha256').notNull(),
+    exportedAt: timestamp('exported_at', { withTimezone: true }).notNull().defaultNow(),
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
+  },
+  (t) => [
+    foreignKey({
+      name: 'draft_export_workspace_id_fk',
+      columns: [t.workspaceId],
+      foreignColumns: [organization.id],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'draft_export_version_fk',
+      columns: [t.workspaceId, t.draftVersionId],
+      foreignColumns: [draftVersion.workspaceId, draftVersion.id],
+    }).onDelete('cascade'),
+    unique('draft_export_version_format_uq').on(t.draftVersionId, t.format),
+    check('draft_export_format_chk', sql`format in ${inList(DRAFT_EXPORT_FORMATS)}`),
+    check('draft_export_size_chk', sql`size_bytes >= 0`),
   ],
 );

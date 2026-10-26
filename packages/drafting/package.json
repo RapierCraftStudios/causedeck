@@ -15,6 +15,8 @@
   "dependencies": {
     "@causedeck/ai": "workspace:*",
     "@causedeck/validators": "workspace:*",
+    "@fontsource/noto-sans-kannada": "catalog:",
+    "@fontsource/noto-sans-tamil": "catalog:",
     "@pdf-lib/fontkit": "catalog:",
     "docx": "catalog:",
     "pdf-lib": "catalog:",
@@ -22,8 +24,6 @@
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
-    "@fontsource/noto-sans-kannada": "catalog:",
-    "@fontsource/noto-sans-tamil": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "fflate": "catalog:",

@@ -1,13 +1,18 @@
 
- RUN  v3.2.7 /work/repo/.claude/worktrees/lean-678/packages/db
+ RUN  v3.2.7 /work/repo/.claude/worktrees/lean-768/packages/core
 
- ✓ |@causedeck/db| src/index.test.ts (4 tests) 83ms
- ✓ |@causedeck/db| src/__tests__/cross-tenant/registry.test.ts (4 tests) 303ms
- ✓ |@causedeck/db| src/__tests__/rls/sql.test.ts (14 tests) 48409ms
-   ✓ row-level security catalog > every table with workspace_id (outside GLOBAL_TABLES) has ENABLE, FORCE and ws_isolation  516ms
-   ✓ row-level security catalog > flags a tenant table that lacks ENABLE, FORCE or the policy  469ms
-   ✓ row-level security catalog > flags a foreign key to a tenant table that does not pair workspace_id  5931ms
-   ✓ global-or-workspace reference tables (#344) > flags missing catalogue policies and a FK into the table without a scope guard  390ms
-   ✓ db:check-rls CLI > passes the migrated database and fails on a fixture table lacking RLS  40771ms
+ ✓ |@causedeck/core| src/drafting/__tests__/drafting.integration.test.ts (6 tests) 75120ms
+   ✓ drafting service and export > saves immutable hashed versions and restores as a new version  11488ms
+   ✓ drafting service and export > denies a clerk and another workspace  19815ms
+   ✓ drafting service and export > exports once, encrypted, with audit, a presigned download and no draft text in logs  15292ms
+   ✓ drafting service and export > denies a clerk on export and on download  9515ms
+   ✓ drafting service and export > writes an ai_call row for a refused non-India narrative call  9801ms
+   ✓ drafting service and export > blocks an export with an unresolved slot  9202ms
+ ✓ |@causedeck/core| src/__tests__/cross-tenant/registry.test.ts (6 tests) 10807ms
+   ✓ cross-tenant registry: core services > registers every runtime export of @causedeck/core  10475ms
+   ✓ cross-tenant registry: core services > registers every runtime export of @causedeck/core/runtime (#298)  325ms
+ ✓ |@causedeck/core| src/jobs/registry.test.ts (10 tests) 20ms
+ ✓ |@causedeck/core| src/domains.test.ts (5 tests) 289ms
+ ✓ |@causedeck/core| src/drafting/__tests__/policy.test.ts (6 tests) 15ms
 
 (timed out after 300s)

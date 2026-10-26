@@ -479,6 +479,75 @@ async function addAWatch(f: Fixture) {
   );
 }
 
+/** Drafts (#768): `ub` names A's draft, version and export ids, as B's member and as A's. */
+function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
+  const ids = (f: Fixture) => ({
+    draftId: f.a.rows.draft_export?.draftId ?? '',
+    versionId: f.a.rows.draft_export?.draftVersionId ?? '',
+    exportId: f.a.rows.draft_export?.id ?? '',
+  });
+  const inA = (f: Fixture) => ({ workspaceId: f.a.id, userId: f.ub });
+  const aState = async (f: Fixture) =>
+    inWorkspace(f.tx, f.a.id, async (s) => ({
+      drafts: await s.select().from(schema.draft),
+      versions: await s.select().from(schema.draftVersion),
+      exports: await s.select().from(schema.draftExport),
+    }));
+  const unchanged = (run: (f: Fixture) => Promise<void>) => async (f: Fixture) => {
+    const before = await aState(f);
+    await run(f);
+    expect(await aState(f)).toEqual(before);
+  };
+  const denied = (call: (f: Fixture, s: Transaction) => Promise<unknown>) =>
+    unchanged(async (f) => {
+      await expectDenied(f.asB((s) => call(f, s)));
+    });
+  return {
+    createDraft: denied((f, s) =>
+      core.createDraft({ db: s }, inA(f), {
+        templateId: f.a.rows.draft?.templateId ?? '',
+        title: 'B on A',
+      }),
+    ),
+    renderDraft: denied((f, s) => core.renderDraft({ db: s }, inA(f), { draftId: ids(f).draftId })),
+    saveVersion: denied((f, s) =>
+      core.saveVersion({ db: s }, inA(f), { draftId: ids(f).draftId, content: [] }),
+    ),
+    listVersions: denied((f, s) =>
+      core.listVersions({ db: s }, inA(f), { draftId: ids(f).draftId }),
+    ),
+    restoreVersion: denied((f, s) =>
+      core.restoreVersion({ db: s }, inA(f), { draftId: ids(f).draftId, versionNo: 1 }),
+    ),
+    exportDraft: denied((f, s) => {
+      const enqueue = vi.fn(() => Promise.resolve(undefined));
+      return core.exportDraft({ db: s, enqueue }, inA(f), {
+        draftId: ids(f).draftId,
+        format: 'pdf',
+      });
+    }),
+    // The job body names A's workspace from B's scope: it fails (tenancy or NOT_FOUND) and stores nothing.
+    runDraftingExport: unchanged(async (f) => {
+      const keys = {} as never;
+      await expect(
+        f.asB((s) =>
+          core.runDraftingExport(
+            { db: s, store: createMemoryObjectStore(), keys, log: logger },
+            { workspaceId: f.a.id, draftVersionId: ids(f).versionId, format: 'pdf', userId: f.ub },
+          ),
+        ),
+      ).rejects.toBeDefined();
+    }),
+    createDraftExportDownload: denied((f, s) =>
+      core.createDraftExportDownload(
+        { db: s, store: createMemoryObjectStore() },
+        inA(f),
+        ids(f).exportId,
+      ),
+    ),
+  };
+}
+
 const CASES: Record<string, Case> = {
   addCauseListWatch: async (f) => {
     // ub's watch lands in B; A has no watch from it.
@@ -3502,6 +3571,8 @@ const CASES: Record<string, Case> = {
     const alerts = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.judgmentAlert));
     expect(alerts.every((a) => a.notifiedAt === null)).toBe(true);
   },
+  // drafts (#768): B on A's draft, version or export is denied; A's drafts and exports are unchanged.
+  ...draftingCases(),
 };
 
 const registered = Object.entries(SERVICE_TESTS)

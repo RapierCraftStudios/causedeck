@@ -1,6 +1,6 @@
 'use client';
 
-import { OfflineBanner } from '@causedeck/ui/patterns';
+import { OfflineBanner } from '@causedeck/ui/patterns/states';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 

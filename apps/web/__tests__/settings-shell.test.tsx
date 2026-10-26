@@ -176,6 +176,7 @@ describe('settings nav manifest', () => {
       'support',
       'court-watch',
       'research',
+      'sso',
     ]);
   });
 
@@ -244,6 +245,7 @@ describe('settings shell', () => {
       en.nav.support,
       en.nav['court-watch'],
       en.nav.research,
+      en.nav.sso,
     ]);
     expect(links[0]?.getAttribute('href')).toBe('/w/demo/settings/profile');
     expect(links[0]?.getAttribute('aria-current')).toBe('page');

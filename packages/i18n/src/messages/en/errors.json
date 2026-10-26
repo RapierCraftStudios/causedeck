@@ -6,9 +6,5 @@
   },
   "notFound": {
     "title": "Page not found"
-  },
-  "offline": {
-    "title": "Offline",
-    "body": "You are offline. Saved court days and briefs remain available once synced."
   }
 }

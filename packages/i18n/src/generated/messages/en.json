@@ -302,6 +302,13 @@
         "offline": "You are offline. Connect to sign in.",
         "accessDenied": "Access was not granted."
       },
+      "sso": {
+        "open": "Sign in with SSO",
+        "emailLabel": "Work email",
+        "emailPlaceholder": "name@firm.example.com",
+        "submit": "Continue with SSO",
+        "failed": "We could not start SSO sign-in for that address. Check it and try again."
+      },
       "phone": {
         "label": "Mobile number",
         "placeholder": "98765 43210",
@@ -1179,7 +1186,7 @@
       "support": "Support access",
       "more": "More",
       "court-watch": "Court watch",
-      "research": "Research"
+      "sso": "Single sign-on"
     },
     "placeholder": {
       "export": "Download a copy of everything in this workspace.",
@@ -1313,9 +1320,11 @@
         "listing": "Cause list",
         "draft": "Drafts",
         "audit": "Audit log",
+        "court_day": "Court day",
         "export": "Export",
         "support": "Support",
-        "shell": "Workspace areas"
+        "shell": "Workspace areas",
+        "appearance": "Appearances"
       },
       "actions": {
         "workspace": {
@@ -1356,12 +1365,13 @@
           "read": "See the cause list"
         },
         "draft": {
-          "read": "See drafts",
-          "write": "Write drafts",
-          "export": "Export drafts"
+          "write": "Write drafts"
         },
         "audit": {
           "read": "Read and export the audit log"
+        },
+        "court_day": {
+          "view_all": "See the whole workspace's court day"
         },
         "export": {
           "run": "Export all workspace data"
@@ -1380,6 +1390,9 @@
         },
         "invoices": {
           "read": "Download invoices"
+        },
+        "appearance": {
+          "assign": "Assign appearances to members"
         }
       },
       "settings": {
@@ -1740,6 +1753,48 @@
       "removed": "Watch removed.",
       "failed": "Could not save. Try again.",
       "loading": "Loading court watch"
+    },
+    "sso": {
+      "metaTitle": "Single sign-on",
+      "title": "Single sign-on",
+      "description": "Let your organisation sign in with its own identity provider (SAML or OIDC). People who sign in this way join as viewers.",
+      "empty": "No identity provider yet.",
+      "error": {
+        "title": "Could not load the SSO settings.",
+        "retry": "Try again"
+      },
+      "form": {
+        "protocol": "Protocol",
+        "issuer": "Issuer",
+        "domain": "Email domain",
+        "enabled": "Enabled",
+        "clientId": "Client ID",
+        "clientSecret": "Client secret",
+        "entryPoint": "Sign-in URL",
+        "cert": "Signing certificate",
+        "save": "Save provider",
+        "delete": "Remove"
+      },
+      "toast": {
+        "saved": "Provider saved.",
+        "removed": "Provider removed.",
+        "failed": "Could not save the provider.",
+        "forbidden": "Only owners can change SSO.",
+        "verified": "Domain verified.",
+        "verifyFailed": "We could not find the DNS record yet."
+      },
+      "status": {
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "unverified": "Domain not verified"
+      },
+      "verify": {
+        "title": "Verify your domain",
+        "instructions": "Add this DNS TXT record to {domain}, then check it. SSO cannot be turned on until the domain is verified.",
+        "name": "Record name",
+        "value": "Record value",
+        "button": "Check record"
+      }
     }
   },
   "lifecycle": {
@@ -2649,6 +2704,228 @@
         "high": "High confidence"
       },
       "updated": "Board read at {time}"
+    },
+    "board": {
+      "header": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "days": "Court day",
+        "summary": "{items, plural, one {# item} other {# items}} in {halls, plural, one {# hall} other {# halls}}",
+        "read": "lists read {time}"
+      },
+      "failure": {
+        "message": "Couldn't read {day}'s {forum} list for Hall {hall}.",
+        "today": "today",
+        "tomorrow": "tomorrow",
+        "openOfficial": "Open the official list",
+        "shareAgain": "or share it again.",
+        "lastKnown": "Last known data, read {time}"
+      },
+      "diff": {
+        "banner": "{count, plural, one {# change} other {# changes}} since the last list",
+        "open": "{count, plural, one {See # change} other {See # changes}}",
+        "title": "List changes",
+        "description": "What was added, moved or removed since the previous list.",
+        "label": {
+          "changed": "Changed list",
+          "supplementary": "Supplementary list"
+        },
+        "kind": {
+          "added": "New: item {item}, {case}",
+          "removed": "Removed: item {item}, {case}",
+          "moved": "Moved from Hall {hall}: item {item}, {case}"
+        }
+      },
+      "shortcuts": {
+        "nextItem": "Next item",
+        "previousItem": "Previous item",
+        "nextHall": "Next hall",
+        "previousHall": "Previous hall",
+        "open": "Open the matter",
+        "carry": "Go to the carry list",
+        "marker": "Set court is at item",
+        "actions": "Quick actions for the item",
+        "diff": "Open list changes",
+        "rail": "Go to the hall rail",
+        "today": "Go to Today",
+        "matters": "Go to Matters",
+        "help": "Show shortcuts"
+      },
+      "clash": {
+        "title": "Clash",
+        "hall": "Items {a} (Hall {hallA}) and {b} (Hall {hallB}) are listed for the same advocate on this date.",
+        "complex": "Items {a} ({hallA}) and {b} ({hallB}) are in different court complexes for the same advocate on this date."
+      },
+      "hall": {
+        "unassigned": "Hall not yet assigned",
+        "name": "Hall {hallNo}",
+        "count": "{count, plural, one {# item} other {# items}}",
+        "courtIsAt": "Court is at item {item}",
+        "bench": "Before {judges}"
+      },
+      "item": {
+        "name": "Item {n}",
+        "unnumbered": "No item number",
+        "brief": "brief {percent} percent ready",
+        "briefUnknown": "brief readiness not known",
+        "clashNote": "clash with another hall",
+        "restricted": "Restricted matter",
+        "clash": "Clash",
+        "carried": "{count, plural, one {Listed before} other {Listed # times before}}",
+        "delegated": "Delegated"
+      },
+      "stage": {
+        "filed": "Filed",
+        "sr_fr": "SR/FR",
+        "defects": "Defects",
+        "re_presented": "Re-presented",
+        "numbered": "Numbered",
+        "disposed": "Disposed",
+        "listed": "Listed",
+        "reserved": "Reserved",
+        "part-heard": "Part-heard"
+      },
+      "change": {
+        "added": "New",
+        "moved": "Moved from Hall {hall}",
+        "removed": "Removed"
+      },
+      "marker": {
+        "label": "Court is at item",
+        "set": "Set",
+        "clear": "Clear",
+        "invalid": "Enter an item number.",
+        "failed": "Could not save. Try again."
+      },
+      "rail": {
+        "carry": "Carry list",
+        "carryEmpty": "Nothing listed before.",
+        "needsYou": "Needs you",
+        "needsEmpty": "Nothing to confirm.",
+        "carriedTimes": "{count, plural, one {listed once before} other {listed # times before}}",
+        "toConfirm": "to confirm",
+        "summary": "Carry {carry}, needs you {needs}",
+        "obligations": "{count, plural, one {# open obligation} other {# open obligations}}"
+      },
+      "actions": {
+        "open": "Quick actions",
+        "title": "Quick actions",
+        "openMatter": "Open the matter",
+        "courtIsHere": "Court is at item {item}"
+      },
+      "hallRail": {
+        "label": "Halls"
+      },
+      "empty": {
+        "title": "Nothing listed",
+        "description": "None of your matters are on a cause list for this day."
+      },
+      "offline": "Offline. Showing the last known data.",
+      "denied": {
+        "title": "You cannot view this day",
+        "description": "Your role does not include the court day."
+      },
+      "loading": "Loading the court day",
+      "error": {
+        "title": "The court day could not load",
+        "retry": "Try again"
+      },
+      "expectedNotListed": "{case} is due {day} but not listed.",
+      "offlineAt": "Offline. Showing data saved at {time}."
+    }
+  },
+  "delegation": {
+    "title": "Tomorrow's plan",
+    "metaTitle": "Tomorrow's plan",
+    "description": "Assign tomorrow's appearances. Suggestions are proposals; nothing changes until you accept.",
+    "empty": "No appearances to assign for tomorrow",
+    "loading": "Loading the plan",
+    "error": "Could not load the plan.",
+    "retry": "Try again",
+    "denied": "You do not have access to the tomorrow plan. Ask the workspace owner.",
+    "offline": "You are offline. Assignments are saved and will sync.",
+    "willSync": "Will sync",
+    "conflictNotice": "{name} changed this assignment first. Showing their change.",
+    "assignee": "Assignee",
+    "assign": "Assign",
+    "choose": "Choose a member",
+    "unassigned": "Unassigned",
+    "clash": "Clash",
+    "suggested": "Suggested: {name}",
+    "acceptAll": "Accept all suggestions",
+    "acceptAllTitle": "Accept all suggestions?",
+    "acceptAllBody": "{count, plural, one {# assignment} other {# assignments}} will be made and the members notified in the app.",
+    "confirm": "Accept",
+    "cancel": "Cancel",
+    "assigned": "Assigned to {name}",
+    "restricted": "{name} cannot see this restricted matter.",
+    "grantAccess": "Grant access and assign",
+    "outcomes": {
+      "label": "Outcomes",
+      "member": "{name}: {done} of {total} outcomes in",
+      "toast": "{name} confirmed an outcome"
+    }
+  },
+  "reminders": {
+    "settings": {
+      "title": "Court-day reminders",
+      "description": "Choose when CauseDeck reminds you about the court day and where the reminders arrive.",
+      "evening": {
+        "label": "Evening brief",
+        "hint": "The night before: what is listed tomorrow."
+      },
+      "morning": {
+        "label": "Morning changes",
+        "hint": "At 7:00 am: what changed in today's list."
+      },
+      "outcomeMissing": {
+        "label": "Outcome missing",
+        "hint": "After court: hearings with no outcome recorded."
+      },
+      "time": "Time",
+      "delay": "Delay",
+      "minutes": "minutes after the last item",
+      "channels": {
+        "in_app": "In-app",
+        "push": "Push",
+        "email": "Email"
+      },
+      "loading": "Loading your reminder settings",
+      "error": "Your reminder settings did not load.",
+      "retry": "Try again",
+      "saved": "Saved",
+      "denied": "Only members can change their own reminders.",
+      "saving": "Saving"
+    },
+    "email": {
+      "evening": {
+        "subject": "Tomorrow's court day is ready",
+        "preview": "Your evening brief for tomorrow",
+        "heading": "Tomorrow's court day is ready",
+        "body": "{listings, plural, one {# listing} other {# listings}} in {halls, plural, one {# hall} other {# halls}}. {clashes, plural, =0 {No clashes.} one {# clash.} other {# clashes.}} {lowReadiness, plural, =0 {Every brief is ready.} one {# brief is below 60 percent ready.} other {# briefs are below 60 percent ready.}} {obligations, plural, =0 {No obligations are due tomorrow.} one {# obligation is due tomorrow.} other {# obligations are due tomorrow.}}",
+        "cta": "Open tomorrow"
+      },
+      "morning": {
+        "subject": "Today's list has changed",
+        "preview": "Changes to today's list",
+        "heading": "Today's list has changed",
+        "body": "{added, plural, =0 {Nothing added} one {# item added} other {# items added}}, {moved, plural, =0 {nothing moved} one {# item moved} other {# items moved}}, {removed, plural, =0 {nothing removed} one {# item removed} other {# items removed}}.",
+        "cta": "See what changed"
+      },
+      "outcomeMissing": {
+        "subject": "Record today's outcomes",
+        "preview": "Hearings still waiting for an outcome",
+        "heading": "Record today's outcomes",
+        "body": "{count, plural, one {# hearing has} other {# hearings have}} no confirmed outcome yet.",
+        "cta": "Record outcomes"
+      },
+      "note": "This reminder only opens the app. It is sent only to you and never to a client."
+    },
+    "inApp": {
+      "eveningBody": "{listings, plural, one {# listing} other {# listings}} tomorrow in {halls, plural, one {# hall} other {# halls}}.",
+      "eveningNames": "Listed: {names}",
+      "morningBody": "{added, plural, =0 {0 added} other {# added}}, {moved, plural, =0 {0 moved} other {# moved}}, {removed, plural, =0 {0 removed} other {# removed}}.",
+      "outcomeBody": "{count, plural, one {# hearing has} other {# hearings have}} no confirmed outcome."
     }
   },
   "courtInsights": {
@@ -3407,110 +3684,6 @@
       "selectMore": "Add to the selection"
     }
   },
-  "draftingTemplates": {
-    "names": {
-      "madras_hc": {
-        "mention_memo": "Mention or adjournment memo",
-        "early_listing_memo": "Early-listing memo",
-        "memo_of_appearance": "Memo of appearance",
-        "certified_copy_application": "Application for certified copy",
-        "client_covering_letter": "Covering letter to the client"
-      },
-      "karnataka_hc": {
-        "mention_memo": "Mention or adjournment memo",
-        "early_listing_memo": "Early-listing memo",
-        "memo_of_appearance": "Memo of appearance",
-        "certified_copy_application": "Application for certified copy",
-        "client_covering_letter": "Covering letter to the client"
-      },
-      "generic_a0": {
-        "adjournment_note": "Adjournment note",
-        "client_covering_letter": "Covering letter to the client"
-      }
-    },
-    "scaffoldBanner": "Scaffold: review before use"
-  },
-  "drafting": {
-    "list": {
-      "title": "Drafts",
-      "newDraft": "New draft",
-      "pickTemplate": "Choose a template",
-      "empty": "No drafts yet. Start one from a template.",
-      "updated": "Updated {date}",
-      "untitled": "Untitled draft"
-    },
-    "states": {
-      "loading": "Loading the draft",
-      "error": "The draft could not be loaded.",
-      "retry": "Try again",
-      "notFound": "This draft does not exist or you cannot open it.",
-      "saving": "Saving",
-      "saved": "Saved"
-    },
-    "panels": {
-      "facts": {
-        "title": "Facts",
-        "empty": "No facts are linked to this draft."
-      },
-      "citations": {
-        "title": "Citations",
-        "empty": "No citations found in the draft.",
-        "check": "Check citations",
-        "checkedAt": "Checked {date}",
-        "status": {
-          "verified": "Verified",
-          "notFound": "Not found",
-          "unknown": "Unknown"
-        }
-      },
-      "consistency": {
-        "title": "Consistency",
-        "empty": "No consistency findings."
-      },
-      "versions": {
-        "title": "Versions",
-        "current": "Current version",
-        "restore": "Restore this version",
-        "number": "Version {number}"
-      }
-    },
-    "findings": {
-      "count": "{count, plural, one {# finding} other {# findings}}",
-      "factMismatch": "A figure or date differs from the facts.",
-      "unsupported": "This statement has no source fact.",
-      "goTo": "Go to location"
-    },
-    "aiDrafted": {
-      "label": "AI-drafted",
-      "notice": "Parts of this draft were written by AI. Review every line before use."
-    },
-    "acknowledgement": {
-      "title": "Confirm your review",
-      "statement": "I have read this draft in full and checked its citations and facts. I take responsibility for its contents.",
-      "confirm": "I acknowledge",
-      "cancel": "Cancel"
-    },
-    "export": {
-      "title": "Export draft",
-      "docx": "Word document",
-      "pdf": "PDF",
-      "unverifiedWarning": "{count, plural, one {# citation is not verified.} other {# citations are not verified.}}",
-      "action": "Export",
-      "failed": "The export failed. Try again."
-    },
-    "shortcuts": {
-      "title": "Keyboard shortcuts",
-      "save": "Save",
-      "checkCitations": "Check citations",
-      "togglePanel": "Show or hide the side panel",
-      "export": "Export"
-    },
-    "offline": {
-      "banner": "You are offline. Edits are saved on this device.",
-      "queued": "{count, plural, one {# change waiting to sync} other {# changes waiting to sync}}",
-      "synced": "All changes synced"
-    }
-  },
   "calendar": {
     "metaTitle": "Calendar",
     "title": "Calendar",
@@ -3629,6 +3802,98 @@
         "error": "Something went wrong. Nothing changed.",
         "forbidden": "You cannot do that."
       }
+    }
+  },
+  "calendarView": {
+    "metaTitle": "Calendar",
+    "title": "Calendar",
+    "description": "Listings and deadlines beyond today and tomorrow.",
+    "views": {
+      "label": "View",
+      "week": "Week",
+      "month": "Month"
+    },
+    "scope": {
+      "label": "Show",
+      "mine": "Mine",
+      "workspace": "Whole chamber"
+    },
+    "toolbar": {
+      "label": "Calendar controls",
+      "previous": "Previous",
+      "next": "Next",
+      "today": "Today",
+      "range": "{from} to {to}",
+      "shortcuts": "Keys: arrows move across days, Enter opens a day, t today, w week, m month, [ and ] previous and next."
+    },
+    "kind": {
+      "listing": "Listing",
+      "next_date": "Next date",
+      "obligation_due": "Due",
+      "holiday": "Holiday",
+      "vacation": "Vacation"
+    },
+    "legend": {
+      "title": "Legend",
+      "proposed": "Proposed (dashed, not counted)",
+      "clash": "Clash: same member in different halls"
+    },
+    "proposed": "Proposed",
+    "restricted": "Restricted matter",
+    "clash": "Clash",
+    "closed": "Court closed: {reason}",
+    "summary": "{listings, plural, =0 {No listings} one {# listing} other {# listings}}, {deadlines, plural, =0 {no deadlines} one {# deadline} other {# deadlines}}",
+    "dayLabel": "{date}, {summary}",
+    "grid": {
+      "week": "Week of {date}",
+      "month": "Month of {date}",
+      "weekday": "{day}"
+    },
+    "week": {
+      "noHall": "Not placed in a hall",
+      "hall": "Hall {hall}",
+      "other": "Dates and deadlines"
+    },
+    "day": {
+      "openDay": "Open day",
+      "close": "Close",
+      "listings": "Listings",
+      "deadlines": "Deadlines",
+      "nothing": "Nothing listed.",
+      "clash": "This day has a clash: the same member is listed in different halls.",
+      "hall": "Hall {hall}",
+      "item": "Item {item}"
+    },
+    "empty": "Nothing listed this range.",
+    "offline": "You are offline. This range is shown as last loaded; it refreshes when you are back online.",
+    "denied": {
+      "title": "You do not have access to the calendar.",
+      "description": "Ask a workspace owner for access."
+    },
+    "error": {
+      "title": "Could not load the calendar.",
+      "retry": "Try again"
+    },
+    "loading": "Loading the calendar",
+    "subscribe": {
+      "title": "Subscribe in your calendar",
+      "explanation": "Your calendar feed is private to you. Anyone with its link can read your confirmed hearings and deadlines, so do not share it.",
+      "active": "Your private feed is active. Its link is shown only when you create or regenerate it.",
+      "inactive": "You have no feed yet. Create one to see hearings in your phone calendar.",
+      "manage": "Manage or regenerate the feed",
+      "disclosure": "Your calendar app may fetch this feed from servers outside India. We keep the content minimal.",
+      "ack": "I understand",
+      "generate": "Generate new link",
+      "regenerate": "Regenerate link",
+      "working": "Working",
+      "urlLabel": "Feed link",
+      "copy": "Copy link",
+      "copied": "Copied",
+      "shownOnce": "Copy this link now. It is private to you and will not be shown again.",
+      "revokesOld": "Regenerating creates a new link and revokes the old one at once. Update the subscription in your calendar app.",
+      "error": "Something went wrong. Nothing changed.",
+      "forbidden": "You cannot do that.",
+      "copyFailed": "Could not copy. Select the link and copy it."
     }
   },
   "inbox": {
@@ -4057,58 +4322,6 @@
       "conflict": "Please wait a minute before asking for another code.",
       "generic": "Something went wrong. Try again."
     }
-  },
-  "research": {
-    "linkOut": {
-      "button": "Research on…",
-      "menuLabel": "Research providers",
-      "hint": "Opens in a new window on a site we do not control.",
-      "preview": "Link: {url}",
-      "empty": "Add a confirmed issue tag or a forum to build research links.",
-      "noQuery": "No research links yet"
-    },
-    "notes": {
-      "heading": "Research notes",
-      "loading": "Loading notes",
-      "empty": "No notes yet. Write down what you found and the authorities you chose.",
-      "error": "Notes could not be loaded. Try again.",
-      "offline": "You are offline. Notes are shown read-only.",
-      "denied": "You do not have access to research notes.",
-      "add": "New note",
-      "titleLabel": "Title",
-      "bodyLabel": "Note",
-      "save": "Save note",
-      "saving": "Saving…",
-      "delete": "Delete note",
-      "edit": "Edit",
-      "saveError": "The note was not saved. Try again.",
-      "authoritiesHeading": "Authorities",
-      "authoritiesEmpty": "No authorities chosen.",
-      "authorityLabel": "Authority",
-      "authorityCitation": "Citation (optional)",
-      "authorityUrl": "Link (https, optional)",
-      "addAuthority": "Add authority",
-      "removeAuthority": "Remove",
-      "pin": "Pin",
-      "unpin": "Unpin",
-      "pinned": "Pinned",
-      "pinHint": "Pinning keeps an authority at the top of this note. It does not add a citation to any draft."
-    }
-  },
-  "settingsResearch": {
-    "title": "Research providers",
-    "description": "Where research links on a matter may point. Links open in a new window; CauseDeck never fetches these sites.",
-    "builtInHeading": "Built-in providers",
-    "ownHeading": "Your providers",
-    "ownEmpty": "No providers of your own yet. Add the link of a subscription you hold, such as SCC Online or Manupatra.",
-    "keyLabel": "Key",
-    "labelLabel": "Name",
-    "templateLabel": "Link template",
-    "templateHint": "An https link with {q} where the query goes, for example https://www.scconline.com/search?q={q}.",
-    "enabledLabel": "Enabled",
-    "save": "Save provider",
-    "remove": "Remove",
-    "saveError": "The provider was not saved. Check the link."
   },
   "bootstrapImport": {
     "metaTitle": "Import your cases",
@@ -4551,6 +4764,350 @@
       "full": "The device outbox is full. Let uploads finish, then try again."
     }
   },
+  "outcome": {
+    "metaTitle": "Hearing outcome",
+    "title": "What happened at the hearing",
+    "heldOn": "Held on {date}",
+    "processing": "Processing your note",
+    "processingHint": "The proposal appears here when your note is ready. You can enter the outcome yourself now.",
+    "needsYou": "Needs you",
+    "needsYouHint": "Some details were not found in your note or the order. They are left blank for you to fill in.",
+    "emptyHint": "No voice note or proposal for this hearing. Type the outcome and confirm.",
+    "confirmedHint": "This outcome is already confirmed.",
+    "denied": {
+      "title": "You cannot confirm outcomes",
+      "body": "Ask the matter owner or an admin to confirm this outcome."
+    },
+    "error": {
+      "title": "Couldn't load this outcome",
+      "retry": "Retry"
+    },
+    "loading": "Loading the hearing outcome",
+    "offline": {
+      "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
+      "queued": "Saved on this device. It will be applied when you are back online."
+    },
+    "summary": {
+      "label": "What happened",
+      "placeholder": "Type what happened at the hearing"
+    },
+    "adjournmentReason": "Adjournment reason",
+    "stageAfter": "Stage after",
+    "nextDate": {
+      "legend": "Next date",
+      "useProposed": "Confirm {date}",
+      "typed": "Enter a date",
+      "typedHint": "dd/mm/yyyy",
+      "typedInvalid": "Enter a real date as dd/mm/yyyy.",
+      "none": "No next date / disposed",
+      "deferred": "To be notified",
+      "required": "Choose the next date, or mark it none or to be notified.",
+      "unanchored": "This date is not in the voice note or the order. Enter it yourself to confirm it."
+    },
+    "conflict": {
+      "title": "The next date differs from the one on file",
+      "current": "On file",
+      "proposed": "Proposed",
+      "keepCurrent": "Keep this date",
+      "useProposed": "Use this date",
+      "required": "Pick which date to keep."
+    },
+    "obligations": {
+      "title": "Directions from the order",
+      "empty": "No directions were found.",
+      "confirm": "Confirm",
+      "edit": "Edit",
+      "dismiss": "Dismiss",
+      "dismissReason": "Reason",
+      "notApplicable": "Not applicable",
+      "description": "Description",
+      "dueDate": "Due date",
+      "owner": "Owner",
+      "confirmed": "Will be created",
+      "dismissed": "Dismissed",
+      "undecided": "Undecided. Nothing is created until you confirm it.",
+      "save": "Done"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "empty": "No tasks were proposed."
+    },
+    "transcript": {
+      "open": "Transcript",
+      "title": "Transcript",
+      "empty": "No transcript for this hearing.",
+      "language": "Original language: {language}",
+      "languages": {
+        "en": "English",
+        "ta": "Tamil",
+        "kn": "Kannada"
+      }
+    },
+    "source": {
+      "voice": "Voice note",
+      "order": "Order",
+      "manual": "Typed by you"
+    },
+    "confirm": "Confirm outcome",
+    "saveManual": "Confirm outcome",
+    "shortcut": "Ctrl Enter",
+    "blocked": {
+      "nextDate": "Choose the next date, or mark it none or to be notified.",
+      "summary": "Type what happened.",
+      "conflict": "Pick which date to keep.",
+      "obligation": "Decide each direction: confirm, edit or dismiss with a reason."
+    },
+    "done": "Outcome confirmed",
+    "failed": "Couldn't confirm the outcome. Try again.",
+    "forbidden": "You can't confirm this outcome.",
+    "delegated": "The matter owner is notified."
+  },
+  "brief": {
+    "metaTitle": "Brief",
+    "printTitle": "Brief - {caseNo} - {date}",
+    "masthead": {
+      "listedOn": "Listed {date}",
+      "hall": "Court {hall}",
+      "item": "Item {item}",
+      "assembled": "Assembled {time}",
+      "openMatter": "Open matter"
+    },
+    "sections": {
+      "stage": "Stage",
+      "lastOrder": "Last order",
+      "obligations": "Open obligations",
+      "carry": "Carry",
+      "synopsis": "Synopsis",
+      "lastHearing": "Last hearing",
+      "courtNotes": "Court notes",
+      "context": "From the file"
+    },
+    "empty": {
+      "title": "Nothing on record yet",
+      "body": "This listing has no stage, orders or obligations yet. Add them to the matter and the brief fills in.",
+      "section": "Nothing to show"
+    },
+    "line": {
+      "unconfirmed": "Unconfirmed",
+      "overdue": "Overdue",
+      "dueOn": "Due {date}",
+      "closedCount": "{count, plural, =0 {No closed obligations} one {# closed obligation} other {# closed obligations}}",
+      "page": "Page {page}"
+    },
+    "provenance": {
+      "openPage": "Open page",
+      "source": "Source",
+      "confidence": "Confidence {value}"
+    },
+    "readiness": {
+      "label": "Ready {score} of 100",
+      "stage_known": "Stage known",
+      "last_order_confirmed": "Last order confirmed",
+      "obligations_reconciled": "Obligations reconciled",
+      "carry_reviewed": "Carry reviewed"
+    },
+    "prepared": {
+      "mark": "Mark prepared",
+      "unmark": "Prepared. Undo",
+      "by": "Prepared by {name}, {when}",
+      "byUnknown": "Prepared {when}",
+      "stale": "Brief changed since you marked it prepared",
+      "saving": "Saving",
+      "error": "Could not save. Try again."
+    },
+    "carry": {
+      "add": "Add item",
+      "addLabel": "New carry item",
+      "addPlaceholder": "A document or thing to carry",
+      "remove": "Remove {label}",
+      "tick": "Packed: {label}",
+      "kind": {
+        "document": "Document",
+        "rule": "Always carry",
+        "manual": "Added by you"
+      },
+      "willSync": "Will sync",
+      "reviewed": "Mark list reviewed",
+      "empty": "Nothing to carry."
+    },
+    "synopsis": {
+      "edit": "Edit synopsis",
+      "label": "Your correction",
+      "save": "Save correction",
+      "cancel": "Cancel",
+      "hint": "Saved as a matter note. The synopsis itself changes only when you confirm a memory proposal.",
+      "strategy": "Strategy",
+      "note": "Your note"
+    },
+    "courtNotes": {
+      "private": "Private to you",
+      "shared": "Shared in chamber",
+      "printToggle": "Include private notes when printing",
+      "hiddenInPrint": "Court notes are left out of the printout"
+    },
+    "actions": {
+      "print": "Print / Save as PDF",
+      "share": "Share inside workspace",
+      "shared": "Link copied. Members of this workspace can open it.",
+      "jump": "Jump to section",
+      "shortcuts": "Keyboard shortcuts",
+      "refresh": "Refresh brief",
+      "bar": "Brief actions"
+    },
+    "shortcuts": {
+      "title": "Brief shortcuts",
+      "print": "Print",
+      "prev": "Previous section",
+      "next": "Next section",
+      "carry": "Go to carry",
+      "notes": "Go to court notes",
+      "edit": "Edit synopsis",
+      "section": "Jump to section 1 to 9",
+      "close": "Close popover or editor",
+      "help": "Show this help"
+    },
+    "offline": {
+      "banner": "Offline. Brief saved at {time}",
+      "notSaved": "Not saved offline"
+    },
+    "denied": {
+      "title": "You cannot open this brief",
+      "body": "This matter is restricted. Ask its owner for access.",
+      "request": "Request access"
+    },
+    "viewer": {
+      "readOnly": "You can read this brief but not change it."
+    },
+    "error": {
+      "title": "The brief could not load",
+      "retry": "Retry",
+      "openMatter": "Open matter",
+      "section": "This section could not load",
+      "sectionRetry": "Retry section"
+    },
+    "notFound": {
+      "title": "Brief not found",
+      "body": "The listing does not exist or you do not have access to it.",
+      "request": "Request access",
+      "back": "Back to briefs"
+    },
+    "loading": "Loading brief"
+  },
+  "share": {
+    "metaTitle": "Shared brief",
+    "unavailable": "Shared brief unavailable",
+    "states": {
+      "invalid": "This link is not valid.",
+      "expired": "This link has expired. Ask the sender for a new one.",
+      "revoked": "The sender has withdrawn this link."
+    },
+    "stage": "Stage: {stage}",
+    "lastOrder": "Last order",
+    "lastHearing": "Last hearing: {date}",
+    "obligations": "Open obligations",
+    "due": "{text} (due {date})",
+    "footer": "Shared as of {assembledAt}. Link expires {expiresAt}.",
+    "join": "Join CauseDeck and import this matter",
+    "import": "Import this matter",
+    "errors": {
+      "noWorkspace": "Create a workspace first, then open this link again.",
+      "gone": "This link can no longer be imported.",
+      "failed": "Something went wrong. Try again."
+    },
+    "manage": {
+      "title": "Share this brief",
+      "description": "Create an expiring link to a text-only copy of the brief. Anyone with the link can read it. You can revoke it at any time.",
+      "expiry": "Link expires after",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "create": "Create link",
+      "creating": "Creating link",
+      "createdOnce": "Link created. Copy it now: it is shown only once. It expires {date}.",
+      "linkLabel": "Share link",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "copyFailed": "Could not copy. Select the link and copy it by hand.",
+      "activeTitle": "Active links",
+      "empty": "No active links.",
+      "createdOn": "Created {date}",
+      "expiresOn": "Expires {date}",
+      "revoke": "Revoke",
+      "revokeLabel": "Revoke the link for {title}",
+      "revoked": "Link revoked",
+      "noListing": "This matter has no listing date yet, so there is no brief to share.",
+      "errors": {
+        "rateLimited": "You have shared too many briefs in the last hour. Try again later.",
+        "forbidden": "You cannot share this brief. Only an owner can, and not a sensitive matter.",
+        "notFound": "This brief or link no longer exists.",
+        "generic": "Something went wrong. Try again."
+      }
+    }
+  },
+  "offline": {
+    "title": "Offline",
+    "body": "You are offline. Saved court days and briefs remain available once synced.",
+    "banner": {
+      "offline": "You are offline. Showing what was saved on this device.",
+      "savedAt": "Saved {time}",
+      "stale": "Saved {time}. This may be out of date.",
+      "backOnline": "Back online. Syncing."
+    },
+    "sync": {
+      "label": "Sync status",
+      "idle": "Everything is saved",
+      "syncing": "Syncing",
+      "pending": "{count, plural, one {# change waiting to sync} other {# changes waiting to sync}}",
+      "failed": "Some changes could not sync",
+      "retry": "Try again",
+      "lastSynced": "Last synced {time}",
+      "keepLocal": "Keep local",
+      "details": "Sync details",
+      "detailsFailed": "These changes stay on this device until they sync. Try again, or keep the local copy."
+    },
+    "courtDay": {
+      "savedFor": "Court day for {date} is saved on this device",
+      "notSaved": "Not saved offline",
+      "unavailable": "This court day was not saved. Connect to load it."
+    },
+    "brief": {
+      "savedFor": "Brief saved on this device",
+      "notSaved": "Not saved offline",
+      "unavailable": "This brief was not saved. Connect to load it."
+    },
+    "outbox": {
+      "queued": "Queued",
+      "uploading": "Uploading",
+      "failed": "Failed",
+      "sent": "Sent",
+      "conflict": "Needs review"
+    },
+    "storage": {
+      "title": "Offline storage",
+      "used": "{used} of {quota} used",
+      "days": "{count, plural, one {# court day saved} other {# court days saved}}",
+      "clear": "Clear saved data",
+      "cleared": "Saved data removed from this device",
+      "unsupported": "This browser cannot save data for offline use.",
+      "size": "{size} saved on this device",
+      "loading": "Checking saved data",
+      "empty": "Nothing is saved on this device yet",
+      "full": "This device is out of space. Clear saved data to make room.",
+      "denied": "This browser has blocked offline storage. Allow site data in the browser settings to read court days without a connection.",
+      "optedOut": "Offline saving is turned off on this device.",
+      "cancel": "Cancel",
+      "clearFailed": "Saved data could not be removed. Try again."
+    },
+    "privacy": {
+      "title": "What is kept on this device",
+      "body": "Court days and briefs for the next few days are kept encrypted on this device so you can read them without a connection. They are removed when you sign out or switch workspace.",
+      "lostPhone": "If you lose this device, signing out from another device does not erase it. Use the device lock, and clear saved data before you hand a device over.",
+      "clearConfirm": "Remove all saved court days and briefs from this device?"
+    },
+    "errors": {
+      "decrypt": "Saved data could not be read. Connect to load it again.",
+      "quota": "There is not enough space on this device to save more.",
+      "unknown": "Something went wrong with offline storage."
+    }
+  },
   "error": {
     "title": "Something went wrong.",
     "description": "Your saved work is safe. Try again, or go back to Today.",
@@ -4558,9 +5115,5 @@
   },
   "notFound": {
     "title": "Page not found"
-  },
-  "offline": {
-    "title": "Offline",
-    "body": "You are offline. Saved court days and briefs remain available once synced."
   }
 }

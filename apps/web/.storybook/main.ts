@@ -10,7 +10,12 @@ const isAliasList = (aliases: AliasOptions): aliases is readonly Alias[] => Arra
 
 const config: StorybookConfig = {
   framework: { name: '@storybook/nextjs-vite', options: {} },
-  stories: ['../components/**/*.stories.@(ts|tsx)'],
+  stories: [
+    '../components/**/*.stories.@(ts|tsx)',
+    '../app/**/_components/**/*.stories.@(ts|tsx)',
+    '../app/**/_offline/**/*.stories.@(ts|tsx)',
+    '../app/**/settings/privacy/_offline-card.stories.@(ts|tsx)',
+  ],
   addons: ['@storybook/addon-docs', '@storybook/addon-a11y', '@storybook/addon-vitest'],
   // next/font (app/fonts.ts) does not run here: serve the ui faces that storybook.css loads.
   staticDirs: [{ from: '../../../packages/ui/fonts', to: '/fonts' }],

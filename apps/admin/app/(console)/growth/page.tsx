@@ -6,6 +6,7 @@ import {
   ACTIVATION_CHANNELS,
   ACTIVATION_STEPS,
   growthFunnel,
+  growthReferralFunnel,
   type ActivationChannel,
   type ActivationStep,
 } from '../../../lib/data/index.ts';
@@ -63,6 +64,7 @@ export default async function GrowthPage({
     staff,
     channel === undefined ? {} : { channel },
   );
+  const referrals = await growthReferralFunnel(staff);
   const ttv = new Map(timeToFirstCourtDay.map((t) => [t.week, t]));
   return (
     <section aria-labelledby="page-title" className="grid gap-4">
@@ -89,6 +91,24 @@ export default async function GrowthPage({
           </Link>
         ))}
       </nav>
+      <dl aria-label="Referral funnel" className="flex flex-wrap gap-6 text-sm tabular-nums">
+        <div>
+          <dt className="text-ink-muted">Invites sent</dt>
+          <dd data-testid="referral-sent">{String(referrals.invitesSent)}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted">Accepted</dt>
+          <dd data-testid="referral-accepted">{String(referrals.accepted)}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted">Activated</dt>
+          <dd data-testid="referral-activated">{String(referrals.activated)}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-muted">Credited</dt>
+          <dd data-testid="referral-credited">{String(referrals.credited)}</dd>
+        </div>
+      </dl>
       {cohorts.length === 0 ? (
         <EmptyState
           title="No sign-ups yet."

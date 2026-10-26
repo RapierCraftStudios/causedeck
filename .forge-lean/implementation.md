@@ -42,3 +42,6 @@ CI log was unavailable and every locally runnable check passes. DB-backed tests 
 
 ## CI fix: memory-erasure timeout
 The only failure was `src/lifecycle/__tests__/memory-erasure.test.ts` timing out at 60 s in the core shard (collect 580 s, so the runner was heavily loaded). The file is untouched by this branch and no code in it touches `template`. It passes locally in 1.5 s (4/4). Treated as a load flake: no code change, so a CI rerun is the fix.
+
+## Merge fix: typecheck exit 127
+`turbo: command not found` was an environment/PATH failure, not a code conflict from the merge. No code change. `pnpm exec turbo run typecheck` over drafting, core, db, validators and i18n (plus dependencies) passes: 17/17 tasks.

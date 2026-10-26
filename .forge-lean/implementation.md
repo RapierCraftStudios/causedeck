@@ -30,3 +30,6 @@ The drafting package holds the registry of 12 system templates as data (block tr
 
 ## Sibling-list check
 engine.test.ts:235 filters exports by /send|file|submit/i and expects []; SCAFFOLD_BANNER, SYSTEM_TEMPLATES, systemTemplate do not match, so recorded as not_members in result.json. No code change.
+
+## CI lint fix
+system-templates.test.ts: replaced `__dirname` with `fileURLToPath(new URL(..., import.meta.url))` (unicorn/prefer-module), used `re.source` in template literals (restrict-template-expressions), ran prettier. ESLint clean on all changed ts files in core, db, drafting, validators, i18n; the 19 system-templates tests pass.

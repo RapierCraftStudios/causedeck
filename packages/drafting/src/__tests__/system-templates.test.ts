@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { strFromU8, unzipSync } from 'fflate';
 import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it } from 'vitest';
@@ -19,7 +20,11 @@ import {
 
 // Synthetic demo data with fictional parties.
 const facts: Facts = {
-  matter: { title: 'Asha Vellore v. Department of Roads', cnr: 'TNCH010001232024', court: 'Demo High Court' },
+  matter: {
+    title: 'Asha Vellore v. Department of Roads',
+    cnr: 'TNCH010001232024',
+    court: 'Demo High Court',
+  },
   parties: { petitioner: 'Asha Vellore', respondent: 'Department of Roads' },
   hearing: { nextDate: '2025-03-12', bench: 'Justice A. Sample' },
   advocate: { name: 'K. Counsel', enrolmentNo: 'MS/1/2020' },
@@ -51,7 +56,11 @@ describe('system template registry', () => {
     const codes = SYSTEM_TEMPLATES.map((t) => t.code);
     expect(new Set(codes).size).toBe(codes.length);
     for (const court of ['madras_hc', 'karnataka_hc']) {
-      expect(byCourt(court).map((t) => t.code.split('.')[1]).sort()).toEqual([
+      expect(
+        byCourt(court)
+          .map((t) => t.code.split('.')[1])
+          .sort(),
+      ).toEqual([
         'certified_copy_application',
         'client_covering_letter',
         'early_listing_memo',
@@ -97,11 +106,13 @@ describe('system template registry', () => {
         expect(lookup(code)?.label, `${t.code}: ${label}`).toBe(label);
       }
     }
-    const dir = join(__dirname, '..', 'system-templates');
+    const dir = fileURLToPath(new URL('../system-templates', import.meta.url));
     for (const sub of ['madras-hc', 'karnataka-hc', 'generic-a0']) {
       for (const file of readdirSync(join(dir, sub))) {
         const src = readFileSync(join(dir, sub, file), 'utf8');
-        expect(src, file).not.toMatch(/['"`][^'"`\n]*(W\.P\.|W\.A\.|C\.M\.A\.|R\.F\.A\.|Writ Petition|Writ Appeal|Hon'ble)/);
+        expect(src, file).not.toMatch(
+          /['"`][^'"`\n]*(W\.P\.|W\.A\.|C\.M\.A\.|R\.F\.A\.|Writ Petition|Writ Appeal|Hon'ble)/,
+        );
       }
     }
   });
@@ -112,7 +123,10 @@ describe('system template registry', () => {
     for (const t of letters) {
       const resolvers = collectSlots(t.blocks).map((s) => s.block.resolver);
       expect(resolvers, t.code).toContain('client.name');
-      expect(resolvers.filter((r) => r.startsWith('party.')), t.code).toEqual([]);
+      expect(
+        resolvers.filter((r) => r.startsWith('party.')),
+        t.code,
+      ).toEqual([]);
     }
   });
 
@@ -122,9 +136,13 @@ describe('system template registry', () => {
     if (t === undefined || preset === undefined) throw new Error('no template');
     const plain = docxText(await renderDocx(t.blocks, preset, facts));
     expect(plain).not.toContain(SCAFFOLD_BANNER);
-    const bannered = docxText(await renderDocx(t.blocks, preset, facts, { banner: SCAFFOLD_BANNER }));
+    const bannered = docxText(
+      await renderDocx(t.blocks, preset, facts, { banner: SCAFFOLD_BANNER }),
+    );
     expect(bannered).toContain(SCAFFOLD_BANNER);
-    const pdf = await PDFDocument.load(await renderPdf(t.blocks, preset, facts, { banner: SCAFFOLD_BANNER }));
+    const pdf = await PDFDocument.load(
+      await renderPdf(t.blocks, preset, facts, { banner: SCAFFOLD_BANNER }),
+    );
     expect(pdf.getPageCount()).toBeGreaterThan(0);
   });
 
@@ -140,7 +158,7 @@ describe('system template registry', () => {
     ];
     for (const t of SYSTEM_TEMPLATES) {
       for (const s of textOf(t.blocks)) {
-        for (const re of patterns) expect(s, `${t.code}: ${re}`).not.toMatch(re);
+        for (const re of patterns) expect(s, `${t.code}: ${re.source}`).not.toMatch(re);
       }
     }
     // The lint itself works.
@@ -169,7 +187,7 @@ describe('system template registry', () => {
       for (const s of textOf(t.blocks)) {
         for (const re of denied) {
           const clean = s.replace(/Give no advice, no commitment, no fee and no citation\./, '');
-          expect(clean, `${t.code}: ${re}`).not.toMatch(re);
+          expect(clean, `${t.code}: ${re.source}`).not.toMatch(re);
         }
       }
     }

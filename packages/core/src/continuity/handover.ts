@@ -46,7 +46,6 @@ import {
 const MAX_UPCOMING = 5;
 const MAX_KEY_DOCUMENTS = 5;
 
-
 async function proceedingIds(scope: ContinuityScope, matterId: string): Promise<string[]> {
   const rows = await scope.tx
     .select({ id: schema.proceeding.id })
@@ -83,7 +82,10 @@ async function stagesOf(scope: ContinuityScope, proceedings: string[]) {
   return stages;
 }
 
-async function lastOrdersOf(scope: ContinuityScope, proceedings: string[]): Promise<HandoverOrder[]> {
+async function lastOrdersOf(
+  scope: ContinuityScope,
+  proceedings: string[],
+): Promise<HandoverOrder[]> {
   if (proceedings.length === 0) return [];
   const { tx, actor } = scope;
   const orders = await tx
@@ -107,7 +109,10 @@ async function lastOrdersOf(scope: ContinuityScope, proceedings: string[]): Prom
           .select()
           .from(schema.anchor)
           .where(
-            and(eq(schema.anchor.workspaceId, actor.workspaceId), inArray(schema.anchor.id, anchorIds)),
+            and(
+              eq(schema.anchor.workspaceId, actor.workspaceId),
+              inArray(schema.anchor.id, anchorIds),
+            ),
           );
   const byId = new Map(anchors.map((a) => [a.id, a]));
   const result: HandoverOrder[] = [];
@@ -164,7 +169,10 @@ async function obligationsOf(scope: ContinuityScope, matterId: string): Promise<
   );
 }
 
-async function upcomingOf(scope: ContinuityScope, proceedings: string[]): Promise<HandoverListing[]> {
+async function upcomingOf(
+  scope: ContinuityScope,
+  proceedings: string[],
+): Promise<HandoverListing[]> {
   if (proceedings.length === 0) return [];
   const rows = await scope.tx
     .select()
@@ -207,7 +215,10 @@ async function keyDocumentsOf(scope: ContinuityScope, matterId: string): Promise
     .orderBy(desc(schema.document.createdAt))
     .limit(MAX_KEY_DOCUMENTS);
   return rows.map((d) =>
-    documentLine(d, `${d.kind.replaceAll('_', ' ')}, added ${d.createdAt.toISOString().slice(0, 10)}`),
+    documentLine(
+      d,
+      `${d.kind.replaceAll('_', ' ')}, added ${d.createdAt.toISOString().slice(0, 10)}`,
+    ),
   );
 }
 
@@ -325,7 +336,12 @@ async function present(scope: ContinuityScope, row: Row): Promise<HandoverNote> 
 
 async function insertVersion(
   scope: ContinuityScope,
-  input: { matterId: string; recipientMemberId: string; edits: HandoverContent['edits']; questions: BriefLine[] },
+  input: {
+    matterId: string;
+    recipientMemberId: string;
+    edits: HandoverContent['edits'];
+    questions: BriefLine[];
+  },
 ): Promise<HandoverNote> {
   const { tx, actor } = scope;
   const [recipient] = await tx
@@ -505,4 +521,3 @@ export async function generateHandoversForMember(
     return notes;
   });
 }
-

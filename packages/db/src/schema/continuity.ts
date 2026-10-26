@@ -3,15 +3,7 @@
 // any update but the recipient's acknowledgement). Both are tenant tables under FORCE RLS. The notes
 // are internal to the workspace; the derived content is stored as the author saw it.
 import { sql } from 'drizzle-orm';
-import {
-  check,
-  foreignKey,
-  integer,
-  jsonb,
-  timestamp,
-  unique,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { check, foreignKey, integer, jsonb, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
 
 import { id } from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';

@@ -16,7 +16,10 @@ describe('continuity across workspaces (R15)', () => {
       await expect(generateHandover(a.deps, asB, a.fixture.matterId)).rejects.toBeDefined();
       await expect(recordView(a.deps, asB, { matterId: a.fixture.matterId })).rejects.toBeDefined();
       await expect(
-        saveHandover(a.deps, asB, { matterId: a.fixture.matterId, recipientMemberId: a.ownerMemberId }),
+        saveHandover(a.deps, asB, {
+          matterId: a.fixture.matterId,
+          recipientMemberId: a.ownerMemberId,
+        }),
       ).rejects.toBeDefined();
       // B's own scope cannot see A's matter.
       await expect(generateHandover(b.deps, b.actor, a.fixture.matterId)).rejects.toMatchObject({
@@ -25,8 +28,12 @@ describe('continuity across workspaces (R15)', () => {
       await expect(
         whatChangedSince(b.deps, b.actor, a.fixture.matterId, new Date(0)),
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
-      expect(await inWorkspace(tx, a.workspaceId, (s) => s.select().from(schema.matterView))).toEqual([]);
-      expect(await inWorkspace(tx, a.workspaceId, (s) => s.select().from(schema.handoverNote))).toEqual([]);
+      expect(
+        await inWorkspace(tx, a.workspaceId, (s) => s.select().from(schema.matterView)),
+      ).toEqual([]);
+      expect(
+        await inWorkspace(tx, a.workspaceId, (s) => s.select().from(schema.handoverNote)),
+      ).toEqual([]);
     });
   });
 

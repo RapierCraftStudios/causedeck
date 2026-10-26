@@ -382,8 +382,14 @@ export const AUDIT_ACTIONS = {
     description: 'A lawyer shared an outward draft from their own channel',
   },
   // Continuity (#71): who generated, read, saved or acknowledged a handover; ids only, never note text.
-  'handover.generated': { security: false, description: 'A handover note was assembled for a matter' },
-  'handover.saved': { security: false, description: 'A handover note version was saved and addressed' },
+  'handover.generated': {
+    security: false,
+    description: 'A handover note was assembled for a matter',
+  },
+  'handover.saved': {
+    security: false,
+    description: 'A handover note version was saved and addressed',
+  },
   'handover.read': { security: false, description: 'Handover notes of a matter were read' },
   'handover.acknowledged': { security: false, description: 'A handover note was acknowledged' },
   'continuity.changes_read': {

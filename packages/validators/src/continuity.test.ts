@@ -45,12 +45,18 @@ describe('continuity schemas (#71)', () => {
 
   it('refuses more than three orders', () => {
     const order = { order_id: id, order_date: '2026-10-01', lines: [] };
-    expect(HandoverBody.safeParse({ ...body, last_orders: [order, order, order, order] }).success).toBe(false);
+    expect(
+      HandoverBody.safeParse({ ...body, last_orders: [order, order, order, order] }).success,
+    ).toBe(false);
   });
 
   it('refuses unknown keys, so no share or email field can ride along', () => {
-    expect(SaveHandoverInput.safeParse({ matterId: id, recipientMemberId: id, shareLink: 'x' }).success).toBe(false);
-    expect(AcknowledgeHandoverInput.safeParse({ handoverId: id, email: 'a@b.c' }).success).toBe(false);
+    expect(
+      SaveHandoverInput.safeParse({ matterId: id, recipientMemberId: id, shareLink: 'x' }).success,
+    ).toBe(false);
+    expect(AcknowledgeHandoverInput.safeParse({ handoverId: id, email: 'a@b.c' }).success).toBe(
+      false,
+    );
   });
 
   it('defaults the edits and questions on save', () => {
@@ -59,7 +65,22 @@ describe('continuity schemas (#71)', () => {
   });
 
   it('parses a change summary and a view marker', () => {
-    expect(ChangeSummary.safeParse({ matter_id: id, since: body.generated_at, days_ago: 12, groups: [], total: 0 }).success).toBe(true);
-    expect(ViewMarker.safeParse({ matter_id: id, previous_viewed_at: null, viewed_at: body.generated_at, recorded: true }).success).toBe(true);
+    expect(
+      ChangeSummary.safeParse({
+        matter_id: id,
+        since: body.generated_at,
+        days_ago: 12,
+        groups: [],
+        total: 0,
+      }).success,
+    ).toBe(true);
+    expect(
+      ViewMarker.safeParse({
+        matter_id: id,
+        previous_viewed_at: null,
+        viewed_at: body.generated_at,
+        recorded: true,
+      }).success,
+    ).toBe(true);
   });
 });

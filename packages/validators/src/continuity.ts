@@ -66,7 +66,10 @@ export const HandoverBody = z.strictObject({
 export type HandoverBody = z.infer<typeof HandoverBody>;
 
 /** The lawyer's text edits per section, kept next to the derived content. */
-export const HandoverEdits = z.partialRecord(z.enum(HANDOVER_SECTIONS), z.string().max(MAX_SECTION_EDIT));
+export const HandoverEdits = z.partialRecord(
+  z.enum(HANDOVER_SECTIONS),
+  z.string().max(MAX_SECTION_EDIT),
+);
 export type HandoverEdits = z.infer<typeof HandoverEdits>;
 
 export const HandoverContent = z.strictObject({ derived: HandoverBody, edits: HandoverEdits });
@@ -95,7 +98,10 @@ export const SaveHandoverInput = z.strictObject({
   matterId: uuid,
   recipientMemberId: uuid,
   edits: HandoverEdits.default({}),
-  openQuestions: z.array(z.string().trim().min(1).max(MAX_QUESTION_LENGTH)).max(MAX_OPEN_QUESTIONS).default([]),
+  openQuestions: z
+    .array(z.string().trim().min(1).max(MAX_QUESTION_LENGTH))
+    .max(MAX_OPEN_QUESTIONS)
+    .default([]),
 });
 export type SaveHandoverInput = z.input<typeof SaveHandoverInput>;
 

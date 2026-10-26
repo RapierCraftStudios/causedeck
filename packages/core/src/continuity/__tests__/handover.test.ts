@@ -46,7 +46,9 @@ describe('generateHandover (R1, R3)', () => {
     await withTestDb(async (tx) => {
       const { deps, actor, fixture, workspaceId } = await seedContinuity(tx);
       await generateHandover(deps, actor, fixture.matterId);
-      expect(await inWorkspace(tx, workspaceId, (s) => s.select().from(schema.handoverNote))).toEqual([]);
+      expect(
+        await inWorkspace(tx, workspaceId, (s) => s.select().from(schema.handoverNote)),
+      ).toEqual([]);
     });
   });
 });
@@ -71,7 +73,9 @@ describe('saveHandover and acknowledgeHandover (R2, R3)', () => {
       expect(first.body.derived.open_questions[0]?.text).toBe('Is the limitation point live?');
       expect(first.body.derived.open_questions_label).toBeNull();
       // The saved question carries into the next generated note.
-      expect((await generateHandover(deps, actor, fixture.matterId)).open_questions).toHaveLength(1);
+      expect((await generateHandover(deps, actor, fixture.matterId)).open_questions).toHaveLength(
+        1,
+      );
       const second = await saveHandover(deps, actor, {
         matterId: fixture.matterId,
         recipientMemberId: recipient,
@@ -80,7 +84,9 @@ describe('saveHandover and acknowledgeHandover (R2, R3)', () => {
       const asRecipient = { userId: recipientUser, workspaceId };
       const seen = await listHandovers(deps, asRecipient, { matterId: fixture.matterId });
       expect(seen.map((n) => n.version)).toEqual([2, 1]);
-      await expect(acknowledgeHandover(deps, actor, { handoverId: first.id })).rejects.toMatchObject({
+      await expect(
+        acknowledgeHandover(deps, actor, { handoverId: first.id }),
+      ).rejects.toMatchObject({
         code: 'FORBIDDEN',
       });
       const acked = await acknowledgeHandover(deps, asRecipient, { handoverId: first.id });
@@ -104,10 +110,14 @@ describe('saveHandover and acknowledgeHandover (R2, R3)', () => {
       const { deps, actor, fixture, workspaceId, ownerMemberId } = await seedContinuity(tx);
       const viewer = await addMember(tx, workspaceId, 'viewer');
       await expect(
-        saveHandover(deps, { userId: viewer, workspaceId }, {
-          matterId: fixture.matterId,
-          recipientMemberId: ownerMemberId,
-        }),
+        saveHandover(
+          deps,
+          { userId: viewer, workspaceId },
+          {
+            matterId: fixture.matterId,
+            recipientMemberId: ownerMemberId,
+          },
+        ),
       ).rejects.toMatchObject({ code: 'FORBIDDEN' });
       await expect(saveHandover(deps, actor, { matterId: 'x' })).rejects.toMatchObject({
         code: 'VALIDATION',

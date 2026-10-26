@@ -133,7 +133,11 @@ async function collect(scope: ContinuityScope, matterId: string, since: Date): P
     for (const o of orders) {
       add('order', o.createdAt, plain(`New order of ${shortDate(o.orderDate)}`, o));
       if (o.nextDate !== null) {
-        add('next_date', o.createdAt, plain(`Next date ${shortDate(o.nextDate)} set by the order`, o));
+        add(
+          'next_date',
+          o.createdAt,
+          plain(`Next date ${shortDate(o.nextDate)} set by the order`, o),
+        );
       }
     }
     const listings = await tx
@@ -171,13 +175,20 @@ async function collect(scope: ContinuityScope, matterId: string, since: Date): P
         add(
           'hearing',
           h.createdAt,
-          plain(`Hearing on ${shortDate(h.heldOn)}${h.outcome === null ? '' : `: ${h.outcome}`}`, h),
+          plain(
+            `Hearing on ${shortDate(h.heldOn)}${h.outcome === null ? '' : `: ${h.outcome}`}`,
+            h,
+          ),
         );
       }
       const next = h.nextDateConfirmed ?? h.nextDateProposed;
       if (next !== null) {
         const line = plain(`Next date ${shortDate(next)}`, h);
-        add('next_date', h.updatedAt, h.nextDateConfirmed === null ? { ...line, label: 'Unconfirmed' } : line);
+        add(
+          'next_date',
+          h.updatedAt,
+          h.nextDateConfirmed === null ? { ...line, label: 'Unconfirmed' } : line,
+        );
       }
     }
   }

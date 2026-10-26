@@ -7,7 +7,12 @@ import { ChangeCard } from './change-card';
 import { HandoverView } from './handover-view';
 
 const sections = [
-  { id: 'a', title: 'Where it stands', items: [{ id: '1', text: 'For final hearing' }], emptyLabel: 'None recorded' },
+  {
+    id: 'a',
+    title: 'Where it stands',
+    items: [{ id: '1', text: 'For final hearing' }],
+    emptyLabel: 'None recorded',
+  },
   { id: 'q', title: 'Open questions', items: [], emptyLabel: 'None recorded' },
 ];
 
@@ -24,7 +29,12 @@ describe('HandoverView', () => {
       <HandoverView
         title="Handover"
         sections={sections}
-        acknowledge={{ label: 'Acknowledge', doneLabel: 'Acknowledged', done: false, onAcknowledge }}
+        acknowledge={{
+          label: 'Acknowledge',
+          doneLabel: 'Acknowledged',
+          done: false,
+          onAcknowledge,
+        }}
       />,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Acknowledge' }));

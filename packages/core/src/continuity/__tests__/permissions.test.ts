@@ -19,8 +19,7 @@ const line = (text: string) => ({
 
 const memory: MemoryProvider = {
   alwaysCarry: () => Promise.resolve([]),
-  synopsis: () =>
-    Promise.resolve({ line: line('SYNOPSIS-TEXT'), strategy: line('STRATEGY-TEXT') }),
+  synopsis: () => Promise.resolve({ line: line('SYNOPSIS-TEXT'), strategy: line('STRATEGY-TEXT') }),
   lastHearing: () => Promise.resolve(null),
   courtNotes: () =>
     Promise.resolve([{ authorUserId: 'someone', shared: true, line: line('COURT-NOTE-TEXT') }]),
@@ -67,7 +66,12 @@ describe('role filtering (R6)', () => {
       const { deps, actor, fixture, workspaceId } = await seedContinuity(tx);
       const clerk = { userId: await addMember(tx, workspaceId, 'clerk'), workspaceId };
       for (const who of [actor, clerk]) {
-        const summary = await whatChangedSince({ ...deps, memory }, who, fixture.matterId, new Date(0));
+        const summary = await whatChangedSince(
+          { ...deps, memory },
+          who,
+          fixture.matterId,
+          new Date(0),
+        );
         expect(JSON.stringify(summary)).not.toMatch(/SYNOPSIS-TEXT|STRATEGY-TEXT|COURT-NOTE-TEXT/);
       }
     });

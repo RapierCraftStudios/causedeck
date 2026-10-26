@@ -20,8 +20,17 @@ const SECTIONS: HandoverSectionView[] = [
     id: 'order',
     title: 'Last orders',
     items: [
-      { id: 'o1', text: 'Respondent shall file the counter affidavit by 20 October 2026.', detail: 'p. 1' },
-      { id: 'o2', text: 'Petitioner may file a rejoinder within one week.', detail: 'p. 1', flag: 'Unconfirmed' },
+      {
+        id: 'o1',
+        text: 'Respondent shall file the counter affidavit by 20 October 2026.',
+        detail: 'p. 1',
+      },
+      {
+        id: 'o2',
+        text: 'Petitioner may file a rejoinder within one week.',
+        detail: 'p. 1',
+        flag: 'Unconfirmed',
+      },
     ],
     emptyLabel: 'None recorded',
   },
@@ -41,7 +50,12 @@ const meta = {
     title: 'Handover: Asha Traders v. State of Fictionia',
     byline: 'Version 2 · from Asha to Vikram · 26 Oct',
     sections: SECTIONS,
-    acknowledge: { label: 'Acknowledge', doneLabel: 'Acknowledged', done: false, onAcknowledge: fn() },
+    acknowledge: {
+      label: 'Acknowledge',
+      doneLabel: 'Acknowledged',
+      done: false,
+      onAcknowledge: fn(),
+    },
   },
 } satisfies Meta<typeof HandoverView>;
 
@@ -74,7 +88,14 @@ export const Active: Story = {
 };
 
 export const Acknowledged: Story = {
-  args: { acknowledge: { label: 'Acknowledge', doneLabel: 'Acknowledged', done: true, onAcknowledge: fn() } },
+  args: {
+    acknowledge: {
+      label: 'Acknowledge',
+      doneLabel: 'Acknowledged',
+      done: true,
+      onAcknowledge: fn(),
+    },
+  },
   play: async ({ canvasElement }) => {
     await expect(within(canvasElement).getByRole('status')).toHaveTextContent('Acknowledged');
   },
@@ -94,11 +115,17 @@ export const LongText: Story = {
 };
 
 export const Tamil: Story = {
-  args: { title: 'ஒப்படைப்பு குறிப்பு', sections: [{ ...SECTIONS[3]!, title: 'திறந்த கேள்விகள்', emptyLabel: 'பதிவு இல்லை' }] },
+  args: {
+    title: 'ஒப்படைப்பு குறிப்பு',
+    sections: [{ ...SECTIONS[3]!, title: 'திறந்த கேள்விகள்', emptyLabel: 'பதிவு இல்லை' }],
+  },
 };
 
 export const Kannada: Story = {
-  args: { title: 'ಹಸ್ತಾಂತರ ಟಿಪ್ಪಣಿ', sections: [{ ...SECTIONS[3]!, title: 'ಬಾಕಿ ಪ್ರಶ್ನೆಗಳು', emptyLabel: 'ಯಾವುದೂ ದಾಖಲಾಗಿಲ್ಲ' }] },
+  args: {
+    title: 'ಹಸ್ತಾಂತರ ಟಿಪ್ಪಣಿ',
+    sections: [{ ...SECTIONS[3]!, title: 'ಬಾಕಿ ಪ್ರಶ್ನೆಗಳು', emptyLabel: 'ಯಾವುದೂ ದಾಖಲಾಗಿಲ್ಲ' }],
+  },
 };
 
 export const Loading: Story = { render: () => <HandoverSkeleton /> };
@@ -132,7 +159,12 @@ export const WhatChanged: Story = {
       heading="Since you last opened this, 12 days ago"
       groups={[
         { day: '20 Oct', items: [{ id: '1', text: 'New order of 20 Oct', detail: 'Order, p. 1' }] },
-        { day: '24 Oct', items: [{ id: '2', text: 'Obligation created: rejoinder to be filed', detail: 'by Asha' }] },
+        {
+          day: '24 Oct',
+          items: [
+            { id: '2', text: 'Obligation created: rejoinder to be filed', detail: 'by Asha' },
+          ],
+        },
       ]}
       emptyLabel="Nothing changed"
       dismissLabel="Dismiss"

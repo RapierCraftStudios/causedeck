@@ -45,6 +45,8 @@ import {
   updateMatterAction,
 } from './actions.ts';
 import { createBriefShareAction, revokeBriefShareAction } from '../../briefs/actions.ts';
+import { HandoverSheet } from './_continuity/handover-sheet.tsx';
+import { WhatChangedCard } from './_continuity/what-changed-card.tsx';
 import MatterLoading from './loading.tsx';
 
 interface MatterPageProps {
@@ -156,6 +158,26 @@ async function loadBriefSharing(
   }
 }
 
+/** Member names by member id and the viewer's own member id, for the handover sheet and card (#71). */
+async function loadContinuityMembers(
+  context: WorkspaceContext,
+): Promise<{ members: Record<string, string>; myMemberId: string | null }> {
+  try {
+    const { listMembersIn } = await import('@causedeck/core/runtime');
+    const rows = await listMembersIn({
+      workspaceId: context.workspace.id,
+      userId: context.user.id,
+    });
+    return {
+      members: Object.fromEntries(rows.map((m) => [m.memberId, m.name])),
+      myMemberId: rows.find((m) => m.userId === context.user.id)?.memberId ?? null,
+    };
+  } catch (error) {
+    logger.error({ err: error }, 'matter overview: could not load members for the handover');
+    return { members: {}, myMemberId: null };
+  }
+}
+
 export default async function MatterOverviewPage({ params, searchParams }: MatterPageProps) {
   const [{ slug, id }, query] = await Promise.all([params, searchParams]);
   const context = await getWorkspaceContext(slug);
@@ -181,8 +203,27 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
     proceedingId === undefined || dev === 'empty'
       ? []
       : await loadReviewCorrections(context, proceedingId, locale);
+  const continuity = await loadContinuityMembers(context);
   return (
     <>
+      <div className="grid gap-3">
+        <div className="flex justify-end">
+          <HandoverSheet
+            workspaceId={context.workspace.id}
+            matterId={id}
+            members={continuity.members}
+            myMemberId={continuity.myMemberId}
+            canWrite={can(context.role, 'task.write')}
+          />
+        </div>
+        {dev === 'empty' ? null : (
+          <WhatChangedCard
+            workspaceId={context.workspace.id}
+            matterId={id}
+            members={continuity.members}
+          />
+        )}
+      </div>
       <MatterOverview
         matter={dev === 'empty' ? emptied(view) : view}
         workspaceId={context.workspace.id}

@@ -1413,7 +1413,14 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     const memberId = await ownerMemberId(tx, workspaceId, ownerId);
     const rows = await tx
       .insert(handoverNote)
-      .values({ workspaceId, matterId, authorId: memberId, recipientId: memberId, body: {}, version: 1 })
+      .values({
+        workspaceId,
+        matterId,
+        authorId: memberId,
+        recipientId: memberId,
+        body: {},
+        version: 1,
+      })
       .returning({ id: handoverNote.id });
     return { matterId, id: first(rows, 'handover_note').id };
   },

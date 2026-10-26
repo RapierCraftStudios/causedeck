@@ -45,6 +45,7 @@ export const NAMESPACES = [
   'outward',
   'outcome',
   'brief',
+  'continuity',
   'share',
   'offline',
   'errors',

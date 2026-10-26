@@ -25,7 +25,8 @@ export interface HandoverViewProps extends Omit<ComponentProps<'article'>, 'chil
   byline?: string | undefined;
   sections: readonly HandoverSectionView[];
   /** Left out when the note is not addressed to the viewer. */
-  acknowledge?: { label: string; doneLabel: string; done: boolean; onAcknowledge: () => void };
+  acknowledge?:
+    { label: string; doneLabel: string; done: boolean; onAcknowledge: () => void } | undefined;
   footer?: ReactNode;
 }
 
@@ -96,7 +97,11 @@ export function HandoverSkeleton({ label = 'Loading' }: { label?: string }) {
   return (
     <div role="status" aria-busy="true" aria-label={label} className="grid max-w-prose gap-3 p-4">
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="bg-muted h-4 animate-pulse rounded" style={{ width: `${String(90 - i * 15)}%` }} />
+        <div
+          key={i}
+          className="bg-muted h-4 animate-pulse rounded"
+          style={{ width: `${String(90 - i * 15)}%` }}
+        />
       ))}
     </div>
   );

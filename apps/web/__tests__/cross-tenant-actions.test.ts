@@ -134,9 +134,7 @@ const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calen
 const courtDay = await import('../app/(app)/w/[slug]/_court-day/actions.ts');
 const offlineActions = await import('../app/(app)/w/[slug]/_offline/actions.ts');
 const shareActions = await import('../app/(public)/share/[token]/actions.ts');
-const continuityActions = await import(
-  '../app/(app)/w/[slug]/matters/[id]/_continuity/actions.ts'
-);
+const continuityActions = await import('../app/(app)/w/[slug]/matters/[id]/_continuity/actions.ts');
 const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 

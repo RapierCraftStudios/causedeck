@@ -77,9 +77,7 @@ export async function inContinuityScope<T>(
     const [self] = await tx
       .select({ id: schema.member.id })
       .from(schema.member)
-      .where(
-        and(eq(schema.member.organizationId, workspaceId), eq(schema.member.userId, userId)),
-      )
+      .where(and(eq(schema.member.organizationId, workspaceId), eq(schema.member.userId, userId)))
       .limit(1);
     if (self === undefined) throw notFound('Workspace not found');
     let settings: PolicySettings | undefined = deps.settings;
@@ -115,7 +113,9 @@ export async function loadMatter(scope: ContinuityScope, matterId: string) {
   const [row] = await scope.tx
     .select()
     .from(schema.matter)
-    .where(and(eq(schema.matter.workspaceId, scope.actor.workspaceId), eq(schema.matter.id, matterId)))
+    .where(
+      and(eq(schema.matter.workspaceId, scope.actor.workspaceId), eq(schema.matter.id, matterId)),
+    )
     .limit(1);
   if (row === undefined) throw notFound('Matter not found');
   return row;

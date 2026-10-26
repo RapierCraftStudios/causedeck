@@ -1,0 +1,159 @@
+// Member offboarding (#178, #18): reassign open work, revoke the member's sessions scoped to the
+// workspace, mark the membership `removed` and record an audit event. Authorization (owner-only,
+// last-owner guard) stays in `removeMember`, which calls this inside its transaction. The audit
+// event goes through the installed `AuditSink`, by default `record()` (packages/core/src/audit).
+import { schema, type Database, type Transaction } from '@causedeck/db';
+import { and, eq } from 'drizzle-orm';
+
+import { recordAuditSink } from '../audit/index.ts';
+import type { AuditSink } from '../shared/audit-sink.ts';
+import { invalid, notFound } from './errors.ts';
+
+type Queryable = Database | Transaction;
+
+const { member, session } = schema;
+
+/**
+ * Open work a removed member holds (tasks, obligations). No such tables exist yet: their modules
+ * register a provider so offboarding can require and perform a reassignment.
+ */
+export interface ReassignProvider {
+  name: string;
+  /** Open items `userId` holds in the workspace. */
+  countOpen(tx: Queryable, workspaceId: string, userId: string): Promise<number>;
+  reassign(tx: Queryable, workspaceId: string, fromUserId: string, toUserId: string): Promise<void>;
+}
+
+const reassignProviders = new Set<ReassignProvider>();
+
+/** Register a provider; returns a function that unregisters it. */
+export function registerReassignProvider(provider: ReassignProvider): () => void {
+  reassignProviders.add(provider);
+  return () => {
+    reassignProviders.delete(provider);
+  };
+}
+
+/** Unregister every provider (tests). */
+export function clearReassignProviders(): void {
+  reassignProviders.clear();
+}
+
+export type { AuditEvent, AuditSink } from '../shared/audit-sink.ts';
+
+export const noopAuditSink: AuditSink = {
+  write: () => Promise.resolve(),
+};
+
+export const consoleAuditSink: AuditSink = {
+  write: (_tx, event) => {
+    console.info('audit event (console sink)', event);
+    return Promise.resolve();
+  },
+};
+
+let activeAuditSink: AuditSink = recordAuditSink;
+
+/** The installed sink; delegates so callers can hold a stable reference. */
+export const auditSink: AuditSink = {
+  write: (tx, event) => activeAuditSink.write(tx, event),
+};
+
+/** Install an audit sink (tests); `null` restores the default `record()`-backed sink. */
+export function setAuditSink(sink: AuditSink | null): void {
+  activeAuditSink = sink ?? recordAuditSink;
+}
+
+export interface OffboardMemberRequest {
+  workspaceId: string;
+  actorUserId: string;
+  target: { memberId: string; userId: string };
+  /** Member id that takes over open work; required when any provider reports open items. */
+  reassignTo?: string | undefined;
+}
+
+/**
+ * Open items (tasks, obligations) `userId` holds in the workspace, across every registered
+ * provider. The members page asks before removal whether a reassignment is required.
+ */
+export async function countOpenWork(
+  tx: Queryable,
+  workspaceId: string,
+  userId: string,
+): Promise<number> {
+  let open = 0;
+  for (const provider of reassignProviders) {
+    open += await provider.countOpen(tx, workspaceId, userId);
+  }
+  return open;
+}
+
+async function reassignTarget(
+  tx: Queryable,
+  request: OffboardMemberRequest,
+): Promise<string | null> {
+  if (request.reassignTo === undefined) return null;
+  if (request.reassignTo === request.target.memberId) {
+    throw invalid('Choose a different member to take over open tasks and obligations');
+  }
+  const [row] = await tx
+    .select({ userId: member.userId })
+    .from(member)
+    .where(
+      and(
+        eq(member.id, request.reassignTo),
+        eq(member.organizationId, request.workspaceId),
+        eq(member.status, 'active'),
+      ),
+    );
+  if (!row) throw notFound('Member to reassign to not found');
+  return row.userId;
+}
+
+/**
+ * Offboard an active member inside the caller's transaction. With open work and no `reassignTo`
+ * this is a `VALIDATION` error and nothing changes. Only sessions whose active workspace is this
+ * one are deleted; the member's other sessions survive and lose access here through `status`.
+ * A target that is not an active member visible in the caller's scope is `NOT_FOUND` before
+ * anything is written: `session` is a global table, so it must never be touched for a member of
+ * another workspace (#209).
+ */
+export async function offboardMember(tx: Queryable, request: OffboardMemberRequest): Promise<void> {
+  const { workspaceId, target } = request;
+  const [visible] = await tx
+    .select({ id: member.id })
+    .from(member)
+    .where(
+      and(
+        eq(member.id, target.memberId),
+        eq(member.organizationId, workspaceId),
+        eq(member.userId, target.userId),
+        eq(member.status, 'active'),
+      ),
+    );
+  if (!visible) throw notFound('Member not found');
+  const toUserId = await reassignTarget(tx, request);
+
+  const open = await countOpenWork(tx, workspaceId, target.userId);
+  if (open > 0 && toUserId === null) {
+    throw invalid('Choose a member to take over open tasks and obligations');
+  }
+  if (toUserId !== null) {
+    for (const provider of reassignProviders) {
+      await provider.reassign(tx, workspaceId, target.userId, toUserId);
+    }
+  }
+
+  await tx
+    .delete(session)
+    .where(and(eq(session.userId, target.userId), eq(session.activeOrganizationId, workspaceId)));
+  await tx.update(member).set({ status: 'removed' }).where(eq(member.id, target.memberId));
+  await auditSink.write(tx, {
+    action: 'member.removed',
+    workspaceId,
+    actorUserId: request.actorUserId,
+    targetUserId: target.userId,
+    reassignedTo: toUserId,
+    at: new Date(),
+  });
+}

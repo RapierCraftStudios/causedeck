@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "calendar": "Calendar",
+    "inbox": "Inbox",
+    "matters": "Matters",
+    "briefs": "Briefs",
+    "obligations": "Obligations",
+    "drafts": "Drafts",
+    "memory": "Memory",
+    "people": "People",
+    "courts": "Courts",
+    "notices": "Notices",
+    "portfolio": "Portfolio",
+    "activity": "Activity",
+    "billing": "Billing",
+    "invoices": "Invoices",
+    "limitation": "Limitation",
+    "insights": "Insights",
+    "settings": "Settings",
+    "groups": {
+      "work": "Work",
+      "followup": "Follow-up",
+      "practice": "Practice",
+      "settings": "Settings"
+    }
+  },
+  "palette": {
+    "title": "Command palette",
+    "placeholder": "Search or jump to...",
+    "description": "Search for a matter, a page or an action, then press Enter.",
+    "close": "Close",
+    "empty": "No matches. Try a matter name, court or action.",
+    "recent": "Recent",
+    "hints": "↑↓ to move, ↵ to open, esc to close",
+    "groups": {
+      "goTo": "Go to",
+      "create": "Create",
+      "matters": "Matters",
+      "settings": "Settings",
+      "help": "Help"
+    }
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "description": "Shortcuts work anywhere except while you are typing in a field.",
+    "close": "Close",
+    "then": "then",
+    "goTo": "Go to {destination}",
+    "groups": {
+      "navigation": "Navigation",
+      "actions": "Actions",
+      "help": "Help"
+    },
+    "actions": {
+      "capture": "Capture",
+      "palette": "Open command palette",
+      "sidebar": "Toggle sidebar",
+      "search": "Search this page",
+      "help": "Keyboard shortcuts"
+    }
+  }
+}

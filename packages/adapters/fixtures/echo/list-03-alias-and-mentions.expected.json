@@ -1,0 +1,51 @@
+{
+  "adapterId": "echo",
+  "adapterVersion": "1.0.0",
+  "forumCode": "test.echo.principal",
+  "listDate": "2026-10-23",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. Writ Petition 501/2026  Thendral Imaginary vs Sample Corporation",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "5",
+      "itemNo": "1",
+      "caseTypeRaw": "Writ Petition",
+      "caseType": "WP",
+      "caseNumber": "501",
+      "caseYear": 2026,
+      "matchKey": "WP/501/2026",
+      "parties": "Thendral Imaginary vs Sample Corporation",
+      "stageRaw": "MENTION MEMOS",
+      "stageNorm": "mention"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. W.P. 502/2026  Iniyan Pretend vs Placeholder Authority",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "5",
+      "itemNo": "2",
+      "caseTypeRaw": "W.P.",
+      "caseType": "WP",
+      "caseNumber": "502",
+      "caseYear": 2026,
+      "matchKey": "WP/502/2026",
+      "parties": "Iniyan Pretend vs Placeholder Authority",
+      "stageRaw": "MENTION MEMOS",
+      "stageNorm": "mention"
+    }
+  ],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["5"],
+    "hallsUnreadable": []
+  }
+}

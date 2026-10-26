@@ -1,4 +1,5 @@
 // Request and response schemas for the public REST API (`apps/api`, #14).
+export * from './billing';
 export * from './errors';
 export * from './me';
 export * from './pagination';

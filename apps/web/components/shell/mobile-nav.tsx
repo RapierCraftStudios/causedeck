@@ -1,19 +1,20 @@
 'use client';
 
-import { Ellipsis } from 'lucide-react';
+import { useIsEnabled } from '@causedeck/flags/react';
+import { Bell, Ellipsis } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
-import {
-  NAV_GROUPS,
-  flagsOff,
-  visibleNavItems,
-  type NavItem,
-  type WorkspaceRoute,
-} from '../../lib/nav.ts';
+import { NAV_GROUPS, visibleNavItems, type NavItem, type WorkspaceRoute } from '../../lib/nav.ts';
 import type { FlagKey, Role } from '../../lib/workspace-context.ts';
+import { LocaleSwitcher } from '../locale-switcher.tsx';
+import {
+  formatBadge,
+  openNotifications,
+  useActiveUnread,
+} from '../notifications/use-notifications.ts';
 
 import { CaptureFab } from './capture-fab.tsx';
 import { isNavItemActive } from './sidebar-nav.tsx';
@@ -35,20 +36,25 @@ const slotTone = (active: boolean) => (active ? 'text-accent' : 'text-ink-muted 
 export interface MobileNavProps {
   slug: string;
   role: Role;
-  /** Feature-flag check. TODO(#22): the real evaluator from `@causedeck/flags`. Defaults to off. */
+  /** Feature-flag check; defaults to the server-evaluated `FlagsProvider` snapshot (off without one). */
   isEnabled?: ((flag: FlagKey) => boolean) | undefined;
 }
 
 /**
  * Phones only (below 768 px, where the sidebar is hidden): a bottom bar 56 px tall plus the
  * safe-area inset, with Today, Inbox, the raised capture button, Matters, Obligations and More.
- * More opens a bottom sheet with the remaining destinations.
+ * More opens a bottom sheet with Notifications (opening the notification panel), the remaining
+ * destinations and the language switcher.
  */
-export function MobileNav({ slug, role, isEnabled = flagsOff }: MobileNavProps) {
+export function MobileNav({ slug, role, isEnabled: isEnabledProp }: MobileNavProps) {
+  const fromFlags = useIsEnabled();
+  const isEnabled = isEnabledProp ?? fromFlags;
   const t = useTranslations();
   const pathname = usePathname();
   const overlays = useShellOverlays();
   const [moreOpen, setMoreOpen] = useState(false);
+  const unread = useActiveUnread();
+  const badge = formatBadge(unread);
 
   const items = visibleNavItems({ role, isEnabled });
   const primary = BOTTOM_NAV_ROUTES.flatMap((id) => items.filter((entry) => entry.id === id));
@@ -117,6 +123,32 @@ export function MobileNav({ slug, role, isEnabled = flagsOff }: MobileNavProps) 
                   <overlays.SheetTitle>{t('shell.mobileNav.moreTitle')}</overlays.SheetTitle>
                 </overlays.SheetHeader>
                 <div className="flex flex-col gap-3">
+                  <button
+                    type="button"
+                    data-more-item="notifications"
+                    aria-haspopup="dialog"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      openNotifications();
+                    }}
+                    className="focus-visible:outline-ring text-ink-muted hover:bg-accent-soft/60 hover:text-ink flex min-h-11 items-center gap-3 rounded-md px-2 text-start text-sm font-medium outline-none focus-visible:outline-2"
+                  >
+                    <Bell aria-hidden="true" className="size-[18px] shrink-0" strokeWidth={1.5} />
+                    <span className="flex-1">{t('notifications.title')}</span>
+                    {badge ? (
+                      <>
+                        <span
+                          aria-hidden="true"
+                          className="bg-accent text-accent-ink flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-semibold tabular-nums"
+                        >
+                          {badge}
+                        </span>
+                        <span className="sr-only">
+                          {t('notifications.unreadCount', { count: unread })}
+                        </span>
+                      </>
+                    ) : null}
+                  </button>
                   {NAV_GROUPS.map((group) => {
                     const groupItems = rest.filter((entry) => entry.group === group);
                     if (groupItems.length === 0) return null;
@@ -163,6 +195,7 @@ export function MobileNav({ slug, role, isEnabled = flagsOff }: MobileNavProps) 
                       </div>
                     );
                   })}
+                  <LocaleSwitcher variant="list" />
                 </div>
               </overlays.SheetContent>
             </overlays.Sheet>
@@ -192,7 +225,10 @@ function BarLink({ item, slug, label, isActive }: BarLinkProps) {
       className={`${SLOT} ${slotTone(isActive)}`}
     >
       <Icon aria-hidden="true" className="size-[18px] shrink-0" strokeWidth={1.5} />
-      <span className="max-w-full truncate px-0.5">{label}</span>
+      {/* Tamil labels run wider than the 60 px slot at 360 px: one step smaller, no padding (#176). */}
+      <span className="max-w-full truncate px-0.5 [&:lang(ta)]:px-0 [&:lang(ta)]:text-[10px]">
+        {label}
+      </span>
     </Link>
   );
 }

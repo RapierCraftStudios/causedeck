@@ -1,6 +1,7 @@
 // Flat config for Next.js apps (web, site, admin): the React rules plus Next.js app conventions.
 import globals from 'globals';
 
+import { serverActionAuthorization } from './authorization.js';
 import { loggerContentRestrictions } from './base.js';
 import { react } from './react.js';
 
@@ -20,6 +21,8 @@ export const next = [
       'no-restricted-syntax': ['error', ...loggerContentRestrictions, edgeRuntimeRestriction],
     },
   },
+  // Server actions must authorize (#235).
+  serverActionAuthorization,
 ];
 
 export default next;

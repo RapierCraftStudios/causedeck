@@ -1,0 +1,55 @@
+{
+  "header": {
+    "caseTypeRaw": "W.P.",
+    "caseType": "WP",
+    "caseNumber": "12610",
+    "caseYear": 2026,
+    "orderDate": "2026-10-21",
+    "neutralCitation": null,
+    "neutralCitationRaw": null,
+    "anchor": {
+      "page": 1,
+      "quote": "W.P.No.12610 of 2026",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "W.P.",
+        "number": "12610",
+        "year": 2026,
+        "matchKey": "WP/12610/2026"
+      }
+    ],
+    "bench": "THE HONOURABLE MR.JUSTICE A. FICTIONAL",
+    "judges": ["THE HONOURABLE MR.JUSTICE A. FICTIONAL"],
+    "orderType": "daily"
+  },
+  "cues": [
+    {
+      "kind": "dispensed",
+      "text": "Personal appearance of the petitioner is dispensed with.",
+      "phrase": "dispensed",
+      "anchor": {
+        "page": 1,
+        "quote": "Personal appearance of the petitioner is dispensed with.",
+        "rowIndex": 13
+      },
+      "confidence": 0.8,
+      "date": null
+    },
+    {
+      "kind": "next_date",
+      "text": "Call on 26.11.2026.",
+      "phrase": "Call on",
+      "anchor": {
+        "page": 1,
+        "quote": "Call on 26.11.2026.",
+        "rowIndex": 14
+      },
+      "confidence": 0.95,
+      "date": "2026-11-26"
+    }
+  ]
+}

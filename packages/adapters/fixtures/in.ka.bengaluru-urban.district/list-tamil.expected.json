@@ -1,0 +1,180 @@
+{
+  "adapterId": "in.ka.bengaluru-urban.district",
+  "adapterVersion": "1.0.0",
+  "forumCode": "in.ka.bengaluru-urban.city-civil-sessions",
+  "listDate": "2026-10-15",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. C.C. No. 5678/2021    கற்பனை வணிகர்கள் நிறுவனம் எதிர் புனைவு ஜவுளி",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "21",
+      "itemNo": "1",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "5678",
+      "caseYear": 2021,
+      "matchKey": "CC/5678/2021",
+      "parties": "கற்பனை வணிகர்கள் நிறுவனம் எதிர் புனைவு ஜவுளி",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. M.V.C. No. 7879/2022    போலி விவசாயி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "21",
+      "itemNo": "2",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "7879",
+      "caseYear": 2022,
+      "matchKey": "MVC/7879/2022",
+      "parties": "போலி விவசாயி எதிர் கற்பனை குடியிருப்போர் சங்கம்",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. S.C. No. 1686/2020    கற்பனை வணிகர்கள் நிறுவனம் எதிர் புனைவு ஜவுளி",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "21",
+      "itemNo": "3",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "1686",
+      "caseYear": 2020,
+      "matchKey": "SC/1686/2020",
+      "parties": "கற்பனை வணிகர்கள் நிறுவனம் எதிர் புனைவு ஜவுளி",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. CCCA No. 8948/2024    கற்பனை குடியிருப்போர் சங்கம் எதிர் போலி விவசாயி",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "21",
+      "itemNo": "4",
+      "caseTypeRaw": "CCCA",
+      "caseType": "CCCA",
+      "caseNumber": "8948",
+      "caseYear": 2024,
+      "matchKey": "CCCA/8948/2024",
+      "parties": "கற்பனை குடியிருப்போர் சங்கம் எதிர் போலி விவசாயி",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. O.S. No. 9274/2024    போலி விவசாயி எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "21",
+      "itemNo": "5",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "9274",
+      "caseYear": 2024,
+      "matchKey": "OS/9274/2024",
+      "parties": "போலி விவசாயி எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+      "stageRaw": "சாட்சியத்திற்காக",
+      "stageNorm": "evidence"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. O.S. No. 4451/2025    மாதிரி வங்கி எதிர் கற்பனை மோட்டார்ஸ்",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "9",
+      "itemNo": "6",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "4451",
+      "caseYear": 2025,
+      "matchKey": "OS/4451/2025",
+      "parties": "மாதிரி வங்கி எதிர் கற்பனை மோட்டார்ஸ்",
+      "stageRaw": "வாதத்திற்காக",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. O.S. No. 511/2020    புனைவு ஜவுளி எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "9",
+      "itemNo": "7",
+      "caseTypeRaw": "O.S.",
+      "caseType": "OS",
+      "caseNumber": "511",
+      "caseYear": 2020,
+      "matchKey": "OS/511/2020",
+      "parties": "புனைவு ஜவுளி எதிர் கற்பனை வணிகர்கள் நிறுவனம்",
+      "stageRaw": "வாதத்திற்காக",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. Crl.Misc. No. 5280/2020    கற்பனை குடியிருப்போர் சங்கம் எதிர் போலி விவசாயி",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "9",
+      "itemNo": "8",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "5280",
+      "caseYear": 2020,
+      "matchKey": "CRLMISC/5280/2020",
+      "parties": "கற்பனை குடியிருப்போர் சங்கம் எதிர் போலி விவசாயி",
+      "stageRaw": "வாதத்திற்காக",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. S.C. No. 9312/2023    கற்பனை குடியிருப்போர் சங்கம் எதிர் மாதிரி வங்கி",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "9",
+      "itemNo": "9",
+      "caseTypeRaw": "S.C.",
+      "caseType": "SC",
+      "caseNumber": "9312",
+      "caseYear": 2023,
+      "matchKey": "SC/9312/2023",
+      "parties": "கற்பனை குடியிருப்போர் சங்கம் எதிர் மாதிரி வங்கி",
+      "stageRaw": "வாதத்திற்காக",
+      "stageNorm": "arguments"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "௧௫.௧௦.௨௦௨௬", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["21", "9"],
+    "hallsUnreadable": []
+  }
+}

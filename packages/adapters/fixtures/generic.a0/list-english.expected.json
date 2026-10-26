@@ -1,0 +1,180 @@
+{
+  "adapterId": "generic.a0",
+  "adapterVersion": "1.0.0",
+  "forumCode": "generic.a0",
+  "listDate": "2026-11-19",
+  "status": "ok",
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. C.C. No. 192/2021    Made-up Farmer vs Pretend Housing Society",
+        "rowIndex": 0
+      },
+      "confidence": 0.6,
+      "hallNo": "26",
+      "itemNo": "1",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "192",
+      "caseYear": 2021,
+      "matchKey": "CC/192/2021",
+      "parties": "Made-up Farmer vs Pretend Housing Society",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. C.C. No. 5288/2026    Invented Motors vs Made-up Farmer",
+        "rowIndex": 1
+      },
+      "confidence": 0.6,
+      "hallNo": "26",
+      "itemNo": "2",
+      "caseTypeRaw": "C.C.",
+      "caseType": "CC",
+      "caseNumber": "5288",
+      "caseYear": 2026,
+      "matchKey": "CC/5288/2026",
+      "parties": "Invented Motors vs Made-up Farmer",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. Ex.P. No. 2332/2022    Invented Motors vs Sample Bank Ltd",
+        "rowIndex": 2
+      },
+      "confidence": 0.6,
+      "hallNo": "26",
+      "itemNo": "3",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "2332",
+      "caseYear": 2022,
+      "matchKey": "EXP/2332/2022",
+      "parties": "Invented Motors vs Sample Bank Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. Crl.Misc. No. 8066/2025    Sample Bank Ltd vs Made-up Farmer",
+        "rowIndex": 3
+      },
+      "confidence": 0.6,
+      "hallNo": "26",
+      "itemNo": "4",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "8066",
+      "caseYear": 2025,
+      "matchKey": "CRLMISC/8066/2025",
+      "parties": "Sample Bank Ltd vs Made-up Farmer",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "5. M.V.C. No. 9196/2020    Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+        "rowIndex": 4
+      },
+      "confidence": 0.6,
+      "hallNo": "26",
+      "itemNo": "5",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "9196",
+      "caseYear": 2020,
+      "matchKey": "MVC/9196/2020",
+      "parties": "Sample Bank Ltd vs Fictional Traders Pvt Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "6. M.V.C. No. 4667/2021    Fictional Traders Pvt Ltd vs Sample Bank Ltd",
+        "rowIndex": 5
+      },
+      "confidence": 0.6,
+      "hallNo": "28",
+      "itemNo": "6",
+      "caseTypeRaw": "M.V.C.",
+      "caseType": "MVC",
+      "caseNumber": "4667",
+      "caseYear": 2021,
+      "matchKey": "MVC/4667/2021",
+      "parties": "Fictional Traders Pvt Ltd vs Sample Bank Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "7. Ex.P. No. 3581/2025    Pretend Housing Society vs Sample Bank Ltd",
+        "rowIndex": 6
+      },
+      "confidence": 0.6,
+      "hallNo": "28",
+      "itemNo": "7",
+      "caseTypeRaw": "Ex.P.",
+      "caseType": "EXP",
+      "caseNumber": "3581",
+      "caseYear": 2025,
+      "matchKey": "EXP/3581/2025",
+      "parties": "Pretend Housing Society vs Sample Bank Ltd",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "8. Crl.Misc. No. 5252/2023    Fictional Traders Pvt Ltd vs Imaginary Textiles",
+        "rowIndex": 7
+      },
+      "confidence": 0.6,
+      "hallNo": "28",
+      "itemNo": "8",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "5252",
+      "caseYear": 2023,
+      "matchKey": "CRLMISC/5252/2023",
+      "parties": "Fictional Traders Pvt Ltd vs Imaginary Textiles",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    },
+    {
+      "anchor": {
+        "page": 2,
+        "quote": "9. Crl.Misc. No. 2632/2025    Imaginary Textiles vs Made-up Farmer",
+        "rowIndex": 8
+      },
+      "confidence": 0.6,
+      "hallNo": "28",
+      "itemNo": "9",
+      "caseTypeRaw": "Crl.Misc.",
+      "caseType": "CRLMISC",
+      "caseNumber": "2632",
+      "caseYear": 2025,
+      "matchKey": "CRLMISC/2632/2025",
+      "parties": "Imaginary Textiles vs Made-up Farmer",
+      "stageRaw": "FOR ARGUMENTS",
+      "stageNorm": "arguments"
+    }
+  ],
+  "source": "text",
+  "listDateAnchor": { "page": 1, "quote": "19.11.2026", "rowIndex": 0 },
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["26", "28"],
+    "hallsUnreadable": []
+  }
+}

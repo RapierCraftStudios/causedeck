@@ -1,0 +1,26 @@
+{
+  "adapter": "in.drt",
+  "classification": "FICTIONAL",
+  "note": "Synthetic DRT and DRAT cause-list pages (#662). Every party and advocate is fictional; real-page validation needs lawyer-supplied lists.",
+  "fixtures": [
+    {
+      "file": "list-01-two-courts.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-02-single-court-unknown-purpose.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL",
+      "forumCode": "in.drat.mumbai"
+    },
+    {
+      "file": "list-03-empty.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    }
+  ]
+}

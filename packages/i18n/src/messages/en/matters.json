@@ -1,0 +1,559 @@
+{
+  "matters": {
+    "metaTitle": "Matters",
+    "title": "Matters",
+    "loading": "Loading matters",
+    "listLabel": "Matters",
+    "new": {
+      "trigger": "New matter",
+      "title": "New matter",
+      "description": "Add a matter by hand. You can add its proceedings and people next.",
+      "titleLabel": "Title",
+      "titleHint": "For example: Rao v. State of Tamil Nadu",
+      "practiceArea": "Practice area",
+      "sensitive": "Sensitive matter",
+      "sensitiveHint": "AI processing is turned off for this matter and it is excluded from bulk imports and shared briefs",
+      "cancel": "Cancel",
+      "submit": "Create matter",
+      "created": "Matter created: {title}",
+      "errors": {
+        "required": "Enter a title.",
+        "forbidden": "Your role can't add matters.",
+        "failed": "Couldn't create the matter. Try again.",
+        "offline": "You're offline. Changes will not save until you're back."
+      },
+      "conflicts": {
+        "heading": "Conflict check",
+        "hint": "Check names against your own matters before you take this one. This is only a prompt: you decide.",
+        "clientLabel": "Client name",
+        "adverseLabel": "Opposite party name",
+        "check": "Check for conflicts",
+        "none": "No conflict found in your matters.",
+        "failed": "Couldn't run the conflict check. Try again.",
+        "hit": "“{checked}” matches {matched} ({source, select, alias {as an alias} other {by name}}) in {matter}, where this is {role, select, client {your client} other {an adverse party}}."
+      }
+    },
+    "search": {
+      "label": "Search matters",
+      "placeholder": "Title, party or case number"
+    },
+    "filters": {
+      "label": "Filters",
+      "open": "Filter",
+      "status": "Status",
+      "statusAny": "Any status",
+      "statusValues": {
+        "active": "Active",
+        "disposed": "Disposed",
+        "archived": "Archived"
+      },
+      "forum": "Forum",
+      "forumAny": "Any forum",
+      "owner": "Owner",
+      "ownerAny": "Anyone",
+      "noNextDate": "No next date",
+      "sensitive": "Sensitive",
+      "sort": "Sort by",
+      "sortValues": {
+        "next_date": "Next date",
+        "updated": "Recently updated",
+        "title": "Title"
+      },
+      "clear": "Clear filters",
+      "done": "Show matters"
+    },
+    "columns": {
+      "matter": "Matter",
+      "nextDate": "Next date",
+      "forumStage": "Forum and stage",
+      "proceedings": "Proceedings",
+      "owner": "Owner",
+      "updated": "Updated"
+    },
+    "row": {
+      "open": "Open matter {title}, next date {date}",
+      "versus": "{petitioner} v. {respondent}",
+      "noOwner": "No owner",
+      "noForum": "No forum",
+      "updated": "Updated {date}"
+    },
+    "nextDate": {
+      "none": "No next date",
+      "confirmed": "Confirmed",
+      "toConfirm": "To confirm"
+    },
+    "sensitive": "Sensitive",
+    "proceedings": "{count, plural, one {# proceeding} other {# proceedings}}",
+    "pagination": {
+      "label": "Pages",
+      "next": "Next 50",
+      "first": "First page"
+    },
+    "empty": {
+      "title": "No matters yet",
+      "body": "Share a cause list or an order to your Inbox, or add a matter by hand.",
+      "openInbox": "Open Inbox"
+    },
+    "filteredEmpty": {
+      "title": "No matters match these filters.",
+      "clear": "Clear filters"
+    },
+    "error": {
+      "title": "Couldn't load matters.",
+      "retry": "Retry",
+      "reference": "Reference: {digest}"
+    },
+    "offline": "You're offline. Showing the last saved matters. Changes will not save until you're back.",
+    "denied": "Your role can't see this. Ask the chamber owner.",
+    "palette": {
+      "new": "New matter",
+      "noNextDate": "No next date"
+    },
+    "workspace": {
+      "metaTitle": "Matter",
+      "loading": "Loading matter",
+      "breadcrumb": "Matters",
+      "tabListLabel": "Matter sections",
+      "tabs": {
+        "overview": "Overview",
+        "proceedings": "Proceedings",
+        "timeline": "Timeline",
+        "people": "People",
+        "documents": "Documents",
+        "research": "Research"
+      },
+      "status": {
+        "active": "Active",
+        "disposed": "Disposed",
+        "archived": "Archived"
+      },
+      "owner": "Owner: {name}",
+      "noOwner": "No owner",
+      "clients": "Clients",
+      "menu": {
+        "label": "Matter actions",
+        "markSensitive": "Mark as sensitive",
+        "removeSensitive": "Remove sensitive",
+        "markTitle": "Mark this matter as sensitive?",
+        "removeTitle": "Remove the sensitive mark?",
+        "removeHint": "AI processing, bulk imports and shared briefs will be available for this matter again.",
+        "confirmMark": "Mark as sensitive",
+        "confirmRemove": "Remove sensitive",
+        "cancel": "Cancel",
+        "failed": "Couldn't change this. Try again.",
+        "announceOn": "This matter is now sensitive.",
+        "announceOff": "This matter is no longer sensitive."
+      },
+      "source": {
+        "document": "From a document",
+        "capture": "From a capture",
+        "adapter": "From the court list",
+        "ai": "Proposed by assistant",
+        "import": "From an import",
+        "manual": "Entered by hand",
+        "system": "From CauseDeck"
+      },
+      "nextDate": {
+        "title": "Next date",
+        "confirm": "Confirm",
+        "none": "No next date",
+        "noneBody": "Add a proceeding and its next listing to see the next date here.",
+        "stage": "Stage: {stage}",
+        "announceConfirmed": "Next date confirmed.",
+        "failed": "Couldn't confirm the date. Try again."
+      },
+      "conflict": {
+        "title": "Two dates for one proceeding",
+        "body": "The sources disagree. Choose the date to keep, or enter the right one.",
+        "current": "Current: {date}",
+        "proposed": "Proposed: {date}",
+        "chooseA": "Choose A",
+        "chooseB": "Choose B",
+        "sideA": "A",
+        "sideB": "B",
+        "manual": "Enter manually",
+        "manualDate": "Next date",
+        "save": "Save date",
+        "cancel": "Cancel",
+        "dateRequired": "Enter a date from today onwards.",
+        "announce": "Next date set to {date}.",
+        "failed": "Couldn't save the date. Try again.",
+        "stale": "This conflict was already resolved. Showing the latest dates.",
+        "chooseN": "Choose {letter}"
+      },
+      "confidence": {
+        "chip": "Confidence {percent}%",
+        "agree": "Sources agree",
+        "conflict": "Sources disagree",
+        "single": "One source",
+        "sources": "Sources: {list}"
+      },
+      "proceedings": {
+        "title": "Proceedings",
+        "count": "{count, plural, one {# proceeding} other {# proceedings}}",
+        "caseNumber": "{type} No. {number} of {year}",
+        "unnumbered": "{type} (unnumbered)",
+        "lead": "Lead",
+        "empty": "No proceedings recorded. Add the case number you have, even before it is numbered (SR or FR number).",
+        "states": {
+          "filed": "Filed",
+          "sr_fr": "SR/FR",
+          "defects": "Defects",
+          "re_presented": "Re-presented",
+          "numbered": "Numbered",
+          "disposed": "Disposed"
+        }
+      },
+      "obligations": {
+        "title": "Open obligations",
+        "count": "{count, plural, =0 {No open obligations} one {# open obligation} other {# open obligations}}"
+      },
+      "documents": {
+        "title": "Recent documents",
+        "empty": "Share or drop files into your Inbox",
+        "openInbox": "Open Inbox",
+        "added": "Added {date}",
+        "textStatus": {
+          "pending": "Text pending",
+          "layer": "Text ready",
+          "ocr": "Text read by OCR",
+          "failed": "Text failed",
+          "skipped": "No text"
+        },
+        "kinds": {
+          "pleading": "Pleading",
+          "ia": "I.A.",
+          "annexure": "Annexure",
+          "order": "Order",
+          "judgment": "Judgment",
+          "cause_list": "Cause list",
+          "correspondence": "Correspondence",
+          "note": "Note",
+          "draft": "Draft",
+          "registry_memo": "Registry memo",
+          "other": "Other"
+        },
+        "label": "{kind}, {status}",
+        "tabTitle": "Documents",
+        "listLabel": "Documents of this matter",
+        "loading": "Loading documents",
+        "inbox": "Share or drop files into your Inbox",
+        "emptyTitle": "No documents yet",
+        "open": "Open {kind}, added {date}",
+        "languages": {
+          "EN": "English",
+          "TA": "Tamil",
+          "KN": "Kannada"
+        },
+        "sources": {
+          "capture": "From your Inbox",
+          "manual": "Added by hand"
+        },
+        "replaces": "Replaces an earlier version",
+        "replacedBy": "Replaced by a newer version",
+        "loadMore": "Show older documents",
+        "newest": "Back to the newest",
+        "error": {
+          "title": "Couldn't load the documents of this matter.",
+          "retry": "Retry",
+          "reference": "Reference: {digest}"
+        },
+        "preview": {
+          "title": "{kind}, added {date}",
+          "description": "The page image and the text read from it.",
+          "pageOf": "Page {page} of {count}",
+          "pages": "Pages",
+          "previous": "Previous page",
+          "next": "Next page",
+          "goTo": "Go to page",
+          "go": "Go",
+          "image": "Page {page}",
+          "imagePending": "Page image not ready yet",
+          "imagePendingHint": "It appears here once the document has been processed.",
+          "text": "Text of this page",
+          "textPending": "Text not extracted yet",
+          "noPages": "No pages yet",
+          "unavailable": "This document is not available.",
+          "failed": "Couldn't load this document. Try again.",
+          "close": "Close"
+        }
+      },
+      "people": {
+        "title": "People",
+        "empty": "No people recorded for this matter yet.",
+        "kinds": {
+          "represents": "We represent",
+          "appears_for": "Appears for",
+          "instructed_by": "Instructed by",
+          "assigned_to": "Assigned to",
+          "opposes": "Opposite side"
+        },
+        "listLabel": "People of this matter",
+        "loading": "Loading people",
+        "add": "Add person",
+        "edit": "Edit {name}",
+        "editShort": "Edit",
+        "remove": "Remove {name} from this matter",
+        "removeTitle": "Remove {name} from this matter?",
+        "removeHint": "Their role here is removed. The person stays in your workspace.",
+        "removeConfirm": "Remove",
+        "removeFailed": "Couldn't remove. Try again.",
+        "cancel": "Cancel",
+        "aliases": "Also known as {aliases}",
+        "onProceeding": "On a proceeding",
+        "announceSaved": "{name} saved.",
+        "announceRemoved": "{name} removed from this matter.",
+        "personKinds": {
+          "party": "Party",
+          "advocate": "Advocate",
+          "judge_staff": "Court or government staff",
+          "client": "Client",
+          "professional": "Professional contact",
+          "other": "Other"
+        },
+        "contact": {
+          "email": "Email",
+          "phone": "Phone",
+          "address": "Address"
+        },
+        "form": {
+          "addTitle": "Add person",
+          "editTitle": "Edit person",
+          "description": "People you add stay in this workspace. Nothing is imported from your contacts.",
+          "name": "Name",
+          "aliases": "Other names",
+          "aliasesHint": "Spellings used in orders and cause lists.",
+          "alias": "Other name {n}",
+          "addAlias": "Add another name",
+          "removeAlias": "Remove other name {n}",
+          "kind": "Who they are",
+          "role": "Role on this matter",
+          "contactTitle": "Contact details",
+          "contactHint": "Kept only for clients and professional contacts.",
+          "save": "Save",
+          "cancel": "Cancel",
+          "errors": {
+            "name": "Enter a name.",
+            "email": "Enter a valid email.",
+            "failed": "Couldn't save. Try again.",
+            "forbidden": "Your role can't change the people of this matter.",
+            "notFound": "This person is no longer on this matter."
+          }
+        },
+        "error": {
+          "title": "Couldn't load the people of this matter.",
+          "retry": "Retry",
+          "reference": "Reference: {digest}"
+        }
+      },
+      "synopsis": {
+        "title": "Synopsis",
+        "manual": "Written by hand",
+        "edit": "Edit synopsis",
+        "write": "Write synopsis",
+        "save": "Save synopsis",
+        "cancel": "Cancel",
+        "label": "Synopsis",
+        "empty": "No synopsis yet",
+        "emptyBody": "A few lines on what this matter is about and where it stands.",
+        "denied": "Your role can't see the synopsis. Ask the chamber owner.",
+        "announceSaved": "Synopsis saved.",
+        "failed": "Couldn't save the synopsis. Try again."
+      },
+      "offlineAction": "You're offline. Changes will not save until you're back.",
+      "error": {
+        "title": "Couldn't load this matter.",
+        "retry": "Retry",
+        "reference": "Reference: {digest}"
+      },
+      "notFound": {
+        "title": "This matter doesn't exist or you can't open it.",
+        "back": "Back to matters"
+      },
+      "provenance": {
+        "confirmed": "Confirmed",
+        "proposed": "Proposed",
+        "edited": "Corrected by hand",
+        "viewOnly": "View only",
+        "offline": "You're offline."
+      },
+      "proceedingsTab": {
+        "title": "Proceedings",
+        "treeLabel": "Proceedings of this matter",
+        "loading": "Loading proceedings",
+        "toolbarLabel": "Proceeding actions",
+        "add": "Add proceeding",
+        "mergeIn": "Merge a matter into this one",
+        "splitStart": "Split into a new matter",
+        "split": {
+          "title": "Move proceedings to a new matter",
+          "description": "The selected proceedings and their obligations move to a new matter. You can undo for 10 seconds.",
+          "newTitle": "New matter title",
+          "titleRequired": "Give the new matter a title.",
+          "moves": "What moves",
+          "crossing": "{count, plural, =0 {No links cross the split} one {# link stays across the two matters} other {# links stay across the two matters}}",
+          "confirm": "Split matter",
+          "cancel": "Cancel",
+          "done": "Proceedings moved to a new matter.",
+          "openNew": "Open new matter",
+          "failed": "Couldn't split. Try again."
+        },
+        "splitHint": "Select the proceedings to move, then continue.",
+        "splitContinue": "{count, plural, =0 {Choose proceedings first} one {Continue with # proceeding} other {Continue with # proceedings}}",
+        "splitCancel": "Cancel split",
+        "expand": "Show the proceedings filed in {label}",
+        "collapse": "Hide the proceedings filed in {label}",
+        "selectRow": "Move {label} to a new matter",
+        "empty": {
+          "title": "No proceedings recorded",
+          "body": "Add the case number you have, even before it is numbered (SR or FR number)."
+        },
+        "unnumbered": "Unnumbered",
+        "chips": {
+          "sr": "SR {value}",
+          "fr": "FR {value}",
+          "diary": "Diary {value}",
+          "filing": "Filing {value}",
+          "cnr": "CNR {value}",
+          "copyCnr": "Copy CNR {value}",
+          "copied": "CNR copied."
+        },
+        "nextDate": "Next date: {date}",
+        "noNextDate": "No next date",
+        "links": {
+          "appealFrom": "Appeal from {label}",
+          "appealedIn": "Appealed in {label}",
+          "connected": "Connected with {label}",
+          "lowerCourt": "Lower court: {label}",
+          "lowerCourtOf": "Lower court of {label}",
+          "parentOf": "Filed in {label}",
+          "anotherMatter": "a proceeding in another matter",
+          "openMatter": "Open linked matter"
+        },
+        "edit": "Edit {label}",
+        "transition": {
+          "menu": "Change state of {label}",
+          "to": "Move to {state}",
+          "title": "Move {label} to {state}?",
+          "number": "Number",
+          "year": "Year",
+          "numberRequired": "Enter the number and year the registry gave.",
+          "reason": "Reason for reopening",
+          "reasonRequired": "Give a reason for reopening a disposed proceeding.",
+          "cureDeadline": "Cure deadline (optional)",
+          "confirm": "Change state",
+          "cancel": "Cancel",
+          "announce": "{label} moved to {state}.",
+          "failed": "Couldn't change the state. Try again.",
+          "stale": "The state changed since. Showing the latest."
+        },
+        "form": {
+          "addTitle": "Add proceeding",
+          "editTitle": "Edit {label}",
+          "description": "Add what you have. An SR or FR number is enough before the case is numbered.",
+          "forum": "Forum",
+          "forumPlaceholder": "Choose a forum",
+          "noForums": "No forums yet. Add one in Courts.",
+          "caseType": "Case type",
+          "caseTypeHint": "Pick from the court's list or type it as printed.",
+          "caseTypeFreeText": "Not in the court's list. It will be saved as typed.",
+          "number": "Number",
+          "year": "Year",
+          "srNo": "SR number",
+          "frNo": "FR number",
+          "diaryNo": "Diary number",
+          "filingNo": "Filing number",
+          "cnr": "CNR",
+          "parent": "Filed in",
+          "noParent": "None (a main proceeding)",
+          "connected": "Connected with",
+          "appealFrom": "Appeal from",
+          "lowerCourt": "Lower court proceeding",
+          "none": "None",
+          "save": "Save proceeding",
+          "cancel": "Cancel",
+          "required": "Required",
+          "invalidYear": "Enter a year like 2026.",
+          "invalidCnr": "A CNR is 16 letters and digits.",
+          "duplicate": "Looks like {label} which is already here. Merge?",
+          "openIt": "Open it",
+          "merge": "Merge",
+          "announceAdded": "Proceeding added.",
+          "announceSaved": "Proceeding saved.",
+          "failed": "Couldn't save the proceeding. Try again.",
+          "conflict": "That proceeding is already recorded."
+        },
+        "merge": {
+          "title": "Merge another matter into this one",
+          "description": "Its proceedings, documents and obligations move here. You can undo for 10 seconds.",
+          "pick": "Matter to merge in",
+          "searchHint": "Type a title, party or case number.",
+          "noResults": "No matching matters",
+          "checking": "Checking what moves",
+          "moves": "What moves here",
+          "proceedingsCount": "{count, plural, =0 {No proceedings} one {# proceeding} other {# proceedings}}",
+          "documentsCount": "{count, plural, =0 {No documents} one {# document} other {# documents}}",
+          "obligationsCount": "{count, plural, =0 {No obligations} one {# obligation} other {# obligations}}",
+          "blocked": {
+            "sensitive": "A sensitive matter can only be merged with another sensitive matter. AI processing is off for sensitive matters, so merging would expose its documents.",
+            "restricted": "These matters are restricted to different people, so they can't be merged.",
+            "merged": "One of these matters was already merged.",
+            "archived": "An archived matter can't be merged or split."
+          },
+          "confirm": "Merge matters",
+          "cancel": "Cancel",
+          "done": "Matter merged.",
+          "failed": "Couldn't merge. Try again."
+        },
+        "undo": {
+          "action": "Undo",
+          "done": "Undone.",
+          "conflict": "Something changed since. Nothing was undone.",
+          "failed": "Couldn't undo. Try again."
+        }
+      },
+      "research": {
+        "title": "Relevant judgments",
+        "metaTitle": "Relevant judgments",
+        "intro": "Tag the statute sections this matter turns on. A new judgment that cites a confirmed tag appears here, linked to the court record.",
+        "tagsHeading": "Issue tags",
+        "tagsEmpty": "No tags yet. Add a statute and section to be alerted to new judgments.",
+        "statute": "Statute",
+        "section": "Section (optional)",
+        "issue": "Issue (optional)",
+        "add": "Add tag",
+        "confirm": "Confirm",
+        "dismiss": "Dismiss",
+        "status": {
+          "proposed": "Proposed",
+          "confirmed": "Confirmed",
+          "dismissed": "Dismissed"
+        },
+        "judgmentsHeading": "Judgments",
+        "judgmentsEmpty": "No relevant judgments yet.",
+        "cites": "Cites {section} {statute} on page {page}",
+        "open": "Open the judgment",
+        "saveError": "Could not save the tag."
+      },
+      "reviewReport": {
+        "title": "Report an error",
+        "open": "Report an error",
+        "corrections": "Corrections from CauseDeck review",
+        "correction": "{field}: {value} (corrected by CauseDeck review, {date})",
+        "field": "What is wrong",
+        "shown": "What CauseDeck shows",
+        "reported": "What it should be",
+        "consent": "I agree to share this record with CauseDeck staff so they can correct it.",
+        "send": "Send report",
+        "cancel": "Cancel",
+        "sent": "Thanks. CauseDeck review will check it and send back a correction.",
+        "error": "The report was not sent. Check the fields and try again.",
+        "fields": {
+          "next_date": "Next date",
+          "stage": "Stage",
+          "bench": "Bench"
+        }
+      }
+    }
+  }
+}

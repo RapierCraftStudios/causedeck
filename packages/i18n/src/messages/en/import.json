@@ -1,0 +1,97 @@
+{
+  "importReview": {
+    "title": "Confirm what we found",
+    "intro": "Each row is a matter we propose to create. Check it, fix it, then confirm. Nothing is created until you confirm.",
+    "summary": "{included} of {total} matters included",
+    "empty": "No matters were found in these files.",
+    "confirm": "Confirm {count, plural, one {# matter} other {# matters}}",
+    "confirming": "Confirming…",
+    "blockedNote": "Pick a date for each conflicting matter before confirming.",
+    "failed": "Could not confirm the import. Nothing was created. Try again.",
+    "saveFailed": "Could not save your edits. Nothing was created.",
+    "grid": {
+      "label": "Proposed matters",
+      "include": "Include {title}",
+      "expand": "Show proceedings",
+      "collapse": "Hide proceedings",
+      "title": "Matter title",
+      "forum": "Forum",
+      "stage": "Stage",
+      "noForum": "Forum not known",
+      "noStage": "Stage not known",
+      "nextDate": "Next date",
+      "noNextDate": "No next date",
+      "sources": "{count, plural, one {# source} other {# sources}}",
+      "confidence": "Confidence {percent}%",
+      "lowConfidence": "Low confidence: check this matter",
+      "conflict": "Sources disagree on a date",
+      "proceedings": "Proceedings",
+      "unnumbered": "Unnumbered",
+      "moveTo": "Move to",
+      "moveLabel": "Move {label} to another matter",
+      "moved": "{label} moved to {title}.",
+      "renamed": "Renamed to {title}.",
+      "merged": "{from} merged into {into}.",
+      "split": "{label} is now a matter of its own.",
+      "mergeNext": "Merge into next",
+      "splitLast": "Split out last",
+      "edit": "Rename",
+      "active": "{title}, row {index} of {total}"
+    },
+    "conflict": {
+      "title": "Which date is right?",
+      "pick": "Use {date}",
+      "picked": "Using {date}.",
+      "blocked": "Blocked until you pick a date"
+    },
+    "provenance": {
+      "label": "Imported from your files"
+    },
+    "preview": {
+      "title": "Sources",
+      "empty": "Select a matter to see where it came from.",
+      "proceeding": "Proceeding",
+      "sources": "{count, plural, one {# source} other {# sources}}",
+      "kind": "From {kind}"
+    },
+    "issues": {
+      "title": "Needs a look",
+      "none": "Nothing needs a look.",
+      "lowConfidence": "{title}: low confidence",
+      "conflictingDates": "{title}: sources disagree on a date",
+      "missingIdentifiers": "No enrolment number or name spelling saved, so no list rows were imported.",
+      "unreadable": "{name}: couldn't read this",
+      "unreadableCopy": "Couldn't read this. Retake, type the key line, or keep as an attachment.",
+      "a0Only": "{name}: kept as an attachment, it needs a dedicated adapter",
+      "review": "Review",
+      "pickDate": "Pick a date",
+      "addIdentifiers": "Add identifiers",
+      "retry": "Retry",
+      "keep": "Keep as attachment"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "open": "Show keyboard shortcuts",
+      "move": "Move between rows",
+      "toggle": "Include or leave out",
+      "expand": "Show or hide proceedings",
+      "merge": "Merge into the next row",
+      "split": "Split out the last proceeding",
+      "edit": "Rename the matter",
+      "confirm": "Confirm the import",
+      "help": "Show this help",
+      "close": "Close"
+    },
+    "result": {
+      "title": "Import confirmed",
+      "created": "{matters, plural, one {# matter} other {# matters}}, {proceedings, plural, one {# proceeding} other {# proceedings}}, {hearings, plural, one {# hearing} other {# hearings}}, {documents, plural, one {# document} other {# documents}} created.",
+      "duplicates": "{count, plural, one {# matter was left out because it already exists} other {# matters were left out because they already exist}}.",
+      "unresolved": "{count, plural, one {# proceeding needs a forum or case type before it can be created} other {# proceedings need a forum or case type before they can be created}}.",
+      "undo": "Undo this import",
+      "undoing": "Undoing…",
+      "undone": "Import undone.",
+      "undoFailed": "Could not undo the import.",
+      "next": "Open your first court-day view"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "output": {
+    "caseNumbers": [
+      {
+        "value": "CCCA No. 8978/2021",
+        "page": 1,
+        "quote": "CCCA No. 8978/2021",
+        "lineRef": 3
+      }
+    ],
+    "cnrs": [],
+    "parties": [],
+    "orderDate": {
+      "date": "2026-08-14",
+      "page": 1,
+      "quote": "Dated: 14.08.2026",
+      "lineRef": 2
+    },
+    "orderType": "interim",
+    "directions": [
+      {
+        "text": "The plaintiff is directed to file the counter within two weeks.",
+        "kind": "filing",
+        "dueExpression": null,
+        "dueDate": null,
+        "page": 1,
+        "quote": "The plaintiff is directed to file the counter within two weeks.",
+        "lineRef": 6
+      }
+    ],
+    "nextDate": {
+      "date": "2026-12-26",
+      "phrase": "Post on 26.12.2026 for evidence.",
+      "page": 1,
+      "quote": "Post on 26.12.2026 for evidence.",
+      "lineRef": 7
+    },
+    "confidence": 0.9
+  },
+  "usage": {
+    "inputTokens": 0,
+    "outputTokens": 0
+  }
+}

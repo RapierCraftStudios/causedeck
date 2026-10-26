@@ -6,6 +6,14 @@
 // `user`, `session`, `account`, `verification`, `passkey`, `two_factor` and `rate_limit` are global
 // (see GLOBAL_TABLES). `organization` is the workspace; `member` and `invitation` are tenant tables
 // whose `organizationId` is stored as `workspace_id`, so RLS (#19) applies to them as to any other.
+//
+// Single source of truth (#177): the workspace is Better Auth's `organization`, and membership and
+// invitations are its `member` and `invitation`. The workspace domain columns (kind, plan, soft
+// delete, member status, invitation token hash, ...) extend those tables here instead of living in
+// duplicate tables or views. Every added column is nullable or defaulted so the organization plugin,
+// which only writes its own fields, keeps working. Workspace-only tables (`workspace_settings`,
+// `workspace_slug_history`) live in `workspace.ts`.
+import { LOCALES } from '@causedeck/i18n/locales';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -16,11 +24,12 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { id, timestamps, workspaceIndex } from '../columns.ts';
+import { citext, id, timestamps, workspaceIndex } from '../columns.ts';
 
 /**
  * Workspace membership roles, mirrored from `ROLES` in `@causedeck/auth` (which depends on this
@@ -28,9 +37,18 @@ import { id, timestamps, workspaceIndex } from '../columns.ts';
  */
 export const WORKSPACE_ROLES = ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const;
 
-export const LOCALES = ['en', 'ta', 'kn'] as const;
+/** UI locales, owned by `@causedeck/i18n`; re-exported for the `user_locale_chk` check. */
+export { LOCALES };
 
-const inList = (values: readonly string[]) =>
+/** A solo practice, a shared chamber with seats (#18), or a bank, NBFC or ARC (#661). */
+export const WORKSPACE_KINDS = ['solo', 'chamber', 'institution'] as const;
+
+/** Membership lifecycle; only `active` members see the workspace or count as seats. */
+export const MEMBER_STATUSES = ['active', 'suspended', 'removed'] as const;
+/** A clerk's setup of the practice: waiting for a senior's one-tap approval, or approved (#505). */
+export const CLERK_SETUP_STATUSES = ['pending', 'approved'] as const;
+
+export const inList = (values: readonly string[]) =>
   sql.raw(`(${values.map((v) => `'${v}'`).join(', ')})`);
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
@@ -42,6 +60,9 @@ export const user = pgTable(
     name: text('name').notNull(),
     email: text('email').notNull().unique('user_email_uq'),
     emailVerified: boolean('email_verified').notNull().default(false),
+    /** E.164, set when the user signs up or in with a phone OTP (#503); unique when present. */
+    phoneNumber: text('phone_number').unique('user_phone_number_uq'),
+    phoneNumberVerified: boolean('phone_number_verified').notNull().default(false),
     image: text('image'),
     twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
     locale: text('locale').notNull().default('en'),
@@ -50,14 +71,24 @@ export const user = pgTable(
   () => [check('user_locale_chk', sql`locale in ${inList(LOCALES)}`)],
 );
 
-export const organization = pgTable('organization', {
-  id: id(),
-  name: text('name').notNull(),
-  slug: text('slug').notNull().unique('organization_slug_uq'),
-  logo: text('logo'),
-  metadata: text('metadata'),
-  createdAt: createdAt(),
-});
+export const organization = pgTable(
+  'organization',
+  {
+    id: id(),
+    name: text('name').notNull(),
+    slug: citext('slug').notNull().unique('organization_slug_uq'),
+    logo: text('logo'),
+    metadata: text('metadata'),
+    kind: text('kind').notNull().default('solo'),
+    planId: text('plan_id'),
+    /** Null for workspaces created by Better Auth directly or whose creator was deleted. */
+    createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
+    /** Soft delete: hidden from membership queries and slug resolution. Hard delete is #31. */
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  () => [check('organization_kind_chk', sql`kind in ${inList(WORKSPACE_KINDS)}`)],
+);
 
 export const session = pgTable(
   'session',
@@ -73,6 +104,8 @@ export const session = pgTable(
     activeOrganizationId: uuid('active_organization_id').references(() => organization.id, {
       onDelete: 'set null',
     }),
+    /** The session's last passkey or TOTP verification, for step-up checks (#304). */
+    stepUpAt: timestamp('step_up_at', { withTimezone: true }),
     ...timestamps(),
   },
   (t) => [index('session_user_id_idx').on(t.userId)],
@@ -175,13 +208,27 @@ export const member = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     role: text('role').notNull(),
+    status: text('status').notNull().default('active'),
+    joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+    /** When the current `role` was granted; starts the owner 2FA grace (#290). */
+    roleGrantedAt: timestamp('role_granted_at', { withTimezone: true }).notNull().defaultNow(),
+    /** Clerk-led onboarding (#505): null until the clerk asks for approval; set only on clerks. */
+    clerkSetupStatus: text('clerk_setup_status'),
+    clerkSetupDecidedAt: timestamp('clerk_setup_decided_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
     workspaceIndex('member', t.organizationId),
     uniqueIndex('member_workspace_user_uq').on(t.organizationId, t.userId),
+    // Target of composite `(workspace_id, *_member_id)` FKs from the matter graph (#344).
+    unique('member_workspace_id_id_uq').on(t.organizationId, t.id),
     index('member_user_id_idx').on(t.userId),
     check('member_role_chk', sql`role in ${inList(WORKSPACE_ROLES)}`),
+    check('member_status_chk', sql`status in ${inList(MEMBER_STATUSES)}`),
+    check(
+      'member_clerk_setup_status_chk',
+      sql`clerk_setup_status is null or clerk_setup_status in ${inList(CLERK_SETUP_STATUSES)}`,
+    ),
   ],
 );
 
@@ -199,11 +246,16 @@ export const invitation = pgTable(
     inviterId: uuid('inviter_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    /** SHA-256 of the invite token (#178); the plaintext is never stored. */
+    tokenHash: text('token_hash'),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
     workspaceIndex('invitation', t.organizationId),
     index('invitation_email_idx').on(t.email),
+    uniqueIndex('invitation_token_hash_uq').on(t.tokenHash),
     check('invitation_role_chk', sql`role in ${inList(WORKSPACE_ROLES)}`),
   ],
 );

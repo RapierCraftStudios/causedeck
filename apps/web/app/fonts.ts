@@ -48,6 +48,9 @@ const geistMono = localFont({
   fallback: ['ui-monospace', 'monospace'],
 });
 
+// Per-script sizing: `size-adjust: 96%` sets the Noto Sans Tamil/Kannada letter body (0.565 em) on
+// the Geist x-height (0.545 em). It is on the faces rather than `font-size-adjust`, so Latin text and
+// digits keep their size. next/font options must be literals, hence the repeat.
 const notoTamil = localFont({
   src: '../../../packages/ui/fonts/noto-sans-tamil-wght.woff2',
   weight: '400 600',
@@ -55,6 +58,7 @@ const notoTamil = localFont({
   preload: false,
   variable: '--font-indic',
   adjustFontFallback: false,
+  declarations: [{ prop: 'size-adjust', value: '96%' }],
 });
 
 const notoKannada = localFont({
@@ -64,6 +68,7 @@ const notoKannada = localFont({
   preload: false,
   variable: '--font-indic',
   adjustFontFallback: false,
+  declarations: [{ prop: 'size-adjust', value: '96%' }],
 });
 
 const INDIC: Partial<Record<Locale, string>> = {

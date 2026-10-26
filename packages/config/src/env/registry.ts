@@ -6,6 +6,7 @@ export type EnvDomain =
   | 'server'
   | 'client'
   | 'email'
+  | 'sms'
   | 'ai'
   | 'storage'
   | 'billing'

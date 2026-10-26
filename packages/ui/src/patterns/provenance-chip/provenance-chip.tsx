@@ -21,7 +21,6 @@ import {
 
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '../../components/drawer';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/popover';
-import { Skeleton } from '../../components/skeleton';
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { cn } from '../../lib/cn';
 import type { Anchor, ProvenanceKind, ProvenanceSource } from '../types';
@@ -329,7 +328,4 @@ export function ProvenanceChip({
   );
 }
 
-/** Loading placeholder with the chip's footprint. */
-export function ProvenanceChipSkeleton({ className, ...props }: ComponentProps<'div'>) {
-  return <Skeleton className={cn('h-6 w-24 rounded-full', className)} {...props} />;
-}
+export { ProvenanceChipSkeleton } from './provenance-chip-skeleton';

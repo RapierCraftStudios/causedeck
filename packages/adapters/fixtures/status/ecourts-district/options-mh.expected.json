@@ -1,0 +1,26 @@
+{
+  "state": [
+    {
+      "code": "1",
+      "label": "Maharashtra"
+    }
+  ],
+  "district": [
+    {
+      "code": "25",
+      "label": "Pune"
+    }
+  ],
+  "establishment": [
+    {
+      "code": "MHPU01",
+      "label": "District Court, Pune (FICTIONAL)"
+    }
+  ],
+  "caseType": [
+    {
+      "code": "4",
+      "label": "Regular Civil Suit - RCS"
+    }
+  ]
+}

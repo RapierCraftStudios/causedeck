@@ -1,0 +1,38 @@
+{
+  "events": [
+    {
+      "kind": "sr_assigned",
+      "anchor": {
+        "page": 1,
+        "quote": "SR.No.12347 of 2026",
+        "rowIndex": 4
+      },
+      "confidence": 0.95,
+      "srNo": "12347/2026"
+    },
+    {
+      "kind": "cure_deadline",
+      "anchor": {
+        "page": 1,
+        "quote": "re-presented within 7 days",
+        "rowIndex": 4
+      },
+      "confidence": 0.9,
+      "deadline": {
+        "n": 7,
+        "unit": "days",
+        "basisDate": "2026-10-15",
+        "derived": "2026-10-22"
+      }
+    },
+    {
+      "kind": "returned_for_defects",
+      "anchor": {
+        "page": 1,
+        "quote": "seat for returns",
+        "rowIndex": 4
+      },
+      "confidence": 0.8
+    }
+  ]
+}

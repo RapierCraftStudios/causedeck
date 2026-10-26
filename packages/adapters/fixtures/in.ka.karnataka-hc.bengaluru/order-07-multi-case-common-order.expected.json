@@ -1,0 +1,77 @@
+{
+  "header": {
+    "caseTypeRaw": "WRIT PETITION",
+    "caseType": "WP",
+    "caseNumber": "7001",
+    "caseYear": 2026,
+    "orderDate": "2026-10-26",
+    "neutralCitation": null,
+    "anchor": {
+      "page": 1,
+      "quote": "WRIT PETITION NO. 7001 OF 2026 (GM-RES)",
+      "rowIndex": 5
+    },
+    "confidence": 1,
+    "caseRefs": [
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "WRIT PETITION",
+        "number": "7001",
+        "year": 2026,
+        "matchKey": "WP/7001/2026",
+        "subCategory": "GM-RES"
+      },
+      {
+        "caseTypeCode": "WP",
+        "caseTypeRaw": "WRIT PETITION",
+        "number": "7002",
+        "year": 2026,
+        "matchKey": "WP/7002/2026",
+        "subCategory": "GM-RES"
+      }
+    ],
+    "bench": "THE HON'BLE MR JUSTICE A. FICTIONAL",
+    "judges": ["THE HON'BLE MR JUSTICE A. FICTIONAL"],
+    "neutralCitationRaw": null,
+    "orderType": "daily",
+    "authenticityFlag": null
+  },
+  "cues": [
+    {
+      "kind": "rule",
+      "text": "Rule.",
+      "anchor": {
+        "page": 1,
+        "quote": "Rule.",
+        "rowIndex": 16
+      },
+      "confidence": 0.8,
+      "phrase": "Rule",
+      "date": null
+    },
+    {
+      "kind": "notice",
+      "text": "Issue notice to the respondents.",
+      "anchor": {
+        "page": 1,
+        "quote": "Issue notice to the respondents.",
+        "rowIndex": 16
+      },
+      "confidence": 0.8,
+      "phrase": "Issue notice",
+      "date": null
+    },
+    {
+      "kind": "next_date",
+      "text": "List on 30.11.2026.",
+      "anchor": {
+        "page": 1,
+        "quote": "List on 30.11.2026.",
+        "rowIndex": 17
+      },
+      "confidence": 0.95,
+      "phrase": "List on",
+      "date": "2026-11-30"
+    }
+  ]
+}

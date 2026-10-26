@@ -10,12 +10,23 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:tenancy": "vitest run src/__tests__/cross-tenant-presign.test.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "catalog:",
+    "@aws-sdk/lib-storage": "catalog:",
+    "@aws-sdk/s3-request-presigner": "catalog:",
+    "@causedeck/config": "workspace:*",
+    "@causedeck/db": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "file-type": "catalog:"
   },
   "devDependencies": {
-    "@causedeck/config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "pino": "catalog:",
+    "testcontainers": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

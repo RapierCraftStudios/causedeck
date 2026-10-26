@@ -1,0 +1,11 @@
+{
+  "forumCode": "generic.a0",
+  "truth": {
+    "kind": "order",
+    "cases": [{ "caseTypeRaw": "C.C.", "caseType": "CC", "caseNumber": "8928", "caseYear": 2026 }],
+    "orderDate": "2026-11-15",
+    "nextDate": "2026-09-06",
+    "dates": ["2026-11-15", "2026-09-06"],
+    "language": "kn"
+  }
+}

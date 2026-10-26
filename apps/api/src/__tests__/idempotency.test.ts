@@ -1,8 +1,7 @@
 // `Idempotency-Key` on POST: replay for the same request, 409 for a different one, 24 h expiry.
 import { randomUUID } from 'node:crypto';
 
-import { schema } from '@causedeck/db';
-import { closeTestDb, testAppDb } from '@causedeck/db/testing';
+import { closeTestDb, schema, testAppDb } from '@causedeck/db/testing';
 import { z } from '@hono/zod-openapi';
 import { and, eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it } from 'vitest';

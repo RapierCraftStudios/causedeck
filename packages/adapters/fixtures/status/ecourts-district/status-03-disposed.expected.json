@@ -1,0 +1,28 @@
+{
+  "template": "ecourts-district",
+  "status": "ok",
+  "cnr": "KABN010987652024",
+  "caseNumber": "CC/77/2024",
+  "nextHearingDate": null,
+  "lastHearingDate": "2026-08-05",
+  "stage": {
+    "raw": "Case disposed",
+    "norm": "disposed"
+  },
+  "bench": "3-Addl. CMM (FICTIONAL)",
+  "orders": [
+    {
+      "date": "2026-08-05",
+      "number": "9",
+      "summary": "Final Order View",
+      "href": "/orders/fict-9.pdf"
+    }
+  ],
+  "quotes": {
+    "cnr": "KABN010987652024",
+    "caseNumber": "CC/77/2024",
+    "stage": "Case disposed",
+    "bench": "3-Addl. CMM (FICTIONAL)",
+    "lastHearingDate": "05/08/2026"
+  }
+}

@@ -172,5 +172,6 @@
    "test": "packages/drafting/src/__tests__/engine.test.ts",
    "why": "The test asserts that no export name matches /send|file|submit/i (expected list is empty); this name matches none of those, so it is not a member of the list"
   }
- ]
+ ],
+ "ci_fix_note": "Latest CI failure: lifecycle/memory-erasure.test.ts timed out at 60s in the core shard (collect 580s, loaded runner). File and its code paths are untouched by this branch; passes locally 4/4 (1.5s for the failing case). Classified as a flaky timeout, no code change; rerun CI."
 }

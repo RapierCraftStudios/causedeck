@@ -136,6 +136,8 @@ describe('row-level security catalog', () => {
         // Outward update drafts (#735).
         'outward_draft',
         'correction',
+        // Stale-matter attention (#70).
+        'attention_snooze',
         'outward_draft_version',
         'outward_share_log',
         'task',

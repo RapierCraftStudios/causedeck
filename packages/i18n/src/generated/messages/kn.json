@@ -736,6 +736,7 @@
         "heading": "ಇಂದು CauseDeck ಮಾಡಿದ್ದು",
         "applied": "{count, plural, =0 {ಇಂದು CauseDeck ತಾನಾಗಿ ಏನನ್ನೂ ಅನ್ವಯಿಸಲಿಲ್ಲ.} one {ಇಂದು CauseDeck ತಾನಾಗಿ # ಬದಲಾವಣೆಯನ್ನು ಅನ್ವಯಿಸಿತು. 7 ದಿನಗಳ ಕಾಲ ರದ್ದುಪಡಿಸಬಹುದು.} other {ಇಂದು CauseDeck ತಾನಾಗಿ # ಬದಲಾವಣೆಗಳನ್ನು ಅನ್ವಯಿಸಿತು. 7 ದಿನಗಳ ಕಾಲ ರದ್ದುಪಡಿಸಬಹುದು.}}",
         "pending": "{count, plural, =0 {ನಿಮ್ಮ ದೃಢೀಕರಣಕ್ಕಾಗಿ ಏನೂ ಕಾಯುತ್ತಿಲ್ಲ.} one {# ಪ್ರಸ್ತಾವನೆ ನಿಮ್ಮ ದೃಢೀಕರಣಕ್ಕಾಗಿ ಕಾಯುತ್ತಿದೆ.} other {# ಪ್ರಸ್ತಾವನೆಗಳು ನಿಮ್ಮ ದೃಢೀಕರಣಕ್ಕಾಗಿ ಕಾಯುತ್ತಿವೆ.}}",
+        "attention": "{count, plural, one {# ಪ್ರಕರಣವನ್ನು ಪರಿಶೀಲಿಸಿ.} other {# ಪ್ರಕರಣಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.}}",
         "matters": "ಇಂದು ಮುಟ್ಟಿದ ಪ್ರಕರಣಗಳು",
         "activityCta": "ಇಂದಿನ ಚಟುವಟಿಕೆ ನೋಡಿ",
         "inboxCta": "ನಿಮ್ಮ ಇನ್‌ಬಾಕ್ಸ್ ತೆರೆಯಿರಿ",
@@ -4784,6 +4785,50 @@
       "record": "ರೆಕಾರ್ಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
       "save": "ಈ ರೆಕಾರ್ಡಿಂಗ್ ಅನ್ನು ಸಾಧನದಲ್ಲಿ ಉಳಿಸಲಾಗಲಿಲ್ಲ.",
       "full": "ಸಾಧನದ ಔಟ್‌ಬಾಕ್ಸ್ ತುಂಬಿದೆ. ಅಪ್‌ಲೋಡ್ ಮುಗಿದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+    }
+  },
+  "attention": {
+    "title": "Needs you",
+    "badge": "{count, plural, =0 {No matters need attention} one {# matter needs attention} other {# matters need attention}}",
+    "badgeLabel": "Attention: {count}",
+    "loading": "Loading what needs you",
+    "empty": "Nothing needs you right now.",
+    "error": "Could not load what needs you. Try again.",
+    "retry": "Try again",
+    "offline": "You are offline. Showing the last loaded flags.",
+    "denied": "You do not have access to these flags in this workspace.",
+    "readOnly": "View only",
+    "close": "Close",
+    "openEvidence": "Open evidence",
+    "since": "Since {date}",
+    "rules": {
+      "no_next_date": "No next date",
+      "past_date_no_outcome": "Past date, no outcome",
+      "no_recent_update": "No recent update",
+      "obligation_overdue_unowned": "Overdue obligation, no owner"
+    },
+    "groupCount": "{rule}: {count}",
+    "actions": {
+      "record_outcome": "Record the outcome",
+      "set_next_date": "Set the next date",
+      "ask_junior": "Ask the junior"
+    },
+    "snooze": {
+      "action": "Snooze",
+      "until": "Snooze until",
+      "reason": "Reason",
+      "submit": "Snooze flag",
+      "dismiss": "Dismiss as intentionally dormant",
+      "lift": "Lift snooze",
+      "hint": "Press s to snooze, Enter to open the evidence, Esc to close."
+    },
+    "snoozes": {
+      "title": "Snoozes and dismissals",
+      "empty": "No snoozes or dismissals on this matter.",
+      "until": "Snoozed until {date}",
+      "dismissed": "Dismissed as intentionally dormant",
+      "allRules": "All flags",
+      "reason": "Reason: {reason}"
     }
   },
   "obligations": {

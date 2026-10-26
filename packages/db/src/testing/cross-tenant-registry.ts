@@ -147,6 +147,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   review_correction: DB_TABLES_TEST,
   // A0 corrections (#558).
   correction: DB_TABLES_TEST,
+  // Stale-matter attention snoozes (#70).
+  attention_snooze: DB_TABLES_TEST,
 
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,
@@ -237,6 +239,15 @@ const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  // Stale-matter attention (#70).
+  detectAttention: empty,
+  countAttention: denies,
+  scanWorkspaceAttention: empty,
+  snoozeFlag: denies,
+  dismissFlag: denies,
+  liftSnooze: denies,
+  listSnoozes: denies,
+  setStaleDays: denies,
   listMemberships: empty,
   listWorkspacesForUser: empty,
   memberRole: empty,
@@ -976,6 +987,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // Stale-matter attention (#70): the rules are pure functions over loaded facts.
+  evaluateRules: 'pure',
+  noNextDate: 'pure',
+  pastDateNoOutcome: 'pure',
+  noRecentUpdate: 'pure',
+  obligationOverdueUnowned: 'pure',
+  HEARING_WINDOW_DAYS: 'constant',
   // WhatsApp OTP (#711): rate-limit constants and the env-selected sender factory (no workspace data).
   WHATSAPP_OTP_NUMBER_LIMIT: 'constant',
   WHATSAPP_OTP_MEMBER_LIMIT: 'constant',

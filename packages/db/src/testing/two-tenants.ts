@@ -12,6 +12,7 @@ import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rl
 import { withWorkspace } from '../rls.ts';
 import { adapterParseRun } from '../schema/adapters.ts';
 import { aiCall, aiCallResult } from '../schema/audit.ts';
+import { attentionSnooze } from '../schema/attention.ts';
 import { correction } from '../schema/correction.ts';
 import {
   activity,
@@ -1564,6 +1565,20 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: correction.id });
     return { documentId, correctionId: first(rows, 'correction').id };
+  },
+  attention_snooze: async (tx, { workspaceId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, `${tag}z`);
+    const rows = await tx
+      .insert(attentionSnooze)
+      .values({
+        workspaceId,
+        matterId,
+        rule: 'no_next_date',
+        until: '2099-01-01',
+        reason: 'Waiting for the registry',
+      })
+      .returning({ id: attentionSnooze.id });
+    return { matterId, snoozeId: first(rows, 'attention_snooze').id };
   },
   task: async (tx, { workspaceId, tag }) => {
     const obligationId = await seedObligation(tx, workspaceId, tag);

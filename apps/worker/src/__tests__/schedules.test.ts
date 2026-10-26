@@ -49,6 +49,7 @@ describe('registerSchedules', () => {
       'system.webhook.sweep',
       'system.orders.poll',
       'system.obligation.reminders',
+      'system.attention.scan',
       'system.brief.refresh-sweep',
       'system.reminder.schedule',
     ]);

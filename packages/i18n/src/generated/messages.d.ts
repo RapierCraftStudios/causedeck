@@ -737,6 +737,7 @@ export type Messages = {
         heading: string;
         applied: string;
         pending: string;
+        attention: string;
         matters: string;
         activityCta: string;
         inboxCta: string;
@@ -4785,6 +4786,50 @@ export type Messages = {
       record: string;
       save: string;
       full: string;
+    };
+  };
+  attention: {
+    title: string;
+    badge: string;
+    badgeLabel: string;
+    loading: string;
+    empty: string;
+    error: string;
+    retry: string;
+    offline: string;
+    denied: string;
+    readOnly: string;
+    close: string;
+    openEvidence: string;
+    since: string;
+    rules: {
+      no_next_date: string;
+      past_date_no_outcome: string;
+      no_recent_update: string;
+      obligation_overdue_unowned: string;
+    };
+    groupCount: string;
+    actions: {
+      record_outcome: string;
+      set_next_date: string;
+      ask_junior: string;
+    };
+    snooze: {
+      action: string;
+      until: string;
+      reason: string;
+      submit: string;
+      dismiss: string;
+      lift: string;
+      hint: string;
+    };
+    snoozes: {
+      title: string;
+      empty: string;
+      until: string;
+      dismissed: string;
+      allRules: string;
+      reason: string;
     };
   };
   obligations: {

@@ -109,6 +109,8 @@ export const PURGE_ORDER = [
   'certified_copy',
   // A0 corrections (#558): cite their document, so before it.
   'correction',
+  // Stale-matter snoozes (#70): cite their matter, so before it.
+  'attention_snooze',
   // Outward drafts (#735): the share log and versions before their draft, then the matter rows.
   'outward_share_log',
   'outward_draft_version',

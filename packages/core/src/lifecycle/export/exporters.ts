@@ -241,6 +241,7 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('review_correction'),
   // A0 grid corrections (#558): customer content, exported with the workspace.
   ws('correction'),
+  ws('attention_snooze'),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [

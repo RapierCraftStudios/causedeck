@@ -19,6 +19,7 @@ import {
   goOffline,
   offlineDbNames,
   savedRows,
+  waitForEveryStore,
   waitForPrefetch,
 } from './offline-helpers.ts';
 
@@ -117,10 +118,13 @@ test.describe('offline court day', () => {
     // The owner's store holds the owner-only matter (item 20); the clerk signs in on the same device.
     await asUser('clerk', { path: 'today' });
     await contentReady(page);
-    await expect.poll(() => offlineDbNames(page).then((names) => names.length)).toBe(2);
+    // One store per member: wait for the clerk's own store to be filled (the prefetch starts 10 s
+    // after sign-in), so offline the board renders from the clerk's store and not from nothing.
+    await waitForEveryStore(page, 2);
     await goOffline(page, context);
     await page.goto(`/w/${SHELL_WORKSPACE}/today`);
     await expectOfflineBoard(page);
+    await expect(page.locator('[data-offline-board]')).toContainText(COURT_DAY.sharedTitle);
     await expect(page.locator('[data-offline-board]')).not.toContainText(COURT_DAY.restrictedTitle);
   });
 

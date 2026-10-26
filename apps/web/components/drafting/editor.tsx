@@ -132,7 +132,7 @@ export function DraftEditor({
                 type="button"
                 data-block-key={key}
                 aria-pressed={selectedSlot === key}
-                aria-label={t('slot', { label })}
+                aria-label={`${value === '' ? label : value} (${t('slot', { label })})`}
                 onClick={() => {
                   onSelectSlot?.(selectedSlot === key ? undefined : key);
                 }}

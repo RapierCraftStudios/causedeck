@@ -383,7 +383,7 @@ export function DraftStudio(props: StudioProps) {
               key={which}
               type="button"
               aria-pressed={panel === which}
-              aria-label={t('shortcuts.togglePanel')}
+              title={t('shortcuts.togglePanel')}
               onClick={() => {
                 setPanel(panel === which ? null : which);
               }}

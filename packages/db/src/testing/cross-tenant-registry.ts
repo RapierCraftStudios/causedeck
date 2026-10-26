@@ -134,6 +134,11 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Client contacts (#82).
   client_contact: DB_TABLES_TEST,
+
+  // Inbound enquiry log (#87).
+  enquiry: DB_TABLES_TEST,
+  enquiry_party: DB_TABLES_TEST,
+  conflict_check_result: DB_TABLES_TEST,
   // Court-day reminders (#64).
   reminder_dispatch: DB_TABLES_TEST,
 

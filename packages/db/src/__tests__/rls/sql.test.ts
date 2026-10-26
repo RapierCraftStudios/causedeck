@@ -222,6 +222,11 @@ describe('row-level security catalog', () => {
 
         // Client contacts (#82).
         'client_contact',
+
+        // Inbound enquiry log (#87).
+        'enquiry',
+        'enquiry_party',
+        'conflict_check_result',
       ].sort(),
     );
     for (const row of rows)

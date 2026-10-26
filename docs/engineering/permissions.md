@@ -103,6 +103,13 @@ the matrix, before the resource checks below.
 | `contact.read` | ✓     | ✓        | ✓      | ✓     | ✓      |
 | `contact.write` | ✓     | ✓        | —      | —     | —      |
 
+## enquiry
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `enquiry.read` | ✓     | ✓        | —      | —     | —      |
+| `enquiry.write` | ✓     | ✓        | —      | —     | —      |
+
 ## export
 
 | Action | owner | advocate | junior | clerk | viewer |

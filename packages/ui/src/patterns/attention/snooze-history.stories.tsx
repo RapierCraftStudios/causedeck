@@ -1,3 +1,4 @@
+// check-stories: n/a Hover, FocusVisible, Active, Disabled, Loading, Invalid, WithIcon, RtlNeutral (the lift button is a plain button; Pending covers the busy state; no icon, invalid or RTL variant)
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 
@@ -55,3 +56,31 @@ export const ReadOnly: Story = {
   ),
 };
 export const Pending: Story = { args: { pending: true } };
+
+export const LongText: Story = {
+  args: {
+    items: [
+      {
+        id: 'l1',
+        ruleLabel: 'No next date recorded since the last hearing',
+        statusText: 'Snoozed until 2026-11-20 by the supervising advocate',
+        reasonText:
+          'Reason: waiting for the registry to publish the corrected cause list for the bench after the vacation',
+      },
+    ],
+  },
+};
+export const Tamil: Story = {
+  args: {
+    items: [
+      { id: 't1', ruleLabel: 'அடுத்த தேதி இல்லை', statusText: '2026-11-20 வரை ஒத்திவைக்கப்பட்டது' },
+    ],
+  },
+};
+export const Kannada: Story = {
+  args: {
+    items: [
+      { id: 'k1', ruleLabel: 'ಮುಂದಿನ ದಿನಾಂಕ ಇಲ್ಲ', statusText: '2026-11-20 ರವರೆಗೆ ಮುಂದೂಡಲಾಗಿದೆ' },
+    ],
+  },
+};

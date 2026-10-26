@@ -1,3 +1,4 @@
+// check-stories: n/a Hover, FocusVisible, Active, Disabled, Invalid, WithIcon, RtlNeutral (the list rows are native rows with their own focus ring; read-only is the ReadOnly story; no icon, invalid or RTL variant)
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 
@@ -80,3 +81,34 @@ export const ErrorState: Story = {
 export const Offline: Story = { args: { state: 'offline' } };
 export const Denied: Story = { args: { state: 'denied' } };
 export const ReadOnly: Story = { args: { readOnly: true } };
+
+const flagIn = (matterTitle: string, evidence: string, suggestedAction: string) => [
+  { ...FLAGS[0]!, matterTitle, evidence, suggestedAction },
+];
+export const LongText: Story = {
+  args: {
+    flags: flagIn(
+      'Mahalakshmi Textiles Private Limited v. The Commissioner of Income Tax (Appeals) and Others',
+      'No next date has been recorded since the last hearing, which ended without an order of any kind being noted',
+      'Set the next date from the hearing roster once the registry has published it',
+    ),
+  },
+};
+export const Tamil: Story = {
+  args: {
+    flags: flagIn(
+      'ஆஷா எதிர் அரசு',
+      '2026-11-01 முதல் அடுத்த தேதி இல்லை',
+      'அடுத்த தேதியை அமைக்கவும்',
+    ),
+  },
+};
+export const Kannada: Story = {
+  args: {
+    flags: flagIn(
+      'ಆಶಾ ವಿರುದ್ಧ ರಾಜ್ಯ',
+      '2026-11-01 ರಿಂದ ಮುಂದಿನ ದಿನಾಂಕ ಇಲ್ಲ',
+      'ಮುಂದಿನ ದಿನಾಂಕವನ್ನು ಹೊಂದಿಸಿ',
+    ),
+  },
+};

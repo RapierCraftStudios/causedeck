@@ -13,9 +13,12 @@ import { resolveSlot, type Facts } from '../slots';
 import type { CourtFormatPreset } from '../presets/index';
 import { assertExportable, type RenderOptions } from './common';
 
-const require = createRequire(import.meta.url);
+// Bound so Next's bundler does not try to statically trace the templated font path; the files are
+// resolved at runtime from the externalized package (see apps/*/next.config.ts).
+const nodeRequire = createRequire(import.meta.url);
+const resolveFont = nodeRequire.resolve.bind(nodeRequire);
 const fontFile = (script: string, subset: string): string =>
-  require.resolve(
+  resolveFont(
     `@fontsource/noto-sans-${script}/files/noto-sans-${script}-${subset}-400-normal.woff`,
   );
 

@@ -1357,7 +1357,9 @@ export type Messages = {
           read: string;
         };
         draft: {
+          read: string;
           write: string;
+          export: string;
         };
         audit: {
           read: string;

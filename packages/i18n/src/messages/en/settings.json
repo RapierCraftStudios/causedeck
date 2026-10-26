@@ -406,7 +406,9 @@
           "read": "See the cause list"
         },
         "draft": {
-          "write": "Write drafts"
+          "read": "See drafts",
+          "write": "Write drafts",
+          "export": "Export drafts"
         },
         "audit": {
           "read": "Read and export the audit log"

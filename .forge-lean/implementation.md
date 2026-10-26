@@ -43,3 +43,6 @@ Renamed drafting's `exportFilename` to `draftExportFilename` (export.ts) and `ca
 ## Conformance fix (R5, R9)
 - Integration test: refused non-India narrative call (`ResidencyViolationError`, `ai_call` row with status `residency_violation`, no export row); clerk denied on `exportDraft` and `createDraftExportDownload` (FORBIDDEN).
 - New `packages/core/src/drafting/__tests__/policy.test.ts`: role matrix for `draft.read/write/export` and the matter-less path.
+
+## CI typecheck/build fix
+Cause: apps/web `permission-matrix.tsx` indexes `settings.roles.actions.<action>` message keys; the new `draft.read` and `draft.export` actions had no labels (TS2345). Added en/ta/kn `settings.json` keys, regenerated `packages/i18n/src/generated`, and added `translation-status.json` entries. `i18n:check` passes and web `tsc --noEmit` is clean.

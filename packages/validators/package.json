@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./api": "./src/api/index.ts",
     "./client-contact": "./src/client-contact.ts",
+    "./fees": "./src/fees.ts",
     "./forum": "./src/forum.ts",
     "./gstin": "./src/gstin.ts",
     "./hearing-outcome": "./src/hearing-outcome.ts",

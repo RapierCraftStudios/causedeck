@@ -750,6 +750,13 @@
       "when": 1793002112381,
       "tag": "20261026080832_client_contact",
       "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1793020244132,
+      "tag": "20261026131044_fees",
+      "breakpoints": true
     }
   ]
 }

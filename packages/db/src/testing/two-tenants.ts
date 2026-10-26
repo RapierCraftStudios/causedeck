@@ -23,6 +23,7 @@ import { billingEvent, entitlement, plan, subscription, usageCounter } from '../
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { briefState } from '../schema/brief.ts';
 import { clientContact } from '../schema/client-contact.ts';
+import { clientLedgerEntry, feeAgreement, invoice, invoiceLine, payment } from '../schema/fees.ts';
 import { briefShare } from '../schema/share.ts';
 import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
@@ -247,6 +248,66 @@ async function seedPerson(tx: Transaction, workspaceId: string, tag: string): Pr
     .values({ workspaceId, name: `Party ${tag}`, kind: 'party', sourceType: 'manual' })
     .returning({ id: person.id });
   return first(rows, 'person').id;
+}
+
+/** A fee agreement for a fresh matter and client (#83). */
+async function seedFeeAgreement(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  tag: string,
+): Promise<{ matterId: string; personId: string; id: string }> {
+  const matterId = await seedMatter(tx, workspaceId, `${tag}-fee`);
+  const personId = await seedPerson(tx, workspaceId, `${tag}-fee-client`);
+  const rows = await tx
+    .insert(feeAgreement)
+    .values({
+      workspaceId,
+      matterId,
+      personId,
+      basis: 'fixed',
+      amountPaise: 100,
+      gstTreatment: 'forward_charge',
+      startsOn: '2026-04-01',
+      createdBy: ownerId,
+    })
+    .returning({ id: feeAgreement.id });
+  return { matterId, personId, id: first(rows, 'fee_agreement').id };
+}
+
+/** A draft invoice under a fresh fee agreement (#83). */
+async function seedInvoice(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  tag: string,
+): Promise<{
+  matterId: string;
+  personId: string;
+  feeAgreementId: string;
+  invoiceId: string;
+  id: string;
+}> {
+  const agreement = await seedFeeAgreement(tx, workspaceId, ownerId, tag);
+  const rows = await tx
+    .insert(invoice)
+    .values({
+      workspaceId,
+      matterId: agreement.matterId,
+      personId: agreement.personId,
+      feeAgreementId: agreement.id,
+      placeOfSupplyStateCode: '29',
+      createdBy: ownerId,
+    })
+    .returning({ id: invoice.id });
+  const invoiceId = first(rows, 'invoice').id;
+  return {
+    matterId: agreement.matterId,
+    personId: agreement.personId,
+    feeAgreementId: agreement.id,
+    invoiceId,
+    id: invoiceId,
+  };
 }
 
 /** A document of a fresh matter (#345). */
@@ -1348,6 +1409,61 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, personId, phone: '+919876543210', createdBy: ownerId })
       .returning({ id: clientContact.id });
     return { personId, id: first(rows, 'client_contact').id };
+  },
+  fee_agreement: async (tx, { workspaceId, ownerId, tag }) => ({
+    ...(await seedFeeAgreement(tx, workspaceId, ownerId, tag)),
+  }),
+  invoice: async (tx, { workspaceId, ownerId, tag }) => ({
+    ...(await seedInvoice(tx, workspaceId, ownerId, tag)),
+  }),
+  invoice_line: async (tx, { workspaceId, ownerId, tag }) => {
+    const seeded = await seedInvoice(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(invoiceLine)
+      .values({
+        workspaceId,
+        invoiceId: seeded.invoiceId,
+        description: 'Seed appearance',
+        unitPricePaise: 100,
+        amountPaise: 100,
+        gstTreatment: 'forward_charge',
+      })
+      .returning({ id: invoiceLine.id });
+    return { ...seeded, id: first(rows, 'invoice_line').id };
+  },
+  payment: async (tx, { workspaceId, ownerId, tag }) => {
+    const seeded = await seedInvoice(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(payment)
+      .values({
+        workspaceId,
+        invoiceId: seeded.invoiceId,
+        amountPaise: 100,
+        method: 'upi',
+        receivedOn: '2026-05-01',
+        createdBy: ownerId,
+      })
+      .returning({ id: payment.id });
+    return { ...seeded, id: first(rows, 'payment').id };
+  },
+  client_ledger_entry: async (tx, { workspaceId, ownerId, tag }) => {
+    const seeded = await seedInvoice(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(clientLedgerEntry)
+      .values({
+        workspaceId,
+        personId: seeded.personId,
+        matterId: seeded.matterId,
+        invoiceId: seeded.invoiceId,
+        kind: 'fee',
+        direction: 'debit',
+        amountPaise: 100,
+        description: 'Seed fee',
+        occurredOn: '2026-05-01',
+        createdBy: ownerId,
+      })
+      .returning({ id: clientLedgerEntry.id });
+    return { ...seeded, id: first(rows, 'client_ledger_entry').id };
   },
   brief_share: async (tx, { workspaceId, ownerId, tag }) => {
     const rows = await tx

@@ -222,6 +222,13 @@ describe('row-level security catalog', () => {
 
         // Client contacts (#82).
         'client_contact',
+
+        // Fees (#83).
+        'fee_agreement',
+        'invoice',
+        'invoice_line',
+        'payment',
+        'client_ledger_entry',
       ].sort(),
     );
     for (const row of rows)

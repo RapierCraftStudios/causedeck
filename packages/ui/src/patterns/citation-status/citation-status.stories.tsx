@@ -2,6 +2,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect } from 'storybook/test';
 
+import { StageBadgeSkeleton } from '../states/loading-skeletons';
 import { CITATION_STATUS_ORDER, CitationStatus } from './citation-status';
 
 const meta = {
@@ -42,4 +43,43 @@ export const LongText: Story = {
       </div>
     ),
   ],
+};
+
+export const WithIcon: Story = {
+  args: { status: 'not_found' },
+};
+
+export const RtlNeutral: Story = {
+  decorators: [
+    (Story) => (
+      <div dir="rtl">
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+export const Tamil: Story = {
+  render: () => (
+    <div lang="ta" className="flex gap-2">
+      <CitationStatus status="verified" label="சரிபார்க்கப்பட்டது" />
+      <CitationStatus status="not_found" label="கிடைக்கவில்லை" />
+      <CitationStatus status="unknown" label="தெரியவில்லை" />
+    </div>
+  ),
+};
+
+export const Kannada: Story = {
+  render: () => (
+    <div lang="kn" className="flex gap-2">
+      <CitationStatus status="verified" label="ಪರಿಶೀಲಿಸಲಾಗಿದೆ" />
+      <CitationStatus status="not_found" label="ಸಿಗಲಿಲ್ಲ" />
+      <CitationStatus status="unknown" label="ತಿಳಿದಿಲ್ಲ" />
+    </div>
+  ),
+};
+
+/** The capsule-sized placeholder while the check runs. */
+export const Loading: Story = {
+  render: () => <StageBadgeSkeleton />,
 };

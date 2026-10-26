@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Round 4: core#test memory-erasure 60s timeout is a load flake (passes locally in 1.8s, unrelated to citations; no change). Earlier: Citation checker implemented; fixture split into compact jsonl (310 lines); V1-V8 exit 0; forgedock check still times out (300s) on V3/V4 under host load, both pass standalone; CI fix: lint errors (drafting citations tests/normalize) fixed; tenancy suites all pass locally, CI cause unconfirmed (no log); round 3: @causedeck/intelligence#test CI failure not reproducible (39 files, 318 tests pass locally; package has no diff and no dependency on drafting/citations), treated as load flake; fixed stale migration header name; db:check, lint-migrations, drizzle-kit check pass",
+ "summary": "Round 5: added CitationStatus, CITATION_STATUS_MAP, CITATION_STATUS_ORDER to the export list in packages/ui/src/index.test.ts; added the missing Loading/WithIcon/RtlNeutral/Tamil/Kannada stories. Other flagged lists are unrelated. Round 4: core#test memory-erasure 60s timeout is a load flake (passes locally in 1.8s, unrelated to citations; no change). Earlier: Citation checker implemented; fixture split into compact jsonl (310 lines); V1-V8 exit 0; forgedock check still times out (300s) on V3/V4 under host load, both pass standalone; CI fix: lint errors (drafting citations tests/normalize) fixed; tenancy suites all pass locally, CI cause unconfirmed (no log); round 3: @causedeck/intelligence#test CI failure not reproducible (39 files, 318 tests pass locally; package has no diff and no dependency on drafting/citations), treated as load flake; fixed stale migration header name; db:check, lint-migrations, drizzle-kit check pass",
  "requirements": [
   {
    "id": "R1",
@@ -183,169 +183,184 @@
  ],
  "not_members": [
   {
-   "symbol": "reportFromRows",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "why": "pure or gate helper, not a service case; the test is driven by packages/db/src/testing/cross-tenant-registry.ts where it is already listed in NOT_A_SERVICE with a reason"
+   "symbol": "CitationStatus",
+   "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
+   "why": "Behaviour test of a different pattern; it does not list pattern exports"
   },
   {
-   "symbol": "assertCitationsClear",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "why": "pure or gate helper, not a service case; the test is driven by packages/db/src/testing/cross-tenant-registry.ts where it is already listed in NOT_A_SERVICE with a reason"
+   "symbol": "CITATION_STATUS_MAP",
+   "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
+   "why": "Behaviour test of a different pattern; it does not list pattern exports"
   },
   {
-   "symbol": "exportBlockedByCitations",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "why": "pure or gate helper, not a service case; the test is driven by packages/db/src/testing/cross-tenant-registry.ts where it is already listed in NOT_A_SERVICE with a reason"
+   "symbol": "CITATION_STATUS_ORDER",
+   "test": "packages/ui/src/patterns/activity-item/activity-item.test.tsx",
+   "why": "Behaviour test of a different pattern; it does not list pattern exports"
   },
   {
-   "symbol": "AUTHORITY_KINDS",
-   "test": "apps/admin/__tests__/headers.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+   "symbol": "CitationStatus",
+   "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
+   "why": "Behaviour test of a different pattern; it does not list pattern exports"
   },
   {
-   "symbol": "AUTHORITY_STATUSES",
-   "test": "apps/admin/__tests__/headers.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+   "symbol": "CITATION_STATUS_MAP",
+   "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
+   "why": "Behaviour test of a different pattern; it does not list pattern exports"
   },
   {
-   "symbol": "authority",
-   "test": "apps/admin/__tests__/headers.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+   "symbol": "CITATION_STATUS_ORDER",
+   "test": "packages/ui/src/patterns/proposal-card/proposal-card.test.tsx",
+   "why": "Behaviour test of a different pattern; it does not list pattern exports"
   },
   {
-   "symbol": "AUTHORITY_KINDS",
-   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_STATUSES",
-   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "authority",
-   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_KINDS",
-   "test": "apps/admin/__tests__/sources-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_STATUSES",
-   "test": "apps/admin/__tests__/sources-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "authority",
-   "test": "apps/admin/__tests__/sources-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_KINDS",
-   "test": "apps/web/__tests__/activity-export-route.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_STATUSES",
-   "test": "apps/web/__tests__/activity-export-route.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "authority",
-   "test": "apps/web/__tests__/activity-export-route.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_KINDS",
-   "test": "apps/web/__tests__/billing-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_STATUSES",
-   "test": "apps/web/__tests__/billing-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "authority",
-   "test": "apps/web/__tests__/billing-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_KINDS",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_STATUSES",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "authority",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_KINDS",
-   "test": "apps/web/__tests__/conflicts-action.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_STATUSES",
-   "test": "apps/web/__tests__/conflicts-action.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "authority",
-   "test": "apps/web/__tests__/conflicts-action.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
-  },
-  {
-   "symbol": "AUTHORITY_KINDS",
+   "symbol": "drafting (packages/i18n/src/messages/en)",
    "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
   },
   {
-   "symbol": "AUTHORITY_STATUSES",
+   "symbol": "drafting (packages/i18n/src/messages/ta)",
    "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
   },
   {
-   "symbol": "authority",
+   "symbol": "drafting (packages/i18n/src/messages/kn)",
    "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
   },
   {
-   "symbol": "AUTHORITY_KINDS",
-   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+   "symbol": "drafting (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/nav.test.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
   },
   {
-   "symbol": "AUTHORITY_STATUSES",
-   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+   "symbol": "drafting (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/nav.test.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
   },
   {
-   "symbol": "authority",
-   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
-   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+   "symbol": "drafting (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/nav.test.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
   },
   {
-   "symbol": "AUTHORITY_KINDS",
-   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
-   "why": "line 91 is a document fixture (kind/language/textStatus values); the file imports nothing from @causedeck/db and holds no list of schema exports or drafting tables"
+   "symbol": "drafting (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/settings-shell.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
   },
   {
-   "symbol": "AUTHORITY_STATUSES",
-   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
-   "why": "line 91 is a document fixture (kind/language/textStatus values); the file imports nothing from @causedeck/db and holds no list of schema exports or drafting tables"
+   "symbol": "drafting (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/settings-shell.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
   },
   {
-   "symbol": "authority",
-   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
-   "why": "line 91 is a document fixture (kind/language/textStatus values); the file imports nothing from @causedeck/db and holds no list of schema exports or drafting tables"
+   "symbol": "drafting (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/settings-shell.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/shortcuts.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/shortcuts.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/shortcuts.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/static-guards.test.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/static-guards.test.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/static-guards.test.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/en)",
+   "test": "apps/web/__tests__/workspace-shell.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/ta)",
+   "test": "apps/web/__tests__/workspace-shell.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/kn)",
+   "test": "apps/web/__tests__/workspace-shell.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/en)",
+   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/ta)",
+   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/kn)",
+   "test": "apps/web/components/shell/__tests__/mobile-nav.test.tsx",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/en)",
+   "test": "e2e/tests/courts/courts.spec.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/ta)",
+   "test": "e2e/tests/courts/courts.spec.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/kn)",
+   "test": "e2e/tests/courts/courts.spec.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/en)",
+   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/ta)",
+   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/kn)",
+   "test": "e2e/tests/lifecycle/delete-workspace.spec.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/en)",
+   "test": "e2e/tests/settings/shell.spec.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/ta)",
+   "test": "e2e/tests/settings/shell.spec.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
+  },
+  {
+   "symbol": "drafting (packages/i18n/src/messages/kn)",
+   "test": "e2e/tests/settings/shell.spec.ts",
+   "why": "Not a member: lists routes, actions, shortcuts or UI flows, not i18n message namespaces; the drafting namespace is not an app route or action"
   }
  ]
 }

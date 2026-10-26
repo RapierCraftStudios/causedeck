@@ -40,3 +40,6 @@ Stale-list follow-up: AUTHORITY_KINDS, AUTHORITY_STATUSES and authority recorded
 ## CI round 3
 - intelligence#test failed in CI only; passes locally (318 tests). No diff in that package; likely load flake. Tenancy log unavailable; db:check passes.
 - Migration header now names 20261026030926_authority.
+
+## CI fix: tenancy
+`authority` (tenant table) was missing from the erasure order (`lifecycle/deletion/erase.ts`) and the drafting exporter (`lifecycle/export/exporters.ts`). Added both. Ran export-coverage, lifecycle cross-tenant and core cross-tenant suites locally: 14 files, 365 tests pass. The CI log was unavailable, so the cause is inferred from these coverage guards.

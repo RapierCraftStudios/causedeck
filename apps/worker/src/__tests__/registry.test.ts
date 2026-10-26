@@ -144,6 +144,7 @@ describe('enqueue', () => {
       'system.audit.retention',
       'export.build',
       'drafting.export',
+      'drafting.citations.check',
       'system.export.expire',
       'system.support.session-expire',
       'system.deletion.tick',

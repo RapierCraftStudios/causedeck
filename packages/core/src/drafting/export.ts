@@ -37,6 +37,7 @@ import { record } from '../audit/index.ts';
 import { collectNarratives } from '@causedeck/drafting';
 import { invalid, notFound } from '../shared/errors.ts';
 
+import { assertCitationsClear, exportBlockedByCitations } from './citation-ack.ts';
 import { asDraftMember, requireDraft, type DraftActor } from './policy.ts';
 import { checkBlocksFor, draftNarratives, loadDraftFacts, type DraftExportRow } from './service.ts';
 
@@ -134,6 +135,15 @@ export async function runDraftingExport(
       .select({ courtPreset: template.courtPreset })
       .from(template)
       .where(eq(template.id, row.templateId));
+    // The job can be enqueued directly, so the citation gate holds here too.
+    assertCitationsClear(
+      await exportBlockedByCitations(
+        tx,
+        workspaceId,
+        draftVersionId,
+        checkBlocksFor(version.content),
+      ),
+    );
     return { version, draft: row, courtPreset: tpl?.courtPreset };
   });
 

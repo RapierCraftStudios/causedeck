@@ -20,9 +20,7 @@ export interface ResolverHit {
 }
 
 export type ResolverOutcome =
-  | { kind: 'hits'; hits: readonly ResolverHit[] }
-  | { kind: 'unavailable' }
-  | { kind: 'throttled' };
+  { kind: 'hits'; hits: readonly ResolverHit[] } | { kind: 'unavailable' } | { kind: 'throttled' };
 
 export interface Verdict {
   status: CitationStatus;

@@ -164,6 +164,15 @@ export const AUDIT_ACTIONS = {
   'export.downloaded': { security: true, description: 'A workspace data export was downloaded' },
   // Drafting export (#768): informational. Metadata holds the format and the version content hash only.
   'draft.exported': { security: false, description: 'A draft version was exported to DOCX or PDF' },
+  // Citation checker (#77). Metadata holds counts, or the acknowledged citation ids and the reason, never draft text.
+  'draft.citations.checked': {
+    security: false,
+    description: 'The citations of a draft version were checked against an authority source',
+  },
+  'draft.citations.acknowledged': {
+    security: true,
+    description: 'A member acknowledged unverified citations of a draft version before an export',
+  },
   // Workspace deletion (#302): fail-closed. Metadata holds the deletion job id and dates only. These
   // events are purged with the workspace in the final erase step; the receipt keeps the chain head.
   'workspace.deletion_requested': {

@@ -33,12 +33,20 @@ export async function checkCitations(
   const out: CheckedCitation[] = [];
   for (const citation of citations) {
     if (!CHECKABLE.includes(citation.kind)) {
-      out.push({ ...citation, verdict: { status: 'unknown', reason: 'unsupported' }, resolved: false });
+      out.push({
+        ...citation,
+        verdict: { status: 'unknown', reason: 'unsupported' },
+        resolved: false,
+      });
       continue;
     }
     if (options.resolver.external) {
       if (budget < 1 || options.limiter?.tryAcquire(options.workspaceId) === false) {
-        out.push({ ...citation, verdict: { status: 'unknown', reason: 'throttled' }, resolved: false });
+        out.push({
+          ...citation,
+          verdict: { status: 'unknown', reason: 'throttled' },
+          resolved: false,
+        });
         continue;
       }
       budget -= 1;

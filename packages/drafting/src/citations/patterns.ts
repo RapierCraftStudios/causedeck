@@ -14,7 +14,8 @@ export interface CitationPattern {
 }
 
 const g = (groups: RegExpExecArray['groups'], name: string): string => groups?.[name] ?? '';
-const court = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+const court = (value: string): string =>
+  value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 
 export const STRUCTURED_PATTERNS: readonly CitationPattern[] = [
   {
@@ -51,7 +52,8 @@ export const STRUCTURED_PATTERNS: readonly CitationPattern[] = [
   {
     id: 'air',
     kind: 'reporter',
-    regex: /\bAIR\s+(?<year>(?:19|20)\d{2})\s+(?<court>SC|[A-Z][A-Za-z]{1,5})\s+(?<page>\d{1,5})\b/g,
+    regex:
+      /\bAIR\s+(?<year>(?:19|20)\d{2})\s+(?<court>SC|[A-Z][A-Za-z]{1,5})\s+(?<page>\d{1,5})\b/g,
     normalize: (m) => {
       const c = g(m.groups, 'court');
       return `AIR ${g(m.groups, 'year')} ${c === 'SC' ? c : court(c)} ${g(m.groups, 'page')}`;

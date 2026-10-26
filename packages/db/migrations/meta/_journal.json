@@ -715,6 +715,13 @@
       "when": 1792968826629,
       "tag": "20261025225346_drafting_export",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1792978592602,
+      "tag": "20261026000000_authority",
+      "breakpoints": true
     }
   ]
 }

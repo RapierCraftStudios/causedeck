@@ -484,6 +484,7 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
   const ids = (f: Fixture) => ({
     draftId: f.a.rows.draft_export?.draftId ?? '',
     versionId: f.a.rows.draft_export?.draftVersionId ?? '',
+    citedVersionId: f.a.rows.authority?.draftVersionId ?? '',
     exportId: f.a.rows.draft_export?.id ?? '',
   });
   const inA = (f: Fixture) => ({ workspaceId: f.a.id, userId: f.ub });
@@ -502,6 +503,15 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
     unchanged(async (f) => {
       await expectDenied(f.asB((s) => call(f, s)));
     });
+  const citationsDenied =
+    (call: (f: Fixture, s: Transaction) => Promise<unknown>) => async (f: Fixture) => {
+      const read = (g: Fixture) =>
+        inWorkspace(g.tx, g.a.id, (s) => s.select().from(schema.authority));
+      const before = await read(f);
+      expect(before).toHaveLength(1);
+      await expectDenied(f.asB((s) => call(f, s)));
+      expect(await read(f)).toEqual(before);
+    };
   return {
     createDraft: denied((f, s) =>
       core.createDraft({ db: s }, inA(f), {
@@ -538,6 +548,20 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
         ),
       ).rejects.toBeDefined();
     }),
+    // Citation checker (#77): B cannot check, read or acknowledge A's citations; A's rows stay.
+    checkDraft: citationsDenied((f, s) =>
+      core.checkDraft({ db: s }, inA(f), ids(f).citedVersionId),
+    ),
+    getCitationReport: citationsDenied((f, s) =>
+      core.getCitationReport({ db: s }, inA(f), { draftVersionId: ids(f).citedVersionId }),
+    ),
+    acknowledgeUnverified: citationsDenied((f, s) =>
+      core.acknowledgeUnverified({ db: s }, inA(f), {
+        draftVersionId: ids(f).citedVersionId,
+        citationIds: [f.a.rows.authority?.id ?? ''],
+        reason: 'B on A',
+      }),
+    ),
     createDraftExportDownload: denied((f, s) =>
       core.createDraftExportDownload(
         { db: s, store: createMemoryObjectStore() },

@@ -98,7 +98,10 @@ describe('classification', () => {
   });
   it('is unknown below the title threshold and without a title', () => {
     expect(
-      classify({ ...base, titleHint: 'Anitha Rao v. Union of India' }, { kind: 'hits', hits: [hit] }),
+      classify(
+        { ...base, titleHint: 'Anitha Rao v. Union of India' },
+        { kind: 'hits', hits: [hit] },
+      ),
     ).toMatchObject({ status: 'unknown', reason: 'title_mismatch' });
     expect(classify({ normalized: base.normalized }, { kind: 'hits', hits: [hit] })).toMatchObject({
       status: 'unknown',
@@ -121,14 +124,17 @@ describe('classification', () => {
   });
   it('is not_found with no exact hit, and unknown on outage or throttle', () => {
     expect(classify(base, { kind: 'hits', hits: [] }).status).toBe('not_found');
-    expect(classify(base, { kind: 'hits', hits: [{ ...hit, citation: '2023 INSC 2' }] }).status).toBe(
-      'not_found',
-    );
+    expect(
+      classify(base, { kind: 'hits', hits: [{ ...hit, citation: '2023 INSC 2' }] }).status,
+    ).toBe('not_found');
     expect(classify(base, { kind: 'unavailable' })).toEqual({
       status: 'unknown',
       reason: 'resolver_unavailable',
     });
-    expect(classify(base, { kind: 'throttled' })).toEqual({ status: 'unknown', reason: 'throttled' });
+    expect(classify(base, { kind: 'throttled' })).toEqual({
+      status: 'unknown',
+      reason: 'throttled',
+    });
   });
   it('scores identical names 1 and unrelated names 0', () => {
     expect(titleSimilarity('A B v. C D', 'a b vs c d')).toBe(1);
@@ -224,7 +230,9 @@ describe('resolvers, limits and links', () => {
       sleep,
       random: () => 0,
     });
-    await expect(resolver.resolve({ normalized: '2023 INSC 123', kind: 'neutral' })).resolves.toEqual({
+    await expect(
+      resolver.resolve({ normalized: '2023 INSC 123', kind: 'neutral' }),
+    ).resolves.toEqual({
       kind: 'unavailable',
     });
     expect(fetchMock).toHaveBeenCalledTimes(3);

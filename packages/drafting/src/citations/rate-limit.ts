@@ -15,7 +15,10 @@ export function createRateLimiter({
     tryAcquire(workspaceId) {
       const t = now();
       const bucket = buckets.get(workspaceId) ?? { tokens: capacity, at: t };
-      bucket.tokens = Math.min(capacity, bucket.tokens + ((t - bucket.at) / 1000) * refillPerSecond);
+      bucket.tokens = Math.min(
+        capacity,
+        bucket.tokens + ((t - bucket.at) / 1000) * refillPerSecond,
+      );
       bucket.at = t;
       const allowed = bucket.tokens >= 1;
       if (allowed) bucket.tokens -= 1;

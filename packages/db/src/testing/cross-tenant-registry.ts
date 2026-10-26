@@ -865,6 +865,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   exportDraft: denies,
   runDraftingExport: denies,
   createDraftExportDownload: denies,
+  // consistency (#78): B running, reading or applying a fix on A's version is denied; A's rows are unchanged.
+  runConsistencyCheck: denies,
+  getConsistencyReport: denies,
+  listFindings: denies,
+  loadConsistencyFacts: denies,
+  applyFix: denies,
   // research notes, facts and provider templates (#80)
   listNotes: denies,
   createNote: denies,

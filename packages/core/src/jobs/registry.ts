@@ -45,6 +45,7 @@ import { deletionTick } from './definitions/deletion-tick.ts';
 import { boardPoll } from './definitions/board-poll.ts';
 import { causelistPoll } from './definitions/causelist-poll.ts';
 import { noticesPoll } from './definitions/notices-poll.ts';
+import { draftingConsistencyCheck } from './definitions/drafting-consistency-check.ts';
 import { draftingExport } from './definitions/drafting-export.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
@@ -187,6 +188,7 @@ export const registry = createRegistry([
   auditRetention,
   exportBuild,
   draftingExport,
+  draftingConsistencyCheck,
   exportExpire,
   supportSessionExpire,
   deletionTick,
@@ -248,6 +250,7 @@ export type JobMap = RegistryMap<
     typeof auditRetention,
     typeof exportBuild,
     typeof draftingExport,
+    typeof draftingConsistencyCheck,
     typeof exportExpire,
     typeof supportSessionExpire,
     typeof deletionTick,

@@ -9,7 +9,10 @@ export const adjournmentNoteA0 = defineTemplate({
   blocks: [
     heading('Note for adjournment'),
     ...caption('As printed in the cause list', 'Case number'),
-    section('Request', narrative('State the reason an adjournment is sought and any date proposed.')),
+    section(
+      'Request',
+      narrative('State the reason an adjournment is sought and any date proposed.'),
+    ),
     text('Submitted for the consideration of the forum.'),
     ...signOff(),
   ],

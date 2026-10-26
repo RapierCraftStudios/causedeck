@@ -33,3 +33,6 @@ engine.test.ts:235 filters exports by /send|file|submit/i and expects []; SCAFFO
 
 ## CI lint fix
 system-templates.test.ts: replaced `__dirname` with `fileURLToPath(new URL(..., import.meta.url))` (unicorn/prefer-module), used `re.source` in template literals (restrict-template-expressions), ran prettier. ESLint clean on all changed ts files in core, db, drafting, validators, i18n; the 19 system-templates tests pass.
+
+## CI lint fix
+CI lint log was unavailable. Prettier flagged 9 system-template files; reformatted them and untracked the accidentally committed packages/drafting/.eslintcache. ESLint on changed files is clean; system-templates test passes.

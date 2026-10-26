@@ -29,6 +29,7 @@ export const SLOT_RESOLVERS = [
   'advocate.name',
   'advocate.enrolment_no',
   'workspace.name',
+  'client.name',
   'date.today',
 ] as const;
 export type SlotResolver = (typeof SLOT_RESOLVERS)[number];
@@ -161,6 +162,25 @@ export const TemplateSchema = z
   })
   .strict();
 export type Template = z.infer<typeof TemplateSchema>;
+
+/** A system template as seeded: the template plus its semantic version, checksum and reviewer. */
+export const SystemTemplateSeedSchema = z
+  .object({
+    code: TemplateSchema.shape.code,
+    name: TemplateSchema.shape.name,
+    kind: TemplateSchema.shape.kind,
+    courtPreset: TemplateSchema.shape.courtPreset,
+    blocks: TemplateSchema.shape.blocks,
+    locale: TemplateSchema.shape.locale,
+    /** Semantic version of the wording, e.g. `1.0.0`. */
+    semver: z.string().regex(/^\d+\.\d+\.\d+$/, 'a semantic version'),
+    /** sha256 hex of the code, kind, preset, locale, semver and blocks. */
+    checksum: z.string().regex(/^[0-9a-f]{64}$/, 'a lowercase sha256 hex digest'),
+    /** Null until a practising advocate has reviewed the wording; the banner shows until then. */
+    reviewedBy: z.string().min(1).max(200).nullable(),
+  })
+  .strict();
+export type SystemTemplateSeed = z.infer<typeof SystemTemplateSeedSchema>;
 
 export const FormatPresetSchema = z
   .object({

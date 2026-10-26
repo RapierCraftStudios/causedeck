@@ -49,6 +49,11 @@ export const template = globalOrWorkspaceTable(
     locale: text('locale').notNull().default('en'),
     version: integer('version').notNull().default(1),
     enabled: boolean('enabled').notNull().default(true),
+    /** sha256 of a system template's content; the seed rewrites a row only when it changes. */
+    checksum: text('checksum'),
+    /** Who reviewed the wording; null keeps the "Scaffold: review before use" banner on exports. */
+    reviewedBy: text('reviewed_by'),
+    isSystem: boolean('is_system').generatedAlwaysAs(sql`workspace_id is null`),
     ...timestamps(),
   },
   (t) => [

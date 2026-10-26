@@ -141,7 +141,11 @@ describe('drafting service and export', () => {
           ),
       );
       expect(audit).toHaveLength(1);
-      expect(audit[0]?.metadata).toMatchObject({ format: 'docx', versionHash: v.contentSha256 });
+      expect(audit[0]?.metadata).toMatchObject({
+        format: 'docx',
+        versionHash: v.contentSha256,
+        bannerShown: true,
+      });
 
       const ready = await exportDraft({ db: tx, enqueue }, actor, { draftId, format: 'docx' });
       expect(ready.status).toBe('ready');
@@ -151,6 +155,33 @@ describe('drafting service and export', () => {
       expect(link.filename.endsWith('-v2.docx')).toBe(true);
 
       expect(JSON.stringify(logs)).not.toContain(SECRET_TEXT);
+    });
+  });
+
+  it('records bannerShown false once the template has a reviewer', async () => {
+    await withTestDb(async (tx) => {
+      const { actor, created, log, workspaceId, seeded } = await setup(tx);
+      await inWorkspace(tx, workspaceId, (s) =>
+        s.update(schema.template).set({ reviewedBy: 'A. Advocate' }),
+      );
+      const v = await saveVersion({ db: tx }, actor, {
+        draftId: created.draft.id,
+        content: content(SECRET_TEXT),
+      });
+      const payload = {
+        workspaceId,
+        draftVersionId: v.id,
+        format: 'docx' as const,
+        userId: seeded.ua,
+      };
+      await runDraftingExport(
+        { db: tx, store: createMemoryObjectStore(), keys, log, now },
+        payload,
+      );
+      const audit = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.auditEvent).where(eq(schema.auditEvent.action, 'draft.exported')),
+      );
+      expect(audit[0]?.metadata).toMatchObject({ bannerShown: false });
     });
   });
 

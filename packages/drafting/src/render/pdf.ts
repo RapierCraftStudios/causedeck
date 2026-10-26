@@ -61,7 +61,7 @@ interface Line {
 
 function lines(blocks: readonly Block[], facts: Facts, opts: RenderOptions): Line[] {
   const narrativeKeys = new Map(collectNarratives(blocks).map((n) => [n.block, n.key]));
-  const out: Line[] = [];
+  const out: Line[] = opts.banner === undefined ? [] : [{ text: opts.banner, heading: true }];
   const visit = (list: readonly Block[]): void => {
     for (const block of list) {
       switch (block.type) {

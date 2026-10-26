@@ -3408,6 +3408,29 @@ export type Messages = {
       selectMore: string;
     };
   };
+  draftingTemplates: {
+    names: {
+      madras_hc: {
+        mention_memo: string;
+        early_listing_memo: string;
+        memo_of_appearance: string;
+        certified_copy_application: string;
+        client_covering_letter: string;
+      };
+      karnataka_hc: {
+        mention_memo: string;
+        early_listing_memo: string;
+        memo_of_appearance: string;
+        certified_copy_application: string;
+        client_covering_letter: string;
+      };
+      generic_a0: {
+        adjournment_note: string;
+        client_covering_letter: string;
+      };
+    };
+    scaffoldBanner: string;
+  };
   calendar: {
     metaTitle: string;
     title: string;

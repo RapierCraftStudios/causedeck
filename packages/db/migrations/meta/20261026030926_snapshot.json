@@ -1,6 +1,6 @@
 {
-  "id": "0e6114e7-efcd-443f-b29a-2458e47a7a74",
-  "prevId": "eeebd88f-d989-4901-bc5c-cd9b38127f89",
+  "id": "83dfad0e-5715-46ed-bd6a-2cc48e36ba89",
+  "prevId": "4ace3258-0c44-4ff9-89bc-21aa14099c1c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -18947,6 +18947,28 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "checksum": {
+          "name": "checksum",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_system": {
+          "name": "is_system",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "workspace_id is null",
+            "type": "stored"
+          }
         },
         "created_at": {
           "name": "created_at",

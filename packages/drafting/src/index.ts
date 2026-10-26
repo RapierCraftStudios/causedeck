@@ -9,7 +9,12 @@ export {
   type NarrativePort,
 } from './narrative';
 export * from './presets/index';
-export { MissingSlotsError, type NarrativeText, type RenderOptions } from './render/common';
+export {
+  MissingSlotsError,
+  SCAFFOLD_BANNER,
+  type NarrativeText,
+  type RenderOptions,
+} from './render/common';
 export { renderDocx } from './render/docx';
 export { PdfTooLargeError, renderPdf, type PdfOptions } from './render/pdf';
 export {
@@ -23,4 +28,5 @@ export {
   type Resolution,
 } from './slots';
 export * from './citations/index';
+export { SYSTEM_TEMPLATES, systemTemplate } from './system-templates/index';
 export * from './consistency/index';

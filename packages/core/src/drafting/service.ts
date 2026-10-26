@@ -311,6 +311,9 @@ export async function loadDraftFacts(
     ...(lead?.cnr ? { cnr: lead.cnr } : {}),
     ...(lead ? { court: lead.forum.court } : {}),
   };
+  // Only a person of kind 'client' linked to this matter: never a free-text or non-client recipient.
+  const client = overview.header.clients.find((c) => c.kind === 'client');
+  if (client) facts.client = { name: client.name };
   facts.parties = {
     ...(petitioner ? { petitioner } : {}),
     ...(lead?.respondent ? { respondent: lead.respondent } : {}),

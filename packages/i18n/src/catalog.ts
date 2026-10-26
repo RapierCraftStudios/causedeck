@@ -26,6 +26,7 @@ export const NAMESPACES = [
   'court-insights',
   'matters',
   'matter-timeline',
+  'drafting-templates',
   'calendar',
   'inbox',
   'pwa',

@@ -15,6 +15,7 @@ import {
   exportBlockers,
   getPreset,
   isValidPreset,
+  generic,
   karnatakaHc,
   madrasHc,
   MissingSlotsError,
@@ -118,7 +119,9 @@ describe('presets', () => {
     expect(madrasHc.maxExportBytes).toBe(20 * 1024 * 1024);
     expect(getPreset('madras_hc')).toBe(madrasHc);
     expect(getPreset('karnataka_hc')).toBe(karnatakaHc);
-    expect(getPreset('generic')).toBeUndefined();
+    expect(getPreset('generic')).toBe(generic);
+    expect(isValidPreset(generic)).toBe(true);
+    expect(getPreset('delhi_hc')).toBeUndefined();
     expect(isValidPreset({ ...madrasHc, fontSizePt: 1 })).toBe(false);
   });
 });

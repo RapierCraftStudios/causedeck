@@ -2,19 +2,50 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add packages/ui/src/patterns/citation-status.tsx (verified, not found, unknown: glyph plus text label, Provenance Chip conventions, story and test), export it from patterns/index.ts.",
+   "quote": "apps/web/app/(app)/w/[slug]/drafts/[id]/{page.tsx,studio.tsx,actions.ts(save, restore)}: RSC shell and data load, client editor over the block tree (editorial serif, slot underline, narrative left rule, [[missing]] warning markers, AI-drafted marker cleared on edit with an edit diff recorded)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Add packages/i18n/src/messages/{en,ta,kn}/drafting.json with every key the studio needs (list, states, panels, dialogs, shortcuts, findings, offline, AI-drafted, export, acknowledgement statement)",
+   "quote": "components/drafting/facts-panel.tsx (Provenance Chips insert into slots) and version-drawer.tsx (restore with diff preview)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "register the namespace in packages/i18n/src/catalog.ts and __tests__/catalog.test.ts.",
+   "quote": "three-column at 1280, single drawer at 768, bottom sheet with tabs at 360, reduced-motion",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R4",
+   "quote": "Cmd/Ctrl+S, Cmd/Ctrl+K draft actions, ] and [ finding navigation with a live region, Esc, shortcut sheet entries",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R5",
+   "quote": "offline read-only cache plus edits queued in the outbox (apps/web/lib/pwa/outbox) with an 'Offline, changes queued' state.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "Editor chunk lazy-loaded; initial JS at most 180 KB gzip.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "CI bundle budget check (apps/web/scripts/check-bundle-budget.mjs, run after next build in CI); locally only the editor dynamic import and the budget unit test are checkable"
+  },
+  {
+   "id": "R7",
+   "quote": "Stories for each component.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "New actions listed in cross-tenant-actions.test.ts.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -22,153 +53,159 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/ui/src/patterns/citation-status/citation-status.tsx",
-   "change": "New CitationStatus component: status 'verified'|'not_found'|'unknown' (local union, no core import); lucide glyph aria-hidden + visible text label (optional `label` prop for translations, English defaults); capsule classes like stage-badge/provenance chip (min-h, rounded-full, text-xs, forced-colors:border-current, wrapping label); data-slot and data-status attrs; status never conveyed by colour alone.",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/[id]/actions.ts",
+   "change": "'use server' saveDraftAction and restoreDraftVersionAction via workspaceAction (action draft.write), dynamic import of @causedeck/core/drafting, deps {db: ctx.tx}; return the new version summary",
    "requirements": [
-    "R1"
+    "R1",
+    "R8"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/ui/src/patterns/citation-status/citation-status.stories.tsx",
-   "change": "Story showing all three statuses and a long-label case.",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/[id]/page.tsx",
+   "change": "RSC: resolve workspace, load getDraft as the member, notFound() on NOT_FOUND, render Studio with lazy editor; add loading.tsx and error.tsx beside it",
    "requirements": [
-    "R1"
+    "R1",
+    "R6"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/ui/src/patterns/citation-status/citation-status.test.tsx",
-   "change": "Test each status renders its text label, glyph is aria-hidden, label override and data-status; model on stage-badge.test.tsx.",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/[id]/studio.tsx",
+   "change": "Client shell: layouts (3-col/drawer/bottom-sheet tabs), editor via next/dynamic, save state, shortcuts, finding navigation live region, offline banner; slots for #828 panels",
    "requirements": [
-    "R1"
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R6"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/ui/src/patterns/index.ts",
-   "change": "Export CitationStatus, props type and status type/meta.",
+   "path": "apps/web/components/drafting/editor.tsx",
+   "change": "Block-tree editor (serif, slot underline, narrative rule, [[missing]] markers, AI-drafted marker cleared on edit with {blockKey,before,after} diff recorded) plus pure helpers in apps/web/lib/drafting/blocks-edit.ts with unit tests",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/i18n/src/messages/en/drafting.json",
-   "change": "Single top-level key `drafting` (NOT top-level offline/shortcuts, which exist) with nested list, states, panels, dialogs, shortcuts, findings, offline, aiDrafted, export, acknowledgement statement, citation status labels. ICU strings.",
+   "path": "apps/web/components/drafting/facts-panel.tsx",
+   "change": "Facts list rendered as Provenance Chips; activating one inserts its value into the focused slot",
    "requirements": [
     "R2"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/i18n/src/messages/ta/drafting.json",
-   "change": "Same key set as en, real Tamil text (must differ from en; same ICU args).",
+   "path": "apps/web/components/drafting/version-drawer.tsx",
+   "change": "Version list with restore and a diff preview before confirming restore",
    "requirements": [
     "R2"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/i18n/src/messages/kn/drafting.json",
-   "change": "Same key set as en, real Kannada text.",
+   "path": "apps/web/lib/pwa/outbox/draft-edits.ts",
+   "change": "Encrypted draft-edit queue (reuse crypto.ts; separate Dexie table or db version bump) and read-only cache of the last loaded draft; flush through saveDraftAction on online via existing sync triggers; no draft text in logs",
    "requirements": [
-    "R2"
+    "R5"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/i18n/src/catalog.ts",
-   "change": "Add 'drafting' to NAMESPACES (next to 'drafting-templates').",
+   "path": "apps/web/lib/shortcuts/registry.ts",
+   "change": "Add draft-studio shortcut entries (mod+s, mod+k draft actions, ], [, Esc) to the shortcut sheet with labelKeys under drafting.shortcuts",
    "requirements": [
-    "R3"
+    "R4"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/i18n/src/__tests__/catalog.test.ts",
-   "change": "Add 'drafting' to the top-level key list; add a small test that drafting exists in every locale with citation status labels and the acknowledgement statement.",
+   "path": "packages/i18n/src/messages/en/drafting.json",
+   "change": "Add the keys the studio needs ('Offline, changes queued', finding navigation, diff preview, tabs, announcements); mirror in ta/kn drafting.json, packages/i18n/translation-status.json (draft entries) and regenerate src/generated via pnpm --filter @causedeck/i18n i18n:types",
    "requirements": [
-    "R3"
+    "R4",
+    "R5",
+    "R2"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/i18n/translation-status.json",
-   "change": "Add every drafting.* leaf as \"draft\" under ta and kn.",
+   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "change": "Add saveDraftAction and restoreDraftVersionAction to ACTIONS and their probe inputs (B on A is FORBIDDEN/NOT_FOUND, A unchanged)",
    "requirements": [
-    "R2"
+    "R8"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "Regenerate with `pnpm --filter @causedeck/i18n i18n:types`.",
+   "path": "apps/web/components/drafting/editor.stories.tsx",
+   "change": "Stories for editor, facts-panel, version-drawer, studio shell states (unique export names across the stories corpus)",
    "requirements": [
-    "R2"
+    "R7"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/generated/messages/ta.json",
-   "change": "Regenerated output.",
+   "path": "apps/web/scripts/check-bundle-budget.mjs",
+   "change": "Optional: add the drafts/[id] route manifest check beside MATTERS/TIMELINE so the editor chunk stays out of initial JS; extend bundle-budget.test.ts accordingly",
    "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/i18n/src/generated/messages/kn.json",
-   "change": "Regenerated output.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/i18n/src/generated/messages.d.ts",
-   "change": "Regenerated Messages type.",
-   "requirements": [
-    "R2"
+    "R6"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Existing top-level catalog keys (offline, shortcuts, draftingTemplates etc.) and the drafting-templates namespace files in packages/i18n/src/messages/*/drafting-templates.json"
+   "what": "apps/web/app/(app)/w/[slug]/drafts/page.tsx (placeholder list page owned by #826) is not modified"
   },
   {
    "id": "P2",
-   "what": "UI import allow-list in packages/ui/src/patterns/boundaries.test.ts: no new dependencies, no @causedeck/core import in packages/ui"
+   "what": "Core drafting API in packages/core/src/drafting/index.ts and block schema packages/validators/src/drafting.ts stay unchanged (blocks are .strict(); no new fields)"
+  },
+  {
+   "id": "P3",
+   "what": "Existing outbox file uploads (apps/web/lib/pwa/outbox/{db,queue,sync,uploader}.ts) behave as before; existing outbox tests keep passing"
+  },
+  {
+   "id": "P4",
+   "what": "Existing shortcuts and their help dialog (apps/web/lib/shortcuts/*) keep working; shortcuts registry tests pass"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/ui exec vitest run src/patterns/citation-status src/patterns/boundaries.test.ts src/patterns/provenance-chip"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research  # run the scoped typecheck/lint/test commands it prints; then rerun with --publish"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts"
+   "command": "pnpm --filter @causedeck/web exec vitest run --maxWorkers=${FORGE_HOST_PARALLELISM:-1} __tests__/cross-tenant-actions.test.ts __tests__/bundle-budget.test.ts lib/drafting components/drafting lib/pwa lib/shortcuts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/i18n i18n:check"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Use a single top-level key `drafting` in drafting.json",
-   "justification": "offline and shortcuts are already top-level keys in other files; mergeNamespaces throws on duplicates (packages/i18n/src/catalog.ts:55-70)",
-   "source": "precedent"
+   "choice": "AI-drafted marker and edit diff live in client state and the offline-queue payload; no schema/block change",
+   "justification": "BlockSchema is strict with no marker field (packages/validators/src/drafting.ts:79-124) and the issue lists no core/db change; immutable versions (service.ts:210-245) are the persisted diff",
+   "source": "spec"
   },
   {
    "id": "K2",
-   "choice": "Define the citation status union locally in packages/ui",
-   "justification": "UI package must not depend on core; allowed imports listed in packages/ui/src/patterns/boundaries.test.ts:5-13",
-   "source": "lint"
+   "choice": "Draft edits queue in a new encrypted draft-edits store beside the outbox rather than as a file item",
+   "justification": "OutboxItem is a blob upload with presign/PUT states (apps/web/lib/pwa/outbox/db.ts:8-31); a JSON save does not fit that uploader, but crypto.ts and sync triggers (sync.ts) are reused",
+   "source": "precedent"
+  },
+  {
+   "id": "K3",
+   "choice": "Actions follow workspaceAction with dynamic core imports and action 'draft.write'",
+   "justification": "apps/web/app/(app)/w/[slug]/matters/actions.ts:30-52; policy matrix packages/auth/src/policy/matrix.ts:31",
+   "source": "precedent"
   }
  ]
 }

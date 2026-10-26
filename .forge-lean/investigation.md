@@ -1,33 +1,38 @@
 **Verdict**: CONFIRMED
-**Confidence**: high
-**Severity**: low (additive UI/i18n groundwork for the drafting studio, #79 part 1)
+**Confidence**: medium
+**Severity**: medium (largest part of the drafting studio epic #79; user-facing, offline/outbox and bundle-budget risk)
 **Task Type**: feature
 
 ### What Was Claimed
-Add a `CitationStatus` UI pattern (verified / not found / unknown; glyph plus text label, Provenance Chip conventions, story, test) exported from `patterns/index.ts`, and a `drafting` i18n namespace (en, ta, kn) with every studio key, registered in `catalog.ts` and `catalog.test.ts`.
+Part 3 of #79: build the drafting studio at `apps/web/app/(app)/w/[slug]/drafts/[id]/` (RSC shell, client editor, save/restore actions), `components/drafting/facts-panel.tsx` and `version-drawer.tsx`, responsive layouts (1280/768/360), keyboard shortcuts, finding navigation, offline read-only cache plus edits queued in the outbox, lazy editor chunk (initial JS <= 180 KB gzip), stories, and registration of the new actions in `cross-tenant-actions.test.ts`.
 
 ### What We Found
-- `packages/ui/src/patterns/index.ts:1-40` exports patterns per folder; no citation-status exists. Template to copy: `patterns/stage-badge/stage-badge.tsx` (icon + label capsule, `label` override prop for translations) and `provenance-chip/provenance-chip.tsx:55-70` (capsule classes, `forced-colors:border-current`, wrapping labels).
-- `packages/ui/src/patterns/boundaries.test.ts:5-13` restricts UI imports to react, radix-ui, vaul, lucide-react, cva, clsx, motion; the pattern must stay within these.
-- `packages/i18n/src/catalog.ts:6-42` `NAMESPACES` has no `drafting` (only `drafting-templates`, top-level key `draftingTemplates`). Top-level keys `offline` and `shortcuts` already exist (errors.json, shell/pwa), so the new file must use a single top-level key `drafting` containing nested `offline`, `shortcuts` etc. (mergeNamespaces throws on duplicates, catalog.ts:55-70).
-- `packages/i18n/src/__tests__/catalog.test.ts:64-70` requires one file per namespace per locale; `:78-120` asserts the exact sorted top-level key list (needs `'drafting'`); `:71-75` ta/kn key sets must equal en; `:77-82` committed `src/generated/messages/{en,ta,kn}.json` and `messages.d.ts` must match (`pnpm i18n:types`).
-- `packages/i18n/translation-status.json` lists every ta/kn key as `"draft"` (e.g. line 3283 for draftingTemplates); `scripts/check-catalogs.ts:1-30` fails on missing status, empty strings, ICU/arg mismatch, ta/kn equal to en (unless in `allowUntranslated`). "Stubs" therefore need real non-English text, marked draft.
-- Core `CitationStatus` exists in `packages/core/src/drafting/citations.ts`; UI must not import core, so define a local status union (`'verified'|'not_found'|'unknown'`) in the pattern.
+- Nothing exists yet: `apps/web/app/(app)/w/[slug]/drafts/` holds only `page.tsx:1-3` (a `placeholderPage('drafts')`, owned by sibling #826); no `[id]` route, no `apps/web/components/drafting/`.
+- Core services are ready (deps #824/#825 merged): `getDraft`, `listVersions`, `saveVersion`, `restoreVersion` exported from `packages/core/src/drafting/index.ts` (subpath `@causedeck/core/drafting`, `packages/core/package.json:28`). `getDraft` returns `{draft, version{blocks}, versions}` (`read.ts:57-61`); `saveVersion`/`restoreVersion` take `DraftingDeps {db, enqueueCitationCheck?}` (`service.ts:87-92,210,245`) and need `draft.write` (junior+, `packages/auth/src/policy/matrix.ts:31`); clerks get FORBIDDEN, unreadable drafts NOT_FOUND (`policy.ts:87,119`).
+- Action pattern to copy: `workspaceAction(schema, handler, {action})` with `WorkspaceScoped` (`apps/web/lib/workspace-action.ts:34-50`), dynamic `import('@causedeck/core/...')`, `ctx.tx` as db (`app/(app)/w/[slug]/matters/actions.ts:30-52`), `Result<T>` return and `export async function xAction(raw: unknown)`.
+- Block model: `Block` union heading/paragraph/page_break/slot/narrative/section/list, all `.strict()` (`packages/validators/src/drafting.ts:79-124`), helpers `walkBlocks`/`collectSlots`/`blockKeys` in `packages/drafting/src/blocks.ts:16-64`. There is NO field for an "AI-drafted" marker, no `[[missing]]` marker handling and no stored edit diff: marker/diff must be client-state derived (see Recommendation). Narrative text is produced by `draftNarratives` (`service.ts:326`) at render time, not stored in blocks.
+- i18n namespace `drafting` exists (`packages/i18n/src/messages/en/drafting.json`): states, panels.facts/citations/consistency/versions, findings, aiDrafted, shortcuts (save/checkCitations/togglePanel/export), offline (banner, queued, synced). Missing for this issue: "Offline, changes queued" state wording, `[`/`]` finding navigation, Cmd+K draft actions, restore diff preview, live-region announcements, tab labels. Add keys to en/ta/kn plus `translation-status.json` and regenerated `src/generated/*` (guard: `catalog.test.ts`).
+- Shortcuts: registry in `apps/web/lib/shortcuts/registry.ts:1-60` (fixed `SHORTCUT_GROUPS`, `ShortcutAction` union, help dialog lazy-loaded via `provider.tsx:44-52`); the studio needs page-scoped entries (provider supports page-registered shortcuts with palette commands, `provider.tsx:66+`).
+- Outbox (`apps/web/lib/pwa/outbox/db.ts:8-31,53-62`) is file/blob oriented (`channel: 'share'|'upload'|'camera'|'voice'`, encrypted blob, presign/PUT upload in `uploader.ts`; Dexie db `causedeck-outbox` v1 `items`,`keys`); `sync.ts` has `online`/visibility triggers and a Web Lock. Draft edits are not files, so they need either a new channel/kind with its own uploader branch or a separate small Dexie table; encryption via `crypto.ts` should be reused (draft text is privileged).
+- Budget: `apps/web/__tests__/bundle-budget.test.ts` and `apps/web/scripts/check-bundle-budget.mjs` enforce 180 KB gzip initial JS and per-route manifests (MATTERS/TIMELINE); a drafts route entry may be added there. Editor must be `next/dynamic`/`import()` loaded; Playwright/Lighthouse/`next build` cannot run locally.
+- `apps/web/__tests__/cross-tenant-actions.test.ts:129-267`: `ACTIONS` map must list every exported action (`:916` asserts exact list), with probe inputs in `inputs(...)`.
+- `packages/ui` has `CitationStatus` (#825) and ProvenanceChip (`apps/web/components/matters/next-date-card.tsx` uses it) for fact chips.
 
 ### Root Cause
-Not a defect: the feature has not been built. #826-#828 (siblings) need these pieces.
+Not a defect: the studio UI was not built; it is the third slice of #79 after #824 (services) and #825 (pattern + i18n).
 
 ### Affected Files
-packages/ui/src/patterns/citation-status/{citation-status.tsx,citation-status.stories.tsx,citation-status.test.tsx}; packages/ui/src/patterns/index.ts; packages/i18n/src/messages/{en,ta,kn}/drafting.json; packages/i18n/src/catalog.ts; packages/i18n/src/__tests__/catalog.test.ts; packages/i18n/translation-status.json; packages/i18n/src/generated/messages/{en,ta,kn}.json and messages.d.ts (regenerated).
+New: `apps/web/app/(app)/w/[slug]/drafts/[id]/{page.tsx,studio.tsx,actions.ts,loading.tsx,error.tsx}`, `apps/web/components/drafting/{facts-panel.tsx,version-drawer.tsx,editor/*, ...stories,tests}`, `apps/web/lib/drafting/{blocks-edit.ts,offline-queue.ts,...}`.
+Changed: `apps/web/__tests__/cross-tenant-actions.test.ts`, `apps/web/lib/shortcuts/registry.ts` (+provider if needed), `apps/web/lib/pwa/outbox/*` (draft-edit kind), `packages/i18n/src/messages/{en,ta,kn}/drafting.json`, `packages/i18n/translation-status.json`, `packages/i18n/src/generated/*`, possibly `apps/web/scripts/check-bundle-budget.mjs` + its test, `apps/web/lib/nav.ts` untouched.
 
 ### Sibling Sweep
-Each prior namespace (drafting-templates, research) followed the same checklist: file x3 locales, NAMESPACES, catalog.test top-level list, translation-status draft entries, regenerated outputs. CLAUDE.md requires `packages/i18n/src/__tests__/catalog.test.ts` update for a new namespace. No `'use server'` action, core export or table is added, so no cross-tenant registry changes.
+Other studio pieces (#826 list page, #828 citation/consistency panels and dialogs, #829 e2e) are separate; keep their slots (panels area, export/ack dialogs) as props/slots in `studio.tsx` and do NOT touch `drafts/page.tsx`. Any new i18n keys must avoid duplicating top-level keys (single `drafting` root). Same stories-naming collision class as #80 (story export names must be unique across the stories corpus, commit e09b7321).
 
 ### History
-`drafting-templates` namespace added with #76 (3917bf5f touched its ta file). No prior citation-status pattern.
+`22df2adf` externalised drafting render libs in Next apps; #824 `43591adb` added read services, #825 `c76d3d0a` added pattern/i18n. No prior studio code.
 
 ### Recommendation
-Implement against base `milestone/drafting-citations-research`: build the pattern (icons CheckCircle2 / CircleOff-or-SearchX / HelpCircle from lucide-react, per-status soft colour classes, `data-slot="citation-status"`, `data-status`, `label` prop defaulting to English, icon `aria-hidden`), then the three JSON files under a single `drafting` key, register, run `pnpm --filter @causedeck/i18n i18n:types`, then add ta/kn "draft" entries to translation-status.json (check `i18n:check --report` output).
+Single lane, ordered checklist: (1) actions `saveDraftAction` (`draft.write`, `{workspaceId, draftId, blocks, baseVersionNo}`; reject stale base with CONFLICT if feasible) and `restoreDraftVersionAction` (`draft.write`), plus a loader helper used by the RSC page (`getDraft` via `inWorkspace`; NOT_FOUND -> `notFound()`); (2) pure block-edit and diff helpers with unit tests (text diff of paragraph/narrative, AI-drafted marker cleared on first edit with `{blockKey, before, after}` recorded in client state and in the offline queue payload; versions themselves are the persisted diff); (3) editor components with `[[missing]]` detection, slot underline, narrative left rule; (4) facts-panel, version-drawer with restore diff preview; (5) responsive layout and reduced motion; (6) shortcuts and live region; (7) offline: cache last `getDraft` payload read-only (Dexie/Cache, encrypted) and queue edits as encrypted draft-edit items flushed through `saveDraftAction` on `online`; (8) lazy editor chunk + budget; (9) stories + tests + cross-tenant registration + i18n keys. Confidence is medium because the AI-marker/diff persistence and the outbox shape are under-specified in the issue.
 
 ### Related Issues
-Parent #79 (closed not_planned); siblings #824, #826, #827, #828, #829 consume these keys and the pattern.
+Parent #79 (closed not_planned); deps #824, #825 (merged); siblings #826, #828, #829 (open).

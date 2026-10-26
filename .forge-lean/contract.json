@@ -2,61 +2,85 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add `packages/core/src/drafting/{service,policy,index}.ts` (`createDraft`, `renderDraft`, `saveVersion` immutable with content hash, `listVersions`, `restoreVersion` creating a new version, `exportDraft`;",
+   "quote": "Party names that differ from the graph beyond alias rules are flagged `error`; alias and honorific variants are accepted silently [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "`can(user,'draft:*')` with clerk restrictions; facts loaded via the matter-graph index and passed to pure slot resolvers)",
+   "quote": "Case numbers are normalised across at least 10 notation variants per launch court and mismatches against the proceeding are flagged with the expected value [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/core/src/jobs/definitions/drafting-export.ts` (job `drafting.export`, payload {workspaceId, draftVersionId, format}, idempotent on (draft_version_id, format) returning the stored file)",
+   "quote": "Dates are parsed from Indian formats and ordinals; a date that contradicts the listing or order date in the graph is flagged with both values [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "storage under the workspace key prefix with envelope encryption and presigned download only (no email/share path)",
+   "quote": "Annexure references are cross-checked: missing annexure, duplicate number, gap in sequence and unreferenced attached document each yield a distinct rule id [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "`exported_at` plus audit_event with actor, format and version hash, ai_call audit on refused non-India calls.",
+   "quote": "Every finding carries the draft span, the graph fact and its provenance (source type and anchor), so the UI can show a Provenance Chip [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Add `@causedeck/drafting` dependency in `packages/core/package.json` and the `./drafting` export;",
+   "quote": "`applyFix` changes the draft only after an explicit confirmation call and creates a new `draft_version`; there is no auto-apply path [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "update CORE_DOMAIN_DEPENDENCIES and `docs/engineering/core-domains.md`,",
+   "quote": "The checker is deterministic and makes no AI calls; a static test asserts the package imports nothing from `packages/ai` under `consistency/` [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "`packages/db/src/testing/cross-tenant-registry.ts` SERVICE_TESTS with real cases in `packages/core/src/__tests__/cross-tenant/services.test.ts` (B on A denied, A unchanged, including export job and presign), `apps/worker/src/__tests__/registry.test.ts`.",
+   "quote": "A draft of 30 pages checks in under 2 s p95 on seeded data [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Testcontainers integration test `packages/core/src/drafting/__tests__/drafting.integration.test.ts`.",
+   "quote": "Findings are scoped by workspace; the checker cannot read matters from other workspaces (cross-tenant suite) [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "No draft text in pino logs.",
+   "quote": "Tamil and Kannada names are compared after Unicode normalisation (NFC) and are not flagged for script differences alone when an alias exists [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "Report is idempotent for the same `draft_version_id` and invalidated when the graph facts change (new listing, order) [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "It proposes nothing automatically: a finding offers \"fix to graph value\" as a lawyer-confirmed edit (L2), never an auto-apply.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R13",
+   "quote": "Job `drafting.consistency.check` payload `{workspaceId, draftVersionId}`.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "report content is privileged matter data; do not log spans.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -64,262 +88,287 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/drafting/policy.ts",
-   "change": "New. Draft access: member role via workspaces index, matter visibility like research/notes-service.ts, `can()` checks for draft.read/draft.write/draft.export; clerk denied (NOT_FOUND/FORBIDDEN per matter-service convention).",
+   "path": "packages/validators/src/consistency.ts",
+   "change": "zod FindingSchema (severity error|warn|info, rule, span {blockKey,start,end}, expected, found, provenance {sourceType, anchorId, sourceRef}, fix?) and ConsistencyReportSchema {draftVersionId, graphRevision, findings, counts}; export from validators package (add ./consistency export in package.json if exports are per-file). Add src/consistency.test.ts.",
    "requirements": [
-    "R2"
+    "R5",
+    "R12",
+    "R13"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/drafting/service.ts",
-   "change": "New. createDraft, renderDraft (loads facts through matter-graph index only, resolveBlocks, no narrative calls unless port given), saveVersion (canonical-JSON sha256 into draft_version.content_sha256, next version_no), listVersions, restoreVersion (new version copying old content), exportDraft (permission check, enqueue `drafting.export`; returns existing export when present). Never logs draft text.",
+   "path": "packages/drafting/src/consistency/extract-entities.ts",
+   "change": "Extract name, case-number, date and annexure-ref mentions with spans from the block tree text (heading, paragraph, list, section children); pure.",
    "requirements": [
     "R1",
     "R2",
-    "R10"
+    "R3",
+    "R4",
+    "R5"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/drafting/export.ts",
-   "change": "New. runDraftingExport({db,store,keys,log,now}, payload): idempotent on (draft_version_id, format): return the existing draft_export row if present; else render docx/pdf via @causedeck/drafting (block on MissingSlotsError), put to storage key objectKey kind 'export' under ws/\u003cworkspaceId>/ with envelope encryption (same keys/store usage as lifecycle/export), insert draft_export with exported_at, record audit `draft.exported` (actor, format, version content hash). `createDraftExportDownload` returns presigned GET only (createDownloadUrl). No email/share function. Narrative calls via createAiPorts so refused non-India calls write ai_call rows.",
+   "path": "packages/drafting/src/consistency/match-names.ts",
+   "change": "NFC + casefold, honorific and initials normalisation, alias-aware matching against person name+aliases; accept script variants only via alias.",
    "requirements": [
-    "R3",
-    "R4",
-    "R5",
+    "R1",
     "R10"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/drafting/index.ts",
-   "change": "New. Public exports of the service functions and types only.",
+   "path": "packages/drafting/src/consistency/match-case-numbers.ts",
+   "change": "Parse/normalise case number notations (W.P.No.1234 of 2025, WP 1234/2025, W.P.(MD), Karnataka WP/CRL forms) and compare type/number/year to the proceeding; expected value in finding.",
    "requirements": [
-    "R1"
+    "R2"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/jobs/definitions/drafting-export.ts",
-   "change": "New. defineJob `drafting.export` (zod payload {workspaceId, draftVersionId, format: ExportFormat}); singleton and idempotencyKey `${draftVersionId}:${format}`; handler calls runDraftingExport; pattern from export-build.ts.",
+   "path": "packages/drafting/src/consistency/match-dates.ts",
+   "change": "Parse dd/mm/yyyy, dd.mm.yyyy, ordinal numerals and words, 1st January 2025; compare with canonical listing and order dates; both values in finding.",
    "requirements": [
     "R3"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Wiring only: import and register draftingExport (3 spots like exportBuild at :48,:187,:247).",
+   "path": "packages/drafting/src/consistency/annexures.ts",
+   "change": "Cross-check Annexure P-n references with attached annexure documents; rule ids annexure.missing, annexure.duplicate, annexure.gap, annexure.unreferenced.",
    "requirements": [
-    "R3"
+    "R4"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/package.json",
-   "change": "Add dependency `@causedeck/drafting: workspace:*` (core uses the engine to render; docs/engineering/13-technical-architecture-spike.md:94 lists drafting in core's dependencies) and exports entry `./drafting`.",
+   "path": "packages/drafting/src/consistency/check.ts",
+   "change": "Pure checkDraft({blocks, facts}) => findings + counts, deterministic, no I/O, no @causedeck/ai import; also consistency/index.ts re-exported from packages/drafting/src/index.ts.",
    "requirements": [
-    "R6"
+    "R1",
+    "R5",
+    "R7",
+    "R8"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/core/src/index.ts",
-   "change": "Add `export * from './drafting/index.ts';`.",
+   "path": "packages/drafting/src/index.ts",
+   "change": "Re-export the consistency API.",
    "requirements": [
-    "R1"
+    "R7"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "Add `drafting` domain (CORE_DOMAINS list as the file requires) with CORE_DOMAIN_DEPENDENCIES entry: workspaces, matter-graph, audit (plus usage/ai only if imported, via their index.ts); add 'drafting' to the jobs dependency list; keep acyclic.",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Add drafting row to the domain table, the dependency graph edges and dependency table, and jobs row, matching D9.",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/db/src/schema/drafting.ts",
-   "change": "Add tenantTable `draft_export` (id, draft_version_id, format text check in pdf/docx, storage_key, size_bytes, exported_at timestamptz not null, created_by nullable, composite FK (workspace_id, draft_version_id) to draft_version, unique (draft_version_id, format), workspace FK cascade) following the existing tables' conventions.",
-   "requirements": [
-    "R3",
-    "R5"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/db/migrations",
-   "change": "Add next free-numbered migration SQL (after 20261025060000_drafting.sql) creating draft_export with forced RLS keyed on app.workspace_id, regenerated snapshot/journal in migrations/meta; renumber if the base took the slot.",
-   "requirements": [
-    "R3",
-    "R5"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add `draft_export` to the root table list.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "Add `draft_export` to the RLS catalog; plus TABLE_TESTS/registry entry and two-tenant seeder for it in packages/db/src/testing (cross-tenant-registry.ts table map).",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/auth/src/policy/actions.ts",
-   "change": "Add `draft.read` and `draft.export` to ACTIONS.draft.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "packages/auth/src/policy/matrix.ts",
-   "change": "MATRIX: draft.read 'junior', draft.export 'junior'; add both to JUNIOR_MATTER_SCOPED (clerks and viewers denied). Regenerate docs/engineering/permissions.md with `pnpm docs:permissions` and update any policy matrix test snapshot that lists actions.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/core/src/audit/events.ts",
-   "change": "Register audit action `draft.exported` (non-security, description) so record() accepts it; update the audit events test list if one enumerates actions.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries for every new runtime export of @causedeck/core (createDraft, renderDraft, saveVersion, listVersions, restoreVersion, exportDraft, runDraftingExport, createDraftExportDownload, draftingExport job exports, etc.) pointing to a real test; NOT_A_SERVICE with reason for pure helpers/consts. Table map: draft_export: DB_TABLES_TEST.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Hotspot (3619 lines): add only a thin wiring (\u003c=150 lines) of real B-on-A cases for drafting (B denied or sees nothing, A unchanged, export job and presign); put bulk in a new file packages/core/src/drafting/__tests__/cross-tenant.test.ts and reference it from the registry if the registry allows a per-entry test path (as LIFECYCLE_TEST does).",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add 'drafting.export' to the expected job names list (near 'export.build' :145).",
-   "requirements": [
-    "R8",
-    "R3"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "packages/core/src/drafting/__tests__/drafting.integration.test.ts",
-   "change": "New testcontainers integration test: create/save/restore/list versions with hash checks, exportDraft end to end with in-memory store (idempotent second run returns same row and key, audit event with actor/format/hash, exported_at set, missing slot blocks export, clerk denied), refused non-India narrative writes ai_call, presigned download only. Add unit tests for policy and for no draft text in logs.",
+   "path": "packages/drafting/src/consistency/__tests__/consistency.test.ts",
+   "change": "Unit tests with Madras and Karnataka fixtures: names/aliases/honorifics/Tamil+Kannada NFC, >=10 case-number variants per court, date formats and conflicts, four annexure rules, provenance on every finding, 30-page perf bound (\u003c2 s), static test that no file under consistency/ imports @causedeck/ai.",
    "requirements": [
     "R1",
     "R2",
     "R3",
     "R4",
     "R5",
-    "R9",
+    "R7",
+    "R8",
     "R10"
    ]
   },
   {
-   "id": "D22",
-   "path": "pnpm-lock.yaml",
-   "change": "Lockfile importer entry for packages/core adding @causedeck/drafting (pnpm install --lockfile-only; delete node_modules first if EACCES).",
+   "id": "D10",
+   "path": "packages/db/src/schema/drafting.ts",
+   "change": "Add tenantTable draft_consistency_report (draft_version_id, graph_revision, report jsonb, created_at; unique(draft_version_id, graph_revision); composite FK to draft_version). Export from schema index if needed.",
+   "requirements": [
+    "R9",
+    "R11"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/db/migrations/20261026000000_drafting_consistency.sql",
+   "change": "Migration for D10 with RLS per tenantTable convention; use next free number on the milestone branch and regenerate meta snapshot; add db registry updates (packages/db/src/index.test.ts root table list, RLS catalog packages/db/src/__tests__/rls/sql.test.ts, TABLE_TESTS and two-tenant seeders, cross-tenant-registry table entry).",
+   "requirements": [
+    "R9",
+    "R11"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/core/src/drafting/consistency-service.ts",
+   "change": "loadConsistencyFacts (via matter-graph index only, actor-scoped), runConsistencyCheck (stores/returns report keyed by draftVersionId+graphRevision), getConsistencyReport/listFindings, applyFix requiring confirm:true that writes a new draft_version via the service's insert path and an audit event. Never logs spans.",
+   "requirements": [
+    "R5",
+    "R6",
+    "R9",
+    "R11",
+    "R12",
+    "R14"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/core/src/drafting/service.ts",
+   "change": "Export the internal version-insert helper for the consistency service (no behaviour change).",
    "requirements": [
     "R6"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/core/src/drafting/index.ts",
+   "change": "Export the consistency service functions and types.",
+   "requirements": [
+    "R6",
+    "R11"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "packages/core/src/jobs/definitions/drafting-consistency-check.ts",
+   "change": "defineJob drafting.consistency.check, payload {workspaceId, draftVersionId, userId}, singleton and idempotencyKey on draftVersionId, PermanentError on WorkspaceError; register in packages/core/src/jobs/registry.ts.",
+   "requirements": [
+    "R13"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Import and register draftingConsistencyCheck next to draftingExport.",
+   "requirements": [
+    "R13"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add drafting.consistency.check to the expected job list.",
+   "requirements": [
+    "R13"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "SERVICE_TESTS entries for the new core exports (or NOT_A_SERVICE with reason for pure helpers/job body); table entry draft_consistency_report.",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases: B running/reading/applying a fix on A's draft version is denied or sees nothing; A's reports and versions unchanged.",
+   "requirements": [
+    "R9",
+    "R6"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/core/src/drafting/__tests__/consistency.integration.test.ts",
+   "change": "Testcontainers test: report idempotent for same version, new revision after a new listing/order, applyFix without confirm rejected and no version created, with confirm creates version_no+1, annexure mapping from matter documents.",
+   "requirements": [
+    "R6",
+    "R9",
+    "R11",
+    "R12"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Describe the consistency functions in the drafting row; CORE_DOMAIN_DEPENDENCIES unchanged unless a new domain import is added (matter-graph, audit, workspaces already listed).",
+   "requirements": [
+    "R9"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/validators/package.json",
+   "change": "Add the ./consistency export if the package uses per-file exports.",
+   "requirements": [
+    "R5"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "packages/drafting public API and purity (packages/drafting/src/index.ts): no send/file/submit function; engine unchanged except nothing."
+   "what": "Slot resolvers, Facts type and export blockers in packages/drafting/src/slots.ts keep their behaviour; renders and snapshots in packages/drafting/src/__tests__ are unchanged."
   },
   {
    "id": "P2",
-   "what": "draft_version immutability trigger and existing drafting RLS in packages/db/migrations/20261025060000_drafting.sql: do not edit; add a new migration only."
+   "what": "Draft versions stay immutable and insertVersion's numbering/locking (packages/core/src/drafting/service.ts) behave as before; saveVersion/restoreVersion/exportDraft contracts unchanged."
   },
   {
    "id": "P3",
-   "what": "export.build workspace export (packages/core/src/jobs/definitions/export-build.ts, lifecycle/export) behaviour and its presign/audit actions."
+   "what": "drafting.export job and its registration (packages/core/src/jobs/definitions/drafting-export.ts) unchanged."
   },
   {
    "id": "P4",
-   "what": "Existing permission matrix rows (packages/auth/src/policy/matrix.ts): only add draft.read and draft.export; draft.write unchanged."
+   "what": "Core domain boundaries: drafting imports other domains only through their index.ts (packages/config/test/core-domain-boundaries.test.ts)."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
+   "command": "pnpm --filter @causedeck/drafting exec vitest run src/consistency src/__tests__ src/index.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/drafting src/domains.test.ts src/jobs/registry.test.ts src/__tests__/cross-tenant/registry.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/consistency.test.ts src/drafting.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/drafting src/jobs/registry.test.ts src/domains.test.ts src/index.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/auth exec vitest run src/policy --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
   },
   {
    "id": "V6",
-   "command": "pnpm --filter @causedeck/db exec tsx scripts/check-schema-conventions.ts && pnpm --filter @causedeck/db exec tsx scripts/lint-migrations.ts"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts"
+  },
+  {
+   "id": "V7",
+   "command": "pnpm --filter @causedeck/config exec vitest run test/core-domain-boundaries.test.ts"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "New table `draft_export` instead of a column on draft_version",
-   "justification": "draft_version is immutable by trigger (packages/db/src/schema/drafting.ts:8-10, only created_by may change), so exported_at and the stored file key cannot live there; unique (draft_version_id, format) gives the idempotency key",
-   "source": "spec"
+   "choice": "The pure checker lives in packages/drafting (checkDraft over supplied facts); the issue's checkConsistency(tx, wsId, draftVersionId) loader lives in core consistency-service.ts.",
+   "justification": "packages/drafting has no db dependency (packages/drafting/package.json:13-22) and slot resolution already follows the pure-resolver plus core loader split (packages/core/src/drafting/service.ts:243, packages/drafting/src/slots.ts:1-3).",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Add policy actions draft.read and draft.export (junior, matter-scoped) rather than reuse draft.write",
-   "justification": "matrix.ts:30 has only draft.write; the issue requires can(user,'draft:*') with clerk restrictions; juniors and up, clerks denied, mirrors memory.read/write (research/notes-service.ts:1-8)",
+   "choice": "The job is defined in packages/core/src/jobs/definitions, not apps/worker/src/jobs.",
+   "justification": "apps/worker/src/jobs does not exist; jobs are registered in packages/core/src/jobs/registry.ts:48,189 and the worker guard is apps/worker/src/__tests__/registry.test.ts:146.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Add workspace dependency core -> drafting",
-   "justification": "docs/engineering/13-technical-architecture-spike.md:94 lists drafting among core's dependencies; apps/web already depends on it",
-   "source": "doc"
+   "choice": "Annexure P-n maps to the n-th kind='annexure' document of the matter ordered by (created_at, id); no new document column.",
+   "justification": "document has no label or number column and no draft link (packages/db/src/schema/documents.ts:71-100); adding one is outside the issue.",
+   "source": "spec"
   },
   {
    "id": "K4",
-   "choice": "Reuse storage kind 'export' and the export-build store/keys wiring",
-   "justification": "packages/storage/src/limits.ts:13 SERVER_OBJECT_KINDS includes 'export'; jobs/definitions/export-build.ts:36-49 shows createObjectStoreFromEnv and EnvKeyProvider usage",
+   "choice": "New table draft_consistency_report stores the report keyed by (draft_version_id, graph_revision) where graph_revision is a sha256 of the canonical facts.",
+   "justification": "Idempotency and invalidation on new listing or order need a stored revision; draft_version is immutable so a report cannot live on it (packages/db/src/schema/drafting.ts:97-123, draft_export precedent at :125-160).",
+   "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "No new workspace package dependency: drafting already depends on validators; core already depends on drafting (packages/core/package.json:66). Tests live in packages/drafting/src/consistency/__tests__ rather than packages/drafting/test.",
+   "justification": "Existing drafting tests sit under src/**/__tests__ (packages/drafting/src/__tests__/engine.test.ts).",
    "source": "precedent"
   }
  ]

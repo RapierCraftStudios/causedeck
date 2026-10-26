@@ -121,6 +121,7 @@ describe('row-level security catalog', () => {
         'document_page',
         // Drafting (#766).
         'draft',
+        'draft_consistency_report',
         'draft_export',
         'draft_version',
         'anchor',

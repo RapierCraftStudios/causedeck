@@ -485,6 +485,8 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
     draftId: f.a.rows.draft_export?.draftId ?? '',
     versionId: f.a.rows.draft_export?.draftVersionId ?? '',
     exportId: f.a.rows.draft_export?.id ?? '',
+    reportVersionId: f.a.rows.draft_consistency_report?.draftVersionId ?? '',
+    matterId: f.a.rows.matter?.matterId ?? '00000000-0000-4000-8000-000000000000',
   });
   const inA = (f: Fixture) => ({ workspaceId: f.a.id, userId: f.ub });
   const aState = async (f: Fixture) =>
@@ -492,6 +494,7 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
       drafts: await s.select().from(schema.draft),
       versions: await s.select().from(schema.draftVersion),
       exports: await s.select().from(schema.draftExport),
+      reports: await s.select().from(schema.draftConsistencyReport),
     }));
   const unchanged = (run: (f: Fixture) => Promise<void>) => async (f: Fixture) => {
     const before = await aState(f);
@@ -538,6 +541,26 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
         ),
       ).rejects.toBeDefined();
     }),
+    // Consistency (#78): B on A's version sees nothing, stores nothing and writes no version.
+    runConsistencyCheck: denied((f, s) =>
+      core.runConsistencyCheck({ db: s }, inA(f), { draftVersionId: ids(f).reportVersionId }),
+    ),
+    getConsistencyReport: denied((f, s) =>
+      core.getConsistencyReport({ db: s }, inA(f), { draftVersionId: ids(f).reportVersionId }),
+    ),
+    listFindings: denied((f, s) =>
+      core.listFindings({ db: s }, inA(f), { draftVersionId: ids(f).reportVersionId }),
+    ),
+    loadConsistencyFacts: denied((f, s) =>
+      core.loadConsistencyFacts({ db: s }, inA(f), ids(f).matterId),
+    ),
+    applyFix: denied((f, s) =>
+      core.applyFix({ db: s }, inA(f), {
+        draftVersionId: ids(f).reportVersionId,
+        findingId: 'name.mismatch:b.0:0',
+        confirm: true,
+      }),
+    ),
     createDraftExportDownload: denied((f, s) =>
       core.createDraftExportDownload(
         { db: s, store: createMemoryObjectStore() },

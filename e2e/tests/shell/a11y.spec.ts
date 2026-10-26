@@ -39,7 +39,8 @@ test.describe('shell accessibility', { tag: '@a11y' }, () => {
   });
 
   test('offline banner', async ({ page, asUser }) => {
-    await openShell(page, asUser);
+    // The shell banner sits on placeholder pages; the Court-Day Board (today) has its own.
+    await openShell(page, asUser, { path: 'obligations' });
     await page.context().setOffline(true);
     await expect(page.getByText(/You are offline/)).toBeVisible();
   });

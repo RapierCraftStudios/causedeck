@@ -4,7 +4,9 @@
 import type { Secret, ServerEnv } from '@causedeck/config/env';
 import type { Database } from '@causedeck/db';
 import { schema } from '@causedeck/db';
+import { eq } from 'drizzle-orm';
 import { passkey } from '@better-auth/passkey';
+import { sso } from '@better-auth/sso';
 import { betterAuth, type BetterAuthPlugin } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, getSessionFromCtx, isAPIError } from 'better-auth/api';
@@ -23,8 +25,20 @@ import {
   PHONE_VERIFY_IP_LIMIT,
   phoneOtpKey,
   RATE_LIMIT_MESSAGE,
+  SSO_DOMAIN_LIMIT,
+  SSO_IP_LIMIT,
+  ssoDomainKey,
 } from './rate-limit';
 import { ac, isRole, roles } from './roles';
+import {
+  isBlockedSsoPath,
+  isSsoPath,
+  isSsoReturnPath,
+  provisionSsoMember,
+  ssoDomainOf,
+  ssoEmailAllowed,
+  withSsoProviderLookup,
+} from './sso';
 import { type SmsSender } from './sms';
 import { markStepUp } from './step-up';
 
@@ -51,7 +65,7 @@ type GoogleEnv =
 export type AuthEnv = Pick<ServerEnv, 'NODE_ENV' | 'APP_URL' | 'BETTER_AUTH_SECRET'> & GoogleEnv;
 
 export type SignInMethod =
-  'magic_link' | 'phone_otp' | 'passkey' | 'google' | 'two_factor' | 'dev' | 'unknown';
+  'magic_link' | 'phone_otp' | 'passkey' | 'google' | 'sso' | 'two_factor' | 'dev' | 'unknown';
 
 /** One auth security event as plain data; `@causedeck/core` turns it into an audit row (#228). */
 export interface SecurityEventInput {
@@ -118,6 +132,8 @@ export function sessionUpdateAgeFor(expiresInSeconds: number): number {
 }
 
 const MAGIC_LINK_VERIFY_PATH = '/magic-link/verify';
+export const SSO_SIGN_IN_PATH = '/sign-in/sso';
+const SSO_CALLBACK_RULE = { window: SSO_IP_LIMIT.windowSeconds, max: SSO_IP_LIMIT.max };
 const PHONE_VERIFY_PATH = PHONE_OTP_VERIFY_PATH;
 const PASSKEY_SIGN_IN_PATH = '/passkey/verify-authentication';
 const TWO_FACTOR_VERIFY_PATHS: ReadonlySet<string> = new Set([
@@ -141,6 +157,7 @@ export function signInMethod(path: string | undefined): SignInMethod {
   if (path === MAGIC_LINK_VERIFY_PATH) return 'magic_link';
   if (path === PHONE_VERIFY_PATH) return 'phone_otp';
   if (path === PASSKEY_SIGN_IN_PATH) return 'passkey';
+  if (path !== undefined && isSsoPath(path)) return 'sso';
   if (path?.startsWith('/callback/')) return 'google';
   if (path !== undefined && TWO_FACTOR_VERIFY_PATHS.has(path)) return 'two_factor';
   // Literal `process.env.NODE_ENV` so production bundles drop the dev path string with the dev provider.
@@ -222,7 +239,8 @@ export function securityEventHook(securityEvents: SecurityEventRecorder, logger:
         ctx.path === MAGIC_LINK_VERIFY_PATH ||
         ctx.path === PHONE_VERIFY_PATH ||
         ctx.path === PASSKEY_SIGN_IN_PATH ||
-        TWO_FACTOR_VERIFY_PATHS.has(ctx.path)
+        TWO_FACTOR_VERIFY_PATHS.has(ctx.path) ||
+        (isSsoPath(ctx.path) && ctx.path !== SSO_SIGN_IN_PATH)
       ) {
         await securityEvents
           .signInFailed({ ...info, userId, method: signInMethod(ctx.path) })
@@ -379,6 +397,24 @@ export function createAuth({
     // Accounts have no password (magic link, passkeys, Google), so enabling and disabling 2FA rely on
     // the session alone (#289); a user who somehow has a credential password is still asked for it.
     twoFactor({ issuer: 'CauseDeck', allowPasswordless: true }),
+    // Per-organisation SAML and OIDC (#683). The plugin only reads the enabled providers of the
+    // keyed `app_sso_provider_lookup` function; the owner-only core service edits them, so its own provider
+    // endpoints are refused in `hooks.before`. Membership is ours (`provisionSsoMember`), not the
+    // plugin's organisation provisioning, because `member` is under row-level security.
+    sso({
+      // The plugin refuses a sign-in on a provider whose domain is not verified, and links an
+      // existing account only when the asserted email is at the verified domain. Verification
+      // itself is ours (DNS TXT, owner-only core service); the plugin's endpoints are blocked.
+      domainVerification: { enabled: true },
+      organizationProvisioning: { disabled: true },
+      provisionUserOnEveryLogin: true,
+      provisionUser: async ({ user, provider }) => {
+        const organizationId = (provider as { organizationId?: unknown }).organizationId;
+        if (typeof organizationId === 'string') {
+          await provisionSsoMember(db, organizationId, user.id);
+        }
+      },
+    }),
   ] satisfies BetterAuthPlugin[];
 
   // Literal `process.env.NODE_ENV` so production bundles drop the dev provider entirely.
@@ -391,7 +427,11 @@ export function createAuth({
     baseURL: appUrl.origin,
     secret: env.BETTER_AUTH_SECRET.reveal(),
     trustedOrigins: [appUrl.origin],
-    database: drizzleAdapter(db, { provider: 'pg', schema }),
+    database: withSsoProviderLookup(
+      db,
+      env.BETTER_AUTH_SECRET.reveal(),
+      drizzleAdapter(db, { provider: 'pg', schema }),
+    ),
     emailAndPassword: { enabled: false },
     socialProviders: env.AUTH_GOOGLE_ENABLED
       ? {
@@ -457,6 +497,9 @@ export function createAuth({
           window: MAGIC_LINK_IP_LIMIT.windowSeconds,
           max: MAGIC_LINK_IP_LIMIT.max,
         },
+        [SSO_SIGN_IN_PATH]: { window: SSO_IP_LIMIT.windowSeconds, max: SSO_IP_LIMIT.max },
+        '/sso/callback/*': SSO_CALLBACK_RULE,
+        '/sso/saml2/sp/acs/*': SSO_CALLBACK_RULE,
         [PHONE_OTP_SEND_PATH]: {
           window: PHONE_OTP_IP_LIMIT.windowSeconds,
           max: PHONE_OTP_IP_LIMIT.max,
@@ -476,6 +519,7 @@ export function createAuth({
     },
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
+        if (isBlockedSsoPath(ctx.path)) throw new APIError('NOT_FOUND', { message: 'Not found' });
         const body = ctx.body as Record<string, unknown> | undefined;
         if (ctx.path === MAGIC_LINK_PATH && typeof body?.email === 'string') {
           const allowed = await consumeRateLimit(
@@ -484,6 +528,26 @@ export function createAuth({
             MAGIC_LINK_EMAIL_LIMIT,
           );
           if (!allowed) throw new APIError('TOO_MANY_REQUESTS', { message: RATE_LIMIT_MESSAGE });
+        }
+        if (ctx.path === SSO_SIGN_IN_PATH) {
+          // Only the email domain picks a provider: a provider or organisation id would let a
+          // caller probe which organisations use SSO.
+          if (body?.providerId !== undefined || body?.organizationSlug !== undefined) {
+            throw new APIError('BAD_REQUEST', { message: 'Sign in with your work email' });
+          }
+          const domain = ssoDomainOf(
+            typeof body?.email === 'string'
+              ? body.email
+              : typeof body?.domain === 'string'
+                ? body.domain
+                : '',
+          );
+          if (domain === null) {
+            throw new APIError('BAD_REQUEST', { message: 'Sign in with your work email' });
+          }
+          if (!(await consumeRateLimit(db, ssoDomainKey(domain), SSO_DOMAIN_LIMIT))) {
+            throw new APIError('TOO_MANY_REQUESTS', { message: RATE_LIMIT_MESSAGE });
+          }
         }
         if (ctx.path === PHONE_OTP_SEND_PATH && typeof body?.phoneNumber === 'string') {
           const allowed = await consumeRateLimit(
@@ -510,6 +574,25 @@ export function createAuth({
       }),
     },
     databaseHooks: {
+      // Takeover guard (#683): on an SSO return the user or linked account must sit at the
+      // provider's verified email domain, whatever the plugin decided about linking.
+      account: {
+        create: {
+          before: async (account, ctx) => {
+            if (isSsoReturnPath(ctx?.path)) {
+              const providerId = (ctx?.params as { providerId?: string } | undefined)?.providerId;
+              const [owner] = await db
+                .select({ email: schema.user.email })
+                .from(schema.user)
+                .where(eq(schema.user.id, account.userId));
+              if (owner === undefined || !(await ssoEmailAllowed(db, providerId, owner.email))) {
+                throw new APIError('FORBIDDEN', { message: 'Email is outside the SSO domain' });
+              }
+            }
+            return undefined;
+          },
+        },
+      },
       session: {
         create: {
           // A session created by a passkey or TOTP ceremony starts with a fresh step-up (#304).
@@ -542,6 +625,15 @@ export function createAuth({
       },
       user: {
         create: {
+          before: async (user, ctx) => {
+            if (isSsoReturnPath(ctx?.path)) {
+              const providerId = (ctx?.params as { providerId?: string } | undefined)?.providerId;
+              if (!(await ssoEmailAllowed(db, providerId, user.email))) {
+                throw new APIError('FORBIDDEN', { message: 'Email is outside the SSO domain' });
+              }
+            }
+            return undefined;
+          },
           // The funnel's first step and cohort anchor (#509): the user id only, never the email.
           // Measurement must not fail a sign-up.
           after: async (user) => {

@@ -4,14 +4,18 @@
 //   2. caches hashed static assets cache-first and public HTML network-first;
 //   3. NEVER caches tenant data: `/api/*`, server actions, RSC payloads and every signed-in route
 //      (`/w/**`, `/account`, `/onboarding`, `/share-target`) go to the network only;
-//   4. takes the Web Share Target POST: files are encrypted into the outbox on this device before
+//   4. answers offline `/today`, `/tomorrow` and brief navigations with a precached data-free shell
+//      that reads the encrypted store on the device (#65); the routes themselves stay uncached;
+//   5. takes the Web Share Target POST: files are encrypted into the outbox on this device before
 //      any network call, then the worker answers 303 -> `/share-target?batch=<id>`.
-// It also runs the outbox on Background Sync and applies updates only when the page asks (the
-// court-day update policy lives in the page), and loads the push handlers (#23).
+// It also runs the outbox on Background Sync, asks a page to prefetch on its own sync tag (#65),
+// applies updates only when the page asks (the court-day update policy lives in the page), and
+// loads the push handlers (#23).
 import { CacheFirst, ExpirationPlugin, NetworkFirst, NetworkOnly, Serwist } from 'serwist';
 import type { PrecacheEntry, RuntimeCaching } from 'serwist';
 
 import { isStaticAsset, isTenantRequest, SHARE_PATH } from '../lib/pwa/cache-policy.ts';
+import { courtDayFallback, PREFETCH_SYNC_TAG, requestPrefetch } from '../sw/court-day-cache.ts';
 import { getDeviceKey } from '../lib/pwa/outbox/crypto.ts';
 import { dexieKeyStore, dexieOutboxStore } from '../lib/pwa/outbox/db.ts';
 import { enqueueFiles, notifyOutboxChanged, OutboxCapError } from '../lib/pwa/outbox/queue.ts';
@@ -21,6 +25,7 @@ import { SYNC_TAG, syncOutbox } from '../lib/pwa/outbox/sync.ts';
 declare const __SW_MANIFEST__: (PrecacheEntry | string)[];
 
 interface WorkerScope {
+  clients: Parameters<typeof requestPrefetch>[0];
   importScripts(...urls: string[]): void;
   skipWaiting(): Promise<void>;
   addEventListener(type: string, listener: (event: never) => void): void;
@@ -67,7 +72,10 @@ const serwist = new Serwist({
   navigationPreload: false,
   runtimeCaching,
   fallbacks: {
-    entries: [{ url: '/offline', matcher: ({ request }) => request.destination === 'document' }],
+    entries: [
+      courtDayFallback,
+      { url: '/offline', matcher: ({ request }) => request.destination === 'document' },
+    ],
   },
 });
 
@@ -101,6 +109,14 @@ worker.addEventListener('fetch', (event: FetchLike) => {
 
 worker.addEventListener('sync', (event: SyncLike) => {
   if (event.tag === SYNC_TAG) event.waitUntil(syncOutbox());
+  if (event.tag === PREFETCH_SYNC_TAG) {
+    // No open page means no session secret: fail so the browser retries the sync later.
+    event.waitUntil(
+      requestPrefetch(worker.clients).then((asked) => {
+        if (asked === 0) throw new Error('no window to prefetch');
+      }),
+    );
+  }
 });
 
 worker.addEventListener('message', (event: MessageLike) => {

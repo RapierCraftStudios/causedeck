@@ -1,12 +1,14 @@
 import { FormatPresetSchema, type CourtPreset } from '@causedeck/validators/drafting';
 
+import { genericPreset } from './generic';
 import { karnatakaHcPreset } from './karnataka-hc';
 import { madrasHcPreset, type CourtFormatPreset } from './madras-hc';
 
-export { karnatakaHcPreset as karnatakaHc, madrasHcPreset as madrasHc };
+export { genericPreset as generic, karnatakaHcPreset as karnatakaHc, madrasHcPreset as madrasHc };
 export { MADRAS_HC_MAX_EXPORT_BYTES, type CourtFormatPreset } from './madras-hc';
 
 export const PRESETS: Readonly<Partial<Record<CourtPreset, CourtFormatPreset>>> = {
+  generic: genericPreset,
   madras_hc: madrasHcPreset,
   karnataka_hc: karnatakaHcPreset,
 };

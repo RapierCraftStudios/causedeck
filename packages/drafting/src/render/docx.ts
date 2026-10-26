@@ -120,24 +120,35 @@ export async function renderDocx(
       : preset.pageNumbering === 'header_right'
         ? { headers: { default: new Header({ children: [number] }) } }
         : {}),
-    children: toParagraphs(blocks, facts, opts, 'b'),
+    children: [
+      ...(opts.banner === undefined
+        ? []
+        : [new Paragraph({ children: [new TextRun({ text: opts.banner, bold: true })] })]),
+      ...toParagraphs(blocks, facts, opts, 'b'),
+    ],
   };
   const size = preset.fontSizePt * 2;
+  // Latin text keeps the court font; Tamil and Kannada runs use a Noto complex-script font.
+  const scriptFont = opts.locale === 'ta' ? 'Noto Sans Tamil' : 'Noto Sans Kannada';
+  const font =
+    opts.locale === 'ta' || opts.locale === 'kn'
+      ? { ascii: preset.fontFamily, hAnsi: preset.fontFamily, cs: scriptFont }
+      : preset.fontFamily;
   const doc = new Document({
     creator: 'CauseDeck',
     customProperties: [{ name: 'AI-assisted', value: String(isAiAssisted(blocks, opts)) }],
     styles: {
       default: {
         document: {
-          run: { font: preset.fontFamily, size },
+          run: { font, size },
           paragraph: { spacing: { line: Math.round(preset.lineSpacing * 240) } },
         },
-        heading1: { run: { font: preset.fontFamily, size, bold: true } },
-        heading2: { run: { font: preset.fontFamily, size, bold: true } },
-        heading3: { run: { font: preset.fontFamily, size, bold: true } },
-        heading4: { run: { font: preset.fontFamily, size, bold: true } },
-        heading5: { run: { font: preset.fontFamily, size, bold: true } },
-        heading6: { run: { font: preset.fontFamily, size, bold: true } },
+        heading1: { run: { font, size, bold: true } },
+        heading2: { run: { font, size, bold: true } },
+        heading3: { run: { font, size, bold: true } },
+        heading4: { run: { font, size, bold: true } },
+        heading5: { run: { font, size, bold: true } },
+        heading6: { run: { font, size, bold: true } },
       },
     },
     sections: [section],

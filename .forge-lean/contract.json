@@ -2,324 +2,419 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add `packages/core/src/drafting/{service,policy,index}.ts` (`createDraft`, `renderDraft`, `saveVersion` immutable with content hash, `listVersions`, `restoreVersion` creating a new version, `exportDraft`;",
+   "quote": "At least two templates per launch court (mention or adjournment memo, client covering letter) plus the other listed kinds exist, each with `is_system = true` and a stable id [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "`can(user,'draft:*')` with clerk restrictions; facts loaded via the matter-graph index and passed to pure slot resolvers)",
+   "quote": "Seeding is idempotent: running it twice produces no duplicate rows and updates a template only when its checksum changes [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/core/src/jobs/definitions/drafting-export.ts` (job `drafting.export`, payload {workspaceId, draftVersionId, format}, idempotent on (draft_version_id, format) returning the stored file)",
+   "quote": "Each template renders with the Madras HC or Karnataka HC preset from #75 and passes a snapshot test using the synthetic demo data with fictional parties [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "storage under the workspace key prefix with envelope encryption and presigned download only (no email/share path)",
+   "quote": "Case-type labels, hall and bench phrases come from the adapter catalogue and are not hard-coded strings in templates [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "`exported_at` plus audit_event with actor, format and version hash, ai_call audit on refused non-India calls.",
+   "quote": "Client covering letter slots only read data about an existing client of the workspace; it never offers a field for non-client recipients [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Add `@causedeck/drafting` dependency in `packages/core/package.json` and the `./drafting` export;",
+   "quote": "Every template shows a visible banner `Scaffold: review before use` until its `reviewed_by` metadata is set, and exporting records the banner state in the audit event [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "update CORE_DOMAIN_DEPENDENCIES and `docs/engineering/core-domains.md`,",
+   "quote": "Templates contain no pre-filled legal citations or authorities; a lint test fails if a citation-pattern string appears in a system template [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "`packages/db/src/testing/cross-tenant-registry.ts` SERVICE_TESTS with real cases in `packages/core/src/__tests__/cross-tenant/services.test.ts` (B on A denied, A unchanged, including export job and presign), `apps/worker/src/__tests__/registry.test.ts`.",
+   "quote": "The covering letter and memo contain no advice, no commitment, no fee quote and no solicitation language; a phrase lint (denylist) runs in CI [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Testcontainers integration test `packages/core/src/drafting/__tests__/drafting.integration.test.ts`.",
+   "quote": "Tamil or Kannada content language switches the font fallback in DOCX and PDF output and renders glyphs without tofu [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "No draft text in pino logs.",
+   "quote": "Templates are read-only to workspaces (SELECT policy only); copying into a workspace template creates a new row owned by that workspace [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "i18n: all template labels used in the UI have `en` keys and `ta`/`kn` stubs [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "the routine documents lawyers actually produce (early-listing memo, memo of appearance, application for certified copy, request for adjournment note, covering letter to junior or senior counsel).",
+   "disposition": "defer",
+   "why": "The v1 catalogue table lists no counsel covering letter, and it needs a non-client recipient slot that the client-letter rule forbids; file as a follow-up with its own recipient model."
+  },
+  {
+   "id": "R13",
+   "quote": "`docs/engineering/drafting-templates.md` (how to add a template, review checklist)",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "Wording is reviewed by a practising advocate fixture-holder before the flag-free release",
+   "disposition": "post-deploy",
+   "why": "Advocate review of wording can only happen on the released scaffolds; the banner stays until `reviewed_by` is set."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/drafting/policy.ts",
-   "change": "New. Draft access: member role via workspaces index, matter visibility like research/notes-service.ts, `can()` checks for draft.read/draft.write/draft.export; clerk denied (NOT_FOUND/FORBIDDEN per matter-service convention).",
+   "path": "packages/db/src/schema/drafting.ts",
+   "change": "Add template columns `checksum text`, `reviewed_by text null`, generated `is_system boolean` (workspace_id is null)",
    "requirements": [
-    "R2"
+    "R1",
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/drafting/service.ts",
-   "change": "New. createDraft, renderDraft (loads facts through matter-graph index only, resolveBlocks, no narrative calls unless port given), saveVersion (canonical-JSON sha256 into draft_version.content_sha256, next version_no), listVersions, restoreVersion (new version copying old content), exportDraft (permission check, enqueue `drafting.export`; returns existing export when present). Never logs draft text.",
+   "path": "packages/db/migrations/\u003cnext free timestamp>_system_templates.sql (+ meta/_journal.json and snapshot)",
+   "change": "Migration for the three template columns; keep the RLS policies unchanged",
    "requirements": [
     "R1",
     "R2",
+    "R6",
     "R10"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/drafting/export.ts",
-   "change": "New. runDraftingExport({db,store,keys,log,now}, payload): idempotent on (draft_version_id, format): return the existing draft_export row if present; else render docx/pdf via @causedeck/drafting (block on MissingSlotsError), put to storage key objectKey kind 'export' under ws/\u003cworkspaceId>/ with envelope encryption (same keys/store usage as lifecycle/export), insert draft_export with exported_at, record audit `draft.exported` (actor, format, version content hash). `createDraftExportDownload` returns presigned GET only (createDownloadUrl). No email/share function. Narrative calls via createAiPorts so refused non-India calls write ai_call rows.",
+   "path": "packages/validators/src/drafting.ts",
+   "change": "Add slot resolver `client.name` to SLOT_RESOLVERS and a SystemTemplateSeed schema",
    "requirements": [
-    "R3",
-    "R4",
     "R5",
-    "R10"
+    "R3"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/drafting/index.ts",
-   "change": "New. Public exports of the service functions and types only.",
+   "path": "packages/validators/src/drafting.test.ts",
+   "change": "Cover the new resolver and seed schema",
    "requirements": [
-    "R1"
+    "R5"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/jobs/definitions/drafting-export.ts",
-   "change": "New. defineJob `drafting.export` (zod payload {workspaceId, draftVersionId, format: ExportFormat}); singleton and idempotencyKey `${draftVersionId}:${format}`; handler calls runDraftingExport; pattern from export-build.ts.",
+   "path": "packages/drafting/src/slots.ts",
+   "change": "Add `Facts.client` and the `client.name` source",
    "requirements": [
-    "R3"
+    "R5"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Wiring only: import and register draftingExport (3 spots like exportBuild at :48,:187,:247).",
+   "path": "packages/drafting/src/render/common.ts",
+   "change": "Add RenderOptions.banner (text) rendered at the top by both renderers",
    "requirements": [
-    "R3"
+    "R6",
+    "R9"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/package.json",
-   "change": "Add dependency `@causedeck/drafting: workspace:*` (core uses the engine to render; docs/engineering/13-technical-architecture-spike.md:94 lists drafting in core's dependencies) and exports entry `./drafting`.",
+   "path": "packages/drafting/src/render/docx.ts",
+   "change": "Render the banner paragraph; script font fallback unchanged",
    "requirements": [
-    "R6"
+    "R6",
+    "R9"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/core/src/index.ts",
-   "change": "Add `export * from './drafting/index.ts';`.",
+   "path": "packages/drafting/src/render/pdf.ts",
+   "change": "Render the banner paragraph",
    "requirements": [
-    "R1"
+    "R6",
+    "R9"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "Add `drafting` domain (CORE_DOMAINS list as the file requires) with CORE_DOMAIN_DEPENDENCIES entry: workspaces, matter-graph, audit (plus usage/ai only if imported, via their index.ts); add 'drafting' to the jobs dependency list; keep acyclic.",
+   "path": "packages/drafting/src/system-templates/madras-hc/*.ts (mention-memo, early-listing-memo, memo-of-appearance, certified-copy-application, client-covering-letter)",
+   "change": "Five Madras HC templates; case-type text built from the adapters catalogue at module load",
    "requirements": [
-    "R7"
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R7",
+    "R8"
    ]
   },
   {
    "id": "D10",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Add drafting row to the domain table, the dependency graph edges and dependency table, and jobs row, matching D9.",
+   "path": "packages/drafting/src/system-templates/karnataka-hc/*.ts",
+   "change": "Same five kinds with Karnataka nomenclature and FR handling, from the Karnataka catalogue",
    "requirements": [
-    "R7"
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R7",
+    "R8"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/db/src/schema/drafting.ts",
-   "change": "Add tenantTable `draft_export` (id, draft_version_id, format text check in pdf/docx, storage_key, size_bytes, exported_at timestamptz not null, created_by nullable, composite FK (workspace_id, draft_version_id) to draft_version, unique (draft_version_id, format), workspace FK cascade) following the existing tables' conventions.",
+   "path": "packages/drafting/src/system-templates/generic-a0/*.ts",
+   "change": "Adjournment note and client covering letter (preset generic)",
    "requirements": [
-    "R3",
-    "R5"
+    "R1",
+    "R5",
+    "R7",
+    "R8"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/db/migrations",
-   "change": "Add next free-numbered migration SQL (after 20261025060000_drafting.sql) creating draft_export with forced RLS keyed on app.workspace_id, regenerated snapshot/journal in migrations/meta; renumber if the base took the slot.",
+   "path": "packages/drafting/src/system-templates/index.ts",
+   "change": "Registry: stable code, semver, sha256 checksum, blocks, locale, reviewedBy null",
    "requirements": [
-    "R3",
-    "R5"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add `draft_export` to the root table list.",
+   "path": "packages/drafting/src/index.ts",
+   "change": "Export the registry and banner constant",
    "requirements": [
-    "R3"
+    "R1",
+    "R6"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "Add `draft_export` to the RLS catalog; plus TABLE_TESTS/registry entry and two-tenant seeder for it in packages/db/src/testing (cross-tenant-registry.ts table map).",
+   "path": "packages/drafting/package.json",
+   "change": "Add `@causedeck/adapters` workspace dependency: case-type labels must come from the adapters catalogue (issue Root Cause); boundaries.js permits it and adapters does not import drafting (no cycle)",
    "requirements": [
-    "R3"
+    "R4"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/auth/src/policy/actions.ts",
-   "change": "Add `draft.read` and `draft.export` to ACTIONS.draft.",
+   "path": "packages/drafting/src/__tests__/system-templates.test.ts",
+   "change": "Registry shape, DOCX text snapshot per template with fictional Facts, citation-pattern lint, phrase denylist lint, client-slot-only check, banner, ta/kn font check, no hard-coded case-type labels",
    "requirements": [
-    "R2"
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R9"
    ]
   },
   {
    "id": "D16",
-   "path": "packages/auth/src/policy/matrix.ts",
-   "change": "MATRIX: draft.read 'junior', draft.export 'junior'; add both to JUNIOR_MATTER_SCOPED (clerks and viewers denied). Regenerate docs/engineering/permissions.md with `pnpm docs:permissions` and update any policy matrix test snapshot that lists actions.",
+   "path": "packages/drafting/src/__tests__/__snapshots__/system-templates.test.ts.snap",
+   "change": "Snapshots",
+   "requirements": [
+    "R3"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/db/src/seed/system-templates.ts",
+   "change": "`seedSystemTemplates(db, entries)`: owner-run upsert on (code, workspace_id null), update only when checksum differs, returns counts; no import of drafting",
+   "requirements": [
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/db/package.json",
+   "change": "Export `./seed/system-templates`",
    "requirements": [
     "R2"
    ]
   },
   {
-   "id": "D17",
-   "path": "packages/core/src/audit/events.ts",
-   "change": "Register audit action `draft.exported` (non-security, description) so record() accepts it; update the audit events test list if one enumerates actions.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries for every new runtime export of @causedeck/core (createDraft, renderDraft, saveVersion, listVersions, restoreVersion, exportDraft, runDraftingExport, createDraftExportDownload, draftingExport job exports, etc.) pointing to a real test; NOT_A_SERVICE with reason for pure helpers/consts. Table map: draft_export: DB_TABLES_TEST.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
    "id": "D19",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Hotspot (3619 lines): add only a thin wiring (\u003c=150 lines) of real B-on-A cases for drafting (B denied or sees nothing, A unchanged, export job and presign); put bulk in a new file packages/core/src/drafting/__tests__/cross-tenant.test.ts and reference it from the registry if the registry allows a per-entry test path (as LIFECYCLE_TEST does).",
+   "path": "packages/db/src/seed/__tests__/system-templates-seed.test.ts",
+   "change": "Idempotency (twice = same rows, updated_at unchanged), update on checksum change, app role cannot write a null-workspace row, app role can insert a copy owned by its own workspace",
    "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add 'drafting.export' to the expected job names list (near 'export.build' :145).",
-   "requirements": [
-    "R8",
-    "R3"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "packages/core/src/drafting/__tests__/drafting.integration.test.ts",
-   "change": "New testcontainers integration test: create/save/restore/list versions with hash checks, exportDraft end to end with in-memory store (idempotent second run returns same row and key, audit event with actor/format/hash, exported_at set, missing slot blocks export, clerk denied), refused non-India narrative writes ai_call, presigned download only. Add unit tests for policy and for no draft text in logs.",
-   "requirements": [
-    "R1",
     "R2",
-    "R3",
-    "R4",
-    "R5",
-    "R9",
     "R10"
    ]
   },
   {
+   "id": "D20",
+   "path": "packages/core/src/drafting/system-templates.ts",
+   "change": "Glue `seedDraftingSystemTemplates(ownerDb)` passing the drafting registry to the db seeder (core may import both)",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/core/src/drafting/service.ts",
+   "change": "loadDraftFacts also loads `client.name` only from person.kind='client' linked to the matter in the same workspace; pass template banner state",
+   "requirements": [
+    "R5",
+    "R6"
+   ]
+  },
+  {
    "id": "D22",
-   "path": "pnpm-lock.yaml",
-   "change": "Lockfile importer entry for packages/core adding @causedeck/drafting (pnpm install --lockfile-only; delete node_modules first if EACCES).",
+   "path": "packages/core/src/drafting/export.ts",
+   "change": "Pass banner when template.reviewed_by is null and add `bannerShown` to the draft.exported audit metadata",
    "requirements": [
     "R6"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "packages/core/src/drafting/__tests__/drafting.integration.test.ts",
+   "change": "Assert audit metadata bannerShown and client slot never resolves a non-client person",
+   "requirements": [
+    "R5",
+    "R6"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "packages/core/scripts/seed-system-templates.ts and packages/core/package.json and root package.json",
+   "change": "Script run as owner after migrations and chained after `db:migrate`; mirrors the forum catalogue deploy step (ADR 0014)",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "packages/i18n/src/messages/en/drafting-templates.json (+ ta, kn stubs), packages/i18n/src/catalog.ts, generated catalogs",
+   "change": "New namespace `drafting-templates` with a label per template code; regenerate generated messages via the i18n script",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Register the namespace if the guard lists them",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "docs/engineering/drafting-templates.md",
+   "change": "How to add a template, checksum/version rule, review checklist, banner rule",
+   "requirements": [
+    "R13"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "packages/drafting public API and purity (packages/drafting/src/index.ts): no send/file/submit function; engine unchanged except nothing."
+   "what": "RLS on `template`: ws_isolation, global_read (SELECT), owner_catalogue (ALL) unchanged (packages/db/src/__tests__/rls/sql.test.ts:301)"
   },
   {
    "id": "P2",
-   "what": "draft_version immutability trigger and existing drafting RLS in packages/db/migrations/20261025060000_drafting.sql: do not edit; add a new migration only."
+   "what": "Existing engine output and snapshots (packages/drafting/src/__tests__/engine.test.ts and its snap) stay identical when no banner option is passed"
   },
   {
    "id": "P3",
-   "what": "export.build workspace export (packages/core/src/jobs/definitions/export-build.ts, lifecycle/export) behaviour and its presign/audit actions."
+   "what": "`draft.exported` audit contract keeps `format` and `versionHash` (packages/core/src/drafting/export.ts:184); draft_version immutability trigger untouched"
   },
   {
    "id": "P4",
-   "what": "Existing permission matrix rows (packages/auth/src/policy/matrix.ts): only add draft.read and draft.export; draft.write unchanged."
+   "what": "No send, file or share path; no generated citations; export still blocked by unresolved slots (packages/drafting/src/slots.ts exportBlockers)"
+  },
+  {
+   "id": "P5",
+   "what": "@causedeck/db keeps importing only config, i18n and validators (packages/config/eslint/boundaries.js DB_DEPENDENCIES)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
+   "command": "pnpm --filter @causedeck/drafting exec vitest run src/__tests__/system-templates.test.ts src/__tests__/engine.test.ts src/index.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/drafting src/domains.test.ts src/jobs/registry.test.ts src/__tests__/cross-tenant/registry.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/drafting.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/__tests__/system-templates-seed.test.ts src/__tests__/rls/sql.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/auth exec vitest run src/policy --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/drafting"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts"
   },
   {
    "id": "V6",
-   "command": "pnpm --filter @causedeck/db exec tsx scripts/check-schema-conventions.ts && pnpm --filter @causedeck/db exec tsx scripts/lint-migrations.ts"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "New table `draft_export` instead of a column on draft_version",
-   "justification": "draft_version is immutable by trigger (packages/db/src/schema/drafting.ts:8-10, only created_by may change), so exported_at and the stored file key cannot live there; unique (draft_version_id, format) gives the idempotency key",
-   "source": "spec"
+   "choice": "Template registry lives in @causedeck/drafting; the db seeder takes entries as a parameter and a core script runs it as owner",
+   "justification": "db may not import drafting (packages/config/eslint/boundaries.js DB_DEPENDENCIES); core may import both (CORE_DEPENDENCIES); precedent: owner-run seedForumCatalogue (packages/db/scripts/migrate.ts, ADR 0014)",
+   "source": "lint"
   },
   {
    "id": "K2",
-   "choice": "Add policy actions draft.read and draft.export (junior, matter-scoped) rather than reuse draft.write",
-   "justification": "matrix.ts:30 has only draft.write; the issue requires can(user,'draft:*') with clerk restrictions; juniors and up, clerks denied, mirrors memory.read/write (research/notes-service.ts:1-8)",
-   "source": "precedent"
+   "choice": "New `client.name` slot resolver instead of free-text recipient",
+   "justification": "Closed resolver list (packages/validators/src/drafting.ts:25-37) is the only way slots read data; limiting to person.kind='client' satisfies the no-non-client-recipient criterion",
+   "source": "spec"
   },
   {
    "id": "K3",
-   "choice": "Add workspace dependency core -> drafting",
-   "justification": "docs/engineering/13-technical-architecture-spike.md:94 lists drafting among core's dependencies; apps/web already depends on it",
+   "choice": "Add `@causedeck/adapters` as a drafting dependency",
+   "justification": "Issue Root Cause requires labels from the adapters case-type catalogue (adapters/src/madras-hc/config/case-types.ts:128); boundaries permit it and there is no cycle",
    "source": "doc"
   },
   {
    "id": "K4",
-   "choice": "Reuse storage kind 'export' and the export-build store/keys wiring",
-   "justification": "packages/storage/src/limits.ts:13 SERVER_OBJECT_KINDS includes 'export'; jobs/definitions/export-build.ts:36-49 shows createObjectStoreFromEnv and EnvKeyProvider usage",
+   "choice": "Reuse TEMPLATE_KINDS (memo, other) rather than adding kinds",
+   "justification": "Avoids touching the kind list used by validators and the web picker (packages/validators/src/drafting.ts:48)",
+   "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "Tests under packages/drafting/src/__tests__ and i18n under packages/i18n/src/messages, not the issue's `test/` and `messages/` paths",
+   "justification": "Existing layout: packages/drafting/src/__tests__/engine.test.ts and packages/i18n/src/catalog.ts",
    "source": "precedent"
   }
  ]

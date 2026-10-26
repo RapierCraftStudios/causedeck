@@ -97,6 +97,7 @@ describe('@causedeck/db root entry point', () => {
       'flag_change_request',
       'forum',
       'hearing',
+      'help_state',
       'ics_feed',
       'ics_feed_event',
       'ics_import_event',

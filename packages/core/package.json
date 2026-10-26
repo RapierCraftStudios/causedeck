@@ -37,6 +37,7 @@
     "./news": "./src/news/index.ts",
     "./network": "./src/network/index.ts",
     "./portfolio": "./src/portfolio/index.ts",
+    "./help": "./src/help/index.ts",
     "./shares": "./src/shares/index.ts",
     "./whatsapp-link": "./src/whatsapp-link/index.ts",
     "./status": "./src/status/index.ts",

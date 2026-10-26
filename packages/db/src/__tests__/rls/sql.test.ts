@@ -172,6 +172,9 @@ describe('row-level security catalog', () => {
         'whatsapp_link',
         'whatsapp_otp_challenge',
         'whatsapp_inbound_message',
+
+        // In-app help state (#94).
+        'help_state',
         // Enterprise onboarding (#682).
         'sso_provider',
         'scim_token',

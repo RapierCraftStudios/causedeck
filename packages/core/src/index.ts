@@ -24,6 +24,7 @@ export * from './matters/index.ts';
 export * from './news/index.ts';
 export * from './network/index.ts';
 export * from './portfolio/index.ts';
+export * from './help/index.ts';
 export * from './whatsapp-link/index.ts';
 export * from './public-api/index.ts';
 export * from './research/index.ts';

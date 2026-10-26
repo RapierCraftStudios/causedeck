@@ -50,6 +50,8 @@ vi.mock('next/navigation', () => ({
 vi.mock('next-intl/server', () => ({
   getTranslations: (namespace?: string) => fakeGetTranslations(state.locale)(namespace),
 }));
+// An async server component cannot render inside jsdom's client render (#94); its own tests cover it.
+vi.mock('../components/help/surface-help.tsx', () => ({ SurfaceHelp: () => null }));
 vi.mock('../lib/env.ts', () => ({
   isDev: () => state.dev,
   serverEnv: () => ({ APP_URL: 'http://localhost:3000' }),

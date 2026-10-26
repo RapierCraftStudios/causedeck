@@ -162,7 +162,7 @@ test.describe('matters keyboard', () => {
   test('the ? sheet and the palette list the matters shortcuts', async ({ page, asUser }) => {
     await openMatters(page, asUser);
     await page.keyboard.press('?');
-    const sheet = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+    const sheet = page.getByRole('dialog', { name: 'Help' });
     await expect(sheet).toBeVisible();
     await expect(sheet).toContainText('New matter');
     await page.keyboard.press('Escape');

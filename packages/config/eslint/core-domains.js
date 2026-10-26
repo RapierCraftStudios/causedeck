@@ -50,6 +50,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Institution portfolios (#663, #498 part 3): the owner check through workspaces, watches through case-watch
   // (status sources) and the matter read probe through matter-graph; clearance through sources.
   portfolio: Object.freeze(['workspaces', 'matter-graph', 'case-watch', 'sources']),
+  // In-app help state (#94): the membership check through workspaces.
+  help: Object.freeze(['workspaces']),
   // The derived listing brief (#60, ADR 0038): the scope and member role through workspaces, the
   // sensitive-matter-safe `summarise` call through ai, graph reads through matter-graph and court-day
   // (imports `index.ts` only).

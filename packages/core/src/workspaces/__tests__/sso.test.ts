@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { openSsoSecret } from '@causedeck/auth/sso';
 import { schema, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -104,7 +104,9 @@ const auditActions = (tx: Transaction, workspaceId: string) =>
     const rows = await s
       .select({ action: schema.auditEvent.action, metadata: schema.auditEvent.metadata })
       .from(schema.auditEvent)
-      .where(and(eq(schema.auditEvent.workspaceId, workspaceId)));
+      .where(and(eq(schema.auditEvent.workspaceId, workspaceId)))
+      // Chain order: app_audit_append stamps created_at under the chain lock; id breaks ties.
+      .orderBy(asc(schema.auditEvent.createdAt), asc(schema.auditEvent.id));
     return rows.filter((r) => r.action.startsWith('sso.'));
   });
 

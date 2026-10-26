@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@causedeck/ui/dialog';
-import { Field } from '@causedeck/ui/field';
+import { Field, useFieldControl } from '@causedeck/ui/field';
 import { Input } from '@causedeck/ui/input';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -42,6 +42,40 @@ export interface CreateDraftInput {
 export type CreateDraftFn = (input: CreateDraftInput) => Promise<Result<{ id: string }>>;
 
 const SELECT_CLASS = 'border-line-control bg-surface h-9 w-full rounded-md border px-2 text-sm';
+
+/** Native select wired to its surrounding `Field` so the label names it (axe `select-name`). */
+function MatterSelect({
+  value,
+  onChange,
+  noMatterLabel,
+  matters,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  noMatterLabel: string;
+  matters: readonly { id: string; title: string }[];
+}) {
+  const control = useFieldControl({});
+  return (
+    <select
+      id={control.id}
+      className={SELECT_CLASS}
+      value={value}
+      disabled={control.disabled}
+      {...control.ariaProps}
+      onChange={(event) => {
+        onChange(event.target.value);
+      }}
+    >
+      <option value="">{noMatterLabel}</option>
+      {matters.map((matter) => (
+        <option key={matter.id} value={matter.id}>
+          {matter.title}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 export interface TemplatePickerProps {
   workspaceId: string;
@@ -182,20 +216,12 @@ export function TemplatePicker({
               />
             </Field>
             <Field label={t('picker.matterLabel')}>
-              <select
-                className={SELECT_CLASS}
+              <MatterSelect
                 value={matterId}
-                onChange={(event) => {
-                  setMatterId(event.target.value);
-                }}
-              >
-                <option value="">{t('picker.noMatterOption')}</option>
-                {matters.map((matter) => (
-                  <option key={matter.id} value={matter.id}>
-                    {matter.title}
-                  </option>
-                ))}
-              </select>
+                onChange={setMatterId}
+                noMatterLabel={t('picker.noMatterOption')}
+                matters={matters}
+              />
             </Field>
           </form>
           <DialogFooter>

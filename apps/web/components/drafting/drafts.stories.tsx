@@ -141,7 +141,7 @@ export const PickerNoTemplates: StoryObj<typeof TemplatePicker> = {
   ),
 };
 
-export const OfflineBanner: StoryObj<typeof DraftsOfflineBanner> = {
+export const ListOffline: StoryObj<typeof DraftsOfflineBanner> = {
   render: () => <DraftsOfflineBanner forced />,
 };
 export const Loading: StoryObj<typeof DraftsLoading> = { render: () => <DraftsLoading /> };

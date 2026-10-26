@@ -3431,6 +3431,87 @@ export type Messages = {
     };
     scaffoldBanner: string;
   };
+  drafting: {
+    list: {
+      title: string;
+      newDraft: string;
+      pickTemplate: string;
+      empty: string;
+      updated: string;
+      untitled: string;
+    };
+    states: {
+      loading: string;
+      error: string;
+      retry: string;
+      notFound: string;
+      saving: string;
+      saved: string;
+    };
+    panels: {
+      facts: {
+        title: string;
+        empty: string;
+      };
+      citations: {
+        title: string;
+        empty: string;
+        check: string;
+        checkedAt: string;
+        status: {
+          verified: string;
+          notFound: string;
+          unknown: string;
+        };
+      };
+      consistency: {
+        title: string;
+        empty: string;
+      };
+      versions: {
+        title: string;
+        current: string;
+        restore: string;
+        number: string;
+      };
+    };
+    findings: {
+      count: string;
+      factMismatch: string;
+      unsupported: string;
+      goTo: string;
+    };
+    aiDrafted: {
+      label: string;
+      notice: string;
+    };
+    acknowledgement: {
+      title: string;
+      statement: string;
+      confirm: string;
+      cancel: string;
+    };
+    export: {
+      title: string;
+      docx: string;
+      pdf: string;
+      unverifiedWarning: string;
+      action: string;
+      failed: string;
+    };
+    shortcuts: {
+      title: string;
+      save: string;
+      checkCitations: string;
+      togglePanel: string;
+      export: string;
+    };
+    offline: {
+      banner: string;
+      queued: string;
+      synced: string;
+    };
+  };
   calendar: {
     metaTitle: string;
     title: string;

@@ -94,6 +94,7 @@ describe('namespaced catalogs (#174)', () => {
         'caseWatch',
         'common',
         'courtDay',
+        'drafting',
         'draftingTemplates',
         'courtInsights',
         'courts',
@@ -132,6 +133,17 @@ describe('namespaced catalogs (#174)', () => {
         'workspace',
       ].sort(),
     );
+  });
+});
+
+describe('drafting studio copy (#825)', () => {
+  it('has the drafting namespace in every locale with citation statuses and the acknowledgement', () => {
+    for (const catalog of [en, ta, kn]) {
+      expect(catalog.drafting.panels.citations.status.verified).not.toBe('');
+      expect(catalog.drafting.panels.citations.status.notFound).not.toBe('');
+      expect(catalog.drafting.panels.citations.status.unknown).not.toBe('');
+      expect(catalog.drafting.acknowledgement.statement).not.toBe('');
+    }
   });
 });
 

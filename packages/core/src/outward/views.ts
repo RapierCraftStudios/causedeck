@@ -14,7 +14,7 @@ import {
   type OutwardScope,
 } from './context.ts';
 
-const { outwardDraft, outwardDraftVersion, matter } = schema;
+const { outwardDraft, outwardDraftVersion, matter, memoryItem, memoryUsage } = schema;
 
 const MAX_LISTED = 50;
 const PREVIEW_CHARS = 240;
@@ -40,6 +40,11 @@ export interface DraftDetail extends DraftSummary {
   systemBody: string;
   /** The facts the system text was built from, each with its provenance. */
   facts: schema.OutwardFact[];
+  /**
+   * The memory that shaped the text (tone, sign-off, client language), for the facts rail. Only the
+   * key and the date the lawyer saved it; never the value.
+   */
+  memoryCitations: { key: string; date: string }[];
   versions: { id: string; author: 'system' | 'member'; createdAt: string }[];
 }
 
@@ -136,8 +141,33 @@ export async function getDraft(
     const versions = await versionsOf(scope, draftId);
     const system = versions.find((v) => v.author === 'system') ?? versions[0];
     const latest = versions.at(-1);
+    const used = await scope.tx
+      .select({ key: memoryItem.key, updatedAt: memoryItem.updatedAt, usedAt: memoryUsage.usedAt })
+      .from(memoryUsage)
+      .innerJoin(
+        memoryItem,
+        and(
+          eq(memoryItem.workspaceId, memoryUsage.workspaceId),
+          eq(memoryItem.id, memoryUsage.itemId),
+        ),
+      )
+      .where(
+        and(
+          eq(memoryUsage.workspaceId, scope.actor.workspaceId),
+          eq(memoryUsage.userId, scope.actor.userId),
+          eq(memoryUsage.usedIn, 'draft'),
+          eq(memoryUsage.outputRef, draftId),
+        ),
+      )
+      .orderBy(asc(memoryUsage.usedAt));
+    const memoryCitations = [
+      ...new Map(
+        used.map((u) => [u.key, { key: u.key, date: u.updatedAt.toISOString().slice(0, 10) }]),
+      ).values(),
+    ];
     return {
       ...summarize(found.draft, found.matterTitle, latest?.body ?? ''),
+      memoryCitations,
       body: latest?.body ?? '',
       systemBody: system?.body ?? '',
       facts: system?.facts ?? [],

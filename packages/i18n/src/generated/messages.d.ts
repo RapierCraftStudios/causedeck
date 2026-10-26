@@ -4309,6 +4309,16 @@ export type Messages = {
       };
     };
   };
+  memoryCitations: {
+    carryRule: string;
+    chipLabel: string;
+    usedMemory: string;
+    draftTitle: string;
+    draftTone: string;
+    draftLanguage: string;
+    draftOther: string;
+    noteDate: string;
+  };
   whatsappLink: {
     title: string;
     description: string;
@@ -5417,6 +5427,11 @@ export type Messages = {
       willSync: string;
       reviewed: string;
       empty: string;
+      suggested: string;
+      suggestAdd: string;
+      suggestAddLabel: string;
+      suggestSkip: string;
+      suggestSkipLabel: string;
     };
     synopsis: {
       edit: string;

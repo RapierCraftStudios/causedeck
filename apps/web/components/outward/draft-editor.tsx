@@ -34,6 +34,8 @@ export interface DraftView {
   body: string;
   systemBody: string;
   facts: FactView[];
+  /** The memory that shaped the text: the memory key and the day it was saved. */
+  memoryCitations: { key: string; date: string }[];
 }
 
 export interface DraftEditorProps {
@@ -56,6 +58,13 @@ export function DraftEditor({
   onClose,
 }: DraftEditorProps) {
   const t = useTranslations('outward');
+  const tm = useTranslations('memoryCitations');
+  const memoryReason = (key: string) =>
+    key === 'M2.client_update_tone'
+      ? tm('draftTone')
+      : key === 'M6.client_language'
+        ? tm('draftLanguage')
+        : tm('draftOther');
   const [body, setBody] = useState(draft.body);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [showDiff, setShowDiff] = useState(false);
@@ -190,6 +199,28 @@ export function DraftEditor({
               ))}
             </ul>
           )}
+          {draft.memoryCitations.length > 0 ? (
+            <div className="grid gap-2">
+              <h3 className="text-ink text-sm font-medium">{tm('draftTitle')}</h3>
+              <ul className="grid gap-2">
+                {draft.memoryCitations.map((c) => (
+                  <li
+                    key={c.key}
+                    data-memory-citation
+                    aria-label={tm('chipLabel', { reason: memoryReason(c.key) })}
+                    className="border-line rounded-lg border p-2 text-sm"
+                  >
+                    <span className="text-ink">
+                      {tm('usedMemory', { reason: memoryReason(c.key) })}
+                    </span>
+                    <span className="text-ink-muted block text-xs">
+                      {tm('noteDate', { date: c.date })}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </aside>
       </div>
       <ShareMenu

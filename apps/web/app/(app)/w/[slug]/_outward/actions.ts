@@ -10,6 +10,7 @@ import { Audience, Language, ShareChannel, Tone } from '@causedeck/validators/ou
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { memoryDeps } from '../../../../../lib/memory/deps.ts';
 import { type Result } from '../../../../../lib/safe-action.ts';
 import {
   WorkspaceScoped,
@@ -43,6 +44,8 @@ export interface SharedView {
 }
 
 const deps = (ctx: WorkspaceActionCtx) => ({ db: ctx.tx });
+/** Compose also reads the lawyer's memory (#74): tone, sign-off and client language. */
+const composeDeps = (ctx: WorkspaceActionCtx) => ({ db: ctx.tx, memory: memoryDeps(ctx.tx) });
 const actor = (ctx: WorkspaceActionCtx) => ({ workspaceId: ctx.workspaceId, userId: ctx.userId });
 const refresh = () => {
   revalidatePath('/w/[slug]/drafts', 'page');
@@ -56,7 +59,7 @@ const compose = workspaceAction(
     delete request.workspaceId;
     assertCan(ctx.actor, 'draft.write');
     const { composeUpdate } = await import('@causedeck/core/outward');
-    const draft = await composeUpdate(deps(ctx), actor(ctx), request);
+    const draft = await composeUpdate(composeDeps(ctx), actor(ctx), request);
     refresh();
     return { draftId: draft.draftId, templateOnly: draft.templateOnly };
   },

@@ -123,6 +123,7 @@ describe('namespaced catalogs (#174)', () => {
         'matters',
         'members',
         'memory',
+        'memoryCitations',
         'nav',
         'notFound',
         'notices',

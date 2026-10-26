@@ -4308,6 +4308,16 @@
       }
     }
   },
+  "memoryCitations": {
+    "carryRule": "because you usually carry this",
+    "chipLabel": "From your memory: {reason}",
+    "usedMemory": "Used memory: {reason}",
+    "draftTitle": "From your memory",
+    "draftTone": "your usual tone and sign-off",
+    "draftLanguage": "the language you use with this client",
+    "draftOther": "a saved memory",
+    "noteDate": "Saved {date}"
+  },
   "whatsappLink": {
     "title": "WhatsApp",
     "description": "Get court-day alerts and your evening summary on your own WhatsApp. Messages go only to the number you verify here, never to clients.",
@@ -5415,7 +5425,12 @@
       },
       "willSync": "Will sync",
       "reviewed": "Mark list reviewed",
-      "empty": "Nothing to carry."
+      "empty": "Nothing to carry.",
+      "suggested": "Suggested from your memory: {label}",
+      "suggestAdd": "Add",
+      "suggestAddLabel": "Add {label} to the carry list",
+      "suggestSkip": "Not now",
+      "suggestSkipLabel": "Not now: {label}"
     },
     "synopsis": {
       "edit": "Edit synopsis",

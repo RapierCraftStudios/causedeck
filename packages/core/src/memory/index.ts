@@ -21,6 +21,7 @@ export {
   searchMatterMemory,
   type MemoryEmbedder,
 } from './embedding.ts';
+export { correctionRate, matchingWeeks, type MatchingWeek } from './metrics.ts';
 export { proposeFromCorrection, proposeFromEdit, proposeMemory } from './propose.ts';
 export {
   memoryCitation,

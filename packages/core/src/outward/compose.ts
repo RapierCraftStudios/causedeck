@@ -6,6 +6,7 @@
 // draft is written for the lawyer to edit and share; nothing here sends it.
 import type { AiGateway } from '@causedeck/ai';
 import { schema, type Transaction } from '@causedeck/db';
+import { readClientLanguage, readClientUpdateStyle, type MemoryItem } from '@causedeck/validators';
 import {
   DraftRequest,
   type Audience,
@@ -15,6 +16,7 @@ import {
 import { and, asc, eq } from 'drizzle-orm';
 
 import { createCoreAiGateway } from '../ai/index.ts';
+import { memoryCitation, memoryFor, recordUsage, type MemoryCitation } from '../memory/index.ts';
 import { invalid, notFound } from '../shared/errors.ts';
 
 import {
@@ -80,6 +82,57 @@ export interface ComposedDraft {
   facts: OutwardFact[];
   /** True when no model call was made. */
   templateOnly: boolean;
+  /** The memory the draft used, for the facts rail ("because of your note on 12 Aug"). */
+  memoryCitations: MemoryCitation[];
+}
+
+interface MemoryStyle {
+  tone?: Tone;
+  language?: Language;
+  signOff?: string;
+  used: MemoryItem[];
+}
+
+/**
+ * What the lawyer's memory says about this draft: M2 tone and sign-off, and (for a client draft)
+ * the M6 language of that client. Only what the request left open is filled; no memory, paused
+ * memory or an unreadable value gives nothing, so the defaults apply.
+ */
+async function memoryStyle(
+  deps: OutwardDeps,
+  actor: OutwardActor,
+  request: {
+    tone?: Tone | undefined;
+    language?: Language | undefined;
+    clientPersonId?: string | undefined;
+  },
+): Promise<MemoryStyle> {
+  const style: MemoryStyle = { used: [] };
+  if (deps.memory === undefined) return style;
+  try {
+    const m2 = await memoryFor(deps.memory, actor, { layers: ['M2'], purpose: 'draft' });
+    const item = m2.items.find((i) => i.key === 'M2.client_update_tone');
+    const found = item === undefined ? {} : readClientUpdateStyle(item.value);
+    if (item !== undefined && (found.signOff !== undefined || (found.tone && !request.tone))) {
+      if (!request.tone && found.tone) style.tone = found.tone;
+      if (found.signOff !== undefined) style.signOff = found.signOff;
+      style.used.push(item);
+    }
+    if (request.clientPersonId !== undefined && request.language === undefined) {
+      const m6 = await memoryFor(deps.memory, actor, { layers: ['M6'], purpose: 'draft' });
+      const lang = m6.items.find(
+        (i) => i.key === 'M6.client_language' && i.personId === request.clientPersonId,
+      );
+      const language = lang === undefined ? null : readClientLanguage(lang.value);
+      if (lang !== undefined && language !== null) {
+        style.language = language;
+        style.used.push(lang);
+      }
+    }
+  } catch {
+    // Memory is a hint: a failure to read it leaves the defaults.
+  }
+  return style;
 }
 
 async function loadFacts(
@@ -247,9 +300,10 @@ export async function composeUpdate(
   input: unknown,
 ): Promise<ComposedDraft> {
   const request = parseOutwardInput(DraftRequest, input);
-  const language = request.language ?? 'en';
-  const tone = request.tone ?? 'formal';
-  return inOutwardScope(deps, actor, async (scope) => {
+  const style = await memoryStyle(deps, actor, request);
+  const language = request.language ?? style.language ?? 'en';
+  const tone = request.tone ?? style.tone ?? 'formal';
+  const composed = await inOutwardScope(deps, actor, async (scope) => {
     const workspaceId = scope.actor.workspaceId;
     const row: typeof schema.matter.$inferSelect = await requireOutwardMatter(
       scope,
@@ -274,7 +328,7 @@ export async function composeUpdate(
         );
     const opening = frame?.opening ?? template.opening(request.audience, tone);
     const closing = frame?.closing ?? template.closing(request.audience, tone);
-    const body = [opening, facts.map((f) => f.text).join('\n'), closing]
+    const body = [opening, facts.map((f) => f.text).join('\n'), closing, style.signOff ?? '']
       .filter((part) => part !== '')
       .join('\n\n');
     const templateOnly = frame === null;
@@ -317,4 +371,20 @@ export async function composeUpdate(
     );
     return { draftId: draft.id, versionId: version.id, body, facts, templateOnly };
   });
+  const memoryCitations: MemoryCitation[] = [];
+  for (const item of style.used) {
+    if (deps.memory === undefined) break;
+    try {
+      const recorded = await recordUsage(deps.memory, actor, {
+        itemId: item.id,
+        usedIn: 'draft',
+        outputRef: composed.draftId,
+        matterId: item.matterId,
+      });
+      if (recorded) memoryCitations.push(memoryCitation(item));
+    } catch {
+      // The citation is best effort.
+    }
+  }
+  return { ...composed, memoryCitations };
 }

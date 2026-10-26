@@ -15,7 +15,13 @@ import { withSql } from '../lifecycle/helpers.ts';
 const matter = MATTERS.appeal;
 const proceeding = matter.proceedings[0];
 export const HELD_ON = '2026-03-10';
-export const PROPOSED_DATE = '10/04/2026';
+
+// Next dates sit in 2099 like the matters fixtures: the server confirms a next date against its real
+// clock and refuses a past one, so a date near the held-on date stops working once it has passed.
+export const PROPOSED_ISO = '2099-04-10';
+export const PROPOSED_DATE = '10/04/2099';
+/** A date a lawyer types on the manual path, `dd/mm/yyyy`. */
+export const TYPED_DATE = '15/04/2099';
 
 export interface SeededHearing {
   hearingId: string;
@@ -40,7 +46,7 @@ export async function seedHearing(
       values (${hearingId}, ${ws}, ${listingId}, ${HELD_ON}, 'manual')`;
     // The fixture's appeal matter already has a confirmed canonical next date (2099-03-02), and a
     // proceeding may hold only one (`listing_one_canonical_uq`). That date is the conflict: the
-    // proposed 10/04/2026 differs from it. Without `conflict`, drop the flag so a proposed or typed
+    // proposed date differs from it. Without `conflict`, drop the flag so a proposed or typed
     // date is a plain choice and Confirm is not gated on a conflict the test never asked for.
     if (opts.conflict !== true) {
       await sql`
@@ -76,7 +82,7 @@ export async function seedHearing(
                   ${sql.json([anchorId])}, ${matter.id}, ${proceeding.id}, ${randomUUID()})`;
       };
       await draft('hearing_outcome', { hearingDate: HELD_ON, outcome: 'Adjourned for reply' });
-      await draft('next_date', { date: '2026-04-10' });
+      await draft('next_date', { date: PROPOSED_ISO });
       for (const description of ['File reply', 'Serve the respondent', 'Produce the lease']) {
         await draft('obligation_from_direction', {
           hearingDate: HELD_ON,

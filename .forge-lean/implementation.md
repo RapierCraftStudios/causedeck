@@ -51,3 +51,6 @@ Same cause: `turbo` was not on PATH in the check shell, so it is not a code conf
 
 ## Merge fix: typecheck exit 127 (third time)
 Still `turbo: command not found` in the check shell (PATH), not a code conflict. No source change. `./node_modules/.bin/turbo run typecheck` over drafting, db, validators, i18n, core passes: 17/17 tasks. The check command needs `pnpm exec turbo` or node_modules/.bin on PATH.
+
+## Merge fix: typecheck exit 127 (fourth time)
+Again `turbo: command not found` (PATH), not a merge conflict. No source change. With `node_modules/.bin` on PATH, full `turbo run typecheck` passes 24/24; `@causedeck/web` needs `NODE_OPTIONS=--max-old-space-size=6144` (default heap OOMs on the shared host, unrelated to this change).

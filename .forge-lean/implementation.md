@@ -48,3 +48,6 @@ The only failure was `src/lifecycle/__tests__/memory-erasure.test.ts` timing out
 
 ## Merge fix: typecheck exit 127 (repeat)
 Same cause: `turbo` was not on PATH in the check shell, so it is not a code conflict. No source change. `pnpm exec tsc --noEmit` passes in drafting, validators, db, core and i18n.
+
+## Merge fix: typecheck exit 127 (third time)
+Still `turbo: command not found` in the check shell (PATH), not a code conflict. No source change. `./node_modules/.bin/turbo run typecheck` over drafting, db, validators, i18n, core passes: 17/17 tasks. The check command needs `pnpm exec turbo` or node_modules/.bin on PATH.

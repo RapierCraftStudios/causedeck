@@ -75,7 +75,7 @@ describe('seedSystemTemplates', () => {
 
   it('is read-only for the app role, which can copy a template into its own workspace', async () => {
     const code = 'seed_test.copy';
-    // Committed as `pnpm db:seed:templates` leaves it, so the app-role transaction below sees the row.
+    // Committed, as the deploy seed leaves it, so the app-role transaction below sees the row.
     await seedSystemTemplates(owner, [entry(code, 'c')]);
     await withTestDb(async (tx) => {
       const { a, ua } = await seedTwoTenants(tx);

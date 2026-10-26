@@ -114,6 +114,13 @@ export const PURGE_ORDER = [
   'bench_roster_entry',
   'bench_roster',
   'role_edge',
+  // Fees (#83) cite their matter and person (composite FKs, NO ACTION): ledger lines and payments
+  // before the invoice, lines before it, the invoice before its fee agreement; all before both.
+  'client_ledger_entry',
+  'payment',
+  'invoice_line',
+  'invoice',
+  'fee_agreement',
   // Client contacts (#82) cite their person (composite FK); before it.
   'client_contact',
   'person',

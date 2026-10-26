@@ -1,0 +1,236 @@
+{
+ "status": "fixed",
+ "summary": "Add fee_agreement, invoice, invoice_line, payment and client_ledger_entry tables with RLS, fees zod schemas, registries and ADR 0043.",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/validators/src/fees.ts:1"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/db/src/schema/fees.ts:1"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/db/src/index.test.ts:81"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "docs/adr/0043-legal-gated-billing-flag.md:1"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/fees.test.ts src/client-contact.test.ts src/index.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/db exec tsx scripts/check-schema-conventions.ts && pnpm --filter @causedeck/db exec tsx scripts/lint-migrations.ts",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "pnpm adr:lint && pnpm docs:links",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/fees.test.ts",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R4 delivered, see implementation.md"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "additive tables; V1-V4 and tsc pass; saas_* untouched"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "all D1-D12 changed; forgedock check PASS"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "git diff --stat shows only deliverable paths (migration meta files are part of D6)"
+  }
+ ],
+ "amendments": [
+  {
+   "id": "A1",
+   "what": "Registered the five fee tables in core export exporters and the erase order (packages/core/src/lifecycle/export/exporters.ts, deletion/erase.ts)",
+   "why": "CI tenancy job runs test:export-coverage, which fails for tenant tables without an exporter; erase must delete fee rows before person/matter (NO ACTION FKs). These are data registries, not new runtime exports (P4 holds)."
+  }
+ ],
+ "not_members": [
+  {
+   "symbol": "clientLedgerEntry",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "mocks the growth/activation module (ACTIVATION_STEPS, channels), not the db schema barrel"
+  },
+  {
+   "symbol": "feeAgreement",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "mocks the growth/activation module (ACTIVATION_STEPS, channels), not the db schema barrel"
+  },
+  {
+   "symbol": "invoice",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "mocks the growth/activation module (ACTIVATION_STEPS, channels), not the db schema barrel"
+  },
+  {
+   "symbol": "invoiceLine",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "mocks the growth/activation module (ACTIVATION_STEPS, channels), not the db schema barrel"
+  },
+  {
+   "symbol": "payment",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "mocks the growth/activation module (ACTIVATION_STEPS, channels), not the db schema barrel"
+  },
+  {
+   "symbol": "clientLedgerEntry",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "a hoisted session stub for response headers; it never enumerates db schema exports"
+  },
+  {
+   "symbol": "feeAgreement",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "a hoisted session stub for response headers; it never enumerates db schema exports"
+  },
+  {
+   "symbol": "invoice",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "a hoisted session stub for response headers; it never enumerates db schema exports"
+  },
+  {
+   "symbol": "invoiceLine",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "a hoisted session stub for response headers; it never enumerates db schema exports"
+  },
+  {
+   "symbol": "payment",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "a hoisted session stub for response headers; it never enumerates db schema exports"
+  },
+  {
+   "symbol": "clientLedgerEntry",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its list is the audited review-action fakes; its @causedeck/db mock only provides withoutWorkspace, not table exports"
+  },
+  {
+   "symbol": "feeAgreement",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its list is the audited review-action fakes; its @causedeck/db mock only provides withoutWorkspace, not table exports"
+  },
+  {
+   "symbol": "invoice",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its list is the audited review-action fakes; its @causedeck/db mock only provides withoutWorkspace, not table exports"
+  },
+  {
+   "symbol": "invoiceLine",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its list is the audited review-action fakes; its @causedeck/db mock only provides withoutWorkspace, not table exports"
+  },
+  {
+   "symbol": "payment",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its list is the audited review-action fakes; its @causedeck/db mock only provides withoutWorkspace, not table exports"
+  },
+  {
+   "symbol": "clientLedgerEntry",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "a mock of @causedeck/core/sources enums; no db schema exports"
+  },
+  {
+   "symbol": "feeAgreement",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "a mock of @causedeck/core/sources enums; no db schema exports"
+  },
+  {
+   "symbol": "invoice",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "a mock of @causedeck/core/sources enums; no db schema exports"
+  },
+  {
+   "symbol": "invoiceLine",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "a mock of @causedeck/core/sources enums; no db schema exports"
+  },
+  {
+   "symbol": "payment",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "a mock of @causedeck/core/sources enums; no db schema exports"
+  },
+  {
+   "symbol": "clientLedgerEntry",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "a hoisted session/guard state stub; no db schema exports"
+  },
+  {
+   "symbol": "feeAgreement",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "a hoisted session/guard state stub; no db schema exports"
+  },
+  {
+   "symbol": "invoice",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "a hoisted session/guard state stub; no db schema exports"
+  },
+  {
+   "symbol": "invoiceLine",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "a hoisted session/guard state stub; no db schema exports"
+  },
+  {
+   "symbol": "payment",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "a hoisted session/guard state stub; no db schema exports"
+  },
+  {
+   "symbol": "clientLedgerEntry",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "a hoisted session/role state stub; its @causedeck/db mock provides only db and withWorkspace"
+  },
+  {
+   "symbol": "feeAgreement",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "a hoisted session/role state stub; its @causedeck/db mock provides only db and withWorkspace"
+  },
+  {
+   "symbol": "invoice",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "a hoisted session/role state stub; its @causedeck/db mock provides only db and withWorkspace"
+  },
+  {
+   "symbol": "invoiceLine",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "a hoisted session/role state stub; its @causedeck/db mock provides only db and withWorkspace"
+  },
+  {
+   "symbol": "payment",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "a hoisted session/role state stub; its @causedeck/db mock provides only db and withWorkspace"
+  }
+ ]
+}

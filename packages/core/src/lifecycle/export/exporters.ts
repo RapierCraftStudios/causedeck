@@ -284,6 +284,12 @@ export const mattersExporter = tablesExporter('matters', [
   ws('person'),
   // Client contacts (#82): phone, email and language of a client; personal data the workspace owns.
   ws('client_contact'),
+  // Fees (#83): the workspace's own fee agreements, invoices, payments and client ledger lines.
+  ws('fee_agreement'),
+  ws('invoice'),
+  ws('invoice_line'),
+  ws('payment'),
+  ws('client_ledger_entry'),
   ws('organisation'),
   ws('role_edge'),
   ws('document', { exclude: ['storage_key'] }),

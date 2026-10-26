@@ -4,7 +4,13 @@
 // benchmark: with three seeded directions the happy path takes at most 6 keyboard actions or 8 taps.
 import { expect, test } from '../../fixtures/index.ts';
 
-import { PROPOSED_DATE, openOutcome, seedHearing, StepCounter } from './outcome-helpers.ts';
+import {
+  PROPOSED_DATE,
+  TYPED_DATE,
+  openOutcome,
+  seedHearing,
+  StepCounter,
+} from './outcome-helpers.ts';
 
 test.describe('hearing outcome', () => {
   test('shows the proposal with its sources and keeps Confirm disabled', async ({
@@ -108,7 +114,7 @@ test.describe('hearing outcome', () => {
     const { hearingId } = await seedHearing(db.name, { proposals: false });
     await openOutcome(page, asUser, hearingId);
     await page.getByLabel('What happened').fill('Adjourned, reply to be filed');
-    await page.getByLabel('Enter a date').fill('15/04/2026');
+    await page.getByLabel('Enter a date').fill(TYPED_DATE);
     await page.getByRole('button', { name: 'Confirm outcome' }).click();
     await expect(page.getByText('Outcome confirmed').first()).toBeVisible();
   });

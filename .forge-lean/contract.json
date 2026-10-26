@@ -1,0 +1,139 @@
+{
+ "requirements": [
+  {
+   "id": "R1",
+   "quote": "Storybook stories with interaction tests for every enquiry component and state (default, empty, loading, error, offline, denied) under packages/ui/src/patterns/enquiry or the route _components, with unique story export names across apps/web.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R2",
+   "quote": "Playwright specs under e2e/tests/people: flag-on flow, flag-off 404 (enquiry-gated-off), keyboard-only, axe zero serious/critical on every state",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "e2e workflow (Playwright, ship PRs and nightly); axe runs in the @a11y fixture"
+  },
+  {
+   "id": "R3",
+   "quote": "visual baselines light/dark at 360/768/1280.",
+   "disposition": "deliver",
+   "verify": "out_of_band",
+   "evidence": "e2e workflow update_snapshots dispatch generates baselines; spec skips without one (people.visual.spec.ts:24)"
+  }
+ ],
+ "deliverables": [
+  {
+   "id": "D1",
+   "path": "apps/web/app/(app)/w/[slug]/people/enquiries/_components/enquiry-list.stories.tsx",
+   "change": "Stories (names prefixed EnquiryList*): default, empty, offline (forceOffline), keyboard shortcuts n/c/Cmd+Enter, Tamil and Kannada names; mock actions with fn\u003c>; play interaction tests. Loading/denied/error states: add stories rendering the route's loading.tsx skeleton and PermissionDeniedPage/error UI where they are client-renderable (EnquiryListLoading/Denied/Error) in this file or a sibling states story.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D2",
+   "path": "apps/web/app/(app)/w/[slug]/people/enquiries/_components/enquiry-form.stories.tsx",
+   "change": "EnquiryForm* stories: open, offline, validation error, action failure; unique names.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "apps/web/app/(app)/w/[slug]/people/enquiries/_components/conflict-panel.stories.tsx",
+   "change": "ConflictPanel* stories: not run, running, no hits, hits with warning text 'Possible conflict. Review before you proceed.', error, disabled/offline, decision note proceed/decline/refer; Tamil/Kannada.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "apps/web/app/(app)/w/[slug]/people/enquiries/_components/outcome-dialog.stories.tsx",
+   "change": "OutcomeDialog* stories: open, offline, error; unique names.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "apps/web/__tests__/enquiry-stories.test.ts",
+   "change": "Guard test modelled on apps/web/__tests__/people-stories.test.ts: each enquiries/_components component that is storybook-able has sibling stories with default meta; Tamil/Kannada stories for name components; story export names unique across all apps/web *.stories.tsx files (static scan of `export const X:`). gated-notice.tsx (async server component) is listed as an explicit exclusion with reason.",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "e2e/tests/people/enquiries.helpers.ts",
+   "change": "Helpers: enable legal-gated intake.enquiry_log for the fixture workspace (SQL into feature_flag + workspace_feature_flag with legal ack, per whatsapp-import-helpers.ts:17-43), seed/empty enquiry rows (see packages/db/src/schema/enquiry.ts), openEnquiries, volatile mask.",
+   "requirements": [
+    "R2",
+    "R3"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "e2e/tests/people/enquiries.spec.ts",
+   "change": "Flag-on flow (log enquiry, run conflict check, see conflict warning, decide, close with outcome), flag-off 404 test named 'enquiry-gated-off' (route returns 404, nav entry hidden), non-owner/advocate denied, keyboard-only (n, c, Cmd/Ctrl+Enter), empty/loading/error/offline states via ?__state, and a route check that nothing public creates an enquiry only if cheap (already covered in #874 route-inventory test).",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "e2e/tests/people/enquiries.a11y.spec.ts",
+   "change": "@a11y tests following people.a11y.spec.ts, each ending on one state: list, empty, form dialog, conflict panel with hits, outcome dialog, loading, error, offline, denied, gated-off 404.",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "e2e/tests/people/enquiries.visual.spec.ts",
+   "change": "Visual baselines following people.visual.spec.ts (skipWithoutBaseline; project matrix gives light/dark x 360/768/1280): list, empty, form, conflict panel, outcome dialog, error, denied. Do not commit snapshot images.",
+   "requirements": [
+    "R3"
+   ]
+  }
+ ],
+ "preserve": [
+  {
+   "id": "P1",
+   "what": "Production enquiry UI, actions and flag gating unchanged: apps/web/app/(app)/w/[slug]/people/enquiries/** non-story files, apps/web/lib/intake/intake-deps.ts, apps/web/lib/nav.ts"
+  },
+  {
+   "id": "P2",
+   "what": "Existing People e2e specs and helpers (e2e/tests/people/helpers.ts) and people-stories.test.ts keep passing; the new people-stories scan of _components is the parent folder, not enquiries/_components"
+  }
+ ],
+ "validate": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/enquiry-stories.test.ts __tests__/people-stories.test.ts __tests__/enquiries-page.test.tsx __tests__/nav.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V2",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/business-practice"
+  }
+ ],
+ "decisions": [
+  {
+   "id": "K1",
+   "choice": "Stories live in the route _components folder, not packages/ui/src/patterns/enquiry",
+   "justification": "The components are app-specific and use next-intl and server-action props; same placement as people/_components/*.stories.tsx (contact-list.stories.tsx) guarded by apps/web/__tests__/people-stories.test.ts",
+   "source": "precedent"
+  },
+  {
+   "id": "K2",
+   "choice": "Flag-on in e2e via direct SQL legal-gated flag seeding",
+   "justification": "Precedent e2e/tests/inbox/whatsapp-import-helpers.ts:17-43 and e2e/tests/product/court-day-board.spec.ts:30-45; intake.enquiry_log is legal-gated (packages/flags/src/keys.ts:122)",
+   "source": "precedent"
+  },
+  {
+   "id": "K3",
+   "choice": "No baseline images committed",
+   "justification": "Baselines are generated only by the e2e workflow update_snapshots dispatch (e2e/tests/people/people.visual.spec.ts:5-8, e2e/README.md)",
+   "source": "doc"
+  }
+ ]
+}

@@ -25,6 +25,14 @@ const components = readdirSync(ENQUIRIES)
 /** Components that render enquirer names, matter titles or translated copy for them. */
 const NAME_COMPONENTS = ['conflict-panel', 'enquiry-form', 'enquiry-list', 'outcome-dialog'];
 
+/** The story files expected beside the components, named so a new one is a deliberate edit. */
+const EXPECTED_STORIES = [
+  'conflict-panel.stories.tsx',
+  'enquiry-form.stories.tsx',
+  'enquiry-list.stories.tsx',
+  'outcome-dialog.stories.tsx',
+];
+
 function storyFiles(dir: string): string[] {
   const out: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -39,6 +47,13 @@ function storyFiles(dir: string): string[] {
 describe('enquiry stories', () => {
   it('finds the enquiry components', () => {
     expect(components.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it('lists exactly the expected story files', () => {
+    const found = readdirSync(ENQUIRIES)
+      .filter((file) => file.endsWith('.stories.tsx'))
+      .sort();
+    expect(found).toEqual(EXPECTED_STORIES);
   });
 
   it.each(components)('%s has stories', (file) => {

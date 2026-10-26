@@ -26,3 +26,7 @@ Stale-list follow-up: AUTHORITY_KINDS, AUTHORITY_STATUSES and authority recorded
 
 - Fixture `citations.json` (2121 lines) replaced by `authorities.jsonl` + `cases.jsonl` (310 lines total), loaded in citations.test.ts; same data, 52 drafting tests pass.
 - V8 (checks.mjs) exit 0; it widened to full turbo typecheck/lint/test because packages/validators/package.json changed, which the host rules forbid running locally, so those run in CI.
+
+- Merge-check failure `turbo run typecheck` exit 127 was `turbo` missing from PATH, not a code defect (no duplicate keys or symbols). Ran `pnpm exec turbo run typecheck --concurrency=$FORGE_HOST_PARALLELISM`: 23/24 packages pass; `@causedeck/web` hit a V8 heap OOM, and re-run with `NODE_OPTIONS=--max-old-space-size=6144 pnpm run typecheck` in apps/web exits 0. No source change needed.
+
+- Post-merge typecheck: bare `turbo` is not on PATH (exit 127, host issue). `pnpm exec turbo run typecheck --filter=[origin/milestone/drafting-citations-research]`: 23/24 ok; web hit a Node heap OOM, rerun with `NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit` in apps/web exits 0. No duplicate-key or symbol clashes; no code change needed.

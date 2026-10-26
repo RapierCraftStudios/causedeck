@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Block } from '../../blocks';
@@ -14,8 +17,6 @@ import {
   type ResolverHit,
 } from '../index';
 
-import fixture from './fixtures/citations.json';
-
 interface Case {
   id: string;
   label: 'valid' | 'fabricated' | 'near_miss';
@@ -24,12 +25,19 @@ interface Case {
   expected: 'verified' | 'not_found' | 'unknown';
   reason?: string;
 }
-const authorities: ResolverHit[] = fixture.authorities.map((a) => ({
+function loadJsonl<T>(name: string): T[] {
+  return readFileSync(join(__dirname, 'fixtures', name), 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as T);
+}
+
+const authorities: ResolverHit[] = loadJsonl<ResolverHit>('authorities.jsonl').map((a) => ({
   citation: a.citation,
   title: a.title,
   sourceUrl: a.sourceUrl,
 }));
-const cases = fixture.cases as Case[];
+const cases = loadJsonl<Case>('cases.jsonl');
 
 describe('extraction', () => {
   it.each([
@@ -226,7 +234,7 @@ describe('resolvers, limits and links', () => {
     const sleep = vi.fn().mockResolvedValue(undefined);
     const resolver = createIndianKanoonResolver({
       token: 't',
-      fetch: fetchMock as unknown as typeof fetch,
+      fetch: fetchMock,
       sleep,
       random: () => 0,
     });
@@ -236,7 +244,7 @@ describe('resolvers, limits and links', () => {
       kind: 'unavailable',
     });
     expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(sleep.mock.calls.map((c) => c[0])).toEqual([250, 500]);
+    expect(sleep.mock.calls.map((c) => c[0] as number)).toEqual([250, 500]);
   });
 
   it('keeps only citation, url and a short title from an Indian Kanoon answer', async () => {
@@ -253,7 +261,7 @@ describe('resolvers, limits and links', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(body)));
     const resolver = createIndianKanoonResolver({
       token: 't',
-      fetch: fetchMock as unknown as typeof fetch,
+      fetch: fetchMock,
     });
     const outcome = await resolver.resolve({ normalized: '2023 INSC 123', kind: 'neutral' });
     expect(outcome).toEqual({

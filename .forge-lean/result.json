@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Citation checker implemented; base already merged, migration 20261026000001 does not collide; V1-V7 re-run and pass; forgedock check fails only on a 300s timeout of V3/V4 (pass standalone, V3 111s) on the loaded host",
+ "summary": "Citation checker implemented; fixture split into compact jsonl (310 lines); V1-V8 exit 0; forgedock check still times out (300s) on V3/V4 under host load, both pass standalone",
  "requirements": [
   {
    "id": "R1",
@@ -127,6 +127,11 @@
   {
    "id": "V7",
    "command": "config",
+   "exit": 0
+  },
+  {
+   "id": "V8",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research",
    "exit": 0
   }
  ],

@@ -23,3 +23,6 @@ Merged origin/milestone/drafting-citations-research (kept both sides of the regi
 - Rerun: base origin/milestone/drafting-citations-research is already merged; migration 20261026000001 has no collision (base tops at 20261026000000). V1-V7 re-run: all exit 0. `forgedock check` fails only because V3/V4 exceed its 300s timeout under host load (V3 passes standalone in 111s); host problem, not a code failure.
 
 Stale-list follow-up: AUTHORITY_KINDS, AUTHORITY_STATUSES and authority recorded as not members of apps/web/__tests__/matter-documents-tab.test.tsx (a document fixture, not a db export list). No code change.
+
+- Fixture `citations.json` (2121 lines) replaced by `authorities.jsonl` + `cases.jsonl` (310 lines total), loaded in citations.test.ts; same data, 52 drafting tests pass.
+- V8 (checks.mjs) exit 0; it widened to full turbo typecheck/lint/test because packages/validators/package.json changed, which the host rules forbid running locally, so those run in CI.

@@ -22,6 +22,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
+import { authority } from '../schema/authority.ts';
 import {
   draft,
   draftConsistencyReport,
@@ -762,6 +763,36 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: draftExport.id });
     return { draftId, draftVersionId: version.id, id: first(rows, 'draft_export').id };
+  },
+  authority: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({
+          workspaceId,
+          draftId,
+          versionNo: 1,
+          content: [],
+          contentSha256: createHash('sha256').update(draftId).digest('hex'),
+        })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(authority)
+      .values({
+        workspaceId,
+        draftVersionId: version.id,
+        blockId: 'b',
+        span: [0, 13],
+        rawText: '2023 INSC 123',
+        normalized: '2023 INSC 123',
+        kind: 'neutral',
+        status: 'unknown',
+      })
+      .returning({ id: authority.id });
+    return { draftId, draftVersionId: version.id, id: first(rows, 'authority').id };
   },
   draft_consistency_report: async (tx, { workspaceId, tag }) => {
     const { draftId } = await seedDraft(tx, workspaceId, tag);

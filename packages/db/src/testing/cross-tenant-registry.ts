@@ -82,6 +82,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   draft_version: DB_TABLES_TEST,
   // Drafting exports (#768): one stored file per draft version and format.
   draft_export: DB_TABLES_TEST,
+  // Citation checker (#77): one row per citation in a draft version.
+  authority: DB_TABLES_TEST,
   // Consistency reports (#78): privileged matter data, one per draft version and graph revision.
   draft_consistency_report: DB_TABLES_TEST,
   // Matter and documents (#345).
@@ -865,6 +867,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   exportDraft: denies,
   runDraftingExport: denies,
   createDraftExportDownload: denies,
+  // citation checker (#77): B on A's version is denied; A's authority rows are unchanged.
+  checkDraft: denies,
+  getCitationReport: denies,
+  acknowledgeUnverified: denies,
   // consistency (#78): B running, reading or applying a fix on A's version is denied; A's rows are unchanged.
   runConsistencyCheck: denies,
   getConsistencyReport: denies,
@@ -1018,6 +1024,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global tables `forum` (system catalogue rows only, `global_read`), `source`, `fetch_log` and `notice` (GLOBAL_TABLES, no RLS): ids, levels, counts and times, never tenant data',
   staffCoverageInputs:
     'app_staff_watch_demand() returns per-source counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
+  // citation checker (#77)
+  reportFromRows: 'pure (maps rows the caller already read to a report)',
+  assertCitationsClear: 'pure (throws on a gate value the caller computed)',
+  exportBlockedByCitations:
+    "reads authority rows inside the caller's workspace scope; reached only through exportDraft and runDraftingExport, which are covered",
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',

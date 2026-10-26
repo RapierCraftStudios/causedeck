@@ -90,6 +90,7 @@ describe('row-level security catalog', () => {
       [
         ...BASELINE_TENANT_TABLES,
         'audit_event',
+        'authority',
         'ai_call',
         'ai_call_result',
         'news_pref',

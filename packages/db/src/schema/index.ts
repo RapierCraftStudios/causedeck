@@ -141,6 +141,7 @@ export {
   type DraftStatus,
   type DraftingBlocks,
 } from './drafting.ts';
+export { AUTHORITY_KINDS, AUTHORITY_STATUSES, authority } from './authority.ts';
 export {
   ANCHOR_KINDS,
   ANCHOR_QUOTE_MAX,

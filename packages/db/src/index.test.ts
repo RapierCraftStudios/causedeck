@@ -59,6 +59,7 @@ describe('@causedeck/db root entry point', () => {
       'appearance',
       'audit_actor_salt',
       'audit_event',
+      'authority',
       'automation_preference',
       'automation_threshold',
       'bench',

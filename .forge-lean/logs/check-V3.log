@@ -1,9 +1,23 @@
 
- RUN  v3.2.7 /work/repo/.claude/worktrees/lean-678/packages/notifications
+ RUN  v3.2.7 /work/repo/.claude/worktrees/lean-77/packages/core
 
- ✓ |@causedeck/notifications| src/__tests__/categories.test.ts (6 tests) 33ms
- ✓ |@causedeck/notifications| src/__tests__/cross-tenant/registry.test.ts (3 tests) 4487ms
-   ✓ cross-tenant registry: notifications services > registers every runtime export of @causedeck/notifications  4480ms
- ✓ |@causedeck/notifications| src/__tests__/quiet-hours.test.ts (3 tests) 108ms
+ ✓ |@causedeck/core| src/drafting/__tests__/citations.integration.test.ts (5 tests) 44652ms
+   ✓ citation checker > labels verified, not_found and unknown; reruns are idempotent; no draft text is kept  11148ms
+   ✓ citation checker > gives a new version no statuses until it is checked  8905ms
+   ✓ citation checker > requires an acknowledgement of a not_found citation before the export, and audits it  9494ms
+   ✓ citation checker > leaves citations unknown while the resolver is unavailable, then resolves them  7690ms
+   ✓ citation checker > reports citations past the daily budget as throttled unknowns  7410ms
+ ✓ |@causedeck/core| src/drafting/__tests__/drafting.integration.test.ts (6 tests) 38743ms
+   ✓ drafting service and export > saves immutable hashed versions and restores as a new version  8149ms
+   ✓ drafting service and export > denies a clerk and another workspace  5998ms
+   ✓ drafting service and export > exports once, encrypted, with audit, a presigned download and no draft text in logs  6795ms
+   ✓ drafting service and export > denies a clerk on export and on download  6509ms
+   ✓ drafting service and export > writes an ai_call row for a refused non-India narrative call  5789ms
+   ✓ drafting service and export > blocks an export with an unresolved slot  5497ms
+ ✓ |@causedeck/core| src/jobs/definitions/capture-jobs.test.ts (8 tests) 24780ms
+   ✓ process job > retries a capture that is not visible yet, and hands a queued one on once  7657ms
+   ✓ scan job > scans through the injected store and queues a clean capture  5600ms
+   ✓ scan job > retries a capture that is not visible yet  5895ms
+   ✓ retention schedule > queues capture.retention for each workspace with expired raw objects  5614ms
 
 (timed out after 300s)

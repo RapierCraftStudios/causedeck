@@ -27,5 +27,6 @@ export {
   type Provenance,
   type Resolution,
 } from './slots';
+export * from './citations/index';
 export { SYSTEM_TEMPLATES, systemTemplate } from './system-templates/index';
 export * from './consistency/index';

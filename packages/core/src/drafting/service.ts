@@ -29,6 +29,9 @@ import { getMatterOverview, listMatterProceedingsTree } from '../matter-graph/in
 import type { GraphEvents, ProceedingNode } from '../matter-graph/index.ts';
 import { invalid, notFound } from '../shared/errors.ts';
 
+import { assertCitationsClear, exportBlockedByCitations } from './citation-ack.ts';
+import { checkDraft, type CheckDraftDeps } from './citations.ts';
+
 import {
   asDraftMember,
   draftNotFound,
@@ -84,6 +87,17 @@ export interface DraftSummary {
 export interface DraftingDeps {
   db: Queryable;
   now?: () => Date;
+  /** Queue `drafting.citations.check` for a new version (ids only); the jobs domain passes it in. */
+  enqueueCitationCheck?: (job: { workspaceId: string; draftVersionId: string }) => Promise<unknown>;
+}
+
+async function queueCitationCheck(
+  deps: DraftingDeps,
+  workspaceId: string,
+  version: DraftVersionSummary,
+): Promise<DraftVersionSummary> {
+  await deps.enqueueCitationCheck?.({ workspaceId, draftVersionId: version.id });
+  return version;
 }
 
 /** The validated block tree of stored or submitted content; VALIDATION when it is not one. */
@@ -199,10 +213,11 @@ export async function saveVersion(
   input: { draftId: string; content: unknown },
 ): Promise<DraftVersionSummary> {
   const blocks = checkBlocksFor(input.content);
-  return asDraftMember(deps.db, actor, async (tx, reader, settings) => {
+  const saved = await asDraftMember(deps.db, actor, async (tx, reader, settings) => {
     await requireDraft(tx, reader, settings, input.draftId, 'draft.write');
     return insertVersion(tx, reader, input.draftId, blocks);
   });
+  return queueCitationCheck(deps, actor.workspaceId, saved);
 }
 
 /** The draft's versions, newest first; content is not part of the listing. */
@@ -232,7 +247,7 @@ export async function restoreVersion(
   actor: DraftActor,
   input: { draftId: string; versionNo: number },
 ): Promise<DraftVersionSummary> {
-  return asDraftMember(deps.db, actor, async (tx, reader, settings) => {
+  const restored = await asDraftMember(deps.db, actor, async (tx, reader, settings) => {
     await requireDraft(tx, reader, settings, input.draftId, 'draft.write');
     const [old] = await tx
       .select({ content: draftVersion.content })
@@ -248,6 +263,7 @@ export async function restoreVersion(
     if (old === undefined) throw notFound('Version not found');
     return insertVersion(tx, reader, input.draftId, checkBlocksFor(old.content));
   });
+  return queueCitationCheck(deps, actor.workspaceId, restored);
 }
 
 const IST_DAY = new Intl.DateTimeFormat('en-CA', {
@@ -408,6 +424,8 @@ export interface ExportDraftDeps extends DraftingDeps {
     format: ExportFormat;
     userId: string;
   }): Promise<unknown>;
+  /** How unchecked citations are resolved before the export gate; the offline mock when omitted. */
+  citations?: Omit<CheckDraftDeps, 'db'>;
 }
 
 export type ExportDraftResult =
@@ -423,7 +441,7 @@ export async function exportDraft(
   const found = await asDraftMember(deps.db, actor, async (tx, reader, settings) => {
     const row = await requireDraft(tx, reader, settings, input.draftId, 'draft.export');
     const [version] = await tx
-      .select({ id: draftVersion.id })
+      .select({ id: draftVersion.id, content: draftVersion.content })
       .from(draftVersion)
       .where(
         and(
@@ -446,9 +464,26 @@ export async function exportDraft(
         ),
       )
       .limit(1);
-    return { versionId: version.id, existing, userId: reader.userId };
+    const blocks = checkBlocksFor(version.content);
+    const gate = await exportBlockedByCitations(tx, reader.workspaceId, version.id, blocks);
+    return { versionId: version.id, existing, userId: reader.userId, gate, blocks };
   });
   if (found.existing) return { status: 'ready', export: found.existing };
+  if (found.gate.unchecked > 0) {
+    // Resolve what was never checked (the member holds `draft.export`), then look again.
+    await checkDraft(
+      { db: deps.db, ...deps.citations },
+      { workspaceId: actor.workspaceId, system: true },
+      found.versionId,
+    );
+  }
+  const gate =
+    found.gate.unchecked > 0
+      ? await asDraftMember(deps.db, actor, (tx, reader) =>
+          exportBlockedByCitations(tx, reader.workspaceId, found.versionId, found.blocks),
+        )
+      : found.gate;
+  assertCitationsClear(gate);
   await deps.enqueue({
     workspaceId: actor.workspaceId,
     draftVersionId: found.versionId,

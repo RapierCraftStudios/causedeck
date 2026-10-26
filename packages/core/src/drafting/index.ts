@@ -32,3 +32,17 @@ export {
   type DraftingExportResult,
 } from './export.ts';
 export type { DraftActor } from './policy.ts';
+export {
+  checkDraft,
+  getCitationReport,
+  reportFromRows,
+  type CheckDraftDeps,
+  type CitationActor,
+} from './citations.ts';
+export {
+  acknowledgeUnverified,
+  assertCitationsClear,
+  exportBlockedByCitations,
+  type AcknowledgeResult,
+  type CitationExportGate,
+} from './citation-ack.ts';

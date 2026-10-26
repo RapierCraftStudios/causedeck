@@ -14,6 +14,7 @@
     "./seed/e2e": "./src/seed/e2e.ts",
     "./seed/forum-catalogue": "./src/seed/forum-catalogue/index.ts",
     "./seed/plans": "./src/seed/plans.ts",
+    "./seed/system-templates": "./src/seed/system-templates.ts",
     "./seed/synthetic": "./src/seed/synthetic/index.ts",
     "./testing": "./src/testing/index.ts",
     "./testing/client": "./src/testing/client.ts",

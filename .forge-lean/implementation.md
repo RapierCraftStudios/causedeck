@@ -51,3 +51,6 @@ Cause: apps/web `permission-matrix.tsx` indexes `settings.roles.actions.<action>
 - Added `draft_export` to the workspace erase order (lifecycle/deletion/erase.ts) and the drafting data exporter (lifecycle/export/exporters.ts): the tenant-table coverage guards need every tenant table handled.
 - Restored the trailing newline of migrations/meta/_journal.json (format check).
 - core tsc clean; lifecycle tests pass except one two-tenant seeding deadlock (40P01) from parallel containers, unrelated.
+
+## CI build fix (no logs, best inference)
+The Next apps (web, admin) reach core's drafting export through `core/jobs`, which pulls `@causedeck/drafting` (docx, pdf-lib, fontkit, fonts resolved by path) into the server bundle. Added `docx`, `pdf-lib`, `@pdf-lib/fontkit` to `serverExternalPackages` in apps/web and apps/admin next.config.ts, like pdfjs/mupdf. apps/api tsup build verified locally (success); `next build` not run (host rule), so this is unconfirmed. Note: the drafting fonts are devDependencies, which the worker `--prod` image would lack; not changed here.

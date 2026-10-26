@@ -62,9 +62,7 @@ export function checkDraft(input: {
   const at = (h: Hit): number => order.get(h.blockKey) ?? Number.MAX_SAFE_INTEGER;
   hits.sort(
     (a, b) =>
-      at(a) - at(b) ||
-      a.start - b.start ||
-      (a.rule < b.rule ? -1 : a.rule > b.rule ? 1 : 0),
+      at(a) - at(b) || a.start - b.start || (a.rule < b.rule ? -1 : a.rule > b.rule ? 1 : 0),
   );
   const findings = hits.map(toFinding);
   const counts: FindingCounts = { error: 0, warn: 0, info: 0 };

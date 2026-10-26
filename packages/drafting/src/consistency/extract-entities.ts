@@ -66,8 +66,7 @@ export function extractAnnexureRefs(tb: TextBlock): AnnexureMention[] {
       end,
       raw: m[0],
       n: Number(m[1]),
-      definition:
-        tb.text.slice(0, start).trim() === '' && DEFINITION_TAIL.test(tb.text.slice(end)),
+      definition: tb.text.slice(0, start).trim() === '' && DEFINITION_TAIL.test(tb.text.slice(end)),
     });
   }
   return out;

@@ -129,7 +129,8 @@ export function canonicalCaseType(raw: string): string | undefined {
   return undefined;
 }
 
-const NUMBER_YEAR = /(?<!\d)(?<!\d\/)(\d{1,7})[ \t]*(?:\/|\b[Oo][Ff]\b)[ \t]*((?:19|20)\d{2})(?!\d)/g;
+const NUMBER_YEAR =
+  /(?<!\d)(?<!\d\/)(\d{1,7})[ \t]*(?:\/|\b[Oo][Ff]\b)[ \t]*((?:19|20)\d{2})(?!\d)/g;
 const TYPE_TOKEN = /\([^)\n]{1,12}\)|[A-Za-z]+\.?/g;
 const LOOKBEHIND = 60;
 
@@ -148,7 +149,7 @@ export function findCaseNumbers(text: string): CaseNumberHit[] {
     let edge = numberAt;
     for (let i = tokens.length - 1; i >= 0; i--) {
       const t = tokens[i];
-      if (t === undefined || !/^[ \t]*[\/-]?[ \t]*$/.test(text.slice(t.end, edge))) break;
+      if (t === undefined || !/^[ \t]*[/-]?[ \t]*$/.test(text.slice(t.end, edge))) break;
       chain.unshift(t);
       edge = t.at;
     }
@@ -196,9 +197,7 @@ export function checkCaseNumbers(
     const sameNumberYear = facts.filter(
       (f) => sameNumber(f.p.number, m.number) && f.p.year === m.year,
     );
-    const close = sameType.find(
-      (f) => sameNumber(f.p.number, m.number) || f.p.year === m.year,
-    );
+    const close = sameType.find((f) => sameNumber(f.p.number, m.number) || f.p.year === m.year);
     const target = close ?? sameNumberYear[0] ?? sameType[0];
     if (target === undefined) continue;
     const expected = formatCaseNumber(target.p);

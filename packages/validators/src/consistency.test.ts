@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  ApplyFixRequestSchema,
-  ConsistencyReportSchema,
-  FindingSchema,
-} from './consistency';
+import { ApplyFixRequestSchema, ConsistencyReportSchema, FindingSchema } from './consistency';
 
 const finding = {
   id: 'name.mismatch:b.0:4',
@@ -19,11 +15,12 @@ const finding = {
 describe('consistency schemas', () => {
   it('accepts a finding with span and provenance and rejects one without', () => {
     expect(FindingSchema.safeParse(finding).success).toBe(true);
-    const { provenance: _p, ...bare } = finding;
+    const bare: Record<string, unknown> = { ...finding };
+    delete bare['provenance'];
     expect(FindingSchema.safeParse(bare).success).toBe(false);
-    expect(FindingSchema.safeParse({ ...finding, span: { blockKey: 'b', start: 5, end: 1 } }).success).toBe(
-      false,
-    );
+    expect(
+      FindingSchema.safeParse({ ...finding, span: { blockKey: 'b', start: 5, end: 1 } }).success,
+    ).toBe(false);
   });
 
   it('validates a report', () => {
@@ -34,7 +31,9 @@ describe('consistency schemas', () => {
       counts: { error: 1, warn: 0, info: 0 },
     };
     expect(ConsistencyReportSchema.safeParse(report).success).toBe(true);
-    expect(ConsistencyReportSchema.safeParse({ ...report, graphRevision: 'x' }).success).toBe(false);
+    expect(ConsistencyReportSchema.safeParse({ ...report, graphRevision: 'x' }).success).toBe(
+      false,
+    );
   });
 
   it('applyFix needs the literal confirm: true', () => {

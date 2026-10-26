@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import type { Block } from '@causedeck/validators/drafting';
 import { FindingSchema } from '@causedeck/validators/consistency';
@@ -11,17 +12,41 @@ import { findDates } from '../match-dates';
 import { namesMatch } from '../match-names';
 
 const prov = (fact: string) => ({ fact, sourceType: 'manual', sourceRef: null, anchorId: 'a1' });
-const para = (text: string, id?: string): Block =>
-  ({ type: 'paragraph', text, ...(id ? { id } : {}) }) as Block;
+const para = (text: string, id?: string): Block => ({
+  type: 'paragraph',
+  text,
+  ...(id ? { id } : {}),
+});
 
 const facts: ConsistencyFacts = {
   parties: [
-    { role: 'petitioner', name: 'Ramesh Kumar', aliases: ['ரமேஷ் குமார்'], provenance: prov('party.petitioner') },
-    { role: 'respondent', name: 'State of Karnataka', aliases: [], provenance: prov('party.respondent') },
-    { role: 'petitioner', name: 'ಸುರೇಶ್ ಗೌಡ', aliases: ['Suresh Gowda'], provenance: prov('party.petitioner') },
+    {
+      role: 'petitioner',
+      name: 'Ramesh Kumar',
+      aliases: ['ரமேஷ் குமார்'],
+      provenance: prov('party.petitioner'),
+    },
+    {
+      role: 'respondent',
+      name: 'State of Karnataka',
+      aliases: [],
+      provenance: prov('party.respondent'),
+    },
+    {
+      role: 'petitioner',
+      name: 'ಸುರೇಶ್ ಗೌಡ',
+      aliases: ['Suresh Gowda'],
+      provenance: prov('party.petitioner'),
+    },
   ],
   proceedings: [
-    { caseTypeCode: 'WP', caseTypeRaw: 'W.P.', number: '1234', year: 2025, provenance: prov('proceeding') },
+    {
+      caseTypeCode: 'WP',
+      caseTypeRaw: 'W.P.',
+      number: '1234',
+      year: 2025,
+      provenance: prov('proceeding'),
+    },
   ],
   listingDates: [{ iso: '2025-03-12', provenance: prov('listing') }],
   orderDates: [{ iso: '2025-02-01', provenance: prov('order') }],
@@ -97,7 +122,11 @@ describe('case numbers', () => {
     expect(run('in W.P.No.1234 of 2025')).toEqual([]);
     const f = run('in W.P.No.1243 of 2025');
     expect(f).toHaveLength(1);
-    expect(f[0]).toMatchObject({ rule: 'case_number.mismatch', severity: 'error', expected: 'W.P. No.1234 of 2025' });
+    expect(f[0]).toMatchObject({
+      rule: 'case_number.mismatch',
+      severity: 'error',
+      expected: 'W.P. No.1234 of 2025',
+    });
     expect(f[0]?.fix?.replacement).toBe('W.P. No.1234 of 2025');
   });
   it('ignores an unrelated case type and non-case text', () => {
@@ -123,7 +152,10 @@ describe('dates', () => {
     expect(findDates('on 31/02/2025')).toEqual([]);
   });
   it('flags an order date and a listing date that contradict the graph, with both values', () => {
-    const f = run('The order dated 05/02/2025 was passed.', 'The matter is listed on 15th March 2025.');
+    const f = run(
+      'The order dated 05/02/2025 was passed.',
+      'The matter is listed on 15th March 2025.',
+    );
     expect(f.map((x) => x.rule)).toEqual(['date.order_mismatch', 'date.listing_mismatch']);
     expect(f[0]).toMatchObject({ expected: '01/02/2025', found: '05/02/2025' });
     expect(f[1]).toMatchObject({ expected: '12/03/2025', found: '15th March 2025' });
@@ -142,7 +174,10 @@ describe('annexures', () => {
         para('as per Annexure P-5'),
         para('and Annexure P-3'),
       ],
-      facts: { ...facts, annexures: [...facts.annexures, { n: 6, provenance: prov('document') }] },
+      facts: {
+        ...facts,
+        annexures: [...(facts.annexures ?? []), { n: 6, provenance: prov('document') }],
+      },
     }).findings;
     const rules = new Set(f.map((x) => x.rule));
     expect(rules).toEqual(
@@ -150,9 +185,9 @@ describe('annexures', () => {
     );
   });
   it('is quiet when references match attachments', () => {
-    expect(
-      checkDraft({ blocks: [para('Annexure P-1 and Annexure P-2')], facts }).findings,
-    ).toEqual([]);
+    expect(checkDraft({ blocks: [para('Annexure P-1 and Annexure P-2')], facts }).findings).toEqual(
+      [],
+    );
   });
 });
 
@@ -179,11 +214,13 @@ describe('findings', () => {
 
 describe('static and perf', () => {
   it('imports nothing from the ai package under consistency/', () => {
-    const dir = join(__dirname, '..');
+    const dir = fileURLToPath(new URL('..', import.meta.url));
     const files = readdirSync(dir).filter((f) => f.endsWith('.ts'));
     expect(files.length).toBeGreaterThan(5);
     for (const f of files) {
-      expect(readFileSync(join(dir, f), 'utf8')).not.toMatch(/from '@causedeck\/ai|from '[^']*packages\/ai/);
+      expect(readFileSync(join(dir, f), 'utf8')).not.toMatch(
+        /from '@causedeck\/ai|from '[^']*packages\/ai/,
+      );
     }
   });
   it('checks a 30-page draft in under 2 s', () => {

@@ -90,7 +90,8 @@ const MONTH_RE =
 const WORD_ORD = Object.keys(ORD_WORDS)
   .sort((a, b) => b.length - a.length)
   .join('|');
-const NUMERIC = /(?<![\d/.-])(\d{1,2})[ \t]*([/.-])[ \t]*(\d{1,2})[ \t]*\2[ \t]*(\d{4}|\d{2})(?![\d])/g;
+const NUMERIC =
+  /(?<![\d/.-])(\d{1,2})[ \t]*([/.-])[ \t]*(\d{1,2})[ \t]*\2[ \t]*(\d{4}|\d{2})(?![\d])/g;
 const TEXTUAL = new RegExp(
   `(?<![\\p{L}\\d])(?:the[ \\t]+)?(?:(\\d{1,2})(?:st|nd|rd|th)?|(${WORD_ORD}))(?:[ \\t]+day)?(?:[ \\t]+of)?[ \\t]*,?[ \\t]*${MONTH_RE}\\.?[ \\t]*,?[ \\t]*(\\d{4})(?!\\d)`,
   'giu',

@@ -83,11 +83,10 @@ export async function loadConsistencyFacts(
   if (matterId === null) return EMPTY_FACTS;
   const graph = { db: deps.db, events: NO_EVENTS, ...(deps.now ? { now: deps.now } : {}) };
   const input = { matterId };
-  const [people, tree, timeline] = await Promise.all([
-    listMatterPeople(graph, actor, input),
-    listMatterProceedingsTree(graph, actor, input),
-    getMatterTimeline(graph, actor, { matterId, kinds: ['listing', 'order'] }),
-  ]);
+  // One after the other: the reads share the caller's transaction.
+  const people = await listMatterPeople(graph, actor, input);
+  const tree = await listMatterProceedingsTree(graph, actor, input);
+  const timeline = await getMatterTimeline(graph, actor, { matterId, kinds: ['listing', 'order'] });
   const nodes = flatten(tree);
   const parties: PartyFact[] = [];
   for (const group of people) {
@@ -271,7 +270,13 @@ export async function applyFix(
   if (!parsed.success) throw invalid('A fix needs explicit confirmation');
   const request = parsed.data;
   return asDraftMember(deps.db, actor, async (tx, reader, settings) => {
-    const { version } = await versionOf(tx, reader, settings, request.draftVersionId, 'draft.write');
+    const { version } = await versionOf(
+      tx,
+      reader,
+      settings,
+      request.draftVersionId,
+      'draft.write',
+    );
     const [row] = await tx
       .select()
       .from(draftConsistencyReport)
@@ -283,13 +288,15 @@ export async function applyFix(
       )
       .orderBy(desc(draftConsistencyReport.createdAt), desc(draftConsistencyReport.id))
       .limit(1);
-    const finding = row ? toReport(row).findings.find((f) => f.id === request.findingId) : undefined;
+    const finding = row
+      ? toReport(row).findings.find((f) => f.id === request.findingId)
+      : undefined;
     if (finding === undefined) throw notFound('Finding not found');
     if (finding.fix === undefined) throw invalid('This finding has no fix to apply');
     const blocks = structuredClone(checkBlocksFor(version.content));
-    let applied = false;
+    const state = { applied: false };
     walkBlocks(blocks, ({ block, key }) => {
-      if (applied || key !== finding.span.blockKey) return;
+      if (state.applied || key !== finding.span.blockKey) return;
       const { start, end } = finding.span;
       const field =
         block.type === 'heading' || block.type === 'paragraph'
@@ -298,21 +305,29 @@ export async function applyFix(
             ? 'title'
             : undefined;
       const text = field === undefined ? undefined : (block as Record<string, unknown>)[field];
-      if (field === undefined || typeof text !== 'string' || text.slice(start, end) !== finding.found) {
+      if (
+        field === undefined ||
+        typeof text !== 'string' ||
+        text.slice(start, end) !== finding.found
+      ) {
         return;
       }
       (block as Record<string, unknown>)[field] =
         text.slice(0, start) + (finding.fix?.replacement ?? '') + text.slice(end);
-      applied = true;
+      state.applied = true;
     });
-    if (!applied) throw conflict('The draft changed since the check; run it again');
+    if (!state.applied) throw conflict('The draft changed since the check; run it again');
     const saved = await insertVersion(tx, reader, version.draftId, blocks);
     await record(
       { db: tx, workspaceId: reader.workspaceId, actor: { userId: reader.userId, kind: 'user' } },
       {
         action: 'draft.fix_applied',
         target: { kind: 'draft_version', id: saved.id },
-        metadata: { rule: finding.rule, fromVersionId: version.id, versionHash: saved.contentSha256 },
+        metadata: {
+          rule: finding.rule,
+          fromVersionId: version.id,
+          versionHash: saved.contentSha256,
+        },
       },
     );
     return saved;

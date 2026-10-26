@@ -19,10 +19,4 @@ export {
   type RuleContext,
   type RuleHit,
 } from './rules.ts';
-export {
-  dismissFlag,
-  liftSnooze,
-  listSnoozes,
-  setStaleDays,
-  snoozeFlag,
-} from './snooze.ts';
+export { dismissFlag, liftSnooze, listSnoozes, setStaleDays, snoozeFlag } from './snooze.ts';

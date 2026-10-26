@@ -3863,9 +3863,7 @@ const CASES: Record<string, Case> = {
     expect((await core.detectAttention({ db: f.tx }, asB)).map((x) => x.matterId)).not.toContain(
       aMatter,
     );
-    await expectDenied(
-      core.detectAttention({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }),
-    );
+    await expectDenied(core.detectAttention({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }));
     expect(await aSnoozes(f)).toEqual(before);
   },
   countAttention: async (f) => {

@@ -40,6 +40,7 @@ export const NAMESPACES = [
   'import',
   'camera',
   'voice',
+  'attention',
   'obligations',
   'memory',
   'outward',

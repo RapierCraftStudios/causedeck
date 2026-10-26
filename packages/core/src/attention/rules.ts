@@ -98,7 +98,8 @@ export function pastDateNoOutcome(facts: MatterFacts, ctx: RuleContext): RuleHit
   for (const listing of facts.listings) {
     if (!live.has(listing.proceedingId) || listing.listDate > ctx.today) continue;
     const seen = latest.get(listing.proceedingId);
-    if (seen === undefined || listing.listDate > seen.listDate) latest.set(listing.proceedingId, listing);
+    if (seen === undefined || listing.listDate > seen.listDate)
+      latest.set(listing.proceedingId, listing);
   }
   const hits: RuleHit[] = [];
   for (const listing of latest.values()) {

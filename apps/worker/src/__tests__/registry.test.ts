@@ -178,6 +178,8 @@ describe('enqueue', () => {
       'system.orders.poll',
       'system.obligation.reminders',
       'obligation.reminders',
+      'system.attention.scan',
+      'attention.scan',
       'brief.refresh',
       'system.brief.refresh-sweep',
       'system.reminder.schedule',

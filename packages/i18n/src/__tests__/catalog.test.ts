@@ -95,6 +95,7 @@ describe('namespaced catalogs (#174)', () => {
     expect(Object.keys(en).sort()).toEqual(
       [
         'activity',
+        'attention',
         'audit',
         'auth',
         'billing',

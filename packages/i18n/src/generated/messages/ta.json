@@ -4776,6 +4776,42 @@
       "full": "சாதன அவுட்பாக்ஸ் நிறைந்துள்ளது. பதிவேற்றம் முடிந்ததும் மீண்டும் முயலுங்கள்."
     }
   },
+  "attention": {
+    "title": "Needs you",
+    "badge": "{count, plural, =0 {No matters need attention} one {# matter needs attention} other {# matters need attention}}",
+    "badgeLabel": "Attention: {count}",
+    "loading": "Loading what needs you",
+    "empty": "Nothing needs you right now.",
+    "error": "Could not load what needs you. Try again.",
+    "retry": "Try again",
+    "offline": "You are offline. Showing the last loaded flags.",
+    "denied": "You do not have access to these flags in this workspace.",
+    "readOnly": "View only",
+    "close": "Close",
+    "openEvidence": "Open evidence",
+    "since": "Since {date}",
+    "rules": {
+      "no_next_date": "No next date",
+      "past_date_no_outcome": "Past date, no outcome",
+      "no_recent_update": "No recent update",
+      "obligation_overdue_unowned": "Overdue obligation, no owner"
+    },
+    "groupCount": "{rule}: {count}",
+    "actions": {
+      "record_outcome": "Record the outcome",
+      "set_next_date": "Set the next date",
+      "ask_junior": "Ask the junior"
+    },
+    "snooze": {
+      "action": "Snooze",
+      "until": "Snooze until",
+      "reason": "Reason",
+      "submit": "Snooze flag",
+      "dismiss": "Dismiss as intentionally dormant",
+      "lift": "Lift snooze",
+      "hint": "Press s to snooze, Enter to open the evidence, Esc to close."
+    }
+  },
   "obligations": {
     "metaTitle": "கடமைகள்",
     "title": "கடமைகள்",

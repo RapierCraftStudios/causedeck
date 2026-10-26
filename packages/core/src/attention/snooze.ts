@@ -19,7 +19,12 @@ import { record, type AuditAction, type AuditMetadataValue } from '../audit/inde
 import { forbidden, invalid, notFound } from '../shared/errors.ts';
 import { localDay } from '../obligations/index.ts';
 
-import { inAttentionScope, type AttentionActor, type AttentionDeps, type AttentionScope } from './detect.ts';
+import {
+  inAttentionScope,
+  type AttentionActor,
+  type AttentionDeps,
+  type AttentionScope,
+} from './detect.ts';
 
 const { matter, member, attentionSnooze, workspaceSettings } = schema;
 
@@ -98,7 +103,8 @@ export async function snoozeFlag(
   if (data.kind !== 'snooze') throw invalid('kind: expected a snooze');
   return inAttentionScope(deps, actor, async (scope) => {
     await requireWritable(scope, data.matterId);
-    if (data.until < localDay(scope.now, deps.timeZone)) throw invalid('until: must not be in the past');
+    if (data.until < localDay(scope.now, deps.timeZone))
+      throw invalid('until: must not be in the past');
     const [row] = await scope.tx
       .insert(attentionSnooze)
       .values({
@@ -113,10 +119,15 @@ export async function snoozeFlag(
       })
       .returning();
     if (row === undefined) throw new Error('snoozeFlag: insert returned no row');
-    await auditAs(scope, 'attention.snoozed', { kind: 'matter', id: data.matterId }, {
-      rule: data.rule ?? 'all',
-      until: data.until,
-    });
+    await auditAs(
+      scope,
+      'attention.snoozed',
+      { kind: 'matter', id: data.matterId },
+      {
+        rule: data.rule ?? 'all',
+        until: data.until,
+      },
+    );
     return toRecord(row);
   });
 }
@@ -145,9 +156,14 @@ export async function dismissFlag(
       })
       .returning();
     if (row === undefined) throw new Error('dismissFlag: insert returned no row');
-    await auditAs(scope, 'attention.dismissed', { kind: 'matter', id: data.matterId }, {
-      rule: data.rule ?? 'all',
-    });
+    await auditAs(
+      scope,
+      'attention.dismissed',
+      { kind: 'matter', id: data.matterId },
+      {
+        rule: data.rule ?? 'all',
+      },
+    );
     return toRecord(row);
   });
 }
@@ -185,9 +201,14 @@ export async function liftSnooze(
           eq(attentionSnooze.id, data.snoozeId),
         ),
       );
-    await auditAs(scope, 'attention.lifted', { kind: 'matter', id: row.matterId }, {
-      rule: row.rule ?? 'all',
-    });
+    await auditAs(
+      scope,
+      'attention.lifted',
+      { kind: 'matter', id: row.matterId },
+      {
+        rule: row.rule ?? 'all',
+      },
+    );
   });
 }
 
@@ -249,9 +270,14 @@ export async function setStaleDays(
       .where(eq(workspaceSettings.workspaceId, actor.workspaceId))
       .returning({ days: workspaceSettings.attentionStaleDays });
     if (row === undefined) throw notFound('Workspace settings not found');
-    await auditAs(scope, 'attention.threshold_changed', { kind: 'workspace', id: actor.workspaceId }, {
-      days: data.days,
-    });
+    await auditAs(
+      scope,
+      'attention.threshold_changed',
+      { kind: 'workspace', id: actor.workspaceId },
+      {
+        days: data.days,
+      },
+    );
     return row.days;
   });
 }

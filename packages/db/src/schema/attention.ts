@@ -4,7 +4,16 @@
 // write is audited. A tenant table under FORCE RLS via `tenantTable()`; rows cascade with their
 // matter. `created_by` is a bare user id (no FK): the record outlives the account.
 import { sql } from 'drizzle-orm';
-import { boolean, check, date, foreignKey, index, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  check,
+  date,
+  foreignKey,
+  index,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { id } from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';

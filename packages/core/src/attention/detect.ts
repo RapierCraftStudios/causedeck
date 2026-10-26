@@ -9,7 +9,14 @@
 import { isRole } from '@causedeck/auth';
 import { can, type Actor, type PolicySettings } from '@causedeck/auth/policy';
 import { matterVisibilityPredicate } from '@causedeck/auth/policy/visibility';
-import { currentScope, isUuid, schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
+import {
+  currentScope,
+  isUuid,
+  schema,
+  withWorkspace,
+  type Database,
+  type Transaction,
+} from '@causedeck/db';
 import {
   ATTENTION_RULES,
   ATTENTION_STALE_DAYS_DEFAULT,
@@ -172,78 +179,88 @@ export async function loadFlags(tx: Transaction, o: LoadOptions): Promise<Attent
   if (matterRows.length === 0) return [];
   const ids = matterRows.map((m) => m.id);
 
-  const [proceedings, listings, orders, obligations, obligationEvents, snoozes] = await Promise.all([
-    tx
-      .select({ id: proceeding.id, matterId: proceeding.matterId, state: proceeding.state })
-      .from(proceeding)
-      .where(and(eq(proceeding.workspaceId, o.workspaceId), inArray(proceeding.matterId, ids))),
-    tx
-      .select({
-        id: listing.id,
-        matterId: proceeding.matterId,
-        proceedingId: listing.proceedingId,
-        listDate: listing.listDate,
-        stageRaw: listing.stageRaw,
-        outcome: hearing.outcome,
-        nextDateConfirmed: hearing.nextDateConfirmed,
-        hearingAt: hearing.updatedAt,
-        listingAt: listing.updatedAt,
-      })
-      .from(listing)
-      .innerJoin(
-        proceeding,
-        and(eq(proceeding.workspaceId, listing.workspaceId), eq(proceeding.id, listing.proceedingId)),
-      )
-      .leftJoin(
-        hearing,
-        and(eq(hearing.workspaceId, listing.workspaceId), eq(hearing.listingId, listing.id)),
-      )
-      .where(and(eq(listing.workspaceId, o.workspaceId), inArray(proceeding.matterId, ids))),
-    tx
-      .select({ matterId: proceeding.matterId, at: max(order.updatedAt) })
-      .from(order)
-      .innerJoin(
-        proceeding,
-        and(eq(proceeding.workspaceId, order.workspaceId), eq(proceeding.id, order.proceedingId)),
-      )
-      .where(and(eq(order.workspaceId, o.workspaceId), inArray(proceeding.matterId, ids)))
-      .groupBy(proceeding.matterId),
-    tx
-      .select({
-        id: obligation.id,
-        matterId: obligation.matterId,
-        status: obligation.status,
-        dueDate: obligation.dueDate,
-        ownerMemberId: obligation.ownerMemberId,
-        updatedAt: obligation.updatedAt,
-      })
-      .from(obligation)
-      .where(and(eq(obligation.workspaceId, o.workspaceId), inArray(obligation.matterId, ids))),
-    tx
-      .select({ matterId: obligation.matterId, at: max(obligationEvent.at) })
-      .from(obligationEvent)
-      .innerJoin(
-        obligation,
-        and(
-          eq(obligation.workspaceId, obligationEvent.workspaceId),
-          eq(obligation.id, obligationEvent.obligationId),
+  const [proceedings, listings, orders, obligations, obligationEvents, snoozes] = await Promise.all(
+    [
+      tx
+        .select({ id: proceeding.id, matterId: proceeding.matterId, state: proceeding.state })
+        .from(proceeding)
+        .where(and(eq(proceeding.workspaceId, o.workspaceId), inArray(proceeding.matterId, ids))),
+      tx
+        .select({
+          id: listing.id,
+          matterId: proceeding.matterId,
+          proceedingId: listing.proceedingId,
+          listDate: listing.listDate,
+          stageRaw: listing.stageRaw,
+          outcome: hearing.outcome,
+          nextDateConfirmed: hearing.nextDateConfirmed,
+          hearingAt: hearing.updatedAt,
+          listingAt: listing.updatedAt,
+        })
+        .from(listing)
+        .innerJoin(
+          proceeding,
+          and(
+            eq(proceeding.workspaceId, listing.workspaceId),
+            eq(proceeding.id, listing.proceedingId),
+          ),
+        )
+        .leftJoin(
+          hearing,
+          and(eq(hearing.workspaceId, listing.workspaceId), eq(hearing.listingId, listing.id)),
+        )
+        .where(and(eq(listing.workspaceId, o.workspaceId), inArray(proceeding.matterId, ids))),
+      tx
+        .select({ matterId: proceeding.matterId, at: max(order.updatedAt) })
+        .from(order)
+        .innerJoin(
+          proceeding,
+          and(eq(proceeding.workspaceId, order.workspaceId), eq(proceeding.id, order.proceedingId)),
+        )
+        .where(and(eq(order.workspaceId, o.workspaceId), inArray(proceeding.matterId, ids)))
+        .groupBy(proceeding.matterId),
+      tx
+        .select({
+          id: obligation.id,
+          matterId: obligation.matterId,
+          status: obligation.status,
+          dueDate: obligation.dueDate,
+          ownerMemberId: obligation.ownerMemberId,
+          updatedAt: obligation.updatedAt,
+        })
+        .from(obligation)
+        .where(and(eq(obligation.workspaceId, o.workspaceId), inArray(obligation.matterId, ids))),
+      tx
+        .select({ matterId: obligation.matterId, at: max(obligationEvent.at) })
+        .from(obligationEvent)
+        .innerJoin(
+          obligation,
+          and(
+            eq(obligation.workspaceId, obligationEvent.workspaceId),
+            eq(obligation.id, obligationEvent.obligationId),
+          ),
+        )
+        .where(
+          and(eq(obligationEvent.workspaceId, o.workspaceId), inArray(obligation.matterId, ids)),
+        )
+        .groupBy(obligation.matterId),
+      tx
+        .select({
+          matterId: attentionSnooze.matterId,
+          rule: attentionSnooze.rule,
+          until: attentionSnooze.until,
+          dismissed: attentionSnooze.dismissed,
+          createdAt: attentionSnooze.createdAt,
+        })
+        .from(attentionSnooze)
+        .where(
+          and(
+            eq(attentionSnooze.workspaceId, o.workspaceId),
+            inArray(attentionSnooze.matterId, ids),
+          ),
         ),
-      )
-      .where(and(eq(obligationEvent.workspaceId, o.workspaceId), inArray(obligation.matterId, ids)))
-      .groupBy(obligation.matterId),
-    tx
-      .select({
-        matterId: attentionSnooze.matterId,
-        rule: attentionSnooze.rule,
-        until: attentionSnooze.until,
-        dismissed: attentionSnooze.dismissed,
-        createdAt: attentionSnooze.createdAt,
-      })
-      .from(attentionSnooze)
-      .where(
-        and(eq(attentionSnooze.workspaceId, o.workspaceId), inArray(attentionSnooze.matterId, ids)),
-      ),
-  ]);
+    ],
+  );
 
   const byMatter = <T extends { matterId: string }>(rows: readonly T[]): Map<string, T[]> => {
     const map = new Map<string, T[]>();
@@ -312,11 +329,17 @@ export async function loadFlags(tx: Transaction, o: LoadOptions): Promise<Attent
   }
   const rank = (rule: string) => ATTENTION_RULES.indexOf(rule as (typeof ATTENTION_RULES)[number]);
   return flags.sort(
-    (a, b) => rank(a.rule) - rank(b.rule) || a.since.localeCompare(b.since) || a.key.localeCompare(b.key),
+    (a, b) =>
+      rank(a.rule) - rank(b.rule) || a.since.localeCompare(b.since) || a.key.localeCompare(b.key),
   );
 }
 
-function toFlag(matterId: string, matterTitle: string, hit: RuleHit, redact: boolean): AttentionFlag {
+function toFlag(
+  matterId: string,
+  matterTitle: string,
+  hit: RuleHit,
+  redact: boolean,
+): AttentionFlag {
   return {
     key: `${matterId}:${hit.rule}:${hit.subjectId ?? '-'}`,
     matterId,
@@ -340,7 +363,14 @@ export async function detectAttention(
   if (!parsed.success) throw invalid(parsed.error.issues[0]?.message ?? 'Invalid input');
   const query = parsed.data;
   return inAttentionScope(deps, actor, async (scope) => {
-    if (!can(scope.actor, 'matter.read', { kind: 'matter', workspaceId: actor.workspaceId }, scope.settings).allow) {
+    if (
+      !can(
+        scope.actor,
+        'matter.read',
+        { kind: 'matter', workspaceId: actor.workspaceId },
+        scope.settings,
+      ).allow
+    ) {
       return [];
     }
     const staleDays = await loadStaleDays(scope.tx, actor.workspaceId);

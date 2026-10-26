@@ -19,3 +19,7 @@ The flagged tests hold no list of schema exports or drafting symbols (siblings s
 
 ## Migration renumber (base took 20261026000000)
 Merged origin/milestone/drafting-citations-research (kept both sides of the registry/list conflicts). Renamed `20261026000000_authority.sql` to `20261026000001_authority.sql` (SQL unchanged), regenerated the snapshot (`meta/20261026000001_snapshot.json`) and journal entry with drizzle-kit on top of the base's journal; the base's `drafting_consistency` files are untouched. Checks: lint-migrations OK, drizzle-kit check OK, db and core tsc pass, db index.test passes. Full turbo checks not run (host rules).
+
+- Rerun: base origin/milestone/drafting-citations-research is already merged; migration 20261026000001 has no collision (base tops at 20261026000000). V1-V7 re-run: all exit 0. `forgedock check` fails only because V3/V4 exceed its 300s timeout under host load (V3 passes standalone in 111s); host problem, not a code failure.
+
+Stale-list follow-up: AUTHORITY_KINDS, AUTHORITY_STATUSES and authority recorded as not members of apps/web/__tests__/matter-documents-tab.test.tsx (a document fixture, not a db export list). No code change.

@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Citation checker implemented and committed; V1-V7 pass directly; forgedock check times out (300s) on V3/V4 only; migration renumbered to 20261026000001 after merging the base",
+ "summary": "Citation checker implemented; base already merged, migration 20261026000001 does not collide; V1-V7 re-run and pass; forgedock check fails only on a 300s timeout of V3/V4 (pass standalone, V3 111s) on the loaded host",
  "requirements": [
   {
    "id": "R1",
@@ -321,6 +321,21 @@
    "symbol": "authority",
    "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
    "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_KINDS",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "line 91 is a document fixture (kind/language/textStatus values); the file imports nothing from @causedeck/db and holds no list of schema exports or drafting tables"
+  },
+  {
+   "symbol": "AUTHORITY_STATUSES",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "line 91 is a document fixture (kind/language/textStatus values); the file imports nothing from @causedeck/db and holds no list of schema exports or drafting tables"
+  },
+  {
+   "symbol": "authority",
+   "test": "apps/web/__tests__/matter-documents-tab.test.tsx",
+   "why": "line 91 is a document fixture (kind/language/textStatus values); the file imports nothing from @causedeck/db and holds no list of schema exports or drafting tables"
   }
  ]
 }

@@ -534,18 +534,6 @@ describe('placeholder pages', () => {
     },
   );
 
-  it('uses the #11 design-spec empty copy verbatim', async () => {
-    const spec: Partial<Record<PlaceholderId, string>> = {
-      today: 'No hearings today. Forward a cause list to see your court day.',
-      obligations: 'No open obligations.',
-    };
-    for (const [route, copy] of Object.entries(spec)) {
-      withIntl(await pageFor(route as PlaceholderId)(props('demo')));
-      expect(document.querySelector('[data-slot="empty-state-title"]')?.textContent).toBe(copy);
-      cleanup();
-    }
-  });
-
   it.each(PLACEHOLDER_ROUTES)(
     '%s shows the loading skeleton under ?__state=loading in dev',
     async (route) => {

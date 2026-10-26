@@ -18,7 +18,7 @@ import {
 import { and, asc, desc, eq } from 'drizzle-orm';
 
 import { submitProposals } from '../automation/index.ts';
-import { record } from '../audit/index.ts';
+import { type AuditMetadataValue, record } from '../audit/index.ts';
 import { conflict, notFound } from '../shared/errors.ts';
 
 import { parse, withIntake, type IntakeActor, type IntakeDeps, type IntakeScope } from './scope.ts';
@@ -100,7 +100,7 @@ function auditEnquiry(
   scope: IntakeScope,
   action: 'enquiry.logged' | 'enquiry.updated' | 'enquiry.closed' | 'enquiry.accepted',
   enquiryId: string,
-  metadata: Record<string, unknown>,
+  metadata: Record<string, AuditMetadataValue>,
 ) {
   return record(
     {

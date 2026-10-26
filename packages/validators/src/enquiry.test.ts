@@ -6,7 +6,7 @@ import {
   EnquiryRetentionMonthsSchema,
   LogEnquiryInput,
   UpdateEnquiryInput,
-} from './enquiry.ts';
+} from './enquiry';
 
 describe('enquiry validators', () => {
   it('limits statuses to the six lifecycle states', () => {

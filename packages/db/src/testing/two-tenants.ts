@@ -1353,14 +1353,24 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
   enquiry: async (tx, { workspaceId, ownerId, tag }) => {
     const rows = await tx
       .insert(enquiry)
-      .values({ workspaceId, enquirerName: `${tag} enquirer`, summary: 'Tenancy', createdBy: ownerId })
+      .values({
+        workspaceId,
+        enquirerName: `${tag} enquirer`,
+        summary: 'Tenancy',
+        createdBy: ownerId,
+      })
       .returning({ id: enquiry.id });
     return { id: first(rows, 'enquiry').id };
   },
   enquiry_party: async (tx, { workspaceId, ownerId, tag }) => {
     const parent = await tx
       .insert(enquiry)
-      .values({ workspaceId, enquirerName: `${tag} enquirer`, summary: 'Tenancy', createdBy: ownerId })
+      .values({
+        workspaceId,
+        enquirerName: `${tag} enquirer`,
+        summary: 'Tenancy',
+        createdBy: ownerId,
+      })
       .returning({ id: enquiry.id });
     const enquiryId = first(parent, 'enquiry').id;
     const rows = await tx
@@ -1372,7 +1382,12 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
   conflict_check_result: async (tx, { workspaceId, ownerId, tag }) => {
     const parent = await tx
       .insert(enquiry)
-      .values({ workspaceId, enquirerName: `${tag} enquirer`, summary: 'Tenancy', createdBy: ownerId })
+      .values({
+        workspaceId,
+        enquirerName: `${tag} enquirer`,
+        summary: 'Tenancy',
+        createdBy: ownerId,
+      })
       .returning({ id: enquiry.id });
     const enquiryId = first(parent, 'enquiry').id;
     const rows = await tx

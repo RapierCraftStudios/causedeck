@@ -21,12 +21,12 @@ PRD intake (#87) lets a chamber log an inbound enquiry (a person asking it to ta
 
 ## Considered options
 
-| Option                                                           | Verdict  | Reason                                                                          |
-| ---------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------- |
-| Log only; no reply, template or notification; hits, not verdicts | Chosen   | No outbound surface to clear; the advocate keeps the judgement                  |
-| Acknowledge receipt automatically                                | Rejected | An automatic message to a prospective client is solicitation-adjacent           |
+| Option                                                           | Verdict  | Reason                                                                           |
+| ---------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| Log only; no reply, template or notification; hits, not verdicts | Chosen   | No outbound surface to clear; the advocate keeps the judgement                   |
+| Acknowledge receipt automatically                                | Rejected | An automatic message to a prospective client is solicitation-adjacent            |
 | Return a "conflicted / clear" verdict                            | Rejected | A name match is not a conflict finding; a false "clear" would be worse than none |
-| Create the matter directly on accept                             | Rejected | Bypasses the automation engine; a new matter defines identity and is a proposal |
+| Create the matter directly on accept                             | Rejected | Bypasses the automation engine; a new matter defines identity and is a proposal  |
 
 ## Decision
 

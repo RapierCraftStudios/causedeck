@@ -33,6 +33,14 @@
       "dismiss": "Dismiss as intentionally dormant",
       "lift": "Lift snooze",
       "hint": "Press s to snooze, Enter to open the evidence, Esc to close."
+    },
+    "snoozes": {
+      "title": "Snoozes and dismissals",
+      "empty": "No snoozes or dismissals on this matter.",
+      "until": "Snoozed until {date}",
+      "dismissed": "Dismissed as intentionally dormant",
+      "allRules": "All flags",
+      "reason": "Reason: {reason}"
     }
   }
 }

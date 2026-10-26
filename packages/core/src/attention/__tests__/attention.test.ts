@@ -151,4 +151,47 @@ describe('attention', () => {
       expect(counts.no_next_date).toBe(1);
     });
   });
+  it('detects over 500 matters in a fixed query set with p95 under 300 ms', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const forum = await inWorkspace(tx, workspaceId, (s) => buildForum(s, workspaceId));
+      const matters = await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .insert(schema.matter)
+          .values(
+            Array.from({ length: 500 }, (_, n) => ({
+              workspaceId,
+              title: `Perf matter ${String(n)}`,
+              practiceArea: 'writ' as const,
+              updatedAt: new Date('2026-11-01T00:00:00Z'),
+            })),
+          )
+          .returning({ id: schema.matter.id }),
+      );
+      await inWorkspace(tx, workspaceId, (s) =>
+        s.insert(schema.proceeding).values(
+          matters.map((m) => ({
+            workspaceId,
+            matterId: m.id,
+            forumId: forum.id,
+            caseTypeCode: 'WP',
+            caseTypeRaw: 'W.P.',
+            sourceType: 'manual' as const,
+            state: 'sr_fr' as const,
+          })),
+        ),
+      );
+      const owner = { userId: ownerId, workspaceId };
+      const runs: number[] = [];
+      let flagged = 0;
+      for (let n = 0; n < 20; n += 1) {
+        const started = performance.now();
+        flagged = (await detectAttention(deps(tx), owner)).length;
+        runs.push(performance.now() - started);
+      }
+      runs.sort((a, b) => a - b);
+      expect(flagged).toBeGreaterThanOrEqual(500);
+      expect(runs[Math.ceil(runs.length * 0.95) - 1]).toBeLessThan(300);
+    });
+  }, 120_000);
 });

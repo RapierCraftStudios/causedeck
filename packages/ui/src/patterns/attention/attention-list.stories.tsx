@@ -25,7 +25,17 @@ const FLAGS: AttentionFlagView[] = [
 const meta = {
   title: 'Patterns/AttentionList',
   component: AttentionList,
-  args: { flags: FLAGS, onOpen: fn(), onClose: fn(), onSnooze: fn(), onRetry: fn() },
+  args: {
+    flags: FLAGS,
+    labels: {
+      rule: (rule, count) =>
+        `${rule === 'no_next_date' ? 'No next date' : 'No recent update'} (${String(count)})`,
+    },
+    onOpen: fn(),
+    onClose: fn(),
+    onSnooze: fn(),
+    onRetry: fn(),
+  },
   decorators: [
     (Story) => (
       <div className="max-w-2xl p-4">

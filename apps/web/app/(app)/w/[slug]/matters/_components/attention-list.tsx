@@ -15,7 +15,7 @@ export interface AttentionFlagListProps {
   flags: readonly AttentionFlag[];
   state?: AttentionState;
   canWrite: boolean;
-  onRetry?: () => void;
+  onRetry?: (() => void) | undefined;
 }
 
 export function AttentionFlagList({

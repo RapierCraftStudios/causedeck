@@ -7,3 +7,4 @@ export {
   type AttentionListProps,
   type AttentionState,
 } from './attention-list';
+export { SnoozeHistory, type SnoozeHistoryItem, type SnoozeHistoryProps } from './snooze-history';

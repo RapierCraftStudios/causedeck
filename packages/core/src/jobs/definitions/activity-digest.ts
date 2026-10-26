@@ -324,7 +324,7 @@ export async function runActivityDigestMember(
           userId,
           category: 'digest.end_of_day',
           title: email.subject,
-          body: `${t('endOfDayDigest.applied', { count: digest.l3Count })} ${t('endOfDayDigest.pending', { count: digest.pendingL2Count })}${attentionCount > 0 ? ` ${String(attentionCount)} to check.` : ''}`,
+          body: `${t('endOfDayDigest.applied', { count: digest.l3Count })} ${t('endOfDayDigest.pending', { count: digest.pendingL2Count })}${attentionCount > 0 ? ` ${t('endOfDayDigest.attention', { count: attentionCount })}` : ''}`,
           href: digest.links.activity,
           dedupeKey: `eod:${localDate}`,
         },

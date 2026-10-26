@@ -737,6 +737,7 @@ export type Messages = {
         heading: string;
         applied: string;
         pending: string;
+        attention: string;
         matters: string;
         activityCta: string;
         inboxCta: string;
@@ -4811,6 +4812,14 @@ export type Messages = {
       dismiss: string;
       lift: string;
       hint: string;
+    };
+    snoozes: {
+      title: string;
+      empty: string;
+      until: string;
+      dismissed: string;
+      allRules: string;
+      reason: string;
     };
   };
   obligations: {

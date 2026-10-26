@@ -59,7 +59,7 @@ export interface AttentionListProps {
   onOpen?: (key: string) => void;
   onClose?: () => void;
   onSnooze?: (key: string) => void;
-  onRetry?: () => void;
+  onRetry?: (() => void) | undefined;
   /** A viewer reads: no snooze. */
   readOnly?: boolean;
   className?: string;

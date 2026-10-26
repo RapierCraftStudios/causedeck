@@ -736,6 +736,7 @@
         "heading": "இன்று CauseDeck செய்தவை",
         "applied": "{count, plural, =0 {இன்று CauseDeck தானாக எதையும் பயன்படுத்தவில்லை.} one {இன்று CauseDeck தானாக # மாற்றத்தைப் பயன்படுத்தியது. 7 நாட்களுக்கு செயல்தவிர்க்கலாம்.} other {இன்று CauseDeck தானாக # மாற்றங்களைப் பயன்படுத்தியது. 7 நாட்களுக்கு செயல்தவிர்க்கலாம்.}}",
         "pending": "{count, plural, =0 {உங்கள் உறுதிப்படுத்தலுக்காக எதுவும் காத்திருக்கவில்லை.} one {# பரிந்துரை உங்கள் உறுதிப்படுத்தலுக்காக காத்திருக்கிறது.} other {# பரிந்துரைகள் உங்கள் உறுதிப்படுத்தலுக்காக காத்திருக்கின்றன.}}",
+        "attention": "{count, plural, one {# வழக்கைச் சரிபார்க்கவும்.} other {# வழக்குகளைச் சரிபார்க்கவும்.}}",
         "matters": "இன்று தொடப்பட்ட வழக்குகள்",
         "activityCta": "இன்றைய செயல்பாட்டைப் பார்",
         "inboxCta": "உங்கள் இன்பாக்ஸைத் திற",
@@ -4810,6 +4811,14 @@
       "dismiss": "Dismiss as intentionally dormant",
       "lift": "Lift snooze",
       "hint": "Press s to snooze, Enter to open the evidence, Esc to close."
+    },
+    "snoozes": {
+      "title": "Snoozes and dismissals",
+      "empty": "No snoozes or dismissals on this matter.",
+      "until": "Snoozed until {date}",
+      "dismissed": "Dismissed as intentionally dormant",
+      "allRules": "All flags",
+      "reason": "Reason: {reason}"
     }
   },
   "obligations": {

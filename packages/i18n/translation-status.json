@@ -202,7 +202,13 @@
     "attention.snooze.submit",
     "attention.snooze.dismiss",
     "attention.snooze.lift",
-    "attention.snooze.hint"
+    "attention.snooze.hint",
+    "attention.snoozes.title",
+    "attention.snoozes.empty",
+    "attention.snoozes.until",
+    "attention.snoozes.dismissed",
+    "attention.snoozes.allRules",
+    "attention.snoozes.reason"
   ],
   "ta": {
     "auth.checkEmail.body": "draft",
@@ -4309,7 +4315,14 @@
     "attention.snooze.submit": "draft",
     "attention.snooze.dismiss": "draft",
     "attention.snooze.lift": "draft",
-    "attention.snooze.hint": "draft"
+    "attention.snooze.hint": "draft",
+    "attention.snoozes.title": "draft",
+    "attention.snoozes.empty": "draft",
+    "attention.snoozes.until": "draft",
+    "attention.snoozes.dismissed": "draft",
+    "attention.snoozes.allRules": "draft",
+    "attention.snoozes.reason": "draft",
+    "notifications.email.endOfDayDigest.attention": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -8416,6 +8429,13 @@
     "attention.snooze.submit": "draft",
     "attention.snooze.dismiss": "draft",
     "attention.snooze.lift": "draft",
-    "attention.snooze.hint": "draft"
+    "attention.snooze.hint": "draft",
+    "attention.snoozes.title": "draft",
+    "attention.snoozes.empty": "draft",
+    "attention.snoozes.until": "draft",
+    "attention.snoozes.dismissed": "draft",
+    "attention.snoozes.allRules": "draft",
+    "attention.snoozes.reason": "draft",
+    "notifications.email.endOfDayDigest.attention": "draft"
   }
 }

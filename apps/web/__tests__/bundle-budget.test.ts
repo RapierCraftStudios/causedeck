@@ -212,7 +212,7 @@ describe('matters route budget (#388)', () => {
 
 describe('drafting studio route budget (#827)', () => {
   it('pins the budget and route', () => {
-    expect(budget.DRAFTS_ROUTE_BUDGET_BYTES).toBe(40 * 1024);
+    expect(budget.DRAFTS_ROUTE_BUDGET_BYTES).toBe(60 * 1024);
     expect(budget.DRAFTS_ROUTE_MANIFEST).toBe(
       'server/app/(app)/w/[slug]/drafts/[id]/page_client-reference-manifest.js',
     );

@@ -62,6 +62,19 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A member checked new matter parties for a conflict of interest',
   },
+  // The inbound enquiry log (#87, ADR 0043). Metadata holds ids and counts only, never names or
+  // enquiry text.
+  'enquiry.logged': { security: false, description: 'A member logged an inbound enquiry' },
+  'enquiry.updated': { security: false, description: 'A member changed an inbound enquiry' },
+  'enquiry.closed': { security: false, description: 'A member closed an inbound enquiry' },
+  'enquiry.accepted': {
+    security: false,
+    description: 'A member accepted an enquiry as a matter, through a proposal',
+  },
+  'enquiry.retention_swept': {
+    security: false,
+    description: 'The retention job deleted closed enquiries past the workspace retention',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },

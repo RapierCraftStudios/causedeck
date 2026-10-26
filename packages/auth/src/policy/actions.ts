@@ -20,6 +20,8 @@ export const ACTIONS = {
   // Client contacts (#82): `contact.write` is the owner/advocate manage; a junior writes through
   // `matter.write` on an assigned matter (`@causedeck/core/people`).
   contact: ['contact.read', 'contact.write'],
+  // The inbound enquiry log (#87, ADR 0043): advocate-level read and write.
+  enquiry: ['enquiry.read', 'enquiry.write'],
   export: ['export.run'],
   support: ['support.manage'],
   // Shell surfaces gated in apps/web/lib/workspace-context.ts.

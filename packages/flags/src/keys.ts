@@ -119,6 +119,12 @@ export const FLAGS = {
     true,
     [500, 486],
   ),
+  'intake.enquiry_log': flag(
+    'intake.enquiry_log',
+    'Inbound enquiry log with a conflict check and no auto-reply (counsel sign-off required).',
+    true,
+    [87, 117],
+  ),
   bench_facts: flag(
     'bench_facts',
     "User-facing factual bench facts (a matter's bench card); internal bench data is never behind this flag (D-050).",

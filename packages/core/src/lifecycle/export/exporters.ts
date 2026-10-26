@@ -284,6 +284,10 @@ export const mattersExporter = tablesExporter('matters', [
   ws('person'),
   // Client contacts (#82): phone, email and language of a client; personal data the workspace owns.
   ws('client_contact'),
+  // Inbound enquiry log (#87): enquirer details and conflict-check hits; personal data the workspace owns.
+  ws('enquiry'),
+  ws('enquiry_party'),
+  ws('conflict_check_result'),
   ws('organisation'),
   ws('role_edge'),
   ws('document', { exclude: ['storage_key'] }),

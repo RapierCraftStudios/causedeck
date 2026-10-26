@@ -116,6 +116,10 @@ export const PURGE_ORDER = [
   'role_edge',
   // Client contacts (#82) cite their person (composite FK); before it.
   'client_contact',
+  // Inbound enquiries (#87): parties and conflict checks cite their enquiry (composite FK); before it.
+  'conflict_check_result',
+  'enquiry_party',
+  'enquiry',
   'person',
   'organisation',
   // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.

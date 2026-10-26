@@ -1327,6 +1327,7 @@ export type Messages = {
         shell: string;
         appearance: string;
         contact: string;
+        enquiry: string;
       };
       actions: {
         workspace: {
@@ -1397,6 +1398,10 @@ export type Messages = {
           assign: string;
         };
         contact: {
+          read: string;
+          write: string;
+        };
+        enquiry: {
           read: string;
           write: string;
         };

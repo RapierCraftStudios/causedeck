@@ -368,7 +368,8 @@
         "support": "Support",
         "shell": "Workspace areas",
         "appearance": "Appearances",
-        "contact": "Client contacts"
+        "contact": "Client contacts",
+        "enquiry": "Enquiry log"
       },
       "actions": {
         "workspace": {
@@ -441,6 +442,10 @@
         "contact": {
           "read": "Read client contacts",
           "write": "Manage client contacts"
+        },
+        "enquiry": {
+          "read": "Read the enquiry log",
+          "write": "Manage the enquiry log"
         }
       },
       "settings": {

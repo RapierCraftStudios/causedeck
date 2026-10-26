@@ -23,6 +23,7 @@ import { billingEvent, entitlement, plan, subscription, usageCounter } from '../
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { briefState } from '../schema/brief.ts';
 import { clientContact } from '../schema/client-contact.ts';
+import { conflictCheckResult, enquiry, enquiryParty } from '../schema/enquiry.ts';
 import { briefShare } from '../schema/share.ts';
 import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
@@ -1348,6 +1349,52 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, personId, phone: '+919876543210', createdBy: ownerId })
       .returning({ id: clientContact.id });
     return { personId, id: first(rows, 'client_contact').id };
+  },
+  enquiry: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(enquiry)
+      .values({
+        workspaceId,
+        enquirerName: `${tag} enquirer`,
+        summary: 'Tenancy',
+        createdBy: ownerId,
+      })
+      .returning({ id: enquiry.id });
+    return { id: first(rows, 'enquiry').id };
+  },
+  enquiry_party: async (tx, { workspaceId, ownerId, tag }) => {
+    const parent = await tx
+      .insert(enquiry)
+      .values({
+        workspaceId,
+        enquirerName: `${tag} enquirer`,
+        summary: 'Tenancy',
+        createdBy: ownerId,
+      })
+      .returning({ id: enquiry.id });
+    const enquiryId = first(parent, 'enquiry').id;
+    const rows = await tx
+      .insert(enquiryParty)
+      .values({ workspaceId, enquiryId, name: `${tag} party`, side: 'adverse' })
+      .returning({ id: enquiryParty.id });
+    return { enquiryId, id: first(rows, 'enquiry_party').id };
+  },
+  conflict_check_result: async (tx, { workspaceId, ownerId, tag }) => {
+    const parent = await tx
+      .insert(enquiry)
+      .values({
+        workspaceId,
+        enquirerName: `${tag} enquirer`,
+        summary: 'Tenancy',
+        createdBy: ownerId,
+      })
+      .returning({ id: enquiry.id });
+    const enquiryId = first(parent, 'enquiry').id;
+    const rows = await tx
+      .insert(conflictCheckResult)
+      .values({ workspaceId, enquiryId, checkedBy: ownerId, partyCount: 1, hitCount: 0 })
+      .returning({ id: conflictCheckResult.id });
+    return { enquiryId, id: first(rows, 'conflict_check_result').id };
   },
   brief_share: async (tx, { workspaceId, ownerId, tag }) => {
     const rows = await tx

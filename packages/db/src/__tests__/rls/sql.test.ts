@@ -190,6 +190,18 @@ describe('row-level security catalog', () => {
         'case_watch',
         'case_status_snapshot',
 
+        // Court-day marker and list snapshots (#58).
+        'court_day_marker',
+        'list_snapshot',
+
+        // Brief state (#60).
+        'brief_state',
+
+        // Brief sharing (#507).
+        'brief_share',
+        // Court-day reminders (#64).
+        'reminder_dispatch',
+
         // Review and correction queue (#518).
         'review_correction',
 

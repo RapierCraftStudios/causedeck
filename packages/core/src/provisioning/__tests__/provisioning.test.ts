@@ -89,11 +89,11 @@ describe('provisioning CSV', () => {
 
 describe('SCIM', () => {
   async function setup(tx: Transaction) {
-    const { a, ua, b } = await seedTwoTenants(tx);
+    const { a, ua, ub, uboth, b } = await seedTwoTenants(tx);
     const { secret, token } = await inWorkspace(tx, a.id, (s) =>
       createScimToken(s, { workspaceId: a.id, actorUserId: ua, name: 'idp' }),
     );
-    return { a, b, ua, secret, token, auth: `Bearer ${secret}` };
+    return { a, b, ua, ub, uboth, secret, token, auth: `Bearer ${secret}` };
   }
 
   it('stores only the hash and rejects revoked and expired tokens', async () => {
@@ -186,15 +186,13 @@ describe('SCIM', () => {
 
   it('never exposes another workspace’s member', async () => {
     await withTestDb(async (tx) => {
-      const { auth, b } = await setup(tx);
-      const [other] = await inWorkspace(tx, b.id, (s) =>
-        s
-          .select({ userId: schema.member.userId })
-          .from(schema.member)
-          .where(eq(schema.member.organizationId, b.id)),
-      );
-      const result = await handleScim(tx, auth, (s, id) => getScimUser(s, id, other?.userId ?? ''));
+      const { auth, ub, uboth } = await setup(tx);
+      // ub belongs to workspace B only. (uboth is seeded into both workspaces, so it is a legitimate
+      // member of A and must stay visible: picking "any member of B" made this test order-dependent.)
+      const result = await handleScim(tx, auth, (s, id) => getScimUser(s, id, ub));
       expect(result.status).toBe(404);
+      const shared = await handleScim(tx, auth, (s, id) => getScimUser(s, id, uboth));
+      expect(shared.status).toBe(200);
     });
   });
 });

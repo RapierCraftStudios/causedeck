@@ -9,8 +9,10 @@
 //
 // Workspace shell (#155): the `/w/[slug]` routes may add at most 42 KB gzip on top of that (40 KB in #155, +2 KB in #593: the precompiled en catalog
 // ships in these chunks and the case-watch namespace grew it by ~0.9 KB over a base already at the limit). The
-// delta is every initial chunk of `/w/[slug]/today` (shell layout, workspace boundaries, page)
-// that the home route does not already load.
+// delta is every initial chunk the workspace routes all load (shell layout, workspace boundaries) that the
+// home route does not already load: the chunks `/w/[slug]/today`, the matters list and the courts index share.
+// Until #59 `/today` was a placeholder and stood in for the shell; it is now the Court-Day Board, whose own
+// code is a route like any other (#59: <= 40 KB gzip beyond shared code, below).
 //
 // Courts routes (#427): `/w/[slug]/courts` and a forum's default tab (`/w/[slug]/courts/[code]/halls`)
 // may each add at most 40 KB gzip beyond shared code: every initial chunk of the route that neither
@@ -31,7 +33,7 @@ export const WORKSPACE_SHELL_BUDGET_BYTES = 42 * 1024;
 export const SW_BUDGET_BYTES = 60 * 1024;
 export const SW_FILE = 'public/sw.js';
 
-/** The workspace route measured for the shell budget. */
+/** The Court-Day Board route (#59); with the matters list and courts index it also defines the shell. */
 export const WORKSPACE_ROUTE_MANIFEST =
   'server/app/(app)/w/[slug]/today/page_client-reference-manifest.js';
 
@@ -99,6 +101,12 @@ export function evaluateBudget(sizes, budget = BUDGET_BYTES) {
  * Gzip bytes the workspace route adds over the home route: its chunks that home does not load,
  * each once. `sizes` maps a chunk path to its gzip size.
  */
+/** Chunks every list loads: the code all workspace routes share. */
+export function commonChunks(...lists) {
+  const [first = [], ...rest] = lists.map((list) => new Set(list));
+  return [...first].filter((file) => rest.every((set) => set.has(file))).sort();
+}
+
 export function shellDelta(homeChunks, routeChunks, sizes, budget = WORKSPACE_SHELL_BUDGET_BYTES) {
   const home = new Set(homeChunks);
   const files = [...new Set(routeChunks)].filter((file) => !home.has(file)).sort();
@@ -192,12 +200,17 @@ function main() {
   for (const entry of sizes) console.log(`${kb(entry.gzipBytes).padStart(10)}  ${entry.file}`);
   console.log(`${kb(result.total).padStart(10)}  total (budget ${kb(result.budget)} gzip)`);
 
-  const shell = shellDelta(homeChunks, routeChunks, gzipBytes);
-  console.log('\nWorkspace route /w/[slug]/today, chunks beyond the home route:');
+  const shellChunks = commonChunks(routeChunks, mattersChunks, courtsChunks[0]?.[1] ?? []);
+  const shell = shellDelta(homeChunks, shellChunks, gzipBytes);
+  console.log('\nWorkspace shell (chunks every workspace route loads), beyond the home route:');
   for (const file of shell.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
   console.log(`${kb(shell.total).padStart(10)}  shell delta (budget ${kb(shell.budget)} gzip)`);
 
-  const sharedChunks = [...homeChunks, ...routeChunks];
+  const sharedChunks = [...homeChunks, ...shellChunks];
+  const board = shellDelta(sharedChunks, routeChunks, gzipBytes, ROUTE_CHUNK_BUDGET_BYTES);
+  console.log(`\nCourt-Day Board ${WORKSPACE_ROUTE_MANIFEST}, chunks beyond shared code:`);
+  for (const file of board.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
+  console.log(`${kb(board.total).padStart(10)}  route delta (budget ${kb(board.budget)} gzip)`);
   const courts = courtsChunks.map(([manifest, chunks]) => {
     const delta = shellDelta(sharedChunks, chunks, gzipBytes, ROUTE_CHUNK_BUDGET_BYTES);
     console.log(`\nCourts route ${manifest}, chunks beyond shared code:`);
@@ -259,6 +272,12 @@ function main() {
   }
   if (!shell.ok) {
     console.error('The workspace shell adds more initial JS than its budget.');
+    failed = true;
+  }
+  if (!board.ok) {
+    console.error(
+      `Court-Day Board ${WORKSPACE_ROUTE_MANIFEST} adds more initial JS than its budget.`,
+    );
     failed = true;
   }
   for (const { manifest, delta } of courts) {

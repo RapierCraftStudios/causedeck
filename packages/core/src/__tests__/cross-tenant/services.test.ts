@@ -14,6 +14,7 @@ import { seedPlans } from '@causedeck/db/seed/plans';
 import { seedForumCatalogue } from '@causedeck/db/seed/forum-catalogue';
 import { createDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
 import { BILLING_SERVICE_TESTS, SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
+import { buildHearing } from '@causedeck/db/testing/matter-graph-fixtures';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { createLogger } from '@causedeck/observability';
 import { and, eq } from 'drizzle-orm';
@@ -267,6 +268,7 @@ const aNotes = (f: Fixture) =>
       .where(eq(schema.researchNote.id, aNote(f).id)),
   );
 
+const PROBE_ID = '00000000-0000-4000-8000-0000000000aa';
 const PROBE_PROVENANCE = { sourceType: 'manual' } as const;
 
 /** A's seeded listing (canonical) and its proceeding. */
@@ -280,6 +282,14 @@ async function aListing(f: Fixture): Promise<{ listingId: string; proceedingId: 
   );
   if (!row) throw new Error("A's listing not found");
   return { listingId, proceedingId: row.proceedingId };
+}
+
+async function aHearing(f: Fixture): Promise<{ hearingId: string }> {
+  const { listingId } = await aListing(f);
+  const hearing = await inWorkspace(f.tx, f.a.id, (s) =>
+    buildHearing(s, f.a.id, { listingId, heldOn: '2026-10-12' }),
+  );
+  return { hearingId: hearing.id };
 }
 
 async function aWorkspace(f: Fixture) {
@@ -1466,6 +1476,111 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getRoleSettings(f.tx, f.a.id)).toEqual(before);
   },
+  listSsoProviders: async (f) => {
+    await inWorkspace(f.tx, f.a.id, (s) =>
+      s.insert(schema.ssoProvider).values({
+        workspaceId: f.a.id,
+        protocol: 'oidc',
+        issuer: 'https://idp.a.example',
+        domain: 'a-sso.example.com',
+        config: { clientSecret: 'secret' },
+        enabled: true,
+        createdBy: f.ua,
+      }),
+    );
+    // B is an owner of its own workspace but is denied A's providers.
+    await expectDenied(
+      f.asB((s) => core.listSsoProviders(s, { workspaceId: f.a.id, actorUserId: f.ub })),
+    );
+  },
+  saveSsoProvider: async (f) => {
+    await expectDenied(
+      f.asB((s) =>
+        core.saveSsoProvider(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          protocol: 'oidc',
+          issuer: 'https://idp.b.example',
+          domain: 'b-sso.example.com',
+          settings: { clientId: 'id', clientSecret: 'secret' },
+          enabled: true,
+          baseUrl: 'https://app.example.com',
+          sealingSecret: 'x'.repeat(32),
+        }),
+      ),
+    );
+    const rows = await f.tx
+      .select({ id: schema.ssoProvider.id })
+      .from(schema.ssoProvider)
+      .where(eq(schema.ssoProvider.domain, 'b-sso.example.com'));
+    expect(rows).toEqual([]);
+  },
+  deleteSsoProvider: async (f) => {
+    const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .insert(schema.ssoProvider)
+        .values({
+          workspaceId: f.a.id,
+          protocol: 'oidc',
+          issuer: 'https://idp.a.example',
+          domain: 'a-del.example.com',
+          config: {},
+          enabled: true,
+          createdBy: f.ua,
+        })
+        .returning({ id: schema.ssoProvider.id }),
+    );
+    await expectDenied(
+      f.asB((s) =>
+        core.deleteSsoProvider(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          providerId: row?.id ?? '',
+        }),
+      ),
+    );
+    const left = await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .select({ id: schema.ssoProvider.id })
+        .from(schema.ssoProvider)
+        .where(eq(schema.ssoProvider.id, row?.id ?? '')),
+    );
+    expect(left).toHaveLength(1);
+  },
+  verifySsoDomain: async (f) => {
+    const [row] = await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .insert(schema.ssoProvider)
+        .values({
+          workspaceId: f.a.id,
+          protocol: 'oidc',
+          issuer: 'https://idp.a.example',
+          domain: 'a-verify.example.com',
+          domainVerificationToken: 'token',
+          config: {},
+          createdBy: f.ua,
+        })
+        .returning({ id: schema.ssoProvider.id }),
+    );
+    // B cannot verify (and so bind) A's provider domain, even if the DNS record is there.
+    await expectDenied(
+      f.asB((s) =>
+        core.verifySsoDomain(s, {
+          workspaceId: f.a.id,
+          actorUserId: f.ub,
+          providerId: row?.id ?? '',
+          resolver: () => Promise.resolve([[`_better-auth-token-${row?.id ?? ''}=token`]]),
+        }),
+      ),
+    );
+    const left = await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .select({ at: schema.ssoProvider.domainVerifiedAt })
+        .from(schema.ssoProvider)
+        .where(eq(schema.ssoProvider.id, row?.id ?? '')),
+    );
+    expect(left).toEqual([{ at: null }]);
+  },
   getPrivacySettings: async (f) => {
     await f.tx
       .update(schema.workspaceSettings)
@@ -2070,6 +2185,289 @@ const CASES: Record<string, Case> = {
     expect(own.map((hall) => hall.hallNo)).not.toContain('xt-a-hall');
     expect(own.every((hall) => hall.lastListAt < probe.run.createdAt)).toBe(true);
     expect(await aParseRuns(f)).toEqual(probe.before);
+  },
+  // Court day (#58): ub names A's workspace; every entry point is denied and A's rows stay as they were.
+  getCourtDay: async (f) => {
+    await expect(
+      core.getCourtDay(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { date: '2026-11-02', scope: 'workspace' },
+      ),
+    ).rejects.toBeDefined();
+  },
+  getCalendarRange: async (f) => {
+    const range = { from: '2026-11-02', to: '2026-11-08', scope: 'workspace' } as const;
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listing));
+    // ub names A's workspace without a seat in it: denied, for both scopes.
+    await expect(
+      core.getCalendarRange({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, range),
+    ).rejects.toBeDefined();
+    await expect(
+      f.asB((s) =>
+        core.getCalendarRange(
+          { db: s },
+          { userId: f.ub, workspaceId: f.a.id },
+          { ...range, scope: 'mine' },
+        ),
+      ),
+    ).rejects.toBeDefined();
+    // ub's own workspace is readable and shows nothing of A.
+    const own = await core.getCalendarRange(
+      { db: f.tx },
+      { userId: f.ub, workspaceId: f.b.id },
+      range,
+    );
+    expect(own.flatMap((d) => d.entries)).toEqual([]);
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listing))).toEqual(before);
+  },
+  setCurrentItem: async (f) => {
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.courtDayMarker));
+    const hallId = '00000000-0000-4000-8000-000000000001';
+    await expect(
+      core.setCurrentItem(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hallId, listDate: '2026-11-02', currentItem: 3 },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.courtDayMarker))).toEqual(
+      before,
+    );
+  },
+  clearCurrentItem: async (f) => {
+    const hallId = '00000000-0000-4000-8000-000000000001';
+    await expect(
+      core.clearCurrentItem(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hallId, listDate: '2026-11-02' },
+      ),
+    ).rejects.toBeDefined();
+  },
+  snapshotList: async (f) => {
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listSnapshot));
+    await expect(
+      core.snapshotList(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        {
+          forumId: '00000000-0000-4000-8000-000000000001',
+          listDate: '2026-11-02',
+          listType: 'daily',
+          rows: [],
+        },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.listSnapshot))).toEqual(
+      before,
+    );
+  },
+  getListDiffs: async (f) => {
+    await expect(
+      core.getListDiffs(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { date: '2026-11-02' },
+      ),
+    ).rejects.toBeDefined();
+  },
+  proposeCourtDayNextDate: async (f) => {
+    const { deps, events } = graphDeps(f.tx);
+    const { proceedingId } = await aListing(f);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.proposeCourtDayNextDate(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { proceedingId, date: '2027-01-04', provenance: PROBE_PROVENANCE },
+      ),
+    );
+    expect(events).toEqual([]);
+  },
+  listConflictCards: async (f) => {
+    const { deps } = graphDeps(f.tx);
+    await expectGraphDenied(f, (db, workspaceId) =>
+      core.listConflictCards(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        {
+          matterId: '00000000-0000-4000-8000-000000000001',
+        },
+      ),
+    );
+  },
+  // hearing outcome (#62): ub names A's workspace and A's hearing; each entry point is denied and the hearing is unchanged.
+  getOutcomeProposal: async (f) => {
+    const { hearingId } = await aHearing(f);
+    await expect(
+      core.getOutcomeProposal(
+        { db: f.tx, events: { emit: () => undefined } },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hearingId },
+      ),
+    ).rejects.toBeDefined();
+  },
+  confirmOutcome: async (f) => {
+    const { hearingId } = await aHearing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing));
+    await expect(
+      core.confirmOutcome(
+        { db: f.tx, events: { emit: () => undefined } },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hearingId, outcome: 'Adjourned', nextDate: { kind: 'none' } },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing))).toEqual(before);
+  },
+  recordManualOutcome: async (f) => {
+    const { hearingId } = await aHearing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing));
+    await expect(
+      core.recordManualOutcome(
+        { db: f.tx, events: { emit: () => undefined } },
+        { userId: f.ub, workspaceId: f.a.id },
+        { hearingId, outcome: 'Adjourned', nextDate: { kind: 'none' } },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing))).toEqual(before);
+  },
+  // briefs (#60): B acting on A's listing is denied and A's brief state is unchanged.
+  assembleBrief: async (f) => {
+    const { listingId } = await aListing(f);
+    await expect(
+      core.assembleBrief({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, listingId),
+    ).rejects.toBeDefined();
+  },
+  markPrepared: async (f) => {
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await expect(
+      core.markPrepared({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { listingId }),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
+  },
+  unmarkPrepared: async (f) => {
+    const { listingId } = await aListing(f);
+    await expect(
+      core.unmarkPrepared({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { listingId }),
+    ).rejects.toBeDefined();
+  },
+  setCarryItem: async (f) => {
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await expect(
+      core.setCarryItem(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { listingId, action: 'add', label: 'Vakalatnama' },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
+  },
+  setBriefNote: async (f) => {
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await expect(
+      core.setBriefNote(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { listingId, note: 'B was here' },
+      ),
+    ).rejects.toBeDefined();
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
+  },
+  // delegation (#63): B acting on A's listing or appearances is denied and A's appearances are unchanged.
+  assignAppearance: async (f) => {
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.appearance));
+    const input = { listingId, memberId: PROBE_ID, capacity: 'arguing' } as const;
+    await expectDenied(
+      core.assignAppearance({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, input),
+    );
+    await expectDenied(
+      f.asB((s) => core.assignAppearance({ db: s }, { userId: f.ub, workspaceId: f.a.id }, input)),
+    );
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.appearance))).toEqual(
+      before,
+    );
+  },
+  reassignAppearance: async (f) => {
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.appearance));
+    await expectDenied(
+      core.reassignAppearance(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { appearanceId: PROBE_ID, toMemberId: PROBE_ID },
+      ),
+    );
+    await expectDenied(
+      core.reassignAppearance(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { fromMemberId: PROBE_ID, toMemberId: PROBE_ID },
+      ),
+    );
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.appearance))).toEqual(
+      before,
+    );
+  },
+  unassign: async (f) => {
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.appearance));
+    await expectDenied(
+      core.unassign(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { appearanceId: PROBE_ID },
+      ),
+    );
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.appearance))).toEqual(
+      before,
+    );
+  },
+  suggestAssignments: async (f) => {
+    await expectDenied(
+      core.suggestAssignments(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { date: '2026-11-02' },
+      ),
+    );
+  },
+  myAppearances: async (f) => {
+    await expectDenied(
+      core.myAppearances(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { date: '2026-11-02' },
+      ),
+    );
+  },
+  chamberOutcomesLive: async (f) => {
+    await expectDenied(
+      core.chamberOutcomesLive(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { date: '2026-11-02' },
+      ),
+    );
+  },
+  refreshBrief: async (f) => {
+    // The system refresh runs in the workspace it names: A's listing id in B's scope is not found
+    // (or refreshes nothing), and A's brief state is unchanged.
+    const { listingId } = await aListing(f);
+    const before = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState));
+    await core
+      .refreshBrief({ db: f.tx }, { workspaceId: f.b.id, listingId })
+      .catch(() => undefined);
+    expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.briefState))).toEqual(
+      before,
+    );
   },
   getLiveHalls: async (f) => {
     // getLiveHalls is a per-member read model, not a write: a user with no seat in the workspace

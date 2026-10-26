@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useEffect, useState, useSyncExternalStore, useTransition } from 'react';
 
-import { useOutbox } from '../../../../../../../lib/offline/use-outbox.ts';
+import { useOfflineEdits } from '../../../../../../../lib/offline/use-outbox.ts';
 import { markPreparedAction } from '../actions.ts';
 
 import { showStaleNote } from './model.ts';
@@ -40,7 +40,7 @@ export function PreparedControl({
   const [error, setError] = useState(false);
   const [pending, start] = useTransition();
   const { slug } = useParams<{ slug: string }>();
-  const { enqueue } = useOutbox(slug, workspaceId);
+  const { enqueue } = useOfflineEdits(slug, workspaceId);
 
   // The refresh clears the mark once; the note stays across a reload until the brief is marked again.
   const staleKey = `brief-stale:${listingId}`;

@@ -10,7 +10,7 @@ import {
   drainScope,
   enqueueOffline,
   listStuck,
-  resolveConflict,
+  resolveStuckEdit,
 } from '../../lib/offline/use-outbox.ts';
 import { OutboxItem } from '../../app/(app)/w/[slug]/_offline/outbox.ts';
 
@@ -113,7 +113,7 @@ describe('offline outbox wiring (#851)', () => {
     expect(entry).toMatchObject({ state: 'conflict', serverDate: '2026-10-25' });
 
     // "Propose my date" requeues against the date now on file, and the next drain sends it.
-    expect(await resolveConflict(SLUG, entry, 'mine', s)).toBe(true);
+    expect(await resolveStuckEdit(SLUG, entry, 'mine', s)).toBe(true);
     expect(await listStuck(SLUG, s)).toEqual([]);
     const sent: unknown[] = [];
     await drainScope(
@@ -133,7 +133,7 @@ describe('offline outbox wiring (#851)', () => {
     await drainScope(SLUG, conflict, s);
     const [again] = await listStuck(SLUG, s);
     if (!again) throw new Error('expected a stuck entry');
-    expect(await resolveConflict(SLUG, again, 'server', s)).toBe(true);
+    expect(await resolveStuckEdit(SLUG, again, 'server', s)).toBe(true);
     expect(await listStuck(SLUG, s)).toEqual([]);
   });
 });

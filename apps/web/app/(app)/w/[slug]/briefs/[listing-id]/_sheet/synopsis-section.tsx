@@ -9,7 +9,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useId, useState, useTransition } from 'react';
 
-import { useOutbox } from '../../../../../../../lib/offline/use-outbox.ts';
+import { useOfflineEdits } from '../../../../../../../lib/offline/use-outbox.ts';
 import { setBriefNoteAction } from '../actions.ts';
 
 import { StatementLine } from './lines.tsx';
@@ -42,7 +42,7 @@ export function SynopsisSection({
   const [pending, start] = useTransition();
   const id = useId();
   const { slug } = useParams<{ slug: string }>();
-  const { enqueue } = useOutbox(slug, workspaceId);
+  const { enqueue } = useOfflineEdits(slug, workspaceId);
 
   const save = () => {
     setError(false);

@@ -8,7 +8,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 
-import { useOutbox } from '../../../../../../../../lib/offline/use-outbox.ts';
+import { useOfflineEdits } from '../../../../../../../../lib/offline/use-outbox.ts';
 import { confirmOutcomeAction, recordManualOutcomeAction } from '../actions.ts';
 
 import { ConfirmBar } from './confirm-bar.tsx';
@@ -47,7 +47,7 @@ export function OutcomeForm({
 }: OutcomeFormProps) {
   const t = useTranslations('outcome');
   const { slug } = useParams<{ slug: string }>();
-  const { enqueue, stuck, resolve } = useOutbox(slug, workspaceId);
+  const { enqueue, stuck, resolve } = useOfflineEdits(slug, workspaceId);
   const [summary, setSummary] = useState(proposal.summary?.value ?? '');
   const [reason, setReason] = useState(proposal.adjournmentReason?.value ?? '');
   const [stage, setStage] = useState(proposal.stageAfter?.value ?? '');

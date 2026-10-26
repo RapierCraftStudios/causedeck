@@ -89,7 +89,7 @@ export async function listStuck(
  * Settle a next-date conflict card: `server` keeps the server's date and drops the edit; `mine`
  * requeues the edit against the server's date now on file, so it is proposed on the next drain.
  */
-export async function resolveConflict(
+export async function resolveStuckEdit(
   slug: string,
   entry: OutboxEntry,
   choice: 'server' | 'mine',
@@ -122,7 +122,7 @@ export async function resolveConflict(
 }
 
 /** For components: `enqueue` bound to the workspace, and the stuck entries (refreshed after a drain). */
-export function useOutbox(slug: string, workspaceId: string) {
+export function useOfflineEdits(slug: string, workspaceId: string) {
   const [stuck, setStuck] = useState<OutboxEntry[]>([]);
   const refresh = useCallback(async () => {
     setStuck(await listStuck(slug));
@@ -146,7 +146,7 @@ export function useOutbox(slug: string, workspaceId: string) {
   );
   const resolve = useCallback(
     async (entry: OutboxEntry, choice: 'server' | 'mine') => {
-      const ok = await resolveConflict(slug, entry, choice);
+      const ok = await resolveStuckEdit(slug, entry, choice);
       await refresh();
       if (ok && choice === 'mine') window.dispatchEvent(new Event(OUTBOX_DRAIN_REQUEST));
       return ok;

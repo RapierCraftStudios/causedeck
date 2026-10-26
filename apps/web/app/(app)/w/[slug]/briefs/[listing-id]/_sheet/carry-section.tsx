@@ -11,7 +11,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useId, useState, useTransition } from 'react';
 
-import { useOutbox } from '../../../../../../../lib/offline/use-outbox.ts';
+import { useOfflineEdits } from '../../../../../../../lib/offline/use-outbox.ts';
 import { setCarryItemAction } from '../actions.ts';
 
 type CarryEdit = SetCarryItemInput extends infer T
@@ -46,7 +46,7 @@ export function CarrySection({
   const [pending, start] = useTransition();
   const inputId = useId();
   const { slug } = useParams<{ slug: string }>();
-  const { enqueue } = useOutbox(slug, workspaceId);
+  const { enqueue } = useOfflineEdits(slug, workspaceId);
 
   // A refresh brings the stored list: it wins over the local copy.
   const [seenItems, setSeenItems] = useState(items);

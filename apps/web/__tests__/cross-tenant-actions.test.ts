@@ -100,6 +100,7 @@ const whatsappLink =
   await import('../app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts');
 const reminders = await import('../app/(app)/w/[slug]/settings/notifications/reminders-actions.ts');
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
+const drafts = await import('../app/(app)/w/[slug]/drafts/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const sso = await import('../app/(app)/w/[slug]/settings/sso/actions.ts');
@@ -180,6 +181,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   unlinkWhatsAppAction: whatsappLink,
   getWhatsAppLinkAction: whatsappLink,
   saveNewsPreferencesAction: news,
+  createDraftAction: drafts,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
   saveSsoProviderAction: sso,
@@ -833,6 +835,13 @@ function inputs(workspaceId: string): Record<string, unknown> {
     revokeBriefShareAction: { workspaceId, shareId: crypto.randomUUID() },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
+    // Drafts (#826): ub may not create a draft in A, even from a real-looking template id.
+    createDraftAction: {
+      workspaceId,
+      templateId: '00000000-0000-4000-8000-0000000000d1',
+      matterId: null,
+      title: 'Cross-tenant probe draft',
+    },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
     checkConflictsAction: {
       workspaceId,

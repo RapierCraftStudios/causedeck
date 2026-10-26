@@ -3719,6 +3719,45 @@ export type Messages = {
       empty: string;
       updated: string;
       untitled: string;
+      metaTitle: string;
+      description: string;
+      loading: string;
+      matter: string;
+      template: string;
+      lastEdited: string;
+      noMatter: string;
+      filterLabel: string;
+      filterAll: string;
+      emptyFiltered: string;
+      open: string;
+      chips: {
+        verified: string;
+        notFound: string;
+        unknown: string;
+        consistencyError: string;
+        consistencyWarn: string;
+        consistencyInfo: string;
+        consistencyClear: string;
+        consistencyPending: string;
+      };
+      picker: {
+        title: string;
+        description: string;
+        suggested: string;
+        noTemplates: string;
+        titleLabel: string;
+        matterLabel: string;
+        noMatterOption: string;
+        submit: string;
+        submitting: string;
+        offline: string;
+        cancel: string;
+        errors: {
+          forbidden: string;
+          validation: string;
+          generic: string;
+        };
+      };
     };
     states: {
       loading: string;
@@ -3727,6 +3766,10 @@ export type Messages = {
       notFound: string;
       saving: string;
       saved: string;
+      requestId: string;
+      copyId: string;
+      copied: string;
+      listError: string;
     };
     panels: {
       facts: {
@@ -3790,6 +3833,7 @@ export type Messages = {
       banner: string;
       queued: string;
       synced: string;
+      listBanner: string;
     };
   };
   calendar: {

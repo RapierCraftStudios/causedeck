@@ -28,15 +28,7 @@ import {
   UpdateClientContactInput,
   type ContactMatterRelation,
 } from '@causedeck/validators/client-contact';
-import {
-  and,
-  asc,
-  eq,
-  inArray,
-  isNotNull,
-  isNull,
-  type SQL,
-} from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, isNull, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
 
 import {
@@ -216,7 +208,10 @@ async function allowedMatters(
       ...(row.allowUserIds === null ? {} : { restricted: { allowUserIds: row.allowUserIds } }),
       ...(row.ownerUserId === null ? {} : { ownerUserId: row.ownerUserId }),
     };
-    if (can(actor, 'matter.read', resource, settings).allow && can(actor, action, resource, settings).allow) {
+    if (
+      can(actor, 'matter.read', resource, settings).allow &&
+      can(actor, action, resource, settings).allow
+    ) {
       allowed.add(row.id);
     }
   }
@@ -264,14 +259,16 @@ async function loadContact(scope: Scope, contactId: string): Promise<ContactRow>
 /** The contact if the actor may change it: managers always, a junior through an assigned matter. */
 async function requireWritable(scope: Scope, contactId: string): Promise<ContactRow> {
   const { actor } = scope;
-  if (!can(actor, 'contact.read', undefined, scope.settings).allow) throw notFound('Contact not found');
+  if (!can(actor, 'contact.read', undefined, scope.settings).allow)
+    throw notFound('Contact not found');
   const row = await loadContact(scope, contactId);
   if (isManager(scope)) return row;
   if (actor.role !== 'junior') throw forbidden('You cannot change client contacts');
   if (row.createdBy === actor.userId) return row;
   const matterIds = (await linksOf(scope.tx, actor.workspaceId, [row.personId])).get(row.personId);
   const writable = await allowedMatters(scope, matterIds ?? [], 'matter.write');
-  if (writable.size === 0) throw forbidden('You can change contacts only on matters assigned to you');
+  if (writable.size === 0)
+    throw forbidden('You can change contacts only on matters assigned to you');
   return row;
 }
 
@@ -311,9 +308,11 @@ export async function createContact(
     const manager = isManager(scope);
     if (!manager) {
       if (scope.actor.role !== 'junior') throw forbidden('You cannot change client contacts');
-      if (data.matterId === undefined) throw forbidden('Link the contact to a matter assigned to you');
+      if (data.matterId === undefined)
+        throw forbidden('Link the contact to a matter assigned to you');
       const writable = await allowedMatters(scope, [data.matterId], 'matter.write');
-      if (!writable.has(data.matterId)) throw forbidden('You can add contacts only on matters assigned to you');
+      if (!writable.has(data.matterId))
+        throw forbidden('You can add contacts only on matters assigned to you');
     }
     await requireClient(scope, data.personId);
     let row: ContactRow | undefined;
@@ -360,7 +359,8 @@ export async function updateContact(
     if (before.archivedAt !== null) throw conflict('This contact is archived');
     const phone = data.phone === undefined ? before.phone : data.phone;
     const email = data.email === undefined ? before.email : data.email;
-    if (phone === null && email === null) throw invalid('phone: A contact keeps a phone or an email');
+    if (phone === null && email === null)
+      throw invalid('phone: A contact keeps a phone or an email');
     const languagePref = data.languagePref ?? before.languagePref;
     const detailsChanged = phone !== before.phone || email !== before.email;
     if (!detailsChanged && languagePref === before.languagePref) return before;
@@ -369,7 +369,10 @@ export async function updateContact(
       .update(clientContact)
       .set({ phone, email, languagePref, updatedAt: scope.now })
       .where(
-        and(eq(clientContact.workspaceId, scope.actor.workspaceId), eq(clientContact.id, before.id)),
+        and(
+          eq(clientContact.workspaceId, scope.actor.workspaceId),
+          eq(clientContact.id, before.id),
+        ),
       )
       .returning();
     if (!row) throw notFound('Contact not found');
@@ -518,7 +521,8 @@ export async function listContacts(
   const data = parse(ListContactsInput, input);
   return inPeopleScope(deps, actor, async (scope) => {
     const { tx, actor: who } = scope;
-    if (!can(who, 'contact.read', undefined, scope.settings).allow) throw notFound('Contact not found');
+    if (!can(who, 'contact.read', undefined, scope.settings).allow)
+      throw notFound('Contact not found');
     const filters: SQL[] = [eq(clientContact.workspaceId, who.workspaceId)];
     if (data.personId !== undefined) filters.push(eq(clientContact.personId, data.personId));
     if (!data.includeArchived) filters.push(isNull(clientContact.archivedAt));
@@ -527,7 +531,10 @@ export async function listContacts(
       .from(clientContact)
       .innerJoin(
         person,
-        and(eq(person.workspaceId, clientContact.workspaceId), eq(person.id, clientContact.personId)),
+        and(
+          eq(person.workspaceId, clientContact.workspaceId),
+          eq(person.id, clientContact.personId),
+        ),
       )
       .where(and(...filters))
       .orderBy(asc(clientContact.createdAt), asc(clientContact.id));
@@ -561,7 +568,8 @@ export async function listContacts(
         createdAt: contact.createdAt,
         linkedCount,
         unlinked:
-          linkedCount === 0 && scope.now.getTime() - contact.createdAt.getTime() >= UNLINKED_AFTER_MS,
+          linkedCount === 0 &&
+          scope.now.getTime() - contact.createdAt.getTime() >= UNLINKED_AFTER_MS,
         redacted,
       };
     });

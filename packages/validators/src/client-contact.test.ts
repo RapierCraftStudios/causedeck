@@ -35,22 +35,34 @@ describe('ClientContactInput', () => {
   });
 
   it('refuses unknown keys, kinds and languages', () => {
-    expect(ClientContactInput.safeParse({ personId, phone: '+919876543210', lead: true }).success).toBe(false);
-    expect(ClientContactInput.safeParse({ personId, email: 'a@example.in', kind: 'lead' }).success).toBe(false);
-    expect(ClientContactInput.safeParse({ personId, email: 'a@example.in', languagePref: 'xx' }).success).toBe(false);
+    expect(
+      ClientContactInput.safeParse({ personId, phone: '+919876543210', lead: true }).success,
+    ).toBe(false);
+    expect(
+      ClientContactInput.safeParse({ personId, email: 'a@example.in', kind: 'lead' }).success,
+    ).toBe(false);
+    expect(
+      ClientContactInput.safeParse({ personId, email: 'a@example.in', languagePref: 'xx' }).success,
+    ).toBe(false);
   });
 });
 
 describe('contact change inputs', () => {
   it('lets an update clear one channel but not be empty', () => {
-    expect(UpdateClientContactInput.safeParse({ contactId: personId, phone: null }).success).toBe(true);
+    expect(UpdateClientContactInput.safeParse({ contactId: personId, phone: null }).success).toBe(
+      true,
+    );
     expect(UpdateClientContactInput.safeParse({ contactId: personId }).success).toBe(false);
   });
 
   it('links with represents or instructed_by only', () => {
     const base = { contactId: personId, matterId: personId };
-    expect(LinkContactToMatterInput.safeParse({ ...base, relation: 'instructed_by' }).success).toBe(true);
-    expect(LinkContactToMatterInput.safeParse({ ...base, relation: 'opposes' }).success).toBe(false);
+    expect(LinkContactToMatterInput.safeParse({ ...base, relation: 'instructed_by' }).success).toBe(
+      true,
+    );
+    expect(LinkContactToMatterInput.safeParse({ ...base, relation: 'opposes' }).success).toBe(
+      false,
+    );
   });
 
   it('archives without purge by default', () => {

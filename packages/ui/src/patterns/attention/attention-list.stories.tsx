@@ -82,9 +82,8 @@ export const Offline: Story = { args: { state: 'offline' } };
 export const Denied: Story = { args: { state: 'denied' } };
 export const ReadOnly: Story = { args: { readOnly: true } };
 
-const flagIn = (matterTitle: string, evidence: string, suggestedAction: string) => [
-  { ...FLAGS[0]!, matterTitle, evidence, suggestedAction },
-];
+const flagIn = (matterTitle: string, evidence: string, suggestedAction: string) =>
+  FLAGS.slice(0, 1).map((flag) => ({ ...flag, matterTitle, evidence, suggestedAction }));
 export const LongText: Story = {
   args: {
     flags: flagIn(

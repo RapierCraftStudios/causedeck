@@ -23,3 +23,4 @@ export {
   type Resolution,
 } from './slots';
 export * from './citations/index';
+export * from './consistency/index';

@@ -154,3 +154,35 @@ export const draftExport = tenantTable(
     check('draft_export_size_chk', sql`size_bytes >= 0`),
   ],
 );
+
+/**
+ * The consistency report of one draft version against the matter graph (#78). `draft_version` is
+ * immutable, so the report lives here, unique per `(draft_version_id, graph_revision)`: the same
+ * inputs return the stored row, and a new listing or order changes `graph_revision` and so gets a
+ * new row. `report` is the validators `ConsistencyReport`; the db stores jsonb. Privileged matter data.
+ */
+export const draftConsistencyReport = tenantTable(
+  'draft_consistency_report',
+  {
+    id: id(),
+    draftVersionId: uuid('draft_version_id').notNull(),
+    /** sha256 hex of the canonical graph facts the report was computed from. */
+    graphRevision: text('graph_revision').notNull(),
+    report: jsonb('report').$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      name: 'draft_consistency_report_workspace_id_fk',
+      columns: [t.workspaceId],
+      foreignColumns: [organization.id],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'draft_consistency_report_version_fk',
+      columns: [t.workspaceId, t.draftVersionId],
+      foreignColumns: [draftVersion.workspaceId, draftVersion.id],
+    }).onDelete('cascade'),
+    unique('draft_consistency_report_version_rev_uq').on(t.draftVersionId, t.graphRevision),
+    check('draft_consistency_report_revision_chk', sql`graph_revision ~ '^[0-9a-f]{64}$'`),
+  ],
+);

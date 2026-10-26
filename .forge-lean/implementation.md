@@ -16,3 +16,6 @@ CITATION_RESOLVER=mock|indian-kanoon (default mock); INDIAN_KANOON_API_TOKEN req
 
 ## Stale-list follow-up
 The flagged tests hold no list of schema exports or drafting symbols (siblings such as draftExport are absent too). Recorded as not_members in result.json; the core helpers are already in NOT_A_SERVICE in cross-tenant-registry.ts. No code change.
+
+## Migration renumber (base took 20261026000000)
+Merged origin/milestone/drafting-citations-research (kept both sides of the registry/list conflicts). Renamed `20261026000000_authority.sql` to `20261026000001_authority.sql` (SQL unchanged), regenerated the snapshot (`meta/20261026000001_snapshot.json`) and journal entry with drizzle-kit on top of the base's journal; the base's `drafting_consistency` files are untouched. Checks: lint-migrations OK, drizzle-kit check OK, db and core tsc pass, db index.test passes. Full turbo checks not run (host rules).

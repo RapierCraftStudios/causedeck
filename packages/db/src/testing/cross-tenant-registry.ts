@@ -84,6 +84,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   draft_export: DB_TABLES_TEST,
   // Citation checker (#77): one row per citation in a draft version.
   authority: DB_TABLES_TEST,
+  // Consistency reports (#78): privileged matter data, one per draft version and graph revision.
+  draft_consistency_report: DB_TABLES_TEST,
   // Matter and documents (#345).
   matter: DB_TABLES_TEST,
   document: DB_TABLES_TEST,
@@ -869,6 +871,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   checkDraft: denies,
   getCitationReport: denies,
   acknowledgeUnverified: denies,
+  // consistency (#78): B running, reading or applying a fix on A's version is denied; A's rows are unchanged.
+  runConsistencyCheck: denies,
+  getConsistencyReport: denies,
+  listFindings: denies,
+  loadConsistencyFacts: denies,
+  applyFix: denies,
   // research notes, facts and provider templates (#80)
   listNotes: denies,
   createNote: denies,

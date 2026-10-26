@@ -23,7 +23,13 @@ import { billingEvent, entitlement, plan, subscription, usageCounter } from '../
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { authority } from '../schema/authority.ts';
-import { draft, draftExport, draftVersion, template } from '../schema/drafting.ts';
+import {
+  draft,
+  draftConsistencyReport,
+  draftExport,
+  draftVersion,
+  template,
+} from '../schema/drafting.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
 import { reviewCorrection, reviewItem } from '../schema/review.ts';
 import { extraction } from '../schema/extraction.ts';
@@ -787,6 +793,31 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: authority.id });
     return { draftId, draftVersionId: version.id, id: first(rows, 'authority').id };
+  },
+  draft_consistency_report: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const contentSha256 = createHash('sha256').update(draftId).digest('hex');
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({ workspaceId, draftId, versionNo: 1, content: [], contentSha256 })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(draftConsistencyReport)
+      .values({
+        workspaceId,
+        draftVersionId: version.id,
+        graphRevision: contentSha256,
+        report: { findings: [] },
+      })
+      .returning({ id: draftConsistencyReport.id });
+    return {
+      draftId,
+      draftVersionId: version.id,
+      id: first(rows, 'draft_consistency_report').id,
+    };
   },
   forum: async (tx, { workspaceId, tag }) => ({ forumId: await seedForum(tx, workspaceId, tag) }),
   court_hall: async (tx, { workspaceId, tag }) => {

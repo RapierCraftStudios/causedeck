@@ -719,8 +719,15 @@
     {
       "idx": 102,
       "version": "7",
-      "when": 1792978592602,
-      "tag": "20261026000000_authority",
+      "when": 1792972800000,
+      "tag": "20261026000000_drafting_consistency",
+      "breakpoints": true
+    },
+    {
+      "idx": 103,
+      "version": "7",
+      "when": 1792982378532,
+      "tag": "20261026000001_authority",
       "breakpoints": true
     }
   ]

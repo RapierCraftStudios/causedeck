@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Citation checker implemented and committed; V1-V7 pass directly; forgedock check times out (300s) on V3/V4 only",
+ "summary": "Citation checker implemented and committed; V1-V7 pass directly; forgedock check times out (300s) on V3/V4 only; migration renumbered to 20261026000001 after merging the base",
  "requirements": [
   {
    "id": "R1",

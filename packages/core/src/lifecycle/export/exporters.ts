@@ -330,6 +330,7 @@ const draftingExporter = tablesExporter('drafting', [
   ws('template'),
   ws('draft', { userColumn: 'created_by' }),
   ws('draft_version', { userColumn: 'created_by' }),
+  ws('draft_consistency_report'),
   ws('draft_export', { userColumn: 'created_by' }),
 ]);
 

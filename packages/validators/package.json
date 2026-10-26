@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./api": "./src/api/index.ts",
     "./citation": "./src/citation.ts",
+    "./consistency": "./src/consistency.ts",
     "./drafting": "./src/drafting.ts",
     "./forum": "./src/forum.ts",
     "./gstin": "./src/gstin.ts",

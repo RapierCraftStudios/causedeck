@@ -1,5 +1,5 @@
 {
-  "id": "235bbc70-6c53-4160-9e22-42f74dad53d0",
+  "id": "eeebd88f-d989-4901-bc5c-cd9b38127f89",
   "prevId": "7ff327f7-3620-4be1-aef9-cb1024204d66",
   "version": "7",
   "dialect": "postgresql",
@@ -2316,183 +2316,6 @@
       },
       "policies": {},
       "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.authority": {
-      "name": "authority",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "draft_version_id": {
-          "name": "draft_version_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "block_id": {
-          "name": "block_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "span": {
-          "name": "span",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "raw_text": {
-          "name": "raw_text",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "normalized": {
-          "name": "normalized",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "resolution": {
-          "name": "resolution",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source_url": {
-          "name": "source_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "checked_at": {
-          "name": "checked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "ack_by": {
-          "name": "ack_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ack_at": {
-          "name": "ack_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "authority_workspace_id_idx": {
-          "name": "authority_workspace_id_idx",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "authority_ack_by_user_id_fk": {
-          "name": "authority_ack_by_user_id_fk",
-          "tableFrom": "authority",
-          "tableTo": "user",
-          "columnsFrom": [
-            "ack_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "authority_workspace_id_fk": {
-          "name": "authority_workspace_id_fk",
-          "tableFrom": "authority",
-          "tableTo": "organization",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "authority_version_fk": {
-          "name": "authority_version_fk",
-          "tableFrom": "authority",
-          "tableTo": "draft_version",
-          "columnsFrom": [
-            "workspace_id",
-            "draft_version_id"
-          ],
-          "columnsTo": [
-            "workspace_id",
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "authority_version_block_span_uq": {
-          "name": "authority_version_block_span_uq",
-          "nullsNotDistinct": false,
-          "columns": [
-            "draft_version_id",
-            "block_id",
-            "span"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "authority_status_chk": {
-          "name": "authority_status_chk",
-          "value": "status in ('verified', 'not_found', 'unknown')"
-        },
-        "authority_kind_chk": {
-          "name": "authority_kind_chk",
-          "value": "kind in ('neutral', 'reporter', 'case_name')"
-        }
-      },
       "isRLSEnabled": false
     },
     "public.automation_preference": {
@@ -6434,6 +6257,116 @@
         "draft_status_chk": {
           "name": "draft_status_chk",
           "value": "status in ('draft', 'final')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.draft_consistency_report": {
+      "name": "draft_consistency_report",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "draft_version_id": {
+          "name": "draft_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "graph_revision": {
+          "name": "graph_revision",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "report": {
+          "name": "report",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "draft_consistency_report_workspace_id_idx": {
+          "name": "draft_consistency_report_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "draft_consistency_report_workspace_id_fk": {
+          "name": "draft_consistency_report_workspace_id_fk",
+          "tableFrom": "draft_consistency_report",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "draft_consistency_report_version_fk": {
+          "name": "draft_consistency_report_version_fk",
+          "tableFrom": "draft_consistency_report",
+          "tableTo": "draft_version",
+          "columnsFrom": [
+            "workspace_id",
+            "draft_version_id"
+          ],
+          "columnsTo": [
+            "workspace_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "draft_consistency_report_version_rev_uq": {
+          "name": "draft_consistency_report_version_rev_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "draft_version_id",
+            "graph_revision"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "draft_consistency_report_revision_chk": {
+          "name": "draft_consistency_report_revision_chk",
+          "value": "graph_revision ~ '^[0-9a-f]{64}$'"
         }
       },
       "isRLSEnabled": false

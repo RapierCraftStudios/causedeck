@@ -173,6 +173,11 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A member acknowledged unverified citations of a draft version before an export',
   },
+  // Consistency fix (#78): a lawyer confirmed one proposed replacement. Metadata holds the rule and hashes only, never draft text.
+  'draft.fix_applied': {
+    security: false,
+    description: 'A lawyer applied a consistency fix, which saved a new draft version',
+  },
   // Workspace deletion (#302): fail-closed. Metadata holds the deletion job id and dates only. These
   // events are purged with the workspace in the final erase step; the receipt keeps the chain head.
   'workspace.deletion_requested': {

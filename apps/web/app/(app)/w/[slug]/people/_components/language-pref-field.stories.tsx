@@ -43,7 +43,7 @@ export const Kannada: Story = {
   },
 };
 
-export const Disabled: Story = {
+export const LanguageDisabled: Story = {
   args: { disabled: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('combobox')).toBeDisabled();

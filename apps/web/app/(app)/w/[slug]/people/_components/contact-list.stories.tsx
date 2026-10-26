@@ -76,7 +76,7 @@ export const Empty: Story = {
   },
 };
 
-export const EmptyReadOnly: Story = {
+export const EmptyNoWrite: Story = {
   args: { contacts: [], canWrite: false },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('No contacts yet')).toBeVisible();

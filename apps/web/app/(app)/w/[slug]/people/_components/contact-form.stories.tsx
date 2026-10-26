@@ -77,7 +77,7 @@ export const Saves: Story = {
   },
 };
 
-export const Forbidden: Story = {
+export const SaveForbidden: Story = {
   args: { createAction: fn<CreateAction>(failing('FORBIDDEN')) },
   play: async () => {
     await screen.findByRole('dialog');
@@ -89,7 +89,7 @@ export const Forbidden: Story = {
   },
 };
 
-export const Invalid: Story = {
+export const InvalidContact: Story = {
   args: { createAction: fn<CreateAction>(failing('VALIDATION')) },
   play: async () => {
     await screen.findByRole('dialog');

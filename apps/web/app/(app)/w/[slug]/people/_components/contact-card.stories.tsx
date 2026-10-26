@@ -37,7 +37,7 @@ export const Linked: Story = {
   },
 };
 
-export const Active: Story = {
+export const ActiveContact: Story = {
   args: { active: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('link')).toHaveAttribute('data-active');
@@ -61,7 +61,7 @@ export const Archived: Story = {
 };
 
 /** A clerk: phone and email are hidden. */
-export const Redacted: Story = {
+export const RedactedContact: Story = {
   args: { contact: { ...CONTACT, phone: null, email: null, redacted: true } },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('Phone and email are hidden for your role')).toBeVisible();

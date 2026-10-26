@@ -640,10 +640,10 @@ test.describe('court-day board', () => {
     await firstCard.evaluate(
       (el) =>
         new Promise<void>((resolve) => {
-          const check = () =>
-            Object.keys(el).some((key) => key.startsWith('__reactFiber$'))
-              ? resolve()
-              : requestAnimationFrame(check);
+          const check = (): void => {
+            if (Object.keys(el).some((key) => key.startsWith('__reactFiber$'))) resolve();
+            else requestAnimationFrame(check);
+          };
           check();
         }),
     );

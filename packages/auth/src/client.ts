@@ -1,5 +1,6 @@
 // Browser auth client (#152). Safe for client components: no server modules, no secrets.
 import { passkeyClient } from '@better-auth/passkey/client';
+import { ssoClient } from '@better-auth/sso/client';
 import { createAuthClient } from 'better-auth/client';
 import {
   magicLinkClient,
@@ -19,6 +20,7 @@ export function createCauseDeckAuthClient(options: { baseURL?: string } = {}) {
       magicLinkClient(),
       phoneNumberClient(),
       twoFactorClient(),
+      ssoClient(),
     ],
   });
 }

@@ -58,7 +58,8 @@ export function formatMessage(
 export async function getTranslator(locale: EmailLocale): Promise<Translate> {
   const messages = await catalog(locale);
   return (key, values) => {
-    const id = `${EMAIL_KEY_PREFIX}.${key}`;
+    // Court-day reminder copy (#64) lives in its own `reminders` namespace.
+    const id = key.startsWith('reminders.') ? key : `${EMAIL_KEY_PREFIX}.${key}`;
     const message = getPath(messages, id);
     const text = formatMessage(message, locale, values);
     if (text === null) throw new Error(`Missing email message ${id}`);

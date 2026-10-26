@@ -107,6 +107,9 @@ test.describe('layouts', () => {
     await openShell(page, asUser);
     for (const route of [
       ...PLACEHOLDER_ROUTES,
+      'today',
+      'tomorrow',
+      'calendar',
       'matters',
       'inbox',
       'billing',

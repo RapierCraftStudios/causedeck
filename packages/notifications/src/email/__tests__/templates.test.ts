@@ -59,6 +59,23 @@ const FIXTURES: { [K in TemplateName]: TemplateProps[K] } = {
     href: `${APP}/w/iyer/settings/billing`,
     preferencesUrl: PREFS,
   },
+  'evening-brief': {
+    listings: 6,
+    halls: 3,
+    clashes: 1,
+    lowReadiness: 2,
+    obligations: 4,
+    url: `${APP}/w/iyer/tomorrow`,
+    preferencesUrl: PREFS,
+  },
+  'morning-diff': {
+    added: 1,
+    moved: 2,
+    removed: 1,
+    url: `${APP}/w/iyer/tomorrow?diff=1`,
+    preferencesUrl: PREFS,
+  },
+  'outcome-missing': { count: 2, url: `${APP}/w/iyer/tomorrow`, preferencesUrl: PREFS },
   notice: {
     title: 'Hearing tomorrow: W.P. 1234/2026',
     body: 'Listed before Court 4.',

@@ -21,6 +21,7 @@
     "./invoice/template": "./src/invoice/template.tsx",
     "./plans": "./src/plans.ts",
     "./proration": "./src/proration.ts",
+    "./referral": "./src/referral.ts",
     "./reconcile": "./src/reconcile.ts",
     "./provider": "./src/provider/index.ts",
     "./service": "./src/service.ts",

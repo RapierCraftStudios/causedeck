@@ -54,3 +54,6 @@ Cause: apps/web `permission-matrix.tsx` indexes `settings.roles.actions.<action>
 
 ## CI build fix (no logs, best inference)
 The Next apps (web, admin) reach core's drafting export through `core/jobs`, which pulls `@causedeck/drafting` (docx, pdf-lib, fontkit, fonts resolved by path) into the server bundle. Added `docx`, `pdf-lib`, `@pdf-lib/fontkit` to `serverExternalPackages` in apps/web and apps/admin next.config.ts, like pdfjs/mupdf. apps/api tsup build verified locally (success); `next build` not run (host rule), so this is unconfirmed. Note: the drafting fonts are devDependencies, which the worker `--prod` image would lack; not changed here.
+
+## CI build fix 2
+Moved @fontsource/noto-sans-{kannada,tamil} to dependencies in packages/drafting (runtime font reads); lockfile importer updated. Cause inferred (no log).

@@ -5514,7 +5514,7 @@
             "workspace_id",
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "client_ledger_entry_matter_fk": {
@@ -5529,7 +5529,7 @@
             "workspace_id",
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "client_ledger_entry_invoice_fk": {
@@ -5544,7 +5544,7 @@
             "workspace_id",
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -7724,7 +7724,7 @@
             "workspace_id",
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "fee_agreement_person_fk": {
@@ -7739,7 +7739,7 @@
             "workspace_id",
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -10165,7 +10165,7 @@
             "workspace_id",
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "invoice_person_fk": {
@@ -10180,7 +10180,7 @@
             "workspace_id",
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "invoice_fee_agreement_fk": {
@@ -10195,7 +10195,7 @@
             "workspace_id",
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -14670,7 +14670,7 @@
             "workspace_id",
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },

@@ -102,23 +102,23 @@ CREATE TABLE "payment" (
 --> statement-breakpoint
 ALTER TABLE "client_ledger_entry" ADD CONSTRAINT "client_ledger_entry_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "client_ledger_entry" ADD CONSTRAINT "client_ledger_entry_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "client_ledger_entry" ADD CONSTRAINT "client_ledger_entry_person_fk" FOREIGN KEY ("workspace_id","person_id") REFERENCES "public"."person"("workspace_id","id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "client_ledger_entry" ADD CONSTRAINT "client_ledger_entry_matter_fk" FOREIGN KEY ("workspace_id","matter_id") REFERENCES "public"."matter"("workspace_id","id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "client_ledger_entry" ADD CONSTRAINT "client_ledger_entry_invoice_fk" FOREIGN KEY ("workspace_id","invoice_id") REFERENCES "public"."invoice"("workspace_id","id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "client_ledger_entry" ADD CONSTRAINT "client_ledger_entry_person_fk" FOREIGN KEY ("workspace_id","person_id") REFERENCES "public"."person"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "client_ledger_entry" ADD CONSTRAINT "client_ledger_entry_matter_fk" FOREIGN KEY ("workspace_id","matter_id") REFERENCES "public"."matter"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "client_ledger_entry" ADD CONSTRAINT "client_ledger_entry_invoice_fk" FOREIGN KEY ("workspace_id","invoice_id") REFERENCES "public"."invoice"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "fee_agreement" ADD CONSTRAINT "fee_agreement_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "fee_agreement" ADD CONSTRAINT "fee_agreement_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "fee_agreement" ADD CONSTRAINT "fee_agreement_matter_fk" FOREIGN KEY ("workspace_id","matter_id") REFERENCES "public"."matter"("workspace_id","id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "fee_agreement" ADD CONSTRAINT "fee_agreement_person_fk" FOREIGN KEY ("workspace_id","person_id") REFERENCES "public"."person"("workspace_id","id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "fee_agreement" ADD CONSTRAINT "fee_agreement_matter_fk" FOREIGN KEY ("workspace_id","matter_id") REFERENCES "public"."matter"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "fee_agreement" ADD CONSTRAINT "fee_agreement_person_fk" FOREIGN KEY ("workspace_id","person_id") REFERENCES "public"."person"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invoice" ADD CONSTRAINT "invoice_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invoice" ADD CONSTRAINT "invoice_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "invoice" ADD CONSTRAINT "invoice_matter_fk" FOREIGN KEY ("workspace_id","matter_id") REFERENCES "public"."matter"("workspace_id","id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "invoice" ADD CONSTRAINT "invoice_person_fk" FOREIGN KEY ("workspace_id","person_id") REFERENCES "public"."person"("workspace_id","id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "invoice" ADD CONSTRAINT "invoice_fee_agreement_fk" FOREIGN KEY ("workspace_id","fee_agreement_id") REFERENCES "public"."fee_agreement"("workspace_id","id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "invoice" ADD CONSTRAINT "invoice_matter_fk" FOREIGN KEY ("workspace_id","matter_id") REFERENCES "public"."matter"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "invoice" ADD CONSTRAINT "invoice_person_fk" FOREIGN KEY ("workspace_id","person_id") REFERENCES "public"."person"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "invoice" ADD CONSTRAINT "invoice_fee_agreement_fk" FOREIGN KEY ("workspace_id","fee_agreement_id") REFERENCES "public"."fee_agreement"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invoice_line" ADD CONSTRAINT "invoice_line_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invoice_line" ADD CONSTRAINT "invoice_line_invoice_fk" FOREIGN KEY ("workspace_id","invoice_id") REFERENCES "public"."invoice"("workspace_id","id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payment" ADD CONSTRAINT "payment_created_by_user_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payment" ADD CONSTRAINT "payment_workspace_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "payment" ADD CONSTRAINT "payment_invoice_fk" FOREIGN KEY ("workspace_id","invoice_id") REFERENCES "public"."invoice"("workspace_id","id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "payment" ADD CONSTRAINT "payment_invoice_fk" FOREIGN KEY ("workspace_id","invoice_id") REFERENCES "public"."invoice"("workspace_id","id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "client_ledger_entry_workspace_id_idx" ON "client_ledger_entry" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "fee_agreement_workspace_id_idx" ON "fee_agreement" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "invoice_workspace_id_idx" ON "invoice" USING btree ("workspace_id");--> statement-breakpoint

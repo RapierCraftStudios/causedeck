@@ -32,7 +32,7 @@ Fees and invoices to clients (#83) are legal-gated: GST treatment (forward or re
 
 - `fee_agreement`, `invoice`, `invoice_line`, `payment` and `client_ledger_entry` are tenant tables under FORCE RLS on `app.workspace_id` (`packages/db/src/schema/fees.ts`). Money columns are `bigint` paise with non-negative CHECKs; payments and ledger amounts are strictly positive, with a `direction` of debit or credit.
 - Every consumer sits behind the legal-gated `invoices.enabled` flag ([flags](../engineering/flags.md)). The flag turns on only through the staff acknowledgement process (#120). Until then no route, action or job in the fees domain runs.
-- Matter, person and invoice links are `RESTRICT`: erasing or merging a person or deleting a matter cannot delete money records.
+- Matter, person and invoice links are `NO ACTION` (checked at statement end, so a workspace delete still cascades): erasing or merging a person or deleting a matter cannot delete money records.
 - Retention: ledger lines, invoices and payments are kept for the statutory period (eight years from the end of the financial year of the entry, to be confirmed by counsel). The DPDP sweep does not delete them. It clears `client_ledger_entry.description`, sets `anonymised_at` and anonymises the `person` row's details. A CHECK keeps an anonymised line free of description text.
 - After the retention period, a later job may delete anonymised lines; that job is separate work and is not part of this decision.
 - Issued invoices are immutable in later parts (#869): corrections are a credit entry, never an edit.

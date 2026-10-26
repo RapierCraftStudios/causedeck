@@ -2,7 +2,7 @@
 // from the `saas_*` invoices CauseDeck issues to workspaces. `fee_agreement` is the terms for a matter,
 // `invoice` and `invoice_line` the bill, `payment` money received against an issued invoice and
 // `client_ledger_entry` the append-only running account of one client. Money is bigint paise. Every
-// table is a tenant table under FORCE RLS. Matter and person links are RESTRICT, not CASCADE: a ledger
+// table is a tenant table under FORCE RLS. Matter and person links are NO ACTION, not CASCADE (a workspace delete still cascades): a ledger
 // line is kept for the statutory period, and the DPDP erasure sweep anonymises it (`anonymised_at`,
 // description cleared) instead of deleting it (docs/adr/0043-legal-gated-billing-flag.md).
 import { sql } from 'drizzle-orm';
@@ -77,12 +77,12 @@ export const feeAgreement = tenantTable(
       name: 'fee_agreement_matter_fk',
       columns: [t.workspaceId, t.matterId],
       foreignColumns: [matter.workspaceId, matter.id],
-    }).onDelete('restrict'),
+    }).onDelete('no action'),
     foreignKey({
       name: 'fee_agreement_person_fk',
       columns: [t.workspaceId, t.personId],
       foreignColumns: [person.workspaceId, person.id],
-    }).onDelete('restrict'),
+    }).onDelete('no action'),
     check('fee_agreement_basis_chk', sql`basis in ${inList(FEE_BASES)}`),
     check('fee_agreement_gst_treatment_chk', sql`gst_treatment in ${inList(GST_TREATMENTS)}`),
     check('fee_agreement_status_chk', sql`status in ${inList(FEE_AGREEMENT_STATUSES)}`),
@@ -125,17 +125,17 @@ export const invoice = tenantTable(
       name: 'invoice_matter_fk',
       columns: [t.workspaceId, t.matterId],
       foreignColumns: [matter.workspaceId, matter.id],
-    }).onDelete('restrict'),
+    }).onDelete('no action'),
     foreignKey({
       name: 'invoice_person_fk',
       columns: [t.workspaceId, t.personId],
       foreignColumns: [person.workspaceId, person.id],
-    }).onDelete('restrict'),
+    }).onDelete('no action'),
     foreignKey({
       name: 'invoice_fee_agreement_fk',
       columns: [t.workspaceId, t.feeAgreementId],
       foreignColumns: [feeAgreement.workspaceId, feeAgreement.id],
-    }).onDelete('restrict'),
+    }).onDelete('no action'),
     check('invoice_status_chk', sql`status in ${inList(INVOICE_STATUSES)}`),
     check('invoice_amounts_chk', sql`taxable_paise >= 0 and tax_paise >= 0 and total_paise >= 0`),
     check('invoice_number_chk', sql`status = 'draft' or number is not null`),
@@ -199,7 +199,7 @@ export const payment = tenantTable(
       name: 'payment_invoice_fk',
       columns: [t.workspaceId, t.invoiceId],
       foreignColumns: [invoice.workspaceId, invoice.id],
-    }).onDelete('restrict'),
+    }).onDelete('no action'),
     check('payment_method_chk', sql`method in ${inList(PAYMENT_METHODS)}`),
     check('payment_amount_chk', sql`amount_paise > 0`),
   ],
@@ -232,17 +232,17 @@ export const clientLedgerEntry = tenantTable(
       name: 'client_ledger_entry_person_fk',
       columns: [t.workspaceId, t.personId],
       foreignColumns: [person.workspaceId, person.id],
-    }).onDelete('restrict'),
+    }).onDelete('no action'),
     foreignKey({
       name: 'client_ledger_entry_matter_fk',
       columns: [t.workspaceId, t.matterId],
       foreignColumns: [matter.workspaceId, matter.id],
-    }).onDelete('restrict'),
+    }).onDelete('no action'),
     foreignKey({
       name: 'client_ledger_entry_invoice_fk',
       columns: [t.workspaceId, t.invoiceId],
       foreignColumns: [invoice.workspaceId, invoice.id],
-    }).onDelete('restrict'),
+    }).onDelete('no action'),
     check('client_ledger_entry_kind_chk', sql`kind in ${inList(LEDGER_ENTRY_KINDS)}`),
     check('client_ledger_entry_direction_chk', sql`direction in ${inList(LEDGER_DIRECTIONS)}`),
     check('client_ledger_entry_amount_chk', sql`amount_paise > 0`),

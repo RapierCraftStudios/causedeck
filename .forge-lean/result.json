@@ -1,0 +1,177 @@
+{
+ "status": "fixed",
+ "summary": "System templates: registry, checksum-gated owner seed, client.name slot, scaffold banner with audit state, ta/kn fonts, i18n and docs",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/drafting/src/system-templates/index.ts:17"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/db/src/seed/system-templates.ts:46"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/drafting/src/__tests__/system-templates.test.ts"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "packages/drafting/src/system-templates/common.ts:62"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "packages/core/src/drafting/service.ts"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "packages/core/src/drafting/export.ts"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "packages/drafting/src/__tests__/system-templates.test.ts"
+  },
+  {
+   "id": "R8",
+   "status": "implemented",
+   "evidence": "packages/drafting/src/__tests__/system-templates.test.ts"
+  },
+  {
+   "id": "R9",
+   "status": "implemented",
+   "evidence": "packages/drafting/src/render/docx.ts"
+  },
+  {
+   "id": "R10",
+   "status": "implemented",
+   "evidence": "packages/db/src/seed/__tests__/system-templates-seed.test.ts"
+  },
+  {
+   "id": "R11",
+   "status": "implemented",
+   "evidence": "packages/i18n/src/messages/en/drafting-templates.json"
+  },
+  {
+   "id": "R13",
+   "status": "implemented",
+   "evidence": "docs/engineering/drafting-templates.md"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "drafting vitest",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "validators vitest",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "db vitest",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "core vitest src/drafting",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "i18n vitest",
+   "exit": 0
+  },
+  {
+   "id": "V6",
+   "command": "checks.mjs",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "db seed test",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "core drafting integration",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R11,R13 mapped above; R12 deferred and R14 post-deploy per contract"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "engine and core drafting tests pass; banner only when option passed"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "V1-V6 pass; RLS test unchanged"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "extra paths declared as amendments"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/tsconfig.json",
+   "why": "Include the scripts folder so the seed script is type-checked and linted by the project service."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/translation-status.json",
+   "why": "i18n:check requires a status for every new ta/kn key."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "why": "Guard test lists the top-level catalog keys; draftingTemplates added."
+  },
+  {
+   "kind": "defer",
+   "requirement": "R12",
+   "why": "Counsel covering letter needs a non-client recipient model; follow-up."
+  },
+  {
+   "kind": "post-deploy",
+   "requirement": "R14",
+   "why": "Advocate review happens on released scaffolds; banner stays until reviewed_by is set."
+  }
+ ],
+ "not_members": [
+  {
+   "symbol": "SCAFFOLD_BANNER",
+   "test": "packages/drafting/src/__tests__/engine.test.ts",
+   "why": "The test asserts that no export name matches /send|file|submit/i (expected list is empty); this name matches none of those, so it is not a member of the list"
+  },
+  {
+   "symbol": "SYSTEM_TEMPLATES",
+   "test": "packages/drafting/src/__tests__/engine.test.ts",
+   "why": "The test asserts that no export name matches /send|file|submit/i (expected list is empty); this name matches none of those, so it is not a member of the list"
+  },
+  {
+   "symbol": "systemTemplate",
+   "test": "packages/drafting/src/__tests__/engine.test.ts",
+   "why": "The test asserts that no export name matches /send|file|submit/i (expected list is empty); this name matches none of those, so it is not a member of the list"
+  }
+ ],
+ "ci_fix_note": "Latest CI failure: lifecycle/memory-erasure.test.ts timed out at 60s in the core shard (collect 580s, loaded runner). File and its code paths are untouched by this branch; passes locally 4/4 (1.5s for the failing case). Classified as a flaky timeout, no code change; rerun CI."
+}

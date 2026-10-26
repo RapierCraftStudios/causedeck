@@ -6,6 +6,7 @@ import {
   ExportRequestSchema,
   FormatPresetSchema,
   MAX_BLOCK_DEPTH,
+  SystemTemplateSeedSchema,
   TemplateSchema,
   type Block,
 } from './drafting';
@@ -117,5 +118,19 @@ describe('other drafting schemas', () => {
     expect(FormatPresetSchema.safeParse(preset).success).toBe(true);
     expect(FormatPresetSchema.safeParse({ ...preset, key: 'karnataka_hc' }).success).toBe(true);
     expect(FormatPresetSchema.safeParse({ ...preset, fontSizePt: 2 }).success).toBe(false);
+  });
+
+  it('knows the client.name slot resolver and validates a system template seed', () => {
+    expect(BlockSchema.safeParse({ type: 'slot', resolver: 'client.name' }).success).toBe(true);
+    const seed = {
+      ...template([{ type: 'paragraph', text: 'x' }]),
+      code: 'madras_hc.memo.mention',
+      semver: '1.0.0',
+      checksum: 'a'.repeat(64),
+      reviewedBy: null,
+    };
+    expect(SystemTemplateSeedSchema.safeParse(seed).success).toBe(true);
+    expect(SystemTemplateSeedSchema.safeParse({ ...seed, semver: '1.0' }).success).toBe(false);
+    expect(SystemTemplateSeedSchema.safeParse({ ...seed, checksum: 'abc' }).success).toBe(false);
   });
 });

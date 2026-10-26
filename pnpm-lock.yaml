@@ -1256,6 +1256,9 @@ importers:
       pdf-lib:
         specifier: 'catalog:'
         version: 1.17.1
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.15
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -1308,6 +1311,9 @@ importers:
 
   packages/drafting:
     dependencies:
+      '@causedeck/adapters':
+        specifier: workspace:*
+        version: link:../adapters
       '@causedeck/ai':
         specifier: workspace:*
         version: link:../ai

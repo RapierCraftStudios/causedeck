@@ -53,6 +53,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "seed:system-templates": "tsx scripts/seed-system-templates.ts",
     "test:tenancy": "vitest run src/__tests__/cross-tenant"
   },
   "dependencies": {
@@ -83,6 +84,7 @@
     "eslint": "catalog:",
     "fast-check": "catalog:",
     "pdf-lib": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

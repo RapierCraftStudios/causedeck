@@ -14,7 +14,14 @@ export interface RenderOptions {
   narratives?: Readonly<Record<string, NarrativeText>>;
   /** `true`, or the resolvers the user accepted as missing. */
   acknowledgeMissing?: boolean | readonly SlotResolver[];
+  /** A visible notice printed above the document, e.g. the scaffold banner of an unreviewed template. */
+  banner?: string;
+  /** Content language: Tamil and Kannada switch the DOCX complex-script font (PDF follows the script). */
+  locale?: 'en' | 'kn' | 'ta';
 }
+
+/** Shown on every export of a system template until its `reviewed_by` is set. */
+export const SCAFFOLD_BANNER = 'Scaffold: review before use';
 
 export class MissingSlotsError extends Error {
   constructor(readonly slots: readonly { key: string; resolver: SlotResolver }[]) {

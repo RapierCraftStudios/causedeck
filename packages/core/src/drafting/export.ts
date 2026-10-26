@@ -10,6 +10,7 @@ import {
   getPreset,
   renderDocx,
   renderPdf,
+  SCAFFOLD_BANNER,
   type CourtFormatPreset,
   type NarrativePort,
 } from '@causedeck/drafting';
@@ -131,10 +132,16 @@ export async function runDraftingExport(
     if (version === undefined) throw notFound('Version not found');
     const row = await requireDraft(tx, reader, settings, version.draftId, 'draft.export');
     const [tpl] = await tx
-      .select({ courtPreset: template.courtPreset })
+      .select({ courtPreset: template.courtPreset, reviewedBy: template.reviewedBy })
       .from(template)
       .where(eq(template.id, row.templateId));
-    return { version, draft: row, courtPreset: tpl?.courtPreset };
+    return {
+      version,
+      draft: row,
+      courtPreset: tpl?.courtPreset,
+      // A template nobody has reviewed keeps its scaffold banner on every export.
+      bannerShown: tpl?.reviewedBy == null,
+    };
   });
 
   const preset: CourtFormatPreset | undefined = getPreset(source.courtPreset as CourtPreset);
@@ -157,7 +164,10 @@ export async function runDraftingExport(
         );
 
   const render = format === 'docx' ? renderDocx : renderPdf;
-  const bytes = await render(blocks, preset, facts, { narratives });
+  const bytes = await render(blocks, preset, facts, {
+    narratives,
+    ...(source.bannerShown ? { banner: SCAFFOLD_BANNER } : {}),
+  });
 
   const filename = draftExportFilename(source.draft.title, source.version.versionNo, format);
   const file = await storeSystemBlob(
@@ -186,7 +196,11 @@ export async function runDraftingExport(
       {
         action: 'draft.exported',
         target: { kind: 'draft_version', id: draftVersionId },
-        metadata: { format, versionHash: source.version.contentSha256 },
+        metadata: {
+          format,
+          versionHash: source.version.contentSha256,
+          bannerShown: source.bannerShown,
+        },
       },
     );
     return inserted;

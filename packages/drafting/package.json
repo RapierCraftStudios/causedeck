@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@causedeck/adapters": "workspace:*",
     "@causedeck/ai": "workspace:*",
     "@causedeck/validators": "workspace:*",
     "@fontsource/noto-sans-kannada": "catalog:",

@@ -2,149 +2,193 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Party names that differ from the graph beyond alias rules are flagged `error`; alias and honorific variants are accepted silently [type:unit]",
+   "quote": "At least two templates per launch court (mention or adjournment memo, client covering letter) plus the other listed kinds exist, each with `is_system = true` and a stable id [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Case numbers are normalised across at least 10 notation variants per launch court and mismatches against the proceeding are flagged with the expected value [type:unit]",
+   "quote": "Seeding is idempotent: running it twice produces no duplicate rows and updates a template only when its checksum changes [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Dates are parsed from Indian formats and ordinals; a date that contradicts the listing or order date in the graph is flagged with both values [type:unit]",
+   "quote": "Each template renders with the Madras HC or Karnataka HC preset from #75 and passes a snapshot test using the synthetic demo data with fictional parties [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Annexure references are cross-checked: missing annexure, duplicate number, gap in sequence and unreferenced attached document each yield a distinct rule id [type:unit]",
+   "quote": "Case-type labels, hall and bench phrases come from the adapter catalogue and are not hard-coded strings in templates [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Every finding carries the draft span, the graph fact and its provenance (source type and anchor), so the UI can show a Provenance Chip [type:unit]",
+   "quote": "Client covering letter slots only read data about an existing client of the workspace; it never offers a field for non-client recipients [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "`applyFix` changes the draft only after an explicit confirmation call and creates a new `draft_version`; there is no auto-apply path [type:api]",
+   "quote": "Every template shows a visible banner `Scaffold: review before use` until its `reviewed_by` metadata is set, and exporting records the banner state in the audit event [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "The checker is deterministic and makes no AI calls; a static test asserts the package imports nothing from `packages/ai` under `consistency/` [type:unit]",
+   "quote": "Templates contain no pre-filled legal citations or authorities; a lint test fails if a citation-pattern string appears in a system template [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "A draft of 30 pages checks in under 2 s p95 on seeded data [type:unit]",
+   "quote": "The covering letter and memo contain no advice, no commitment, no fee quote and no solicitation language; a phrase lint (denylist) runs in CI [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Findings are scoped by workspace; the checker cannot read matters from other workspaces (cross-tenant suite) [type:api]",
+   "quote": "Tamil or Kannada content language switches the font fallback in DOCX and PDF output and renders glyphs without tofu [type:manual]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "Tamil and Kannada names are compared after Unicode normalisation (NFC) and are not flagged for script differences alone when an alias exists [type:unit]",
+   "quote": "Templates are read-only to workspaces (SELECT policy only); copying into a workspace template creates a new row owned by that workspace [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Report is idempotent for the same `draft_version_id` and invalidated when the graph facts change (new listing, order) [type:api]",
+   "quote": "i18n: all template labels used in the UI have `en` keys and `ta`/`kn` stubs [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "It proposes nothing automatically: a finding offers \"fix to graph value\" as a lawyer-confirmed edit (L2), never an auto-apply.",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "the routine documents lawyers actually produce (early-listing memo, memo of appearance, application for certified copy, request for adjournment note, covering letter to junior or senior counsel).",
+   "disposition": "defer",
+   "why": "The v1 catalogue table lists no counsel covering letter, and it needs a non-client recipient slot that the client-letter rule forbids; file as a follow-up with its own recipient model."
   },
   {
    "id": "R13",
-   "quote": "Job `drafting.consistency.check` payload `{workspaceId, draftVersionId}`.",
+   "quote": "`docs/engineering/drafting-templates.md` (how to add a template, review checklist)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R14",
-   "quote": "report content is privileged matter data; do not log spans.",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "Wording is reviewed by a practising advocate fixture-holder before the flag-free release",
+   "disposition": "post-deploy",
+   "why": "Advocate review of wording can only happen on the released scaffolds; the banner stays until `reviewed_by` is set."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/validators/src/consistency.ts",
-   "change": "zod FindingSchema (severity error|warn|info, rule, span {blockKey,start,end}, expected, found, provenance {sourceType, anchorId, sourceRef}, fix?) and ConsistencyReportSchema {draftVersionId, graphRevision, findings, counts}; export from validators package (add ./consistency export in package.json if exports are per-file). Add src/consistency.test.ts.",
+   "path": "packages/db/src/schema/drafting.ts",
+   "change": "Add template columns `checksum text`, `reviewed_by text null`, generated `is_system boolean` (workspace_id is null)",
    "requirements": [
-    "R5",
-    "R12",
-    "R13"
+    "R1",
+    "R2",
+    "R6"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/drafting/src/consistency/extract-entities.ts",
-   "change": "Extract name, case-number, date and annexure-ref mentions with spans from the block tree text (heading, paragraph, list, section children); pure.",
+   "path": "packages/db/migrations/\u003cnext free timestamp>_system_templates.sql (+ meta/_journal.json and snapshot)",
+   "change": "Migration for the three template columns; keep the RLS policies unchanged",
    "requirements": [
     "R1",
     "R2",
-    "R3",
-    "R4",
-    "R5"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/drafting/src/consistency/match-names.ts",
-   "change": "NFC + casefold, honorific and initials normalisation, alias-aware matching against person name+aliases; accept script variants only via alias.",
-   "requirements": [
-    "R1",
+    "R6",
     "R10"
    ]
   },
   {
-   "id": "D4",
-   "path": "packages/drafting/src/consistency/match-case-numbers.ts",
-   "change": "Parse/normalise case number notations (W.P.No.1234 of 2025, WP 1234/2025, W.P.(MD), Karnataka WP/CRL forms) and compare type/number/year to the proceeding; expected value in finding.",
+   "id": "D3",
+   "path": "packages/validators/src/drafting.ts",
+   "change": "Add slot resolver `client.name` to SLOT_RESOLVERS and a SystemTemplateSeed schema",
    "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D5",
-   "path": "packages/drafting/src/consistency/match-dates.ts",
-   "change": "Parse dd/mm/yyyy, dd.mm.yyyy, ordinal numerals and words, 1st January 2025; compare with canonical listing and order dates; both values in finding.",
-   "requirements": [
+    "R5",
     "R3"
    ]
   },
   {
-   "id": "D6",
-   "path": "packages/drafting/src/consistency/annexures.ts",
-   "change": "Cross-check Annexure P-n references with attached annexure documents; rule ids annexure.missing, annexure.duplicate, annexure.gap, annexure.unreferenced.",
+   "id": "D4",
+   "path": "packages/validators/src/drafting.test.ts",
+   "change": "Cover the new resolver and seed schema",
    "requirements": [
-    "R4"
+    "R5"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/drafting/src/slots.ts",
+   "change": "Add `Facts.client` and the `client.name` source",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/drafting/src/render/common.ts",
+   "change": "Add RenderOptions.banner (text) rendered at the top by both renderers",
+   "requirements": [
+    "R6",
+    "R9"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/drafting/src/consistency/check.ts",
-   "change": "Pure checkDraft({blocks, facts}) => findings + counts, deterministic, no I/O, no @causedeck/ai import; also consistency/index.ts re-exported from packages/drafting/src/index.ts.",
+   "path": "packages/drafting/src/render/docx.ts",
+   "change": "Render the banner paragraph; script font fallback unchanged",
+   "requirements": [
+    "R6",
+    "R9"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/drafting/src/render/pdf.ts",
+   "change": "Render the banner paragraph",
+   "requirements": [
+    "R6",
+    "R9"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/drafting/src/system-templates/madras-hc/*.ts (mention-memo, early-listing-memo, memo-of-appearance, certified-copy-application, client-covering-letter)",
+   "change": "Five Madras HC templates; case-type text built from the adapters catalogue at module load",
+   "requirements": [
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R7",
+    "R8"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/drafting/src/system-templates/karnataka-hc/*.ts",
+   "change": "Same five kinds with Karnataka nomenclature and FR handling, from the Karnataka catalogue",
+   "requirements": [
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R7",
+    "R8"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/drafting/src/system-templates/generic-a0/*.ts",
+   "change": "Adjournment note and client covering letter (preset generic)",
    "requirements": [
     "R1",
     "R5",
@@ -153,222 +197,224 @@
    ]
   },
   {
-   "id": "D8",
-   "path": "packages/drafting/src/index.ts",
-   "change": "Re-export the consistency API.",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D9",
-   "path": "packages/drafting/src/consistency/__tests__/consistency.test.ts",
-   "change": "Unit tests with Madras and Karnataka fixtures: names/aliases/honorifics/Tamil+Kannada NFC, >=10 case-number variants per court, date formats and conflicts, four annexure rules, provenance on every finding, 30-page perf bound (\u003c2 s), static test that no file under consistency/ imports @causedeck/ai.",
+   "id": "D12",
+   "path": "packages/drafting/src/system-templates/index.ts",
+   "change": "Registry: stable code, semver, sha256 checksum, blocks, locale, reviewedBy null",
    "requirements": [
     "R1",
-    "R2",
-    "R3",
-    "R4",
-    "R5",
-    "R7",
-    "R8",
-    "R10"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "packages/db/src/schema/drafting.ts",
-   "change": "Add tenantTable draft_consistency_report (draft_version_id, graph_revision, report jsonb, created_at; unique(draft_version_id, graph_revision); composite FK to draft_version). Export from schema index if needed.",
-   "requirements": [
-    "R9",
-    "R11"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/db/migrations/20261026000000_drafting_consistency.sql",
-   "change": "Migration for D10 with RLS per tenantTable convention; use next free number on the milestone branch and regenerate meta snapshot; add db registry updates (packages/db/src/index.test.ts root table list, RLS catalog packages/db/src/__tests__/rls/sql.test.ts, TABLE_TESTS and two-tenant seeders, cross-tenant-registry table entry).",
-   "requirements": [
-    "R9",
-    "R11"
-   ]
-  },
-  {
-   "id": "D12",
-   "path": "packages/core/src/drafting/consistency-service.ts",
-   "change": "loadConsistencyFacts (via matter-graph index only, actor-scoped), runConsistencyCheck (stores/returns report keyed by draftVersionId+graphRevision), getConsistencyReport/listFindings, applyFix requiring confirm:true that writes a new draft_version via the service's insert path and an audit event. Never logs spans.",
-   "requirements": [
-    "R5",
-    "R6",
-    "R9",
-    "R11",
-    "R12",
-    "R14"
+    "R2"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/core/src/drafting/service.ts",
-   "change": "Export the internal version-insert helper for the consistency service (no behaviour change).",
+   "path": "packages/drafting/src/index.ts",
+   "change": "Export the registry and banner constant",
    "requirements": [
+    "R1",
     "R6"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/core/src/drafting/index.ts",
-   "change": "Export the consistency service functions and types.",
+   "path": "packages/drafting/package.json",
+   "change": "Add `@causedeck/adapters` workspace dependency: case-type labels must come from the adapters catalogue (issue Root Cause); boundaries.js permits it and adapters does not import drafting (no cycle)",
    "requirements": [
-    "R6",
-    "R11"
+    "R4"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/core/src/jobs/definitions/drafting-consistency-check.ts",
-   "change": "defineJob drafting.consistency.check, payload {workspaceId, draftVersionId, userId}, singleton and idempotencyKey on draftVersionId, PermanentError on WorkspaceError; register in packages/core/src/jobs/registry.ts.",
+   "path": "packages/drafting/src/__tests__/system-templates.test.ts",
+   "change": "Registry shape, DOCX text snapshot per template with fictional Facts, citation-pattern lint, phrase denylist lint, client-slot-only check, banner, ta/kn font check, no hard-coded case-type labels",
    "requirements": [
-    "R13"
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R9"
    ]
   },
   {
    "id": "D16",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Import and register draftingConsistencyCheck next to draftingExport.",
+   "path": "packages/drafting/src/__tests__/__snapshots__/system-templates.test.ts.snap",
+   "change": "Snapshots",
    "requirements": [
-    "R13"
+    "R3"
    ]
   },
   {
    "id": "D17",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add drafting.consistency.check to the expected job list.",
+   "path": "packages/db/src/seed/system-templates.ts",
+   "change": "`seedSystemTemplates(db, entries)`: owner-run upsert on (code, workspace_id null), update only when checksum differs, returns counts; no import of drafting",
    "requirements": [
-    "R13"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D18",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries for the new core exports (or NOT_A_SERVICE with reason for pure helpers/job body); table entry draft_consistency_report.",
+   "path": "packages/db/package.json",
+   "change": "Export `./seed/system-templates`",
    "requirements": [
-    "R9"
+    "R2"
    ]
   },
   {
    "id": "D19",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real cases: B running/reading/applying a fix on A's draft version is denied or sees nothing; A's reports and versions unchanged.",
+   "path": "packages/db/src/seed/__tests__/system-templates-seed.test.ts",
+   "change": "Idempotency (twice = same rows, updated_at unchanged), update on checksum change, app role cannot write a null-workspace row, app role can insert a copy owned by its own workspace",
    "requirements": [
-    "R9",
-    "R6"
+    "R2",
+    "R10"
    ]
   },
   {
    "id": "D20",
-   "path": "packages/core/src/drafting/__tests__/consistency.integration.test.ts",
-   "change": "Testcontainers test: report idempotent for same version, new revision after a new listing/order, applyFix without confirm rejected and no version created, with confirm creates version_no+1, annexure mapping from matter documents.",
+   "path": "packages/core/src/drafting/system-templates.ts",
+   "change": "Glue `seedDraftingSystemTemplates(ownerDb)` passing the drafting registry to the db seeder (core may import both)",
    "requirements": [
-    "R6",
-    "R9",
-    "R11",
-    "R12"
+    "R2"
    ]
   },
   {
    "id": "D21",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Describe the consistency functions in the drafting row; CORE_DOMAIN_DEPENDENCIES unchanged unless a new domain import is added (matter-graph, audit, workspaces already listed).",
+   "path": "packages/core/src/drafting/service.ts",
+   "change": "loadDraftFacts also loads `client.name` only from person.kind='client' linked to the matter in the same workspace; pass template banner state",
    "requirements": [
-    "R9"
+    "R5",
+    "R6"
    ]
   },
   {
    "id": "D22",
-   "path": "packages/validators/package.json",
-   "change": "Add the ./consistency export if the package uses per-file exports.",
+   "path": "packages/core/src/drafting/export.ts",
+   "change": "Pass banner when template.reviewed_by is null and add `bannerShown` to the draft.exported audit metadata",
    "requirements": [
-    "R5"
+    "R6"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "packages/core/src/drafting/__tests__/drafting.integration.test.ts",
+   "change": "Assert audit metadata bannerShown and client slot never resolves a non-client person",
+   "requirements": [
+    "R5",
+    "R6"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "packages/core/scripts/seed-system-templates.ts and packages/core/package.json and root package.json",
+   "change": "Script run as owner after migrations and chained after `db:migrate`; mirrors the forum catalogue deploy step (ADR 0014)",
+   "requirements": [
+    "R2"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "packages/i18n/src/messages/en/drafting-templates.json (+ ta, kn stubs), packages/i18n/src/catalog.ts, generated catalogs",
+   "change": "New namespace `drafting-templates` with a label per template code; regenerate generated messages via the i18n script",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "packages/i18n/src/__tests__/catalog.test.ts",
+   "change": "Register the namespace if the guard lists them",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "docs/engineering/drafting-templates.md",
+   "change": "How to add a template, checksum/version rule, review checklist, banner rule",
+   "requirements": [
+    "R13"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Slot resolvers, Facts type and export blockers in packages/drafting/src/slots.ts keep their behaviour; renders and snapshots in packages/drafting/src/__tests__ are unchanged."
+   "what": "RLS on `template`: ws_isolation, global_read (SELECT), owner_catalogue (ALL) unchanged (packages/db/src/__tests__/rls/sql.test.ts:301)"
   },
   {
    "id": "P2",
-   "what": "Draft versions stay immutable and insertVersion's numbering/locking (packages/core/src/drafting/service.ts) behave as before; saveVersion/restoreVersion/exportDraft contracts unchanged."
+   "what": "Existing engine output and snapshots (packages/drafting/src/__tests__/engine.test.ts and its snap) stay identical when no banner option is passed"
   },
   {
    "id": "P3",
-   "what": "drafting.export job and its registration (packages/core/src/jobs/definitions/drafting-export.ts) unchanged."
+   "what": "`draft.exported` audit contract keeps `format` and `versionHash` (packages/core/src/drafting/export.ts:184); draft_version immutability trigger untouched"
   },
   {
    "id": "P4",
-   "what": "Core domain boundaries: drafting imports other domains only through their index.ts (packages/config/test/core-domain-boundaries.test.ts)."
+   "what": "No send, file or share path; no generated citations; export still blocked by unresolved slots (packages/drafting/src/slots.ts exportBlockers)"
+  },
+  {
+   "id": "P5",
+   "what": "@causedeck/db keeps importing only config, i18n and validators (packages/config/eslint/boundaries.js DB_DEPENDENCIES)"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/drafting exec vitest run src/consistency src/__tests__ src/index.test.ts"
+   "command": "pnpm --filter @causedeck/drafting exec vitest run src/__tests__/system-templates.test.ts src/__tests__/engine.test.ts src/index.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/validators exec vitest run src/consistency.test.ts src/drafting.test.ts"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/drafting.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/drafting src/jobs/registry.test.ts src/domains.test.ts src/index.test.ts"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/seed/__tests__/system-templates-seed.test.ts src/__tests__/rls/sql.test.ts"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/drafting"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts"
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts src/__tests__/check-catalogs.test.ts"
   },
   {
    "id": "V6",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts"
-  },
-  {
-   "id": "V7",
-   "command": "pnpm --filter @causedeck/config exec vitest run test/core-domain-boundaries.test.ts"
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "The pure checker lives in packages/drafting (checkDraft over supplied facts); the issue's checkConsistency(tx, wsId, draftVersionId) loader lives in core consistency-service.ts.",
-   "justification": "packages/drafting has no db dependency (packages/drafting/package.json:13-22) and slot resolution already follows the pure-resolver plus core loader split (packages/core/src/drafting/service.ts:243, packages/drafting/src/slots.ts:1-3).",
-   "source": "precedent"
+   "choice": "Template registry lives in @causedeck/drafting; the db seeder takes entries as a parameter and a core script runs it as owner",
+   "justification": "db may not import drafting (packages/config/eslint/boundaries.js DB_DEPENDENCIES); core may import both (CORE_DEPENDENCIES); precedent: owner-run seedForumCatalogue (packages/db/scripts/migrate.ts, ADR 0014)",
+   "source": "lint"
   },
   {
    "id": "K2",
-   "choice": "The job is defined in packages/core/src/jobs/definitions, not apps/worker/src/jobs.",
-   "justification": "apps/worker/src/jobs does not exist; jobs are registered in packages/core/src/jobs/registry.ts:48,189 and the worker guard is apps/worker/src/__tests__/registry.test.ts:146.",
-   "source": "precedent"
-  },
-  {
-   "id": "K3",
-   "choice": "Annexure P-n maps to the n-th kind='annexure' document of the matter ordered by (created_at, id); no new document column.",
-   "justification": "document has no label or number column and no draft link (packages/db/src/schema/documents.ts:71-100); adding one is outside the issue.",
+   "choice": "New `client.name` slot resolver instead of free-text recipient",
+   "justification": "Closed resolver list (packages/validators/src/drafting.ts:25-37) is the only way slots read data; limiting to person.kind='client' satisfies the no-non-client-recipient criterion",
    "source": "spec"
   },
   {
+   "id": "K3",
+   "choice": "Add `@causedeck/adapters` as a drafting dependency",
+   "justification": "Issue Root Cause requires labels from the adapters case-type catalogue (adapters/src/madras-hc/config/case-types.ts:128); boundaries permit it and there is no cycle",
+   "source": "doc"
+  },
+  {
    "id": "K4",
-   "choice": "New table draft_consistency_report stores the report keyed by (draft_version_id, graph_revision) where graph_revision is a sha256 of the canonical facts.",
-   "justification": "Idempotency and invalidation on new listing or order need a stored revision; draft_version is immutable so a report cannot live on it (packages/db/src/schema/drafting.ts:97-123, draft_export precedent at :125-160).",
+   "choice": "Reuse TEMPLATE_KINDS (memo, other) rather than adding kinds",
+   "justification": "Avoids touching the kind list used by validators and the web picker (packages/validators/src/drafting.ts:48)",
    "source": "precedent"
   },
   {
    "id": "K5",
-   "choice": "No new workspace package dependency: drafting already depends on validators; core already depends on drafting (packages/core/package.json:66). Tests live in packages/drafting/src/consistency/__tests__ rather than packages/drafting/test.",
-   "justification": "Existing drafting tests sit under src/**/__tests__ (packages/drafting/src/__tests__/engine.test.ts).",
+   "choice": "Tests under packages/drafting/src/__tests__ and i18n under packages/i18n/src/messages, not the issue's `test/` and `messages/` paths",
+   "justification": "Existing layout: packages/drafting/src/__tests__/engine.test.ts and packages/i18n/src/catalog.ts",
    "source": "precedent"
   }
  ]

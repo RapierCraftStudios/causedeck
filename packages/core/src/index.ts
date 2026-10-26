@@ -32,3 +32,4 @@ export * from './support/index.ts';
 export * from './usage/index.ts';
 export * from './webhooks/index.ts';
 export * from './workspaces/index.ts';
+export * from './continuity/index.ts';

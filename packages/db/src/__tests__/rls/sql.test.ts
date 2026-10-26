@@ -205,6 +205,10 @@ describe('row-level security catalog', () => {
         // Brief state (#60).
         'brief_state',
 
+        // Continuity (#71).
+        'matter_view',
+        'handover_note',
+
         // Brief sharing (#507).
         'brief_share',
         // Court-day reminders (#64).

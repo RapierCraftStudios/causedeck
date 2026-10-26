@@ -23,6 +23,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { briefState } from '../schema/brief.ts';
+import { handoverNote, matterView } from '../schema/continuity.ts';
 import { briefShare } from '../schema/share.ts';
 import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
@@ -1397,6 +1398,24 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, listingId, note: `Seed note ${tag}`, updatedBy: ownerId })
       .returning({ id: briefState.id });
     return { listingId, id: first(rows, 'brief_state').id };
+  },
+  matter_view: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, `${tag}-view`);
+    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const rows = await tx
+      .insert(matterView)
+      .values({ workspaceId, matterId, memberId })
+      .returning({ id: matterView.id });
+    return { matterId, id: first(rows, 'matter_view').id };
+  },
+  handover_note: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, `${tag}-handover`);
+    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const rows = await tx
+      .insert(handoverNote)
+      .values({ workspaceId, matterId, authorId: memberId, recipientId: memberId, body: {}, version: 1 })
+      .returning({ id: handoverNote.id });
+    return { matterId, id: first(rows, 'handover_note').id };
   },
   brief_share: async (tx, { workspaceId, ownerId, tag }) => {
     const rows = await tx

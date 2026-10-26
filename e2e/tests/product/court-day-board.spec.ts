@@ -632,6 +632,21 @@ test.describe('court-day board', () => {
     db,
   }) => {
     await openBoard(page, asUser, db, { size: PHONE });
+    // The board streams in behind `main`: wait for its first card to be in the page and hydrated
+    // (the server-rendered card has no handlers yet, so a press that lands earlier is lost), then
+    // measure, so neither the target sizes nor the long-press race the stream.
+    const firstCard = page.locator('section[data-hall-column]:visible [data-court-item]').first();
+    await expect(firstCard).toBeVisible();
+    await firstCard.evaluate(
+      (el) =>
+        new Promise<void>((resolve) => {
+          const check = () =>
+            Object.keys(el).some((key) => key.startsWith('__reactFiber$'))
+              ? resolve()
+              : requestAnimationFrame(check);
+          check();
+        }),
+    );
     const controls = page.locator(
       [
         '[data-hall-rail] a',
@@ -665,7 +680,7 @@ test.describe('court-day board', () => {
     }
 
     // Long-press opens the sheet.
-    const card = page.locator('section[data-hall-column]:visible [data-court-item]').first();
+    const card = firstCard;
     const box = await card.boundingBox();
     if (!box) throw new Error('no card box');
     await page.mouse.move(box.x + 60, box.y + 12);

@@ -133,6 +133,7 @@ export {
   DRAFT_EXPORT_FORMATS,
   DRAFT_STATUSES,
   draft,
+  draftConsistencyReport,
   draftExport,
   draftVersion,
   template,

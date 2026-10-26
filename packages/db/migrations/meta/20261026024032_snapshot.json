@@ -1,6 +1,6 @@
 {
-  "id": "ee6946e8-d880-435a-b08c-b4c98fc52d85",
-  "prevId": "7ff327f7-3620-4be1-aef9-cb1024204d66",
+  "id": "4ace3258-0c44-4ff9-89bc-21aa14099c1c",
+  "prevId": "eeebd88f-d989-4901-bc5c-cd9b38127f89",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -6257,6 +6257,116 @@
         "draft_status_chk": {
           "name": "draft_status_chk",
           "value": "status in ('draft', 'final')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.draft_consistency_report": {
+      "name": "draft_consistency_report",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "draft_version_id": {
+          "name": "draft_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "graph_revision": {
+          "name": "graph_revision",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "report": {
+          "name": "report",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "draft_consistency_report_workspace_id_idx": {
+          "name": "draft_consistency_report_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "draft_consistency_report_workspace_id_fk": {
+          "name": "draft_consistency_report_workspace_id_fk",
+          "tableFrom": "draft_consistency_report",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "draft_consistency_report_version_fk": {
+          "name": "draft_consistency_report_version_fk",
+          "tableFrom": "draft_consistency_report",
+          "tableTo": "draft_version",
+          "columnsFrom": [
+            "workspace_id",
+            "draft_version_id"
+          ],
+          "columnsTo": [
+            "workspace_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "draft_consistency_report_version_rev_uq": {
+          "name": "draft_consistency_report_version_rev_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "draft_version_id",
+            "graph_revision"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "draft_consistency_report_revision_chk": {
+          "name": "draft_consistency_report_revision_chk",
+          "value": "graph_revision ~ '^[0-9a-f]{64}$'"
         }
       },
       "isRLSEnabled": false

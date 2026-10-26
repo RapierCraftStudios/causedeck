@@ -104,7 +104,8 @@ const versionColumns = {
   createdAt: draftVersion.createdAt,
 };
 
-async function insertVersion(
+/** Insert the next immutable version of a draft; the caller has checked access. */
+export async function insertVersion(
   tx: Transaction,
   actor: { workspaceId: string; userId: string },
   draftId: string,

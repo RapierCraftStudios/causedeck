@@ -86,6 +86,7 @@ describe('@causedeck/db root entry point', () => {
       'document',
       'document_page',
       'draft',
+      'draft_consistency_report',
       'draft_export',
       'draft_version',
       'email_suppression',

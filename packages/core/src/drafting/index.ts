@@ -1,5 +1,13 @@
 // The drafting domain's public surface (#768). Other domains import this file only.
 export {
+  applyFix,
+  getConsistencyReport,
+  listFindings,
+  loadConsistencyFacts,
+  runConsistencyCheck,
+  type StoredReport,
+} from './consistency-service.ts';
+export {
   createDraft,
   exportDraft,
   listVersions,

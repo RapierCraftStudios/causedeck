@@ -5,14 +5,7 @@
 // workspace in either table within 24 h, and never touches another workspace's rows.
 
 import { Secret } from '@causedeck/config/env';
-import {
-  createDb,
-  schema,
-  tenantPolicy,
-  withWorkspace,
-  type Database,
-  type Transaction,
-} from '@causedeck/db';
+import { createDb, schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { testDatabaseUrls } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { eq, sql, TransactionRollbackError } from 'drizzle-orm';
@@ -25,6 +18,8 @@ import {
   requestMemoryErasure,
   runMemoryErasure,
 } from '../index.ts';
+
+import { createMemoryFixtures } from '../testing/memory-fixtures.ts';
 
 import { captureLog } from './fixtures.ts';
 
@@ -58,22 +53,6 @@ async function codeOf(promise: Promise<unknown>): Promise<string | undefined> {
   return undefined;
 }
 
-async function createMemoryFixtures(tx: Transaction): Promise<void> {
-  await tx.execute(sql`create table memory_item (
-    id uuid primary key default gen_random_uuid(),
-    workspace_id uuid not null references organization (id) on delete cascade,
-    content_ref text not null)`);
-  await tx.execute(sql`create table memory_embedding (
-    id uuid primary key default gen_random_uuid(),
-    workspace_id uuid not null references organization (id) on delete cascade,
-    item_id uuid references memory_item (id),
-    content_ref text not null)`);
-  for (const table of ['memory_item', 'memory_embedding']) {
-    await tx.execute(sql.raw(`create index ${table}_workspace_id_idx on ${table} (workspace_id)`));
-    for (const statement of tenantPolicy(table)) await tx.execute(sql.raw(statement));
-  }
-}
-
 /** `items` memory items for `workspaceId`, each with one embedding, plus `extra` loose embeddings. */
 async function seedMemory(tx: Transaction, workspaceId: string, items: number, extra = 0) {
   await withWorkspace(tx, { workspaceId }, async (s) => {
@@ -104,66 +83,104 @@ async function memoryRows(tx: Transaction, workspaceId: string) {
 const T0 = new Date('2026-10-20T10:00:00.000Z');
 
 describe('memory erasure', () => {
-  it('an owner request, run by the job, erases every memory row of the workspace within 24 h', async () => {
-    await rolledBack(async (tx) => {
-      await createMemoryFixtures(tx);
-      const seeded: TwoTenants = await seedTwoTenants(tx);
-      // More embeddings than one batch, so the batched delete loops.
-      await seedMemory(tx, seeded.a.id, 3, MEMORY_ERASE_BATCH + 5);
-      await seedMemory(tx, seeded.b.id, 2);
-
-      const enqueue = vi.fn(() => Promise.resolve(null));
-      const job = await requestMemoryErasure(
-        { db: tx, workspaceId: seeded.a.id, userId: seeded.ua, now: () => T0 },
-        { enqueue },
-      );
-      expect(job.status).toBe('scheduled');
-      expect(job.eraseAfter?.getTime()).toBe(T0.getTime() + MEMORY_ERASURE_SLA_MS);
-      expect(enqueue).toHaveBeenCalledWith({ workspaceId: seeded.a.id, jobId: job.id });
-      // Nothing is erased before the job runs.
-      expect(await memoryRows(tx, seeded.a.id)).toEqual({
-        items: 3,
-        embeddings: MEMORY_ERASE_BATCH + 8,
-      });
-
-      const ranAt = new Date(T0.getTime() + 5 * 60_000);
-      const { log, lines } = captureLog();
-      const outcome = await runMemoryErasure(
-        { db: tx, log, now: () => ranAt },
-        { workspaceId: seeded.a.id, jobId: job.id },
-      );
-      expect(outcome).toEqual({
-        status: 'erased',
-        counts: { memory_embedding: MEMORY_ERASE_BATCH + 8, memory_item: 3 },
-      });
-      expect(await memoryRows(tx, seeded.a.id)).toEqual({ items: 0, embeddings: 0 });
-      expect(await memoryRows(tx, seeded.b.id)).toEqual({ items: 2, embeddings: 2 });
-      expect(lines.join('\n')).not.toContain('item-');
-
-      const [row] = await withWorkspace(tx, { workspaceId: seeded.a.id }, (s) =>
-        s.select().from(schema.deletionJob).where(eq(schema.deletionJob.id, job.id)),
-      );
-      expect(row?.status).toBe('erased');
-      const completed = row?.completedAt?.getTime() ?? Infinity;
-      expect(completed - T0.getTime()).toBeLessThan(MEMORY_ERASURE_SLA_MS);
-      expect(completed).toBeLessThanOrEqual(row?.eraseAfter?.getTime() ?? 0);
-      const events = await withWorkspace(tx, { workspaceId: seeded.a.id }, (s) =>
-        s
-          .select({ action: schema.auditEvent.action, metadata: schema.auditEvent.metadata })
-          .from(schema.auditEvent)
-          .where(eq(schema.auditEvent.targetId, job.id)),
-      );
-      expect(events.map((e) => e.action).sort()).toEqual([
-        'memory.erased',
-        'memory.erasure_requested',
-      ]);
-
-      // Idempotent: a second run (a retried job) changes nothing.
-      expect(
-        await runMemoryErasure({ db: tx, log }, { workspaceId: seeded.a.id, jobId: job.id }),
-      ).toEqual({ status: 'already-erased', counts: {} });
+  it('memory fixtures do not block on a concurrent workspace write', async () => {
+    const other = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
+    let markWritten = (): void => undefined;
+    let release = (): void => undefined;
+    const written = new Promise<void>((resolve) => {
+      markWritten = resolve;
     });
+    const released = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    // A second connection holds an uncommitted write to `organization`, as a parallel test file does.
+    const holder = other
+      .transaction(async (tx) => {
+        await seedTwoTenants(tx);
+        markWritten();
+        await released;
+        tx.rollback();
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof TransactionRollbackError)) throw error;
+      });
+    try {
+      await written;
+      await rolledBack(async (tx) => {
+        await tx.execute(sql`set local lock_timeout = '2s'`);
+        await createMemoryFixtures(tx);
+      });
+    } finally {
+      release();
+      await holder;
+      await other.$client.end();
+    }
   });
+
+  it(
+    'an owner request, run by the job, erases every memory row of the workspace within 24 h',
+    { timeout: 10_000 },
+    async () => {
+      await rolledBack(async (tx) => {
+        await createMemoryFixtures(tx);
+        const seeded: TwoTenants = await seedTwoTenants(tx);
+        // More embeddings than one batch, so the batched delete loops.
+        await seedMemory(tx, seeded.a.id, 3, MEMORY_ERASE_BATCH + 5);
+        await seedMemory(tx, seeded.b.id, 2);
+
+        const enqueue = vi.fn(() => Promise.resolve(null));
+        const job = await requestMemoryErasure(
+          { db: tx, workspaceId: seeded.a.id, userId: seeded.ua, now: () => T0 },
+          { enqueue },
+        );
+        expect(job.status).toBe('scheduled');
+        expect(job.eraseAfter?.getTime()).toBe(T0.getTime() + MEMORY_ERASURE_SLA_MS);
+        expect(enqueue).toHaveBeenCalledWith({ workspaceId: seeded.a.id, jobId: job.id });
+        // Nothing is erased before the job runs.
+        expect(await memoryRows(tx, seeded.a.id)).toEqual({
+          items: 3,
+          embeddings: MEMORY_ERASE_BATCH + 8,
+        });
+
+        const ranAt = new Date(T0.getTime() + 5 * 60_000);
+        const { log, lines } = captureLog();
+        const outcome = await runMemoryErasure(
+          { db: tx, log, now: () => ranAt },
+          { workspaceId: seeded.a.id, jobId: job.id },
+        );
+        expect(outcome).toEqual({
+          status: 'erased',
+          counts: { memory_embedding: MEMORY_ERASE_BATCH + 8, memory_item: 3 },
+        });
+        expect(await memoryRows(tx, seeded.a.id)).toEqual({ items: 0, embeddings: 0 });
+        expect(await memoryRows(tx, seeded.b.id)).toEqual({ items: 2, embeddings: 2 });
+        expect(lines.join('\n')).not.toContain('item-');
+
+        const [row] = await withWorkspace(tx, { workspaceId: seeded.a.id }, (s) =>
+          s.select().from(schema.deletionJob).where(eq(schema.deletionJob.id, job.id)),
+        );
+        expect(row?.status).toBe('erased');
+        const completed = row?.completedAt?.getTime() ?? Infinity;
+        expect(completed - T0.getTime()).toBeLessThan(MEMORY_ERASURE_SLA_MS);
+        expect(completed).toBeLessThanOrEqual(row?.eraseAfter?.getTime() ?? 0);
+        const events = await withWorkspace(tx, { workspaceId: seeded.a.id }, (s) =>
+          s
+            .select({ action: schema.auditEvent.action, metadata: schema.auditEvent.metadata })
+            .from(schema.auditEvent)
+            .where(eq(schema.auditEvent.targetId, job.id)),
+        );
+        expect(events.map((e) => e.action).sort()).toEqual([
+          'memory.erased',
+          'memory.erasure_requested',
+        ]);
+
+        // Idempotent: a second run (a retried job) changes nothing.
+        expect(
+          await runMemoryErasure({ db: tx, log }, { workspaceId: seeded.a.id, jobId: job.id }),
+        ).toEqual({ status: 'already-erased', counts: {} });
+      });
+    },
+  );
 
   it('a second request while one is pending returns it without enqueueing again', async () => {
     await rolledBack(async (tx) => {

@@ -15,6 +15,7 @@ interface BudgetModule {
   SW_BUDGET_BYTES: number;
   swBudget: (source: string, budget?: number) => { gzipBytes: number; budget: number; ok: boolean };
   WORKSPACE_ROUTE_MANIFEST: string;
+  commonChunks: (...lists: string[][]) => string[];
   shellDelta: (
     homeChunks: string[],
     routeChunks: string[],
@@ -90,6 +91,17 @@ describe('workspace shell budget (#155)', () => {
     expect(budget.WORKSPACE_ROUTE_MANIFEST).toBe(
       'server/app/(app)/w/[slug]/today/page_client-reference-manifest.js',
     );
+  });
+
+  it('defines the shell as the chunks every workspace route loads (#59: /today is a real route now)', () => {
+    expect(
+      budget.commonChunks(
+        ['static/chunks/shell.js', 'static/chunks/board.js', 'static/chunks/b.js'],
+        ['static/chunks/b.js', 'static/chunks/matters.js', 'static/chunks/shell.js'],
+        ['static/chunks/shell.js', 'static/chunks/courts.js', 'static/chunks/b.js'],
+      ),
+    ).toEqual(['static/chunks/b.js', 'static/chunks/shell.js']);
+    expect(budget.commonChunks()).toEqual([]);
   });
 
   it('counts only the workspace chunks the home route does not load, each once', () => {

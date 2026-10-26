@@ -33,6 +33,9 @@ export const GENERIC_PUSH_TITLES: Record<CategoryKey, string> = {
   'digest.daily': 'Your daily digest is ready',
   'digest.end_of_day': 'What CauseDeck did today',
   'digest.news': 'Legal news for you today',
+  'reminder.evening': "Tomorrow's court day is ready",
+  'reminder.morning': "Today's list has changed",
+  'reminder.outcome_missing': "Record today's outcomes",
   'system.notice': 'New notification',
 };
 

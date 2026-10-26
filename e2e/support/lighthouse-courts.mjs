@@ -16,7 +16,8 @@ const MAILPIT_URL = process.env.E2E_MAILPIT_URL ?? 'http://127.0.0.1:8025';
 const PORT = 3100;
 const ORIGIN = `http://localhost:${String(PORT)}`;
 const EMAIL = 'owner@chennai-solo.e2e.test';
-const CALLBACK = '/w/chennai-solo/courts';
+const CONFIG = process.argv[2] ?? 'lighthouserc.courts.json';
+const CALLBACK = process.argv[3] ?? '/w/chennai-solo/courts';
 
 const e2eDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const webDir = path.join(e2eDir, '..', 'apps', 'web');
@@ -104,7 +105,7 @@ try {
     lhci,
     [
       'autorun',
-      '--config=lighthouserc.courts.json',
+      `--config=${CONFIG}`,
       `--collect.settings.extraHeaders=${JSON.stringify({ Cookie: cookie })}`,
     ],
     { cwd: e2eDir, stdio: 'inherit' },

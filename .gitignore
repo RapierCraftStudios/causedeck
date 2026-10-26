@@ -45,3 +45,7 @@ packages/adapters/fixtures/generated/
 !*.tfvars.example
 crash.log
 infra/terraform/envs/*/backend.tf
+
+# Tool state, never committed: ForgeDock lane scratch and ESLint caches (lanes kept committing them; they conflicted in every base merge).
+.forge-lean/
+.eslintcache

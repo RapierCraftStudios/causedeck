@@ -15,12 +15,21 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Product activation (#509): a leaf; workspaces records `invite_sent` through it.
   activation: Object.freeze([]),
   workspaces: Object.freeze(['audit', 'activation']),
+  // Brief sharing and referral (#507): reads a brief, imports a matter, records activation.
+  shares: Object.freeze(['briefs', 'matter-graph', 'activation', 'workspaces']),
   matters: Object.freeze(['workspaces', 'audit']),
   // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
   // The KHC cause-list watch (#482) stages proposals through automation and the import matcher.
   court: Object.freeze(['workspaces', 'automation', 'import', 'matter-graph', 'sources']),
-  // Court-day display-board tracking (#493): the board source's clearance through sources.
-  'court-day': Object.freeze(['sources']),
+  // Court-day display-board tracking (#493): the board source's clearance through sources. The court
+  // day (#58) reads roles through workspaces, audits the hall marker through audit and wraps the
+  // canonical next-date proposal and conflict view of matter-graph (imports `index.ts` only).
+  // The calendar range (#66) reads forum closures through deadlines (`loadCourtCalendar`).
+  'court-day': Object.freeze(['sources', 'matter-graph', 'workspaces', 'audit', 'deadlines']),
+  // The hearing outcome (#62): roles through workspaces, the canonical next date through the
+  // matter-graph index only, the audit event through audit. It reads the voice proposals and their
+  // transcript anchors as rows and imports no other domain.
+  hearings: Object.freeze(['matter-graph', 'audit', 'workspaces']),
   // The matter graph (#362): roles and role settings through workspaces, the matter actor through
   // matters. It emits events through its own port and never imports audit or notifications.
   'matter-graph': Object.freeze(['workspaces', 'matters']),
@@ -41,6 +50,13 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Institution portfolios (#663, #498 part 3): the owner check through workspaces, watches through case-watch
   // (status sources) and the matter read probe through matter-graph; clearance through sources.
   portfolio: Object.freeze(['workspaces', 'matter-graph', 'case-watch', 'sources']),
+  // The derived listing brief (#60, ADR 0038): the scope and member role through workspaces, the
+  // sensitive-matter-safe `summarise` call through ai, graph reads through matter-graph and court-day
+  // (imports `index.ts` only).
+  briefs: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day', 'ai']),
+  // Chamber delegation (#63): the member role and the offboarding provider through workspaces,
+  // assignment audit through audit, the day and its clashes through court-day (imports `index.ts` only).
+  delegation: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day']),
   // WhatsApp number link and OTP (#678, #502 part 1): the membership check through workspaces
   'whatsapp-link': Object.freeze(['workspaces', 'audit', 'capture']),
   // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same
@@ -156,6 +172,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'data-ops',
     'court',
     'court-day',
+    'briefs',
+    'delegation',
     'sources',
     'notices',
     'research',

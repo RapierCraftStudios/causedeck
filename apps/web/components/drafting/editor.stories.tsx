@@ -5,6 +5,7 @@ import { fn } from 'storybook/test';
 
 import { DraftEditor } from './editor.tsx';
 import { FactsPanel, type DraftFact } from './facts-panel.tsx';
+import { DraftStudio } from '../../app/(app)/w/[slug]/drafts/[id]/studio.tsx';
 import { VersionDrawer } from './version-drawer.tsx';
 
 const BLOCKS: Block[] = [
@@ -73,4 +74,29 @@ export const DraftVersionDrawer: Story = {
       onRestore={fn()}
     />
   ),
+};
+
+const STUDIO = {
+  workspaceId: 'w1',
+  draftId: 'd1',
+  title: 'Writ petition',
+  versionNo: 2,
+  blocks: BLOCKS,
+  slotValues: { cnr: '[[missing: matter.cnr]]' },
+  aiTexts: { n: 'Model-drafted summary of the facts.' },
+  facts: FACTS,
+  versions: [
+    { versionNo: 2, createdAt: '2026-03-02T10:00:00.000Z', blocks: BLOCKS },
+    {
+      versionNo: 1,
+      createdAt: '2026-03-01T10:00:00.000Z',
+      blocks: [{ type: 'paragraph', text: 'First draft.' }] as Block[],
+    },
+  ],
+};
+
+export const DraftStudioShell: Story = { render: () => <DraftStudio {...STUDIO} /> };
+
+export const DraftStudioShellNoAiText: Story = {
+  render: () => <DraftStudio {...STUDIO} aiTexts={{}} />,
 };

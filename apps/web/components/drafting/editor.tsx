@@ -58,6 +58,7 @@ export function DraftEditor({
   onChange,
 }: DraftEditorProps) {
   const t = useTranslations('drafting.editor');
+  const ta = useTranslations('drafting.aiDrafted');
 
   function edit(key: string, text: string, ai?: string) {
     const result = editBlockText(blocks, key, text, ai);
@@ -97,6 +98,14 @@ export function DraftEditor({
               {block.type === 'narrative' ? (
                 <p className="text-ink-muted font-sans text-xs">
                   {t('narrative', { prompt: block.prompt })}
+                  {text === '' ? null : (
+                    <span
+                      data-slot="ai-drafted-marker"
+                      className="bg-seal-subtle text-ink ms-2 rounded-sm px-1"
+                    >
+                      {ta('label')}
+                    </span>
+                  )}
                 </p>
               ) : null}
               <textarea

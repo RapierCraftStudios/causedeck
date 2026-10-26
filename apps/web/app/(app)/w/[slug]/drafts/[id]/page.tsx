@@ -58,6 +58,12 @@ export default async function DraftPage({ params }: DraftPageProps) {
   const slotValues = Object.fromEntries(
     Object.entries(rendered.slots).map(([key, resolution]) => [key, resolution.value]),
   );
+  // Model-written narrative text, when the render produced any (no model call is made on page load).
+  const aiTexts = Object.fromEntries(
+    Object.entries(rendered.narratives).flatMap(([key, n]) =>
+      n.modelDrafted ? [[key, n.text]] : [],
+    ),
+  );
   const facts: DraftFact[] = Object.entries(rendered.slots).flatMap(([key, resolution]) =>
     resolution.provenance.kind === 'fact'
       ? [
@@ -83,6 +89,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
       versionNo={detail.version.versionNo}
       blocks={detail.version.blocks}
       slotValues={slotValues}
+      aiTexts={aiTexts}
       facts={facts}
       versions={detail.versions.map((v) => ({
         versionNo: v.versionNo,

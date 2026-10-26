@@ -51,6 +51,8 @@ export interface StudioProps {
   versionNo: number;
   blocks: Block[];
   slotValues: Record<string, string>;
+  /** Model-written text by narrative block key; shown with the AI-drafted marker until edited. */
+  aiTexts?: Record<string, string>;
   facts: DraftFact[];
   versions: DraftVersionView[];
   /** Extra places `]` and `[` can go (#828's findings), by block key. */
@@ -386,6 +388,7 @@ export function DraftStudio(props: StudioProps) {
           <DraftEditor
             blocks={blocks}
             slotValues={props.slotValues}
+            aiTexts={props.aiTexts ?? {}}
             selectedSlot={selectedSlot}
             readOnly={readOnly}
             onSelectSlot={setSelectedSlot}

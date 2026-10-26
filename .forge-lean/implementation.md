@@ -21,3 +21,6 @@ Recovery pass for the red `build` check. Admin's Turbopack build failed on the t
 - Drafting package vitest (15 tests) passes after the fix. The Next build is CI-only, so the build fix is unverified locally and the new test does not apply.
 ### Notes
 No behaviour change from the pdf.ts edit. The Security check fails on historical gitleaks findings in unrelated test files, not on this branch's changes.
+
+## Stale-list fix
+The 20 flagged (symbol, test) pairs are not members: none of the 10 tests names the sibling exports (DRAFT_STATUSES, draft, draftVersion); the flagged lines are unrelated mock state or fixtures. Recorded in result.json `not_members`.

@@ -3765,6 +3765,11 @@
       "notFound": "This draft does not exist or you cannot open it.",
       "saving": "Saving",
       "saved": "Saved",
+      "offlineQueued": "Offline, changes queued",
+      "conflict": "This draft changed elsewhere. Reload to see the latest version.",
+      "saveFailed": "The draft could not be saved.",
+      "unsaved": "Unsaved changes",
+      "cachedCopy": "Showing the copy saved on this device.",
       "requestId": "Request ID: {digest}",
       "copyId": "Copy request ID",
       "copied": "Copied",
@@ -3773,7 +3778,9 @@
     "panels": {
       "facts": {
         "title": "Facts",
-        "empty": "No facts are linked to this draft."
+        "empty": "No facts are linked to this draft.",
+        "insert": "Insert {label} into the slot",
+        "selectSlot": "Select a slot in the draft first."
       },
       "citations": {
         "title": "Citations",
@@ -3794,14 +3801,23 @@
         "title": "Versions",
         "current": "Current version",
         "restore": "Restore this version",
-        "number": "Version {number}"
+        "number": "Version {number}",
+        "diffTitle": "Changes if you restore version {number}",
+        "noChanges": "This version matches the current draft.",
+        "added": "Added",
+        "removed": "Removed",
+        "confirm": "Restore as a new version",
+        "restored": "Version restored",
+        "close": "Close versions"
       }
     },
     "findings": {
       "count": "{count, plural, one {# finding} other {# findings}}",
       "factMismatch": "A figure or date differs from the facts.",
       "unsupported": "This statement has no source fact.",
-      "goTo": "Go to location"
+      "goTo": "Go to location",
+      "position": "Finding {index} of {total}",
+      "none": "No findings to go to."
     },
     "aiDrafted": {
       "label": "AI-drafted",
@@ -3826,13 +3842,35 @@
       "save": "Save",
       "checkCitations": "Check citations",
       "togglePanel": "Show or hide the side panel",
-      "export": "Export"
+      "export": "Export",
+      "prevFinding": "Previous finding",
+      "nextFinding": "Next finding",
+      "close": "Close the open panel",
+      "actions": "Draft actions"
     },
     "offline": {
       "banner": "You are offline. Edits are saved on this device.",
       "queued": "{count, plural, one {# change waiting to sync} other {# changes waiting to sync}}",
       "synced": "All changes synced",
       "listBanner": "You are offline. This is the last saved list; new drafts cannot be created."
+    },
+    "editor": {
+      "label": "Draft editor",
+      "missing": "Missing: {name}",
+      "slot": "Fact: {label}",
+      "narrative": "Narrative: {prompt}",
+      "edited": "Edited by you"
+    },
+    "tabs": {
+      "editor": "Editor",
+      "facts": "Facts",
+      "versions": "Versions"
+    },
+    "actions": {
+      "title": "Draft actions",
+      "save": "Save draft",
+      "showFacts": "Show facts",
+      "showVersions": "Show versions"
     }
   },
   "calendar": {

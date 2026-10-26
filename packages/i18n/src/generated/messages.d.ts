@@ -3766,6 +3766,11 @@ export type Messages = {
       notFound: string;
       saving: string;
       saved: string;
+      offlineQueued: string;
+      conflict: string;
+      saveFailed: string;
+      unsaved: string;
+      cachedCopy: string;
       requestId: string;
       copyId: string;
       copied: string;
@@ -3775,6 +3780,8 @@ export type Messages = {
       facts: {
         title: string;
         empty: string;
+        insert: string;
+        selectSlot: string;
       };
       citations: {
         title: string;
@@ -3796,6 +3803,13 @@ export type Messages = {
         current: string;
         restore: string;
         number: string;
+        diffTitle: string;
+        noChanges: string;
+        added: string;
+        removed: string;
+        confirm: string;
+        restored: string;
+        close: string;
       };
     };
     findings: {
@@ -3803,6 +3817,8 @@ export type Messages = {
       factMismatch: string;
       unsupported: string;
       goTo: string;
+      position: string;
+      none: string;
     };
     aiDrafted: {
       label: string;
@@ -3828,12 +3844,34 @@ export type Messages = {
       checkCitations: string;
       togglePanel: string;
       export: string;
+      prevFinding: string;
+      nextFinding: string;
+      close: string;
+      actions: string;
     };
     offline: {
       banner: string;
       queued: string;
       synced: string;
       listBanner: string;
+    };
+    editor: {
+      label: string;
+      missing: string;
+      slot: string;
+      narrative: string;
+      edited: string;
+    };
+    tabs: {
+      editor: string;
+      facts: string;
+      versions: string;
+    };
+    actions: {
+      title: string;
+      save: string;
+      showFacts: string;
+      showVersions: string;
     };
   };
   calendar: {

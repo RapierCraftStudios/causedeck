@@ -122,6 +122,7 @@ const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedi
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
+const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
@@ -233,6 +234,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateMatterAction: matterWorkspace,
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
+  saveDraftAction: draftStudio,
+  restoreDraftVersionAction: draftStudio,
   addTagAction: research,
   confirmOutcomeAction: hearingOutcome,
   markPreparedAction: briefSheet,
@@ -855,6 +858,18 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
     confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    // Drafting studio (#827): ub may not save to or restore a version of A's draft.
+    saveDraftAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      baseVersionNo: 1,
+      blocks: [{ type: 'paragraph', text: 'Cross-tenant probe' }],
+    },
+    restoreDraftVersionAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      versionNo: 1,
+    },
     // Hearing outcome (#62): ub may not confirm A's hearing outcome.
     confirmOutcomeAction: {
       workspaceId,
@@ -1516,6 +1531,21 @@ describe('cross-tenant server actions', () => {
       expect(result, name).not.toHaveProperty('data');
     }
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('drafting studio actions under B’s own workspace find none of A’s draft (#827)', async () => {
+    const own = inputs(t.b.id);
+    const versions = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select({ id: schema.draftVersion.id }).from(schema.draftVersion),
+      );
+    const before = await versions();
+    for (const name of ['saveDraftAction', 'restoreDraftVersionAction']) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await versions()).toEqual(before);
   });
 
   it('hearing outcome actions under B’s own workspace find none of A’s hearing (#62)', async () => {

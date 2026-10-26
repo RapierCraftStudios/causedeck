@@ -173,11 +173,19 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'inbox',
   // Its own component test since #826 (components/drafting/__tests__/drafts-list.test.tsx).
   'drafts',
+  // The court-day board since #59 (_court-day/__tests__/court-day.test.ts, e2e court-day-board).
+  'today',
+  // With the tomorrow plan (#63) under it: tomorrow-page.test.tsx.
+  'tomorrow',
+  // Its own component test since #66 (calendar/_components/calendar-view.test.tsx).
+  'calendar',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
 );
 const FLAGGED = new Set(['invoices', 'limitation']);
+/** A placeholder page that renders unflagged, derived so it cannot go stale when one graduates. */
+const OFFLINE_ROUTE = PLACEHOLDER_ROUTES.find((route) => !FLAGGED.has(route)) ?? 'briefs';
 
 /** Flagged pages rebuilt with the flag on, so every route can be rendered. */
 function pageFor(route: PlaceholderId): PageComponent {
@@ -524,7 +532,6 @@ describe('placeholder pages', () => {
 
   it('uses the #11 design-spec empty copy verbatim', async () => {
     const spec: Partial<Record<PlaceholderId, string>> = {
-      today: 'No hearings today. Forward a cause list to see your court day.',
       obligations: 'No open obligations.',
     };
     for (const [route, copy] of Object.entries(spec)) {
@@ -592,7 +599,7 @@ describe('placeholder pages', () => {
 
   it('shows the offline banner only while navigator.onLine is false', async () => {
     online = false;
-    withIntl(await PAGES.today(props('demo')));
+    withIntl(await PAGES[OFFLINE_ROUTE](props('demo')));
     const banner = () => document.querySelector('[data-pattern-state="offline"]');
     expect(banner()?.textContent).toContain('You are offline.');
 
@@ -610,7 +617,7 @@ describe('placeholder pages', () => {
   });
 
   it('renders no offline banner when online', async () => {
-    withIntl(await PAGES.today(props('demo')));
+    withIntl(await PAGES[OFFLINE_ROUTE](props('demo')));
     expect(document.querySelector('[data-pattern-state="offline"]')).toBeNull();
   });
 });

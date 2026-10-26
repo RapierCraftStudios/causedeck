@@ -51,6 +51,13 @@ export const ssoProvider = tenantTable(
     /** Protocol settings (endpoints, certificate, client id and secret); a secret, never exported. */
     config: jsonb('config').$type<Record<string, unknown>>().notNull().default({}),
     enabled: boolean('enabled').notNull().default(false),
+    /**
+     * DNS TXT proof that the organisation controls `domain` (random, published at
+     * `_better-auth-token-<id>.<domain>`). Reset whenever the domain changes.
+     */
+    domainVerificationToken: text('domain_verification_token'),
+    /** Set once the TXT record was seen; only a verified, enabled provider can sign anyone in. */
+    domainVerifiedAt: timestamp('domain_verified_at', { withTimezone: true }),
     createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     ...timestamps(),
   },
@@ -60,7 +67,10 @@ export const ssoProvider = tenantTable(
       columns: [t.workspaceId],
       foreignColumns: [organization.id],
     }).onDelete('cascade'),
-    uniqueIndex('sso_provider_domain_uq').on(t.domain),
+    // A domain belongs to the one organisation that proved it; unverified claims never block it.
+    uniqueIndex('sso_provider_domain_uq')
+      .on(t.domain)
+      .where(sql`${t.domainVerifiedAt} is not null`),
     check('sso_provider_protocol_chk', sql`protocol in ${inList(SSO_PROTOCOLS)}`),
     check('sso_provider_domain_chk', sql`domain = lower(btrim(domain)) and length(domain) > 0`),
     check('sso_provider_issuer_chk', sql`length(btrim(issuer)) > 0`),

@@ -25,3 +25,36 @@ export function isTenantRequest(request: Request, url: URL): boolean {
 export function isStaticAsset(url: URL): boolean {
   return url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/');
 }
+
+/** The public, data-free page the worker serves for offline court-day and brief navigations (#65). */
+export const OFFLINE_SHELL_PATH = '/offline/court-day';
+
+export type OfflineRoute =
+  | { kind: 'board'; slug: string; which: 'today' | 'tomorrow' }
+  | { kind: 'brief'; slug: string; listingId: string };
+
+const OFFLINE_ROUTE = /^\/w\/([^/]+)\/(?:(today|tomorrow)|briefs\/([^/]+))\/?$/;
+
+/** The court-day route a pathname names, or null: only these may be answered from the device. */
+export function parseOfflineRoute(pathname: string): OfflineRoute | null {
+  const match = OFFLINE_ROUTE.exec(pathname);
+  if (!match) return null;
+  const [, slug = '', which, listingId] = match;
+  if (which === 'today' || which === 'tomorrow') return { kind: 'board', slug, which };
+  return listingId ? { kind: 'brief', slug, listingId } : null;
+}
+
+/**
+ * A page navigation to a court-day route. When the network fails the worker answers it with the
+ * precached shell (`OFFLINE_SHELL_PATH`), which reads the encrypted store on the device. The route
+ * itself stays network-only: its response, like every RSC payload and API reply, is never stored.
+ */
+export function isOfflineShellNavigation(request: Request, url: URL): boolean {
+  return (
+    request.method === 'GET' &&
+    request.destination === 'document' &&
+    !request.headers.has('rsc') &&
+    !url.searchParams.has('_rsc') &&
+    parseOfflineRoute(url.pathname) !== null
+  );
+}

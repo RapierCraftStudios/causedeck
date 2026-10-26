@@ -70,7 +70,14 @@ export interface PreferencesFormProps {
 }
 
 /** The digest selector drives this category's email, so it has no row of its own. */
-const ROWS = CATEGORY_KEYS.filter((key) => key !== 'digest.daily');
+/** The court-day reminders (#64) have their own card with a time per kind. */
+const REMINDER_CARD = ['reminder.evening', 'reminder.morning', 'reminder.outcome_missing'] as const;
+type CardCategory = (typeof REMINDER_CARD)[number];
+type RowCategory = Exclude<CategoryKey, CardCategory>;
+const ROWS = CATEGORY_KEYS.filter(
+  (key): key is RowCategory =>
+    key !== 'digest.daily' && !(REMINDER_CARD as readonly string[]).includes(key),
+);
 
 /** Message ids for the dotted category keys (next-intl keys cannot contain dots). */
 const CATEGORY_MESSAGE = {
@@ -93,7 +100,7 @@ const CATEGORY_MESSAGE = {
   'digest.end_of_day': 'digestEndOfDay',
   'digest.news': 'digestNews',
   'system.notice': 'systemNotice',
-} as const satisfies Record<CategoryKey, string>;
+} as const satisfies Record<Exclude<CategoryKey, CardCategory>, string>;
 
 const CHANNEL_MESSAGE = { in_app: 'inApp', email: 'email', push: 'push' } as const satisfies Record<
   Exclude<Channel, 'whatsapp'>,
@@ -190,12 +197,12 @@ export function PreferencesForm({
     );
   };
 
-  const categoryLabel = (category: CategoryKey) =>
+  const categoryLabel = (category: RowCategory) =>
     t(`categories.${CATEGORY_MESSAGE[category]}.label`);
   const channelLabel = (channel: Exclude<Channel, 'whatsapp'>) =>
     t(`channels.${CHANNEL_MESSAGE[channel]}`);
 
-  const cellSwitch = (category: CategoryKey, channel: Exclude<Channel, 'whatsapp'>) => {
+  const cellSwitch = (category: RowCategory, channel: Exclude<Channel, 'whatsapp'>) => {
     const cell = cells[cellKey(category, channel)];
     if (cell === undefined) return null;
     return (
@@ -221,10 +228,10 @@ export function PreferencesForm({
     );
   };
 
-  const isMandatory = (category: CategoryKey) =>
+  const isMandatory = (category: RowCategory) =>
     MATRIX_CHANNELS.some((channel) => cells[cellKey(category, channel)]?.locked === true);
 
-  const categoryText = (category: CategoryKey, withExplanationId: boolean) => (
+  const categoryText = (category: RowCategory, withExplanationId: boolean) => (
     <div className="flex flex-col gap-0.5">
       <span className="font-medium">{categoryLabel(category)}</span>
       <span className="text-ink-muted text-xs">

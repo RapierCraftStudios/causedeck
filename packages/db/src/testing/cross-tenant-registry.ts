@@ -132,6 +132,18 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   case_watch: DB_TABLES_TEST,
   case_status_snapshot: DB_TABLES_TEST,
 
+  // Court-day marker and list snapshots (#58).
+  court_day_marker: DB_TABLES_TEST,
+  list_snapshot: DB_TABLES_TEST,
+
+  // Brief state (#60).
+  brief_state: DB_TABLES_TEST,
+
+  // Brief sharing (#507).
+  brief_share: DB_TABLES_TEST,
+  // Court-day reminders (#64).
+  reminder_dispatch: DB_TABLES_TEST,
+
   // Review and correction queue (#518).
   review_correction: DB_TABLES_TEST,
 
@@ -258,6 +270,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // role settings (#285)
   getRoleSettings: empty,
   updateRoleSettings: denies,
+  // SSO providers (#683)
+  listSsoProviders: empty,
+  saveSsoProvider: denies,
+  deleteSsoProvider: denies,
+  verifySsoDomain: denies,
   // privacy settings (#286)
   getPrivacySettings: empty,
   updateWorkspacePrivacy: denies,
@@ -504,6 +521,35 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getLiveHalls: denies,
   // bench card (#521): the flagged read model opens withWorkspace on the given actor
   getBenchCard: denies,
+  // court day (#58): B acting on A's workspace is denied, A's rows are unchanged
+  getCourtDay: denies,
+  // calendar range (#66): B acting on A's workspace is denied, A's rows are unchanged
+  getCalendarRange: denies,
+  setCurrentItem: denies,
+  clearCurrentItem: denies,
+  snapshotList: denies,
+  // court-day board (#59): B reading A's list diffs is denied
+  getListDiffs: denies,
+  proposeCourtDayNextDate: denies,
+  listConflictCards: denies,
+  // hearing outcome (#62): B acting on A's hearing is denied (NOT_FOUND), A's hearing is unchanged
+  getOutcomeProposal: denies,
+  confirmOutcome: denies,
+  recordManualOutcome: denies,
+  // briefs (#60): B acting on A's listing is denied (NOT_FOUND), A's brief state is unchanged
+  assembleBrief: denies,
+  markPrepared: denies,
+  unmarkPrepared: denies,
+  setCarryItem: denies,
+  setBriefNote: denies,
+  refreshBrief: denies,
+  // delegation (#63): B acting on A's listing or appearances is denied, A's appearances are unchanged
+  assignAppearance: denies,
+  reassignAppearance: denies,
+  unassign: denies,
+  suggestAssignments: denies,
+  myAppearances: denies,
+  chamberOutcomesLive: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -928,6 +974,18 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   providerFromTemplate: 'pure function over a template row',
   BUILT_IN_PROVIDERS: 'constant',
   QUERY_PLACEHOLDER: 'constant',
+  // briefs (#60): pure scoring, the empty memory port, and the system sweep
+  computeReadiness: 'pure',
+  emptyMemoryProvider: 'constant: the default memory port returns nothing',
+  onCourtDayListChanged:
+    "trigger consumer: lists the changed list's listings inside the event's own workspace scope and enqueues a refresh each; covered by briefs/__tests__/state.test.ts",
+  refreshBriefTargets:
+    'system job body: no workspace; lists targets only through the owner-defined app_brief_refresh_targets and refreshes each in its own workspace scope; covered by briefs/__tests__/state.test.ts',
+  // delegation (#63): the offboarding provider runs only inside removeMember's workspace scope, and
+  // the registrar is a no-op wiring call; both covered by delegation/__tests__/assign.test.ts
+  appearanceReassignProvider:
+    "offboarding provider: runs on removeMember's workspace-scoped transaction; covered by delegation/__tests__/assign.test.ts",
+  registerAppearanceReassignProvider: 'wiring: registers the provider once, touches no data',
   // whatsapp-link (#678): constants
   WHATSAPP_OTP_TTL_MS: 'constant',
   WHATSAPP_OTP_RESEND_COOLDOWN_MS: 'constant',
@@ -1194,6 +1252,16 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   planBoardAlert: 'pure (decides the one alert a listed item earns from a board row)',
   pollBoards:
     'system job body: no workspace; reads halls only through the owner-defined app_board_poll_targets, writes the global content-free board_observation and notifies each matter owner in their own workspace scope; covered by court-day/board.test.ts',
+  detectClashes: 'pure (groups already-loaded items by date and member)',
+  diffLists: 'pure',
+  addDays: 'pure (calendar date arithmetic)',
+  buildEveningBrief: 'pure (counts over an already-loaded court day, which getCourtDay scopes)',
+  buildMorningDiff: 'pure (sums already-computed list diffs)',
+  eveningPushPayload: 'pure (drops the matter names from an evening brief)',
+  findMissingOutcomes: 'pure (filters hearings already read under the workspace scope)',
+  LOW_READINESS_BELOW: 'constant',
+  OUTCOME_FALLBACK_TIME: 'constant',
+  hashRows: 'pure',
   itemNumber: 'pure',
   paceSamples: 'pure',
   estimateCallWindow: 'pure',
@@ -1479,6 +1547,9 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   // End-of-day digest preference (#49)
   getEndOfDayPreference: notificationDenies,
   setEndOfDayPreference: notificationDenies,
+  // Court-day reminder preferences (#64)
+  getReminderPreferences: notificationDenies,
+  setReminderPreferences: notificationDenies,
 };
 
 /** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */

@@ -7,6 +7,7 @@ import { createHash } from 'node:crypto';
 import { withWorkspace } from '../rls.ts';
 import { invitation, member, organization, user, WORKSPACE_ROLES } from '../schema/auth.ts';
 import { subscription } from '../schema/billing.ts';
+import { briefShare } from '../schema/share.ts';
 
 import { registerSeed, type SeedDb } from './index.ts';
 // The e2e subscriptions reference catalogue rows: register the `plans` seeder (order 0) too.
@@ -245,6 +246,45 @@ export function e2eInvitationTokenHash(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
+/** Seeded brief shares of chennai-solo (#507), one per state `/share/<token>` shows. */
+export const E2E_SHARES = {
+  valid: {
+    id: '00000000-0000-4000-8000-0000000e0001',
+    token: 'e2e-share-valid-00000000000000000000000000',
+  },
+  expired: {
+    id: '00000000-0000-4000-8000-0000000e0002',
+    token: 'e2e-share-expired-000000000000000000000000',
+  },
+  revoked: {
+    id: '00000000-0000-4000-8000-0000000e0003',
+    token: 'e2e-share-revoked-000000000000000000000000',
+  },
+} as const;
+export const E2E_SHARE_TITLE = 'Iyer v. State of Tamil Nadu';
+
+function shareRow(state: keyof typeof E2E_SHARES, at: Date) {
+  const seeded = E2E_SHARES[state];
+  return {
+    id: seeded.id,
+    workspaceId: E2E_WORKSPACES['chennai-solo'].id,
+    tokenHash: createHash('sha256').update(seeded.token).digest('hex'),
+    snapshot: {
+      matterTitle: E2E_SHARE_TITLE,
+      synopsis: 'A bail matter listed for arguments.',
+      stage: 'Arguments',
+      lastOrder: ['Notice issued to the State.'],
+      lastHearing: null,
+      openObligations: [],
+      assembledAt: at.toISOString(),
+    },
+    createdBy: e2eUser('owner', 'chennai-solo').id,
+    expiresAt: state === 'expired' ? at : E2E_INVITE_FAR_FUTURE,
+    revokedAt: state === 'revoked' ? at : null,
+    createdAt: at,
+  };
+}
+
 function invitationRow(seeded: E2eInvitation, at: Date) {
   const base = {
     id: seeded.id,
@@ -351,6 +391,12 @@ export async function seedE2e(db: SeedDb): Promise<void> {
       if (own.length > 0) await tx.insert(member).values(own).onConflictDoNothing();
       const invited = invitations.filter((i) => i.organizationId === workspaceId);
       if (invited.length > 0) await tx.insert(invitation).values(invited).onConflictDoNothing();
+      if (workspace.slug === 'chennai-solo') {
+        const shares = (Object.keys(E2E_SHARES) as (keyof typeof E2E_SHARES)[]).map((k) =>
+          shareRow(k, at),
+        );
+        await tx.insert(briefShare).values(shares).onConflictDoNothing();
+      }
       const paid = subscriptions.filter((s) => s.workspaceId === workspaceId);
       if (paid.length > 0) await tx.insert(subscription).values(paid).onConflictDoNothing();
     });

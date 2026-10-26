@@ -44,6 +44,12 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0034](0034-governed-fetch-layer.md) | Governed fetch layer | Proposed | 2026-10-23 | — |
 | [0035](0035-data-ops-alerting.md) | Data operations alerting | Proposed | 2026-10-23 | — |
 | [0036](0036-bench-facts.md) | Internal bench facts and the flagged bench card | Proposed | 2026-10-24 | — |
+| [0037](0037-court-day-read-model.md) | The court day read model | Proposed | 2026-10-24 | — |
+| [0038](0038-brief-as-derived-view.md) | The brief is a derived view | Proposed | 2026-10-25 | — |
+| [0039](0039-reminder-scheduling.md) | Court-day reminder scheduling | Proposed | 2026-10-25 | — |
+| [0040](0040-court-day-board-interaction-model.md) | The court-day board interaction model | Proposed | 2026-10-25 | — |
+| [0041](0041-brief-print-via-css.md) | Brief printing through a print stylesheet | Proposed | 2026-10-25 | — |
+| [0042](0042-offline-encrypted-store-and-key-lifecycle.md) | Offline encrypted store and key lifecycle | Proposed | 2026-10-25 | — |
 
 ## Statuses
 

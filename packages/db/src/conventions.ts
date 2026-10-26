@@ -81,6 +81,8 @@ export const GLOBAL_TABLES: readonly string[] = [
   'review_item',
   'bench_sitting_fact',
   'activation_event',
+  'referral',
+  'referral_credit',
 ];
 
 /**

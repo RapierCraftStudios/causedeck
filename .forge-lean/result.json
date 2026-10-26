@@ -1,0 +1,326 @@
+{
+ "status": "fixed",
+ "summary": "Citation checker implemented and committed; V1-V7 pass directly; forgedock check times out (300s) on V3/V4 only",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R8",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R9",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R10",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R11",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R12",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R13",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R14",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R15",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R16",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R17",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  },
+  {
+   "id": "R18",
+   "status": "implemented",
+   "evidence": "see implementation.md"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "drafting vitest",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "validators vitest",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "core drafting/jobs/audit",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "core cross-tenant",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "db",
+   "exit": 0
+  },
+  {
+   "id": "V6",
+   "command": "worker registry",
+   "exit": 0
+  },
+  {
+   "id": "V7",
+   "command": "config",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "core cross-tenant (V4), maxWorkers=14",
+   "result": "pass: 343 tests in 1003s (exceeds the 300s precheck cap)",
+   "fails_without_fix": "unknown"
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R18 implemented"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "V3-V7 pass"
+  },
+  {
+   "question": "3",
+   "answer": "no",
+   "evidence": "V1-V7 pass run directly; forgedock check exits 124 at 300s on V3 and V4 (V4 takes ~1000s on this host, 343 tests, only 3 added by this diff)"
+  },
+  {
+   "question": "4",
+   "answer": "no",
+   "evidence": ".env.example and docs/engineering/env.md are non-deliverable"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": ".env.example",
+   "why": "env registry guard requires the new CITATION_RESOLVER and INDIAN_KANOON_API_TOKEN keys"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "docs/engineering/env.md",
+   "why": "env registry guard requires the new keys documented"
+  }
+ ],
+ "not_members": [
+  {
+   "symbol": "reportFromRows",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "pure or gate helper, not a service case; the test is driven by packages/db/src/testing/cross-tenant-registry.ts where it is already listed in NOT_A_SERVICE with a reason"
+  },
+  {
+   "symbol": "assertCitationsClear",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "pure or gate helper, not a service case; the test is driven by packages/db/src/testing/cross-tenant-registry.ts where it is already listed in NOT_A_SERVICE with a reason"
+  },
+  {
+   "symbol": "exportBlockedByCitations",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "pure or gate helper, not a service case; the test is driven by packages/db/src/testing/cross-tenant-registry.ts where it is already listed in NOT_A_SERVICE with a reason"
+  },
+  {
+   "symbol": "AUTHORITY_KINDS",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_STATUSES",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "authority",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_KINDS",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_STATUSES",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "authority",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_KINDS",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_STATUSES",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "authority",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_KINDS",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_STATUSES",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "authority",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_KINDS",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_STATUSES",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "authority",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_KINDS",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_STATUSES",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "authority",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_KINDS",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_STATUSES",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "authority",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_KINDS",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_STATUSES",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "authority",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_KINDS",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "AUTHORITY_STATUSES",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  },
+  {
+   "symbol": "authority",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "test mocks or imports unrelated modules and holds no list of @causedeck/db schema exports or drafting tables; no sibling (e.g. draftExport) is named there either"
+  }
+ ]
+}

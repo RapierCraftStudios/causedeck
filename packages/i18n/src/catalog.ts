@@ -27,6 +27,7 @@ export const NAMESPACES = [
   'reminders',
   'court-insights',
   'matters',
+  'people',
   'matter-timeline',
   'calendar',
   'calendarView',

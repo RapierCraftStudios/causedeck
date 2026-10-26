@@ -3528,6 +3528,118 @@ export type Messages = {
       };
     };
   };
+  people: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    new: {
+      trigger: string;
+    };
+    search: {
+      label: string;
+      placeholder: string;
+    };
+    filters: {
+      kind: string;
+      language: string;
+      all: string;
+      clear: string;
+    };
+    kinds: {
+      primary: string;
+      instructing: string;
+      accounts: string;
+      family: string;
+    };
+    languages: {
+      en: string;
+      hi: string;
+      ta: string;
+      kn: string;
+      te: string;
+      ml: string;
+      mr: string;
+    };
+    list: {
+      label: string;
+      linked: string;
+      unlinked: string;
+      unlinkedHint: string;
+      archived: string;
+      redacted: string;
+      noDetails: string;
+      open: string;
+    };
+    empty: {
+      title: string;
+      body: string;
+    };
+    filteredEmpty: {
+      title: string;
+      clear: string;
+    };
+    loading: string;
+    error: {
+      title: string;
+      retry: string;
+      reference: string;
+    };
+    offline: string;
+    denied: string;
+    notFound: string;
+    form: {
+      titleNew: string;
+      titleEdit: string;
+      client: string;
+      clientHint: string;
+      kind: string;
+      phone: string;
+      phoneHint: string;
+      email: string;
+      save: string;
+      saving: string;
+      cancel: string;
+      needOne: string;
+      failed: string;
+      forbidden: string;
+      invalid: string;
+    };
+    language: {
+      label: string;
+      hint: string;
+    };
+    detail: {
+      back: string;
+      details: string;
+      phone: string;
+      email: string;
+      language: string;
+      kind: string;
+      edit: string;
+      archive: string;
+      archiveConfirm: string;
+      purge: string;
+      archivedOn: string;
+      linkedMatters: string;
+      noMatters: string;
+      relation: {
+        represents: string;
+        instructed_by: string;
+      };
+      log: {
+        title: string;
+        readOnly: string;
+        empty: string;
+        undone: string;
+      };
+    };
+    shortcuts: {
+      new: string;
+      search: string;
+      open: string;
+      close: string;
+    };
+  };
   matterTimeline: {
     title: string;
     loading: string;

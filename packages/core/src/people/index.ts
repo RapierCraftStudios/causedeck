@@ -15,4 +15,10 @@ export {
   type PeopleActor,
   type PeopleDeps,
 } from './contacts.ts';
+export {
+  getContactDetail,
+  type ContactDetail,
+  type ContactLinkedMatter,
+  type ContactLogEntry,
+} from './detail.ts';
 export type { ContactLanguageChangedEvent, PeopleEvent, PeopleEvents } from './events.ts';

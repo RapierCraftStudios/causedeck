@@ -1,0 +1,114 @@
+{
+  "people": {
+    "metaTitle": "People",
+    "title": "People",
+    "description": "Phone, email and language for your clients, and the matters they are linked to.",
+    "new": {
+      "trigger": "New contact"
+    },
+    "search": {
+      "label": "Search contacts",
+      "placeholder": "Search by name, phone or email"
+    },
+    "filters": {
+      "kind": "Kind",
+      "language": "Language",
+      "all": "All",
+      "clear": "Clear filters"
+    },
+    "kinds": {
+      "primary": "Primary",
+      "instructing": "Instructing",
+      "accounts": "Accounts",
+      "family": "Family"
+    },
+    "languages": {
+      "en": "English",
+      "hi": "Hindi",
+      "ta": "Tamil",
+      "kn": "Kannada",
+      "te": "Telugu",
+      "ml": "Malayalam",
+      "mr": "Marathi"
+    },
+    "list": {
+      "label": "Client contacts",
+      "linked": "{count, plural, =0 {No linked matters} one {# linked matter} other {# linked matters}}",
+      "unlinked": "Not linked to a matter",
+      "unlinkedHint": "No matter was linked within 24 hours of adding this contact.",
+      "archived": "Archived",
+      "redacted": "Phone and email are hidden for your role",
+      "noDetails": "No phone or email",
+      "open": "Open {name}"
+    },
+    "empty": {
+      "title": "No contacts yet",
+      "body": "Add the phone, email and language of a client you already act for."
+    },
+    "filteredEmpty": {
+      "title": "No contacts match these filters",
+      "clear": "Clear filters"
+    },
+    "loading": "Loading contacts",
+    "error": {
+      "title": "Couldn't load contacts.",
+      "retry": "Retry",
+      "reference": "Reference: {digest}"
+    },
+    "offline": "You are offline. This is the last saved list; changes will not save until you reconnect.",
+    "denied": "You don't have permission to see client contacts.",
+    "notFound": "This contact does not exist or you cannot see it.",
+    "form": {
+      "titleNew": "New contact",
+      "titleEdit": "Edit contact",
+      "client": "Client name",
+      "clientHint": "The client this contact belongs to.",
+      "kind": "Kind",
+      "phone": "Phone",
+      "phoneHint": "With country code, e.g. +919876543210",
+      "email": "Email",
+      "save": "Save contact",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "needOne": "Give a phone or an email.",
+      "failed": "The contact could not be saved. Try again.",
+      "forbidden": "You cannot change client contacts.",
+      "invalid": "Check the phone (with country code) and email."
+    },
+    "language": {
+      "label": "Language for messages",
+      "hint": "Messages to this client are written in this language."
+    },
+    "detail": {
+      "back": "All contacts",
+      "details": "Details",
+      "phone": "Phone",
+      "email": "Email",
+      "language": "Language",
+      "kind": "Kind",
+      "edit": "Edit",
+      "archive": "Archive",
+      "archiveConfirm": "Archive this contact?",
+      "purge": "Archive and erase details",
+      "archivedOn": "Archived",
+      "linkedMatters": "Linked matters",
+      "noMatters": "Not linked to a matter you can see.",
+      "relation": {
+        "represents": "We represent",
+        "instructed_by": "Instructs us"
+      },
+      "log": {
+        "title": "Outward-action log",
+        "readOnly": "A read-only record of changes to this contact's details.",
+        "empty": "No changes recorded.",
+        "undone": "Undone"
+      }
+    },
+    "shortcuts": {
+      "new": "New contact",
+      "search": "Search",
+      "open": "Open contact",
+      "close": "Close"
+    }
+  }
+}

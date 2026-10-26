@@ -2956,6 +2956,23 @@ const CASES: Record<string, Case> = {
     const all = await core.listContacts(deps, { userId: f.ub, workspaceId: f.b.id });
     expect(all.map((c) => c.id)).toContain(bId);
   },
+  getContactDetail: async (f) => {
+    const { deps } = peopleDeps(f.tx);
+    const contactId = f.a.rows.client_contact?.id ?? '';
+    await expectContactsDenied(f, (db, workspaceId) =>
+      core.getContactDetail({ ...deps, db }, { userId: f.ub, workspaceId }, { contactId }),
+    );
+    // B's own owner finds nothing of A's contact; A's owner reads it: the probe itself is sound.
+    await expectDenied(
+      core.getContactDetail(deps, { userId: f.ub, workspaceId: f.b.id }, { contactId }),
+    );
+    const own = await core.getContactDetail(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { contactId },
+    );
+    expect(own.contact.id).toBe(contactId);
+  },
   createContact: async (f) => {
     const { deps, events, graphEvents } = peopleDeps(f.tx);
     const aPerson = await clientPersonOf(f, f.a.id);

@@ -606,6 +606,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // people (#82): B reading, changing, linking or archiving A's client contacts is denied, A's
   // contacts, their activity and role edges are unchanged; B's own list holds none of A's
   listContacts: empty,
+  getContactDetail: denies,
   createContact: denies,
   updateContact: denies,
   undoContactChange: denies,

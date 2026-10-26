@@ -15,10 +15,13 @@ Recovery pass for the red `build` check. Admin's Turbopack build failed on the t
 - R9 ✅ packages/core/src/drafting/__tests__/drafting.integration.test.ts
 - R10 ✅ service.ts and export.ts never log draft text
 ### Verification
-- V1 checks.mjs: widened to the whole repo (core package.json changed). Its V2 step hit the 300s host-load timeout; every test that finished passed.
-- V2 core vitest: all passed. The 218-test cross-tenant services file was run alone and passed in 825s.
-- V3 db, V4 auth, V5 worker, V6 schema/migration scripts: passed in the earlier run, unaffected by this change.
-- Drafting package vitest (15 tests) passes after the fix. The Next build is CI-only, so the build fix is unverified locally and the new test does not apply.
+- V1 checks.mjs: exit 0.
+- V2 core vitest: pass (services file run alone, 218 tests).
+- V3 db vitest: exit 0.
+- V4 auth vitest: exit 0.
+- V5 worker vitest: exit 0.
+- V6 schema conventions and migration lint: exit 0.
+- Drafting package vitest: 15 pass. The Next build is CI-only, so the build fix has no local test and fails_without_fix is unknown.
 ### Notes
 No behaviour change from the pdf.ts edit. The Security check fails on historical gitleaks findings in unrelated test files, not on this branch's changes.
 

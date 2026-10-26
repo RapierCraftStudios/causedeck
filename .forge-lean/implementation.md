@@ -43,3 +43,8 @@ Stale-list follow-up: AUTHORITY_KINDS, AUTHORITY_STATUSES and authority recorded
 
 ## CI fix: tenancy
 `authority` (tenant table) was missing from the erasure order (`lifecycle/deletion/erase.ts`) and the drafting exporter (`lifecycle/export/exporters.ts`). Added both. Ran export-coverage, lifecycle cross-tenant and core cross-tenant suites locally: 14 files, 365 tests pass. The CI log was unavailable, so the cause is inferred from these coverage guards.
+
+## CI round 4
+- core#test: only `lifecycle/__tests__/memory-erasure.test.ts` "owner request..." timed out at 60 s; 1594 other tests passed, shard took 587 s (host load). The test uses ad-hoc memory tables and `seedTwoTenants`, not the citation code. Locally it passes in 1.8 s (4/4). Treated as a load flake; no code change.
+
+- CI core shard: memory-erasure.test.ts "owner request ... erases every memory row" timed out at 60s while the shard ran 587s with collect time 595s (host contention). Locally the file passes (4 tests, 1.8s for that case, `vitest run src/lifecycle/__tests__/memory-erasure.test.ts`). Our only lifecycle change is registering `authority` in erase.ts/exporters.ts (one line each); no code fix applicable, treated as a CI load flake; re-run the shard.

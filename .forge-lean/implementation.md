@@ -31,3 +31,6 @@ No env vars. Both reports of one version share a timestamp inside a single test 
 
 ## Sibling-list fix
 Added no list entries: the db table list already names draft_consistency_report, and the cross-tenant services list already names the new service functions. The other flagged tests do not enumerate these symbols; recorded as not_members in result.json.
+
+## Lint fix
+CI lint failed on Prettier formatting in `drafting-consistency-check.ts` and `validators/src/consistency.ts`; ran prettier --write. ESLint on changed files in drafting, validators, core, db and worker is clean.

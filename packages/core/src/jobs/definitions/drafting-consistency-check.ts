@@ -39,7 +39,10 @@ export async function runDraftingConsistencyCheckJob(
       { draftVersionId: payload.draftVersionId },
     );
     // Counts only: findings carry spans and names, which never reach a log.
-    ctx.log.info({ draftVersionId: payload.draftVersionId, counts: report.counts }, 'consistency checked');
+    ctx.log.info(
+      { draftVersionId: payload.draftVersionId, counts: report.counts },
+      'consistency checked',
+    );
     return report;
   } catch (error) {
     if (error instanceof WorkspaceError) {

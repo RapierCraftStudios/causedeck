@@ -53,7 +53,10 @@ export const FindingSchema = z
     found: z.string().max(2000),
     provenance: FindingProvenanceSchema,
     /** The edit a lawyer may confirm: replace the span with this text. Absent when none is safe. */
-    fix: z.object({ replacement: z.string().max(2000) }).strict().exactOptional(),
+    fix: z
+      .object({ replacement: z.string().max(2000) })
+      .strict()
+      .exactOptional(),
   })
   .strict();
 export type Finding = z.infer<typeof FindingSchema>;

@@ -2,324 +2,540 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Add `packages/core/src/drafting/{service,policy,index}.ts` (`createDraft`, `renderDraft`, `saveVersion` immutable with content hash, `listVersions`, `restoreVersion` creating a new version, `exportDraft`;",
+   "quote": "Neutral-citation patterns for SC (`YYYY INSC N`), Madras HC and Karnataka HC (`YYYY:MHC:N`, `YYYY:KHC:N`) and common reporters (SCC, SCC OnLine, AIR, MLJ, ILR) are extracted from text with spans mapped to block ids [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "`can(user,'draft:*')` with clerk restrictions; facts loaded via the matter-graph index and passed to pure slot resolvers)",
+   "quote": "On the labelled fixture set the false-verified rate is at most 0.5% and every fabricated citation resolves to `not_found` or `unknown`, never `verified` [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "`packages/core/src/jobs/definitions/drafting-export.ts` (job `drafting.export`, payload {workspaceId, draftVersionId, format}, idempotent on (draft_version_id, format) returning the stored file)",
+   "quote": "A citation is `verified` only on an exact structured match and a title similarity at or above a configured threshold; ambiguous matches are `unknown` [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "storage under the workspace key prefix with envelope encryption and presigned download only (no email/share path)",
+   "quote": "No code path generates, completes, corrects or suggests a citation; static test greps the package for AI calls inside `citations/` and fails if any exist [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "`exported_at` plus audit_event with actor, format and version hash, ai_call audit on refused non-India calls.",
+   "quote": "The resolver stores only citation string, status, canonical URL and short title; no judgment text is persisted [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Add `@causedeck/drafting` dependency in `packages/core/package.json` and the `./drafting` export;",
+   "quote": "With `CITATION_RESOLVER=mock` (default when no token is set) the checker runs fully offline in dev and CI [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "update CORE_DOMAIN_DEPENDENCIES and `docs/engineering/core-domains.md`,",
+   "quote": "Resolver outage, timeout or rate-limit yields `unknown` with reason `resolver_unavailable`, never `verified`, and the job retries with backoff [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "`packages/db/src/testing/cross-tenant-registry.ts` SERVICE_TESTS with real cases in `packages/core/src/__tests__/cross-tenant/services.test.ts` (B on A denied, A unchanged, including export job and presign), `apps/worker/src/__tests__/registry.test.ts`.",
+   "quote": "`acknowledgeUnverified` is required to export a draft containing any `not_found` citation; the acknowledgement stores actor, time, reason and citation ids in `audit_event` [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Testcontainers integration test `packages/core/src/drafting/__tests__/drafting.integration.test.ts`.",
+   "quote": "Editing a cited span invalidates its previous status and re-queues the check; stale statuses are never shown as current [type:api]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "No draft text in pino logs.",
+   "quote": "Per-workspace resolver rate limit and daily budget are enforced and visible in the report as `throttled` [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "`authority` has RLS on `workspace_id` and is covered by the cross-tenant suite [type:api]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "Official links open as plain external links intended for a new window; no court page is framed and nothing is scraped [type:manual]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R13",
+   "quote": "The check job p95 is under 5 s for a 10-citation draft against the mock resolver [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "at least 200 labelled cases: valid, fabricated, near-miss",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "Job `drafting.citations.check` payload `{workspaceId, draftVersionId}`; emits `draft.citations.checked`.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R16",
+   "quote": "`CitationReport = { draftVersionId, items: Array\u003c{ id, blockId, span:[start,end], raw, normalized, kind, status, sourceUrl?, reason? }>, counts:{verified,not_found,unknown} }`",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R17",
+   "quote": "`packages/config/src/env.ts` (add `INDIAN_KANOON_API_TOKEN` optional, `CITATION_RESOLVER=mock|indian-kanoon`)",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R18",
+   "quote": "Never log draft text; log citation strings only at debug level and never with matter identifiers.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R19",
+   "quote": "Out of scope**: UI for statuses and the acknowledgement dialog (#79); research link-outs (#80); the consistency checker (#78).",
+   "disposition": "not-applicable",
+   "evidence": ".forge-lean/investigation.md: issue marks UI (#79), link-outs (#80) and consistency checker (#78) out of scope; open issues #78 and #79 cover them",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R20",
+   "quote": "Real credentials: #114.",
+   "disposition": "post-deploy",
+   "why": "The real Indian Kanoon token and commercial-use confirmation are human issue #114; the live resolver can only be checked after it is configured. Mock is the default and is fully tested in lane."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/core/src/drafting/policy.ts",
-   "change": "New. Draft access: member role via workspaces index, matter visibility like research/notes-service.ts, `can()` checks for draft.read/draft.write/draft.export; clerk denied (NOT_FOUND/FORBIDDEN per matter-service convention).",
+   "path": "packages/validators/src/citation.ts",
+   "change": "zod `CitationSchema`, `CitationStatus = 'verified'|'not_found'|'unknown'`, `CitationKind`, reason enum (resolver_unavailable, throttled, ambiguous, ...), `CitationReport` type. Add the `./citation` subpath to packages/validators/package.json (mirror `./drafting`).",
    "requirements": [
-    "R2"
+    "R16",
+    "R7",
+    "R10"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/core/src/drafting/service.ts",
-   "change": "New. createDraft, renderDraft (loads facts through matter-graph index only, resolveBlocks, no narrative calls unless port given), saveVersion (canonical-JSON sha256 into draft_version.content_sha256, next version_no), listVersions, restoreVersion (new version copying old content), exportDraft (permission check, enqueue `drafting.export`; returns existing export when present). Never logs draft text.",
+   "path": "packages/validators/package.json",
+   "change": "Add `./citation` export mirroring `./drafting`.",
    "requirements": [
-    "R1",
-    "R2",
-    "R10"
+    "R16"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/core/src/drafting/export.ts",
-   "change": "New. runDraftingExport({db,store,keys,log,now}, payload): idempotent on (draft_version_id, format): return the existing draft_export row if present; else render docx/pdf via @causedeck/drafting (block on MissingSlotsError), put to storage key objectKey kind 'export' under ws/\u003cworkspaceId>/ with envelope encryption (same keys/store usage as lifecycle/export), insert draft_export with exported_at, record audit `draft.exported` (actor, format, version content hash). `createDraftExportDownload` returns presigned GET only (createDownloadUrl). No email/share function. Narrative calls via createAiPorts so refused non-India calls write ai_call rows.",
+   "path": "packages/drafting/src/citations/patterns.ts",
+   "change": "Regexes for INSC, MHC, KHC neutral citations and SCC, SCC OnLine, AIR, MLJ, ILR reporters, plus `Party v. Party`.",
    "requirements": [
-    "R3",
-    "R4",
-    "R5",
-    "R10"
+    "R1"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/core/src/drafting/index.ts",
-   "change": "New. Public exports of the service functions and types only.",
+   "path": "packages/drafting/src/citations/normalize.ts",
+   "change": "Canonical form of each citation kind (whitespace, punctuation, court code case); reuse nothing that imports db.",
    "requirements": [
-    "R1"
+    "R1",
+    "R3"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/core/src/jobs/definitions/drafting-export.ts",
-   "change": "New. defineJob `drafting.export` (zod payload {workspaceId, draftVersionId, format: ExportFormat}); singleton and idempotencyKey `${draftVersionId}:${format}`; handler calls runDraftingExport; pattern from export-build.ts.",
+   "path": "packages/drafting/src/citations/extract.ts",
+   "change": "`extractCitations(blocks)` walks the block tree with `walkBlocks` (text of heading, paragraph, section title) and returns `{blockId (block key), span:[start,end], raw, normalized, kind}`; deterministic ids so a version's citation set is reproducible.",
    "requirements": [
-    "R3"
+    "R1",
+    "R16"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Wiring only: import and register draftingExport (3 spots like exportBuild at :48,:187,:247).",
+   "path": "packages/drafting/src/citations/match.ts",
+   "change": "Pure `classify(citation, resolverResult, {titleThreshold})`: verified only on exact normalised structured match plus title similarity at or above threshold; ambiguous or multiple matches give unknown; no hit on a definitive resolver gives not_found; outage gives unknown/resolver_unavailable. Store only citation, status, sourceUrl, short title (truncate title).",
    "requirements": [
-    "R3"
+    "R3",
+    "R5",
+    "R7"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/core/package.json",
-   "change": "Add dependency `@causedeck/drafting: workspace:*` (core uses the engine to render; docs/engineering/13-technical-architecture-spike.md:94 lists drafting in core's dependencies) and exports entry `./drafting`.",
+   "path": "packages/drafting/src/citations/resolvers/mock.ts",
+   "change": "Deterministic offline resolver fixtures; default resolver.",
    "requirements": [
-    "R6"
+    "R6",
+    "R13"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/core/src/index.ts",
-   "change": "Add `export * from './drafting/index.ts';`.",
+   "path": "packages/drafting/src/citations/resolvers/indian-kanoon.ts",
+   "change": "API client over injectable fetch: timeout, retry with jitter, maps HTTP 429/5xx/timeouts to a typed unavailable outcome; returns only citation, canonical URL and short title, never judgment text.",
+   "requirements": [
+    "R5",
+    "R7"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/drafting/src/citations/resolvers/official-links.ts",
+   "change": "Pure link builders for SC and HC neutral-citation portals (strings only, no fetch, no scraping).",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/drafting/src/citations/rate-limit.ts",
+   "change": "Per-workspace token-bucket limiter with injectable clock; returns throttled outcome.",
+   "requirements": [
+    "R10"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/drafting/src/citations/index.ts",
+   "change": "Barrel for the citations module; re-export from packages/drafting/src/index.ts (see D12).",
    "requirements": [
     "R1"
    ]
   },
   {
-   "id": "D9",
-   "path": "packages/config/eslint/core-domains.js",
-   "change": "Add `drafting` domain (CORE_DOMAINS list as the file requires) with CORE_DOMAIN_DEPENDENCIES entry: workspaces, matter-graph, audit (plus usage/ai only if imported, via their index.ts); add 'drafting' to the jobs dependency list; keep acyclic.",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D10",
-   "path": "docs/engineering/core-domains.md",
-   "change": "Add drafting row to the domain table, the dependency graph edges and dependency table, and jobs row, matching D9.",
-   "requirements": [
-    "R7"
-   ]
-  },
-  {
-   "id": "D11",
-   "path": "packages/db/src/schema/drafting.ts",
-   "change": "Add tenantTable `draft_export` (id, draft_version_id, format text check in pdf/docx, storage_key, size_bytes, exported_at timestamptz not null, created_by nullable, composite FK (workspace_id, draft_version_id) to draft_version, unique (draft_version_id, format), workspace FK cascade) following the existing tables' conventions.",
-   "requirements": [
-    "R3",
-    "R5"
-   ]
-  },
-  {
    "id": "D12",
-   "path": "packages/db/migrations",
-   "change": "Add next free-numbered migration SQL (after 20261025060000_drafting.sql) creating draft_export with forced RLS keyed on app.workspace_id, regenerated snapshot/journal in migrations/meta; renumber if the base took the slot.",
+   "path": "packages/drafting/src/index.ts",
+   "change": "Re-export the citations public surface.",
    "requirements": [
-    "R3",
-    "R5"
+    "R1"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add `draft_export` to the root table list.",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "packages/db/src/__tests__/rls/sql.test.ts",
-   "change": "Add `draft_export` to the RLS catalog; plus TABLE_TESTS/registry entry and two-tenant seeder for it in packages/db/src/testing (cross-tenant-registry.ts table map).",
-   "requirements": [
-    "R3"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/auth/src/policy/actions.ts",
-   "change": "Add `draft.read` and `draft.export` to ACTIONS.draft.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": "packages/auth/src/policy/matrix.ts",
-   "change": "MATRIX: draft.read 'junior', draft.export 'junior'; add both to JUNIOR_MATTER_SCOPED (clerks and viewers denied). Regenerate docs/engineering/permissions.md with `pnpm docs:permissions` and update any policy matrix test snapshot that lists actions.",
-   "requirements": [
-    "R2"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "packages/core/src/audit/events.ts",
-   "change": "Register audit action `draft.exported` (non-security, description) so record() accepts it; update the audit events test list if one enumerates actions.",
-   "requirements": [
-    "R5"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "SERVICE_TESTS entries for every new runtime export of @causedeck/core (createDraft, renderDraft, saveVersion, listVersions, restoreVersion, exportDraft, runDraftingExport, createDraftExportDownload, draftingExport job exports, etc.) pointing to a real test; NOT_A_SERVICE with reason for pure helpers/consts. Table map: draft_export: DB_TABLES_TEST.",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Hotspot (3619 lines): add only a thin wiring (\u003c=150 lines) of real B-on-A cases for drafting (B denied or sees nothing, A unchanged, export job and presign); put bulk in a new file packages/core/src/drafting/__tests__/cross-tenant.test.ts and reference it from the registry if the registry allows a per-entry test path (as LIFECYCLE_TEST does).",
-   "requirements": [
-    "R8"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add 'drafting.export' to the expected job names list (near 'export.build' :145).",
-   "requirements": [
-    "R8",
-    "R3"
-   ]
-  },
-  {
-   "id": "D21",
-   "path": "packages/core/src/drafting/__tests__/drafting.integration.test.ts",
-   "change": "New testcontainers integration test: create/save/restore/list versions with hash checks, exportDraft end to end with in-memory store (idempotent second run returns same row and key, audit event with actor/format/hash, exported_at set, missing slot blocks export, clerk denied), refused non-India narrative writes ai_call, presigned download only. Add unit tests for policy and for no draft text in logs.",
+   "path": "packages/drafting/src/citations/__tests__/citations.test.ts",
+   "change": "Unit tests: extraction spans and block ids per pattern, classify thresholds, outage/throttle, official links, mock offline, p95 under 5 s for 10 citations, false-verified rate at most 0.5% on the fixture set, every fabricated case never verified.",
    "requirements": [
     "R1",
     "R2",
     "R3",
-    "R4",
+    "R6",
+    "R7",
+    "R10",
+    "R12",
+    "R13"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/drafting/src/citations/__tests__/fixtures/citations.json",
+   "change": "At least 200 labelled cases (valid, fabricated, near-miss) used by the mock resolver and the rate test.",
+   "requirements": [
+    "R14",
+    "R2"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "packages/drafting/src/citations/__tests__/no-ai.test.ts",
+   "change": "Static test: reads every file under citations/ and fails on imports or identifiers of `@causedeck/ai`, `narrative`, `draftNarrative`, gateway or any generate/complete/suggest call (model on packages/core/src/automation/no-l5.test.ts).",
+   "requirements": [
+    "R4"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/db/src/schema/authority.ts",
+   "change": "Tenant table `authority` (id, draft_version_id, block_id, span, raw_text, normalized, kind, resolution jsonb of {reason,title,similarity,source}, status, source_url, checked_at, ack_by, ack_at) via `tenantTable`, composite FK to draft_version(workspace_id,id) as in draftExport, unique on (draft_version_id, block_id, span), check on status/kind. No judgment-text column.",
+   "requirements": [
     "R5",
-    "R9",
-    "R10"
+    "R11"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export the authority schema.",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/db/migrations/20261026000000_authority.sql",
+   "change": "Generated CREATE TABLE plus hand-written RLS (enable, force, ws_isolation policy, workspace_id index) in the style of 20261025225346_drafting_export.sql, with the header comments it uses. Use the next free timestamp after the newest file on the base; add meta/\u003cts>_snapshot.json and the _journal.json entry (generate with drizzle-kit, do not hand-edit the snapshot).",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/db/migrations/meta/_journal.json",
+   "change": "Journal entry for the new migration.",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/db/migrations/meta/20261026000000_snapshot.json",
+   "change": "Regenerated snapshot for the new migration.",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add `authority` to the root table list.",
+   "requirements": [
+    "R11"
    ]
   },
   {
    "id": "D22",
-   "path": "pnpm-lock.yaml",
-   "change": "Lockfile importer entry for packages/core adding @causedeck/drafting (pnpm install --lockfile-only; delete node_modules first if EACCES).",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add `authority` to the RLS catalog.",
    "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register `authority` in the table map (DB_TABLES_TEST or TABLE_TESTS plus seeders as the registry requires) and add the new core drafting exports to SERVICE_TESTS (or NOT_A_SERVICE with a reason for pure helpers).",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases: workspace B cannot read, check or acknowledge workspace A's citation report (denied or sees nothing; A unchanged). Keep the addition small (hotspot file).",
+   "requirements": [
+    "R11",
+    "R8"
+   ]
+  },
+  {
+   "id": "D25",
+   "path": "packages/core/src/drafting/citations.ts",
+   "change": "`checkDraft(deps, actor|system, draftVersionId)`: load version content, `extractCitations`, resolve via the configured resolver under limiter plus daily budget (count of today's external-resolver rows per workspace), classify, upsert `authority` rows idempotently on (draft_version_id, block_id, span), record `draft.citations.checked` audit (counts only), return `CitationReport` (counts include throttled as unknown with reason `throttled`, listed separately in the report). `getCitationReport` returns only statuses for the requested version (draft.read). Never log draft text; citation strings at debug only.",
+   "requirements": [
+    "R5",
+    "R6",
+    "R7",
+    "R9",
+    "R10",
+    "R15",
+    "R16",
+    "R18"
+   ]
+  },
+  {
+   "id": "D26",
+   "path": "packages/core/src/drafting/citation-ack.ts",
+   "change": "`acknowledgeUnverified(deps, actor, {draftVersionId, citationIds, reason})`: requires `draft.export`, sets ack_by/ack_at on the not_found rows, writes `draft.citations.acknowledged` audit_event with actor, time, reason and citation ids in the same transaction. Plus `exportBlockedByCitations` helper.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D27",
+   "path": "packages/core/src/drafting/service.ts",
+   "change": "`saveVersion`/`restoreVersion` accept an optional `enqueueCitationCheck` dep and call it after the insert (new version has no statuses until checked); `exportDraft` refuses with a CONFLICT-type error when the version has any unacknowledged not_found citation, or has unchecked citations (extract and compare to stored rows, running `checkDraft` first).",
+   "requirements": [
+    "R8",
+    "R9"
+   ]
+  },
+  {
+   "id": "D28",
+   "path": "packages/core/src/drafting/export.ts",
+   "change": "`runDraftingExport` applies the same gate (defence in depth, since the job can be enqueued directly); refusal is a `WorkspaceError` so the job wrapper makes it permanent.",
+   "requirements": [
+    "R8"
+   ]
+  },
+  {
+   "id": "D29",
+   "path": "packages/core/src/drafting/index.ts",
+   "change": "Export checkDraft, getCitationReport, acknowledgeUnverified and their types (other domains import only this file).",
+   "requirements": [
+    "R8",
+    "R15",
+    "R16"
+   ]
+  },
+  {
+   "id": "D30",
+   "path": "packages/core/src/jobs/definitions/drafting-citations-check.ts",
+   "change": "`defineJob` `drafting.citations.check`, payload `{workspaceId, draftVersionId}` (zod), singleton/idempotent on draftVersionId, retries with backoff; transient resolver unavailability leaves the row unknown/resolver_unavailable and rethrows a retryable error until the last attempt; permanent errors (missing version, WorkspaceError) use PermanentError. Exports `enqueueDraftingCitationCheck` like `enqueueDraftingExport`.",
+   "requirements": [
+    "R7",
+    "R15"
+   ]
+  },
+  {
+   "id": "D31",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Register the new job and its enqueue wiring next to draftingExport (:48,189,250).",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D32",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add `drafting.citations.check` to the expected job list (:146 area).",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D33",
+   "path": "packages/core/src/audit/events.ts",
+   "change": "Add `draft.citations.checked` and `draft.citations.acknowledged` (security:false for checked, true for acknowledged) to the action registry.",
+   "requirements": [
+    "R8",
+    "R15"
+   ]
+  },
+  {
+   "id": "D34",
+   "path": "packages/config/src/env/providers.ts",
+   "change": "Add optional secret `INDIAN_KANOON_API_TOKEN` and enum `CITATION_RESOLVER=mock|indian-kanoon` (default mock; indian-kanoon requires the token; production default stays mock until #114). Update any generated env docs or key-registry tests that enumerate keys.",
+   "requirements": [
+    "R17",
     "R6"
+   ]
+  },
+  {
+   "id": "D35",
+   "path": "packages/core/src/drafting/__tests__/citations.integration.test.ts",
+   "change": "Testcontainers test: check a version with mock resolver (verified, not_found, unknown), idempotent rerun, new version has no statuses, ack required then export allowed, ack audit row content, outage gives unknown/resolver_unavailable, daily budget gives throttled, no draft text in log output.",
+   "requirements": [
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R9",
+    "R10",
+    "R18"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "packages/drafting public API and purity (packages/drafting/src/index.ts): no send/file/submit function; engine unchanged except nothing."
+   "what": "`runDraftingExport` idempotency on (draft_version_id, format) and its audit event `draft.exported` (packages/core/src/drafting/export.ts); existing drafting.integration.test.ts must still pass."
   },
   {
    "id": "P2",
-   "what": "draft_version immutability trigger and existing drafting RLS in packages/db/migrations/20261025060000_drafting.sql: do not edit; add a new migration only."
+   "what": "`draft_version` immutability trigger and `saveVersion`/`restoreVersion` return shapes (packages/core/src/drafting/service.ts, packages/db/src/schema/drafting.ts)."
   },
   {
    "id": "P3",
-   "what": "export.build workspace export (packages/core/src/jobs/definitions/export-build.ts, lifecycle/export) behaviour and its presign/audit actions."
+   "what": "packages/drafting stays db-free: no new workspace dependency in packages/drafting/package.json; core domain import rules (packages/config/eslint/core-domains.js) unchanged; other domains import drafting only via packages/core/src/drafting/index.ts."
   },
   {
    "id": "P4",
-   "what": "Existing permission matrix rows (packages/auth/src/policy/matrix.ts): only add draft.read and draft.export; draft.write unchanged."
+   "what": "The corpus verifier `verifyCitation` in packages/core/src/citations/verify.ts and its callers are unchanged."
+  },
+  {
+   "id": "P5",
+   "what": "The existing policy matrix: no new policy action; `draft.read`/`draft.write`/`draft.export` semantics (packages/auth/src/policy/matrix.ts) unchanged."
+  },
+  {
+   "id": "P6",
+   "what": "The permanent guardrail: no code path generates, completes or suggests a citation (PX-4); the checker only labels."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
+   "command": "pnpm --filter @causedeck/drafting exec vitest run src/citations src/__tests__ --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/drafting src/domains.test.ts src/jobs/registry.test.ts src/__tests__/cross-tenant/registry.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/drafting.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/drafting src/jobs src/audit --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/auth exec vitest run src/policy --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V6",
-   "command": "pnpm --filter @causedeck/db exec tsx scripts/check-schema-conventions.ts && pnpm --filter @causedeck/db exec tsx scripts/lint-migrations.ts"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V7",
+   "command": "pnpm --filter @causedeck/config exec vitest run --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V8",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "New table `draft_export` instead of a column on draft_version",
-   "justification": "draft_version is immutable by trigger (packages/db/src/schema/drafting.ts:8-10, only created_by may change), so exported_at and the stored file key cannot live there; unique (draft_version_id, format) gives the idempotency key",
-   "source": "spec"
+   "choice": "Pure extract/match/resolve code lives in packages/drafting/src/citations; the DB-backed `checkDraft` and `acknowledgeUnverified` live in packages/core/src/drafting, not in packages/drafting as the issue's file list says.",
+   "justification": "packages/drafting/package.json depends only on ai and validators; adding @causedeck/db would be a new workspace dependency, and the existing split (engine pure, service in core) is the #768 precedent (packages/core/src/drafting/service.ts).",
+   "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Add policy actions draft.read and draft.export (junior, matter-scoped) rather than reuse draft.write",
-   "justification": "matrix.ts:30 has only draft.write; the issue requires can(user,'draft:*') with clerk restrictions; juniors and up, clerks denied, mirrors memory.read/write (research/notes-service.ts:1-8)",
+   "choice": "The job is a core job definition (packages/core/src/jobs/definitions/drafting-citations-check.ts) registered in jobs/registry.ts, not apps/worker/src/jobs/check-citations.ts.",
+   "justification": "All jobs including drafting.export are defined in core and only listed in apps/worker/src/__tests__/registry.test.ts:146.",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Add workspace dependency core -> drafting",
-   "justification": "docs/engineering/13-technical-architecture-spike.md:94 lists drafting among core's dependencies; apps/web already depends on it",
-   "source": "doc"
+   "choice": "Migration at packages/db/migrations with timestamp name instead of packages/db/drizzle/00xx, and tests in src/__tests__ instead of test/.",
+   "justification": "Repo layout: packages/db/migrations/20261025225346_drafting_export.sql and meta/_journal.json; vitest includes src.",
+   "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Reuse storage kind 'export' and the export-build store/keys wiring",
-   "justification": "packages/storage/src/limits.ts:13 SERVER_OBJECT_KINDS includes 'export'; jobs/definitions/export-build.ts:36-49 shows createObjectStoreFromEnv and EnvKeyProvider usage",
+   "choice": "Statuses attach to immutable draft_version_id; an edit creates a new version with no authority rows, which is how stale statuses are invalidated and a re-check queued.",
+   "justification": "draft_version is immutable by trigger (packages/db/src/schema/drafting.ts:108-131), so rows cannot go stale in place.",
+   "source": "spec"
+  },
+  {
+   "id": "K5",
+   "choice": "The per-workspace daily budget is counted from authority rows (external-resolver rows checked today) rather than a new usage table; the rate limit is an in-memory token bucket.",
+   "justification": "Avoids a second table and migration; AI budgets in packages/ai/usage are LLM-spend specific and not reusable for resolver calls.",
+   "source": "precedent"
+  },
+  {
+   "id": "K6",
+   "choice": "No new policy action: report reads use draft.read, check uses draft.write, acknowledgement uses draft.export.",
+   "justification": "packages/auth/src/policy/actions.ts:14 and matrix.ts:30-32 already define them, with clerk restrictions via JUNIOR_MATTER_SCOPED.",
    "source": "precedent"
   }
  ]

@@ -22,3 +22,4 @@ export {
   type Provenance,
   type Resolution,
 } from './slots';
+export * from './citations/index';

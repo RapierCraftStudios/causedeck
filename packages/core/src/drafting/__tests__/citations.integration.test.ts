@@ -70,7 +70,9 @@ describe('citation checker', () => {
       ]);
       const again = await checkDraft(deps, actor, version.id);
       expect(again.items.map((i) => i.id)).toEqual(report.items.map((i) => i.id));
-      const rows = await inWorkspace(tx, workspaceId, (s) => s.select().from(schema.authority));
+      const rows = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.authority).where(eq(schema.authority.draftVersionId, version.id)),
+      );
       expect(rows).toHaveLength(3);
       expect(JSON.stringify(rows)).not.toContain('7f3a');
       expect(JSON.stringify(logs)).not.toContain('7f3a');

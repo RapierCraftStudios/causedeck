@@ -1,5 +1,5 @@
 // Find the citations in a draft's block tree. Text lives in heading and paragraph blocks and in
-// section titles; slot and narrative blocks hold no author text. A span is `[start, end)` in that
+// section titles; slot and other computed-content blocks hold no author text. A span is `[start, end)` in that
 // block's own text and `blockId` is the stable block key from `walkBlocks`, so the same version
 // always yields the same ids. A case name directly in front of a structured citation becomes that
 // citation's title hint instead of an item of its own.
@@ -41,7 +41,7 @@ export function extractFromText(text: string, blockId: string): ExtractedCitatio
         blockId,
         span: [start, end],
         raw: match[0],
-        normalized: pattern.normalize(match as RegExpExecArray),
+        normalized: pattern.normalize(match),
         kind: pattern.kind,
       });
     }

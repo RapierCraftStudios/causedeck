@@ -219,6 +219,9 @@ describe('row-level security catalog', () => {
 
         // Official notices feed (#584).
         'notice_match',
+
+        // Client contacts (#82).
+        'client_contact',
       ].sort(),
     );
     for (const row of rows)

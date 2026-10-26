@@ -131,6 +131,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Brief sharing (#507).
   brief_share: DB_TABLES_TEST,
+
+  // Client contacts (#82).
+  client_contact: DB_TABLES_TEST,
   // Court-day reminders (#64).
   reminder_dispatch: DB_TABLES_TEST,
 
@@ -600,6 +603,14 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   upsertPerson: denies,
   setRoleEdge: denies,
   setSensitive: denies,
+  // people (#82): B reading, changing, linking or archiving A's client contacts is denied, A's
+  // contacts, their activity and role edges are unchanged; B's own list holds none of A's
+  listContacts: empty,
+  createContact: denies,
+  updateContact: denies,
+  undoContactChange: denies,
+  linkToMatter: denies,
+  archiveContact: denies,
   // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
   getDocumentPreview: documentPreviewDenies,
   // business dashboard (#519): a non-staff user is refused by app_staff_business_snapshot
@@ -1072,6 +1083,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   slugify: 'pure',
   SLUG_REDIRECT_DAYS: 'constant',
   INVITATION_TTL_MS: 'constant',
+  UNLINKED_AFTER_MS: 'constant',
   INVITE_RATE_LIMIT: 'constant',
   ACCEPT_RATE_LIMIT: 'constant',
   generateInvitationToken: 'pure (random bytes)',

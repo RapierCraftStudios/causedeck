@@ -78,6 +78,7 @@ describe('@causedeck/db root entry point', () => {
       'catalogue_meta',
       'cause_list_publication',
       'cause_list_watch',
+      'client_contact',
       'contributed_document',
       'contribution_ledger',
       'court_day_marker',

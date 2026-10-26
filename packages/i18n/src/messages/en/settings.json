@@ -367,7 +367,8 @@
         "export": "Export",
         "support": "Support",
         "shell": "Workspace areas",
-        "appearance": "Appearances"
+        "appearance": "Appearances",
+        "contact": "Client contacts"
       },
       "actions": {
         "workspace": {
@@ -436,6 +437,10 @@
         },
         "appearance": {
           "assign": "Assign appearances to members"
+        },
+        "contact": {
+          "read": "Read client contacts",
+          "write": "Manage client contacts"
         }
       },
       "settings": {

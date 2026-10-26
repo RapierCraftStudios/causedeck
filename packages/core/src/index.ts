@@ -21,6 +21,7 @@ export * from './lifecycle/index.ts';
 export * from './matter-graph/index.ts';
 export * from './matters/index.ts';
 export * from './news/index.ts';
+export * from './people/index.ts';
 export * from './network/index.ts';
 export * from './portfolio/index.ts';
 export * from './whatsapp-link/index.ts';

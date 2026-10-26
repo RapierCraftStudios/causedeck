@@ -57,6 +57,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Chamber delegation (#63): the member role and the offboarding provider through workspaces,
   // assignment audit through audit, the day and its clashes through court-day (imports `index.ts` only).
   delegation: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day']),
+  // Client contacts (#82): the member role and settings through workspaces, links as role edges
+  // through matter-graph's `setRoleEdge` (imports `index.ts` only).
+  people: Object.freeze(['workspaces', 'matter-graph']),
   // WhatsApp number link and OTP (#678, #502 part 1): the membership check through workspaces
   'whatsapp-link': Object.freeze(['workspaces', 'audit', 'capture']),
   // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same

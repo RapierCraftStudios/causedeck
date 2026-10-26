@@ -22,6 +22,7 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { briefState } from '../schema/brief.ts';
+import { clientContact } from '../schema/client-contact.ts';
 import { briefShare } from '../schema/share.ts';
 import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
@@ -1339,6 +1340,14 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, listingId, note: `Seed note ${tag}`, updatedBy: ownerId })
       .returning({ id: briefState.id });
     return { listingId, id: first(rows, 'brief_state').id };
+  },
+  client_contact: async (tx, { workspaceId, ownerId, tag }) => {
+    const personId = await seedPerson(tx, workspaceId, `${tag}-client`);
+    const rows = await tx
+      .insert(clientContact)
+      .values({ workspaceId, personId, phone: '+919876543210', createdBy: ownerId })
+      .returning({ id: clientContact.id });
+    return { personId, id: first(rows, 'client_contact').id };
   },
   brief_share: async (tx, { workspaceId, ownerId, tag }) => {
     const rows = await tx

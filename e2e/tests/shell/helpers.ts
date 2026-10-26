@@ -25,8 +25,8 @@ export const PLACEHOLDER_ROUTES = [
   'briefs',
   'obligations',
   'drafts',
+  // `people` is a real page since #848 (its own specs are in tests/people).
   'memory',
-  'people',
   'insights',
 ] as const;
 

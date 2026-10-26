@@ -72,6 +72,22 @@ export const CATEGORIES = {
     mandatory: false,
     lockedChannels: [],
   },
+  // Court-day reminders (#64): the evening brief, the morning list diff, the missing-outcome nudge.
+  'reminder.evening': {
+    defaultChannels: ['in_app', 'push', 'email'],
+    mandatory: false,
+    lockedChannels: [],
+  },
+  'reminder.morning': {
+    defaultChannels: ['in_app', 'push', 'email'],
+    mandatory: false,
+    lockedChannels: [],
+  },
+  'reminder.outcome_missing': {
+    defaultChannels: ['in_app', 'push', 'email'],
+    mandatory: false,
+    lockedChannels: [],
+  },
   'system.notice': { defaultChannels: ['in_app'], mandatory: false, lockedChannels: [] },
 } as const satisfies Record<string, CategoryDefinition>;
 

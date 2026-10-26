@@ -1,4 +1,4 @@
-// Outward update drafts (#69, #735; ADR 0039): `outward_draft` (what is prepared for whom, in which
+// Outward update drafts (#69, #735; ADR 0045): `outward_draft` (what is prepared for whom, in which
 // language), `outward_draft_version` (the system draft and each lawyer edit, with the facts used)
 // and `outward_share_log` (the lawyer's explicit shares). There is no send path: nothing here
 // records a transmission by the system. Tenant tables under FORCE RLS via `tenantTable()`. Members

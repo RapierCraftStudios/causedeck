@@ -1,4 +1,4 @@
-// `system.memory.purge` and `memory.purge` (#72, ADR 0038). Deleting a memory item removes its value
+// `system.memory.purge` and `memory.purge` (#72, ADR 0044). Deleting a memory item removes its value
 // at once, but its embeddings stay until this sweep. The system job runs hourly (so a deleted item's
 // vectors are gone well inside 24 h), lists the workspaces that still hold embeddings of deleted
 // items (ids only, through the owner-defined `app_memory_purge_targets` function) and queues

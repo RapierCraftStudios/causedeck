@@ -1,4 +1,4 @@
-// Obligation service inputs (#67; ADR 0037): the zod inputs of the `@causedeck/core` obligation
+// Obligation service inputs (#67; ADR 0043): the zod inputs of the `@causedeck/core` obligation
 // service (create, patch, close, reopen, reconcile, defects, certified copies, the queue). The
 // service parses every input with these before touching the database. Objects are strict. Names
 // follow the stored columns: the issue's `closed` is the status `done` (or `not_applicable`), its

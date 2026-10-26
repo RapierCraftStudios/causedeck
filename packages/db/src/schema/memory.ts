@@ -1,4 +1,4 @@
-// Lawyer memory tables (#72; PRD ME-1..ME-4, ADR 0038). `memory_item` is what the OS learned about
+// Lawyer memory tables (#72; PRD ME-1..ME-4, ADR 0044). `memory_item` is what the OS learned about
 // one lawyer: a layer (M1 profile, M2 working preferences, M3 matter memory, M4 private court notes,
 // M6 relationship memory, M7 recognition memory), a registered key and an envelope-encrypted value.
 // A row exists only after a person confirmed a `memory_proposal` or wrote the note themselves.

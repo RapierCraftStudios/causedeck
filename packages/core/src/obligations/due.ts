@@ -1,4 +1,4 @@
-// Date arithmetic for obligations (#67; ADR 0037): the local day in the workspace's zone (IST by
+// Date arithmetic for obligations (#67; ADR 0043): the local day in the workspace's zone (IST by
 // default), the queue group of a due date and a follow-up date with an optional working-day hook.
 // Due dates come from a person or from a document; nothing here derives one from a legal rule
 // (limitation periods live in #84 behind a flag), it only moves calendar days.

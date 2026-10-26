@@ -3,7 +3,12 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const state = vi.hoisted(() => ({ growthFunnel: vi.fn() }));
+const state = vi.hoisted(() => ({
+  growthFunnel: vi.fn(),
+  growthReferralFunnel: vi.fn(() =>
+    Promise.resolve({ invitesSent: 5, accepted: 3, activated: 2, credited: 1 }),
+  ),
+}));
 
 vi.mock('../lib/data/index.ts', () => {
   const steps = [
@@ -31,6 +36,7 @@ vi.mock('../lib/data/index.ts', () => {
       'other',
     ],
     growthFunnel: state.growthFunnel,
+    growthReferralFunnel: state.growthReferralFunnel,
   };
 });
 vi.mock('../lib/staff.ts', () => ({
@@ -99,6 +105,14 @@ describe('GrowthPage', () => {
     expect(html).toContain('5h 0m / 1d 2h');
     expect(html).toContain('First court-day view');
     expect(html).toContain('Time to first court-day view (median / p90)');
+  });
+
+  it('shows the referral funnel counts', async () => {
+    const html = await render();
+    expect(html).toContain('data-testid="referral-sent">5<');
+    expect(html).toContain('data-testid="referral-accepted">3<');
+    expect(html).toContain('data-testid="referral-activated">2<');
+    expect(html).toContain('data-testid="referral-credited">1<');
   });
 
   it('passes a known channel to the read and ignores an unknown one', async () => {

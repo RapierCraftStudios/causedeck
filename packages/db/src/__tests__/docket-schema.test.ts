@@ -292,6 +292,8 @@ describe('docket tables in the catalog (#347)', () => {
       order by 1`);
     const anchorFk = 'FOREIGN KEY (workspace_id, anchor_id) REFERENCES anchor(workspace_id, id)';
     expect(Object.fromEntries(rows.map((r) => [r.name, r.def]))).toEqual({
+      appearance_assigned_by_fk:
+        'FOREIGN KEY (workspace_id, assigned_by_member_id) REFERENCES member(workspace_id, id) ON DELETE SET NULL (assigned_by_member_id)',
       appearance_hearing_fk:
         'FOREIGN KEY (workspace_id, hearing_id) REFERENCES hearing(workspace_id, id) ON DELETE CASCADE',
       appearance_appearing_for_person_fk:

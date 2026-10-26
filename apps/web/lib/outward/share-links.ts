@@ -1,4 +1,4 @@
-// The only ways an outward draft leaves the app (#736, ADR 0039): a `wa.me` or `mailto:` link the
+// The only ways an outward draft leaves the app (#736, ADR 0045): a `wa.me` or `mailto:` link the
 // lawyer opens themselves, a clipboard copy, or a file download. Nothing here transmits anything;
 // the lawyer's own app (or file manager) does the sending.
 

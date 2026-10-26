@@ -1,4 +1,4 @@
-// The memory domain (#72, ADR 0038): what the OS learned about one lawyer. Nothing is saved until a
+// The memory domain (#72, ADR 0044): what the OS learned about one lawyer. Nothing is saved until a
 // person confirms it; scope is enforced in SQL; values are envelope-encrypted with the workspace
 // key; no memory describes a judge or a bench. UI is #73; consumers read through `memoryFor`.
 export {

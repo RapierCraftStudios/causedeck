@@ -1,7 +1,7 @@
 'use client';
 // The draft editor (#736): the lawyer's text in a serif textarea, the facts it was built from with
 // their provenance on a right rail, guard warnings as plain amber notes, and the share menu. It
-// never sends: the lawyer reviews, edits and shares it themselves (ADR 0039).
+// never sends: the lawyer reviews, edits and shares it themselves (ADR 0045).
 // Keys: Cmd/Ctrl+Enter copies, `l` cycles the language, `d` shows the changes, Esc closes.
 import { Button } from '@causedeck/ui/button';
 import { Textarea } from '@causedeck/ui/textarea';

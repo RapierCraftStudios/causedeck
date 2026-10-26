@@ -5,9 +5,11 @@
 import { Button } from '@causedeck/ui/button';
 import { Textarea } from '@causedeck/ui/textarea';
 import type { Brief } from '@causedeck/validators';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useId, useState, useTransition } from 'react';
 
+import { useOutbox } from '../../../../../../../lib/offline/use-outbox.ts';
 import { setBriefNoteAction } from '../actions.ts';
 
 import { StatementLine } from './lines.tsx';
@@ -39,9 +41,23 @@ export function SynopsisSection({
   const [error, setError] = useState(false);
   const [pending, start] = useTransition();
   const id = useId();
+  const { slug } = useParams<{ slug: string }>();
+  const { enqueue } = useOutbox(slug, workspaceId);
 
   const save = () => {
     setError(false);
+    if (offline) {
+      // Sealed on this device; it replays on reconnect (#851).
+      void enqueue({ kind: 'brief_note', listingId, note: text }).then((queued) => {
+        if (queued) {
+          setSaved(text.trim() === '' ? null : text.trim());
+          setEditing(false);
+        } else {
+          setError(true);
+        }
+      });
+      return;
+    }
     start(async () => {
       const result = await setBriefNoteAction({ workspaceId, listingId, note: text });
       if (!result.ok) {
@@ -117,7 +133,7 @@ export function SynopsisSection({
           />
           <p className="text-muted-foreground font-sans text-xs">{t('hint')}</p>
           <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={pending || offline}>
+            <Button type="submit" size="sm" disabled={pending}>
               {t('save')}
             </Button>
             <Button

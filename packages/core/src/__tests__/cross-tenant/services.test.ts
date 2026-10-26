@@ -3870,10 +3870,11 @@ const CASES: Record<string, Case> = {
     await expectDenied(core.countAttention({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }));
   },
   scanWorkspaceAttention: async (f) => {
-    // The scan opens the workspace it is given: from B's scope it reads nothing of A's.
+    // The scan opens the workspace it is given: from inside B's scope, A's is refused outright.
     const before = await aSnoozes(f);
-    const counts = await f.asB((s) => core.scanWorkspaceAttention({ db: s }, f.a.id));
-    expect(counts).toEqual({});
+    await expect(f.asB((s) => core.scanWorkspaceAttention({ db: s }, f.a.id))).rejects.toThrow(
+      /different workspace/,
+    );
     expect(await aSnoozes(f)).toEqual(before);
   },
   snoozeFlag: async (f) => {

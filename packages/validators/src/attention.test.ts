@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { AttentionQuery, Snooze, StaleDaysInput } from './attention.ts';
+import { AttentionQuery, Snooze, StaleDaysInput } from './attention';
 
 const matterId = '3f0c1c52-6a56-4b6e-9d7e-2f4f6c0a1b11';
 

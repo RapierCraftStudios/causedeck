@@ -50,7 +50,8 @@ describe('navigation manifest', () => {
     expect(visible('advocate')).toBe(false);
     expect(visible('advocate', on)).toBe(true);
     expect(visible('owner', on)).toBe(true);
-    for (const role of ['junior', 'clerk', 'viewer'] as const) expect(visible(role, on)).toBe(false);
+    for (const role of ['junior', 'clerk', 'viewer'] as const)
+      expect(visible(role, on)).toBe(false);
     expect(getNavItem('enquiries').href('demo')).toBe('/w/demo/people/enquiries');
   });
 
@@ -79,7 +80,9 @@ describe('flag-gated items', () => {
   it('marks invoices and limitation as flagged, and nothing else', () => {
     expect(getNavItem('invoices').flag).toBe('invoices.enabled');
     expect(getNavItem('limitation').flag).toBe('limitation.enabled');
+    expect(getNavItem('enquiries').flag).toBe('intake.enquiry_log');
     expect(NAV_ITEMS.filter((entry) => entry.flag).map((entry) => entry.id)).toEqual([
+      'enquiries',
       'invoices',
       'limitation',
     ]);
@@ -101,8 +104,10 @@ describe('flag-gated items', () => {
     const visible = ids(visibleNavItems({ isEnabled: onlyInvoices }));
     expect(visible).toContain('invoices');
     expect(visible).not.toContain('limitation');
-    expect(asked.sort()).toEqual(['invoices.enabled', 'limitation.enabled']);
-    expect(ids(visibleNavItems({ isEnabled: () => true }))).toEqual([...SPIKE_ROUTES].sort());
+    expect(asked.sort()).toEqual(['intake.enquiry_log', 'invoices.enabled', 'limitation.enabled']);
+    expect(ids(visibleNavItems({ isEnabled: () => true }))).toEqual(
+      [...SPIKE_ROUTES, 'enquiries'].sort(),
+    );
     expect(ids(visibleNavItems({ isEnabled: () => false }))).toEqual(ids(visibleNavItems()));
   });
 });
@@ -110,7 +115,7 @@ describe('flag-gated items', () => {
 describe('permission-gated items', () => {
   it('hides items the role lacks permission for', () => {
     const owner = ids(visibleNavItems({ role: 'owner', isEnabled: () => true }));
-    expect(owner).toEqual([...SPIKE_ROUTES].sort());
+    expect(owner).toEqual([...SPIKE_ROUTES, 'enquiries'].sort());
     const clerk = ids(visibleNavItems({ role: 'clerk', isEnabled: () => true }));
     expect(clerk).not.toContain('billing');
     expect(clerk).not.toContain('invoices');

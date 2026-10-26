@@ -111,6 +111,7 @@ describe('namespaced catalogs (#174)', () => {
         'courts',
         'courtsRosters',
         'emailIntake',
+        'enquiry',
         'error',
         'home',
         'importReview',
@@ -237,5 +238,19 @@ describe('people namespace (#848)', () => {
     expect(Object.keys(en.people.languages).sort()).toEqual(
       ['en', 'hi', 'kn', 'ml', 'mr', 'ta', 'te'].sort(),
     );
+  });
+});
+
+describe('enquiry namespace (#874)', () => {
+  it('is registered with en complete and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('enquiry');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('enquiry.'));
+    expect(leaves).toContain('enquiry.conflict.warning');
+    expect(leaves).toContain('enquiry.form.title');
+    expect(getPath(en, 'nav.enquiries')).toBeTruthy();
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+      expect(getPath(catalog, 'nav.enquiries')).toBeTruthy();
+    }
   });
 });

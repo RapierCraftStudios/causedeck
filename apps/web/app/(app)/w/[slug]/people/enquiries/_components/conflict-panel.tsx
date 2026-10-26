@@ -77,7 +77,7 @@ export function ConflictPanel({ result, running, disabled, error, onDecide }: Co
               <Button
                 key={decision}
                 type="button"
-                variant={decision === 'proceed' ? 'default' : 'secondary'}
+                variant={decision === 'proceed' ? 'primary' : 'secondary'}
                 data-conflict-decision={decision}
                 disabled={disabled}
                 onClick={() => {

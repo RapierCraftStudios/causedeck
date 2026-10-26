@@ -51,6 +51,18 @@ async function requireFlag(ctx: WorkspaceActionCtx): Promise<void> {
   if (!on) throw new ActionError('NOT_FOUND', '');
 }
 
+/** Core's `FeatureDisabledError` (its own flag read) is a refusal: FORBIDDEN, a backstop to `requireFlag`. */
+async function guarded<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    if (error instanceof Error && error.name === 'FeatureDisabledError') {
+      throw new ActionError('FORBIDDEN', '');
+    }
+    throw error;
+  }
+}
+
 function revalidateEnquiries(): void {
   revalidatePath('/w/[slug]/people/enquiries', 'page');
 }
@@ -68,7 +80,9 @@ const log = workspaceAction(
   async (input, ctx) => {
     await requireFlag(ctx);
     const { logEnquiry } = await import('@causedeck/core/intake');
-    const row = await logEnquiry(intakeDeps(ctx.tx), actorOf(ctx), omitWorkspace(input));
+    const row = await guarded(() =>
+      logEnquiry(intakeDeps(ctx.tx), actorOf(ctx), omitWorkspace(input)),
+    );
     revalidateEnquiries();
     return { id: row.id, status: row.status };
   },
@@ -84,7 +98,9 @@ const update = workspaceAction(
   async (input, ctx) => {
     await requireFlag(ctx);
     const { updateEnquiry } = await import('@causedeck/core/intake');
-    const row = await updateEnquiry(intakeDeps(ctx.tx), actorOf(ctx), omitWorkspace(input));
+    const row = await guarded(() =>
+      updateEnquiry(intakeDeps(ctx.tx), actorOf(ctx), omitWorkspace(input)),
+    );
     revalidateEnquiries();
     return { id: row.id, status: row.status };
   },
@@ -100,7 +116,9 @@ const check = workspaceAction(
   async (input, ctx): Promise<ConflictCheckView> => {
     await requireFlag(ctx);
     const { runConflictCheck } = await import('@causedeck/core/intake');
-    const result = await runConflictCheck(intakeDeps(ctx.tx), actorOf(ctx), omitWorkspace(input));
+    const result = await guarded(() =>
+      runConflictCheck(intakeDeps(ctx.tx), actorOf(ctx), omitWorkspace(input)),
+    );
     revalidateEnquiries();
     return toConflictCheckView(result);
   },
@@ -116,7 +134,9 @@ const accept = workspaceAction(
   async (input, ctx) => {
     await requireFlag(ctx);
     const { acceptEnquiry } = await import('@causedeck/core/intake');
-    const row = await acceptEnquiry(intakeDeps(ctx.tx), actorOf(ctx), omitWorkspace(input));
+    const row = await guarded(() =>
+      acceptEnquiry(intakeDeps(ctx.tx), actorOf(ctx), omitWorkspace(input)),
+    );
     revalidateEnquiries();
     return { id: row.id, status: row.status };
   },
@@ -132,7 +152,9 @@ const close = workspaceAction(
   async (input, ctx) => {
     await requireFlag(ctx);
     const { closeEnquiry } = await import('@causedeck/core/intake');
-    const row = await closeEnquiry(intakeDeps(ctx.tx), actorOf(ctx), omitWorkspace(input));
+    const row = await guarded(() =>
+      closeEnquiry(intakeDeps(ctx.tx), actorOf(ctx), omitWorkspace(input)),
+    );
     revalidateEnquiries();
     return { id: row.id, status: row.status };
   },

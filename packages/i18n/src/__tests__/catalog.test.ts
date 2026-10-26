@@ -129,6 +129,7 @@ describe('namespaced catalogs (#174)', () => {
         'onboardingDiscovery',
         'outcome',
         'palette',
+        'people',
         'portfolio',
         'provisioning',
         'pwa',
@@ -215,5 +216,26 @@ describe('whatsapp link copy (#681)', () => {
       expect(catalog.whatsappLink.unlink).not.toBe('');
       expect(catalog.whatsappLink.linked).toContain('{number}');
     }
+  });
+});
+
+describe('people namespace (#848)', () => {
+  it('is registered with en complete and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('people');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('people.'));
+    expect(leaves).toContain('people.list.linked');
+    expect(leaves).toContain('people.detail.log.title');
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+    }
+  });
+
+  it('has a label for every contact kind and language preference', () => {
+    expect(Object.keys(en.people.kinds).sort()).toEqual(
+      ['accounts', 'family', 'instructing', 'primary'].sort(),
+    );
+    expect(Object.keys(en.people.languages).sort()).toEqual(
+      ['en', 'hi', 'kn', 'ml', 'mr', 'ta', 'te'].sort(),
+    );
   });
 });

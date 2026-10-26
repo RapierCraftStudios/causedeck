@@ -161,6 +161,8 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'billing',
   'activity',
   'settings',
+  // Its own page and action tests since #848 (people-actions.test.ts).
+  'people',
   // Its own page test since #399 (courts-page.test.tsx).
   'courts',
   // Its own page test since #588 (components/notices/__tests__/notice-list.test.tsx).

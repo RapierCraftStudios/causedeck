@@ -119,6 +119,7 @@ const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
 const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
+const peopleContacts = await import('../app/(app)/w/[slug]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
@@ -254,6 +255,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   undoSplitAction: proceedingsTab,
   upsertPersonAction: matterPeople,
   setRoleEdgeAction: matterPeople,
+  createContactAction: peopleContacts,
+  updateContactAction: peopleContacts,
+  undoContactChangeAction: peopleContacts,
+  linkContactToMatterAction: peopleContacts,
+  archiveContactAction: peopleContacts,
   enableChannelAction: inbox,
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
@@ -906,6 +912,24 @@ function inputs(workspaceId: string): Record<string, unknown> {
       personId: t.a.rows.person?.personId,
       kind: 'represents',
     },
+    // People screens (#848): A's client and contact
+    createContactAction: {
+      workspaceId,
+      personId: t.a.rows.client_contact?.personId,
+      phone: '+919876543299',
+    },
+    updateContactAction: {
+      workspaceId,
+      contactId: t.a.rows.client_contact?.id,
+      phone: '+919876543298',
+    },
+    undoContactChangeAction: { workspaceId, activityId: randomUUID() },
+    linkContactToMatterAction: {
+      workspaceId,
+      contactId: t.a.rows.client_contact?.id,
+      matterId: t.a.rows.matter?.matterId,
+    },
+    archiveContactAction: { workspaceId, contactId: t.a.rows.client_contact?.id },
     // Proceedings tab (#392): ub may not add to, change, link, move, merge or split A's matters and
     // proceedings, nor undo a merge or split naming them.
     ...proceedingsInputs(workspaceId),
@@ -1446,6 +1470,11 @@ describe('cross-tenant server actions', () => {
       // People tab (#393): A's matter and person
       'upsertPersonAction',
       'setRoleEdgeAction',
+      // People screens (#848): A's contact, client and matter
+      'createContactAction',
+      'updateContactAction',
+      'linkContactToMatterAction',
+      'archiveContactAction',
     ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));

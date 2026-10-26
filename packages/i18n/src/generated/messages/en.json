@@ -3522,7 +3522,8 @@
       "export": "Export",
       "prevFinding": "Previous finding",
       "nextFinding": "Next finding",
-      "close": "Close the open panel"
+      "close": "Close the open panel",
+      "actions": "Draft actions"
     },
     "offline": {
       "banner": "You are offline. Edits are saved on this device.",

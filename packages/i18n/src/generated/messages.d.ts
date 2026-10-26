@@ -3524,6 +3524,7 @@ export type Messages = {
       prevFinding: string;
       nextFinding: string;
       close: string;
+      actions: string;
     };
     offline: {
       banner: string;

@@ -3375,7 +3375,8 @@
     "drafting.actions.showVersions": "draft",
     "drafting.shortcuts.prevFinding": "draft",
     "drafting.shortcuts.nextFinding": "draft",
-    "drafting.shortcuts.close": "draft"
+    "drafting.shortcuts.close": "draft",
+    "drafting.shortcuts.actions": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -6742,6 +6743,7 @@
     "drafting.actions.showVersions": "draft",
     "drafting.shortcuts.prevFinding": "draft",
     "drafting.shortcuts.nextFinding": "draft",
-    "drafting.shortcuts.close": "draft"
+    "drafting.shortcuts.close": "draft",
+    "drafting.shortcuts.actions": "draft"
   }
 }

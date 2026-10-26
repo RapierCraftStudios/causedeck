@@ -1,0 +1,477 @@
+'use client';
+
+// Drafting studio shell (#827). Three columns from 1280 px (facts, editor, versions), one slide-in
+// drawer at 768 px, and a bottom sheet with tabs at 360 px; panels move without animation under
+// `prefers-reduced-motion`. The editor is a lazy chunk (the route's initial JS stays small).
+// Save is Cmd/Ctrl+S, draft actions Cmd/Ctrl+K, `]` and `[` walk the findings (announced in a live
+// region), Esc closes what is open. Offline, the loaded draft stays readable from the encrypted
+// device cache and edits queue until `online`. `panels` is where #828's citation and consistency
+// panels go.
+import type { Block } from '@causedeck/validators/drafting';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+
+import { FactsPanel, type DraftFact } from '../../../../../../components/drafting/facts-panel.tsx';
+import {
+  VersionDrawer,
+  type DraftVersionView,
+} from '../../../../../../components/drafting/version-drawer.tsx';
+import { registerCommands } from '../../../../../../lib/commands/registry.ts';
+import {
+  hasMissing,
+  insertFact,
+  keyedBlocks,
+  stepFinding,
+  type EditDiff,
+} from '../../../../../../lib/drafting/blocks-edit.ts';
+import {
+  browserDraftEditStores,
+  cacheDraft,
+  flushDraftEdits,
+  pendingDraftEdits,
+  queueDraftEdit,
+  readCachedDraft,
+  type QueuedDraftEdit,
+} from '../../../../../../lib/pwa/outbox/draft-edits.ts';
+import { DRAFT_STUDIO_SHORTCUTS } from '../../../../../../lib/shortcuts/registry.ts';
+
+import { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
+
+const DraftEditor = dynamic(() => import('../../../../../../components/drafting/editor.tsx'), {
+  ssr: false,
+  loading: () => <div aria-hidden="true" className="bg-surface-sunken h-64 rounded-md" />,
+});
+
+export interface StudioProps {
+  workspaceId: string;
+  draftId: string;
+  title: string;
+  versionNo: number;
+  blocks: Block[];
+  slotValues: Record<string, string>;
+  facts: DraftFact[];
+  versions: DraftVersionView[];
+  /** Extra places `]` and `[` can go (#828's findings), by block key. */
+  findingKeys?: string[];
+  /** #828's citation and consistency panels. */
+  panels?: ReactNode;
+}
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'queued' | 'conflict' | 'failed';
+type Panel = 'facts' | 'versions';
+
+const isTyping = (target: EventTarget | null) =>
+  target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
+
+export function DraftStudio(props: StudioProps) {
+  const t = useTranslations('drafting');
+  const router = useRouter();
+  const [blocks, setBlocks] = useState<Block[]>(props.blocks);
+  const [baseNo, setBaseNo] = useState(props.versionNo);
+  const [dirty, setDirty] = useState(false);
+  const [state, setState] = useState<SaveState>('idle');
+  const [online, setOnline] = useState(true);
+  const [cached, setCached] = useState(false);
+  const [pending, setPending] = useState(0);
+  const [selectedSlot, setSelectedSlot] = useState<string | undefined>();
+  const [panel, setPanel] = useState<Panel | null>(null);
+  const [menu, setMenu] = useState(false);
+  const [finding, setFinding] = useState(-1);
+  const [announcement, setAnnouncement] = useState('');
+  const diffs = useRef<EditDiff[]>([]);
+
+  const readOnly = !online && cached;
+
+  // A fresh server version (after a restore or reload) replaces the local tree.
+  useEffect(() => {
+    setBlocks(props.blocks);
+    setBaseNo(props.versionNo);
+    setDirty(false);
+    diffs.current = [];
+  }, [props.blocks, props.versionNo]);
+
+  const findings = useMemo(() => {
+    const keys = keyedBlocks(blocks)
+      .filter(({ block, key }) =>
+        block.type === 'paragraph'
+          ? hasMissing(block.text)
+          : block.type === 'slot' && hasMissing(props.slotValues[key] ?? ''),
+      )
+      .map((entry) => entry.key);
+    return [...new Set([...keys, ...(props.findingKeys ?? [])])];
+  }, [blocks, props.slotValues, props.findingKeys]);
+
+  const refreshPending = useCallback(async () => {
+    const { store } = await browserDraftEditStores();
+    setPending(await pendingDraftEdits(store, props.workspaceId));
+  }, [props.workspaceId]);
+
+  const { workspaceId, draftId, title, versionNo, blocks: initial } = props;
+  // Cache the loaded draft for offline reading; track connectivity and flush the queue on `online`.
+  useEffect(() => {
+    void (async () => {
+      const { store, keys } = await browserDraftEditStores();
+      await cacheDraft(store, keys, { workspaceId, draftId, title, versionNo, blocks: initial });
+      setCached((await readCachedDraft(store, keys, workspaceId, draftId)) !== undefined);
+      await refreshPending();
+    })().catch(() => undefined);
+  }, [workspaceId, draftId, title, versionNo, initial, refreshPending]);
+
+  const send = useCallback(
+    async (edit: QueuedDraftEdit) => {
+      const result = await saveDraftAction({
+        workspaceId: edit.workspaceId,
+        draftId: edit.draftId,
+        baseVersionNo: edit.baseVersionNo,
+        blocks: edit.blocks,
+      });
+      return result.ok ? ({ ok: true } as const) : ({ ok: false, code: result.error.code } as const);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    setOnline(navigator.onLine);
+    const goOnline = () => {
+      setOnline(true);
+      void (async () => {
+        const { store, keys } = await browserDraftEditStores();
+        const result = await flushDraftEdits(store, keys, send);
+        await refreshPending();
+        if (result.conflicts > 0) setState('conflict');
+        else if (result.sent > 0) {
+          setState('saved');
+          setAnnouncement(t('offline.synced'));
+          router.refresh();
+        }
+      })().catch(() => undefined);
+    };
+    const goOffline = () => {
+      setOnline(false);
+    };
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, [send, refreshPending, router, t]);
+
+  const save = useCallback(async () => {
+    if (readOnly && !dirty) return;
+    const edit: QueuedDraftEdit = {
+      workspaceId: props.workspaceId,
+      draftId: props.draftId,
+      baseVersionNo: baseNo,
+      blocks,
+      diffs: diffs.current,
+    };
+    const queue = async () => {
+      const { store, keys } = await browserDraftEditStores();
+      await queueDraftEdit(store, keys, edit);
+      diffs.current = [];
+      setState('queued');
+      await refreshPending();
+    };
+    if (!navigator.onLine) return queue();
+    setState('saving');
+    try {
+      const result = await saveDraftAction({
+        workspaceId: edit.workspaceId,
+        draftId: edit.draftId,
+        baseVersionNo: edit.baseVersionNo,
+        blocks: edit.blocks,
+      });
+      if (result.ok) {
+        setBaseNo(result.data.versionNo);
+        setDirty(false);
+        diffs.current = [];
+        setState('saved');
+        setAnnouncement(t('states.saved'));
+        router.refresh();
+      } else {
+        setState(result.error.code === 'CONFLICT' ? 'conflict' : 'failed');
+      }
+    } catch {
+      await queue().catch(() => {
+        setState('failed');
+      });
+    }
+  }, [readOnly, dirty, props.workspaceId, props.draftId, baseNo, blocks, refreshPending, router, t]);
+
+  async function restore(versionNo: number) {
+    const result = await restoreDraftVersionAction({
+      workspaceId: props.workspaceId,
+      draftId: props.draftId,
+      versionNo,
+    });
+    if (result.ok) {
+      setAnnouncement(t('panels.versions.restored'));
+      router.refresh();
+    } else {
+      setState('failed');
+    }
+  }
+
+  const go = useCallback(
+    (direction: 1 | -1) => {
+      const next = stepFinding(findings.length, finding, direction);
+      if (next < 0) {
+        setAnnouncement(t('findings.none'));
+        return;
+      }
+      setFinding(next);
+      const target = document.querySelector<HTMLElement>(
+        `[data-block-key="${CSS.escape(findings[next] as string)}"]`,
+      );
+      target?.focus();
+      target?.scrollIntoView({
+        block: 'center',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      });
+      setAnnouncement(t('findings.position', { index: next + 1, total: findings.length }));
+    },
+    [findings, finding, t],
+  );
+
+  const latest = useRef({ save, go });
+  useEffect(() => {
+    latest.current = { save, go };
+  });
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const mod = event.metaKey || event.ctrlKey;
+      const key = event.key.toLowerCase();
+      if (mod && key === 's') {
+        event.preventDefault();
+        void latest.current.save();
+      } else if (mod && key === 'k') {
+        // Draft actions replace the palette while the studio is open.
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setMenu((open) => !open);
+      } else if (!mod && !isTyping(event.target) && (key === ']' || key === '[')) {
+        event.preventDefault();
+        latest.current.go(key === ']' ? 1 : -1);
+      } else if (key === 'escape') {
+        setMenu(false);
+        setPanel(null);
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      window.removeEventListener('keydown', onKey, true);
+    };
+  }, []);
+
+  // The `?` sheet and palette list the studio's keys while it is open.
+  useEffect(
+    () =>
+      registerCommands(
+        'help',
+        DRAFT_STUDIO_SHORTCUTS.map((entry) => ({
+          id: entry.id,
+          labelKey: entry.labelKey,
+          shortcut: entry.keys,
+          perform: () => {
+            if (entry.id === 'draft.save') void latest.current.save();
+            else if (entry.id === 'draft.actions') setMenu(true);
+            else if (entry.id === 'draft.nextFinding') latest.current.go(1);
+            else if (entry.id === 'draft.prevFinding') latest.current.go(-1);
+            else setPanel(null);
+          },
+        })),
+      ),
+    [],
+  );
+
+  const status =
+    !online
+      ? t('states.offlineQueued')
+      : state === 'saving'
+        ? t('states.saving')
+        : state === 'conflict'
+          ? t('states.conflict')
+          : state === 'failed'
+            ? t('states.saveFailed')
+            : state === 'queued'
+              ? t('states.offlineQueued')
+              : dirty
+                ? t('states.unsaved')
+                : state === 'saved'
+                  ? t('states.saved')
+                  : '';
+
+  const panelBody = (which: Panel) =>
+    which === 'facts' ? (
+      <FactsPanel
+        facts={props.facts}
+        selectedSlot={selectedSlot}
+        disabled={readOnly}
+        onInsert={(fact) => {
+          if (selectedSlot === undefined) return;
+          setBlocks((current) => insertFact(current, selectedSlot, fact.value));
+          setDirty(true);
+        }}
+      />
+    ) : (
+      <VersionDrawer
+        versions={props.versions}
+        currentVersionNo={props.versionNo}
+        currentBlocks={blocks}
+        disabled={readOnly}
+        onRestore={(no) => void restore(no)}
+      />
+    );
+
+  return (
+    <div data-slot="draft-studio" className="flex min-h-0 flex-1 flex-col gap-3">
+      <header className="flex flex-wrap items-center gap-3">
+        <h1 className="font-serif text-xl font-semibold">{props.title}</h1>
+        <span role="status" className="text-ink-muted text-sm">
+          {status}
+        </span>
+        {!online ? (
+          <span className="text-warn text-sm">
+            {t('offline.banner')} {readOnly ? t('states.cachedCopy') : ''}
+          </span>
+        ) : null}
+        {pending > 0 ? (
+          <span className="text-ink-muted text-sm">{t('offline.queued', { count: pending })}</span>
+        ) : null}
+        <div className="ms-auto flex gap-2 xl:hidden">
+          {(['facts', 'versions'] as const).map((which) => (
+            <button
+              key={which}
+              type="button"
+              aria-pressed={panel === which}
+              aria-label={t('shortcuts.togglePanel')}
+              onClick={() => {
+                setPanel(panel === which ? null : which);
+              }}
+              className="border-line focus-visible:ring-focus min-h-11 rounded-md border px-3 text-sm focus-visible:ring-2"
+            >
+              {t(`tabs.${which}`)}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          disabled={readOnly || !dirty || state === 'saving'}
+          onClick={() => void save()}
+          className="bg-seal text-seal-fg focus-visible:ring-focus min-h-11 rounded-md px-4 text-sm focus-visible:ring-2 disabled:opacity-50"
+        >
+          {t('actions.save')}
+        </button>
+      </header>
+
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 xl:grid-cols-[18rem_minmax(0,1fr)_18rem]">
+        <aside
+          aria-label={t('panels.facts.title')}
+          className="hidden xl:block xl:overflow-y-auto"
+        >
+          {panelBody('facts')}
+        </aside>
+
+        <main className="mx-auto w-full max-w-3xl" aria-label={t('editor.label')}>
+          <DraftEditor
+            blocks={blocks}
+            slotValues={props.slotValues}
+            selectedSlot={selectedSlot}
+            readOnly={readOnly}
+            onSelectSlot={setSelectedSlot}
+            onChange={(next, diff) => {
+              setBlocks(next);
+              setDirty(true);
+              if (diff !== undefined) diffs.current = [...diffs.current, diff];
+            }}
+          />
+          {props.panels}
+        </main>
+
+        <aside
+          aria-label={t('panels.versions.title')}
+          className="hidden xl:block xl:overflow-y-auto"
+        >
+          {panelBody('versions')}
+        </aside>
+      </div>
+
+      {panel === null ? null : (
+        // Below 1280 px: a side drawer from 768 px, a bottom sheet with tabs under it.
+        <div
+          role="dialog"
+          aria-label={t(`tabs.${panel}`)}
+          className="bg-surface border-line fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-lg border-t p-4 shadow-lg motion-safe:transition-transform md:inset-y-0 md:end-0 md:start-auto md:max-h-none md:w-80 md:rounded-none md:border-s md:border-t-0 xl:hidden"
+        >
+          <div role="tablist" className="mb-3 flex gap-2 md:hidden">
+            {(['editor', 'facts', 'versions'] as const).map((tab) => (
+              <button
+                key={tab}
+                role="tab"
+                type="button"
+                aria-selected={tab === panel}
+                onClick={() => {
+                  setPanel(tab === 'editor' ? null : tab);
+                }}
+                className="aria-selected:bg-seal-subtle min-h-11 flex-1 rounded-md text-sm"
+              >
+                {t(`tabs.${tab}`)}
+              </button>
+            ))}
+          </div>
+          {panelBody(panel)}
+          <button
+            type="button"
+            onClick={() => {
+              setPanel(null);
+            }}
+            className="border-line mt-3 min-h-11 rounded-md border px-3 text-sm"
+          >
+            {t('panels.versions.close')}
+          </button>
+        </div>
+      )}
+
+      {menu ? (
+        <div
+          role="dialog"
+          aria-label={t('actions.title')}
+          className="bg-surface border-line fixed start-1/2 top-24 z-50 flex w-72 -translate-x-1/2 flex-col gap-1 rounded-lg border p-2 shadow-lg"
+        >
+          <button
+            type="button"
+            autoFocus
+            className="min-h-11 rounded-md px-2 text-start text-sm"
+            onClick={() => {
+              setMenu(false);
+              void save();
+            }}
+          >
+            {t('actions.save')}
+          </button>
+          {(['facts', 'versions'] as const).map((which) => (
+            <button
+              key={which}
+              type="button"
+              className="min-h-11 rounded-md px-2 text-start text-sm"
+              onClick={() => {
+                setMenu(false);
+                setPanel(which);
+              }}
+            >
+              {which === 'facts' ? t('actions.showFacts') : t('actions.showVersions')}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      <div aria-live="polite" role="status" className="sr-only">
+        {announcement}
+      </div>
+    </div>
+  );
+}

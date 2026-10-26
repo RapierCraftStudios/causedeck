@@ -115,6 +115,7 @@ const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedi
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
+const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
@@ -205,6 +206,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateMatterAction: matterWorkspace,
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
+  saveDraftAction: draftStudio,
+  restoreDraftVersionAction: draftStudio,
   addTagAction: research,
   confirmTagAction: research,
   dismissTagAction: research,
@@ -731,6 +734,18 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
     confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    // Drafting studio (#827): ub may not save to or restore a version of A's draft.
+    saveDraftAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      baseVersionNo: 1,
+      blocks: [{ type: 'paragraph', text: 'Cross-tenant probe' }],
+    },
+    restoreDraftVersionAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      versionNo: 1,
+    },
     // Research tab (#497): ub may not tag A's matter or confirm A's tag.
     addTagAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId, statute: 'ipc' },
     confirmTagAction: {
@@ -1264,6 +1279,21 @@ describe('cross-tenant server actions', () => {
       expect(result, name).not.toHaveProperty('data');
     }
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('drafting studio actions under B’s own workspace find none of A’s draft (#827)', async () => {
+    const own = inputs(t.b.id);
+    const versions = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select({ id: schema.draftVersion.id }).from(schema.draftVersion),
+      );
+    const before = await versions();
+    for (const name of ['saveDraftAction', 'restoreDraftVersionAction']) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await versions()).toEqual(before);
   });
 
   it('proceedings tab actions under B’s own workspace find none of A’s matter or proceedings (#392)', async () => {

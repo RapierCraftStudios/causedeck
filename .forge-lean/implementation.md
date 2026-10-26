@@ -1,29 +1,33 @@
 ### Approach
-Recovery pass for the red `build` check. Admin's Turbopack build failed on the templated `require.resolve` of the PDF fonts in `packages/drafting/src/render/pdf.ts`. The resolver is now a bound function, so the bundler no longer traces it. Everything else from earlier runs was verified against the contract.
+Deterministic consistency checker (#78) as a pure `checkDraft` in `@causedeck/drafting`, schemas in validators, a core service that loads facts through the matter-graph index as the actor and stores one report per (draft version, graph revision), `applyFix` gated on `confirm: true`, and job `drafting.consistency.check`. This session fixed the facts loader (the three graph reads ran concurrently on one transaction and returned empty facts) and the integration test expectations, then cleared type and lint errors.
 ### Changes
-- packages/drafting/src/render/pdf.ts: font path resolved through a bound `createRequire().resolve`.
-- Earlier commits (verified): core drafting service/policy/export/index, `drafting.export` job and registry, `draft_export` table with migration, `draft.read`/`draft.export` policy and matrix, audit action, core-domains config and docs, cross-tenant and worker registry tests, integration test.
+- packages/validators/src/consistency.ts (+test), package.json: Finding/Report/ApplyFix schemas, `./consistency` export.
+- packages/drafting/src/consistency/*: extract-entities, match-names, match-case-numbers, match-dates, annexures, check, index (+ unit, static and perf tests).
+- packages/core/src/drafting/consistency-service.ts, index.ts, service.ts (`insertVersion` exported): facts, run/get/list/applyFix; integration test.
+- packages/core/src/jobs/definitions/drafting-consistency-check.ts, registry.ts; audit/events.ts (`draft.fix_applied`).
+- packages/db: `draft_consistency_report` table, migration 20261026000000, schema, registries, seeders; erase.ts and exporters.ts lists.
+- Registry tests: worker registry, cross-tenant services, core-domains doc.
 ### Acceptance Criteria Status
-- R1 ✅ packages/core/src/drafting/service.ts
-- R2 ✅ packages/core/src/drafting/policy.ts
-- R3 ✅ packages/core/src/jobs/definitions/drafting-export.ts
-- R4 ✅ packages/core/src/drafting/export.ts
-- R5 ✅ packages/core/src/drafting/export.ts
-- R6 ✅ packages/core/package.json
-- R7 ✅ packages/config/eslint/core-domains.js, docs/engineering/core-domains.md
-- R8 ✅ packages/db/src/testing/cross-tenant-registry.ts, packages/core/src/__tests__/cross-tenant/services.test.ts
-- R9 ✅ packages/core/src/drafting/__tests__/drafting.integration.test.ts
-- R10 ✅ service.ts and export.ts never log draft text
+- R1 ✅ packages/drafting/src/consistency/match-names.ts
+- R2 ✅ packages/drafting/src/consistency/match-case-numbers.ts
+- R3 ✅ packages/drafting/src/consistency/match-dates.ts
+- R4 ✅ packages/drafting/src/consistency/annexures.ts
+- R5 ✅ packages/validators/src/consistency.ts, check.ts
+- R6 ✅ packages/core/src/drafting/consistency-service.ts (applyFix)
+- R7 ✅ packages/drafting/src/consistency/__tests__/consistency.test.ts (static test)
+- R8 ✅ same file (perf test)
+- R9 ✅ packages/core/src/__tests__/cross-tenant/services.test.ts
+- R10 ✅ match-names.ts
+- R11 ✅ consistency-service.ts (graphRevision), consistency.integration.test.ts
+- R12 ✅ applyFix needs `confirm: true`
+- R13 ✅ jobs/definitions/drafting-consistency-check.ts
+- R14 ✅ job logs counts only; no spans logged
 ### Verification
-- V1 checks.mjs: exit 0.
-- V2 core vitest: pass (services file run alone, 218 tests).
-- V3 db vitest: exit 0.
-- V4 auth vitest: exit 0.
-- V5 worker vitest: exit 0.
-- V6 schema conventions and migration lint: exit 0.
-- Drafting package vitest: 15 pass. The Next build is CI-only, so the build fix has no local test and fails_without_fix is unknown.
+- V1 drafting vitest: 61 pass. V2 validators: 11 pass. V3 core drafting/registry/domains/index: 32 pass (failed before the sequential-read fix: 2 integration tests). V4 cross-tenant services: 223 pass. V5 db: 18 pass. V6 worker registry: 9 pass. V7 config boundaries: 40 pass.
+- New/updated integration test fails without the fix (empty facts, no order mismatch).
+- tsc clean for validators, drafting, core; eslint clean on changed files, prettier applied.
 ### Notes
-No behaviour change from the pdf.ts edit. The Security check fails on historical gitleaks findings in unrelated test files, not on this branch's changes.
+No env vars. Both reports of one version share a timestamp inside a single test transaction, so the test accepts either as newest.
 
-## Stale-list fix
-The 20 flagged (symbol, test) pairs are not members: none of the 10 tests names the sibling exports (DRAFT_STATUSES, draft, draftVersion); the flagged lines are unrelated mock state or fixtures. Recorded in result.json `not_members`.
+## Sibling-list fix
+Added no list entries: the db table list already names draft_consistency_report, and the cross-tenant services list already names the new service functions. The other flagged tests do not enumerate these symbols; recorded as not_members in result.json.

@@ -4253,7 +4253,20 @@
     "outward.shortcuts.copy": "draft",
     "outward.shortcuts.language": "draft",
     "outward.shortcuts.diff": "draft",
-    "outward.shortcuts.close": "draft"
+    "outward.shortcuts.close": "draft",
+    "brief.carry.suggested": "draft",
+    "brief.carry.suggestAdd": "draft",
+    "brief.carry.suggestAddLabel": "draft",
+    "brief.carry.suggestSkip": "draft",
+    "brief.carry.suggestSkipLabel": "draft",
+    "memoryCitations.draftTitle": "draft",
+    "memoryCitations.draftTone": "draft",
+    "memoryCitations.draftLanguage": "draft",
+    "memoryCitations.draftOther": "draft",
+    "memoryCitations.noteDate": "draft",
+    "memoryCitations.carryRule": "draft",
+    "memoryCitations.chipLabel": "draft",
+    "memoryCitations.usedMemory": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -8332,6 +8345,19 @@
     "outward.shortcuts.copy": "draft",
     "outward.shortcuts.language": "draft",
     "outward.shortcuts.diff": "draft",
-    "outward.shortcuts.close": "draft"
+    "outward.shortcuts.close": "draft",
+    "brief.carry.suggested": "draft",
+    "brief.carry.suggestAdd": "draft",
+    "brief.carry.suggestAddLabel": "draft",
+    "brief.carry.suggestSkip": "draft",
+    "brief.carry.suggestSkipLabel": "draft",
+    "memoryCitations.draftTitle": "draft",
+    "memoryCitations.draftTone": "draft",
+    "memoryCitations.draftLanguage": "draft",
+    "memoryCitations.draftOther": "draft",
+    "memoryCitations.noteDate": "draft",
+    "memoryCitations.carryRule": "draft",
+    "memoryCitations.chipLabel": "draft",
+    "memoryCitations.usedMemory": "draft"
   }
 }

@@ -21,6 +21,10 @@ const draft: DraftView = {
     { kind: 'next_date', text: '12 Dec 2026', confirmed: true, source: 'hearing · cause_list' },
     { kind: 'outcome', text: 'Adjourned', confirmed: false, source: 'hearing · manual' },
   ],
+  memoryCitations: [
+    { key: 'M2.client_update_tone', date: '2026-08-12' },
+    { key: 'M6.client_language', date: '2026-09-02' },
+  ],
 };
 const card: DraftCardView = {
   id: draft.id,

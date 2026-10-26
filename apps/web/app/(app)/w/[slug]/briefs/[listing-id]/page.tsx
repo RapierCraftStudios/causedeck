@@ -11,6 +11,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { domainErrorCode } from '../../../../../../lib/matters/graph-deps.ts';
 import { loadMatterOverview } from '../../../../../../lib/matters/workspace.ts';
+import { memoryDeps } from '../../../../../../lib/memory/deps.ts';
 import { can } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 
@@ -32,8 +33,10 @@ export default async function BriefPage({ params }: BriefPageProps) {
   if (!context) notFound();
   if (!can(context.role, 'listing.read')) return <PermissionDenied />;
 
-  const [{ db, inWorkspace, listMembersIn }, { assembleBrief, computeReadiness, refreshBrief }] =
-    await Promise.all([import('@causedeck/core/runtime'), import('@causedeck/core/briefs')]);
+  const [
+    { db, inWorkspace, listMembersIn },
+    { assembleBrief, computeReadiness, createBriefMemoryProvider, refreshBrief },
+  ] = await Promise.all([import('@causedeck/core/runtime'), import('@causedeck/core/briefs')]);
   const scope = { workspaceId: context.workspace.id, userId: context.user.id };
   let brief;
   let staleCleared = false;
@@ -41,7 +44,14 @@ export default async function BriefPage({ params }: BriefPageProps) {
     // A material change since the mark was made clears it before the sheet is read.
     const refreshed = await refreshBrief({ db }, { workspaceId: scope.workspaceId, listingId });
     staleCleared = refreshed.stale !== null;
-    brief = await inWorkspace(scope, (tx) => assembleBrief({ db: tx }, scope, listingId));
+    // The memory port reads the member's confirmed memory (#74) and cites each use.
+    brief = await inWorkspace(scope, (tx) =>
+      assembleBrief(
+        { db: tx, memory: createBriefMemoryProvider(memoryDeps(tx)) },
+        scope,
+        listingId,
+      ),
+    );
   } catch (error) {
     const code = domainErrorCode(error);
     if (code === 'FORBIDDEN') return <PermissionDenied />;

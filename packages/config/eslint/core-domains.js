@@ -55,7 +55,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The derived listing brief (#60, ADR 0038): the scope and member role through workspaces, the
   // sensitive-matter-safe `summarise` call through ai, graph reads through matter-graph and court-day
   // (imports `index.ts` only).
-  briefs: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day', 'ai']),
+  briefs: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day', 'ai', 'memory']),
   // Chamber delegation (#63): the member role and the offboarding provider through workspaces,
   // assignment audit through audit, the day and its clashes through court-day (imports `index.ts` only).
   delegation: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day']),
@@ -162,7 +162,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   corrections: Object.freeze(['workspaces']),
   // Outward update drafts (#735, ADR 0045): roles through workspaces, audit events through audit,
   // the narrative through the AI gateway wiring in ai; reads graph rows from the tables.
-  outward: Object.freeze(['workspaces', 'audit', 'matter-graph', 'ai']),
+  outward: Object.freeze(['workspaces', 'audit', 'matter-graph', 'ai', 'memory']),
+  // Recognition-based matching (#74): M7 aliases rank candidates and a correction files an alias
+  // proposal, both through memory's index (a hint only, never an auto-apply).
+  matching: Object.freeze(['memory']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
   jobs: Object.freeze([

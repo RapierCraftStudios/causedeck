@@ -46,3 +46,8 @@ Renamed drafting's `exportFilename` to `draftExportFilename` (export.ts) and `ca
 
 ## CI typecheck/build fix
 Cause: apps/web `permission-matrix.tsx` indexes `settings.roles.actions.<action>` message keys; the new `draft.read` and `draft.export` actions had no labels (TS2345). Added en/ta/kn `settings.json` keys, regenerated `packages/i18n/src/generated`, and added `translation-status.json` entries. `i18n:check` passes and web `tsc --noEmit` is clean.
+
+## CI fix (build/tenancy, no logs)
+- Added `draft_export` to the workspace erase order (lifecycle/deletion/erase.ts) and the drafting data exporter (lifecycle/export/exporters.ts): the tenant-table coverage guards need every tenant table handled.
+- Restored the trailing newline of migrations/meta/_journal.json (format check).
+- core tsc clean; lifecycle tests pass except one two-tenant seeding deadlock (40P01) from parallel containers, unrelated.

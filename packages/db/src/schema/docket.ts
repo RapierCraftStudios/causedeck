@@ -148,6 +148,10 @@ export const appearance = tenantTable(
     capacity: appearanceCapacity('capacity').notNull(),
     /** References `person` once it exists (#348). */
     appearingForPersonId: uuid('appearing_for_person_id'),
+    /** The member who delegated this appearance (#63); null for one not delegated, or once that membership is gone. */
+    assignedByMemberId: uuid('assigned_by_member_id'),
+    /** The delegator's optional instruction to the assignee. */
+    note: text('note'),
     ...timestamps(),
   },
   (t) => [
@@ -166,6 +170,11 @@ export const appearance = tenantTable(
     foreignKey({
       name: 'appearance_member_fk',
       columns: [t.workspaceId, t.memberId],
+      foreignColumns: [member.organizationId, member.id],
+    }).onDelete('set null'),
+    foreignKey({
+      name: 'appearance_assigned_by_fk',
+      columns: [t.workspaceId, t.assignedByMemberId],
       foreignColumns: [member.organizationId, member.id],
     }).onDelete('set null'),
   ],

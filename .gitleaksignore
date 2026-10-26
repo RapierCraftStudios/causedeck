@@ -48,3 +48,13 @@ bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.ka.bengal
 bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.tn.chennai.district/list-commercial.expected.json:generic-api-key:39
 bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.tn.chennai.district/list-tamil.expected.json:generic-api-key:147
 bc37fc26d135b335a37ff9a0217299c59ad3fc9b:packages/adapters/fixtures/in.tn.chennai.district/list-table.expected.json:generic-api-key:111
+# A memory key in the automation handler test (M2.judge_habit), not a secret; history only.
+f0d4e871d81af87606a5badef683c627b57338ab:packages/core/src/automation/__tests__/handlers.test.ts:generic-api-key:293
+# Lane-branch history (#100-#106, #769-#771) scanned by the full-history CI job; none are secrets:
+# test-only HMAC signing keys in the status tests, a dummy CI-plan Cloudflare token in a tfvars example,
+# a curl --user built from required env vars, and contract prose ("redaction processor ...").
+8b080d340ef7f4e121afd6b24fb8f38abcade56d:apps/site/lib/status/status.test.ts:generic-api-key:13
+ef57d9a422daa9e3f9942b18a6d63253a492b344:packages/core/src/status/status.test.ts:generic-api-key:26
+07792d63a729ffd00ee2751502633df3da009f9c:infra/terraform/envs/stage-b/terraform.tfvars.example:cloudflare-api-key:24
+9a8c1f981aa64da0b35a9ee8d09219dd7723862a:infra/scripts/backup/lib/india-guard.sh:curl-auth-user:73
+f894bc0fa59be794a15ac28456a26fa0f469c144:.forge-lean/contract.json:generic-api-key:155

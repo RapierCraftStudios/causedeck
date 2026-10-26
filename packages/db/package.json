@@ -12,6 +12,8 @@
     "./schema": "./src/schema/index.ts",
     "./seed": "./src/seed/index.ts",
     "./seed/e2e": "./src/seed/e2e.ts",
+    "./seed/court-day-fixtures": "./src/seed/court-day-fixtures.ts",
+    "./seed/brief-fixtures": "./src/seed/brief-fixtures.ts",
     "./seed/forum-catalogue": "./src/seed/forum-catalogue/index.ts",
     "./seed/plans": "./src/seed/plans.ts",
     "./seed/synthetic": "./src/seed/synthetic/index.ts",

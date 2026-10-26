@@ -1,7 +1,7 @@
 // Static policy lint for infra/terraform (#99): `node --test infra/terraform/test/policy.test.mjs`.
 // Plain-text checks (no HCL parser, like infra/scripts/compose-prod.test.mjs) so it runs without
 // Terraform; `terraform validate/plan/test` and checkov run in .github/workflows/terraform.yml and
-// residency.tftest.hcl repeats the residency rules against the real graph.
+// envs/prod/tests/residency.tftest.hcl repeats the residency rules against the real graph.
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -376,7 +376,7 @@ describe('terraform.yml', () => {
     const apply = wf.slice(wf.indexOf('\n  apply:'));
     assert.match(apply, /if: github\.event_name == 'workflow_dispatch'/);
     assert.match(apply, /environment: terraform-\$\{\{ inputs\.env \}\}/);
-    for (const step of ['fmt -check', 'validate', 'tflint', 'checkov', 'test -test-directory']) {
+    for (const step of ['fmt -check', 'validate', 'tflint', 'checkov', 'terraform test']) {
       assert.ok(wf.includes(step), `missing ${step}`);
     }
     assert.match(wf, /-var-file=terraform\.tfvars\.example/);
@@ -387,6 +387,6 @@ describe('terraform.yml', () => {
     const readme = read('README.md');
     assert.match(readme, /₹6k to 12k/);
     assert.match(readme, /Sunday 20:00 UTC/);
-    assert.ok(existsSync(path.join(tf, 'test', 'residency.tftest.hcl')));
+    assert.ok(existsSync(path.join(tf, 'envs', 'prod', 'tests', 'residency.tftest.hcl')));
   });
 });

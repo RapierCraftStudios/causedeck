@@ -1,5 +1,6 @@
-# `terraform test` for the residency and safety invariants. Run from an env root:
-#   terraform -chdir=infra/terraform/envs/prod test -test-directory=../../test
+# `terraform test` for the residency and safety invariants. Run from the prod env root, where
+# terraform test finds this `tests/` directory (the testing directory must sit inside the config dir):
+#   terraform -chdir=infra/terraform/envs/prod test
 # Providers are mocked, so no credentials or network are needed.
 
 mock_provider "cloudflare" {}

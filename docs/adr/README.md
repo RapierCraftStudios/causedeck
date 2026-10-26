@@ -50,8 +50,8 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0040](0040-court-day-board-interaction-model.md) | The court-day board interaction model | Proposed | 2026-10-25 | — |
 | [0041](0041-brief-print-via-css.md) | Brief printing through a print stylesheet | Proposed | 2026-10-25 | — |
 | [0042](0042-offline-encrypted-store-and-key-lifecycle.md) | Offline encrypted store and key lifecycle | Proposed | 2026-10-25 | — |
-| [0050](0050-incident-and-key-rotation-policy.md) | Incident and key rotation policy | Proposed | 2026-10-25 | — |
-| [0051](0051-stage-b-c-scale-path.md) | Stage B and C scale path | Proposed | 2026-10-25 | — |
+| [0043](0043-incident-and-key-rotation-policy.md) | Incident and key rotation policy | Proposed | 2026-10-25 | — |
+| [0044](0044-stage-b-c-scale-path.md) | Stage B and C scale path | Proposed | 2026-10-25 | — |
 
 ## Statuses
 

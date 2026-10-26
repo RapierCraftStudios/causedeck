@@ -23,10 +23,13 @@ export const NAMESPACES = [
   'portfolio',
   'case-watch',
   'court-day',
+  'delegation',
+  'reminders',
   'court-insights',
   'matters',
   'matter-timeline',
   'calendar',
+  'calendarView',
   'inbox',
   'pwa',
   'whatsapp-import',
@@ -38,7 +41,12 @@ export const NAMESPACES = [
   'import',
   'camera',
   'voice',
+  'outcome',
+  'brief',
+  'share',
+  'offline',
   'errors',
+  'status',
 ] as const;
 
 export type Namespace = (typeof NAMESPACES)[number];

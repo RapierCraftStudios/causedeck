@@ -53,6 +53,7 @@ catalog:
   '@aws-sdk/s3-request-presigner': 3.1152.0
   '@axe-core/playwright': 4.13.0
   '@better-auth/passkey': 1.7.10
+  '@better-auth/sso': 1.7.10
   '@commitlint/cli': 21.2.3
   '@commitlint/config-conventional': 21.2.3
   '@date-fns/tz': 1.5.0
@@ -127,6 +128,7 @@ catalog:
   eslint-plugin-import-x: 4.17.1
   eslint-plugin-react-hooks: 7.1.1
   eslint-plugin-unicorn: 65.0.0
+  fake-indexeddb: 6.2.6
   fast-check: 4.10.2
   fflate: 0.8.3
   file-type: 22.2.0
@@ -145,6 +147,7 @@ catalog:
   mupdf: 1.28.1
   next: 16.4.2
   next-intl: 4.14.9
+  next-mdx-remote: 6.0.0
   next-themes: 0.4.6
   nodemailer: 10.1.1
   parse5: 8.0.1

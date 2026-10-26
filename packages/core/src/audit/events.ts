@@ -38,6 +38,11 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'Staff created or changed an external data source or flipped its kill switch',
   },
+  // The public status page's incident log (#770). Metadata holds the change and the old and new state.
+  'incident.changed': {
+    security: true,
+    description: 'Staff opened, updated or resolved a public status incident',
+  },
   // The court document network (#485, D-048). Metadata holds ids and counts only, never content.
   'network.contributed': {
     security: false,
@@ -112,6 +117,15 @@ export const AUDIT_ACTIONS = {
   // Public API keys (#624): fail-closed. Metadata holds the key's scopes (created) or nothing.
   'api_key.created': { security: true, description: 'An owner or admin issued a public API key' },
   'api_key.revoked': { security: true, description: 'An owner or admin revoked a public API key' },
+  // Per-organisation SSO (#683): fail-closed. Metadata holds the protocol, domain and enabled flag,
+  // never the provider settings (client secrets, certificates).
+  'sso.provider_created': { security: true, description: 'An owner added an SSO provider' },
+  'sso.provider_updated': { security: true, description: 'An owner changed an SSO provider' },
+  'sso.provider_deleted': { security: true, description: 'An owner removed an SSO provider' },
+  'sso.domain_verified': {
+    security: true,
+    description: 'An owner proved control of an SSO provider domain by DNS',
+  },
   // Bulk provisioning (#684): fail-closed. A run's metadata holds its source, counts and a dry-run
   // flag (never the addresses); a provisioned or deprovisioned member names the source and change.
   'provisioning.run': {
@@ -324,6 +338,38 @@ export const AUDIT_ACTIONS = {
   'automation.reassigned': {
     security: true,
     description: "A capture's results were moved to another matter",
+  },
+  // The lawyer's manual "court is at item N" hall marker (#58): an internal note, ids and numbers only.
+  'court_day.marker_set': {
+    security: false,
+    description: 'A manual court-is-at-item marker was set for a hall',
+  },
+  'court_day.marker_cleared': {
+    security: false,
+    description: 'A manual court-is-at-item marker was cleared',
+  },
+  // A confirmed hearing outcome (#62): ids, kinds and counts only, never the outcome text.
+  'hearing.outcome_confirmed': {
+    security: true,
+    description: 'A person confirmed a hearing outcome, its next date, obligations and tasks',
+  },
+  // Chamber delegation of appearances (#63): ids only, never the delegator's note.
+  'appearance.assigned': {
+    security: false,
+    description: 'An appearance was assigned to a member',
+  },
+  'appearance.reassigned': {
+    security: false,
+    description: 'An appearance moved to another member; the previous assignee is recorded',
+  },
+  'appearance.unassigned': {
+    security: false,
+    description: 'A member was removed from an appearance',
+  },
+  'matter.access_granted': {
+    security: true,
+    description:
+      'An owner granted a member access to a restricted matter to delegate an appearance',
   },
 } as const satisfies Record<string, AuditActionSpec>;
 

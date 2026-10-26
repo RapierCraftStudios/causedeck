@@ -41,9 +41,11 @@ import {
   ACTIVATION_CHANNELS,
   ACTIVATION_STEPS,
   activationFunnel,
+  referralFunnel,
   type ActivationChannel,
   type ActivationStep,
   type Funnel,
+  type ReferralFunnel,
 } from '@causedeck/core/activation';
 import {
   countActiveStaff,
@@ -58,6 +60,7 @@ import {
   type StaffWorkspaceMetadata,
   type StaffWorkspaceUsage,
 } from '@causedeck/core/support';
+import { listIncidents, type IncidentRecord } from '@causedeck/core/status';
 import type { Database } from '@causedeck/db';
 import { listAccessModeRegistry, type AccessModeRegistryEntry } from '@causedeck/flags';
 
@@ -213,12 +216,44 @@ export function growthFunnel(
   );
 }
 
+/** Brief-share referral funnel: invites sent, accepted, activated and credited (#507). Counts only. */
+export function growthReferralFunnel(
+  staff: StaffActor,
+  options: { since?: Date } = {},
+  db?: Database,
+): Promise<ReferralFunnel> {
+  return staffQuery(
+    staff,
+    {
+      purpose: 'growth.referral_funnel',
+      capability: 'growth',
+      tables: ['activation_event', 'referral', 'referral_credit'],
+    },
+    (tx) => referralFunnel(tx, options),
+    db,
+  );
+}
+
 /** Every external data source in the registry, for the Sources page (#478). */
 export function sourceRegistry(staff: StaffActor, db?: Database): Promise<SourceRecord[]> {
   return staffQuery(
     staff,
     { purpose: 'sources.registry', capability: 'sources', tables: ['source'] },
     (tx) => listSources(tx),
+    db,
+  );
+}
+
+/** Every incident with its updates, for the Status page (#770). */
+export function incidentConsole(staff: StaffActor, db?: Database): Promise<IncidentRecord[]> {
+  return staffQuery(
+    staff,
+    {
+      purpose: 'status.incidents',
+      capability: 'status',
+      tables: ['incident', 'incident_update'],
+    },
+    (tx) => listIncidents(tx),
     db,
   );
 }

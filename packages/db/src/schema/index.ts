@@ -298,6 +298,14 @@ export {
   type NoticeMatchReason,
 } from './notices.ts';
 export {
+  INCIDENT_SEVERITIES,
+  INCIDENT_STATES,
+  incident,
+  incidentUpdate,
+  type IncidentSeverity,
+  type IncidentState,
+} from './status.ts';
+export {
   CASE_STATUS_VIA,
   caseStatusSnapshot,
   caseWatch,
@@ -311,6 +319,7 @@ export {
   type IssueTagSource,
   type IssueTagStatus,
 } from './matter-issue.ts';
+export { courtDayMarker, listSnapshot, type ListSnapshotRow } from './court-day.ts';
 export {
   REVIEW_FIELDS,
   REVIEW_KINDS,
@@ -321,3 +330,6 @@ export {
   type ReviewKind,
   type ReviewStatus,
 } from './review.ts';
+export { briefState, type BriefCarryEntry } from './brief.ts';
+export { briefShare, referral, referralCredit, type SharedBriefSnapshot } from './share.ts';
+export { reminderDispatch, REMINDER_KINDS, type ReminderKind } from './reminder.ts';

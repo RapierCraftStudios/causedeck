@@ -223,3 +223,16 @@ dispatch; until they exist the specs skip.
 - **`workflow_dispatch` with `update_snapshots`:** regenerates the baselines (see above). Creating
   the PR needs "Allow GitHub Actions to create and approve pull requests" enabled in the repository
   settings.
+
+## Offline court day
+
+`tests/product/offline-court-day.spec.ts` (#747, part 6 of #65) signs in, waits for the 7-day
+prefetch, then uses `context.setOffline(true)`: offline render of `/today`, `/tomorrow` and a brief,
+the branded `/offline` fallback, per-user and per-workspace isolation, revoked-access purge, axe
+(`@a11y`) and a keyboard-only pass. `offline-court-day.visual.spec.ts` holds the `@visual` baselines.
+The outbox replay and next-date conflict cases are `test.fixme` until the UI enqueues edits.
+`pnpm --filter @causedeck/e2e lhci:court-day` runs `lighthouserc.court-day.json` on
+`/w/chennai-solo/today` (mobile; script size <= 180 KB, interactive and LCP < 2.5 s) with the same
+signed-in setup as `lhci:courts`. The manual iOS Safari and Android Chrome matrix is
+[`docs/engineering/offline-test-matrix.md`](../docs/engineering/offline-test-matrix.md). All of this
+runs in CI only (Playwright and Lighthouse are never run on the build host).

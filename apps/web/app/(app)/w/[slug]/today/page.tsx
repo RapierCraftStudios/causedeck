@@ -1,5 +1,4 @@
-// `/w/[slug]/today` (#493): the court-day view. The placeholder stays until the day view lands; the
-// bench-notice alerts (#496) and the
+// `/w/[slug]/today` (#493, #59): the court-day board. The bench-notice alerts (#496) and the
 // live halls section (hall, item now, status, your item N away, estimated window) sits under it.
 // It renders nothing while `court.live-tracking` is off or the member has no item listed today, and
 // a failed read never breaks the page.
@@ -15,6 +14,7 @@ import {
   placeholderPage,
   type WorkspacePageProps,
 } from '../../../../../components/shell/placeholder-page.tsx';
+import { renderBoard } from '../_court-day/render-board.tsx';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../src/health.ts';
 
@@ -58,14 +58,14 @@ async function loadBenchNotices(slug: string): Promise<BenchNoticeAlertView[]> {
 
 export default async function TodayPage(props: WorkspacePageProps) {
   // The placeholder renders first so its guards (membership, permission, dev states) run unchanged.
-  const base = await Placeholder(props);
+  const { base, board } = await renderBoard(props, 'today', Placeholder);
   const { slug } = await props.params;
   const live = await LiveHalls({ halls: await loadHalls(slug) });
   const bench = await loadBenchNotices(slug);
   return (
     <div className="flex flex-col gap-6">
       <SurfaceHelp slug={slug} surface="today" />
-      {base}
+      {board ?? base}
       <BenchNoticeAlerts alerts={bench} slug={slug} />
       {live}
     </div>

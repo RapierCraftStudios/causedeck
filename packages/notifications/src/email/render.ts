@@ -22,6 +22,21 @@ import {
   type EndOfDayDigestProps,
 } from './templates/end-of-day-digest.tsx';
 import {
+  EveningBriefEmail,
+  eveningBriefSubject,
+  type EveningBriefProps,
+} from './templates/evening-brief.tsx';
+import {
+  MorningDiffEmail,
+  morningDiffSubject,
+  type MorningDiffProps,
+} from './templates/morning-diff.tsx';
+import {
+  OutcomeMissingEmail,
+  outcomeMissingSubject,
+  type OutcomeMissingProps,
+} from './templates/outcome-missing.tsx';
+import {
   NewsDigestEmail,
   newsDigestSubject,
   type NewsDigestProps,
@@ -46,6 +61,9 @@ export interface TemplateProps {
   'daily-digest': DailyDigestProps;
   'end-of-day-digest': EndOfDayDigestProps;
   'news-digest': NewsDigestProps;
+  'evening-brief': EveningBriefProps;
+  'morning-diff': MorningDiffProps;
+  'outcome-missing': OutcomeMissingProps;
   'billing-notice': BillingNoticeProps;
   notice: NoticeProps;
 }
@@ -85,6 +103,21 @@ export const TEMPLATES: { [K in TemplateName]: TemplateDefinition<TemplateProps[
     category: 'digest.news',
     subject: newsDigestSubject,
     component: NewsDigestEmail,
+  },
+  'evening-brief': {
+    category: 'reminder.evening',
+    subject: eveningBriefSubject,
+    component: EveningBriefEmail,
+  },
+  'morning-diff': {
+    category: 'reminder.morning',
+    subject: morningDiffSubject,
+    component: MorningDiffEmail,
+  },
+  'outcome-missing': {
+    category: 'reminder.outcome_missing',
+    subject: outcomeMissingSubject,
+    component: OutcomeMissingEmail,
   },
   'billing-notice': {
     category: 'billing.notice',

@@ -256,6 +256,31 @@ describe('shortcuts in the app shell', () => {
     expect(captureOpen()).toBe('true');
   });
 
+  it('lets a page hotkey that claims a key win, but g chords still reach the shell', () => {
+    renderShell();
+    const claimed: string[] = [];
+    const claim = (event: KeyboardEvent) => {
+      claimed.push(event.key);
+      event.preventDefault();
+    };
+    document.addEventListener('keydown', claim);
+    press({ key: 'c' });
+    expect(claimed).toEqual(['c']);
+    expect(captureOpen()).toBe('false');
+    for (const [second, href] of [
+      ['o', '/w/demo/obligations'],
+      ['c', '/w/demo/courts'],
+    ] as const) {
+      claimed.length = 0;
+      push.mockReset();
+      press({ key: 'g' });
+      press({ key: second });
+      expect(push).toHaveBeenCalledWith(href);
+      expect(claimed).toEqual(['g']);
+    }
+    document.removeEventListener('keydown', claim);
+  });
+
   it('mod+k opens the palette (bound once, so it stays open)', async () => {
     renderShell();
     press({ key: 'k', ctrlKey: true });

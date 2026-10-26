@@ -302,6 +302,13 @@
         "offline": "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ಸೈನ್ ಇನ್ ಮಾಡಲು ಸಂಪರ್ಕಿಸಿ.",
         "accessDenied": "ಪ್ರವೇಶವನ್ನು ನೀಡಲಾಗಿಲ್ಲ."
       },
+      "sso": {
+        "open": "SSO ಮೂಲಕ ಸೈನ್ ಇನ್ ಮಾಡಿ",
+        "emailLabel": "ಕೆಲಸದ ಇಮೇಲ್",
+        "emailPlaceholder": "name@firm.example.com",
+        "submit": "SSO ಮೂಲಕ ಮುಂದುವರಿಯಿರಿ",
+        "failed": "ಆ ವಿಳಾಸಕ್ಕೆ SSO ಸೈನ್ ಇನ್ ಪ್ರಾರಂಭಿಸಲು ಆಗಲಿಲ್ಲ. ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+      },
       "phone": {
         "label": "ಮೊಬೈಲ್ ಸಂಖ್ಯೆ",
         "placeholder": "98765 43210",
@@ -1178,7 +1185,8 @@
       "audit": "ಆಡಿಟ್ ಲಾಗ್",
       "support": "ಬೆಂಬಲ ಪ್ರವೇಶ",
       "more": "ಇನ್ನಷ್ಟು",
-      "court-watch": "ನ್ಯಾಯಾಲಯ ವೀಕ್ಷಣೆ"
+      "court-watch": "ನ್ಯಾಯಾಲಯ ವೀಕ್ಷಣೆ",
+      "sso": "ಸಿಂಗಲ್ ಸೈನ್-ಆನ್"
     },
     "placeholder": {
       "export": "ಈ ಕಾರ್ಯಕ್ಷೇತ್ರದಲ್ಲಿರುವ ಎಲ್ಲದರ ಪ್ರತಿಯನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.",
@@ -1312,9 +1320,11 @@
         "listing": "ಪ್ರಕರಣ ಪಟ್ಟಿ",
         "draft": "ಕರಡುಗಳು",
         "audit": "ಆಡಿಟ್ ಲಾಗ್",
+        "court_day": "ನ್ಯಾಯಾಲಯದ ದಿನ",
         "export": "ರಫ್ತು",
         "support": "ಬೆಂಬಲ",
-        "shell": "ಕಾರ್ಯಕ್ಷೇತ್ರದ ವಿಭಾಗಗಳು"
+        "shell": "ಕಾರ್ಯಕ್ಷೇತ್ರದ ವಿಭಾಗಗಳು",
+        "appearance": "ಹಾಜರಾತಿಗಳು"
       },
       "actions": {
         "workspace": {
@@ -1360,6 +1370,9 @@
         "audit": {
           "read": "ಆಡಿಟ್ ಲಾಗ್ ಓದುವುದು ಮತ್ತು ರಫ್ತು ಮಾಡುವುದು"
         },
+        "court_day": {
+          "view_all": "ಕಾರ್ಯಕ್ಷೇತ್ರದ ಸಂಪೂರ್ಣ ನ್ಯಾಯಾಲಯ ದಿನವನ್ನು ವೀಕ್ಷಿಸುವುದು"
+        },
         "export": {
           "run": "ಕಾರ್ಯಕ್ಷೇತ್ರದ ಎಲ್ಲಾ ಡೇಟಾವನ್ನು ರಫ್ತು ಮಾಡುವುದು"
         },
@@ -1377,6 +1390,9 @@
         },
         "invoices": {
           "read": "ಇನ್‌ವಾಯ್ಸ್‌ಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡುವುದು"
+        },
+        "appearance": {
+          "assign": "ಹಾಜರಾತಿಗಳನ್ನು ಸದಸ್ಯರಿಗೆ ನಿಯೋಜಿಸಿ"
         }
       },
       "settings": {
@@ -1737,6 +1753,48 @@
       "removed": "ವೀಕ್ಷಣೆ ತೆಗೆಯಲಾಗಿದೆ.",
       "failed": "ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
       "loading": "ನ್ಯಾಯಾಲಯ ವೀಕ್ಷಣೆ ಲೋಡ್ ಆಗುತ್ತಿದೆ"
+    },
+    "sso": {
+      "metaTitle": "ಸಿಂಗಲ್ ಸೈನ್-ಆನ್",
+      "title": "ಸಿಂಗಲ್ ಸೈನ್-ಆನ್",
+      "description": "ನಿಮ್ಮ ಸಂಸ್ಥೆ ತನ್ನದೇ ಗುರುತು ಒದಗಿಸುವವರ (SAML ಅಥವಾ OIDC) ಮೂಲಕ ಸೈನ್ ಇನ್ ಮಾಡಲಿ. ಹೀಗೆ ಸೈನ್ ಇನ್ ಮಾಡುವವರು ವೀಕ್ಷಕರಾಗಿ ಸೇರುತ್ತಾರೆ.",
+      "empty": "ಇನ್ನೂ ಗುರುತು ಒದಗಿಸುವವರು ಇಲ್ಲ.",
+      "error": {
+        "title": "SSO ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ.",
+        "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
+      },
+      "form": {
+        "protocol": "ಪ್ರೋಟೋಕಾಲ್",
+        "issuer": "ಇಶ್ಯೂಯರ್",
+        "domain": "ಇಮೇಲ್ ಡೊಮೇನ್",
+        "enabled": "ಸಕ್ರಿಯ",
+        "clientId": "ಕ್ಲೈಂಟ್ ID",
+        "clientSecret": "ಕ್ಲೈಂಟ್ ರಹಸ್ಯ",
+        "entryPoint": "ಸೈನ್-ಇನ್ URL",
+        "cert": "ಸಹಿ ಪ್ರಮಾಣಪತ್ರ",
+        "save": "ಪೂರೈಕೆದಾರರನ್ನು ಉಳಿಸಿ",
+        "delete": "ತೆಗೆದುಹಾಕಿ"
+      },
+      "toast": {
+        "saved": "ಪೂರೈಕೆದಾರರನ್ನು ಉಳಿಸಲಾಗಿದೆ.",
+        "removed": "ಪೂರೈಕೆದಾರರನ್ನು ತೆಗೆಯಲಾಗಿದೆ.",
+        "failed": "ಪೂರೈಕೆದಾರರನ್ನು ಉಳಿಸಲಾಗಲಿಲ್ಲ.",
+        "forbidden": "SSO ಬದಲಾಯಿಸಲು ಮಾಲೀಕರಿಗೆ ಮಾತ್ರ ಸಾಧ್ಯ.",
+        "verified": "ಡೊಮೇನ್ ಪರಿಶೀಲಿಸಲಾಗಿದೆ.",
+        "verifyFailed": "DNS ದಾಖಲೆ ಇನ್ನೂ ಸಿಗಲಿಲ್ಲ."
+      },
+      "status": {
+        "enabled": "ಸಕ್ರಿಯ",
+        "disabled": "ನಿಷ್ಕ್ರಿಯ",
+        "unverified": "ಡೊಮೇನ್ ಪರಿಶೀಲಿಸಿಲ್ಲ"
+      },
+      "verify": {
+        "title": "ನಿಮ್ಮ ಡೊಮೇನ್ ಪರಿಶೀಲಿಸಿ",
+        "instructions": "{domain} ಗೆ ಈ DNS TXT ದಾಖಲೆಯನ್ನು ಸೇರಿಸಿ, ನಂತರ ಪರಿಶೀಲಿಸಿ. ಡೊಮೇನ್ ಪರಿಶೀಲನೆಯಾಗುವವರೆಗೆ SSO ಅನ್ನು ಆನ್ ಮಾಡಲಾಗುವುದಿಲ್ಲ.",
+        "name": "ದಾಖಲೆಯ ಹೆಸರು",
+        "value": "ದಾಖಲೆಯ ಮೌಲ್ಯ",
+        "button": "ದಾಖಲೆ ಪರಿಶೀಲಿಸಿ"
+      }
     }
   },
   "lifecycle": {
@@ -2646,6 +2704,228 @@
         "high": "ಹೆಚ್ಚಿನ ವಿಶ್ವಾಸ"
       },
       "updated": "ಫಲಕ ಓದಿದ ಸಮಯ {time}"
+    },
+    "board": {
+      "header": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "days": "Court day",
+        "summary": "{items, plural, one {# item} other {# items}} in {halls, plural, one {# hall} other {# halls}}",
+        "read": "lists read {time}"
+      },
+      "failure": {
+        "message": "Couldn't read {day}'s {forum} list for Hall {hall}.",
+        "today": "today",
+        "tomorrow": "tomorrow",
+        "openOfficial": "Open the official list",
+        "shareAgain": "or share it again.",
+        "lastKnown": "Last known data, read {time}"
+      },
+      "diff": {
+        "banner": "{count, plural, one {# change} other {# changes}} since the last list",
+        "open": "{count, plural, one {See # change} other {See # changes}}",
+        "title": "List changes",
+        "description": "What was added, moved or removed since the previous list.",
+        "label": {
+          "changed": "Changed list",
+          "supplementary": "Supplementary list"
+        },
+        "kind": {
+          "added": "New: item {item}, {case}",
+          "removed": "Removed: item {item}, {case}",
+          "moved": "Moved from Hall {hall}: item {item}, {case}"
+        }
+      },
+      "shortcuts": {
+        "nextItem": "Next item",
+        "previousItem": "Previous item",
+        "nextHall": "Next hall",
+        "previousHall": "Previous hall",
+        "open": "Open the matter",
+        "carry": "Go to the carry list",
+        "marker": "Set court is at item",
+        "actions": "Quick actions for the item",
+        "diff": "Open list changes",
+        "rail": "Go to the hall rail",
+        "today": "Go to Today",
+        "matters": "Go to Matters",
+        "help": "Show shortcuts"
+      },
+      "clash": {
+        "title": "Clash",
+        "hall": "Items {a} (Hall {hallA}) and {b} (Hall {hallB}) are listed for the same advocate on this date.",
+        "complex": "Items {a} ({hallA}) and {b} ({hallB}) are in different court complexes for the same advocate on this date."
+      },
+      "hall": {
+        "unassigned": "Hall not yet assigned",
+        "name": "Hall {hallNo}",
+        "count": "{count, plural, one {# item} other {# items}}",
+        "courtIsAt": "Court is at item {item}",
+        "bench": "Before {judges}"
+      },
+      "item": {
+        "name": "Item {n}",
+        "unnumbered": "No item number",
+        "brief": "brief {percent} percent ready",
+        "briefUnknown": "brief readiness not known",
+        "clashNote": "clash with another hall",
+        "restricted": "Restricted matter",
+        "clash": "Clash",
+        "carried": "{count, plural, one {Listed before} other {Listed # times before}}",
+        "delegated": "Delegated"
+      },
+      "stage": {
+        "filed": "Filed",
+        "sr_fr": "SR/FR",
+        "defects": "Defects",
+        "re_presented": "Re-presented",
+        "numbered": "Numbered",
+        "disposed": "Disposed",
+        "listed": "Listed",
+        "reserved": "Reserved",
+        "part-heard": "Part-heard"
+      },
+      "change": {
+        "added": "New",
+        "moved": "Moved from Hall {hall}",
+        "removed": "Removed"
+      },
+      "marker": {
+        "label": "Court is at item",
+        "set": "Set",
+        "clear": "Clear",
+        "invalid": "Enter an item number.",
+        "failed": "Could not save. Try again."
+      },
+      "rail": {
+        "carry": "Carry list",
+        "carryEmpty": "Nothing listed before.",
+        "needsYou": "Needs you",
+        "needsEmpty": "Nothing to confirm.",
+        "carriedTimes": "{count, plural, one {listed once before} other {listed # times before}}",
+        "toConfirm": "to confirm",
+        "summary": "Carry {carry}, needs you {needs}",
+        "obligations": "{count, plural, one {# open obligation} other {# open obligations}}"
+      },
+      "actions": {
+        "open": "Quick actions",
+        "title": "Quick actions",
+        "openMatter": "Open the matter",
+        "courtIsHere": "Court is at item {item}"
+      },
+      "hallRail": {
+        "label": "Halls"
+      },
+      "empty": {
+        "title": "Nothing listed",
+        "description": "None of your matters are on a cause list for this day."
+      },
+      "offline": "Offline. Showing the last known data.",
+      "denied": {
+        "title": "You cannot view this day",
+        "description": "Your role does not include the court day."
+      },
+      "loading": "Loading the court day",
+      "error": {
+        "title": "The court day could not load",
+        "retry": "Try again"
+      },
+      "expectedNotListed": "{case} is due {day} but not listed.",
+      "offlineAt": "Offline. Showing data saved at {time}."
+    }
+  },
+  "delegation": {
+    "title": "ನಾಳೆಯ ಯೋಜನೆ",
+    "metaTitle": "ನಾಳೆಯ ಯೋಜನೆ",
+    "description": "ನಾಳೆಯ ಹಾಜರಾತಿಗಳನ್ನು ನಿಯೋಜಿಸಿ. ಸಲಹೆಗಳು ಪ್ರಸ್ತಾವನೆಗಳಷ್ಟೇ; ನೀವು ಒಪ್ಪುವವರೆಗೆ ಬದಲಾವಣೆ ಇಲ್ಲ.",
+    "empty": "ನಾಳೆ ನಿಯೋಜಿಸಲು ಹಾಜರಾತಿಗಳಿಲ್ಲ",
+    "loading": "ಯೋಜನೆ ಲೋಡ್ ಆಗುತ್ತಿದೆ",
+    "error": "ಯೋಜನೆಯನ್ನು ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ.",
+    "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+    "denied": "ನಾಳೆಯ ಯೋಜನೆಗೆ ನಿಮಗೆ ಪ್ರವೇಶವಿಲ್ಲ. ವರ್ಕ್‌ಸ್ಪೇಸ್ ಮಾಲೀಕರನ್ನು ಕೇಳಿ.",
+    "offline": "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ನಿಯೋಜನೆಗಳು ಉಳಿಸಲ್ಪಟ್ಟು ಸಿಂಕ್ ಆಗುತ್ತವೆ.",
+    "willSync": "ಸಿಂಕ್ ಆಗುತ್ತದೆ",
+    "conflictNotice": "{name} ಮೊದಲು ಈ ನಿಯೋಜನೆಯನ್ನು ಬದಲಿಸಿದರು. ಅವರ ಬದಲಾವಣೆ ತೋರಿಸಲಾಗಿದೆ.",
+    "assignee": "ನಿಯೋಜಿತರು",
+    "assign": "ನಿಯೋಜಿಸಿ",
+    "choose": "ಸದಸ್ಯರನ್ನು ಆರಿಸಿ",
+    "unassigned": "ನಿಯೋಜಿಸಿಲ್ಲ",
+    "clash": "ಘರ್ಷಣೆ",
+    "suggested": "ಸಲಹೆ: {name}",
+    "acceptAll": "ಎಲ್ಲಾ ಸಲಹೆಗಳನ್ನು ಒಪ್ಪಿ",
+    "acceptAllTitle": "ಎಲ್ಲಾ ಸಲಹೆಗಳನ್ನು ಒಪ್ಪುವಿರಾ?",
+    "acceptAllBody": "{count, plural, one {# ನಿಯೋಜನೆ} other {# ನಿಯೋಜನೆಗಳು}} ಮಾಡಲಾಗುತ್ತದೆ ಮತ್ತು ಸದಸ್ಯರಿಗೆ ಆ್ಯಪ್‌ನಲ್ಲಿ ತಿಳಿಸಲಾಗುತ್ತದೆ.",
+    "confirm": "ಒಪ್ಪಿ",
+    "cancel": "ರದ್ದುಮಾಡಿ",
+    "assigned": "{name} ಅವರಿಗೆ ನಿಯೋಜಿಸಲಾಗಿದೆ",
+    "restricted": "{name} ಈ ನಿರ್ಬಂಧಿತ ಪ್ರಕರಣವನ್ನು ನೋಡಲಾಗದು.",
+    "grantAccess": "ಪ್ರವೇಶ ನೀಡಿ ನಿಯೋಜಿಸಿ",
+    "outcomes": {
+      "label": "ಫಲಿತಾಂಶಗಳು",
+      "member": "{name}: {total} ರಲ್ಲಿ {done} ಫಲಿತಾಂಶಗಳು ಬಂದಿವೆ",
+      "toast": "{name} ಒಂದು ಫಲಿತಾಂಶವನ್ನು ದೃಢಪಡಿಸಿದರು"
+    }
+  },
+  "reminders": {
+    "settings": {
+      "title": "ನ್ಯಾಯಾಲಯ ದಿನದ ಜ್ಞಾಪನೆಗಳು",
+      "description": "ನ್ಯಾಯಾಲಯ ದಿನದ ಬಗ್ಗೆ ಯಾವಾಗ ಮತ್ತು ಎಲ್ಲಿ ಜ್ಞಾಪಿಸಬೇಕು ಎಂಬುದನ್ನು ಆರಿಸಿ.",
+      "evening": {
+        "label": "ಸಂಜೆಯ ಸಾರಾಂಶ",
+        "hint": "ಹಿಂದಿನ ರಾತ್ರಿ: ನಾಳೆ ಪಟ್ಟಿಯಲ್ಲಿರುವುದು."
+      },
+      "morning": {
+        "label": "ಬೆಳಗಿನ ಬದಲಾವಣೆಗಳು",
+        "hint": "ಬೆಳಿಗ್ಗೆ 7:00: ಇಂದಿನ ಪಟ್ಟಿಯಲ್ಲಿ ಬದಲಾದದ್ದು."
+      },
+      "outcomeMissing": {
+        "label": "ಫಲಿತಾಂಶ ದಾಖಲಾಗಿಲ್ಲ",
+        "hint": "ನ್ಯಾಯಾಲಯದ ನಂತರ: ಫಲಿತಾಂಶ ದಾಖಲಾಗದ ವಿಚಾರಣೆಗಳು."
+      },
+      "time": "ಸಮಯ",
+      "delay": "ವಿಳಂಬ",
+      "minutes": "ಕೊನೆಯ ಐಟಂ ನಂತರದ ನಿಮಿಷಗಳು",
+      "channels": {
+        "in_app": "ಆ್ಯಪ್‌ನಲ್ಲಿ",
+        "push": "ಪುಶ್",
+        "email": "ಇಮೇಲ್"
+      },
+      "loading": "ನಿಮ್ಮ ಜ್ಞಾಪನೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಲೋಡ್ ಆಗುತ್ತಿವೆ",
+      "error": "ನಿಮ್ಮ ಜ್ಞಾಪನೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಲೋಡ್ ಆಗಲಿಲ್ಲ.",
+      "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+      "saved": "ಉಳಿಸಲಾಗಿದೆ",
+      "denied": "ಸದಸ್ಯರು ಮಾತ್ರ ತಮ್ಮ ಜ್ಞಾಪನೆಗಳನ್ನು ಬದಲಾಯಿಸಬಹುದು.",
+      "saving": "ಉಳಿಸಲಾಗುತ್ತಿದೆ"
+    },
+    "email": {
+      "evening": {
+        "subject": "ನಾಳೆಯ ನ್ಯಾಯಾಲಯ ದಿನ ಸಿದ್ಧವಾಗಿದೆ",
+        "preview": "ನಾಳೆಗಾಗಿ ನಿಮ್ಮ ಸಂಜೆಯ ಸಾರಾಂಶ",
+        "heading": "ನಾಳೆಯ ನ್ಯಾಯಾಲಯ ದಿನ ಸಿದ್ಧವಾಗಿದೆ",
+        "body": "{listings, plural, one {# ಪಟ್ಟಿ} other {# ಪಟ್ಟಿಗಳು}}, {halls, plural, one {# ಹಾಲ್} other {# ಹಾಲ್‌ಗಳು}}. {clashes, plural, =0 {ಘರ್ಷಣೆಗಳಿಲ್ಲ.} one {# ಘರ್ಷಣೆ.} other {# ಘರ್ಷಣೆಗಳು.}} {lowReadiness, plural, =0 {ಎಲ್ಲಾ ಸಾರಾಂಶಗಳು ಸಿದ್ಧ.} one {# ಸಾರಾಂಶ ಶೇಕಡಾ 60 ಕ್ಕಿಂತ ಕಡಿಮೆ ಸಿದ್ಧ.} other {# ಸಾರಾಂಶಗಳು ಶೇಕಡಾ 60 ಕ್ಕಿಂತ ಕಡಿಮೆ ಸಿದ್ಧ.}} {obligations, plural, =0 {ನಾಳೆ ಯಾವುದೇ ಬಾಧ್ಯತೆ ಇಲ್ಲ.} one {ನಾಳೆ # ಬಾಧ್ಯತೆ ಇದೆ.} other {ನಾಳೆ # ಬಾಧ್ಯತೆಗಳಿವೆ.}}",
+        "cta": "ನಾಳೆಯನ್ನು ತೆರೆಯಿರಿ"
+      },
+      "morning": {
+        "subject": "ಇಂದಿನ ಪಟ್ಟಿ ಬದಲಾಗಿದೆ",
+        "preview": "ಇಂದಿನ ಪಟ್ಟಿಯ ಬದಲಾವಣೆಗಳು",
+        "heading": "ಇಂದಿನ ಪಟ್ಟಿ ಬದಲಾಗಿದೆ",
+        "body": "{added, plural, =0 {ಏನೂ ಸೇರಿಲ್ಲ} other {# ಸೇರಿದೆ}}, {moved, plural, =0 {ಸ್ಥಾನ ಬದಲಾಗಿಲ್ಲ} other {# ಸ್ಥಾನ ಬದಲಾಗಿದೆ}}, {removed, plural, =0 {ತೆಗೆದಿಲ್ಲ} other {# ತೆಗೆಯಲಾಗಿದೆ}}.",
+        "cta": "ಬದಲಾವಣೆಗಳನ್ನು ನೋಡಿ"
+      },
+      "outcomeMissing": {
+        "subject": "ಇಂದಿನ ಫಲಿತಾಂಶಗಳನ್ನು ದಾಖಲಿಸಿ",
+        "preview": "ಫಲಿತಾಂಶಕ್ಕಾಗಿ ಕಾಯುತ್ತಿರುವ ವಿಚಾರಣೆಗಳು",
+        "heading": "ಇಂದಿನ ಫಲಿತಾಂಶಗಳನ್ನು ದಾಖಲಿಸಿ",
+        "body": "{count, plural, one {# ವಿಚಾರಣೆಗೆ} other {# ವಿಚಾರಣೆಗಳಿಗೆ}} ಇನ್ನೂ ದೃಢಪಡಿಸಿದ ಫಲಿತಾಂಶ ಇಲ್ಲ.",
+        "cta": "ಫಲಿತಾಂಶಗಳನ್ನು ದಾಖಲಿಸಿ"
+      },
+      "note": "ಈ ಜ್ಞಾಪನೆ ಆ್ಯಪ್ ಅನ್ನು ಮಾತ್ರ ತೆರೆಯುತ್ತದೆ. ಇದು ನಿಮಗೆ ಮಾತ್ರ ಕಳುಹಿಸಲಾಗುತ್ತದೆ, ಕಕ್ಷಿದಾರರಿಗೆ ಅಲ್ಲ."
+    },
+    "inApp": {
+      "eveningBody": "ನಾಳೆ {listings, plural, one {# ಪಟ್ಟಿ} other {# ಪಟ್ಟಿಗಳು}}, {halls, plural, one {# ಹಾಲ್} other {# ಹಾಲ್‌ಗಳು}}.",
+      "eveningNames": "ಪಟ್ಟಿಯಲ್ಲಿ: {names}",
+      "morningBody": "{added, plural, =0 {0 ಸೇರಿದೆ} other {# ಸೇರಿದೆ}}, {moved, plural, =0 {0 ಬದಲಾಗಿದೆ} other {# ಬದಲಾಗಿದೆ}}, {removed, plural, =0 {0 ತೆಗೆಯಲಾಗಿದೆ} other {# ತೆಗೆಯಲಾಗಿದೆ}}.",
+      "outcomeBody": "{count, plural, one {# ವಿಚಾರಣೆಗೆ} other {# ವಿಚಾರಣೆಗಳಿಗೆ}} ದೃಢಪಡಿಸಿದ ಫಲಿತಾಂಶ ಇಲ್ಲ."
     }
   },
   "courtInsights": {
@@ -3522,6 +3802,98 @@
         "error": "ಏನೋ ತಪ್ಪಾಯಿತು. ಏನೂ ಬದಲಾಗಿಲ್ಲ.",
         "forbidden": "ನೀವು ಇದನ್ನು ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ."
       }
+    }
+  },
+  "calendarView": {
+    "metaTitle": "ಕ್ಯಾಲೆಂಡರ್",
+    "title": "ಕ್ಯಾಲೆಂಡರ್",
+    "description": "ಇಂದು ಮತ್ತು ನಾಳೆಯನ್ನು ಮೀರಿದ ಪಟ್ಟಿಮಾಡಿದ ಪ್ರಕರಣಗಳು ಮತ್ತು ಗಡುವುಗಳು.",
+    "views": {
+      "label": "ನೋಟ",
+      "week": "ವಾರ",
+      "month": "ತಿಂಗಳು"
+    },
+    "scope": {
+      "label": "ತೋರಿಸು",
+      "mine": "ನನ್ನವು",
+      "workspace": "ಇಡೀ ಕಚೇರಿ"
+    },
+    "toolbar": {
+      "label": "ಕ್ಯಾಲೆಂಡರ್ ನಿಯಂತ್ರಣಗಳು",
+      "previous": "ಹಿಂದಿನದು",
+      "next": "ಮುಂದಿನದು",
+      "today": "ಇಂದು",
+      "range": "{from} ರಿಂದ {to} ವರೆಗೆ",
+      "shortcuts": "ಕೀಗಳು: ಬಾಣದ ಕೀಗಳು ದಿನಗಳ ನಡುವೆ ಸರಿಸುತ್ತವೆ, Enter ಒಂದು ದಿನವನ್ನು ತೆರೆಯುತ್ತದೆ, t ಇಂದು, w ವಾರ, m ತಿಂಗಳು, [ ಮತ್ತು ] ಹಿಂದಿನದು ಮತ್ತು ಮುಂದಿನದು."
+    },
+    "kind": {
+      "listing": "ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ",
+      "next_date": "ಮುಂದಿನ ದಿನಾಂಕ",
+      "obligation_due": "ಬಾಕಿ",
+      "holiday": "ರಜೆ",
+      "vacation": "ನ್ಯಾಯಾಲಯದ ರಜೆ"
+    },
+    "legend": {
+      "title": "ಸೂಚಿ",
+      "proposed": "ಪ್ರಸ್ತಾವಿತ (ಚುಕ್ಕಿ ಗೆರೆ, ಲೆಕ್ಕಕ್ಕೆ ಸೇರುವುದಿಲ್ಲ)",
+      "clash": "ಸಂಘರ್ಷ: ಒಬ್ಬರೇ ಸದಸ್ಯರು ಬೇರೆ ಬೇರೆ ಸಭಾಂಗಣಗಳಲ್ಲಿ"
+    },
+    "proposed": "ಪ್ರಸ್ತಾವಿತ",
+    "restricted": "ನಿರ್ಬಂಧಿತ ಪ್ರಕರಣ",
+    "clash": "ಸಂಘರ್ಷ",
+    "closed": "ನ್ಯಾಯಾಲಯ ಮುಚ್ಚಿದೆ: {reason}",
+    "summary": "{listings, plural, =0 {ಪಟ್ಟಿಮಾಡಿದ ಪ್ರಕರಣಗಳಿಲ್ಲ} one {# ಪ್ರಕರಣ ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ} other {# ಪ್ರಕರಣಗಳನ್ನು ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ}}, {deadlines, plural, =0 {ಗಡುವುಗಳಿಲ್ಲ} one {# ಗಡುವು} other {# ಗಡುವುಗಳು}}",
+    "dayLabel": "{date}, {summary}",
+    "grid": {
+      "week": "{date} ವಾರ",
+      "month": "{date} ತಿಂಗಳು",
+      "weekday": "{day}"
+    },
+    "week": {
+      "noHall": "ಸಭಾಂಗಣಕ್ಕೆ ಹಂಚಿಕೆಯಾಗಿಲ್ಲ",
+      "hall": "ಸಭಾಂಗಣ {hall}",
+      "other": "ದಿನಾಂಕಗಳು ಮತ್ತು ಗಡುವುಗಳು"
+    },
+    "day": {
+      "openDay": "ದಿನವನ್ನು ತೆರೆಯಿರಿ",
+      "close": "ಮುಚ್ಚಿ",
+      "listings": "ಪಟ್ಟಿಮಾಡಿದ ಪ್ರಕರಣಗಳು",
+      "deadlines": "ಗಡುವುಗಳು",
+      "nothing": "ಏನೂ ಪಟ್ಟಿಮಾಡಲಾಗಿಲ್ಲ.",
+      "clash": "ಈ ದಿನ ಸಂಘರ್ಷವಿದೆ: ಒಬ್ಬರೇ ಸದಸ್ಯರನ್ನು ಬೇರೆ ಬೇರೆ ಸಭಾಂಗಣಗಳಲ್ಲಿ ಪಟ್ಟಿಮಾಡಲಾಗಿದೆ.",
+      "hall": "ಸಭಾಂಗಣ {hall}",
+      "item": "ಕ್ರಮ ಸಂಖ್ಯೆ {item}"
+    },
+    "empty": "ಈ ಅವಧಿಯಲ್ಲಿ ಏನೂ ಪಟ್ಟಿಮಾಡಲಾಗಿಲ್ಲ.",
+    "offline": "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ಈ ಅವಧಿಯನ್ನು ಕೊನೆಯ ಬಾರಿ ಲೋಡ್ ಆದಂತೆ ತೋರಿಸಲಾಗಿದೆ; ಮತ್ತೆ ಆನ್‌ಲೈನ್ ಬಂದಾಗ ನವೀಕರಿಸಲಾಗುತ್ತದೆ.",
+    "denied": {
+      "title": "ಕ್ಯಾಲೆಂಡರ್ ಬಳಸಲು ನಿಮಗೆ ಅನುಮತಿ ಇಲ್ಲ.",
+      "description": "ಪ್ರವೇಶಕ್ಕಾಗಿ ವರ್ಕ್‌ಸ್ಪೇಸ್ ಮಾಲೀಕರನ್ನು ಕೇಳಿ."
+    },
+    "error": {
+      "title": "ಕ್ಯಾಲೆಂಡರ್ ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ.",
+      "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
+    },
+    "loading": "ಕ್ಯಾಲೆಂಡರ್ ಲೋಡ್ ಆಗುತ್ತಿದೆ",
+    "subscribe": {
+      "title": "ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್‌ನಲ್ಲಿ ಚಂದಾದಾರರಾಗಿ",
+      "explanation": "ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್ ಫೀಡ್ ನಿಮಗೆ ಮಾತ್ರ ಖಾಸಗಿ. ಅದರ ಲಿಂಕ್ ಇರುವ ಯಾರಾದರೂ ನಿಮ್ಮ ದೃಢೀಕೃತ ವಿಚಾರಣೆಗಳು ಮತ್ತು ಗಡುವುಗಳನ್ನು ಓದಬಹುದು; ಆದ್ದರಿಂದ ಹಂಚಿಕೊಳ್ಳಬೇಡಿ.",
+      "active": "ನಿಮ್ಮ ಖಾಸಗಿ ಫೀಡ್ ಸಕ್ರಿಯವಾಗಿದೆ. ಅದರ ಲಿಂಕ್ ಅನ್ನು ನೀವು ರಚಿಸಿದಾಗ ಅಥವಾ ಮರುರಚಿಸಿದಾಗ ಮಾತ್ರ ತೋರಿಸಲಾಗುತ್ತದೆ.",
+      "inactive": "ನಿಮಗೆ ಇನ್ನೂ ಫೀಡ್ ಇಲ್ಲ. ನಿಮ್ಮ ಫೋನ್ ಕ್ಯಾಲೆಂಡರ್‌ನಲ್ಲಿ ವಿಚಾರಣೆಗಳನ್ನು ನೋಡಲು ಒಂದನ್ನು ರಚಿಸಿ.",
+      "manage": "ಫೀಡ್ ನಿರ್ವಹಿಸಿ ಅಥವಾ ಮರುರಚಿಸಿ",
+      "disclosure": "ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್ ಆ್ಯಪ್ ಈ ಫೀಡ್ ಅನ್ನು ಭಾರತದ ಹೊರಗಿನ ಸರ್ವರ್‌ಗಳಿಂದ ಪಡೆಯಬಹುದು. ನಾವು ವಿಷಯವನ್ನು ಕನಿಷ್ಠವಾಗಿಡುತ್ತೇವೆ.",
+      "ack": "ನನಗೆ ಅರ್ಥವಾಗಿದೆ",
+      "generate": "ಹೊಸ ಲಿಂಕ್ ರಚಿಸಿ",
+      "regenerate": "ಲಿಂಕ್ ಮರುರಚಿಸಿ",
+      "working": "ಕೆಲಸ ನಡೆಯುತ್ತಿದೆ",
+      "urlLabel": "ಫೀಡ್ ಲಿಂಕ್",
+      "copy": "ಲಿಂಕ್ ನಕಲಿಸಿ",
+      "copied": "ನಕಲಿಸಲಾಗಿದೆ",
+      "shownOnce": "ಈ ಲಿಂಕ್ ಅನ್ನು ಈಗಲೇ ನಕಲಿಸಿ. ಇದು ನಿಮಗೆ ಮಾತ್ರ ಖಾಸಗಿ ಮತ್ತು ಮತ್ತೆ ತೋರಿಸಲಾಗುವುದಿಲ್ಲ.",
+      "revokesOld": "ಮರುರಚಿಸಿದರೆ ಹೊಸ ಲಿಂಕ್ ರಚನೆಯಾಗಿ ಹಳೆಯದು ತಕ್ಷಣ ರದ್ದಾಗುತ್ತದೆ. ನಿಮ್ಮ ಕ್ಯಾಲೆಂಡರ್ ಆ್ಯಪ್‌ನಲ್ಲಿ ಚಂದಾದಾರಿಕೆಯನ್ನು ನವೀಕರಿಸಿ.",
+      "error": "ಏನೋ ತಪ್ಪಾಗಿದೆ. ಏನೂ ಬದಲಾಗಿಲ್ಲ.",
+      "forbidden": "ನೀವು ಅದನ್ನು ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+      "copyFailed": "ನಕಲಿಸಲಾಗಲಿಲ್ಲ. ಲಿಂಕ್ ಆಯ್ಕೆಮಾಡಿ ನಕಲಿಸಿ."
     }
   },
   "inbox": {
@@ -4496,6 +4868,350 @@
       "full": "ಸಾಧನದ ಔಟ್‌ಬಾಕ್ಸ್ ತುಂಬಿದೆ. ಅಪ್‌ಲೋಡ್ ಮುಗಿದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
     }
   },
+  "outcome": {
+    "metaTitle": "ವಿಚಾರಣೆಯ ಫಲಿತಾಂಶ",
+    "title": "ವಿಚಾರಣೆಯ ಫಲಿತಾಂಶ",
+    "heldOn": "Held on {date}",
+    "processing": "Processing your note",
+    "processingHint": "The proposal appears here when your note is ready. You can enter the outcome yourself now.",
+    "needsYou": "Needs you",
+    "needsYouHint": "Some details were not found in your note or the order. They are left blank for you to fill in.",
+    "emptyHint": "No voice note or proposal for this hearing. Type the outcome and confirm.",
+    "confirmedHint": "This outcome is already confirmed.",
+    "denied": {
+      "title": "You cannot confirm outcomes",
+      "body": "Ask the matter owner or an admin to confirm this outcome."
+    },
+    "error": {
+      "title": "Couldn't load this outcome",
+      "retry": "Retry"
+    },
+    "loading": "Loading the hearing outcome",
+    "offline": {
+      "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
+      "queued": "Saved on this device. It will be applied when you are back online."
+    },
+    "summary": {
+      "label": "What happened",
+      "placeholder": "Type what happened at the hearing"
+    },
+    "adjournmentReason": "Adjournment reason",
+    "stageAfter": "Stage after",
+    "nextDate": {
+      "legend": "Next date",
+      "useProposed": "Confirm {date}",
+      "typed": "Enter a date",
+      "typedHint": "dd/mm/yyyy",
+      "typedInvalid": "Enter a real date as dd/mm/yyyy.",
+      "none": "No next date / disposed",
+      "deferred": "To be notified",
+      "required": "Choose the next date, or mark it none or to be notified.",
+      "unanchored": "This date is not in the voice note or the order. Enter it yourself to confirm it."
+    },
+    "conflict": {
+      "title": "The next date differs from the one on file",
+      "current": "On file",
+      "proposed": "Proposed",
+      "keepCurrent": "Keep this date",
+      "useProposed": "Use this date",
+      "required": "Pick which date to keep."
+    },
+    "obligations": {
+      "title": "Directions from the order",
+      "empty": "No directions were found.",
+      "confirm": "Confirm",
+      "edit": "Edit",
+      "dismiss": "Dismiss",
+      "dismissReason": "Reason",
+      "notApplicable": "Not applicable",
+      "description": "Description",
+      "dueDate": "Due date",
+      "owner": "Owner",
+      "confirmed": "Will be created",
+      "dismissed": "Dismissed",
+      "undecided": "Undecided. Nothing is created until you confirm it.",
+      "save": "Done"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "empty": "No tasks were proposed."
+    },
+    "transcript": {
+      "open": "Transcript",
+      "title": "Transcript",
+      "empty": "No transcript for this hearing.",
+      "language": "Original language: {language}",
+      "languages": {
+        "en": "English",
+        "ta": "Tamil",
+        "kn": "Kannada"
+      }
+    },
+    "source": {
+      "voice": "Voice note",
+      "order": "Order",
+      "manual": "Typed by you"
+    },
+    "confirm": "Confirm outcome",
+    "saveManual": "Confirm outcome",
+    "shortcut": "Ctrl Enter",
+    "blocked": {
+      "nextDate": "Choose the next date, or mark it none or to be notified.",
+      "summary": "Type what happened.",
+      "conflict": "Pick which date to keep.",
+      "obligation": "Decide each direction: confirm, edit or dismiss with a reason."
+    },
+    "done": "Outcome confirmed",
+    "failed": "Couldn't confirm the outcome. Try again.",
+    "forbidden": "You can't confirm this outcome.",
+    "delegated": "The matter owner is notified."
+  },
+  "brief": {
+    "metaTitle": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ",
+    "printTitle": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ - {caseNo} - {date}",
+    "masthead": {
+      "listedOn": "{date} ರಂದು ಪಟ್ಟಿಯಾಗಿದೆ",
+      "hall": "ನ್ಯಾಯಾಲಯ ಸಭಾಂಗಣ {hall}",
+      "item": "ಕ್ರಮ ಸಂಖ್ಯೆ {item}",
+      "assembled": "{time}ಕ್ಕೆ ಸಿದ್ಧಪಡಿಸಲಾಗಿದೆ",
+      "openMatter": "ಪ್ರಕರಣ ತೆರೆಯಿರಿ"
+    },
+    "sections": {
+      "stage": "ಹಂತ",
+      "lastOrder": "ಕೊನೆಯ ಆದೇಶ",
+      "obligations": "ಬಾಕಿ ಇರುವ ಬಾಧ್ಯತೆಗಳು",
+      "carry": "ಕೊಂಡೊಯ್ಯಬೇಕಾದವು",
+      "synopsis": "ಸಾರಾಂಶ",
+      "lastHearing": "ಕೊನೆಯ ವಿಚಾರಣೆ",
+      "courtNotes": "ನ್ಯಾಯಾಲಯ ಟಿಪ್ಪಣಿಗಳು",
+      "context": "ಕಡತದಿಂದ"
+    },
+    "empty": {
+      "title": "ಇನ್ನೂ ಯಾವುದೇ ದಾಖಲೆ ಇಲ್ಲ",
+      "body": "ಈ ಪಟ್ಟಿಯಲ್ಲಿ ಇನ್ನೂ ಹಂತ, ಆದೇಶ ಅಥವಾ ಬಾಧ್ಯತೆಗಳಿಲ್ಲ. ಅವುಗಳನ್ನು ಪ್ರಕರಣಕ್ಕೆ ಸೇರಿಸಿದರೆ ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ತುಂಬುತ್ತದೆ.",
+      "section": "ತೋರಿಸಲು ಏನೂ ಇಲ್ಲ"
+    },
+    "line": {
+      "unconfirmed": "ದೃಢೀಕರಿಸಿಲ್ಲ",
+      "overdue": "ಅವಧಿ ಮೀರಿದೆ",
+      "dueOn": "{date} ರೊಳಗೆ ಮುಗಿಸಬೇಕು",
+      "closedCount": "{count, plural, =0 {ಮುಕ್ತಾಯಗೊಂಡ ಬಾಧ್ಯತೆಗಳಿಲ್ಲ} one {# ಮುಕ್ತಾಯಗೊಂಡ ಬಾಧ್ಯತೆ} other {# ಮುಕ್ತಾಯಗೊಂಡ ಬಾಧ್ಯತೆಗಳು}}",
+      "page": "ಪುಟ {page}"
+    },
+    "provenance": {
+      "openPage": "ಪುಟ ತೆರೆಯಿರಿ",
+      "source": "ಮೂಲ",
+      "confidence": "ವಿಶ್ವಾಸಾರ್ಹತೆ {value}"
+    },
+    "readiness": {
+      "label": "ಸಿದ್ಧತೆ 100ರಲ್ಲಿ {score}",
+      "stage_known": "ಹಂತ ತಿಳಿದಿದೆ",
+      "last_order_confirmed": "ಕೊನೆಯ ಆದೇಶ ದೃಢೀಕರಿಸಲಾಗಿದೆ",
+      "obligations_reconciled": "ಬಾಧ್ಯತೆಗಳನ್ನು ತಾಳೆ ಮಾಡಲಾಗಿದೆ",
+      "carry_reviewed": "ಕೊಂಡೊಯ್ಯುವ ಪಟ್ಟಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ"
+    },
+    "prepared": {
+      "mark": "ಸಿದ್ಧವೆಂದು ಗುರುತಿಸಿ",
+      "unmark": "ಸಿದ್ಧವಾಗಿದೆ. ರದ್ದುಮಾಡಿ",
+      "by": "{name} ಸಿದ್ಧಪಡಿಸಿದ್ದಾರೆ, {when}",
+      "byUnknown": "ಸಿದ್ಧಪಡಿಸಿದ್ದು {when}",
+      "stale": "ಸಿದ್ಧವೆಂದು ಗುರುತಿಸಿದ ನಂತರ ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಬದಲಾಗಿದೆ",
+      "saving": "ಉಳಿಸಲಾಗುತ್ತಿದೆ",
+      "error": "ಉಳಿಸಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+    },
+    "carry": {
+      "add": "ವಸ್ತು ಸೇರಿಸಿ",
+      "addLabel": "ಹೊಸ ವಸ್ತು",
+      "addPlaceholder": "ಕೊಂಡೊಯ್ಯಬೇಕಾದ ದಾಖಲೆ ಅಥವಾ ವಸ್ತು",
+      "remove": "{label} ತೆಗೆದುಹಾಕಿ",
+      "tick": "ಪ್ಯಾಕ್ ಮಾಡಲಾಗಿದೆ: {label}",
+      "kind": {
+        "document": "ದಾಖಲೆ",
+        "rule": "ಯಾವಾಗಲೂ ಕೊಂಡೊಯ್ಯಿರಿ",
+        "manual": "ನೀವು ಸೇರಿಸಿದ್ದು"
+      },
+      "willSync": "ಸಿಂಕ್ ಆಗುತ್ತದೆ",
+      "reviewed": "ಪಟ್ಟಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ ಎಂದು ಗುರುತಿಸಿ",
+      "empty": "ಕೊಂಡೊಯ್ಯಲು ಏನೂ ಇಲ್ಲ."
+    },
+    "synopsis": {
+      "edit": "ಸಾರಾಂಶ ಸಂಪಾದಿಸಿ",
+      "label": "ನಿಮ್ಮ ತಿದ್ದುಪಡಿ",
+      "save": "ತಿದ್ದುಪಡಿ ಉಳಿಸಿ",
+      "cancel": "ರದ್ದುಮಾಡಿ",
+      "hint": "ಪ್ರಕರಣದ ಟಿಪ್ಪಣಿಯಾಗಿ ಉಳಿಸಲಾಗುತ್ತದೆ. ನೀವು ಮೆಮೊರಿ ಪ್ರಸ್ತಾವನೆಯನ್ನು ದೃಢೀಕರಿಸಿದಾಗ ಮಾತ್ರ ಸಾರಾಂಶ ಬದಲಾಗುತ್ತದೆ.",
+      "strategy": "ತಂತ್ರ",
+      "note": "ನಿಮ್ಮ ಟಿಪ್ಪಣಿ"
+    },
+    "courtNotes": {
+      "private": "ನಿಮಗೆ ಮಾತ್ರ",
+      "shared": "ಚೇಂಬರ್‌ನಲ್ಲಿ ಹಂಚಲಾಗಿದೆ",
+      "printToggle": "ಮುದ್ರಿಸುವಾಗ ಖಾಸಗಿ ಟಿಪ್ಪಣಿಗಳನ್ನೂ ಸೇರಿಸಿ",
+      "hiddenInPrint": "ನ್ಯಾಯಾಲಯ ಟಿಪ್ಪಣಿಗಳನ್ನು ಮುದ್ರಣದಲ್ಲಿ ಸೇರಿಸಿಲ್ಲ"
+    },
+    "actions": {
+      "print": "ಮುದ್ರಿಸಿ / PDF ಆಗಿ ಉಳಿಸಿ",
+      "share": "ವರ್ಕ್‌ಸ್ಪೇಸ್ ಒಳಗೆ ಹಂಚಿ",
+      "shared": "ಲಿಂಕ್ ನಕಲಿಸಲಾಗಿದೆ. ಈ ವರ್ಕ್‌ಸ್ಪೇಸ್‌ನ ಸದಸ್ಯರು ತೆರೆಯಬಹುದು.",
+      "jump": "ವಿಭಾಗಕ್ಕೆ ಹೋಗಿ",
+      "shortcuts": "ಕೀಬೋರ್ಡ್ ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು",
+      "refresh": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ರಿಫ್ರೆಶ್ ಮಾಡಿ",
+      "bar": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಕ್ರಿಯೆಗಳು"
+    },
+    "shortcuts": {
+      "title": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು",
+      "print": "ಮುದ್ರಿಸಿ",
+      "prev": "ಹಿಂದಿನ ವಿಭಾಗ",
+      "next": "ಮುಂದಿನ ವಿಭಾಗ",
+      "carry": "ಕೊಂಡೊಯ್ಯುವವುಗಳಿಗೆ ಹೋಗಿ",
+      "notes": "ನ್ಯಾಯಾಲಯ ಟಿಪ್ಪಣಿಗಳಿಗೆ ಹೋಗಿ",
+      "edit": "ಸಾರಾಂಶ ಸಂಪಾದಿಸಿ",
+      "section": "1 ರಿಂದ 9ನೇ ವಿಭಾಗಕ್ಕೆ ಹೋಗಿ",
+      "close": "ಪಾಪ್‌ಓವರ್ ಅಥವಾ ಸಂಪಾದಕವನ್ನು ಮುಚ್ಚಿ",
+      "help": "ಈ ಸಹಾಯವನ್ನು ತೋರಿಸಿ"
+    },
+    "offline": {
+      "banner": "ಆಫ್‌ಲೈನ್. ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿಯನ್ನು {time}ಕ್ಕೆ ಉಳಿಸಲಾಗಿದೆ",
+      "notSaved": "ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಉಳಿಸಿಲ್ಲ"
+    },
+    "denied": {
+      "title": "ಈ ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿಯನ್ನು ತೆರೆಯಲು ನಿಮಗೆ ಅನುಮತಿ ಇಲ್ಲ",
+      "body": "ಈ ಪ್ರಕರಣಕ್ಕೆ ನಿರ್ಬಂಧವಿದೆ. ಅದರ ಮಾಲೀಕರಲ್ಲಿ ಪ್ರವೇಶ ಕೇಳಿ.",
+      "request": "ಪ್ರವೇಶ ವಿನಂತಿಸಿ"
+    },
+    "viewer": {
+      "readOnly": "ನೀವು ಈ ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿಯನ್ನು ಓದಬಹುದು, ಬದಲಾಯಿಸಲಾಗದು."
+    },
+    "error": {
+      "title": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಲೋಡ್ ಆಗಲಿಲ್ಲ",
+      "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+      "openMatter": "ಪ್ರಕರಣ ತೆರೆಯಿರಿ",
+      "section": "ಈ ವಿಭಾಗ ಲೋಡ್ ಆಗಲಿಲ್ಲ",
+      "sectionRetry": "ವಿಭಾಗವನ್ನು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ"
+    },
+    "notFound": {
+      "title": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಸಿಗಲಿಲ್ಲ",
+      "body": "ಈ ಪಟ್ಟಿ ಅಸ್ತಿತ್ವದಲ್ಲಿಲ್ಲ ಅಥವಾ ಅದಕ್ಕೆ ನಿಮಗೆ ಪ್ರವೇಶವಿಲ್ಲ.",
+      "request": "ಪ್ರವೇಶ ವಿನಂತಿಸಿ",
+      "back": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿಗಳಿಗೆ ಹಿಂತಿರುಗಿ"
+    },
+    "loading": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ"
+  },
+  "share": {
+    "metaTitle": "ಹಂಚಿಕೊಂಡ ಬ್ರೀಫ್",
+    "unavailable": "ಹಂಚಿಕೊಂಡ ಬ್ರೀಫ್ ಲಭ್ಯವಿಲ್ಲ",
+    "states": {
+      "invalid": "ಈ ಲಿಂಕ್ ಮಾನ್ಯವಾಗಿಲ್ಲ.",
+      "expired": "ಈ ಲಿಂಕ್‌ನ ಅವಧಿ ಮುಗಿದಿದೆ. ಕಳುಹಿಸಿದವರಿಗೆ ಹೊಸದನ್ನು ಕೇಳಿ.",
+      "revoked": "ಕಳುಹಿಸಿದವರು ಈ ಲಿಂಕ್ ಅನ್ನು ಹಿಂಪಡೆದಿದ್ದಾರೆ."
+    },
+    "stage": "ಹಂತ: {stage}",
+    "lastOrder": "ಕೊನೆಯ ಆದೇಶ",
+    "lastHearing": "ಕೊನೆಯ ವಿಚಾರಣೆ: {date}",
+    "obligations": "ಬಾಕಿ ಇರುವ ಹೊಣೆಗಳು",
+    "due": "{text} (ಗಡುವು {date})",
+    "footer": "{assembledAt} ರಂತೆ ಹಂಚಲಾಗಿದೆ. ಲಿಂಕ್ {expiresAt} ರಂದು ಮುಗಿಯುತ್ತದೆ.",
+    "join": "CauseDeck ಗೆ ಸೇರಿ ಮತ್ತು ಈ ಪ್ರಕರಣವನ್ನು ಆಮದು ಮಾಡಿ",
+    "import": "ಈ ಪ್ರಕರಣವನ್ನು ಆಮದು ಮಾಡಿ",
+    "errors": {
+      "noWorkspace": "ಮೊದಲು ವರ್ಕ್‌ಸ್ಪೇಸ್ ರಚಿಸಿ, ನಂತರ ಈ ಲಿಂಕ್ ಅನ್ನು ಮತ್ತೆ ತೆರೆಯಿರಿ.",
+      "gone": "ಈ ಲಿಂಕ್ ಅನ್ನು ಇನ್ನು ಆಮದು ಮಾಡಲಾಗುವುದಿಲ್ಲ.",
+      "failed": "ಏನೋ ತಪ್ಪಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+    },
+    "manage": {
+      "title": "ಈ ಸಂಕ್ಷಿಪ್ತವನ್ನು ಹಂಚಿಕೊಳ್ಳಿ",
+      "description": "ಸಂಕ್ಷಿಪ್ತದ ಪಠ್ಯ-ಮಾತ್ರ ಪ್ರತಿಗೆ ಅವಧಿ ಮುಗಿಯುವ ಲಿಂಕ್ ರಚಿಸಿ. ಲಿಂಕ್ ಇರುವ ಯಾರಾದರೂ ಓದಬಹುದು. ಯಾವಾಗ ಬೇಕಾದರೂ ಅದನ್ನು ಹಿಂಪಡೆಯಬಹುದು.",
+      "expiry": "ಲಿಂಕ್ ಅವಧಿ ಮುಗಿಯುವ ಸಮಯ",
+      "days": "{count, plural, one {# ದಿನ} other {# ದಿನಗಳು}}",
+      "create": "ಲಿಂಕ್ ರಚಿಸಿ",
+      "creating": "ಲಿಂಕ್ ರಚಿಸಲಾಗುತ್ತಿದೆ",
+      "createdOnce": "ಲಿಂಕ್ ರಚಿಸಲಾಗಿದೆ. ಈಗಲೇ ನಕಲಿಸಿ: ಇದು ಒಮ್ಮೆ ಮಾತ್ರ ತೋರಿಸಲಾಗುತ್ತದೆ. ಇದರ ಅವಧಿ {date} ರಂದು ಮುಗಿಯುತ್ತದೆ.",
+      "linkLabel": "ಹಂಚಿಕೆ ಲಿಂಕ್",
+      "copy": "ಲಿಂಕ್ ನಕಲಿಸಿ",
+      "copied": "ಲಿಂಕ್ ನಕಲಿಸಲಾಗಿದೆ",
+      "copyFailed": "ನಕಲಿಸಲಾಗಲಿಲ್ಲ. ಲಿಂಕ್ ಆಯ್ಕೆ ಮಾಡಿ ಕೈಯಿಂದ ನಕಲಿಸಿ.",
+      "activeTitle": "ಸಕ್ರಿಯ ಲಿಂಕ್‌ಗಳು",
+      "empty": "ಸಕ್ರಿಯ ಲಿಂಕ್‌ಗಳಿಲ್ಲ.",
+      "createdOn": "ರಚಿಸಿದ್ದು {date}",
+      "expiresOn": "ಅವಧಿ ಮುಗಿಯುವುದು {date}",
+      "revoke": "ಹಿಂಪಡೆಯಿರಿ",
+      "revokeLabel": "{title} ಲಿಂಕ್ ಹಿಂಪಡೆಯಿರಿ",
+      "revoked": "ಲಿಂಕ್ ಹಿಂಪಡೆಯಲಾಗಿದೆ",
+      "noListing": "ಈ ಪ್ರಕರಣಕ್ಕೆ ಇನ್ನೂ ಪಟ್ಟಿ ದಿನಾಂಕ ಇಲ್ಲ, ಆದ್ದರಿಂದ ಹಂಚಿಕೊಳ್ಳಲು ಸಂಕ್ಷಿಪ್ತ ಇಲ್ಲ.",
+      "errors": {
+        "rateLimited": "ಕಳೆದ ಒಂದು ಗಂಟೆಯಲ್ಲಿ ನೀವು ಹೆಚ್ಚು ಸಂಕ್ಷಿಪ್ತಗಳನ್ನು ಹಂಚಿಕೊಂಡಿದ್ದೀರಿ. ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+        "forbidden": "ನೀವು ಈ ಸಂಕ್ಷಿಪ್ತವನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗದು. ಮಾಲೀಕರು ಮಾತ್ರ ಹಂಚಿಕೊಳ್ಳಬಹುದು, ಮತ್ತು ಸೂಕ್ಷ್ಮ ಪ್ರಕರಣವನ್ನು ಹಂಚಿಕೊಳ್ಳಲಾಗದು.",
+        "notFound": "ಈ ಸಂಕ್ಷಿಪ್ತ ಅಥವಾ ಲಿಂಕ್ ಇನ್ನು ಇಲ್ಲ.",
+        "generic": "ಏನೋ ತಪ್ಪಾಯಿತು. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+      }
+    }
+  },
+  "offline": {
+    "title": "ಆಫ್‌ಲೈನ್",
+    "body": "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ಸಿಂಕ್ ಆದ ನಂತರ ಉಳಿಸಿದ ನ್ಯಾಯಾಲಯ ದಿನಗಳು ಮತ್ತು ಸಂಕ್ಷಿಪ್ತಗಳು ಲಭ್ಯವಿರುತ್ತವೆ.",
+    "banner": {
+      "offline": "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಿದ್ದನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ.",
+      "savedAt": "{time} ರಂದು ಉಳಿಸಲಾಗಿದೆ",
+      "stale": "{time} ರಂದು ಉಳಿಸಲಾಗಿದೆ. ಇದು ಹಳೆಯದಾಗಿರಬಹುದು.",
+      "backOnline": "ಮತ್ತೆ ಆನ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ಸಿಂಕ್ ಆಗುತ್ತಿದೆ."
+    },
+    "sync": {
+      "label": "ಸಿಂಕ್ ಸ್ಥಿತಿ",
+      "idle": "ಎಲ್ಲವನ್ನೂ ಉಳಿಸಲಾಗಿದೆ",
+      "syncing": "ಸಿಂಕ್ ಆಗುತ್ತಿದೆ",
+      "pending": "{count, plural, one {# ಬದಲಾವಣೆ ಸಿಂಕ್‌ಗಾಗಿ ಕಾಯುತ್ತಿದೆ} other {# ಬದಲಾವಣೆಗಳು ಸಿಂಕ್‌ಗಾಗಿ ಕಾಯುತ್ತಿವೆ}}",
+      "failed": "ಕೆಲವು ಬದಲಾವಣೆಗಳನ್ನು ಸಿಂಕ್ ಮಾಡಲು ಆಗಲಿಲ್ಲ",
+      "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+      "lastSynced": "ಕೊನೆಯ ಸಿಂಕ್ {time}",
+      "keepLocal": "ಸ್ಥಳೀಯವಾಗಿ ಇರಿಸಿ",
+      "details": "ಸಿಂಕ್ ವಿವರಗಳು",
+      "detailsFailed": "ಈ ಬದಲಾವಣೆಗಳು ಸಿಂಕ್ ಆಗುವವರೆಗೆ ಈ ಸಾಧನದಲ್ಲೇ ಇರುತ್ತವೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ ಅಥವಾ ಸ್ಥಳೀಯ ಪ್ರತಿಯನ್ನು ಇರಿಸಿ."
+    },
+    "courtDay": {
+      "savedFor": "{date} ರ ನ್ಯಾಯಾಲಯ ದಿನವನ್ನು ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ",
+      "notSaved": "ಆಫ್‌ಲೈನ್‌ಗಾಗಿ ಉಳಿಸಿಲ್ಲ",
+      "unavailable": "ಈ ನ್ಯಾಯಾಲಯ ದಿನವನ್ನು ಉಳಿಸಿಲ್ಲ. ಲೋಡ್ ಮಾಡಲು ಸಂಪರ್ಕಿಸಿ."
+    },
+    "brief": {
+      "savedFor": "ಸಂಕ್ಷಿಪ್ತವನ್ನು ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಸಲಾಗಿದೆ",
+      "notSaved": "ಆಫ್‌ಲೈನ್‌ಗಾಗಿ ಉಳಿಸಿಲ್ಲ",
+      "unavailable": "ಈ ಸಂಕ್ಷಿಪ್ತವನ್ನು ಉಳಿಸಿಲ್ಲ. ಲೋಡ್ ಮಾಡಲು ಸಂಪರ್ಕಿಸಿ."
+    },
+    "outbox": {
+      "queued": "ಸರದಿಯಲ್ಲಿದೆ",
+      "uploading": "ಅಪ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ",
+      "failed": "ವಿಫಲವಾಗಿದೆ",
+      "sent": "ಕಳುಹಿಸಲಾಗಿದೆ",
+      "conflict": "ಪರಿಶೀಲನೆ ಅಗತ್ಯ"
+    },
+    "storage": {
+      "title": "ಆಫ್‌ಲೈನ್ ಸಂಗ್ರಹಣೆ",
+      "used": "{quota} ರಲ್ಲಿ {used} ಬಳಕೆಯಾಗಿದೆ",
+      "days": "{count, plural, one {# ನ್ಯಾಯಾಲಯ ದಿನ ಉಳಿಸಲಾಗಿದೆ} other {# ನ್ಯಾಯಾಲಯ ದಿನಗಳು ಉಳಿಸಲಾಗಿವೆ}}",
+      "clear": "ಉಳಿಸಿದ ಡೇಟಾ ಅಳಿಸಿ",
+      "cleared": "ಉಳಿಸಿದ ಡೇಟಾವನ್ನು ಈ ಸಾಧನದಿಂದ ತೆಗೆದುಹಾಕಲಾಗಿದೆ",
+      "unsupported": "ಈ ಬ್ರೌಸರ್ ಆಫ್‌ಲೈನ್ ಬಳಕೆಗಾಗಿ ಡೇಟಾ ಉಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+      "size": "ಈ ಸಾಧನದಲ್ಲಿ {size} ಉಳಿಸಲಾಗಿದೆ",
+      "loading": "ಉಳಿಸಿದ ಡೇಟಾವನ್ನು ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ",
+      "empty": "ಈ ಸಾಧನದಲ್ಲಿ ಇನ್ನೂ ಏನೂ ಉಳಿಸಿಲ್ಲ",
+      "full": "ಈ ಸಾಧನದಲ್ಲಿ ಸ್ಥಳವಿಲ್ಲ. ಸ್ಥಳ ಮಾಡಲು ಉಳಿಸಿದ ಡೇಟಾವನ್ನು ತೆರವುಗೊಳಿಸಿ.",
+      "denied": "ಈ ಬ್ರೌಸರ್ ಆಫ್‌ಲೈನ್ ಸಂಗ್ರಹಣೆಯನ್ನು ತಡೆದಿದೆ. ಸಂಪರ್ಕವಿಲ್ಲದೆ ನ್ಯಾಯಾಲಯ ದಿನಗಳನ್ನು ಓದಲು ಬ್ರೌಸರ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಸೈಟ್ ಡೇಟಾವನ್ನು ಅನುಮತಿಸಿ.",
+      "optedOut": "ಈ ಸಾಧನದಲ್ಲಿ ಆಫ್‌ಲೈನ್ ಉಳಿತಾಯವನ್ನು ಆಫ್ ಮಾಡಲಾಗಿದೆ.",
+      "cancel": "ರದ್ದುಮಾಡಿ",
+      "clearFailed": "ಉಳಿಸಿದ ಡೇಟಾವನ್ನು ತೆಗೆಯಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+    },
+    "privacy": {
+      "title": "ಈ ಸಾಧನದಲ್ಲಿ ಇರಿಸಿಕೊಳ್ಳುವುದು",
+      "body": "ಮುಂದಿನ ಕೆಲವು ದಿನಗಳ ನ್ಯಾಯಾಲಯ ದಿನಗಳು ಮತ್ತು ಸಂಕ್ಷಿಪ್ತಗಳನ್ನು ಸಂಪರ್ಕವಿಲ್ಲದೆ ಓದಲು ಈ ಸಾಧನದಲ್ಲಿ ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡಿ ಇರಿಸಲಾಗುತ್ತದೆ. ಸೈನ್ ಔಟ್ ಮಾಡಿದಾಗ ಅಥವಾ ವರ್ಕ್‌ಸ್ಪೇಸ್ ಬದಲಿಸಿದಾಗ ಅವನ್ನು ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ.",
+      "lostPhone": "ಈ ಸಾಧನ ಕಳೆದುಹೋದರೆ, ಬೇರೆ ಸಾಧನದಿಂದ ಸೈನ್ ಔಟ್ ಮಾಡಿದರೂ ಇದು ಅಳಿಸಿಹೋಗುವುದಿಲ್ಲ. ಸಾಧನದ ಲಾಕ್ ಬಳಸಿ, ಸಾಧನವನ್ನು ಹಸ್ತಾಂತರಿಸುವ ಮೊದಲು ಉಳಿಸಿದ ಡೇಟಾ ಅಳಿಸಿ.",
+      "clearConfirm": "ಉಳಿಸಿದ ಎಲ್ಲಾ ನ್ಯಾಯಾಲಯ ದಿನಗಳು ಮತ್ತು ಸಂಕ್ಷಿಪ್ತಗಳನ್ನು ಈ ಸಾಧನದಿಂದ ತೆಗೆದುಹಾಕಬೇಕೆ?"
+    },
+    "errors": {
+      "decrypt": "ಉಳಿಸಿದ ಡೇಟಾ ಓದಲು ಆಗಲಿಲ್ಲ. ಮತ್ತೆ ಲೋಡ್ ಮಾಡಲು ಸಂಪರ್ಕಿಸಿ.",
+      "quota": "ಇನ್ನಷ್ಟು ಉಳಿಸಲು ಈ ಸಾಧನದಲ್ಲಿ ಸಾಕಷ್ಟು ಸ್ಥಳವಿಲ್ಲ.",
+      "unknown": "ಆಫ್‌ಲೈನ್ ಸಂಗ್ರಹಣೆಯಲ್ಲಿ ಏನೋ ತಪ್ಪಾಗಿದೆ."
+    }
+  },
   "error": {
     "title": "ಏನೋ ತಪ್ಪಾಗಿದೆ.",
     "description": "ನಿಮ್ಮ ಉಳಿಸಿದ ಕೆಲಸ ಸುರಕ್ಷಿತವಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
@@ -4504,8 +5220,16 @@
   "notFound": {
     "title": "ಪುಟ ಸಿಗಲಿಲ್ಲ"
   },
-  "offline": {
-    "title": "ಆಫ್‌ಲೈನ್",
-    "body": "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ಸಿಂಕ್ ಆದ ನಂತರ ಉಳಿಸಿದ ನ್ಯಾಯಾಲಯ ದಿನಗಳು ಮತ್ತು ಸಂಕ್ಷಿಪ್ತಗಳು ಲಭ್ಯವಿರುತ್ತವೆ."
+  "status": {
+    "components": {
+      "database": "ಸೈನ್-ಇನ್ ಮತ್ತು ಪ್ರಕರಣಗಳು",
+      "storage": "ಡಾಕ್ಯುಮೆಂಟ್ ಸಂಗ್ರಹಣೆ",
+      "court": "ನೀವು ಹಂಚಿಕೊಳ್ಳುವ ದಾಖಲೆಗಳ ವಿಶ್ಲೇಷಣೆ"
+    },
+    "states": {
+      "operational": "ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತಿದೆ",
+      "degraded": "ಕಾರ್ಯಕ್ಷಮತೆ ಕಡಿಮೆ",
+      "down": "ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತಿಲ್ಲ"
+    }
   }
 }

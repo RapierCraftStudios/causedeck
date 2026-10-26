@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@causedeck/ui/button';
-import { ErrorState } from '@causedeck/ui/patterns';
+import { ErrorState } from '@causedeck/ui/patterns/states';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 

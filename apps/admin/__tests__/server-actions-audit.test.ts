@@ -177,6 +177,7 @@ vi.mock('@causedeck/core/activation', () => ({
   ACTIVATION_CHANNELS: [],
   ACTIVATION_STEPS: [],
   activationFunnel: () => Promise.resolve({ cohorts: [], timeToFirstCourtDay: [] }),
+  referralFunnel: () => Promise.resolve({ invitesSent: 0, accepted: 0, activated: 0, credited: 0 }),
 }));
 vi.mock('@causedeck/db', () => ({
   withoutWorkspace: (_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) =>
@@ -517,6 +518,7 @@ describe('admin data layer reads', () => {
         costAlertPaisePerUser: 4000,
       }),
     growthFunnel: (d) => d.growthFunnel(staff),
+    growthReferralFunnel: (d) => d.growthReferralFunnel(staff),
     workspaceMigrationRuns: (d) => d.workspaceMigrationRuns(staff, WORKSPACE_ID),
     migrationRunProgress: (d) => d.migrationRunProgress(staff, WORKSPACE_ID, MIGRATION_RUN_ID),
     migrationRunReport: (d) => d.migrationRunReport(staff, WORKSPACE_ID, MIGRATION_RUN_ID),

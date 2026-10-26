@@ -122,3 +122,47 @@ export async function activationFunnel(
     timeToFirstCourtDay: await timeToFirstCourtDay(db, options),
   };
 }
+
+export interface ReferralFunnel {
+  /** Users who shared a brief (the `invite_sent` step). */
+  invitesSent: number;
+  /** Invited users who claimed a shared link. */
+  accepted: number;
+  /** Of those, the ones who imported the shared matter into their own workspace. */
+  activated: number;
+  /** Referrals that earned the free month on both sides. */
+  credited: number;
+}
+
+/** Brief-share referral funnel (#507): counts only, no user id leaves this module. */
+export async function referralFunnel(
+  db: Queryable,
+  { since }: { since?: Date } = {},
+): Promise<ReferralFunnel> {
+  const [row] = await db.execute<{
+    sent: string | number;
+    accepted: string | number;
+    activated: string | number;
+    credited: string | number;
+  }>(sql`
+    select
+      (select count(distinct user_id) from activation_event
+        where step = 'invite_sent'
+        ${since === undefined ? sql`` : sql`and occurred_at >= ${since.toISOString()}::timestamptz`}) as sent,
+      (select count(*) from referral
+        where true
+        ${since === undefined ? sql`` : sql`and accepted_at >= ${since.toISOString()}::timestamptz`}) as accepted,
+      (select count(*) from referral
+        where activated_at is not null
+        ${since === undefined ? sql`` : sql`and accepted_at >= ${since.toISOString()}::timestamptz`}) as activated,
+      (select count(distinct r.id) from referral r join referral_credit c on c.referral_id = r.id
+        where true
+        ${since === undefined ? sql`` : sql`and r.accepted_at >= ${since.toISOString()}::timestamptz`}) as credited
+  `);
+  return {
+    invitesSent: Number(row?.sent ?? 0),
+    accepted: Number(row?.accepted ?? 0),
+    activated: Number(row?.activated ?? 0),
+    credited: Number(row?.credited ?? 0),
+  };
+}

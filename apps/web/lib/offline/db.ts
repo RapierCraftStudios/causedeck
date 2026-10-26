@@ -1,0 +1,219 @@
+// The offline cache's IndexedDB schema (#65, Dexie, ADR-0042). One database per user and workspace,
+// so a second account on the same browser or a workspace switch never reads another's rows. Only
+// keys, dates and `savedAt` are in the clear; every payload is sealed by `crypto.ts`. This is the
+// only module in `lib/offline` that imports Dexie, so the shell never pays for it.
+import Dexie, { type EntityTable } from 'dexie';
+
+import type { SealedPayload, Vault, WrappedKey, WrappedKeyStore } from './crypto.ts';
+import { isStale as isStaleAt, stampSavedAt, windowStart } from './freshness.ts';
+
+export interface OfflineScope {
+  userId: string;
+  workspaceId: string;
+}
+
+const DB_PREFIX = 'causedeck-offline';
+
+export function offlineDbName(scope: OfflineScope): string {
+  return `${DB_PREFIX}:${scope.userId}:${scope.workspaceId}`;
+}
+
+interface SealedRow extends SealedPayload {
+  workspaceId: string;
+  savedAt: number;
+}
+
+/** Keyed `[workspaceId, date]`. */
+export interface CourtDayRow extends SealedRow {
+  date: string;
+}
+
+/** Keyed `[workspaceId, listingId]`; `date` is the listing's day, for eviction. */
+export interface BriefRow extends SealedRow {
+  listingId: string;
+  date: string;
+}
+
+/** Keyed `[workspaceId, documentId]`: metadata only, never file bytes. */
+export interface DocumentMetaRow extends SealedRow {
+  documentId: string;
+  listingId: string;
+}
+
+/** Writes made offline, waiting to replay (#745). The payload is sealed. */
+export interface OutboxRow extends SealedRow {
+  id: string;
+  createdAt: number;
+}
+
+export type MetaRow = ({ id: 'key' } & WrappedKey) | { id: 'lastSyncAt'; value: number };
+
+export class OfflineDb extends Dexie {
+  courtDay!: EntityTable<CourtDayRow>;
+  briefs!: EntityTable<BriefRow>;
+  documentsMeta!: EntityTable<DocumentMetaRow>;
+  outbox!: EntityTable<OutboxRow, 'id'>;
+  meta!: EntityTable<MetaRow, 'id'>;
+
+  constructor(name: string) {
+    super(name);
+    this.version(1).stores({
+      courtDay: '[workspaceId+date], date',
+      briefs: '[workspaceId+listingId], date',
+      documentsMeta: '[workspaceId+documentId], listingId',
+      outbox: 'id, workspaceId, createdAt',
+      meta: 'id',
+    });
+  }
+}
+
+export function openOfflineDb(scope: OfflineScope): OfflineDb {
+  return new OfflineDb(offlineDbName(scope));
+}
+
+/** The wrapped data key lives in `meta`, next to the rows it protects. */
+export function dexieWrappedKeyStore(db: OfflineDb): WrappedKeyStore {
+  return {
+    get: async () => {
+      const row = await db.meta.get('key');
+      return row && 'wrapped' in row ? row : undefined;
+    },
+    put: async (value) => {
+      await db.meta.put({ id: 'key', ...value });
+    },
+    remove: () => db.meta.delete('key'),
+  };
+}
+
+export async function putCourtDay(
+  db: OfflineDb,
+  vault: Vault,
+  workspaceId: string,
+  date: string,
+  value: unknown,
+  now: number,
+): Promise<void> {
+  const sealed = await vault.seal(value);
+  await db.courtDay.put({ workspaceId, date, savedAt: stampSavedAt(now), ...sealed });
+}
+
+export async function getCourtDay(
+  db: OfflineDb,
+  vault: Vault,
+  workspaceId: string,
+  date: string,
+  now: number,
+): Promise<{ value: unknown; savedAt: number; stale: boolean } | undefined> {
+  const row = await db.courtDay.get([workspaceId, date]);
+  if (!row) return undefined;
+  return {
+    value: await vault.open(row),
+    savedAt: row.savedAt,
+    stale: isStaleAt(row.savedAt, now),
+  };
+}
+
+export async function putBrief(
+  db: OfflineDb,
+  vault: Vault,
+  workspaceId: string,
+  listingId: string,
+  date: string,
+  value: unknown,
+  now: number,
+): Promise<void> {
+  const sealed = await vault.seal(value);
+  await db.briefs.put({ workspaceId, listingId, date, savedAt: stampSavedAt(now), ...sealed });
+}
+
+export async function getBrief(
+  db: OfflineDb,
+  vault: Vault,
+  workspaceId: string,
+  listingId: string,
+  now: number,
+): Promise<{ value: unknown; savedAt: number; stale: boolean } | undefined> {
+  const row = await db.briefs.get([workspaceId, listingId]);
+  if (!row) return undefined;
+  return {
+    value: await vault.open(row),
+    savedAt: row.savedAt,
+    stale: isStaleAt(row.savedAt, now),
+  };
+}
+
+/** What the outbox seals per row: the queued item, its state and, for a conflict, the card. */
+export interface OutboxEntry {
+  key: string;
+  createdAt: number;
+  state: 'pending' | 'failed' | 'conflict';
+  item: unknown;
+  /** Why it stopped: a domain code for `failed`, the server's value for a next-date conflict. */
+  code?: string;
+  serverDate?: string | null;
+}
+
+/** Queue an edit. `createdAt` is strictly increasing per database so replay order is stable. */
+export async function enqueueOutbox(
+  db: OfflineDb,
+  vault: Vault,
+  workspaceId: string,
+  key: string,
+  item: unknown,
+  now: number,
+): Promise<OutboxEntry> {
+  const last = await db.outbox.orderBy('createdAt').last();
+  const createdAt = last && last.createdAt >= now ? last.createdAt + 1 : now;
+  const entry: OutboxEntry = { key, createdAt, state: 'pending', item };
+  await db.outbox.put({
+    id: key,
+    workspaceId,
+    createdAt,
+    savedAt: stampSavedAt(now),
+    ...(await vault.seal(entry)),
+  });
+  return entry;
+}
+
+/** Every queued entry, oldest first. */
+export async function listOutbox(db: OfflineDb, vault: Vault): Promise<OutboxEntry[]> {
+  const rows = await db.outbox.orderBy('createdAt').toArray();
+  return Promise.all(rows.map((row) => vault.open<OutboxEntry>(row)));
+}
+
+/** Rewrite an entry's state in place (keeps its key and order). */
+export async function updateOutbox(
+  db: OfflineDb,
+  vault: Vault,
+  entry: OutboxEntry,
+  now: number,
+): Promise<void> {
+  const row = await db.outbox.get(entry.key);
+  if (!row) return;
+  await db.outbox.put({ ...row, savedAt: stampSavedAt(now), ...(await vault.seal(entry)) });
+}
+
+export async function removeOutbox(db: OfflineDb, key: string): Promise<void> {
+  await db.outbox.delete(key);
+}
+
+/** Rolling window: drop court days and briefs dated before yesterday. Returns how many rows went. */
+export async function evictOutsideWindow(db: OfflineDb, today: string): Promise<number> {
+  const cutoff = windowStart(today);
+  const days = await db.courtDay.where('date').below(cutoff).delete();
+  const briefs = await db.briefs.where('date').below(cutoff).delete();
+  return days + briefs;
+}
+
+/** Delete this scope's whole database: rows, wrapped key and all (sign-out, switch, clear). */
+export async function deleteOfflineDb(scope: OfflineScope): Promise<void> {
+  await Dexie.delete(offlineDbName(scope));
+}
+
+/** Delete every offline database of this browser (sign-out clears all workspaces and users). */
+export async function deleteAllOfflineDbs(): Promise<void> {
+  const names = await Dexie.getDatabaseNames();
+  await Promise.all(
+    names.filter((name) => name.startsWith(`${DB_PREFIX}:`)).map((n) => Dexie.delete(n)),
+  );
+}

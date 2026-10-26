@@ -5,6 +5,8 @@
 // bench, is rejected, because memory never profiles the bench (permanent guardrail).
 import { z } from 'zod';
 
+import { BRIEF_SECTION_KEYS } from './brief';
+
 export const MEMORY_LAYERS = ['M1', 'M2', 'M3', 'M4', 'M6', 'M7'] as const;
 export const MemoryLayer = z.enum(MEMORY_LAYERS);
 export type MemoryLayer = z.output<typeof MemoryLayer>;
@@ -303,3 +305,105 @@ export const MemoryCorrectionInput = z.strictObject({
   target: z.enum(['party', 'matter']).default('party'),
 });
 export type MemoryCorrectionInput = z.input<typeof MemoryCorrectionInput>;
+
+// How memory values steer outputs (#74). A stored value is free-form (`MemoryValue`); these readers
+// give the consumers one typed view and ignore what they cannot read, so a malformed value falls
+// back to the default rather than breaking a brief or a draft.
+
+export type BriefSectionKey = (typeof BRIEF_SECTION_KEYS)[number];
+export const BRIEF_VERBOSITIES = ['short', 'full'] as const;
+export type BriefVerbosity = (typeof BRIEF_VERBOSITIES)[number];
+
+/** The member's M2 brief format: section order (listed sections first) and verbosity. */
+export interface BriefFormat {
+  order: BriefSectionKey[];
+  verbosity: BriefVerbosity;
+}
+
+export const DEFAULT_BRIEF_FORMAT: BriefFormat = {
+  order: [...BRIEF_SECTION_KEYS],
+  verbosity: 'full',
+};
+
+const isVerbosity = (v: unknown): v is BriefVerbosity =>
+  typeof v === 'string' && (BRIEF_VERBOSITIES as readonly string[]).includes(v);
+const isSection = (v: string): v is BriefSectionKey =>
+  (BRIEF_SECTION_KEYS as readonly string[]).includes(v);
+
+/** `M2.brief_format`: 'short' | 'full', or {order: 'carry,stage,...', verbosity}; null if unreadable. */
+export function readBriefFormat(value: MemoryValue): BriefFormat | null {
+  if (typeof value === 'string') {
+    const verbosity = value.trim().toLowerCase();
+    return isVerbosity(verbosity) ? { ...DEFAULT_BRIEF_FORMAT, verbosity } : null;
+  }
+  if (Array.isArray(value) || typeof value !== 'object') return null;
+  const listed = typeof value['order'] === 'string' ? value['order'].split(',') : [];
+  const first = listed.map((s) => s.trim()).filter(isSection);
+  const verbosity = isVerbosity(value['verbosity']) ? value['verbosity'] : 'full';
+  if (first.length === 0 && !isVerbosity(value['verbosity'])) return null;
+  const order = [...new Set([...first, ...BRIEF_SECTION_KEYS])];
+  return { order, verbosity };
+}
+
+export interface AlwaysCarryRule {
+  label: string;
+  /** 'first_hearing': only on the first listing of a proceeding; 'always' otherwise. */
+  when: 'always' | 'first_hearing';
+}
+
+/** `M2.always_carry`: a label, a list of labels, or {label, when}; unreadable gives no rule. */
+export function readAlwaysCarry(value: MemoryValue): AlwaysCarryRule[] {
+  if (typeof value === 'string') return [{ label: value, when: 'always' }];
+  if (Array.isArray(value)) return value.map((label) => ({ label, when: 'always' as const }));
+  const label = value['label'];
+  if (typeof label !== 'string' || label.trim() === '') return [];
+  return [
+    { label: label.trim(), when: value['when'] === 'first_hearing' ? 'first_hearing' : 'always' },
+  ];
+}
+
+const OUTWARD_TONE_VALUES = ['formal', 'brief', 'warm'] as const;
+const OUTWARD_LANGUAGE_VALUES = ['en', 'ta', 'kn'] as const;
+const LANGUAGE_NAMES: Readonly<Record<string, (typeof OUTWARD_LANGUAGE_VALUES)[number]>> = {
+  english: 'en',
+  tamil: 'ta',
+  kannada: 'kn',
+};
+
+/** `M2.client_update_tone`: a tone, or {tone, sign_off}; fields that cannot be read are absent. */
+export function readClientUpdateStyle(value: MemoryValue): {
+  tone?: (typeof OUTWARD_TONE_VALUES)[number];
+  signOff?: string;
+} {
+  const asTone = (v: unknown) =>
+    OUTWARD_TONE_VALUES.find((t) => typeof v === 'string' && t === v.trim().toLowerCase());
+  if (typeof value === 'string') {
+    const tone = asTone(value);
+    return tone === undefined ? {} : { tone };
+  }
+  if (Array.isArray(value)) return {};
+  const tone = asTone(value['tone']);
+  const signOff = value['sign_off'];
+  return {
+    ...(tone === undefined ? {} : { tone }),
+    ...(typeof signOff === 'string' && signOff.trim() !== '' ? { signOff: signOff.trim() } : {}),
+  };
+}
+
+/** `M6.client_language`: 'en' | 'ta' | 'kn' or the English name of one of them. */
+export function readClientLanguage(
+  value: MemoryValue,
+): (typeof OUTWARD_LANGUAGE_VALUES)[number] | null {
+  if (typeof value !== 'string') return null;
+  const v = value.trim().toLowerCase();
+  return OUTWARD_LANGUAGE_VALUES.find((l) => l === v) ?? LANGUAGE_NAMES[v] ?? null;
+}
+
+/** An `M7` alias value: what was typed and what it stands for. */
+export function readAlias(value: MemoryValue): { alias: string; canonical: string } | null {
+  if (typeof value !== 'object' || Array.isArray(value)) return null;
+  const { alias, canonical } = value;
+  return typeof alias === 'string' && typeof canonical === 'string' && alias && canonical
+    ? { alias, canonical }
+    : null;
+}

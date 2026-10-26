@@ -22,6 +22,7 @@ import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 
 import { record, type AuditAction, type AuditMetadataValue } from '../audit/index.ts';
+import type { MemoryDeps } from '../memory/index.ts';
 import { forbidden, invalid, notFound } from '../shared/errors.ts';
 import { activeMember } from '../shared/membership.ts';
 import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/index.ts';
@@ -36,6 +37,8 @@ export interface OutwardDeps {
   now?: () => Date;
   /** The AI gateway; the core gateway over the scope's transaction when omitted. */
   gateway?: AiGateway;
+  /** Lawyer memory (#74): M2 tone and sign-off, M6 client language. Without it the defaults apply. */
+  memory?: MemoryDeps;
 }
 
 export interface OutwardActor {

@@ -19,6 +19,7 @@ import {
   type BriefDeps,
   type MemoryQuery,
 } from './scope.ts';
+import { applyBriefFormat } from './memory-provider.ts';
 import { carrySection } from './sections/carry.ts';
 import { contextSection } from './sections/context.ts';
 import { courtNotesSection } from './sections/court-notes.ts';
@@ -51,6 +52,7 @@ export async function assembleBrief(
       workspaceId: actor.workspaceId,
       matterId: listing.matterId,
       userId: actor.userId,
+      listingId,
     };
     const state = await loadBriefState(scope, listingId);
     const canMemory = await mayDo(scope, 'memory.read');
@@ -58,14 +60,23 @@ export async function assembleBrief(
 
     const order = await lastOrderSection(scope, listing, opts.compress !== false);
     const obligations = await obligationsSection(scope, listing);
-    const carry = await carrySection(scope, listing, obligations.documentIds, state, memory);
+    const carry = await carrySection(
+      scope,
+      listing,
+      obligations.documentIds,
+      state,
+      memory,
+      query,
+    );
     const context = listing.sensitive
       ? []
       : await contextSection(scope, listing, obligations.open, opts.contextQuery);
     const synopsis = canMemory ? await synopsisSection(memory, query, canStrategy) : null;
     const memoryHearing = canMemory ? await memory.lastHearing(query) : null;
 
-    return Brief.parse({
+    const format = (await memory.format?.(query)) ?? null;
+
+    const brief = Brief.parse({
       listing_id: listingId,
       matter_id: listing.matterId,
       proceeding_id: listing.proceedingId,
@@ -86,5 +97,6 @@ export async function assembleBrief(
       note: state.note,
       carry_reviewed: carry.reviewed,
     });
+    return applyBriefFormat(brief, format);
   });
 }

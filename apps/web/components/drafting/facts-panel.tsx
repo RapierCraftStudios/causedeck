@@ -23,7 +23,11 @@ export interface FactsPanelProps {
 export function FactsPanel({ facts, selectedSlot, disabled = false, onInsert }: FactsPanelProps) {
   const t = useTranslations('drafting.panels.facts');
   return (
-    <section data-slot="facts-panel" aria-labelledby="facts-panel-title" className="flex flex-col gap-3">
+    <section
+      data-slot="facts-panel"
+      aria-labelledby="facts-panel-title"
+      className="flex flex-col gap-3"
+    >
       <h2 id="facts-panel-title" className="text-sm font-semibold">
         {t('title')}
       </h2>

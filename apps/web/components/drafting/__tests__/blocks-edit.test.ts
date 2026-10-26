@@ -13,7 +13,13 @@ import {
 
 const tree: Block[] = [
   { type: 'heading', id: 'h', level: 1, text: 'Petition' },
-  { type: 'section', children: [{ type: 'paragraph', text: 'Facts.' }, { type: 'slot', id: 's', resolver: 'matter.cnr' }] },
+  {
+    type: 'section',
+    children: [
+      { type: 'paragraph', text: 'Facts.' },
+      { type: 'slot', id: 's', resolver: 'matter.cnr' },
+    ],
+  },
   { type: 'narrative', id: 'n', prompt: 'Summarise', maxChars: 500 },
 ];
 

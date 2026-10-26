@@ -85,12 +85,14 @@ export function DraftStudio(props: StudioProps) {
   const readOnly = !online && cached;
 
   // A fresh server version (after a restore or reload) replaces the local tree.
+  /* eslint-disable react-hooks/set-state-in-effect -- adopting a new server version is the point of this effect */
   useEffect(() => {
     setBlocks(props.blocks);
     setBaseNo(props.versionNo);
     setDirty(false);
     diffs.current = [];
   }, [props.blocks, props.versionNo]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const findings = useMemo(() => {
     const keys = keyedBlocks(blocks)
@@ -119,20 +121,18 @@ export function DraftStudio(props: StudioProps) {
     })().catch(() => undefined);
   }, [workspaceId, draftId, title, versionNo, initial, refreshPending]);
 
-  const send = useCallback(
-    async (edit: QueuedDraftEdit) => {
-      const result = await saveDraftAction({
-        workspaceId: edit.workspaceId,
-        draftId: edit.draftId,
-        baseVersionNo: edit.baseVersionNo,
-        blocks: edit.blocks,
-      });
-      return result.ok ? ({ ok: true } as const) : ({ ok: false, code: result.error.code } as const);
-    },
-    [],
-  );
+  const send = useCallback(async (edit: QueuedDraftEdit) => {
+    const result = await saveDraftAction({
+      workspaceId: edit.workspaceId,
+      draftId: edit.draftId,
+      baseVersionNo: edit.baseVersionNo,
+      blocks: edit.blocks,
+    });
+    return result.ok ? ({ ok: true } as const) : ({ ok: false, code: result.error.code } as const);
+  }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the browser's connectivity once on mount
     setOnline(navigator.onLine);
     const goOnline = () => {
       setOnline(true);
@@ -199,7 +199,17 @@ export function DraftStudio(props: StudioProps) {
         setState('failed');
       });
     }
-  }, [readOnly, dirty, props.workspaceId, props.draftId, baseNo, blocks, refreshPending, router, t]);
+  }, [
+    readOnly,
+    dirty,
+    props.workspaceId,
+    props.draftId,
+    baseNo,
+    blocks,
+    refreshPending,
+    router,
+    t,
+  ]);
 
   async function restore(versionNo: number) {
     const result = await restoreDraftVersionAction({
@@ -288,22 +298,21 @@ export function DraftStudio(props: StudioProps) {
     [],
   );
 
-  const status =
-    !online
-      ? t('states.offlineQueued')
-      : state === 'saving'
-        ? t('states.saving')
-        : state === 'conflict'
-          ? t('states.conflict')
-          : state === 'failed'
-            ? t('states.saveFailed')
-            : state === 'queued'
-              ? t('states.offlineQueued')
-              : dirty
-                ? t('states.unsaved')
-                : state === 'saved'
-                  ? t('states.saved')
-                  : '';
+  const status = !online
+    ? t('states.offlineQueued')
+    : state === 'saving'
+      ? t('states.saving')
+      : state === 'conflict'
+        ? t('states.conflict')
+        : state === 'failed'
+          ? t('states.saveFailed')
+          : state === 'queued'
+            ? t('states.offlineQueued')
+            : dirty
+              ? t('states.unsaved')
+              : state === 'saved'
+                ? t('states.saved')
+                : '';
 
   const panelBody = (which: Panel) =>
     which === 'facts' ? (
@@ -369,10 +378,7 @@ export function DraftStudio(props: StudioProps) {
       </header>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 xl:grid-cols-[18rem_minmax(0,1fr)_18rem]">
-        <aside
-          aria-label={t('panels.facts.title')}
-          className="hidden xl:block xl:overflow-y-auto"
-        >
+        <aside aria-label={t('panels.facts.title')} className="hidden xl:block xl:overflow-y-auto">
           {panelBody('facts')}
         </aside>
 
@@ -405,7 +411,7 @@ export function DraftStudio(props: StudioProps) {
         <div
           role="dialog"
           aria-label={t(`tabs.${panel}`)}
-          className="bg-surface border-line fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-lg border-t p-4 shadow-lg motion-safe:transition-transform md:inset-y-0 md:end-0 md:start-auto md:max-h-none md:w-80 md:rounded-none md:border-s md:border-t-0 xl:hidden"
+          className="bg-surface border-line fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-lg border-t p-4 shadow-lg motion-safe:transition-transform md:inset-y-0 md:start-auto md:end-0 md:max-h-none md:w-80 md:rounded-none md:border-s md:border-t-0 xl:hidden"
         >
           <div role="tablist" className="mb-3 flex gap-2 md:hidden">
             {(['editor', 'facts', 'versions'] as const).map((tab) => (

@@ -54,7 +54,7 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 async function seal(key: CryptoKey, value: unknown): Promise<Sealed> {
-  return encryptBytes(key, encoder.encode(JSON.stringify(value)).buffer as ArrayBuffer);
+  return encryptBytes(key, encoder.encode(JSON.stringify(value)).buffer);
 }
 
 async function open<T>(key: CryptoKey, row: Sealed): Promise<T> {
@@ -128,7 +128,8 @@ export async function pendingDraftEdits(
 ): Promise<number> {
   const rows = await store.queue();
   return rows.filter(
-    (row) => row.state === 'queued' && (workspaceId === undefined || row.workspaceId === workspaceId),
+    (row) =>
+      row.state === 'queued' && (workspaceId === undefined || row.workspaceId === workspaceId),
   ).length;
 }
 

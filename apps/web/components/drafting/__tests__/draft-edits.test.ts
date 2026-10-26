@@ -10,21 +10,33 @@ import {
   type DraftEditStore,
 } from '../../../lib/pwa/outbox/draft-edits.ts';
 
+function put(map: Map<string, unknown>, id: string, row: unknown) {
+  map.set(id, row);
+  return Promise.resolve();
+}
+function drop(map: Map<string, unknown>, id: string) {
+  map.delete(id);
+  return Promise.resolve();
+}
+
 function memory() {
-  const cache = new Map<string, never>();
-  const queue = new Map<string, never>();
+  const cache = new Map<string, unknown>();
+  const queue = new Map<string, unknown>();
   const store = {
-    getCache: (id: string) => Promise.resolve(cache.get(id)),
-    putCache: (row: { id: string }) => Promise.resolve(void cache.set(row.id, row as never)),
-    queue: () => Promise.resolve([...queue.values()]),
-    getQueued: (id: string) => Promise.resolve(queue.get(id)),
-    putQueued: (row: { id: string }) => Promise.resolve(void queue.set(row.id, row as never)),
-    removeQueued: (id: string) => Promise.resolve(void queue.delete(id)),
+    getCache: (id: string) => Promise.resolve(cache.get(id) as never),
+    putCache: (row: { id: string }) => put(cache, row.id, row),
+    queue: () => Promise.resolve([...queue.values()] as never[]),
+    getQueued: (id: string) => Promise.resolve(queue.get(id) as never),
+    putQueued: (row: { id: string }) => put(queue, row.id, row),
+    removeQueued: (id: string) => drop(queue, id),
   } as unknown as DraftEditStore;
   let key: CryptoKey | undefined;
   const keys = {
     get: () => Promise.resolve(key),
-    put: (k: CryptoKey) => Promise.resolve(void (key = k)),
+    put: (k: CryptoKey) => {
+      key = k;
+      return Promise.resolve();
+    },
   };
   return { store, keys, queue };
 }
@@ -41,7 +53,13 @@ const edit = (base = 3, text = 'x') => ({
 describe('draft edit cache and queue', () => {
   it('round-trips the cache and never stores plaintext', async () => {
     const { store, keys } = memory();
-    await cacheDraft(store, keys, { workspaceId: 'w', draftId: 'd', title: 'T', versionNo: 2, blocks });
+    await cacheDraft(store, keys, {
+      workspaceId: 'w',
+      draftId: 'd',
+      title: 'T',
+      versionNo: 2,
+      blocks,
+    });
     const row = await store.getCache('w:d');
     expect(new TextDecoder().decode(row?.encryptedBlob)).not.toContain('Secret');
     expect((await readCachedDraft(store, keys, 'w', 'd'))?.blocks).toEqual(blocks);
@@ -56,7 +74,11 @@ describe('draft edit cache and queue', () => {
     expect(await pendingDraftEdits(store, 'w')).toBe(1);
     const seen: { base: number; n: number; text: string }[] = [];
     await flushDraftEdits(store, keys, (e) => {
-      seen.push({ base: e.baseVersionNo, n: e.diffs.length, text: (e.blocks[0] as { text: string }).text });
+      seen.push({
+        base: e.baseVersionNo,
+        n: e.diffs.length,
+        text: (e.blocks[0] as { text: string }).text,
+      });
       return Promise.resolve({ ok: true });
     });
     expect(seen).toEqual([{ base: 3, n: 2, text: 'two' }]);
@@ -66,7 +88,9 @@ describe('draft edit cache and queue', () => {
   it('flushes: conflicts stay and are not retried, transient failures retry', async () => {
     const { store, keys } = memory();
     await queueDraftEdit(store, keys, edit());
-    expect(await flushDraftEdits(store, keys, () => Promise.resolve({ ok: false, code: 'CONFLICT' }))).toEqual({
+    expect(
+      await flushDraftEdits(store, keys, () => Promise.resolve({ ok: false, code: 'CONFLICT' })),
+    ).toEqual({
       sent: 0,
       conflicts: 1,
       failed: 0,
@@ -80,7 +104,9 @@ describe('draft edit cache and queue', () => {
     expect(await pendingDraftEdits(store)).toBe(0);
 
     await queueDraftEdit(store, keys, { ...edit(), draftId: 'e' });
-    expect((await flushDraftEdits(store, keys, () => Promise.reject(new Error('offline')))).failed).toBe(1);
+    expect(
+      (await flushDraftEdits(store, keys, () => Promise.reject(new Error('offline')))).failed,
+    ).toBe(1);
     expect(await pendingDraftEdits(store)).toBe(1);
   });
 });

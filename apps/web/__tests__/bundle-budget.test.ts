@@ -25,6 +25,8 @@ interface BudgetModule {
   COURTS_ROUTE_MANIFESTS: string[];
   MATTERS_ROUTE_BUDGET_BYTES: number;
   MATTERS_ROUTE_MANIFEST: string;
+  DRAFTS_ROUTE_BUDGET_BYTES: number;
+  DRAFTS_ROUTE_MANIFEST: string;
   TIMELINE_ROUTE_BUDGET_BYTES: number;
   TIMELINE_ROUTE_MANIFEST: string;
   MATTER_WORKSPACE_MANIFEST: string;
@@ -193,6 +195,25 @@ describe('matters route budget (#388)', () => {
     expect(budget.shellDelta(shared, ['shell.js', 'matters.js', 'extra.js'], sizes, limit).ok).toBe(
       false,
     );
+  });
+});
+
+describe('drafting studio route budget (#827)', () => {
+  it('pins the budget and route', () => {
+    expect(budget.DRAFTS_ROUTE_BUDGET_BYTES).toBe(40 * 1024);
+    expect(budget.DRAFTS_ROUTE_MANIFEST).toBe(
+      'server/app/(app)/w/[slug]/drafts/[id]/page_client-reference-manifest.js',
+    );
+  });
+
+  it('keeps the lazy editor chunk out of the initial delta', () => {
+    const limit = budget.DRAFTS_ROUTE_BUDGET_BYTES;
+    const sizes = { 'shell.js': 28_000, 'studio.js': 30 * 1024, 'editor.js': 80 * 1024 };
+    const delta = budget.shellDelta(['shell.js'], ['shell.js', 'studio.js'], sizes, limit);
+    expect(delta.ok).toBe(true);
+    expect(
+      budget.shellDelta(['shell.js'], ['shell.js', 'studio.js', 'editor.js'], sizes, limit).ok,
+    ).toBe(false);
   });
 });
 

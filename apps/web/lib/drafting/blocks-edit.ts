@@ -54,7 +54,9 @@ function mapBlocks(
 }
 
 /** Whether the block holds text a person types into. */
-export function isTextBlock(block: Block): block is Extract<Block, { type: 'heading' | 'paragraph' }> {
+export function isTextBlock(
+  block: Block,
+): block is Extract<Block, { type: 'heading' | 'paragraph' }> {
   return block.type === 'heading' || block.type === 'paragraph';
 }
 
@@ -170,8 +172,12 @@ export interface DiffLine {
 
 /** Line diff (longest common subsequence) from the `from` tree to the `to` tree. */
 export function diffBlocks(from: readonly Block[], to: readonly Block[]): DiffLine[] {
-  const a = keyedBlocks(from).map((e) => blockLine(e.block)).filter((l) => l !== '');
-  const b = keyedBlocks(to).map((e) => blockLine(e.block)).filter((l) => l !== '');
+  const a = keyedBlocks(from)
+    .map((e) => blockLine(e.block))
+    .filter((l) => l !== '');
+  const b = keyedBlocks(to)
+    .map((e) => blockLine(e.block))
+    .filter((l) => l !== '');
   const table: number[][] = Array.from({ length: a.length + 1 }, () =>
     new Array<number>(b.length + 1).fill(0),
   );
@@ -194,7 +200,9 @@ export function diffBlocks(from: readonly Block[], to: readonly Block[]): DiffLi
       out.push({ kind: 'same', text: a[i] as string });
       i++;
       j++;
-    } else if (((table[i + 1] as number[])[j] as number) >= ((table[i] as number[])[j + 1] as number)) {
+    } else if (
+      ((table[i + 1] as number[])[j] as number) >= ((table[i] as number[])[j + 1] as number)
+    ) {
       out.push({ kind: 'removed', text: a[i++] as string });
     } else {
       out.push({ kind: 'added', text: b[j++] as string });

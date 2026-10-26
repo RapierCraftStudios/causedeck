@@ -13,7 +13,7 @@ export interface DraftVersionView {
   versionNo: number;
   createdAt: string;
   /** The version's blocks, when loaded; the preview needs them. */
-  blocks?: Block[];
+  blocks?: Block[] | undefined;
 }
 
 export interface VersionDrawerProps {
@@ -35,11 +35,14 @@ export function VersionDrawer({
   const t = useTranslations('drafting.panels.versions');
   const [chosen, setChosen] = useState<number | undefined>();
   const picked = versions.find((v) => v.versionNo === chosen);
-  const lines =
-    picked?.blocks === undefined ? undefined : diffBlocks(currentBlocks, picked.blocks);
+  const lines = picked?.blocks === undefined ? undefined : diffBlocks(currentBlocks, picked.blocks);
 
   return (
-    <section data-slot="version-drawer" aria-labelledby="versions-title" className="flex flex-col gap-3">
+    <section
+      data-slot="version-drawer"
+      aria-labelledby="versions-title"
+      className="flex flex-col gap-3"
+    >
       <h2 id="versions-title" className="text-sm font-semibold">
         {t('title')}
       </h2>
@@ -55,7 +58,9 @@ export function VersionDrawer({
               }}
               className="focus-visible:ring-focus aria-pressed:bg-seal-subtle min-h-11 w-full rounded-md px-2 text-start text-sm focus-visible:ring-2"
             >
-              {v.versionNo === currentVersionNo ? t('current') : t('number', { number: v.versionNo })}
+              {v.versionNo === currentVersionNo
+                ? t('current')
+                : t('number', { number: v.versionNo })}
               <span className="text-ink-muted ms-2 text-xs">{v.createdAt.slice(0, 10)}</span>
             </button>
           </li>
@@ -68,16 +73,20 @@ export function VersionDrawer({
             <p className="text-ink-muted text-sm">{t('noChanges')}</p>
           ) : (
             <ul className="flex flex-col gap-0.5 font-serif text-sm">
-              {(lines ?? []).filter((l) => l.kind !== 'same').map((line, i) => (
-                <li
-                  key={i}
-                  className={line.kind === 'added' ? 'text-success' : 'text-danger line-through'}
-                >
-                  <span className="sr-only">{line.kind === 'added' ? t('added') : t('removed')}: </span>
-                  {line.kind === 'added' ? '+ ' : '− '}
-                  {line.text}
-                </li>
-              ))}
+              {(lines ?? [])
+                .filter((l) => l.kind !== 'same')
+                .map((line, i) => (
+                  <li
+                    key={i}
+                    className={line.kind === 'added' ? 'text-success' : 'text-danger line-through'}
+                  >
+                    <span className="sr-only">
+                      {line.kind === 'added' ? t('added') : t('removed')}:{' '}
+                    </span>
+                    {line.kind === 'added' ? '+ ' : '− '}
+                    {line.text}
+                  </li>
+                ))}
             </ul>
           )}
           <button

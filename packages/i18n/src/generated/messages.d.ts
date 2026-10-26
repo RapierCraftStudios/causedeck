@@ -1187,6 +1187,7 @@ export type Messages = {
       support: string;
       more: string;
       'court-watch': string;
+      research: string;
       sso: string;
     };
     placeholder: {
@@ -1366,7 +1367,9 @@ export type Messages = {
           read: string;
         };
         draft: {
+          read: string;
           write: string;
+          export: string;
         };
         audit: {
           read: string;
@@ -3685,6 +3688,110 @@ export type Messages = {
       selectMore: string;
     };
   };
+  draftingTemplates: {
+    names: {
+      madras_hc: {
+        mention_memo: string;
+        early_listing_memo: string;
+        memo_of_appearance: string;
+        certified_copy_application: string;
+        client_covering_letter: string;
+      };
+      karnataka_hc: {
+        mention_memo: string;
+        early_listing_memo: string;
+        memo_of_appearance: string;
+        certified_copy_application: string;
+        client_covering_letter: string;
+      };
+      generic_a0: {
+        adjournment_note: string;
+        client_covering_letter: string;
+      };
+    };
+    scaffoldBanner: string;
+  };
+  drafting: {
+    list: {
+      title: string;
+      newDraft: string;
+      pickTemplate: string;
+      empty: string;
+      updated: string;
+      untitled: string;
+    };
+    states: {
+      loading: string;
+      error: string;
+      retry: string;
+      notFound: string;
+      saving: string;
+      saved: string;
+    };
+    panels: {
+      facts: {
+        title: string;
+        empty: string;
+      };
+      citations: {
+        title: string;
+        empty: string;
+        check: string;
+        checkedAt: string;
+        status: {
+          verified: string;
+          notFound: string;
+          unknown: string;
+        };
+      };
+      consistency: {
+        title: string;
+        empty: string;
+      };
+      versions: {
+        title: string;
+        current: string;
+        restore: string;
+        number: string;
+      };
+    };
+    findings: {
+      count: string;
+      factMismatch: string;
+      unsupported: string;
+      goTo: string;
+    };
+    aiDrafted: {
+      label: string;
+      notice: string;
+    };
+    acknowledgement: {
+      title: string;
+      statement: string;
+      confirm: string;
+      cancel: string;
+    };
+    export: {
+      title: string;
+      docx: string;
+      pdf: string;
+      unverifiedWarning: string;
+      action: string;
+      failed: string;
+    };
+    shortcuts: {
+      title: string;
+      save: string;
+      checkCitations: string;
+      togglePanel: string;
+      export: string;
+    };
+    offline: {
+      banner: string;
+      queued: string;
+      synced: string;
+    };
+  };
   calendar: {
     metaTitle: string;
     title: string;
@@ -4323,6 +4430,58 @@ export type Messages = {
       conflict: string;
       generic: string;
     };
+  };
+  research: {
+    linkOut: {
+      button: string;
+      menuLabel: string;
+      hint: string;
+      preview: string;
+      empty: string;
+      noQuery: string;
+    };
+    notes: {
+      heading: string;
+      loading: string;
+      empty: string;
+      error: string;
+      offline: string;
+      denied: string;
+      add: string;
+      titleLabel: string;
+      bodyLabel: string;
+      save: string;
+      saving: string;
+      delete: string;
+      edit: string;
+      saveError: string;
+      authoritiesHeading: string;
+      authoritiesEmpty: string;
+      authorityLabel: string;
+      authorityCitation: string;
+      authorityUrl: string;
+      addAuthority: string;
+      removeAuthority: string;
+      pin: string;
+      unpin: string;
+      pinned: string;
+      pinHint: string;
+    };
+  };
+  settingsResearch: {
+    title: string;
+    description: string;
+    builtInHeading: string;
+    ownHeading: string;
+    ownEmpty: string;
+    keyLabel: string;
+    labelLabel: string;
+    templateLabel: string;
+    templateHint: string;
+    enabledLabel: string;
+    save: string;
+    remove: string;
+    saveError: string;
   };
   bootstrapImport: {
     metaTitle: string;

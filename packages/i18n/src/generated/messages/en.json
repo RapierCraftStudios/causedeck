@@ -1186,6 +1186,7 @@
       "support": "Support access",
       "more": "More",
       "court-watch": "Court watch",
+      "research": "Research",
       "sso": "Single sign-on"
     },
     "placeholder": {
@@ -1365,7 +1366,9 @@
           "read": "See the cause list"
         },
         "draft": {
-          "write": "Write drafts"
+          "read": "See drafts",
+          "write": "Write drafts",
+          "export": "Export drafts"
         },
         "audit": {
           "read": "Read and export the audit log"
@@ -3684,6 +3687,110 @@
       "selectMore": "Add to the selection"
     }
   },
+  "draftingTemplates": {
+    "names": {
+      "madras_hc": {
+        "mention_memo": "Mention or adjournment memo",
+        "early_listing_memo": "Early-listing memo",
+        "memo_of_appearance": "Memo of appearance",
+        "certified_copy_application": "Application for certified copy",
+        "client_covering_letter": "Covering letter to the client"
+      },
+      "karnataka_hc": {
+        "mention_memo": "Mention or adjournment memo",
+        "early_listing_memo": "Early-listing memo",
+        "memo_of_appearance": "Memo of appearance",
+        "certified_copy_application": "Application for certified copy",
+        "client_covering_letter": "Covering letter to the client"
+      },
+      "generic_a0": {
+        "adjournment_note": "Adjournment note",
+        "client_covering_letter": "Covering letter to the client"
+      }
+    },
+    "scaffoldBanner": "Scaffold: review before use"
+  },
+  "drafting": {
+    "list": {
+      "title": "Drafts",
+      "newDraft": "New draft",
+      "pickTemplate": "Choose a template",
+      "empty": "No drafts yet. Start one from a template.",
+      "updated": "Updated {date}",
+      "untitled": "Untitled draft"
+    },
+    "states": {
+      "loading": "Loading the draft",
+      "error": "The draft could not be loaded.",
+      "retry": "Try again",
+      "notFound": "This draft does not exist or you cannot open it.",
+      "saving": "Saving",
+      "saved": "Saved"
+    },
+    "panels": {
+      "facts": {
+        "title": "Facts",
+        "empty": "No facts are linked to this draft."
+      },
+      "citations": {
+        "title": "Citations",
+        "empty": "No citations found in the draft.",
+        "check": "Check citations",
+        "checkedAt": "Checked {date}",
+        "status": {
+          "verified": "Verified",
+          "notFound": "Not found",
+          "unknown": "Unknown"
+        }
+      },
+      "consistency": {
+        "title": "Consistency",
+        "empty": "No consistency findings."
+      },
+      "versions": {
+        "title": "Versions",
+        "current": "Current version",
+        "restore": "Restore this version",
+        "number": "Version {number}"
+      }
+    },
+    "findings": {
+      "count": "{count, plural, one {# finding} other {# findings}}",
+      "factMismatch": "A figure or date differs from the facts.",
+      "unsupported": "This statement has no source fact.",
+      "goTo": "Go to location"
+    },
+    "aiDrafted": {
+      "label": "AI-drafted",
+      "notice": "Parts of this draft were written by AI. Review every line before use."
+    },
+    "acknowledgement": {
+      "title": "Confirm your review",
+      "statement": "I have read this draft in full and checked its citations and facts. I take responsibility for its contents.",
+      "confirm": "I acknowledge",
+      "cancel": "Cancel"
+    },
+    "export": {
+      "title": "Export draft",
+      "docx": "Word document",
+      "pdf": "PDF",
+      "unverifiedWarning": "{count, plural, one {# citation is not verified.} other {# citations are not verified.}}",
+      "action": "Export",
+      "failed": "The export failed. Try again."
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "save": "Save",
+      "checkCitations": "Check citations",
+      "togglePanel": "Show or hide the side panel",
+      "export": "Export"
+    },
+    "offline": {
+      "banner": "You are offline. Edits are saved on this device.",
+      "queued": "{count, plural, one {# change waiting to sync} other {# changes waiting to sync}}",
+      "synced": "All changes synced"
+    }
+  },
   "calendar": {
     "metaTitle": "Calendar",
     "title": "Calendar",
@@ -4322,6 +4429,58 @@
       "conflict": "Please wait a minute before asking for another code.",
       "generic": "Something went wrong. Try again."
     }
+  },
+  "research": {
+    "linkOut": {
+      "button": "Research on…",
+      "menuLabel": "Research providers",
+      "hint": "Opens in a new window on a site we do not control.",
+      "preview": "Link: {url}",
+      "empty": "Add a confirmed issue tag or a forum to build research links.",
+      "noQuery": "No research links yet"
+    },
+    "notes": {
+      "heading": "Research notes",
+      "loading": "Loading notes",
+      "empty": "No notes yet. Write down what you found and the authorities you chose.",
+      "error": "Notes could not be loaded. Try again.",
+      "offline": "You are offline. Notes are shown read-only.",
+      "denied": "You do not have access to research notes.",
+      "add": "New note",
+      "titleLabel": "Title",
+      "bodyLabel": "Note",
+      "save": "Save note",
+      "saving": "Saving…",
+      "delete": "Delete note",
+      "edit": "Edit",
+      "saveError": "The note was not saved. Try again.",
+      "authoritiesHeading": "Authorities",
+      "authoritiesEmpty": "No authorities chosen.",
+      "authorityLabel": "Authority",
+      "authorityCitation": "Citation (optional)",
+      "authorityUrl": "Link (https, optional)",
+      "addAuthority": "Add authority",
+      "removeAuthority": "Remove",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "pinned": "Pinned",
+      "pinHint": "Pinning keeps an authority at the top of this note. It does not add a citation to any draft."
+    }
+  },
+  "settingsResearch": {
+    "title": "Research providers",
+    "description": "Where research links on a matter may point. Links open in a new window; CauseDeck never fetches these sites.",
+    "builtInHeading": "Built-in providers",
+    "ownHeading": "Your providers",
+    "ownEmpty": "No providers of your own yet. Add the link of a subscription you hold, such as SCC Online or Manupatra.",
+    "keyLabel": "Key",
+    "labelLabel": "Name",
+    "templateLabel": "Link template",
+    "templateHint": "An https link with {q} where the query goes, for example https://www.scconline.com/search?q={q}.",
+    "enabledLabel": "Enabled",
+    "save": "Save provider",
+    "remove": "Remove",
+    "saveError": "The provider was not saved. Check the link."
   },
   "bootstrapImport": {
     "metaTitle": "Import your cases",

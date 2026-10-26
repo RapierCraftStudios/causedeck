@@ -1,29 +1,32 @@
 ### Approach
-Recovery pass for the red `build` check. Admin's Turbopack build failed on the templated `require.resolve` of the PDF fonts in `packages/drafting/src/render/pdf.ts`. The resolver is now a bound function, so the bundler no longer traces it. Everything else from earlier runs was verified against the contract.
+The drafting package holds the registry of 12 system templates as data (block trees, semver, sha256 checksum, `reviewedBy` null). The db seeder takes entries as a parameter (db may not import drafting). A core script runs it as the owner after `db:migrate`. Exports of unreviewed templates print the scaffold banner and record `bannerShown` in the audit event.
 ### Changes
-- packages/drafting/src/render/pdf.ts: font path resolved through a bound `createRequire().resolve`.
-- Earlier commits (verified): core drafting service/policy/export/index, `drafting.export` job and registry, `draft_export` table with migration, `draft.read`/`draft.export` policy and matrix, audit action, core-domains config and docs, cross-tenant and worker registry tests, integration test.
+- packages/db: `template` gains `checksum`, `reviewed_by` and generated `is_system` (schema, migration, journal, snapshot); `seed/system-templates.ts` (checksum-gated upsert); package export.
+- packages/validators: `client.name` resolver and `SystemTemplateSeedSchema`, with tests.
+- packages/drafting: `Facts.client`, banner and locale render options (DOCX and PDF), generic preset, 12 templates and registry, `@causedeck/adapters` dependency, tests and snapshot.
+- packages/core: `loadDraftFacts` fills `client.name` only from a `client`-kind person on the matter; export passes the banner and audits `bannerShown`; `system-templates.ts` glue; `scripts/seed-system-templates.ts`; tsconfig includes `scripts`; integration test.
+- package.json (root, core): `db:migrate` chains the seed script; core gets `tsx`; pnpm-lock updated.
+- packages/i18n: `drafting-templates` namespace (en, ta, kn), catalog, generated files, translation-status, guard test key list.
+- docs/engineering/drafting-templates.md.
 ### Acceptance Criteria Status
-- R1 ✅ packages/core/src/drafting/service.ts
-- R2 ✅ packages/core/src/drafting/policy.ts
-- R3 ✅ packages/core/src/jobs/definitions/drafting-export.ts
-- R4 ✅ packages/core/src/drafting/export.ts
-- R5 ✅ packages/core/src/drafting/export.ts
-- R6 ✅ packages/core/package.json
-- R7 ✅ packages/config/eslint/core-domains.js, docs/engineering/core-domains.md
-- R8 ✅ packages/db/src/testing/cross-tenant-registry.ts, packages/core/src/__tests__/cross-tenant/services.test.ts
-- R9 ✅ packages/core/src/drafting/__tests__/drafting.integration.test.ts
-- R10 ✅ service.ts and export.ts never log draft text
+- R1 ✅ packages/drafting/src/system-templates/index.ts:17, packages/db/src/schema/drafting.ts:55
+- R2 ✅ packages/db/src/seed/system-templates.ts:46 (setWhere checksum)
+- R3 ✅ packages/drafting/src/__tests__/system-templates.test.ts (snapshot)
+- R4 ✅ packages/drafting/src/system-templates/common.ts:62
+- R5 ✅ packages/core/src/drafting/service.ts (client.name), system-templates.test.ts
+- R6 ✅ packages/core/src/drafting/export.ts (banner, bannerShown)
+- R7 ✅ system-templates.test.ts citation lint
+- R8 ✅ system-templates.test.ts phrase denylist
+- R9 ✅ packages/drafting/src/render/docx.ts, system-templates.test.ts font test
+- R10 ✅ packages/db/src/seed/__tests__/system-templates-seed.test.ts
+- R11 ✅ packages/i18n/src/messages/*/drafting-templates.json
+- R12 deferred (contract disposition), R14 post-deploy (contract disposition)
+- R13 ✅ docs/engineering/drafting-templates.md
 ### Verification
-- V1 checks.mjs: exit 0.
-- V2 core vitest: pass (services file run alone, 218 tests).
-- V3 db vitest: exit 0.
-- V4 auth vitest: exit 0.
-- V5 worker vitest: exit 0.
-- V6 schema conventions and migration lint: exit 0.
-- Drafting package vitest: 15 pass. The Next build is CI-only, so the build fix has no local test and fails_without_fix is unknown.
+- V1 drafting vitest: pass. V2 validators: pass. V3 db seed + rls: pass (seed test fails without the setWhere checksum gate: updated_at would change). V4 core drafting: pass. V5 i18n: pass. V6 checks.mjs: pass.
+- `forgedock check`: PASS. tsc clean for drafting, db, core, i18n.
 ### Notes
-No behaviour change from the pdf.ts edit. The Security check fails on historical gitleaks findings in unrelated test files, not on this branch's changes.
+`pnpm db:migrate` now also runs the core seed script (needs DATABASE_URL_OWNER). A re-seed with a changed checksum resets `reviewed_by` to null. The seed script itself was not run locally (the core `tsx` link needs an install).
 
-## Stale-list fix
-The 20 flagged (symbol, test) pairs are not members: none of the 10 tests names the sibling exports (DRAFT_STATUSES, draft, draftVersion); the flagged lines are unrelated mock state or fixtures. Recorded in result.json `not_members`.
+## Sibling-list check
+engine.test.ts:235 filters exports by /send|file|submit/i and expects []; SCAFFOLD_BANNER, SYSTEM_TEMPLATES, systemTemplate do not match, so recorded as not_members in result.json. No code change.

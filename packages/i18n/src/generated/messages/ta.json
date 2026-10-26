@@ -302,6 +302,13 @@
         "offline": "நீங்கள் இணைப்பில் இல்லை. உள்நுழைய இணைக்கவும்.",
         "accessDenied": "அணுகல் வழங்கப்படவில்லை."
       },
+      "sso": {
+        "open": "SSO மூலம் உள்நுழையவும்",
+        "emailLabel": "பணி மின்னஞ்சல்",
+        "emailPlaceholder": "name@firm.example.com",
+        "submit": "SSO மூலம் தொடரவும்",
+        "failed": "அந்த முகவரிக்கு SSO உள்நுழைவைத் தொடங்க முடியவில்லை. சரிபார்த்து மீண்டும் முயலவும்."
+      },
       "phone": {
         "label": "மொபைல் எண்",
         "placeholder": "98765 43210",
@@ -1179,7 +1186,8 @@
       "support": "ஆதரவு அணுகல்",
       "more": "மேலும்",
       "court-watch": "நீதிமன்றக் கண்காணிப்பு",
-      "research": "ஆய்வு"
+      "research": "ஆய்வு",
+      "sso": "ஒற்றை உள்நுழைவு"
     },
     "placeholder": {
       "export": "இந்தப் பணியிடத்தில் உள்ள அனைத்தின் நகலையும் பதிவிறக்கவும்.",
@@ -1313,9 +1321,11 @@
         "listing": "வழக்குப் பட்டியல்",
         "draft": "வரைவுகள்",
         "audit": "தணிக்கைப் பதிவு",
+        "court_day": "நீதிமன்ற நாள்",
         "export": "ஏற்றுமதி",
         "support": "ஆதரவு",
-        "shell": "பணியிடப் பகுதிகள்"
+        "shell": "பணியிடப் பகுதிகள்",
+        "appearance": "ஆஜர்கள்"
       },
       "actions": {
         "workspace": {
@@ -1363,6 +1373,9 @@
         "audit": {
           "read": "தணிக்கைப் பதிவைப் படித்தல், ஏற்றுமதி செய்தல்"
         },
+        "court_day": {
+          "view_all": "பணியிடத்தின் முழு நீதிமன்ற நாளையும் பார்த்தல்"
+        },
         "export": {
           "run": "பணியிடத் தரவு முழுவதையும் ஏற்றுமதி செய்தல்"
         },
@@ -1380,6 +1393,9 @@
         },
         "invoices": {
           "read": "விலைப்பட்டியல்களைப் பதிவிறக்குதல்"
+        },
+        "appearance": {
+          "assign": "ஆஜர்களை உறுப்பினர்களுக்கு ஒதுக்கு"
         }
       },
       "settings": {
@@ -1740,6 +1756,48 @@
       "removed": "கண்காணிப்பு நீக்கப்பட்டது.",
       "failed": "சேமிக்க முடியவில்லை. மீண்டும் முயலுங்கள்.",
       "loading": "நீதிமன்றக் கண்காணிப்பு ஏற்றப்படுகிறது"
+    },
+    "sso": {
+      "metaTitle": "ஒற்றை உள்நுழைவு",
+      "title": "ஒற்றை உள்நுழைவு",
+      "description": "உங்கள் நிறுவனம் தனது அடையாள வழங்குநர் (SAML அல்லது OIDC) மூலம் உள்நுழையட்டும். இவ்வாறு உள்நுழைவோர் பார்வையாளர்களாகச் சேர்வர்.",
+      "empty": "இன்னும் அடையாள வழங்குநர் இல்லை.",
+      "error": {
+        "title": "SSO அமைப்புகளை ஏற்ற முடியவில்லை.",
+        "retry": "மீண்டும் முயலவும்"
+      },
+      "form": {
+        "protocol": "நெறிமுறை",
+        "issuer": "வழங்குநர் அடையாளம்",
+        "domain": "மின்னஞ்சல் டொமைன்",
+        "enabled": "இயக்கத்தில்",
+        "clientId": "கிளையன்ட் ID",
+        "clientSecret": "கிளையன்ட் ரகசியம்",
+        "entryPoint": "உள்நுழைவு URL",
+        "cert": "கையொப்ப சான்றிதழ்",
+        "save": "வழங்குநரைச் சேமி",
+        "delete": "நீக்கு"
+      },
+      "toast": {
+        "saved": "வழங்குநர் சேமிக்கப்பட்டது.",
+        "removed": "வழங்குநர் நீக்கப்பட்டது.",
+        "failed": "வழங்குநரைச் சேமிக்க முடியவில்லை.",
+        "forbidden": "SSO-ஐ உரிமையாளர்கள் மட்டுமே மாற்ற முடியும்.",
+        "verified": "டொமைன் சரிபார்க்கப்பட்டது.",
+        "verifyFailed": "DNS பதிவு இன்னும் கிடைக்கவில்லை."
+      },
+      "status": {
+        "enabled": "இயக்கத்தில்",
+        "disabled": "முடக்கத்தில்",
+        "unverified": "டொமைன் சரிபார்க்கப்படவில்லை"
+      },
+      "verify": {
+        "title": "உங்கள் டொமைனைச் சரிபார்க்கவும்",
+        "instructions": "{domain}-க்கு இந்த DNS TXT பதிவைச் சேர்த்து, பின்னர் சரிபார்க்கவும். டொமைன் சரிபார்க்கப்படும் வரை SSO-வை இயக்க முடியாது.",
+        "name": "பதிவின் பெயர்",
+        "value": "பதிவின் மதிப்பு",
+        "button": "பதிவைச் சரிபார்"
+      }
     }
   },
   "lifecycle": {
@@ -2649,6 +2707,228 @@
         "high": "அதிக நம்பகத்தன்மை"
       },
       "updated": "பலகை படித்த நேரம் {time}"
+    },
+    "board": {
+      "header": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "days": "Court day",
+        "summary": "{items, plural, one {# item} other {# items}} in {halls, plural, one {# hall} other {# halls}}",
+        "read": "lists read {time}"
+      },
+      "failure": {
+        "message": "Couldn't read {day}'s {forum} list for Hall {hall}.",
+        "today": "today",
+        "tomorrow": "tomorrow",
+        "openOfficial": "Open the official list",
+        "shareAgain": "or share it again.",
+        "lastKnown": "Last known data, read {time}"
+      },
+      "diff": {
+        "banner": "{count, plural, one {# change} other {# changes}} since the last list",
+        "open": "{count, plural, one {See # change} other {See # changes}}",
+        "title": "List changes",
+        "description": "What was added, moved or removed since the previous list.",
+        "label": {
+          "changed": "Changed list",
+          "supplementary": "Supplementary list"
+        },
+        "kind": {
+          "added": "New: item {item}, {case}",
+          "removed": "Removed: item {item}, {case}",
+          "moved": "Moved from Hall {hall}: item {item}, {case}"
+        }
+      },
+      "shortcuts": {
+        "nextItem": "Next item",
+        "previousItem": "Previous item",
+        "nextHall": "Next hall",
+        "previousHall": "Previous hall",
+        "open": "Open the matter",
+        "carry": "Go to the carry list",
+        "marker": "Set court is at item",
+        "actions": "Quick actions for the item",
+        "diff": "Open list changes",
+        "rail": "Go to the hall rail",
+        "today": "Go to Today",
+        "matters": "Go to Matters",
+        "help": "Show shortcuts"
+      },
+      "clash": {
+        "title": "Clash",
+        "hall": "Items {a} (Hall {hallA}) and {b} (Hall {hallB}) are listed for the same advocate on this date.",
+        "complex": "Items {a} ({hallA}) and {b} ({hallB}) are in different court complexes for the same advocate on this date."
+      },
+      "hall": {
+        "unassigned": "Hall not yet assigned",
+        "name": "Hall {hallNo}",
+        "count": "{count, plural, one {# item} other {# items}}",
+        "courtIsAt": "Court is at item {item}",
+        "bench": "Before {judges}"
+      },
+      "item": {
+        "name": "Item {n}",
+        "unnumbered": "No item number",
+        "brief": "brief {percent} percent ready",
+        "briefUnknown": "brief readiness not known",
+        "clashNote": "clash with another hall",
+        "restricted": "Restricted matter",
+        "clash": "Clash",
+        "carried": "{count, plural, one {Listed before} other {Listed # times before}}",
+        "delegated": "Delegated"
+      },
+      "stage": {
+        "filed": "Filed",
+        "sr_fr": "SR/FR",
+        "defects": "Defects",
+        "re_presented": "Re-presented",
+        "numbered": "Numbered",
+        "disposed": "Disposed",
+        "listed": "Listed",
+        "reserved": "Reserved",
+        "part-heard": "Part-heard"
+      },
+      "change": {
+        "added": "New",
+        "moved": "Moved from Hall {hall}",
+        "removed": "Removed"
+      },
+      "marker": {
+        "label": "Court is at item",
+        "set": "Set",
+        "clear": "Clear",
+        "invalid": "Enter an item number.",
+        "failed": "Could not save. Try again."
+      },
+      "rail": {
+        "carry": "Carry list",
+        "carryEmpty": "Nothing listed before.",
+        "needsYou": "Needs you",
+        "needsEmpty": "Nothing to confirm.",
+        "carriedTimes": "{count, plural, one {listed once before} other {listed # times before}}",
+        "toConfirm": "to confirm",
+        "summary": "Carry {carry}, needs you {needs}",
+        "obligations": "{count, plural, one {# open obligation} other {# open obligations}}"
+      },
+      "actions": {
+        "open": "Quick actions",
+        "title": "Quick actions",
+        "openMatter": "Open the matter",
+        "courtIsHere": "Court is at item {item}"
+      },
+      "hallRail": {
+        "label": "Halls"
+      },
+      "empty": {
+        "title": "Nothing listed",
+        "description": "None of your matters are on a cause list for this day."
+      },
+      "offline": "Offline. Showing the last known data.",
+      "denied": {
+        "title": "You cannot view this day",
+        "description": "Your role does not include the court day."
+      },
+      "loading": "Loading the court day",
+      "error": {
+        "title": "The court day could not load",
+        "retry": "Try again"
+      },
+      "expectedNotListed": "{case} is due {day} but not listed.",
+      "offlineAt": "Offline. Showing data saved at {time}."
+    }
+  },
+  "delegation": {
+    "title": "நாளைய திட்டம்",
+    "metaTitle": "நாளைய திட்டம்",
+    "description": "நாளைய ஆஜர்களை ஒதுக்குங்கள். பரிந்துரைகள் முன்மொழிவுகள் மட்டுமே; நீங்கள் ஏற்கும் வரை மாற்றம் இல்லை.",
+    "empty": "நாளைக்கு ஒதுக்க ஆஜர்கள் இல்லை",
+    "loading": "திட்டம் ஏற்றப்படுகிறது",
+    "error": "திட்டத்தை ஏற்ற முடியவில்லை.",
+    "retry": "மீண்டும் முயற்சி",
+    "denied": "நாளைய திட்டத்துக்கு உங்களுக்கு அணுகல் இல்லை. பணியிட உரிமையாளரிடம் கேளுங்கள்.",
+    "offline": "நீங்கள் இணைப்பில் இல்லை. ஒதுக்கீடுகள் சேமிக்கப்பட்டு ஒத்திசைக்கப்படும்.",
+    "willSync": "ஒத்திசைக்கப்படும்",
+    "conflictNotice": "{name} முதலில் இந்த ஒதுக்கீட்டை மாற்றினார். அவர் மாற்றம் காட்டப்படுகிறது.",
+    "assignee": "ஒதுக்கப்பட்டவர்",
+    "assign": "ஒதுக்கு",
+    "choose": "உறுப்பினரைத் தேர்ந்தெடுக்கவும்",
+    "unassigned": "ஒதுக்கப்படவில்லை",
+    "clash": "மோதல்",
+    "suggested": "பரிந்துரை: {name}",
+    "acceptAll": "எல்லா பரிந்துரைகளையும் ஏற்கவும்",
+    "acceptAllTitle": "எல்லா பரிந்துரைகளையும் ஏற்கவா?",
+    "acceptAllBody": "{count, plural, one {# ஒதுக்கீடு} other {# ஒதுக்கீடுகள்}} செய்யப்பட்டு உறுப்பினர்களுக்கு செயலியில் அறிவிக்கப்படும்.",
+    "confirm": "ஏற்கவும்",
+    "cancel": "ரத்து",
+    "assigned": "{name} என்பவருக்கு ஒதுக்கப்பட்டது",
+    "restricted": "{name} இந்தக் கட்டுப்படுத்தப்பட்ட வழக்கைப் பார்க்க முடியாது.",
+    "grantAccess": "அணுகல் அளித்து ஒதுக்கு",
+    "outcomes": {
+      "label": "முடிவுகள்",
+      "member": "{name}: {total} இல் {done} முடிவுகள் வந்தன",
+      "toast": "{name} ஒரு முடிவை உறுதிசெய்தார்"
+    }
+  },
+  "reminders": {
+    "settings": {
+      "title": "நீதிமன்ற நாள் நினைவூட்டல்கள்",
+      "description": "நீதிமன்ற நாள் பற்றி எப்போது, எங்கே நினைவூட்ட வேண்டும் என்பதைத் தேர்ந்தெடுங்கள்.",
+      "evening": {
+        "label": "மாலை சுருக்கம்",
+        "hint": "முந்தைய இரவு: நாளை பட்டியலிடப்பட்டவை."
+      },
+      "morning": {
+        "label": "காலை மாற்றங்கள்",
+        "hint": "காலை 7:00: இன்றைய பட்டியலில் மாறியவை."
+      },
+      "outcomeMissing": {
+        "label": "முடிவு பதிவாகவில்லை",
+        "hint": "நீதிமன்றத்திற்குப் பிறகு: முடிவு பதிவாகாத விசாரணைகள்."
+      },
+      "time": "நேரம்",
+      "delay": "தாமதம்",
+      "minutes": "கடைசி உருப்படிக்குப் பிறகு நிமிடங்கள்",
+      "channels": {
+        "in_app": "செயலியில்",
+        "push": "புஷ்",
+        "email": "மின்னஞ்சல்"
+      },
+      "loading": "உங்கள் நினைவூட்டல் அமைப்புகள் ஏற்றப்படுகின்றன",
+      "error": "உங்கள் நினைவூட்டல் அமைப்புகள் ஏற்றப்படவில்லை.",
+      "retry": "மீண்டும் முயற்சிக்கவும்",
+      "saved": "சேமிக்கப்பட்டது",
+      "denied": "உறுப்பினர்கள் மட்டுமே தங்கள் நினைவூட்டல்களை மாற்ற முடியும்.",
+      "saving": "சேமிக்கிறது"
+    },
+    "email": {
+      "evening": {
+        "subject": "நாளைய நீதிமன்ற நாள் தயாராக உள்ளது",
+        "preview": "நாளைக்கான உங்கள் மாலை சுருக்கம்",
+        "heading": "நாளைய நீதிமன்ற நாள் தயாராக உள்ளது",
+        "body": "{listings, plural, one {# பட்டியல்} other {# பட்டியல்கள்}}, {halls, plural, one {# அரங்கு} other {# அரங்குகள்}}. {clashes, plural, =0 {மோதல்கள் இல்லை.} one {# மோதல்.} other {# மோதல்கள்.}} {lowReadiness, plural, =0 {அனைத்து சுருக்கங்களும் தயார்.} one {# சுருக்கம் 60 சதவீதத்திற்கும் குறைவாக தயார்.} other {# சுருக்கங்கள் 60 சதவீதத்திற்கும் குறைவாக தயார்.}} {obligations, plural, =0 {நாளை எந்தக் கடமையும் இல்லை.} one {நாளை # கடமை உள்ளது.} other {நாளை # கடமைகள் உள்ளன.}}",
+        "cta": "நாளையைத் திறக்கவும்"
+      },
+      "morning": {
+        "subject": "இன்றைய பட்டியல் மாறியுள்ளது",
+        "preview": "இன்றைய பட்டியல் மாற்றங்கள்",
+        "heading": "இன்றைய பட்டியல் மாறியுள்ளது",
+        "body": "{added, plural, =0 {சேர்க்கப்படவில்லை} other {# சேர்க்கப்பட்டது}}, {moved, plural, =0 {மாற்றம் இல்லை} other {# இடம் மாறியது}}, {removed, plural, =0 {நீக்கம் இல்லை} other {# நீக்கப்பட்டது}}.",
+        "cta": "மாற்றங்களைப் பார்க்கவும்"
+      },
+      "outcomeMissing": {
+        "subject": "இன்றைய முடிவுகளைப் பதிவுசெய்யவும்",
+        "preview": "முடிவுக்காகக் காத்திருக்கும் விசாரணைகள்",
+        "heading": "இன்றைய முடிவுகளைப் பதிவுசெய்யவும்",
+        "body": "{count, plural, one {# விசாரணைக்கு} other {# விசாரணைகளுக்கு}} இன்னும் உறுதிசெய்யப்பட்ட முடிவு இல்லை.",
+        "cta": "முடிவுகளைப் பதிவுசெய்யவும்"
+      },
+      "note": "இந்த நினைவூட்டல் செயலியை மட்டுமே திறக்கும். இது உங்களுக்கு மட்டுமே அனுப்பப்படும், கட்சிக்காரருக்கு அல்ல."
+    },
+    "inApp": {
+      "eveningBody": "நாளை {listings, plural, one {# பட்டியல்} other {# பட்டியல்கள்}}, {halls, plural, one {# அரங்கு} other {# அரங்குகள்}}.",
+      "eveningNames": "பட்டியலில்: {names}",
+      "morningBody": "{added, plural, =0 {0 சேர்க்கப்பட்டது} other {# சேர்க்கப்பட்டது}}, {moved, plural, =0 {0 மாறியது} other {# மாறியது}}, {removed, plural, =0 {0 நீக்கப்பட்டது} other {# நீக்கப்பட்டது}}.",
+      "outcomeBody": "{count, plural, one {# விசாரணைக்கு} other {# விசாரணைகளுக்கு}} உறுதிசெய்யப்பட்ட முடிவு இல்லை."
     }
   },
   "courtInsights": {
@@ -3631,6 +3911,98 @@
       }
     }
   },
+  "calendarView": {
+    "metaTitle": "நாட்காட்டி",
+    "title": "நாட்காட்டி",
+    "description": "இன்றும் நாளையும் தாண்டிய பட்டியலிடப்பட்ட வழக்குகளும் காலக்கெடுக்களும்.",
+    "views": {
+      "label": "காட்சி",
+      "week": "வாரம்",
+      "month": "மாதம்"
+    },
+    "scope": {
+      "label": "காட்டு",
+      "mine": "என்னுடையவை",
+      "workspace": "முழு அலுவலகம்"
+    },
+    "toolbar": {
+      "label": "நாட்காட்டிக் கட்டுப்பாடுகள்",
+      "previous": "முந்தையது",
+      "next": "அடுத்தது",
+      "today": "இன்று",
+      "range": "{from} முதல் {to} வரை",
+      "shortcuts": "விசைகள்: அம்புக்குறிகள் நாட்களுக்கிடையே நகர்த்தும், Enter ஒரு நாளைத் திறக்கும், t இன்று, w வாரம், m மாதம், [ மற்றும் ] முந்தையது மற்றும் அடுத்தது."
+    },
+    "kind": {
+      "listing": "பட்டியலிடப்பட்டது",
+      "next_date": "அடுத்த தேதி",
+      "obligation_due": "நிலுவை",
+      "holiday": "விடுமுறை",
+      "vacation": "நீதிமன்ற விடுமுறை"
+    },
+    "legend": {
+      "title": "விளக்கம்",
+      "proposed": "முன்மொழியப்பட்டது (புள்ளிக்கோடு, கணக்கில் சேராது)",
+      "clash": "மோதல்: ஒரே உறுப்பினர் வெவ்வேறு அரங்குகளில்"
+    },
+    "proposed": "முன்மொழியப்பட்டது",
+    "restricted": "கட்டுப்படுத்தப்பட்ட வழக்கு",
+    "clash": "மோதல்",
+    "closed": "நீதிமன்றம் மூடப்பட்டுள்ளது: {reason}",
+    "summary": "{listings, plural, =0 {பட்டியலிடப்பட்ட வழக்குகள் இல்லை} one {# வழக்கு பட்டியலிடப்பட்டது} other {# வழக்குகள் பட்டியலிடப்பட்டன}}, {deadlines, plural, =0 {காலக்கெடுக்கள் இல்லை} one {# காலக்கெடு} other {# காலக்கெடுக்கள்}}",
+    "dayLabel": "{date}, {summary}",
+    "grid": {
+      "week": "{date} வாரம்",
+      "month": "{date} மாதம்",
+      "weekday": "{day}"
+    },
+    "week": {
+      "noHall": "அரங்கில் ஒதுக்கப்படவில்லை",
+      "hall": "அரங்கு {hall}",
+      "other": "தேதிகளும் காலக்கெடுக்களும்"
+    },
+    "day": {
+      "openDay": "நாளைத் திற",
+      "close": "மூடு",
+      "listings": "பட்டியலிடப்பட்ட வழக்குகள்",
+      "deadlines": "காலக்கெடுக்கள்",
+      "nothing": "எதுவும் பட்டியலிடப்படவில்லை.",
+      "clash": "இந்த நாளில் மோதல் உள்ளது: ஒரே உறுப்பினர் வெவ்வேறு அரங்குகளில் பட்டியலிடப்பட்டுள்ளார்.",
+      "hall": "அரங்கு {hall}",
+      "item": "வரிசை எண் {item}"
+    },
+    "empty": "இந்தக் காலத்தில் எதுவும் பட்டியலிடப்படவில்லை.",
+    "offline": "நீங்கள் இணைப்பில் இல்லை. இந்தக் காலம் கடைசியாக ஏற்றப்பட்டபடி காட்டப்படுகிறது; இணைப்பு வந்ததும் புதுப்பிக்கப்படும்.",
+    "denied": {
+      "title": "நாட்காட்டியை அணுக உங்களுக்கு அனுமதி இல்லை.",
+      "description": "அணுகலுக்கு பணியிட உரிமையாளரிடம் கேளுங்கள்."
+    },
+    "error": {
+      "title": "நாட்காட்டியை ஏற்ற முடியவில்லை.",
+      "retry": "மீண்டும் முயற்சி செய்"
+    },
+    "loading": "நாட்காட்டி ஏற்றப்படுகிறது",
+    "subscribe": {
+      "title": "உங்கள் நாட்காட்டியில் சந்தா செலுத்துங்கள்",
+      "explanation": "உங்கள் நாட்காட்டி ஊட்டம் உங்களுக்கு மட்டுமே உரியது. இதன் இணைப்பு உள்ள எவரும் உங்கள் உறுதிசெய்யப்பட்ட விசாரணைகளையும் காலக்கெடுக்களையும் படிக்க முடியும்; எனவே பகிர வேண்டாம்.",
+      "active": "உங்கள் தனிப்பட்ட ஊட்டம் செயலில் உள்ளது. அதன் இணைப்பு நீங்கள் உருவாக்கும்போது அல்லது மீண்டும் உருவாக்கும்போது மட்டுமே காட்டப்படும்.",
+      "inactive": "உங்களுக்கு இன்னும் ஊட்டம் இல்லை. உங்கள் தொலைபேசி நாட்காட்டியில் விசாரணைகளைக் காண ஒன்றை உருவாக்குங்கள்.",
+      "manage": "ஊட்டத்தை நிர்வகிக்க அல்லது மீண்டும் உருவாக்க",
+      "disclosure": "உங்கள் நாட்காட்டி செயலி இந்த ஊட்டத்தை இந்தியாவுக்கு வெளியே உள்ள சேவையகங்களிலிருந்து பெறக்கூடும். உள்ளடக்கத்தை நாங்கள் குறைந்தபட்சமாக வைத்திருக்கிறோம்.",
+      "ack": "புரிந்துகொண்டேன்",
+      "generate": "புதிய இணைப்பை உருவாக்கு",
+      "regenerate": "இணைப்பை மீண்டும் உருவாக்கு",
+      "working": "செயல்பாட்டில் உள்ளது",
+      "urlLabel": "ஊட்ட இணைப்பு",
+      "copy": "இணைப்பை நகலெடு",
+      "copied": "நகலெடுக்கப்பட்டது",
+      "shownOnce": "இந்த இணைப்பை இப்போதே நகலெடுங்கள். இது உங்களுக்கு மட்டுமே உரியது, மீண்டும் காட்டப்படாது.",
+      "revokesOld": "மீண்டும் உருவாக்குவது புதிய இணைப்பை உருவாக்கி பழையதை உடனே ரத்து செய்யும். உங்கள் நாட்காட்டி செயலியில் சந்தாவைப் புதுப்பிக்கவும்.",
+      "error": "ஏதோ தவறு நடந்தது. எதுவும் மாறவில்லை.",
+      "forbidden": "அதை உங்களால் செய்ய முடியாது.",
+      "copyFailed": "நகலெடுக்க முடியவில்லை. இணைப்பைத் தேர்ந்தெடுத்து நகலெடுக்கவும்."
+    }
+  },
   "inbox": {
     "metaTitle": "இன்பாக்ஸ்",
     "title": "இன்பாக்ஸ்",
@@ -4551,6 +4923,350 @@
       "full": "சாதன அவுட்பாக்ஸ் நிறைந்துள்ளது. பதிவேற்றம் முடிந்ததும் மீண்டும் முயலுங்கள்."
     }
   },
+  "outcome": {
+    "metaTitle": "விசாரணை முடிவு",
+    "title": "விசாரணை முடிவு",
+    "heldOn": "Held on {date}",
+    "processing": "Processing your note",
+    "processingHint": "The proposal appears here when your note is ready. You can enter the outcome yourself now.",
+    "needsYou": "Needs you",
+    "needsYouHint": "Some details were not found in your note or the order. They are left blank for you to fill in.",
+    "emptyHint": "No voice note or proposal for this hearing. Type the outcome and confirm.",
+    "confirmedHint": "This outcome is already confirmed.",
+    "denied": {
+      "title": "You cannot confirm outcomes",
+      "body": "Ask the matter owner or an admin to confirm this outcome."
+    },
+    "error": {
+      "title": "Couldn't load this outcome",
+      "retry": "Retry"
+    },
+    "loading": "Loading the hearing outcome",
+    "offline": {
+      "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
+      "queued": "Saved on this device. It will be applied when you are back online."
+    },
+    "summary": {
+      "label": "What happened",
+      "placeholder": "Type what happened at the hearing"
+    },
+    "adjournmentReason": "Adjournment reason",
+    "stageAfter": "Stage after",
+    "nextDate": {
+      "legend": "Next date",
+      "useProposed": "Confirm {date}",
+      "typed": "Enter a date",
+      "typedHint": "dd/mm/yyyy",
+      "typedInvalid": "Enter a real date as dd/mm/yyyy.",
+      "none": "No next date / disposed",
+      "deferred": "To be notified",
+      "required": "Choose the next date, or mark it none or to be notified.",
+      "unanchored": "This date is not in the voice note or the order. Enter it yourself to confirm it."
+    },
+    "conflict": {
+      "title": "The next date differs from the one on file",
+      "current": "On file",
+      "proposed": "Proposed",
+      "keepCurrent": "Keep this date",
+      "useProposed": "Use this date",
+      "required": "Pick which date to keep."
+    },
+    "obligations": {
+      "title": "Directions from the order",
+      "empty": "No directions were found.",
+      "confirm": "Confirm",
+      "edit": "Edit",
+      "dismiss": "Dismiss",
+      "dismissReason": "Reason",
+      "notApplicable": "Not applicable",
+      "description": "Description",
+      "dueDate": "Due date",
+      "owner": "Owner",
+      "confirmed": "Will be created",
+      "dismissed": "Dismissed",
+      "undecided": "Undecided. Nothing is created until you confirm it.",
+      "save": "Done"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "empty": "No tasks were proposed."
+    },
+    "transcript": {
+      "open": "Transcript",
+      "title": "Transcript",
+      "empty": "No transcript for this hearing.",
+      "language": "Original language: {language}",
+      "languages": {
+        "en": "English",
+        "ta": "Tamil",
+        "kn": "Kannada"
+      }
+    },
+    "source": {
+      "voice": "Voice note",
+      "order": "Order",
+      "manual": "Typed by you"
+    },
+    "confirm": "Confirm outcome",
+    "saveManual": "Confirm outcome",
+    "shortcut": "Ctrl Enter",
+    "blocked": {
+      "nextDate": "Choose the next date, or mark it none or to be notified.",
+      "summary": "Type what happened.",
+      "conflict": "Pick which date to keep.",
+      "obligation": "Decide each direction: confirm, edit or dismiss with a reason."
+    },
+    "done": "Outcome confirmed",
+    "failed": "Couldn't confirm the outcome. Try again.",
+    "forbidden": "You can't confirm this outcome.",
+    "delegated": "The matter owner is notified."
+  },
+  "brief": {
+    "metaTitle": "சுருக்கம்",
+    "printTitle": "சுருக்கம் - {caseNo} - {date}",
+    "masthead": {
+      "listedOn": "{date} அன்று பட்டியலிடப்பட்டது",
+      "hall": "நீதிமன்ற அரங்கு {hall}",
+      "item": "வரிசை எண் {item}",
+      "assembled": "{time} மணிக்கு தொகுக்கப்பட்டது",
+      "openMatter": "வழக்கைத் திற"
+    },
+    "sections": {
+      "stage": "நிலை",
+      "lastOrder": "கடைசி உத்தரவு",
+      "obligations": "நிலுவையிலுள்ள கடமைகள்",
+      "carry": "எடுத்துச் செல்ல வேண்டியவை",
+      "synopsis": "சுருக்கக் குறிப்பு",
+      "lastHearing": "கடைசி விசாரணை",
+      "courtNotes": "நீதிமன்றக் குறிப்புகள்",
+      "context": "கோப்பிலிருந்து"
+    },
+    "empty": {
+      "title": "இதுவரை பதிவு எதுவும் இல்லை",
+      "body": "இந்தப் பட்டியலில் இன்னும் நிலை, உத்தரவுகள் அல்லது கடமைகள் இல்லை. அவற்றை வழக்கில் சேர்த்தால் சுருக்கம் நிரம்பும்.",
+      "section": "காட்டுவதற்கு எதுவும் இல்லை"
+    },
+    "line": {
+      "unconfirmed": "உறுதிசெய்யப்படவில்லை",
+      "overdue": "காலதாமதம்",
+      "dueOn": "{date} அன்று முடிக்க வேண்டும்",
+      "closedCount": "{count, plural, =0 {முடிந்த கடமைகள் இல்லை} one {# முடிந்த கடமை} other {# முடிந்த கடமைகள்}}",
+      "page": "பக்கம் {page}"
+    },
+    "provenance": {
+      "openPage": "பக்கத்தைத் திற",
+      "source": "ஆதாரம்",
+      "confidence": "நம்பகத்தன்மை {value}"
+    },
+    "readiness": {
+      "label": "தயார்நிலை 100-க்கு {score}",
+      "stage_known": "நிலை தெரிந்துள்ளது",
+      "last_order_confirmed": "கடைசி உத்தரவு உறுதிசெய்யப்பட்டது",
+      "obligations_reconciled": "கடமைகள் சரிபார்க்கப்பட்டன",
+      "carry_reviewed": "எடுத்துச் செல்லும் பட்டியல் பார்க்கப்பட்டது"
+    },
+    "prepared": {
+      "mark": "தயார் எனக் குறி",
+      "unmark": "தயார். செயல்தவிர்",
+      "by": "{name} தயார் செய்தார், {when}",
+      "byUnknown": "தயார் செய்யப்பட்டது {when}",
+      "stale": "தயார் எனக் குறித்த பிறகு சுருக்கம் மாறியுள்ளது",
+      "saving": "சேமிக்கிறது",
+      "error": "சேமிக்க முடியவில்லை. மீண்டும் முயலவும்."
+    },
+    "carry": {
+      "add": "உருப்படியைச் சேர்",
+      "addLabel": "புதிய உருப்படி",
+      "addPlaceholder": "எடுத்துச் செல்ல வேண்டிய ஆவணம் அல்லது பொருள்",
+      "remove": "{label} உருப்படியை நீக்கு",
+      "tick": "எடுத்து வைத்தது: {label}",
+      "kind": {
+        "document": "ஆவணம்",
+        "rule": "எப்போதும் எடுத்துச் செல்",
+        "manual": "நீங்கள் சேர்த்தது"
+      },
+      "willSync": "ஒத்திசைக்கப்படும்",
+      "reviewed": "பட்டியலைப் பார்த்ததாகக் குறி",
+      "empty": "எடுத்துச் செல்ல எதுவும் இல்லை."
+    },
+    "synopsis": {
+      "edit": "சுருக்கக் குறிப்பைத் திருத்து",
+      "label": "உங்கள் திருத்தம்",
+      "save": "திருத்தத்தைச் சேமி",
+      "cancel": "ரத்து செய்",
+      "hint": "வழக்குக் குறிப்பாகச் சேமிக்கப்படும். நினைவு முன்மொழிவை நீங்கள் உறுதிசெய்தால் மட்டுமே சுருக்கக் குறிப்பு மாறும்.",
+      "strategy": "உத்தி",
+      "note": "உங்கள் குறிப்பு"
+    },
+    "courtNotes": {
+      "private": "உங்களுக்கு மட்டும்",
+      "shared": "அறையில் பகிரப்பட்டது",
+      "printToggle": "அச்சிடும்போது தனிப்பட்ட குறிப்புகளையும் சேர்",
+      "hiddenInPrint": "நீதிமன்றக் குறிப்புகள் அச்சில் சேர்க்கப்படவில்லை"
+    },
+    "actions": {
+      "print": "அச்சிடு / PDF ஆகச் சேமி",
+      "share": "பணியிடத்துக்குள் பகிர்",
+      "shared": "இணைப்பு நகலெடுக்கப்பட்டது. இந்தப் பணியிட உறுப்பினர்கள் திறக்கலாம்.",
+      "jump": "பகுதிக்குச் செல்",
+      "shortcuts": "விசைப்பலகை குறுக்குவழிகள்",
+      "refresh": "சுருக்கத்தைப் புதுப்பி",
+      "bar": "சுருக்கச் செயல்கள்"
+    },
+    "shortcuts": {
+      "title": "சுருக்கக் குறுக்குவழிகள்",
+      "print": "அச்சிடு",
+      "prev": "முந்தைய பகுதி",
+      "next": "அடுத்த பகுதி",
+      "carry": "எடுத்துச் செல்பவைக்குச் செல்",
+      "notes": "நீதிமன்றக் குறிப்புகளுக்குச் செல்",
+      "edit": "சுருக்கக் குறிப்பைத் திருத்து",
+      "section": "1 முதல் 9 வரை பகுதிக்குச் செல்",
+      "close": "பாப்ஓவர் அல்லது திருத்தியை மூடு",
+      "help": "இந்த உதவியைக் காட்டு"
+    },
+    "offline": {
+      "banner": "இணைப்பு இல்லை. சுருக்கம் {time} மணிக்குச் சேமிக்கப்பட்டது",
+      "notSaved": "இணைப்பின்றிச் சேமிக்கப்படவில்லை"
+    },
+    "denied": {
+      "title": "இந்தச் சுருக்கத்தைத் திறக்க உங்களுக்கு அனுமதி இல்லை",
+      "body": "இந்த வழக்கு கட்டுப்படுத்தப்பட்டுள்ளது. உரிமையாளரிடம் அணுகல் கேளுங்கள்.",
+      "request": "அணுகல் கோரு"
+    },
+    "viewer": {
+      "readOnly": "இந்தச் சுருக்கத்தைப் படிக்கலாம், மாற்ற முடியாது."
+    },
+    "error": {
+      "title": "சுருக்கத்தை ஏற்ற முடியவில்லை",
+      "retry": "மீண்டும் முயல்",
+      "openMatter": "வழக்கைத் திற",
+      "section": "இந்தப் பகுதியை ஏற்ற முடியவில்லை",
+      "sectionRetry": "பகுதியை மீண்டும் முயல்"
+    },
+    "notFound": {
+      "title": "சுருக்கம் கிடைக்கவில்லை",
+      "body": "இந்தப் பட்டியல் இல்லை அல்லது அதை அணுக உங்களுக்கு அனுமதி இல்லை.",
+      "request": "அணுகல் கோரு",
+      "back": "சுருக்கங்களுக்குத் திரும்பு"
+    },
+    "loading": "சுருக்கம் ஏற்றப்படுகிறது"
+  },
+  "share": {
+    "metaTitle": "பகிரப்பட்ட சுருக்கம்",
+    "unavailable": "பகிரப்பட்ட சுருக்கம் கிடைக்கவில்லை",
+    "states": {
+      "invalid": "இந்த இணைப்பு செல்லாது.",
+      "expired": "இந்த இணைப்பு காலாவதியாகிவிட்டது. அனுப்பியவரிடம் புதியதைக் கேளுங்கள்.",
+      "revoked": "அனுப்பியவர் இந்த இணைப்பைத் திரும்பப் பெற்றுவிட்டார்."
+    },
+    "stage": "நிலை: {stage}",
+    "lastOrder": "கடைசி உத்தரவு",
+    "lastHearing": "கடைசி விசாரணை: {date}",
+    "obligations": "நிலுவையில் உள்ள கடமைகள்",
+    "due": "{text} (கெடு {date})",
+    "footer": "{assembledAt} நிலவரப்படி பகிரப்பட்டது. இணைப்பு {expiresAt} அன்று காலாவதியாகும்.",
+    "join": "CauseDeck இல் சேர்ந்து இந்த வழக்கை இறக்குமதி செய்யுங்கள்",
+    "import": "இந்த வழக்கை இறக்குமதி செய்யுங்கள்",
+    "errors": {
+      "noWorkspace": "முதலில் ஒரு பணியிடத்தை உருவாக்கி, பிறகு இந்த இணைப்பை மீண்டும் திறக்கவும்.",
+      "gone": "இந்த இணைப்பை இனி இறக்குமதி செய்ய முடியாது.",
+      "failed": "ஏதோ தவறு நடந்தது. மீண்டும் முயலவும்."
+    },
+    "manage": {
+      "title": "இந்தச் சுருக்கத்தைப் பகிரவும்",
+      "description": "சுருக்கத்தின் உரை-மட்டும் நகலுக்கு காலாவதியாகும் இணைப்பை உருவாக்கவும். இணைப்பு உள்ள எவரும் படிக்கலாம். எப்போது வேண்டுமானாலும் அதைத் திரும்பப் பெறலாம்.",
+      "expiry": "இணைப்பு காலாவதியாகும் காலம்",
+      "days": "{count, plural, one {# நாள்} other {# நாட்கள்}}",
+      "create": "இணைப்பை உருவாக்கு",
+      "creating": "இணைப்பு உருவாக்கப்படுகிறது",
+      "createdOnce": "இணைப்பு உருவாக்கப்பட்டது. இப்போதே நகலெடுக்கவும்: இது ஒருமுறை மட்டுமே காட்டப்படும். இது {date} அன்று காலாவதியாகும்.",
+      "linkLabel": "பகிர்வு இணைப்பு",
+      "copy": "இணைப்பை நகலெடு",
+      "copied": "இணைப்பு நகலெடுக்கப்பட்டது",
+      "copyFailed": "நகலெடுக்க முடியவில்லை. இணைப்பைத் தேர்ந்தெடுத்து கையால் நகலெடுக்கவும்.",
+      "activeTitle": "செயலில் உள்ள இணைப்புகள்",
+      "empty": "செயலில் உள்ள இணைப்புகள் இல்லை.",
+      "createdOn": "உருவாக்கியது {date}",
+      "expiresOn": "காலாவதி {date}",
+      "revoke": "திரும்பப் பெறு",
+      "revokeLabel": "{title} இணைப்பைத் திரும்பப் பெறு",
+      "revoked": "இணைப்பு திரும்பப் பெறப்பட்டது",
+      "noListing": "இந்த வழக்குக்கு இன்னும் பட்டியல் தேதி இல்லை, எனவே பகிர சுருக்கம் இல்லை.",
+      "errors": {
+        "rateLimited": "கடந்த ஒரு மணி நேரத்தில் அதிகமான சுருக்கங்களைப் பகிர்ந்துவிட்டீர்கள். பிறகு மீண்டும் முயலவும்.",
+        "forbidden": "இந்தச் சுருக்கத்தை உங்களால் பகிர முடியாது. உரிமையாளர் மட்டுமே பகிர முடியும், மேலும் உணர்திறன் வழக்கைப் பகிர முடியாது.",
+        "notFound": "இந்தச் சுருக்கம் அல்லது இணைப்பு இனி இல்லை.",
+        "generic": "ஏதோ தவறு நடந்தது. மீண்டும் முயலவும்."
+      }
+    }
+  },
+  "offline": {
+    "title": "இணைப்பில்லை",
+    "body": "நீங்கள் இணைப்பில்லாமல் உள்ளீர்கள். ஒத்திசைத்த பிறகு சேமித்த நீதிமன்ற நாட்களும் சுருக்கங்களும் கிடைக்கும்.",
+    "banner": {
+      "offline": "நீங்கள் இணைப்பில்லாமல் உள்ளீர்கள். இந்தச் சாதனத்தில் சேமித்தது காட்டப்படுகிறது.",
+      "savedAt": "{time} அன்று சேமிக்கப்பட்டது",
+      "stale": "{time} அன்று சேமிக்கப்பட்டது. இது பழையதாக இருக்கலாம்.",
+      "backOnline": "மீண்டும் இணைப்பு கிடைத்தது. ஒத்திசைக்கிறது."
+    },
+    "sync": {
+      "label": "ஒத்திசைவு நிலை",
+      "idle": "அனைத்தும் சேமிக்கப்பட்டன",
+      "syncing": "ஒத்திசைக்கிறது",
+      "pending": "{count, plural, one {# மாற்றம் ஒத்திசைவுக்காகக் காத்திருக்கிறது} other {# மாற்றங்கள் ஒத்திசைவுக்காகக் காத்திருக்கின்றன}}",
+      "failed": "சில மாற்றங்களை ஒத்திசைக்க முடியவில்லை",
+      "retry": "மீண்டும் முயலவும்",
+      "lastSynced": "கடைசியாக ஒத்திசைத்தது {time}",
+      "keepLocal": "உள்ளூரில் வைத்திரு",
+      "details": "ஒத்திசைவு விவரங்கள்",
+      "detailsFailed": "இந்த மாற்றங்கள் ஒத்திசையும் வரை இந்தச் சாதனத்திலேயே இருக்கும். மீண்டும் முயலவும் அல்லது உள்ளூர் நகலை வைத்திருக்கவும்."
+    },
+    "courtDay": {
+      "savedFor": "{date} நீதிமன்ற நாள் இந்தச் சாதனத்தில் சேமிக்கப்பட்டுள்ளது",
+      "notSaved": "இணைப்பில்லாமல் சேமிக்கப்படவில்லை",
+      "unavailable": "இந்த நீதிமன்ற நாள் சேமிக்கப்படவில்லை. ஏற்ற இணைப்பைப் பெறவும்."
+    },
+    "brief": {
+      "savedFor": "சுருக்கம் இந்தச் சாதனத்தில் சேமிக்கப்பட்டுள்ளது",
+      "notSaved": "இணைப்பில்லாமல் சேமிக்கப்படவில்லை",
+      "unavailable": "இந்தச் சுருக்கம் சேமிக்கப்படவில்லை. ஏற்ற இணைப்பைப் பெறவும்."
+    },
+    "outbox": {
+      "queued": "வரிசையில் உள்ளது",
+      "uploading": "பதிவேற்றுகிறது",
+      "failed": "தோல்வியடைந்தது",
+      "sent": "அனுப்பப்பட்டது",
+      "conflict": "மறுபார்வை தேவை"
+    },
+    "storage": {
+      "title": "இணைப்பில்லா சேமிப்பு",
+      "used": "{quota} இல் {used} பயன்படுத்தப்பட்டது",
+      "days": "{count, plural, one {# நீதிமன்ற நாள் சேமிக்கப்பட்டது} other {# நீதிமன்ற நாட்கள் சேமிக்கப்பட்டன}}",
+      "clear": "சேமித்த தரவை அழிக்கவும்",
+      "cleared": "சேமித்த தரவு இந்தச் சாதனத்திலிருந்து நீக்கப்பட்டது",
+      "unsupported": "இந்த உலாவி இணைப்பில்லாப் பயன்பாட்டிற்குத் தரவைச் சேமிக்க முடியாது.",
+      "size": "இந்தச் சாதனத்தில் {size} சேமிக்கப்பட்டது",
+      "loading": "சேமித்த தரவைச் சரிபார்க்கிறது",
+      "empty": "இந்தச் சாதனத்தில் இன்னும் எதுவும் சேமிக்கப்படவில்லை",
+      "full": "இந்தச் சாதனத்தில் இடம் இல்லை. இடம் உருவாக்க சேமித்த தரவை அழிக்கவும்.",
+      "denied": "இந்த உலாவி ஆஃப்லைன் சேமிப்பைத் தடுத்துள்ளது. இணைப்பில்லாமல் நீதிமன்ற நாட்களைப் படிக்க உலாவி அமைப்புகளில் தள தரவை அனுமதிக்கவும்.",
+      "optedOut": "இந்தச் சாதனத்தில் ஆஃப்லைன் சேமிப்பு அணைக்கப்பட்டுள்ளது.",
+      "cancel": "ரத்துசெய்",
+      "clearFailed": "சேமித்த தரவை நீக்க முடியவில்லை. மீண்டும் முயலவும்."
+    },
+    "privacy": {
+      "title": "இந்தச் சாதனத்தில் வைக்கப்படுவது",
+      "body": "அடுத்த சில நாட்களின் நீதிமன்ற நாட்களும் சுருக்கங்களும் இணைப்பில்லாமல் படிக்க, இந்தச் சாதனத்தில் மறைகுறியாக்கப்பட்டு வைக்கப்படுகின்றன. வெளியேறும்போது அல்லது பணியிடத்தை மாற்றும்போது அவை நீக்கப்படும்.",
+      "lostPhone": "இந்தச் சாதனத்தைத் தொலைத்தால், மற்றொரு சாதனத்திலிருந்து வெளியேறுவது இதை அழிக்காது. சாதனப் பூட்டைப் பயன்படுத்தவும், சாதனத்தை ஒப்படைக்கும் முன் சேமித்த தரவை அழிக்கவும்.",
+      "clearConfirm": "சேமித்த அனைத்து நீதிமன்ற நாட்களையும் சுருக்கங்களையும் இந்தச் சாதனத்திலிருந்து நீக்கவா?"
+    },
+    "errors": {
+      "decrypt": "சேமித்த தரவைப் படிக்க முடியவில்லை. மீண்டும் ஏற்ற இணைப்பைப் பெறவும்.",
+      "quota": "மேலும் சேமிக்க இந்தச் சாதனத்தில் போதுமான இடம் இல்லை.",
+      "unknown": "இணைப்பில்லாச் சேமிப்பில் ஏதோ தவறு நடந்தது."
+    }
+  },
   "error": {
     "title": "ஏதோ தவறு நடந்தது.",
     "description": "உங்கள் சேமித்த பணி பாதுகாப்பாக உள்ளது. மீண்டும் முயலவும்.",
@@ -4558,9 +5274,5 @@
   },
   "notFound": {
     "title": "பக்கம் கிடைக்கவில்லை"
-  },
-  "offline": {
-    "title": "இணைப்பில்லை",
-    "body": "நீங்கள் இணைப்பில்லாமல் உள்ளீர்கள். ஒத்திசைத்த பிறகு சேமித்த நீதிமன்ற நாட்களும் சுருக்கங்களும் கிடைக்கும்."
   }
 }

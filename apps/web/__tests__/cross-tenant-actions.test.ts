@@ -52,7 +52,11 @@ vi.mock('../lib/auth.ts', () => ({
 }));
 vi.mock('../lib/env.ts', () => ({
   isProd: () => false,
-  serverEnv: () => ({ APP_URL: 'http://localhost:3000', EMAIL_PROVIDER: 'console' }),
+  serverEnv: () => ({
+    APP_URL: 'http://localhost:3000',
+    EMAIL_PROVIDER: 'console',
+    BETTER_AUTH_SECRET: { reveal: () => 'cross-tenant-test-secret-0123456789' },
+  }),
 }));
 vi.mock('../src/health.ts', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -94,9 +98,11 @@ const notifications = await import('../app/(app)/w/[slug]/notifications/actions.
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
 const whatsappLink =
   await import('../app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts');
+const reminders = await import('../app/(app)/w/[slug]/settings/notifications/reminders-actions.ts');
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
+const sso = await import('../app/(app)/w/[slug]/settings/sso/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
 const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
@@ -115,14 +121,24 @@ const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedi
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
+const hearingOutcome =
+  await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
+const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
+const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
+const courtDay = await import('../app/(app)/w/[slug]/_court-day/actions.ts');
+const offlineActions = await import('../app/(app)/w/[slug]/_offline/actions.ts');
+const shareActions = await import('../app/(public)/share/[token]/actions.ts');
+const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
 const FAR_FUTURE = '9999-12-31T23:59:59.999999Z';
+/** A hall id no tenant owns: the court-day marker actions must refuse it, never write. */
+const PROBE_HALL_ID = '00000000-0000-4000-8000-0000000000a1';
 const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
 
 /** Every exported server action and the module it comes from. */
@@ -137,6 +153,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   prepareTransferAction: members,
   confirmTransferAction: members,
   acceptInvitationAction: invite,
+  importSharedBriefAction: shareActions,
+  pullCourtDaySnapshotAction: offlineActions,
+  pushOutboxAction: offlineActions,
+  createBriefShareAction: briefShareActions,
+  revokeBriefShareAction: briefShareActions,
   createWorkspaceAction: onboarding,
   setLocaleAction: account,
   updateAccountProfileAction: account,
@@ -151,6 +172,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setNotificationDigestAction: preferences,
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
+  getReminderPreferencesAction: reminders,
+  setReminderPreferencesAction: reminders,
   requestWhatsAppOtpAction: whatsappLink,
   verifyWhatsAppOtpAction: whatsappLink,
   setWhatsAppCategoriesAction: whatsappLink,
@@ -159,6 +182,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   saveNewsPreferencesAction: news,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
+  saveSsoProviderAction: sso,
+  deleteSsoProviderAction: sso,
+  verifySsoDomainAction: sso,
   requestClerkSetupApprovalAction: welcome,
   approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
@@ -206,6 +232,12 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
   addTagAction: research,
+  confirmOutcomeAction: hearingOutcome,
+  markPreparedAction: briefSheet,
+  setCarryItemAction: briefSheet,
+  setBriefNoteAction: briefSheet,
+  setPrintNotesAction: briefSheet,
+  recordManualOutcomeAction: hearingOutcome,
   confirmTagAction: research,
   dismissTagAction: research,
   createNoteAction: research,
@@ -259,8 +291,14 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   undoActivityAction: inbox,
   reassignCaptureAction: inbox,
   keepAsAttachmentAction: inbox,
+  assignAppearanceAction: planActions,
+  acceptSuggestionAction: planActions,
+  acceptAllSuggestionsAction: planActions,
+  outcomesLiveAction: planActions,
   typeKeyLineAction: inbox,
   markSentAction: inbox,
+  setCurrentItemAction: courtDay,
+  clearCurrentItemAction: courtDay,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -506,9 +544,43 @@ function inputs(workspaceId: string): Record<string, unknown> {
     setNotificationDigestAction: { workspaceId, digest: 'off' },
     setCourtHoursQuietAction: { workspaceId, enabled: true },
     setLockScreenDetailsAction: { workspaceId, enabled: true },
+    getReminderPreferencesAction: { workspaceId },
+    setReminderPreferencesAction: {
+      workspaceId,
+      evening: { time: '21:00', channels: { in_app: true, push: false, email: false } },
+      morning: { channels: { in_app: true, push: false, email: true } },
+      outcome_missing: { delayMinutes: 60, channels: { in_app: true, push: true, email: false } },
+    },
     requestWhatsAppOtpAction: { workspaceId, e164: '+919812345678', consent: true },
     verifyWhatsAppOtpAction: { workspaceId, code: '000000' },
     setWhatsAppCategoriesAction: { workspaceId, categories: ['court.board'] },
+    setCurrentItemAction: {
+      workspaceId,
+      hallId: PROBE_HALL_ID,
+      listDate: '2030-01-02',
+      currentItem: 3,
+    },
+    clearCurrentItemAction: { workspaceId, hallId: PROBE_HALL_ID, listDate: '2030-01-02' },
+    // Offline pull and push (#743): ub may not pull A's days nor push edits to A's matters.
+    pullCourtDaySnapshotAction: { workspaceId, from: '2030-01-01', to: '2030-01-07' },
+    pushOutboxAction: {
+      workspaceId,
+      items: [
+        {
+          key: 'xt-probe-date',
+          kind: 'next_date',
+          proceedingId: t.a.rows.proceeding?.proceedingId,
+          date: '2031-05-05',
+          expectedCanonicalDate: null,
+        },
+        {
+          key: 'xt-probe-note',
+          kind: 'brief_note',
+          listingId: t.a.rows.listing?.listingId,
+          note: 'Cross-tenant probe note',
+        },
+      ],
+    },
     unlinkWhatsAppAction: { workspaceId },
     getWhatsAppLinkAction: { workspaceId },
     saveNewsPreferencesAction: {
@@ -533,6 +605,16 @@ function inputs(workspaceId: string): Record<string, unknown> {
       advocatesCanInvite: false,
       ownersSeeRestrictedMatters: false,
     },
+    saveSsoProviderAction: {
+      workspaceId,
+      protocol: 'oidc',
+      issuer: 'https://idp.example.com',
+      domain: `xt-${workspaceId.slice(0, 8)}.example.com`,
+      enabled: false,
+      settings: { clientId: 'probe', clientSecret: 'probe-secret' },
+    },
+    deleteSsoProviderAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
+    verifySsoDomainAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
     updateWorkspacePrivacyAction: {
       workspaceId,
       sensitiveDefaultRestricted: false,
@@ -716,6 +798,39 @@ function inputs(workspaceId: string): Record<string, unknown> {
     keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
     typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
     markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
+    // Delegation (#63): ub, owner of B, may not assign appearances in A.
+    assignAppearanceAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      memberId: t.a.rows.listing?.listingId,
+      capacity: 'arguing',
+    },
+    acceptSuggestionAction: {
+      workspaceId,
+      suggestion: {
+        listingId: t.a.rows.listing?.listingId,
+        memberId: t.a.rows.listing?.listingId,
+        capacity: 'arguing',
+      },
+    },
+    acceptAllSuggestionsAction: {
+      workspaceId,
+      suggestions: [
+        {
+          listingId: t.a.rows.listing?.listingId,
+          memberId: t.a.rows.listing?.listingId,
+          capacity: 'arguing',
+        },
+      ],
+    },
+    outcomesLiveAction: { workspaceId, date: '2026-10-26' },
+    // Brief sharing (#507): ub, owner of B, may not share A's brief or revoke A's link.
+    createBriefShareAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      expiresInDays: 7,
+    },
+    revokeBriefShareAction: { workspaceId, shareId: crypto.randomUUID() },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
@@ -731,6 +846,33 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
     confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    // Hearing outcome (#62): ub may not confirm A's hearing outcome.
+    confirmOutcomeAction: {
+      workspaceId,
+      hearingId: t.a.rows.hearing?.hearingId,
+      outcome: 'Cross-tenant probe outcome',
+      nextDate: { kind: 'none' },
+    },
+    recordManualOutcomeAction: {
+      workspaceId,
+      hearingId: t.a.rows.hearing?.hearingId,
+      outcome: 'Cross-tenant probe outcome',
+      nextDate: { kind: 'none' },
+    },
+    // Brief sheet (#61): ub may not mark, tick or note A's listing.
+    markPreparedAction: { workspaceId, listingId: t.a.rows.listing?.listingId, prepared: true },
+    setCarryItemAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      action: 'add',
+      label: 'Cross-tenant probe',
+    },
+    setBriefNoteAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      note: 'Cross-tenant probe note',
+    },
+    setPrintNotesAction: { workspaceId, include: true },
     // Research tab (#497): ub may not tag A's matter or confirm A's tag.
     addTagAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId, statute: 'ipc' },
     confirmTagAction: {
@@ -979,6 +1121,75 @@ describe('cross-tenant server actions', () => {
     );
   });
 
+  it('offline push under B’s own workspace refuses A’s ids per item and writes nothing (#743)', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    const pushed = (await action('pushOutboxAction')(all.pushOutboxAction)) as {
+      ok: boolean;
+      data?: { status: string }[];
+    };
+    expect(pushed.ok).toBe(true);
+    expect(pushed.data?.map((r) => r.status)).toEqual(['rejected', 'rejected']);
+    const pulled = (await action('pullCourtDaySnapshotAction')(all.pullCourtDaySnapshotAction)) as {
+      ok: boolean;
+      data?: { briefs: unknown[] };
+    };
+    expect(pulled.ok).toBe(true);
+    expect(pulled.data?.briefs).toEqual([]);
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('offline push replayed adds one proposal and the same keys answer duplicate (#743)', async () => {
+    signInAs(t.ua);
+    const proceedingId = t.a.rows.proceeding?.proceedingId;
+    const current = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+      tx
+        .select({
+          listDate: schema.listing.listDate,
+          proceedingId: schema.listing.proceedingId,
+          canonical: schema.listing.canonical,
+        })
+        .from(schema.listing),
+    );
+    const canonical = current.find((r) => r.proceedingId === proceedingId && r.canonical);
+    const item = {
+      key: 'xt-replay',
+      kind: 'next_date',
+      proceedingId,
+      date: '2031-06-06',
+      expectedCanonicalDate: canonical?.listDate ?? null,
+    };
+    const count = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => {
+        const rows = await tx.select({ date: schema.listing.listDate }).from(schema.listing);
+        return rows.filter((r) => r.date === '2031-06-06').length;
+      });
+    const push = async (items: unknown[]) =>
+      (await action('pushOutboxAction')({ workspaceId: t.a.id, items })) as {
+        ok: boolean;
+        data?: { status: string }[];
+      };
+    expect((await push([item, item])).data?.map((r) => r.status)).toEqual(['applied', 'duplicate']);
+    expect(await count()).toBe(1);
+    // A later batch with the same key finds the earlier proposal: no second row.
+    expect((await push([item])).data?.[0]?.status).toBe('applied');
+    expect(await count()).toBe(1);
+  });
+
+  it('court-day marker actions refuse a hall outside the workspace and write nothing', async () => {
+    const before = await snapshotA();
+    for (const workspaceId of [t.a.id, t.b.id]) {
+      const all = inputs(workspaceId);
+      const set = (await action('setCurrentItemAction')(all.setCurrentItemAction)) as {
+        ok: boolean;
+      };
+      expect(set.ok, `set ${workspaceId}`).toBe(false);
+      // Clearing a marker that does not exist is a no-op, never an error and never a write.
+      await action('clearCurrentItemAction')(all.clearCurrentItemAction);
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
   it('notifications under B’s own workspace never show or mark A’s notification', async () => {
     const before = await snapshotA();
     expect(before.notifications.map((row) => row.id)).toContain(aNotificationId);
@@ -1020,6 +1231,18 @@ describe('cross-tenant server actions', () => {
       rows.filter((row) => row.userId === t.ub && row.workspaceId === t.b.id);
     expect(mine(inB.prefs).length).toBeGreaterThan(0);
     expect(mine(inB.settings)).toHaveLength(1);
+  });
+
+  it('reminder preferences under B’s own workspace change only ub’s rows in B (#64)', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    expect(
+      await action('setReminderPreferencesAction')(all.setReminderPreferencesAction),
+    ).toMatchObject({ ok: true, data: { evening: { time: '21:00', channels: { push: false } } } });
+    expect(
+      await action('getReminderPreferencesAction')(all.getReminderPreferencesAction),
+    ).toMatchObject({ ok: true, data: { outcome_missing: { delayMinutes: 60 } } });
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('WhatsApp link actions under B’s own workspace touch only ub’s rows in B (#681)', async () => {
@@ -1091,6 +1314,26 @@ describe('cross-tenant server actions', () => {
       advocatesCanInvite: true,
       ownersSeeRestrictedMatters: true,
     });
+  });
+
+  it('saveSsoProviderAction and deleteSsoProviderAction under B’s own workspace change only B', async () => {
+    const before = await snapshotA();
+    const saved = await action('saveSsoProviderAction')(inputs(t.b.id).saveSsoProviderAction);
+    expect(saved).toMatchObject({
+      ok: true,
+      data: { protocol: 'oidc', enabled: false, domainVerified: false },
+    });
+    // The result never carries the provider's settings.
+    expect(JSON.stringify(saved)).not.toContain('probe-secret');
+    expect(await snapshotA()).toEqual(before);
+    const { id } = (saved as { data: { id: string } }).data;
+    expect(
+      await action('deleteSsoProviderAction')({ workspaceId: t.b.id, providerId: id }),
+    ).toEqual({
+      ok: true,
+      data: { id },
+    });
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('updateWorkspacePrivacyAction under B’s own workspace changes only B', async () => {
@@ -1266,6 +1509,28 @@ describe('cross-tenant server actions', () => {
     expect(await snapshotA()).toEqual(before);
   });
 
+  it('hearing outcome actions under B’s own workspace find none of A’s hearing (#62)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    for (const name of ['confirmOutcomeAction', 'recordManualOutcomeAction']) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('brief sheet actions under B’s own workspace find none of A’s listing (#61)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    for (const name of ['markPreparedAction', 'setCarryItemAction', 'setBriefNoteAction']) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
   it('proceedings tab actions under B’s own workspace find none of A’s matter or proceedings (#392)', async () => {
     const before = await snapshotA();
     const own = inputs(t.b.id);
@@ -1427,6 +1692,57 @@ describe('cross-tenant server actions', () => {
     const result = await action('acceptInvitationAction')({ token: aInvitation.token });
     expect(result).toEqual({ ok: true, data: { status: 'rejected', reason: 'EMAIL_MISMATCH' } });
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('importSharedBriefAction with a token that names no share imports nothing and leaves A alone', async () => {
+    const before = await snapshotA();
+    const result = await action('importSharedBriefAction')({ token: 'not-a-real-token-at-all' });
+    expect(result).toEqual({ ok: true, data: { status: 'rejected', reason: 'INVALID' } });
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('brief share actions under B’s workspace cannot share A’s listing or revoke A’s link (#507)', async () => {
+    const aShare = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => {
+      const [row] = await tx
+        .insert(schema.briefShare)
+        .values({
+          workspaceId: t.a.id,
+          tokenHash: `xt-${crypto.randomUUID()}`,
+          snapshot: {
+            matterTitle: 'XT',
+            synopsis: null,
+            stage: null,
+            lastOrder: [],
+            lastHearing: null,
+            openObligations: [],
+            assembledAt: new Date().toISOString(),
+          },
+          createdBy: t.ua,
+          expiresAt: new Date(Date.now() + 86_400_000),
+        })
+        .returning({ id: schema.briefShare.id });
+      if (row === undefined) throw new Error('seed share');
+      return row.id;
+    });
+    const sharesOfA = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.briefShare),
+      );
+    const before = await sharesOfA();
+    const created = await action('createBriefShareAction')({
+      workspaceId: t.b.id,
+      listingId: t.a.rows.listing?.listingId,
+      expiresInDays: 7,
+    });
+    expect(code(created)).toBe('NOT_FOUND');
+    const revoked = await action('revokeBriefShareAction')({
+      workspaceId: t.b.id,
+      shareId: aShare,
+    });
+    expect(code(revoked)).toBe('NOT_FOUND');
+    const after = await sharesOfA();
+    expect(after).toEqual(before);
+    expect(after.find((row) => row.id === aShare)?.revokedAt).toBeNull();
   });
 
   it('createWorkspaceAction and setLocaleAction touch only the caller’s own data', async () => {

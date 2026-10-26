@@ -81,6 +81,16 @@ describe('namespaced catalogs (#174)', () => {
     expect(JSON.parse(generated['src/generated/messages/kn.json'] ?? '')).toEqual(kn);
   });
 
+  it('registers the offline namespace with the offline page keys and a ta/kn leaf for every en leaf (#742)', () => {
+    expect(NAMESPACES).toContain('offline');
+    const offlineLeaves = flattenKeys({ offline: en.offline });
+    expect(offlineLeaves).toContain('offline.title');
+    expect(offlineLeaves).toContain('offline.privacy.lostPhone');
+    for (const catalog of [ta, kn]) {
+      expect(flattenKeys({ offline: catalog.offline }).sort()).toEqual([...offlineLeaves].sort());
+    }
+  });
+
   it('keeps the top-level keys app call sites use', () => {
     expect(Object.keys(en).sort()).toEqual(
       [
@@ -89,13 +99,16 @@ describe('namespaced catalogs (#174)', () => {
         'auth',
         'billing',
         'bootstrapImport',
+        'brief',
         'calendar',
+        'calendarView',
         'camera',
         'caseWatch',
         'common',
         'courtDay',
         'drafting',
         'draftingTemplates',
+        'delegation',
         'courtInsights',
         'courts',
         'courtsRosters',
@@ -116,11 +129,14 @@ describe('namespaced catalogs (#174)', () => {
         'notifications',
         'offline',
         'onboardingDiscovery',
+        'outcome',
         'palette',
         'portfolio',
         'provisioning',
         'pwa',
+        'reminders',
         'settings',
+        'share',
         'shell',
         'shortcuts',
         'theme',
@@ -144,6 +160,17 @@ describe('drafting studio copy (#825)', () => {
       expect(catalog.drafting.panels.citations.status.unknown).not.toBe('');
       expect(catalog.drafting.acknowledgement.statement).not.toBe('');
     }
+  });
+});
+
+describe('share namespace (#507)', () => {
+  it.each(LOCALES)('%s has the share page and import strings', (locale) => {
+    const catalog = { en, ta, kn }[locale] as { share?: { states?: Record<string, string> } };
+    expect(Object.keys(catalog.share?.states ?? {}).sort()).toEqual([
+      'expired',
+      'invalid',
+      'revoked',
+    ]);
   });
 });
 

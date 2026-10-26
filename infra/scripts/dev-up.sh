@@ -5,6 +5,8 @@ set -euo pipefail
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 compose=(docker compose -f "$root/infra/docker/compose.dev.yml")
+# CI only (GitHub sets CI=true): throwaway-database Postgres settings (compose.ci.yml).
+if [ "${CI:-}" = true ]; then compose+=(-f "$root/infra/docker/compose.ci.yml"); fi
 
 "${compose[@]}" up -d --wait postgres minio mailpit
 # One-shot bucket setup runs separately: `up --wait` treats an exited container as a failure.

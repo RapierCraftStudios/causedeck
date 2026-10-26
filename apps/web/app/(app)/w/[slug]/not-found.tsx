@@ -1,6 +1,6 @@
 'use client';
 
-import { NotFound } from '@causedeck/ui/patterns';
+import { NotFound } from '@causedeck/ui/patterns/states';
 import { useTranslations } from 'next-intl';
 
 // A client component: the patterns entry point includes interactive (hook-using) patterns.

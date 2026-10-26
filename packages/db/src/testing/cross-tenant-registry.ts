@@ -985,6 +985,23 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // briefs (#60): pure scoring, the empty memory port, and the system sweep
   computeReadiness: 'pure',
   emptyMemoryProvider: 'constant: the default memory port returns nothing',
+  // brief memory and recognition-based matching (#74): every read goes through memoryFor / recordUsage
+  // (memoryDenies above); the cross-tenant brief case is briefs/__tests__/memory-wiring.test.ts
+  createBriefMemoryProvider:
+    'factory: every method reads through memoryFor and cites through recordUsage, both tenant-checked (memoryDenies); briefs/__tests__/memory-wiring.test.ts shows workspace B sees none of A',
+  applyBriefFormat: 'pure',
+  ALIAS_BOOST: 'constant',
+  ALIAS_PENALTY: 'constant',
+  CONFIDENT_MARGIN: 'constant',
+  needsConfirmation: 'pure',
+  rankCandidates: 'pure',
+  recognitionHints:
+    'reads only through memoryFor (memoryDenies): the actor workspace and own aliases',
+  rankWithMemory: 'reads through memoryFor and cites through recordUsage (memoryDenies)',
+  learnFromCorrection: 'delegates to proposeFromCorrection (memoryDenies)',
+  correctionRate: 'pure',
+  matchingWeeks:
+    'aggregate counts filtered by the caller workspace_id inside the scoped transaction of tenureMetrics (memory/review.ts)',
   onCourtDayListChanged:
     "trigger consumer: lists the changed list's listings inside the event's own workspace scope and enqueues a refresh each; covered by briefs/__tests__/state.test.ts",
   refreshBriefTargets:

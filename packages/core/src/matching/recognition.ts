@@ -3,11 +3,7 @@
 // confirmations the lawyer is asked for fall over time. Memory is a hint only: `autoApplyAllowed`
 // (the L3 gate, docs/product/09 §4.2) is true only when the case number or the CNR matches exactly,
 // so no alias can cause an unsafe auto-apply. Nothing here reads memory about a judge or a bench.
-import {
-  readAlias,
-  type MemoryCorrectionInput,
-  type MemoryProposal,
-} from '@causedeck/validators';
+import { readAlias, type MemoryCorrectionInput, type MemoryProposal } from '@causedeck/validators';
 
 import {
   memoryFor,
@@ -128,7 +124,7 @@ export async function recognitionHints(
   deps: MemoryDeps,
   actor: MemoryActor,
 ): Promise<RecognitionHint[]> {
-  const { items } = await memoryFor(deps, actor, { layers: ['M7'] });
+  const { items } = await memoryFor(deps, actor, { layers: ['M7'], purpose: 'matching' });
   const hints: RecognitionHint[] = [];
   for (const item of items) {
     const alias = readAlias(item.value);

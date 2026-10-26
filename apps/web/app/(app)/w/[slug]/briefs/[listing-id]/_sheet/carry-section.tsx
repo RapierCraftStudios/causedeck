@@ -11,6 +11,8 @@ import { useId, useState, useTransition } from 'react';
 
 import { setCarryItemAction } from '../actions.ts';
 
+import { MemoryCitation } from './memory-citation.tsx';
+
 export interface CarrySectionProps {
   workspaceId: string;
   listingId: string;
@@ -113,6 +115,7 @@ export function CarrySection({
             <span className="text-muted-foreground font-sans text-xs print:hidden">
               {t(`kind.${item.kind}`)}
             </span>
+            {item.kind === 'rule' ? <MemoryCitation reason="carryRule" /> : null}
             {queued.has(item.key) ? (
               <span className="font-sans text-xs print:hidden">{t('willSync')}</span>
             ) : null}

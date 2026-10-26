@@ -60,14 +60,7 @@ export async function assembleBrief(
 
     const order = await lastOrderSection(scope, listing, opts.compress !== false);
     const obligations = await obligationsSection(scope, listing);
-    const carry = await carrySection(
-      scope,
-      listing,
-      obligations.documentIds,
-      state,
-      memory,
-      query,
-    );
+    const carry = await carrySection(scope, listing, obligations.documentIds, state, memory, query);
     const context = listing.sensitive
       ? []
       : await contextSection(scope, listing, obligations.open, opts.contextQuery);

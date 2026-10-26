@@ -2,6 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   assertNotBench,
+  readAlias,
+  readAlwaysCarry,
+  readBriefFormat,
+  readClientLanguage,
+  readClientUpdateStyle,
   isMemoryKey,
   isStrategyKey,
   layerOfKey,
@@ -103,5 +108,35 @@ describe('M1.last_memory_review (#73)', () => {
         scope: 'workspace',
       }).success,
     ).toBe(true);
+  });
+});
+
+describe('memory value readers (#74)', () => {
+  it('reads a brief format and falls back on garbage', () => {
+    expect(readBriefFormat('short')?.verbosity).toBe('short');
+    expect(readBriefFormat({ order: 'carry, obligations' })?.order.slice(0, 2)).toEqual([
+      'carry',
+      'obligations',
+    ]);
+    expect(readBriefFormat('one page')).toBeNull();
+    expect(readBriefFormat(['x'])).toBeNull();
+  });
+
+  it('reads always-carry rules, tone, language and aliases', () => {
+    expect(readAlwaysCarry({ label: 'vakalat copy', when: 'first_hearing' })).toEqual([
+      { label: 'vakalat copy', when: 'first_hearing' },
+    ]);
+    expect(readAlwaysCarry({ nope: 1 })).toEqual([]);
+    expect(readClientUpdateStyle({ tone: 'Warm', sign_off: ' Regards ' })).toEqual({
+      tone: 'warm',
+      signOff: 'Regards',
+    });
+    expect(readClientLanguage('Tamil')).toBe('ta');
+    expect(readClientLanguage('french')).toBeNull();
+    expect(readAlias({ alias: 'Rajan', canonical: 'M. Rajan' })).toEqual({
+      alias: 'Rajan',
+      canonical: 'M. Rajan',
+    });
+    expect(readAlias('Rajan')).toBeNull();
   });
 });

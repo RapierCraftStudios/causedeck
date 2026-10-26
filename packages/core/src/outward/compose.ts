@@ -6,11 +6,7 @@
 // draft is written for the lawyer to edit and share; nothing here sends it.
 import type { AiGateway } from '@causedeck/ai';
 import { schema, type Transaction } from '@causedeck/db';
-import {
-  readClientLanguage,
-  readClientUpdateStyle,
-  type MemoryItem,
-} from '@causedeck/validators';
+import { readClientLanguage, readClientUpdateStyle, type MemoryItem } from '@causedeck/validators';
 import {
   DraftRequest,
   type Audience,
@@ -105,12 +101,16 @@ interface MemoryStyle {
 async function memoryStyle(
   deps: OutwardDeps,
   actor: OutwardActor,
-  request: { tone?: Tone | undefined; language?: Language | undefined; clientPersonId?: string | undefined },
+  request: {
+    tone?: Tone | undefined;
+    language?: Language | undefined;
+    clientPersonId?: string | undefined;
+  },
 ): Promise<MemoryStyle> {
   const style: MemoryStyle = { used: [] };
   if (deps.memory === undefined) return style;
   try {
-    const m2 = await memoryFor(deps.memory, actor, { layers: ['M2'] });
+    const m2 = await memoryFor(deps.memory, actor, { layers: ['M2'], purpose: 'draft' });
     const item = m2.items.find((i) => i.key === 'M2.client_update_tone');
     const found = item === undefined ? {} : readClientUpdateStyle(item.value);
     if (item !== undefined && (found.signOff !== undefined || (found.tone && !request.tone))) {
@@ -119,7 +119,7 @@ async function memoryStyle(
       style.used.push(item);
     }
     if (request.clientPersonId !== undefined && request.language === undefined) {
-      const m6 = await memoryFor(deps.memory, actor, { layers: ['M6'] });
+      const m6 = await memoryFor(deps.memory, actor, { layers: ['M6'], purpose: 'draft' });
       const lang = m6.items.find(
         (i) => i.key === 'M6.client_language' && i.personId === request.clientPersonId,
       );

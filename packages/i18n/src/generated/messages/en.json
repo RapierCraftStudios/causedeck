@@ -4307,6 +4307,11 @@
       }
     }
   },
+  "memoryCitations": {
+    "carryRule": "because you usually carry this",
+    "chipLabel": "From your memory: {reason}",
+    "usedMemory": "Used memory: {reason}"
+  },
   "whatsappLink": {
     "title": "WhatsApp",
     "description": "Get court-day alerts and your evening summary on your own WhatsApp. Messages go only to the number you verify here, never to clients.",

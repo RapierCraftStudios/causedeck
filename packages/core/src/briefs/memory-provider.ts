@@ -56,10 +56,18 @@ const textOf = (item: MemoryItem): string | null =>
 
 export function createBriefMemoryProvider(deps: MemoryDeps): BriefMemoryProvider {
   const read = (actor: MemoryActor, layer: 'M2' | 'M3' | 'M4', matterId?: string) =>
-    memoryFor(deps, actor, { layers: [layer], ...(matterId === undefined ? {} : { matterId }) });
+    memoryFor(deps, actor, {
+      layers: [layer],
+      purpose: 'brief',
+      ...(matterId === undefined ? {} : { matterId }),
+    });
 
   /** Cite the use; a failure to log never breaks the brief. */
-  async function cite(actor: MemoryActor, item: MemoryItem, q: { listingId?: string; matterId?: string }) {
+  async function cite(
+    actor: MemoryActor,
+    item: MemoryItem,
+    q: { listingId?: string; matterId?: string },
+  ) {
     try {
       await recordUsage(deps, actor, {
         itemId: item.id,
@@ -85,7 +93,10 @@ export function createBriefMemoryProvider(deps: MemoryDeps): BriefMemoryProvider
         );
         if (fit.length === 0) continue;
         fit.forEach((r, i) =>
-          rules.push({ id: fit.length === 1 ? item.id : `${item.id}.${String(i)}`, label: r.label }),
+          rules.push({
+            id: fit.length === 1 ? item.id : `${item.id}.${String(i)}`,
+            label: r.label,
+          }),
         );
         await cite(actor, item, q);
       }
@@ -98,7 +109,8 @@ export function createBriefMemoryProvider(deps: MemoryDeps): BriefMemoryProvider
       const { items } = await read(actor, 'M3', q.matterId);
       const main = items.find((i) => i.key === 'M3.synopsis' && textOf(i) !== null);
       if (main === undefined) return null;
-      const note = q.canStrategy === true ? items.find((i) => i.key === 'M3.strategy_note') : undefined;
+      const note =
+        q.canStrategy === true ? items.find((i) => i.key === 'M3.strategy_note') : undefined;
       await cite(actor, main, q);
       if (note !== undefined) await cite(actor, note, q);
       const strategyText = note === undefined ? null : textOf(note);
@@ -108,8 +120,8 @@ export function createBriefMemoryProvider(deps: MemoryDeps): BriefMemoryProvider
       };
     },
 
-    async lastHearing(): Promise<MemoryLine | null> {
-      return null;
+    lastHearing(): Promise<MemoryLine | null> {
+      return Promise.resolve(null);
     },
 
     async courtNotes(q: MemoryQuery): Promise<MemoryNote[]> {
@@ -122,7 +134,11 @@ export function createBriefMemoryProvider(deps: MemoryDeps): BriefMemoryProvider
         if (text === null) continue;
         await cite(actor, item, q);
         // `memoryFor` returns only the actor's own and chamber-shared notes.
-        notes.push({ authorUserId: q.userId, shared: item.sharedWithChamber, line: lineOf(item, text) });
+        notes.push({
+          authorUserId: q.userId,
+          shared: item.sharedWithChamber,
+          line: lineOf(item, text),
+        });
       }
       return notes;
     },
@@ -144,12 +160,16 @@ export function createBriefMemoryProvider(deps: MemoryDeps): BriefMemoryProvider
     async observeCarryRemoval(q: MemoryQuery, rule: CarryRule): Promise<void> {
       if (q.listingId === undefined) return;
       try {
-        await proposeFromEdit(deps, { workspaceId: q.workspaceId, userId: q.userId }, {
-          outputId: q.listingId,
-          pattern: `Stop carrying ${rule.label}`.slice(0, 200),
-          key: 'M2.always_carry',
-          scope: 'user',
-        });
+        await proposeFromEdit(
+          deps,
+          { workspaceId: q.workspaceId, userId: q.userId },
+          {
+            outputId: q.listingId,
+            pattern: `Stop carrying ${rule.label}`.slice(0, 200),
+            key: 'M2.always_carry',
+            scope: 'user',
+          },
+        );
       } catch {
         // Learning from a removal is best effort.
       }

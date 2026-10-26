@@ -1,0 +1,7 @@
+{
+  "memoryCitations": {
+    "carryRule": "because you usually carry this",
+    "chipLabel": "From your memory: {reason}",
+    "usedMemory": "Used memory: {reason}"
+  }
+}

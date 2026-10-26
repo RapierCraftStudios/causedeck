@@ -4308,6 +4308,11 @@ export type Messages = {
       };
     };
   };
+  memoryCitations: {
+    carryRule: string;
+    chipLabel: string;
+    usedMemory: string;
+  };
   whatsappLink: {
     title: string;
     description: string;

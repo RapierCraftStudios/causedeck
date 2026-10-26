@@ -82,6 +82,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   draft_version: DB_TABLES_TEST,
   // Drafting exports (#768): one stored file per draft version and format.
   draft_export: DB_TABLES_TEST,
+  // Consistency reports (#78): privileged matter data, one per draft version and graph revision.
+  draft_consistency_report: DB_TABLES_TEST,
   // Matter and documents (#345).
   matter: DB_TABLES_TEST,
   document: DB_TABLES_TEST,

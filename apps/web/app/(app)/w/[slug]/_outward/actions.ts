@@ -4,7 +4,7 @@
 // `draft.write` asserted here and again by the core service, which also applies the matter's
 // visibility) and calls `@causedeck/core/outward` on the workspace-scoped transaction. None of them
 // sends anything: sharing is the lawyer's own copy, `wa.me` / `mailto:` link or download, and
-// `markDraftSharedAction` only logs that they did it (ADR 0039).
+// `markDraftSharedAction` only logs that they did it (ADR 0045).
 import { assertCan } from '@causedeck/auth/policy';
 import { Audience, Language, ShareChannel, Tone } from '@causedeck/validators/outward-draft';
 import { revalidatePath } from 'next/cache';

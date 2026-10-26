@@ -1,4 +1,4 @@
-// Compose an outward update draft (#735, ADR 0039). The facts come from the matter graph, each
+// Compose an outward update draft (#735, ADR 0045). The facts come from the matter graph, each
 // with its provenance: only confirmed facts read as plain statements, the rest become a flagged
 // "to be confirmed" line. The lines are built from the language's templates; the model (task
 // `outward_update`, through the gateway: India-only, budgeted, audited) adds an opening and a

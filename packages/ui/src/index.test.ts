@@ -173,6 +173,15 @@ describe('@causedeck/ui', () => {
       'DEFAULT_SCOPE_CHIP_LABELS',
       'ProposalTray',
       'DEFAULT_PROPOSAL_TRAY_LABELS',
+      'DEFAULT_RESOLUTION_FIELD_LABELS',
+      'ResolutionField',
+      'SourceCompare',
+      'SourceText',
+      'ConfirmBar',
+      'SheetPage',
+      'SectionLabel',
+      'ProvenanceLink',
+      'ReadinessMeter',
     ]) {
       expect(ui, name).toHaveProperty(name);
       expect(patterns[name]).toBe((ui as Record<string, unknown>)[name]);

@@ -1,4 +1,4 @@
-// `system.memory.review-prepare` and `memory.review-prepare` (#72, ADR 0038). On the 1st of each
+// `system.memory.review-prepare` and `memory.review-prepare` (#72, ADR 0044). On the 1st of each
 // month at 06:00 IST the system job lists the workspaces that hold memory (ids only, through the
 // owner-defined `app_memory_review_targets` function) and queues `memory.review-prepare` for each;
 // that job calls `monthlyReview` and logs the counts. Counts and rates only: no value, key or name.

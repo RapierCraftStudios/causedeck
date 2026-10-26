@@ -1,4 +1,4 @@
-// Sharing a draft (#735, ADR 0039): the lawyer's explicit act, from their own channel. The log row
+// Sharing a draft (#735, ADR 0045): the lawyer's explicit act, from their own channel. The log row
 // names the member, the channel and the version that was shared; the system sends nothing, and
 // there is no job or system caller of these functions.
 import { schema } from '@causedeck/db';

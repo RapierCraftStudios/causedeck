@@ -13,6 +13,12 @@ import {
   obligationReminders,
   obligationRemindersSchedule,
 } from './definitions/obligation-reminders.ts';
+import {
+  reminderEvening,
+  reminderMorning,
+  reminderOutcomeMissing,
+  reminderSchedule,
+} from './definitions/reminders.ts';
 import { courtDataRetention } from './definitions/court-data-retention.ts';
 import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
 import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
@@ -32,6 +38,7 @@ import { captureRetention, systemCaptureRetention } from './definitions/capture-
 import { captureScan } from './definitions/capture-scan.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
+import { briefRefresh, briefRefreshSweep } from './definitions/brief-refresh.ts';
 import { portfolioAlertScan } from './definitions/portfolio-alert-scan.ts';
 import { ordersPoll } from './definitions/orders-poll.ts';
 import { statusPoll } from './definitions/status-poll.ts';
@@ -229,6 +236,12 @@ export const registry = createRegistry([
   ordersPoll,
   obligationRemindersSchedule,
   obligationReminders,
+  briefRefresh,
+  briefRefreshSweep,
+  reminderSchedule,
+  reminderEvening,
+  reminderMorning,
+  reminderOutcomeMissing,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -295,6 +308,12 @@ export type JobMap = RegistryMap<
     typeof ordersPoll,
     typeof obligationRemindersSchedule,
     typeof obligationReminders,
+    typeof briefRefresh,
+    typeof briefRefreshSweep,
+    typeof reminderSchedule,
+    typeof reminderEvening,
+    typeof reminderMorning,
+    typeof reminderOutcomeMissing,
   ]
 >;
 export type JobName = keyof JobMap;

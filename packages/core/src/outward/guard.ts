@@ -1,4 +1,4 @@
-// The outward guard (#735, ADR 0039): an update to a client or counsel states facts; it gives no
+// The outward guard (#735, ADR 0045): an update to a client or counsel states facts; it gives no
 // advice, makes no commitment, quotes no fee, predicts no outcome and cites no authority. A
 // sentence that does is removed. Phrase sets exist for English, Tamil and Kannada; Tamil and
 // Kannada text is also checked against the English set because lawyers mix the two.

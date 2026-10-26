@@ -1,4 +1,4 @@
-// The obligation service's own tables (#67; ADR 0037): `obligation_event` (the history of an
+// The obligation service's own tables (#67; ADR 0043): `obligation_event` (the history of an
 // obligation: creation, reschedules with their reason, closure, reopening, defect and copy steps),
 // `defect` (a registry defect with its cure deadline) and `certified_copy` (applied -> ready ->
 // collected). Each hangs off an `obligation` row, which stays the one queue item; tenant tables

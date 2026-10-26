@@ -1,4 +1,4 @@
-// The obligation service (#67; ADR 0037): create, edit and reschedule (with a reason), close and
+// The obligation service (#67; ADR 0043): create, edit and reschedule (with a reason), close and
 // reopen (a person's act), reconcile order directions, registry defects, certified copies, the
 // queue and the reminders. Other domains import this file only.
 export * from './certified-copies.ts';

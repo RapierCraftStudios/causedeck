@@ -178,6 +178,12 @@ describe('enqueue', () => {
       'system.orders.poll',
       'system.obligation.reminders',
       'obligation.reminders',
+      'brief.refresh',
+      'system.brief.refresh-sweep',
+      'system.reminder.schedule',
+      'reminder.evening',
+      'reminder.morning',
+      'reminder.outcome-missing',
     ]);
   });
 });

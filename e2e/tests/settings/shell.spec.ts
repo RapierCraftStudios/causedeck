@@ -54,6 +54,7 @@ test.describe('settings shell', () => {
         'Audit log',
         'Support access',
         'Court watch',
+        'Single sign-on',
       ]);
       await expect(subNav(page).getByRole('link', { name: 'Profile' })).toHaveAttribute(
         'aria-current',

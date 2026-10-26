@@ -30,6 +30,7 @@ import {
   updateWorkspacePrivacyAction,
   type PrivacySettingsView,
 } from './actions.ts';
+import { OfflineCard } from './_offline-card.tsx';
 import { PrivacyError } from './error.tsx';
 import { PrivacyForm, PrivacySkeleton } from './privacy-form.tsx';
 
@@ -133,6 +134,7 @@ export default async function PrivacyPage({ params, searchParams }: PrivacyPageP
           <PrivacySection context={context} state={state} />
         </Suspense>
       )}
+      <OfflineCard />
       <SettingSection
         id="privacy-sub-processors"
         title={t('subProcessors.title')}

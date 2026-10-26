@@ -1,4 +1,4 @@
-// Saving and changing memory (#72, ADR 0038). `confirmMemory` is the only path that turns a
+// Saving and changing memory (#72, ADR 0044). `confirmMemory` is the only path that turns a
 // proposal into a `memory_item`, and `createMemoryNote` the only other writer of a new item: a note the
 // lawyer wrote themselves. Values are sealed with the workspace key (`sealValue`, `encryptField`
 // with AAD = workspace id) before they reach a row, and a delete removes the value at once; the

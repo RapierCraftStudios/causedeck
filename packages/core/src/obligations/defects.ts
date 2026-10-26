@@ -1,4 +1,4 @@
-// Registry defects (#67; ADR 0016, ADR 0037). `raiseDefect` moves the proceeding to `defects`
+// Registry defects (#67; ADR 0016, ADR 0043). `raiseDefect` moves the proceeding to `defects`
 // through `transitionProceeding` (the only writer of `proceeding.state`) and creates the defect
 // with its cure-deadline obligation (source `registry_defect`). `cureDefect` records the cure and
 // closes that obligation, a person's act. `representFiling` moves the proceeding to `re_presented`.

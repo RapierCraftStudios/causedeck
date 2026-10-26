@@ -149,6 +149,10 @@ export const appearance = tenantTable(
     capacity: appearanceCapacity('capacity').notNull(),
     /** A person of the same workspace (`appearance_appearing_for_person_fk`); null once they are gone. */
     appearingForPersonId: uuid('appearing_for_person_id'),
+    /** The member who delegated this appearance (#63); null for one not delegated, or once that membership is gone. */
+    assignedByMemberId: uuid('assigned_by_member_id'),
+    /** The delegator's optional instruction to the assignee. */
+    note: text('note'),
     ...timestamps(),
   },
   (t) => [
@@ -173,6 +177,11 @@ export const appearance = tenantTable(
       name: 'appearance_appearing_for_person_fk',
       columns: [t.workspaceId, t.appearingForPersonId],
       foreignColumns: [person.workspaceId, person.id],
+    }).onDelete('set null'),
+    foreignKey({
+      name: 'appearance_assigned_by_fk',
+      columns: [t.workspaceId, t.assignedByMemberId],
+      foreignColumns: [member.organizationId, member.id],
     }).onDelete('set null'),
   ],
 );

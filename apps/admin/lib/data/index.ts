@@ -41,9 +41,11 @@ import {
   ACTIVATION_CHANNELS,
   ACTIVATION_STEPS,
   activationFunnel,
+  referralFunnel,
   type ActivationChannel,
   type ActivationStep,
   type Funnel,
+  type ReferralFunnel,
 } from '@causedeck/core/activation';
 import {
   countActiveStaff,
@@ -209,6 +211,24 @@ export function growthFunnel(
     staff,
     { purpose: 'growth.funnel', capability: 'growth', tables: ['activation_event'] },
     (tx) => activationFunnel(tx, options),
+    db,
+  );
+}
+
+/** Brief-share referral funnel: invites sent, accepted, activated and credited (#507). Counts only. */
+export function growthReferralFunnel(
+  staff: StaffActor,
+  options: { since?: Date } = {},
+  db?: Database,
+): Promise<ReferralFunnel> {
+  return staffQuery(
+    staff,
+    {
+      purpose: 'growth.referral_funnel',
+      capability: 'growth',
+      tables: ['activation_event', 'referral', 'referral_credit'],
+    },
+    (tx) => referralFunnel(tx, options),
     db,
   );
 }

@@ -49,6 +49,8 @@ describe('registerSchedules', () => {
       'system.webhook.sweep',
       'system.orders.poll',
       'system.obligation.reminders',
+      'system.brief.refresh-sweep',
+      'system.reminder.schedule',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -90,6 +92,8 @@ describe('registerSchedules', () => {
       ['system.billing.dunning-tick', '30 4 * * *', '2026-10-18T23:00:00.000Z'],
       // End-of-day digest scheduler (#49): every half hour from 18:00 to 23:30 IST; 18:00 IST is 12:30 UTC.
       ['system.activity.digest', '0,30 18-23 * * *', '2026-10-18T12:30:00.000Z'],
+      // Court-day reminders (#64): every half hour from 07:00 to 23:30 IST; 07:00 IST is 01:30 UTC.
+      ['system.reminder.schedule', '0,30 7-23 * * *', '2026-10-18T01:30:00.000Z'],
       // News digest scheduler (#481): every half hour, like the notification digest; 06:00 IST is 00:30 UTC.
       ['system.news.digest', '0,30 * * * *', '2026-10-18T00:30:00.000Z'],
       // News poll fan-out (#481): hourly at :10 IST, which is :40 UTC.

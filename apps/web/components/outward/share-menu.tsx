@@ -1,5 +1,5 @@
 'use client';
-// How a draft leaves the app (#736, ADR 0039): copy, open `wa.me` / `mailto:` in the lawyer's own
+// How a draft leaves the app (#736, ADR 0045): copy, open `wa.me` / `mailto:` in the lawyer's own
 // app, or download. Each is a click by the lawyer; the server is only told afterwards that they
 // shared it. Sticky at the bottom on a phone. Disabled with a reason when offline or view-only.
 import { Button } from '@causedeck/ui/button';

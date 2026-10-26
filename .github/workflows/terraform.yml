@@ -63,7 +63,7 @@ jobs:
       - name: terraform test (mocked providers)
         run: >-
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/prod
-          "$TF_IMAGE" test -test-directory=../../test
+          "$TF_IMAGE" test
       - name: tflint
         run: >-
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform

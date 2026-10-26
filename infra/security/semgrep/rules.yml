@@ -55,6 +55,8 @@ rules:
         - '**/*.test.*'
         - '**/__tests__/**'
         - packages/fetch/**
+        # Lint-rule fixtures: deliberately unlisted URLs that the ESLint rule tests lint.
+        - '**/__fixtures__/**'
         - packages/ui/**
         # Browser code: it can only reach what the page CSP (connect-src) allows.
         - apps/web/components/**
@@ -70,12 +72,17 @@ rules:
       An automation level above L4 (L5..L9) must not exist: nothing auto-sends, files or pays
       (PRD TR-1, `pnpm check:no-l5`).
     pattern-either:
-      - pattern: '=~/^L[5-9]$/'
+      - patterns:
+          - pattern: '"$LEVEL"'
+          - metavariable-regex:
+              metavariable: $LEVEL
+              regex: ^L[5-9]$
       - patterns:
           - pattern: '{ ..., automationLevel: $N, ... }'
           - metavariable-comparison:
               metavariable: $N
               comparison: $N > 4
+          - focus-metavariable: $N
     paths:
       exclude:
         - '**/*.test.*'

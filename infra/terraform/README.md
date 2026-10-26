@@ -23,7 +23,7 @@ infra/terraform/
   envs/{prod,staging}            roots; terraform.tfvars.example holds dummy values
   envs/stage-b                   Stage B root composing the #106 modules (plan only in CI)
   backend.tf.example             remote state (S3 ap-south-1, locking)
-  test/                          policy.test.mjs (node) and residency.tftest.hcl (terraform test)
+  test/                          policy.test.mjs (node); envs/prod/tests/residency.tftest.hcl is the terraform test
 ```
 
 ## Variables

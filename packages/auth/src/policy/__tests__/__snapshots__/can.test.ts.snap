@@ -20,6 +20,8 @@ exports[`can() totality and the matrix > returns a decision for every (role, act
     "audit.read",
     "court_day.view_all",
     "appearance.assign",
+    "contact.read",
+    "contact.write",
     "limitation.read",
     "insights.read",
     "settings.read",
@@ -31,6 +33,7 @@ exports[`can() totality and the matrix > returns a decision for every (role, act
     "task.read",
     "task.write",
     "listing.read",
+    "contact.read",
     "settings.read",
   ],
   "junior": [
@@ -45,6 +48,7 @@ exports[`can() totality and the matrix > returns a decision for every (role, act
     "task.write",
     "listing.read",
     "draft.write",
+    "contact.read",
     "limitation.read",
     "settings.read",
   ],
@@ -73,6 +77,8 @@ exports[`can() totality and the matrix > returns a decision for every (role, act
     "audit.read",
     "court_day.view_all",
     "appearance.assign",
+    "contact.read",
+    "contact.write",
     "export.run",
     "support.manage",
     "limitation.read",
@@ -84,6 +90,7 @@ exports[`can() totality and the matrix > returns a decision for every (role, act
     "document.read",
     "task.read",
     "listing.read",
+    "contact.read",
   ],
 }
 `;

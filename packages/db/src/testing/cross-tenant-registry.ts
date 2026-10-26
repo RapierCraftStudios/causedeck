@@ -863,6 +863,10 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   renderDraft: denies,
   saveVersion: denies,
   listVersions: denies,
+  // drafts read side (#824): B naming A's workspace is denied; B's own lists hold none of A's.
+  getDraft: denies,
+  listDrafts: empty,
+  listTemplates: empty,
   restoreVersion: denies,
   exportDraft: denies,
   runDraftingExport: denies,

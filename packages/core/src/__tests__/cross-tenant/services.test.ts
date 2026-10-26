@@ -529,6 +529,17 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
     listVersions: denied((f, s) =>
       core.listVersions({ db: s }, inA(f), { draftId: ids(f).draftId }),
     ),
+    getDraft: denied((f, s) => core.getDraft({ db: s }, inA(f), { draftId: ids(f).draftId })),
+    listDrafts: unchanged(async (f) => {
+      await expectDenied(f.asB((s) => core.listDrafts({ db: s }, inA(f))));
+      const own = await f.asB((s) =>
+        core.listDrafts({ db: s }, { workspaceId: f.b.id, userId: f.ub }),
+      );
+      expect(own.map((d) => d.id)).not.toContain(ids(f).draftId);
+    }),
+    listTemplates: unchanged(async (f) => {
+      await expectDenied(f.asB((s) => core.listTemplates({ db: s }, inA(f))));
+    }),
     restoreVersion: denied((f, s) =>
       core.restoreVersion({ db: s }, inA(f), { draftId: ids(f).draftId, versionNo: 1 }),
     ),

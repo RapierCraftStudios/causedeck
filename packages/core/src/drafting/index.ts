@@ -46,3 +46,12 @@ export {
   type AcknowledgeResult,
   type CitationExportGate,
 } from './citation-ack.ts';
+export {
+  getDraft,
+  listDrafts,
+  listTemplates,
+  type DraftDetail,
+  type DraftListItem,
+  type DraftReadDeps,
+  type TemplateSuggestion,
+} from './read.ts';

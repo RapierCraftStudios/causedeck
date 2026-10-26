@@ -483,6 +483,12 @@ async function addAWatch(f: Fixture) {
   );
 }
 
+/** A's attention snoozes, to prove a B-scoped call left them unchanged. */
+const aSnoozes = (f: Fixture) =>
+  inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.attentionSnooze).orderBy(schema.attentionSnooze.id),
+  );
+
 const CASES: Record<string, Case> = {
   addCauseListWatch: async (f) => {
     // ub's watch lands in B; A has no watch from it.
@@ -3846,6 +3852,93 @@ const CASES: Record<string, Case> = {
     expect(asB.notified).toBe(0);
     const alerts = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.judgmentAlert));
     expect(alerts.every((a) => a.notifiedAt === null)).toBe(true);
+  },
+  // Stale-matter attention (#70): B on A's matter and snooze is denied or sees nothing; A is unchanged.
+  detectAttention: async (f) => {
+    const aMatter = String(f.a.rows.attention_snooze?.matterId);
+    const before = await aSnoozes(f);
+    const asB = { userId: f.ub, workspaceId: f.b.id };
+    const flags = await core.detectAttention({ db: f.tx }, asB, { matterId: aMatter });
+    expect(flags).toEqual([]);
+    expect((await core.detectAttention({ db: f.tx }, asB)).map((x) => x.matterId)).not.toContain(
+      aMatter,
+    );
+    await expectDenied(
+      core.detectAttention({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }),
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  countAttention: async (f) => {
+    await expectDenied(core.countAttention({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }));
+  },
+  scanWorkspaceAttention: async (f) => {
+    // The scan opens the workspace it is given: from B's scope it reads nothing of A's.
+    const before = await aSnoozes(f);
+    const counts = await f.asB((s) => core.scanWorkspaceAttention({ db: s }, f.a.id));
+    expect(counts).toEqual({});
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  snoozeFlag: async (f) => {
+    const before = await aSnoozes(f);
+    await expectDenied(
+      core.snoozeFlag(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        {
+          kind: 'snooze',
+          matterId: String(f.a.rows.attention_snooze?.matterId),
+          rule: null,
+          until: '2099-01-01',
+          reason: 'x',
+        },
+      ),
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  dismissFlag: async (f) => {
+    const before = await aSnoozes(f);
+    await expectDenied(
+      core.dismissFlag(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { kind: 'dismiss', matterId: String(f.a.rows.attention_snooze?.matterId), rule: null },
+      ),
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  liftSnooze: async (f) => {
+    const before = await aSnoozes(f);
+    const snoozeId = String(f.a.rows.attention_snooze?.snoozeId);
+    await expectDenied(
+      core.liftSnooze({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { snoozeId }),
+    );
+    // From B's own scope A's snooze does not exist.
+    await expectDenied(
+      core.liftSnooze({ db: f.tx }, { userId: f.ub, workspaceId: f.b.id }, { snoozeId }),
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  listSnoozes: async (f) => {
+    const matterId = String(f.a.rows.attention_snooze?.matterId);
+    await expectDenied(
+      core.listSnoozes({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, matterId),
+    );
+    await expectDenied(
+      core.listSnoozes({ db: f.tx }, { userId: f.ub, workspaceId: f.b.id }, matterId),
+    );
+  },
+  setStaleDays: async (f) => {
+    const read = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s
+          .select({ days: schema.workspaceSettings.attentionStaleDays })
+          .from(schema.workspaceSettings),
+      );
+    const before = await read();
+    await expectDenied(
+      core.setStaleDays({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { days: 90 }),
+    );
+    expect(await read()).toEqual(before);
   },
 };
 

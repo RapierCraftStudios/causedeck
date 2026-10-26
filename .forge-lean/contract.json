@@ -150,9 +150,82 @@
   {
    "id": "D12",
    "path": "apps/web/scripts/check-bundle-budget.mjs",
-   "change": "Optional: add the drafts/[id] route manifest check beside MATTERS/TIMELINE so the editor chunk stays out of initial JS; extend bundle-budget.test.ts accordingly",
+   "change": "add the drafts/[id] route manifest check beside MATTERS/TIMELINE so the editor chunk stays out of initial JS; extend bundle-budget.test.ts accordingly",
    "requirements": [
     "R6"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/[id]/loading.tsx",
+   "change": "Route loading skeleton beside page.tsx",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/web/app/(app)/w/[slug]/drafts/[id]/error.tsx",
+   "change": "Route error boundary beside page.tsx",
+   "requirements": [
+    "R1"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "apps/web/lib/drafting/blocks-edit.ts",
+   "change": "Pure block-tree edit helpers (slot insert, narrative edit, AI-drafted marker clear, {blockKey,before,after} diff, [[missing]] findings)",
+   "requirements": [
+    "R1",
+    "R4"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "apps/web/__tests__/bundle-budget.test.ts",
+   "change": "Test for the drafts/[id] route manifest budget added in check-bundle-budget.mjs",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/i18n/src/messages/ta/drafting.json",
+   "change": "Mirror new keys (draft text, non-English)",
+   "requirements": [
+    "R4",
+    "R5",
+    "R2"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/i18n/src/messages/kn/drafting.json",
+   "change": "Mirror new keys (draft text, non-English)",
+   "requirements": [
+    "R4",
+    "R5",
+    "R2"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/i18n/translation-status.json",
+   "change": "draft entries for new ta/kn keys",
+   "requirements": [
+    "R4",
+    "R5",
+    "R2"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/i18n/src/generated/messages.d.ts",
+   "change": "Regenerated via pnpm --filter @causedeck/i18n i18n:types (plus generated/messages/{en,ta,kn}.json)",
+   "requirements": [
+    "R4",
+    "R5",
+    "R2"
    ]
   }
  ],

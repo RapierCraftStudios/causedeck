@@ -36,3 +36,6 @@ Single lane, ordered checklist: (1) actions `saveDraftAction` (`draft.write`, `{
 
 ### Related Issues
 Parent #79 (closed not_planned); deps #824, #825 (merged); siblings #826, #828, #829 (open).
+
+### Rerun Note
+Branch already implements R1-R8 (studio.tsx keys/layouts/offline, actions.ts, editor, facts-panel, version-drawer, draft-edits.ts, DRAFT_STUDIO_SHORTCUTS registered via registerCommands, stories, budget entry); validate commands pass. Last run failed conformance (unimplemented/scope_creep), most likely because loading/error/blocks-edit/i18n sibling files were not listed as deliverables. Contract now lists every touched file explicitly; remaining work is to re-verify each requirement against studio.tsx and fix any real gap found, without touching drafts/page.tsx.

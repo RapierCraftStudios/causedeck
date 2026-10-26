@@ -120,6 +120,7 @@ const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const peopleContacts = await import('../app/(app)/w/[slug]/people/actions.ts');
+const enquiries = await import('../app/(app)/w/[slug]/people/enquiries/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
@@ -260,6 +261,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   undoContactChangeAction: peopleContacts,
   linkContactToMatterAction: peopleContacts,
   archiveContactAction: peopleContacts,
+  logEnquiryAction: enquiries,
+  updateEnquiryAction: enquiries,
+  runConflictCheckAction: enquiries,
+  acceptEnquiryAction: enquiries,
+  closeEnquiryAction: enquiries,
   enableChannelAction: inbox,
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
@@ -930,6 +936,12 @@ function inputs(workspaceId: string): Record<string, unknown> {
       matterId: t.a.rows.matter?.matterId,
     },
     archiveContactAction: { workspaceId, contactId: t.a.rows.client_contact?.id },
+    // Enquiry log (#874): ub may not log into, change, check, accept or close A's enquiries.
+    logEnquiryAction: { workspaceId, enquirerName: 'Probe', summary: 'Probe', parties: [] },
+    updateEnquiryAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id, summary: 'Changed' },
+    runConflictCheckAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id },
+    acceptEnquiryAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id },
+    closeEnquiryAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id },
     // Proceedings tab (#392): ub may not add to, change, link, move, merge or split A's matters and
     // proceedings, nor undo a merge or split naming them.
     ...proceedingsInputs(workspaceId),
@@ -1475,6 +1487,11 @@ describe('cross-tenant server actions', () => {
       'updateContactAction',
       'linkContactToMatterAction',
       'archiveContactAction',
+      // Enquiry log (#874): A's enquiry
+      'updateEnquiryAction',
+      'runConflictCheckAction',
+      'acceptEnquiryAction',
+      'closeEnquiryAction',
     ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));

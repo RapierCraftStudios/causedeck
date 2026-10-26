@@ -17,7 +17,7 @@ import {
 } from '../notifications/use-notifications.ts';
 
 import { CaptureFab } from './capture-fab.tsx';
-import { isNavItemActive } from './sidebar-nav.tsx';
+import { activeNavItem } from './sidebar-nav.tsx';
 import { loadShellOverlays, useShellOverlays } from './use-shell-overlays.ts';
 
 /** Destinations with their own slot in the bar; the rest live in the More sheet. */
@@ -58,8 +58,8 @@ export function MobileNav({ slug, role, isEnabled: isEnabledProp }: MobileNavPro
 
   const items = visibleNavItems({ role, isEnabled });
   const primary = BOTTOM_NAV_ROUTES.flatMap((id) => items.filter((entry) => entry.id === id));
-  const rest = items.filter((entry) => !BOTTOM_NAV_ROUTES.includes(entry.id));
-  const active = items.find((entry) => isNavItemActive(entry, slug, pathname));
+  const rest = items.filter((entry) => !(BOTTOM_NAV_ROUTES as readonly string[]).includes(entry.id));
+  const active = activeNavItem(items, slug, pathname);
   const moreActive = active !== undefined && rest.includes(active);
 
   const slot = (entry: NavItem) => (

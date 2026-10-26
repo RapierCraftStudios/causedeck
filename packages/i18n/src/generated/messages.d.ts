@@ -46,6 +46,7 @@ export type Messages = {
       practice: string;
       settings: string;
     };
+    enquiries: string;
   };
   palette: {
     title: string;
@@ -3643,6 +3644,100 @@ export type Messages = {
       search: string;
       open: string;
       close: string;
+    };
+  };
+  enquiry: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    gatedNotice: string;
+    loading: string;
+    offline: string;
+    new: {
+      trigger: string;
+    };
+    empty: {
+      title: string;
+      body: string;
+    };
+    list: {
+      label: string;
+    };
+    row: {
+      review: string;
+      close: string;
+      check: string;
+    };
+    status: {
+      logged: string;
+      checked: string;
+      accepted_as_matter: string;
+      declined: string;
+      referred: string;
+      closed: string;
+    };
+    channels: {
+      phone: string;
+      email: string;
+      walk_in: string;
+      referral: string;
+      web: string;
+      other: string;
+    };
+    conflict: {
+      title: string;
+      hits: string;
+      notRun: string;
+      running: string;
+      count: string;
+      warning: string;
+      noHits: string;
+      role: {
+        client: string;
+        adverse: string;
+      };
+      note: {
+        label: string;
+        hint: string;
+      };
+      decision: {
+        proceed: string;
+        decline: string;
+        refer: string;
+      };
+    };
+    form: {
+      title: string;
+      enquirer: string;
+      channel: string;
+      phone: string;
+      phoneHint: string;
+      email: string;
+      summary: string;
+      clients: string;
+      adverse: string;
+      partiesHint: string;
+      cancel: string;
+      save: string;
+      saving: string;
+      error: {
+        required: string;
+        forbidden: string;
+        invalid: string;
+        conflict: string;
+        failed: string;
+      };
+    };
+    outcome: {
+      title: string;
+      reason: string;
+      hint: string;
+      confirm: string;
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
     };
   };
   matterTimeline: {

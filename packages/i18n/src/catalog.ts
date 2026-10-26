@@ -28,6 +28,7 @@ export const NAMESPACES = [
   'court-insights',
   'matters',
   'people',
+  'enquiry',
   'matter-timeline',
   'calendar',
   'calendarView',

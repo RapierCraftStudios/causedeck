@@ -8,7 +8,7 @@ import {
   visibleNavItems,
   WORKSPACE_ROUTES,
 } from '../lib/nav.ts';
-import type { FlagKey } from '../lib/workspace-context.ts';
+import type { FlagKey, Role } from '../lib/workspace-context.ts';
 
 /** Spike §8 workspace-scoped routes, written out independently of the manifest. */
 const SPIKE_ROUTES = [
@@ -38,8 +38,20 @@ const ids = (items: readonly { id: string }[]) => items.map((entry) => entry.id)
 describe('navigation manifest', () => {
   it('covers exactly the spike §8 workspace routes, once each', () => {
     expect([...WORKSPACE_ROUTES].sort()).toEqual([...SPIKE_ROUTES].sort());
-    expect(ids(NAV_ITEMS)).toEqual([...WORKSPACE_ROUTES].sort());
+    // `enquiries` is a flag-gated destination below People (`people/enquiries`), not a spike route.
+    expect(ids(NAV_ITEMS)).toEqual([...WORKSPACE_ROUTES, 'enquiries'].sort());
     expect(new Set(NAV_ITEMS.map((entry) => entry.id)).size).toBe(NAV_ITEMS.length);
+  });
+
+  it('hides the enquiries item unless intake.enquiry_log is on and the role is an advocate', () => {
+    const on = (flag: string) => flag === 'intake.enquiry_log';
+    const visible = (role: Role, enabled?: (flag: FlagKey) => boolean) =>
+      visibleNavItems({ role, isEnabled: enabled }).some((entry) => entry.id === 'enquiries');
+    expect(visible('advocate')).toBe(false);
+    expect(visible('advocate', on)).toBe(true);
+    expect(visible('owner', on)).toBe(true);
+    for (const role of ['junior', 'clerk', 'viewer'] as const) expect(visible(role, on)).toBe(false);
+    expect(getNavItem('enquiries').href('demo')).toBe('/w/demo/people/enquiries');
   });
 
   it('builds workspace-scoped hrefs with an encoded slug', () => {

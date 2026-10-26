@@ -5,12 +5,7 @@
 //
 // The list's filters (search, kind, language) live in the URL and are applied here over
 // `listContacts`, which returns the workspace's contacts already limited to what the role may see.
-import type {
-  ContactDetail,
-  ContactView,
-  PeopleDeps,
-  PeopleEvents,
-} from '@causedeck/core/people';
+import type { ContactDetail, ContactView, PeopleDeps, PeopleEvents } from '@causedeck/core/people';
 import type { Transaction } from '@causedeck/core/runtime';
 import { CONTACT_KINDS, LANGUAGE_PREFS } from '@causedeck/validators/client-contact';
 import type { ContactKind, LanguagePref } from '@causedeck/validators/client-contact';
@@ -73,7 +68,8 @@ export function filterContacts(
   state: ContactListState,
 ): ContactView[] {
   const needle = state.q.toLowerCase();
-  const digits = needle.replace(/[^\d+]/g, '');
+  // A phone only matches a query that looks like one (digits, `+`, spaces, dashes).
+  const digits = /^[\d+\s()-]+$/.test(needle) ? needle.replace(/[^\d+]/g, '') : '';
   return contacts.filter((c) => {
     if (state.kind !== undefined && c.kind !== state.kind) return false;
     if (state.language !== undefined && c.languagePref !== state.language) return false;
@@ -95,9 +91,7 @@ function domainErrorCode(error: unknown): string | undefined {
 }
 
 export type ContactsLoad =
-  | { kind: 'list'; contacts: ContactView[] }
-  | { kind: 'denied' }
-  | { kind: 'error' };
+  { kind: 'list'; contacts: ContactView[] } | { kind: 'denied' } | { kind: 'error' };
 
 /** The workspace's contacts for the member; a denial and a failure are results, never a throw. */
 export async function loadContacts(context: WorkspaceContext): Promise<ContactsLoad> {
@@ -169,8 +163,8 @@ export function toContactRowView(contact: ContactView, slug: string): ContactRow
     id: contact.id,
     href: `/w/${encodeURIComponent(slug)}/people/${contact.id}`,
     personName: contact.personName,
-    kind: contact.kind,
-    languagePref: contact.languagePref,
+    kind: CONTACT_KINDS.find((k) => k === contact.kind) ?? 'primary',
+    languagePref: LANGUAGE_PREFS.find((l) => l === contact.languagePref) ?? 'en',
     phone: contact.phone,
     email: contact.email,
     linkedCount: contact.linkedCount,

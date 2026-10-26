@@ -34,6 +34,14 @@ function actorOf(ctx: WorkspaceActionCtx) {
   return { workspaceId: ctx.workspaceId, userId: ctx.userId };
 }
 
+/** The input without `workspaceId`, which the services take from the actor. */
+function omitWorkspace<T extends { workspaceId: string }>(input: T): Omit<T, 'workspaceId'> {
+  return Object.fromEntries(Object.entries(input).filter(([key]) => key !== 'workspaceId')) as Omit<
+    T,
+    'workspaceId'
+  >;
+}
+
 function revalidatePeople(): void {
   revalidatePath('/w/[slug]/people', 'layout');
 }
@@ -63,7 +71,7 @@ const create = workspaceAction(
   async (input, ctx) => {
     const { createContact } = await import('@causedeck/core/people');
     const { upsertPerson } = await import('@causedeck/core/matter-graph');
-    const { workspaceId: _workspaceId, personId, clientName, ...rest } = input;
+    const { personId, clientName, ...rest } = omitWorkspace(input);
     const deps = peopleDeps(ctx.tx);
     const actor = actorOf(ctx);
     let clientId = personId;
@@ -94,7 +102,7 @@ const update = workspaceAction(
   WorkspaceScoped.extend(UpdateClientContactInput.shape),
   async (input, ctx) => {
     const { updateContact } = await import('@causedeck/core/people');
-    const { workspaceId: _workspaceId, ...rest } = input;
+    const rest = omitWorkspace(input);
     const row = await updateContact(peopleDeps(ctx.tx), actorOf(ctx), stripUndefined(rest));
     revalidatePeople();
     return { id: row.id, personId: row.personId };
@@ -127,7 +135,7 @@ const link = workspaceAction(
   WorkspaceScoped.extend(LinkContactToMatterInput.shape),
   async (input, ctx) => {
     const { linkToMatter } = await import('@causedeck/core/people');
-    const { workspaceId: _workspaceId, ...rest } = input;
+    const rest = omitWorkspace(input);
     const row = await linkToMatter(peopleDeps(ctx.tx), actorOf(ctx), rest);
     revalidatePeople();
     return { id: row.id, personId: row.personId };
@@ -143,7 +151,7 @@ const archive = workspaceAction(
   WorkspaceScoped.extend(ArchiveClientContactInput.shape),
   async (input, ctx) => {
     const { archiveContact } = await import('@causedeck/core/people');
-    const { workspaceId: _workspaceId, ...rest } = input;
+    const rest = omitWorkspace(input);
     const row = await archiveContact(peopleDeps(ctx.tx), actorOf(ctx), rest);
     revalidatePeople();
     return { id: row.id, personId: row.personId };
@@ -154,4 +162,3 @@ const archive = workspaceAction(
 export async function archiveContactAction(raw: unknown): Promise<Result<SavedContact>> {
   return archive(raw);
 }
-

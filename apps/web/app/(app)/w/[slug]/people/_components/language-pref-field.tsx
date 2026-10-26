@@ -14,7 +14,7 @@ export interface LanguagePrefFieldProps {
 export function LanguagePrefField({ value, onChange, disabled = false }: LanguagePrefFieldProps) {
   const t = useTranslations('people');
   return (
-    <Field label={t('language.label')} description={t('language.hint')}>
+    <Field label={t('language.label')} hint={t('language.hint')}>
       <select
         data-contact-field="language"
         className="border-line-control bg-surface h-9 w-full rounded-md border px-2 text-sm"

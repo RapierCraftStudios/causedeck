@@ -57,7 +57,11 @@ describe('getContactDetail (#82)', () => {
         { personId: p.id, phone: '+919876543210' },
       );
       await expect(
-        getContactDetail(d, { userId: b.ownerId, workspaceId: b.workspaceId }, { contactId: row.id }),
+        getContactDetail(
+          d,
+          { userId: b.ownerId, workspaceId: b.workspaceId },
+          { contactId: row.id },
+        ),
       ).rejects.toThrow();
       await expect(
         getContactDetail(

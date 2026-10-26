@@ -34,7 +34,7 @@ export function ContactCard({ contact, active = false }: ContactCardProps) {
       <p className="text-ink-muted text-sm">
         {contact.redacted
           ? t('list.redacted')
-          : ([contact.phone, contact.email].filter(Boolean).join(' · ') || t('list.noDetails'))}
+          : [contact.phone, contact.email].filter(Boolean).join(' · ') || t('list.noDetails')}
       </p>
       <p className="flex flex-wrap items-center gap-2 text-sm">
         <span data-contact-linked="">{t('list.linked', { count: contact.linkedCount })}</span>

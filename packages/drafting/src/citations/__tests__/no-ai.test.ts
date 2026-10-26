@@ -28,7 +28,7 @@ describe('citations/ makes no AI call', () => {
   it.each(files.map((f) => [path.relative(root, f), f]))(
     '%s has no AI or authoring code',
     (_n, file) => {
-      expect(FORBIDDEN.exec(readFileSync(file as string, 'utf8'))?.[0]).toBeUndefined();
+      expect(FORBIDDEN.exec(readFileSync(file, 'utf8'))?.[0]).toBeUndefined();
     },
   );
 });

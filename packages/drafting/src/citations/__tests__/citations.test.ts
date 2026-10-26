@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -26,7 +26,7 @@ interface Case {
   reason?: string;
 }
 function loadJsonl<T>(name: string): T[] {
-  return readFileSync(join(__dirname, 'fixtures', name), 'utf8')
+  return readFileSync(fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url)), 'utf8')
     .split('\n')
     .filter(Boolean)
     .map((line) => JSON.parse(line) as T);

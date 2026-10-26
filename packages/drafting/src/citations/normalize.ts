@@ -6,7 +6,7 @@ export function normalizedCitationsIn(text: string): string[] {
   const found: { index: number; value: string }[] = [];
   for (const pattern of STRUCTURED_PATTERNS) {
     for (const match of text.matchAll(new RegExp(pattern.regex.source, pattern.regex.flags))) {
-      found.push({ index: match.index, value: pattern.normalize(match as RegExpExecArray) });
+      found.push({ index: match.index, value: pattern.normalize(match) });
     }
   }
   return found.sort((a, b) => a.index - b.index).map((f) => f.value);

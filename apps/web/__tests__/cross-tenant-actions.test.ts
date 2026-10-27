@@ -301,6 +301,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   outcomesLiveAction: planActions,
   typeKeyLineAction: inbox,
   markSentAction: inbox,
+  listAttentionAction: attention,
   snoozeFlagAction: attention,
   dismissFlagAction: attention,
   liftSnoozeAction: attention,
@@ -824,7 +825,8 @@ function inputs(workspaceId: string): Record<string, unknown> {
     keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
     typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
     markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
-    // Stale-matter attention (#70): ub may not snooze, dismiss or lift on A's matters.
+    // Stale-matter attention (#70): ub may not list, snooze, dismiss or lift on A's matters.
+    listAttentionAction: { workspaceId },
     snoozeFlagAction: {
       workspaceId,
       matterId: t.a.rows.attention_snooze?.matterId ?? XT_ID,

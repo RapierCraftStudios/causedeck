@@ -17,7 +17,7 @@ import { Input } from '@causedeck/ui/input';
 import { isTypingTarget } from '@causedeck/ui/hooks';
 import { ObligationEmpty } from '@causedeck/ui/patterns';
 import { toast } from '@causedeck/ui/sonner';
-import { Tabs, TabsList, TabsTrigger } from '@causedeck/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@causedeck/ui/tabs';
 import type { QueueGroup } from '@causedeck/validators/obligation';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -264,11 +264,16 @@ export function QueueView(props: QueueViewProps) {
       else if (key === '/') {
         event.preventDefault();
         searchRef.current?.focus();
-      } else if (key === '?') setHelp(true);
+      } else if (key === '?') {
+        // Claim it: the shell's own `?` (on window, bubble) leaves a claimed key alone.
+        event.preventDefault();
+        setHelp(true);
+      }
     };
-    window.addEventListener('keydown', onKey);
+    // On document, so page keys run before the shell's window listener (lib/shortcuts/provider.tsx).
+    document.addEventListener('keydown', onKey);
     return () => {
-      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('keydown', onKey);
     };
   }, [flat, selectedId, current, canWrite, canTrack]);
 
@@ -348,11 +353,13 @@ export function QueueView(props: QueueViewProps) {
           {t('readOnly')}
         </p>
       )}
+      {/* Each trigger's aria-controls names its panel, so the panels live in TabsContent. */}
       <Tabs
         value={tab}
         onValueChange={(value) => {
           setTab(value as ObligationTab);
         }}
+        className="gap-4"
       >
         <TabsList aria-label={t('tabs.label')}>
           {OBLIGATION_TABS.map((value) => (
@@ -361,9 +368,7 @@ export function QueueView(props: QueueViewProps) {
             </TabsTrigger>
           ))}
         </TabsList>
-      </Tabs>
-      {tab === 'queue' ? (
-        <>
+        <TabsContent value="queue" className="flex flex-col gap-4">
           <QueueFilterBar
             filters={filters}
             matters={options.matters}
@@ -374,12 +379,14 @@ export function QueueView(props: QueueViewProps) {
           <div data-slot="obligation-queue" className="flex flex-col">
             {queueBody}
           </div>
-        </>
-      ) : tab === 'defects' ? (
-        <DefectsTab defects={defects} />
-      ) : (
-        <CopiesTab copies={copies} />
-      )}
+        </TabsContent>
+        <TabsContent value="defects">
+          <DefectsTab defects={defects} />
+        </TabsContent>
+        <TabsContent value="copies">
+          <CopiesTab copies={copies} />
+        </TabsContent>
+      </Tabs>
       <CloseDialog
         open={closing !== null}
         onOpenChange={(open) => {

@@ -22,10 +22,9 @@ export const CLERK_WORKSPACE = 'bengaluru-chamber';
 export const PLACEHOLDER_ROUTES = [
   // `today` and `tomorrow` are the Court-Day Board (#59) and `calendar` is real (#66): their
   // states are covered in tests/product/court-day-board.spec.ts and tests/calendar.
-  // `matters` is a real page since #388 (its own states are covered in tests/matters).
+  // `matters` is a real page since #388 (its own states are covered in tests/matters), and so are
+  // `obligations` (#68, tests/obligations) and `memory` (#73, tests/memory).
   'briefs',
-  'obligations',
-  'memory',
   'people',
   'insights',
 ] as const;

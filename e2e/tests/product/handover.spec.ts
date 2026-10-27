@@ -63,8 +63,11 @@ test.describe('handover', () => {
     await page.setViewportSize(PHONE);
     await asUser('owner', { workspace: MATTERS_WORKSPACE, path: `matters/${MATTERS.appeal.id}` });
     await contentReady(page);
-    await page.keyboard.press('h');
-    await expect(page.getByRole('dialog')).toBeVisible();
+    // The sheet's `h` listener attaches when it hydrates, which can trail <main>: retry the key.
+    await expect(async () => {
+      await page.keyboard.press('h');
+      await expect(page.getByRole('dialog')).toBeVisible({ timeout: 1_000 });
+    }).toPass();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toBeHidden();
   });
@@ -74,7 +77,13 @@ test.describe('handover', () => {
     await page.getByRole('button', { name: 'Close' }).click();
     await context.setOffline(true);
     await page.getByRole('button', { name: 'Handover' }).click();
-    await expect(page.getByRole('status').filter({ hasText: /offline/i })).toBeVisible();
+    // The page's own offline banner is a status too: look inside the sheet.
+    await expect(
+      page
+        .getByRole('dialog')
+        .getByRole('status')
+        .filter({ hasText: /offline/i }),
+    ).toBeVisible();
     await context.setOffline(false);
   });
 

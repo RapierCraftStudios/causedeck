@@ -37,7 +37,7 @@ export function DraftsScreen({
   const online = useOnline();
   const offline = forceOffline || !online;
   return (
-    <div className="flex flex-col gap-6">
+    <div data-route="drafts" className="flex flex-col gap-6">
       <h1 className="font-serif text-2xl font-medium">{t('title')}</h1>
       <DraftsWorkspace
         drafts={drafts}

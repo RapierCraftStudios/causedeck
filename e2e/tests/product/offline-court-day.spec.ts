@@ -11,6 +11,7 @@
 import postgres from 'postgres';
 
 import { COURT_DAY, seedCourtDay } from '../../fixtures/court-day-data.ts';
+import { COURTS_WORKSPACE_ID } from '../../fixtures/courts-data.ts';
 import { expect as baseExpect, test } from '../../fixtures/index.ts';
 import { databaseUrl } from '../../support/db-reset.ts';
 import { SHELL_WORKSPACE, contentReady } from '../shell/helpers.ts';
@@ -244,15 +245,24 @@ test.describe('offline court day', () => {
     const serverDate = '2099-03-02';
     let seeded: { hearing_id: string; workspace_id: string; proceeding_id: string };
     try {
-      const [row] = await sql<
-        { hearing_id: string; workspace_id: string; proceeding_id: string }[]
-      >`
-        select h.id as hearing_id, h.workspace_id, p.id as proceeding_id
-          from hearing h
-          join listing l on l.id = h.listing_id
-          join proceeding p on p.id = l.proceeding_id
-          join matter m on m.id = p.matter_id
-         where m.title = ${COURT_DAY.sharedTitle}`;
+      // The owner role is under FORCE RLS: the read needs the seed's workspace, as the seed's writes did.
+      const [row] = await sql.begin(async (tx) => {
+        await tx`select set_config('app.workspace_id', ${COURTS_WORKSPACE_ID}, true)`;
+        const [found] = await tx<
+          { hearing_id: string; workspace_id: string; proceeding_id: string }[]
+        >`
+          select h.id as hearing_id, h.workspace_id, p.id as proceeding_id
+            from hearing h
+            join listing l on l.id = h.listing_id
+            join proceeding p on p.id = l.proceeding_id
+            join matter m on m.id = p.matter_id
+           where m.title = ${COURT_DAY.sharedTitle}`;
+        // The seed confirms every hearing, and a confirmed outcome is read-only: reopen this one.
+        if (found !== undefined) {
+          await tx`update hearing set confirmation_state = 'proposed' where id = ${found.hearing_id}`;
+        }
+        return [found];
+      });
       if (row === undefined) throw new Error('e2e: no hearing for the shared matter');
       seeded = row;
     } finally {

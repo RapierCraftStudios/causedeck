@@ -55,18 +55,21 @@ for (const shot of SHOTS) {
         await page.goto(`/w/${shot.workspace}/${shot.path(drafts)}`);
       }
       if (shot.name === 'error') {
-        await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText(
-          'Something went wrong.',
+        await expect(page.locator('main').getByRole('alert')).toContainText(
+          'Drafts could not be loaded',
           { timeout: 15_000 },
         );
       } else if (shot.name !== 'loading' && shot.name !== 'denied') {
         await contentReady(page);
       }
       if (shot.diff === true) {
-        await page.getByRole('button', { name: 'Compare with the prepared text' }).click();
-        await expect(
-          page.getByRole('group', { name: 'Changes from the prepared text' }),
-        ).toBeVisible();
+        // The editor can stream in after <main> hydrates: retry until the toggle is pressed.
+        const toggle = page.getByRole('button', { name: 'Compare with the prepared text' });
+        const group = page.getByRole('group', { name: 'Changes from the prepared text' });
+        await expect(async () => {
+          if ((await toggle.getAttribute('aria-pressed')) !== 'true') await toggle.click();
+          await expect(group).toBeVisible({ timeout: 1_000 });
+        }).toPass();
       }
       await expect(page).toHaveScreenshot(`outward-drafts-${shot.name}.png`, {
         fullPage: true,

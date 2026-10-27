@@ -13,9 +13,16 @@ export interface AttentionBadgeProps {
   workspaceId: string;
   flags: readonly AttentionFlag[];
   canWrite: boolean;
+  /** After a snooze or dismiss, so the owner can reload the flags. */
+  onChanged?: (() => void) | undefined;
 }
 
-export function AttentionBadgeBody({ workspaceId, flags, canWrite }: AttentionBadgeProps) {
+export function AttentionBadgeBody({
+  workspaceId,
+  flags,
+  canWrite,
+  onChanged,
+}: AttentionBadgeProps) {
   const t = useTranslations('attention');
   return (
     <Popover>
@@ -30,7 +37,12 @@ export function AttentionBadgeBody({ workspaceId, flags, canWrite }: AttentionBa
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[min(32rem,90vw)]">
-        <AttentionFlagList workspaceId={workspaceId} flags={flags} canWrite={canWrite} />
+        <AttentionFlagList
+          workspaceId={workspaceId}
+          flags={flags}
+          canWrite={canWrite}
+          onChanged={onChanged}
+        />
       </PopoverContent>
     </Popover>
   );

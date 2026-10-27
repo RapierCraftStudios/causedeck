@@ -441,7 +441,7 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Amends:** spike §2 (core dependencies).
 - **Revisit if:** core starts making external calls outside `@causedeck/fetch`, or the fetch layer grows code that should not run in request paths.
 
-### D-053 — Data posture: coverage first; an anonymised shared corpus
+### D-053 — Data posture: coverage first; an anonymised shared corpus; sources not shown
 - **Date:** 2026-10-27 · **Status:** Proposed (founder: "Dont worry too much about lawful its like a grey area right Scraping and everything Point is for us low cost high value for the user"; on names: "the name of the case I think is Supposed to be public … most cases and case laws Are basically ruled on facts … We necessarily dont even need to worry about the names") · **⚖** for the record, not a gate
 - **Decision:**
   1. **Retrieval posture.** Scraping public court and government pages and solving captchas is treated as a business risk the founder accepts, not as something blocked until counsel replies.
@@ -458,6 +458,11 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
      - **No name search** over judgment text. The raw text is kept for staff and for citation verification internals only. The placeholder mapping is not stored. Masking requests are handled within 72 hours.
      - The lawyer's own matters keep real names inside their workspace (unchanged).
   3. **Editorial rule narrowed.** No corpus field may hold content from an editorial source (SCC Online, Manupatra, other publishers' headnotes or citators). Our own machine-generated segment roles, tags, statute and citation references and outcomes are allowed (*EBC v. D.B. Modak* protects editorial additions, not original analysis).
+  4. **Sources are not shown to users.** The app and the developer API (#487) show each record's official identity only: court, case number, neutral or court citation, date, and a link to the official court copy where one exists. They do not show which portal, aggregator, dataset or fetch route the record came from.
+     - Provenance (`provenance`, `source_id`, fetch logs) stays internal, for staff, audits, masking requests and re-fetches.
+     - Licences that require attribution are met once, on a public "Data sources and licences" page and in the API terms. CC-BY-4.0 allows attribution "in any reasonable manner", so per-record credits are not needed (the Dattam Labs datasets, #890).
+     - A source whose terms demand visible per-record attribution is not served to users unless we accept that term for that source.
+     - Never claim a record came from the court when it did not. "Official copy" links point only at the court's own document.
 - **Bright lines, unchanged and never relaxed:** statutory identity bans (POCSO s.23, BNS s.72, JJ Act s.74, in-camera and matrimonial) are filtered at ingest; court-ordered masking is honoured; no judge ratings, predictions or profiles (D-050); no framing of court pages.
 - **Why:** coverage at low cost is the product (D-049). Competitors already work this way, and no Indian ruling has addressed scraping public court portals. Precedent value lies in facts and reasoning, not party identity. Removing identities from the shared corpus shrinks right-to-be-forgotten exposure (the Delhi HC in May 2026 and the Karnataka HC in August 2026 directed name masking and name-search removal at Indian Kanoon) and DPDP scope, and makes the corpus safe to embed, search and serve through the API. Research: [docs/strategy/13](docs/strategy/13-legal-data-competitive-research.md).
 - **Amends:** D-048 (the bright lines on captcha solving at scale and covert bulk crawling; the corpus rule on editorial content; DPDP posture for the shared corpus), D-001 (corpus content), #484 (static editorial test), #118 (its acceptance criterion "no server-side automation and no captcha circumvention" becomes "assess").

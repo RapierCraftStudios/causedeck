@@ -18,11 +18,7 @@ const FIVE_QUESTIONS = [
   'key_documents',
 ];
 
-async function openHandover(
-  page: Page,
-  asUser: AsUser,
-  size = PHONE,
-) {
+async function openHandover(page: Page, asUser: AsUser, size = PHONE) {
   await page.setViewportSize(size);
   await asUser('owner', { workspace: MATTERS_WORKSPACE, path: `matters/${MATTERS.appeal.id}` });
   await contentReady(page);

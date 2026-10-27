@@ -55,7 +55,9 @@ export function ConsistencyPanel({
     const ok = await onFix(pending);
     setBusy(false);
     setPending(null);
-    setMessage(ok ? { tone: 'success', text: tc('fixed') } : { tone: 'danger', text: tc('fixFailed') });
+    setMessage(
+      ok ? { tone: 'success', text: tc('fixed') } : { tone: 'danger', text: tc('fixFailed') },
+    );
   }
 
   async function undo() {
@@ -63,7 +65,9 @@ export function ConsistencyPanel({
     setBusy(true);
     const ok = await onUndo(undoVersionNo);
     setBusy(false);
-    setMessage(ok ? { tone: 'success', text: tc('undone') } : { tone: 'danger', text: tc('undoFailed') });
+    setMessage(
+      ok ? { tone: 'success', text: tc('undone') } : { tone: 'danger', text: tc('undoFailed') },
+    );
   }
 
   return (
@@ -156,7 +160,9 @@ export function ConsistencyPanel({
           <DialogHeader>
             <DialogTitle>{tc('fixTitle')}</DialogTitle>
             <DialogDescription>
-              {pending === null ? '' : tc('fixBody', { found: pending.found, expected: pending.expected })}
+              {pending === null
+                ? ''
+                : tc('fixBody', { found: pending.found, expected: pending.expected })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -62,7 +62,12 @@ const DownloadExport = WorkspaceScoped.extend({ exportId: z.uuid() });
 /** Core domain errors become the client-safe codes; anything else stays an INTERNAL failure. */
 function rethrow(error: unknown): never {
   const code = domainErrorCode(error);
-  if (code === 'NOT_FOUND' || code === 'FORBIDDEN' || code === 'VALIDATION' || code === 'CONFLICT') {
+  if (
+    code === 'NOT_FOUND' ||
+    code === 'FORBIDDEN' ||
+    code === 'VALIDATION' ||
+    code === 'CONFLICT'
+  ) {
     throw new ActionError(code, '');
   }
   throw error;

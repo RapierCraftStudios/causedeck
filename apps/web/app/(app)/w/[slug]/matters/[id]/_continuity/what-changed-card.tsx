@@ -9,6 +9,24 @@ import { useEffect, useState } from 'react';
 import { recordViewAction, whatChangedAction } from './actions.ts';
 import { changeGroups, showChangeCard } from './model.ts';
 
+/**
+ * Resolves once the document has loaded. Recording the view is a server action; firing it while
+ * the page is still streaming left a second copy of the streamed segment in the DOM (the brief
+ * sheet rendered twice in e2e), so the card waits for the stream to finish.
+ */
+function afterLoad(): Promise<void> {
+  if (document.readyState === 'complete') return Promise.resolve();
+  return new Promise((resolve) => {
+    window.addEventListener(
+      'load',
+      () => {
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
+
 export function WhatChangedCard({
   workspaceId,
   matterId,
@@ -28,6 +46,8 @@ export function WhatChangedCard({
     // A call, not a property read: TypeScript would otherwise narrow `aborted` across the awaits.
     const stale = () => unmounted.signal.aborted;
     void (async () => {
+      await afterLoad();
+      if (stale()) return;
       const marker = await recordViewAction({ workspaceId, matterId });
       if (stale() || !marker.ok || !showChangeCard(marker.data.previous_viewed_at)) return;
       const changed = await whatChangedAction({

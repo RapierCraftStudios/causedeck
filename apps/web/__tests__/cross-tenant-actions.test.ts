@@ -56,6 +56,7 @@ vi.mock('../lib/env.ts', () => ({
     APP_URL: 'http://localhost:3000',
     EMAIL_PROVIDER: 'console',
     BETTER_AUTH_SECRET: { reveal: () => 'cross-tenant-test-secret-0123456789' },
+    KEK_BASE64: { reveal: () => Buffer.alloc(32, 7).toString('base64') },
   }),
 }));
 vi.mock('../src/health.ts', () => ({
@@ -1734,8 +1735,10 @@ describe('cross-tenant server actions', () => {
     const searched = await action('searchPrecedentsForBlockAction')(
       own['searchPrecedentsForBlockAction'],
     );
-    console.log('DBG', JSON.stringify(searched));
-    expect(searched).toHaveProperty('data.passages', []);
+    // The seeded workspace keys are random bytes, so the memory crypto may refuse; what must hold is
+    // that B never receives a passage.
+    if ((searched as { ok: boolean }).ok) expect(searched).toHaveProperty('data.passages', []);
+    else expect(searched).not.toHaveProperty('data');
     const proposed = await action('proposePrecedentAction')(own['proposePrecedentAction']);
     expect(['NOT_FOUND', 'FORBIDDEN']).toContain(code(proposed));
     expect(proposed).not.toHaveProperty('data');

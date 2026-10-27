@@ -47,6 +47,7 @@ export const NAMESPACES = [
   'attention',
   'obligations',
   'memory',
+  'memory-m5',
   'outward',
   'outcome',
   'brief',

@@ -1,10 +1,12 @@
 // `/w/[slug]/memory/review` (#73): the monthly review. A stepper through the active items not
 // confirmed, edited or used in 60 days, with Keep, Edit and Delete; finishing records the review
-// date (`M1.last_memory_review`) and shows a summary. Needs `memory.write`.
+// date (`M1.last_memory_review`) and shows a summary. Needs `memory.write`. With `m5_playbooks` on,
+// M5 items (with their last use) offer Retire instead of Delete (#903).
 import { PermissionDenied } from '@causedeck/ui/patterns';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { workspaceFlagCheck } from '../../../../../../lib/flags.ts';
 import { memoryDeps } from '../../../../../../lib/memory/deps.ts';
 
 import { toCardView } from '../../../../../../lib/memory/memory-state.ts';
@@ -35,8 +37,10 @@ export default async function MemoryReviewPage({ params }: ReviewPageProps) {
   const candidates = await runtime.inWorkspace(scope, (tx) =>
     memory.listReviewCandidates(memoryDeps(tx), scope),
   );
+  const m5 = (await workspaceFlagCheck(context))('m5_playbooks');
   return (
     <ReviewStepper
+      m5Enabled={m5}
       workspaceId={context.workspace.id}
       slug={slug}
       isOwner={context.role === 'owner'}

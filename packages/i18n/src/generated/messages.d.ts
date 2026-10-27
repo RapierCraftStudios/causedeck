@@ -3946,6 +3946,27 @@ export type Messages = {
         preparing: string;
       };
     };
+    factCheck: {
+      status: {
+        match: string;
+        mismatch: string;
+        unsupported: string;
+        unverifiedCitation: string;
+        ambiguous: string;
+      };
+      source: string;
+      noSource: string;
+      page: string;
+      openPage: string;
+      actions: {
+        fix: string;
+        ignore: string;
+        ignoreForMatter: string;
+        markAssertion: string;
+      };
+      announce: string;
+      noIssues: string;
+    };
   };
   calendar: {
     metaTitle: string;

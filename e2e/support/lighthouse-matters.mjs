@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import postgres from 'postgres';
 
+import { seedDraftingFixtures } from '../fixtures/drafting-data.ts';
 import { matterForumId, seedMatterFixtures } from '../fixtures/matters-data.ts';
 import { COURTS_WORKSPACE_ID } from '../fixtures/courts-data.ts';
 
@@ -21,6 +22,10 @@ const PORT = 3100;
 const ORIGIN = `http://localhost:${String(PORT)}`;
 const EMAIL = 'owner@chennai-solo.e2e.test';
 const CALLBACK = '/w/chennai-solo/matters';
+// The Lighthouse config to run: the matters one by default, or `lighthouserc.drafting.json` (#829),
+// which seeds the drafting fixtures instead of the matters ones (a later step on the same database).
+const CONFIG = process.argv[2] ?? 'lighthouserc.matters.json';
+const DRAFTING = CONFIG.includes('drafting');
 
 const e2eDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const webDir = path.join(e2eDir, '..', 'apps', 'web');
@@ -105,10 +110,11 @@ async function seedMatters() {
   if (!url) throw new Error('lhci:matters: DATABASE_URL_OWNER is not set');
   const sql = postgres(url, { max: 1, onnotice: () => undefined });
   try {
-    const forum = await matterForumId(sql);
+    const forum = DRAFTING ? undefined : await matterForumId(sql);
     await sql.begin(async (tx) => {
       await tx`select set_config('app.workspace_id', ${COURTS_WORKSPACE_ID}, true)`;
-      await seedMatterFixtures(tx, forum);
+      if (DRAFTING) await seedDraftingFixtures(tx);
+      else await seedMatterFixtures(tx, forum);
     });
   } finally {
     await sql.end();
@@ -126,7 +132,7 @@ try {
     lhci,
     [
       'autorun',
-      '--config=lighthouserc.matters.json',
+      `--config=${CONFIG}`,
       `--collect.settings.extraHeaders=${JSON.stringify({ Cookie: cookie })}`,
     ],
     { cwd: e2eDir, stdio: 'inherit' },

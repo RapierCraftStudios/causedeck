@@ -14,6 +14,13 @@ import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
 
 import { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
+import {
+  acknowledgeUnverifiedAction,
+  applyFixAction,
+  downloadDraftExportAction,
+  exportDraftAction,
+  runChecksAction,
+} from './checks-actions.ts';
 import { DraftStudio } from './studio.tsx';
 
 interface DraftPageProps {
@@ -72,7 +79,8 @@ export default async function DraftPage({ params }: DraftPageProps) {
   let loaded;
   try {
     const { inWorkspace } = await import('@causedeck/core/runtime');
-    const { getDraft, renderDraft } = await import('@causedeck/core/drafting');
+    const { exportBlockedByCitations, getCitationReport, getDraft, listFindings, renderDraft } =
+      await import('@causedeck/core/drafting');
     loaded = await inWorkspace(actor, async (tx) => {
       const detail = await getDraft({ db: tx }, actor, { draftId: id });
       const rendered = await renderDraft({ db: tx }, actor, { draftId: id });
@@ -83,8 +91,17 @@ export default async function DraftPage({ params }: DraftPageProps) {
         const past = await renderDraft({ db: tx }, actor, { draftId: id, versionNo: v.versionNo });
         older.push({ versionNo: v.versionNo, blocks: past.blocks });
       }
+      const versionId = detail.version.id;
+      const report = await getCitationReport({ db: tx }, actor, { draftVersionId: versionId });
+      const gate = await exportBlockedByCitations(
+        tx,
+        actor.workspaceId,
+        versionId,
+        detail.version.blocks,
+      );
+      const found = await listFindings({ db: tx }, actor, { draftVersionId: versionId });
       const authorities = await pinnedAuthorities(tx, actor, detail.draft.matterId);
-      return { detail, rendered, older, authorities };
+      return { detail, rendered, older, authorities, report, gate, found };
     });
   } catch (error) {
     const code = domainErrorCode(error);
@@ -93,7 +110,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
     throw error;
   }
 
-  const { detail, rendered, older, authorities } = loaded;
+  const { detail, rendered, older, authorities, report, gate, found } = loaded;
   const slotValues = Object.fromEntries(
     Object.entries(rendered.slots).map(([key, resolution]) => [key, resolution.value]),
   );
@@ -131,6 +148,28 @@ export default async function DraftPage({ params }: DraftPageProps) {
       slotValues={slotValues}
       aiTexts={aiTexts}
       facts={facts}
+      checks={{
+        actions: {
+          run: runChecksAction,
+          acknowledge: acknowledgeUnverifiedAction,
+          fix: applyFixAction,
+          exportDraft: exportDraftAction,
+          download: downloadDraftExportAction,
+        },
+        versionId: detail.version.id,
+        citations: report.items.map((c) => ({
+          id: c.id,
+          blockId: c.blockId,
+          raw: c.raw,
+          status: c.status,
+          title: c.title,
+          acknowledged: c.status === 'not_found' && !gate.unacknowledged.includes(c.id),
+        })),
+        findings: found,
+        checked: report.items.length > 0 || found.length > 0,
+        courtPreset: null,
+        aiAssisted: Object.keys(aiTexts).length > 0,
+      }}
       authorities={authorities}
       versions={detail.versions.map((v) => ({
         versionNo: v.versionNo,

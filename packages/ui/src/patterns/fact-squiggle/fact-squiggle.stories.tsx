@@ -53,15 +53,11 @@ export const AllFactStatuses: Story = {
   ),
 };
 
+// Dark on <html> like the apps (the preview's theme global): the card renders in a portal, outside
+// any story wrapper, and the squiggle inherits the themed text colour.
 export const Dark: Story = {
   args: { defaultOpen: true },
-  decorators: [
-    (Story) => (
-      <div data-theme="dark" className="dark bg-surface p-6">
-        <Story />
-      </div>
-    ),
-  ],
+  globals: { theme: 'dark' },
 };
 
 export const FactCardSheet: Story = {

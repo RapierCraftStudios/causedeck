@@ -10,6 +10,7 @@
     "./citation": "./src/citation.ts",
     "./consistency": "./src/consistency.ts",
     "./drafting": "./src/drafting.ts",
+    "./factcheck": "./src/factcheck.ts",
     "./forum": "./src/forum.ts",
     "./gstin": "./src/gstin.ts",
     "./hearing-outcome": "./src/hearing-outcome.ts",

@@ -124,6 +124,7 @@ describe('row-level security catalog', () => {
         'draft',
         'draft_consistency_report',
         'draft_export',
+        'draft_fact_ack',
         'draft_version',
         'anchor',
         // Proceedings (#346).

@@ -877,7 +877,8 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
           workspaceId,
           layer: 'M5',
           key: 'M5.precedent',
-          scope: 'user',
+          // Workspace scope so the suite can read it as any member (a user-scope item is hidden from all but its owner).
+          scope: 'workspace',
           ownerUserId: ownerId,
           valueCiphertext: `seed-ciphertext-${tag}`,
           sourceType: 'ai',

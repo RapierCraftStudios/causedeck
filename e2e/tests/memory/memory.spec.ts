@@ -4,7 +4,7 @@
 import { expect, test } from '../../fixtures/index.ts';
 import { shellReady } from '../shell/helpers.ts';
 
-const MEMORY = '/w/chennai-solo/memory';
+const MEMORY = 'memory';
 
 test.describe('memory screen', () => {
   test('empty state says nothing is saved and CauseDeck asks first', async ({ page, asUser }) => {

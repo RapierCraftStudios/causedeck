@@ -19,10 +19,10 @@ test.describe('calendar states', { tag: '@a11y' }, () => {
 
   test('a failed read shows the error boundary with retry', async ({ page, asUser }) => {
     await asUser('owner', open('?__state=error'));
-    await expect(page.getByRole('heading', { name: 'Could not load the calendar.' })).toBeVisible({
-      timeout: 15_000,
-    });
-    await expect(page.getByRole('button', { name: 'Try again' })).toBeVisible();
+    // ErrorState renders its title inside the alert, not as a heading.
+    const alert = page.locator('main').getByRole('alert');
+    await expect(alert).toContainText('Could not load the calendar.', { timeout: 15_000 });
+    await expect(alert.getByRole('button', { name: 'Try again' })).toBeVisible();
   });
 
   test('offline shows the notice and clears when back online', async ({ page, asUser }) => {

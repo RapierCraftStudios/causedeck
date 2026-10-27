@@ -3,7 +3,7 @@
 import { expect, test } from '../../fixtures/index.ts';
 import { shellReady } from '../shell/helpers.ts';
 
-const MEMORY = '/w/chennai-solo/memory';
+const MEMORY = 'memory';
 const WIDTHS = [360, 768, 1280] as const;
 
 for (const colorScheme of ['light', 'dark'] as const) {

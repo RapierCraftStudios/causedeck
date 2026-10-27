@@ -4,7 +4,7 @@
 import { expect, test } from '../../fixtures/index.ts';
 import { shellReady } from '../shell/helpers.ts';
 
-const QUEUE = '/w/chennai-solo/obligations';
+const QUEUE = 'obligations';
 
 test.describe('obligation queue', () => {
   test('empty state invites confirming orders', async ({ page, asUser }) => {

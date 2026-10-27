@@ -52,6 +52,18 @@ export async function seedDrafts(database: string): Promise<SeededDrafts> {
        limit 1`;
     if (owner === undefined) throw new Error('outward seed: the shell workspace has no owner');
     const ws = owner.workspace_id;
+    // A client draft must name its client (outward_draft_client_chk), as composeUpdate requires.
+    const [existingClient] = await sql<{ id: string }[]>`
+      select id from person where workspace_id = ${ws} and kind = 'client' order by id limit 1`;
+    let clientPersonId = existingClient?.id;
+    if (clientPersonId === undefined) {
+      const [created] = await sql<{ id: string }[]>`
+        insert into person (workspace_id, name, aliases, kind, source_type, confirmation_state)
+        values (${ws}, 'S. Ramaswamy (fictional)', '{}'::text[], 'client', 'manual', 'confirmed')
+        returning id`;
+      if (created === undefined) throw new Error('outward seed: client person insert failed');
+      clientPersonId = created.id;
+    }
 
     const hearingFor = async (listingId: string): Promise<string> => {
       const [row] = await sql<{ id: string }[]>`
@@ -71,9 +83,9 @@ export async function seedDrafts(database: string): Promise<SeededDrafts> {
     ): Promise<{ id: string; versionIds: string[] }> => {
       const [d] = await sql<{ id: string }[]>`
         insert into outward_draft (workspace_id, matter_id, hearing_id, audience, language, tone,
-          status, created_by)
+          status, client_person_id, created_by)
         values (${ws}, ${matterId}, ${hearingId}, ${audience}, ${language}, 'formal', ${status},
-          ${owner.user_id})
+          ${audience === 'client' ? clientPersonId : null}, ${owner.user_id})
         returning id`;
       if (d === undefined) throw new Error('outward seed: draft insert returned nothing');
       const versionIds: string[] = [];

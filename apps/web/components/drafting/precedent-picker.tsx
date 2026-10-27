@@ -4,6 +4,7 @@
 // selected narrative block by court, kind, language and similarity, each with the reasons it is
 // suggested and where it came from (Provenance Chip). Inserting is an explicit click; the studio
 // turns it into a new draft version. The ranking runs on the server (`precedent-actions.ts`).
+import { Button } from '@causedeck/ui/button';
 import { ProvenanceChip } from '@causedeck/ui/patterns';
 import type { Block } from '@causedeck/validators/drafting';
 import { useTranslations } from 'next-intl';
@@ -121,16 +122,19 @@ export function PrecedentPicker({
                   state: 'confirmed',
                 }}
               />
-              <button
+              {/* The design-system button: the seal colours fail 4.5:1 at this size in both themes. */}
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 disabled={disabled}
                 onClick={() => {
                   onInsert(passage);
                 }}
-                className="bg-seal text-seal-fg focus-visible:ring-focus ms-auto min-h-11 rounded-md px-3 text-sm focus-visible:ring-2 disabled:opacity-50"
+                className="ms-auto min-h-11"
               >
                 {t('insert')}
-              </button>
+              </Button>
             </div>
           </li>
         ))}

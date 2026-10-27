@@ -79,6 +79,8 @@ export const EXPORT_EXCLUSIONS: Readonly<Record<string, string>> = {
     'Pending or dismissed memory proposals (#72): sealed candidates the lawyer has not saved; the confirmed memory is exported through exportMemory, and the rows are erased with the workspace.',
   memory_embedding:
     'Derived search vectors of memory items (#72); recomputed from the items, purged within 24 h of a delete, and erased with the workspace.',
+  precedent_passage:
+    'M5 precedent passages (#901): sealed with the workspace key and private to the member who confirmed them, like memory_item; the decrypted export is exportMemory. Erased with the workspace and with the member memory erasure (cascade from memory_item).',
   memory_usage:
     'Ledger of which memory item influenced which output (#72): ids and purpose only, no memory content; erased with the workspace.',
   memory_pause:

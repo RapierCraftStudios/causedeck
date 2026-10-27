@@ -841,6 +841,13 @@
       "when": 1793101504345,
       "tag": "20261027114504_authority",
       "breakpoints": true
+    },
+    {
+      "idx": 120,
+      "version": "7",
+      "when": 1793110853924,
+      "tag": "20261027142053_precedent_passage",
+      "breakpoints": true
     }
   ]
 }

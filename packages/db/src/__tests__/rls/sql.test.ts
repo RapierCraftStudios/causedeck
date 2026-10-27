@@ -195,6 +195,8 @@ describe('row-level security catalog', () => {
         'memory_embedding',
         'memory_usage',
         'memory_pause',
+        // M5 precedent bank (#901).
+        'precedent_passage',
 
         // Enterprise onboarding (#682).
         'sso_provider',

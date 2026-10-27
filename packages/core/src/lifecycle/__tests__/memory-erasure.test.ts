@@ -130,6 +130,7 @@ describe('memory erasure', () => {
         counts: {
           memory_embedding: baseA.embeddings + MEMORY_ERASE_BATCH + 8,
           memory_item: baseA.items + 3,
+          precedent_passage: 1,
         },
       });
       expect(await memoryRows(tx, seeded.a.id)).toEqual({ items: 0, embeddings: 0 });
@@ -185,6 +186,7 @@ describe('memory erasure', () => {
       expect(await eraseMemory(tx, seeded.a.id)).toEqual({
         memory_embedding: baseA.embeddings,
         memory_item: baseA.items,
+        precedent_passage: 1,
       });
       expect(await memoryRows(tx, seeded.a.id)).toEqual({ items: 0, embeddings: 0 });
       expect(await memoryRows(tx, seeded.b.id)).toEqual(baseB);

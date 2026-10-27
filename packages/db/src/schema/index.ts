@@ -169,6 +169,12 @@ export {
 } from './drafting.ts';
 export { AUTHORITY_KINDS, AUTHORITY_STATUSES, authority } from './authority.ts';
 export {
+  PRECEDENT_PASSAGE_KINDS,
+  PRECEDENT_PASSAGE_STATUSES,
+  precedentPassage,
+  type PrecedentPassageStatus,
+} from './precedent.ts';
+export {
   ANCHOR_KINDS,
   ANCHOR_QUOTE_MAX,
   anchor,

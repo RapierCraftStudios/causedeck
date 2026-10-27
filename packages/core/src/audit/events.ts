@@ -281,6 +281,12 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'An owner shared an M4 court note with the chamber or made it private again',
   },
+  // M5 embeddings (#901, ADR 0046): an embedder outside India was refused before any text was sent.
+  // Metadata holds the embedder id and its region, never the text.
+  'memory.embedding_refused': {
+    security: true,
+    description: 'Memory text was not embedded because the embedder runs outside India',
+  },
   // Capture inbox (#43). Metadata holds the channel, MIME type, size and flags; never a filename or
   // file content. Channel changes and quarantines are fail-closed: they change where a lawyer's
   // data may flow or record a threat.

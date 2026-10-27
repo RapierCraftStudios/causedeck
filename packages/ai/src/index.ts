@@ -2,6 +2,18 @@
 export const packageName: string = '@causedeck/ai';
 
 export * from './errors.ts';
+export {
+  createMockEmbedder,
+  createProviderEmbedder,
+  EMBEDDING_DIMENSIONS as AI_EMBEDDING_DIMENSIONS,
+  guardEmbedder,
+  requireIndiaRoute,
+  type Embedder,
+  type EmbedderRegion,
+  type EmbeddingAuditSink,
+  type EmbeddingRefusal,
+  type ProviderEmbedderConfig,
+} from './embeddings.ts';
 export { createGateway, type AiGateway, type GatewayConfig } from './gateway.ts';
 export { inputHash, normalise } from './hash.ts';
 export type * from './ports.ts';

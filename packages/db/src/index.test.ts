@@ -158,6 +158,7 @@ describe('@causedeck/db root entry point', () => {
       'portfolio',
       'portfolio_case',
       'portfolio_panel_advocate',
+      'precedent_passage',
       'proceeding',
       'proceeding_link',
       'proceeding_state_change',

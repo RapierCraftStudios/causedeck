@@ -95,7 +95,11 @@ export async function loadFactCheckFacts(
   const tree = await listMatterProceedingsTree(graph, actor, { matterId });
   const timeline = await getMatterTimeline(graph, actor, { matterId, kinds: ['listing', 'order'] });
   const nodes = flatten(tree);
-  const anchor = (id: string, quote: string) => ({ document: `proceeding:${id}`, page: null, quote });
+  const anchor = (id: string, quote: string) => ({
+    document: `proceeding:${id}`,
+    page: null,
+    quote,
+  });
   return {
     proceedings: nodes.flatMap((n) =>
       n.number !== null && n.year !== null
@@ -123,7 +127,9 @@ export async function loadFactCheckFacts(
         : []),
     ]),
     amounts: [],
-    cnrs: nodes.flatMap((n) => (n.cnr === null ? [] : [{ cnr: n.cnr, anchor: anchor(n.id, n.cnr) }])),
+    cnrs: nodes.flatMap((n) =>
+      n.cnr === null ? [] : [{ cnr: n.cnr, anchor: anchor(n.id, n.cnr) }],
+    ),
     courtRefs: [],
   };
 }
@@ -138,7 +144,7 @@ function claimsOf(content: unknown): Claim[] {
   const parsed = validateBlockTree(content);
   if (!parsed.ok) throw invalid('Invalid draft content');
   const claims: Claim[] = [];
-  walkBlocks(parsed.blocks as Block[], ({ block, key }) => {
+  walkBlocks(parsed.blocks, ({ block, key }) => {
     const text = textOf(block);
     if (text !== undefined) claims.push(...extractClaims(text, key));
   });
@@ -182,7 +188,10 @@ export async function openFactBlockers(
     .select()
     .from(draftFactAck)
     .where(
-      and(eq(draftFactAck.workspaceId, workspaceId), eq(draftFactAck.draftVersionId, draftVersionId)),
+      and(
+        eq(draftFactAck.workspaceId, workspaceId),
+        eq(draftFactAck.draftVersionId, draftVersionId),
+      ),
     );
   const [owner] = await tx
     .select({ matterId: draft.matterId })
@@ -218,7 +227,9 @@ export async function openFactBlockers(
         isNotNull(authority.ackAt),
       ),
     );
-  const ackedIds = new Set(acked.map((a) => `${a.blockId}:${String(a.span[0])}-${String(a.span[1])}`));
+  const ackedIds = new Set(
+    acked.map((a) => `${a.blockId}:${String(a.span[0])}-${String(a.span[1])}`),
+  );
   const all = rows.filter((r) => r.kind === 'blocker');
   return {
     checked: rows.some((r) => r.kind === 'checked'),
@@ -277,7 +288,11 @@ export async function runFactCheck(
       {
         action: 'draft.factcheck.checked',
         target: { kind: 'draft_version', id: draftVersionId },
-        metadata: { claims: claims.length, blockers: blockers.length, unresolved: state.open.length },
+        metadata: {
+          claims: claims.length,
+          blockers: blockers.length,
+          unresolved: state.open.length,
+        },
       },
     );
     return {
@@ -358,12 +373,18 @@ async function decide(
 }
 
 /** "Ignore for this matter": the claim stops blocking every draft of the matter (`draft.write`). */
-export const ignoreForMatter = (deps: { db: Database | Transaction }, actor: DraftActor, input: unknown) =>
-  decide(deps, actor, input, 'ignore');
+export const ignoreForMatter = (
+  deps: { db: Database | Transaction },
+  actor: DraftActor,
+  input: unknown,
+) => decide(deps, actor, input, 'ignore');
 
 /** "Mark as my assertion": the author stands behind the claim; the row records who (`draft.write`). */
-export const markAsAssertion = (deps: { db: Database | Transaction }, actor: DraftActor, input: unknown) =>
-  decide(deps, actor, input, 'assertion');
+export const markAsAssertion = (
+  deps: { db: Database | Transaction },
+  actor: DraftActor,
+  input: unknown,
+) => decide(deps, actor, input, 'assertion');
 
 export interface FactFixResult {
   toVersionId: string;

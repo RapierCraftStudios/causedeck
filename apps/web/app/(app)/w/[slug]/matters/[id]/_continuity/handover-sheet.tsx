@@ -16,12 +16,7 @@ import {
   useTransition,
 } from 'react';
 
-import {
-  acknowledgeHandoverAction,
-  generateHandoverAction,
-  listHandoversAction,
-  saveHandoverAction,
-} from './actions.ts';
+import { acknowledgeHandoverAction, listHandoversAction, saveHandoverAction } from './actions.ts';
 import { HandoverHistory } from './handover-history.tsx';
 import { HandoverNoteView } from './handover-view.tsx';
 

@@ -24,21 +24,23 @@ export function WhatChangedCard({
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    let live = true;
+    const unmounted = new AbortController();
+    // A call, not a property read: TypeScript would otherwise narrow `aborted` across the awaits.
+    const stale = () => unmounted.signal.aborted;
     void (async () => {
       const marker = await recordViewAction({ workspaceId, matterId });
-      if (!live || !marker.ok || !showChangeCard(marker.data.previous_viewed_at)) return;
+      if (stale() || !marker.ok || !showChangeCard(marker.data.previous_viewed_at)) return;
       const changed = await whatChangedAction({
         workspaceId,
         matterId,
         since: marker.data.previous_viewed_at,
       });
-      if (!live) return;
+      if (stale()) return;
       if (changed.ok) setSummary(changed.data);
       else setFailed(true);
     })();
     return () => {
-      live = false;
+      unmounted.abort();
     };
   }, [workspaceId, matterId]);
 

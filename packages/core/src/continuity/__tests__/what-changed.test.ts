@@ -63,7 +63,8 @@ describe('whatChangedSince (R4)', () => {
         deps,
         actor,
         fixture.matterId,
-        new Date(NOW.getTime() + 86_400_000),
+        // Seeded rows take created_at from the database clock, so the marker must be after real time too.
+        new Date(Math.max(NOW.getTime(), Date.now()) + 86_400_000),
       );
       expect(summary.total).toBe(0);
       expect(summary.groups).toEqual([]);

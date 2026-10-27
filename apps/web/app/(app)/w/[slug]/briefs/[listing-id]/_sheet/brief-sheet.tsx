@@ -14,6 +14,7 @@ import { PreparedControl } from './prepared-control.tsx';
 import { SectionIndex } from './section-index.tsx';
 import { Sections } from './sections.tsx';
 import { useBriefKeyboard } from './use-brief-keyboard.tsx';
+import { WhatChangedRail } from './what-changed-rail.tsx';
 import './print.css';
 
 function useOnline(): boolean {
@@ -106,6 +107,11 @@ export function BriefSheet({ view }: { view: SheetViewModel }) {
           </Button>
         </div>
       </div>
+      <WhatChangedRail
+        workspaceId={view.workspaceId}
+        matterId={brief.matter_id}
+        members={view.members}
+      />
       <SectionIndex sections={keys} />
       {copied ? (
         <p role="status" className="font-sans text-sm print:hidden">

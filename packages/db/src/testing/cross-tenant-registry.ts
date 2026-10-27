@@ -138,6 +138,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Brief state (#60).
   brief_state: DB_TABLES_TEST,
 
+  // Continuity (#71).
+  matter_view: DB_TABLES_TEST,
+  handover_note: DB_TABLES_TEST,
+
   // Brief sharing (#507).
   brief_share: DB_TABLES_TEST,
   // Court-day reminders (#64).
@@ -556,6 +560,15 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmOutcome: denies,
   recordManualOutcome: denies,
   // briefs (#60): B acting on A's listing is denied (NOT_FOUND), A's brief state is unchanged
+  // continuity (#71): B acting on A's matter or handover is denied, A's handovers and views are unchanged
+  generateHandover: denies,
+  saveHandover: denies,
+  listHandovers: denies,
+  acknowledgeHandover: denies,
+  generateHandoversForMember: denies,
+  recordView: denies,
+  whatChangedSince: denies,
+  changesForViewer: denies,
   assembleBrief: denies,
   markPrepared: denies,
   unmarkPrepared: denies,

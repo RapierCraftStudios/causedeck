@@ -154,4 +154,5 @@ export {
 } from './court-day';
 export * from './delegation';
 export * from './brief';
+export * from './continuity';
 export * from './attention';

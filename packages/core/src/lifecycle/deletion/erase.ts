@@ -111,6 +111,10 @@ export const PURGE_ORDER = [
   'correction',
   // Stale-matter snoozes (#70): cite their matter, so before it.
   'attention_snooze',
+  // Continuity (#71): handover versions and per-member matter views cite their matter and the
+  // members, so they go before both.
+  'handover_note',
+  'matter_view',
   // Outward drafts (#735): the share log and versions before their draft, then the matter rows.
   'outward_share_log',
   'outward_draft_version',

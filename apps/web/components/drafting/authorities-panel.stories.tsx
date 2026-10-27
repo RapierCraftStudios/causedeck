@@ -20,4 +20,4 @@ type Story = StoryObj<typeof meta>;
 export const WithAuthorities: Story = {};
 export const Empty: Story = { args: { authorities: [] } };
 export const NoBlockSelected: Story = { args: { selectedSlot: undefined } };
-export const Disabled: Story = { args: { disabled: true } };
+export const AuthoritiesDisabled: Story = { args: { disabled: true } };

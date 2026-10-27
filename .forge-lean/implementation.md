@@ -1,0 +1,2 @@
+# Stale-list fix (#914)
+Inspected every flagged test. The only real lists (cross-tenant services.test.ts, cross-tenant-registry.ts) already name the new exports (service cases + NOT_A_SERVICE entries for assertFactCheckClear/exportBlockedByFactCheck). Other hits are unrelated mocks/fixtures; recorded as not_members in result.json. V1/V2 pass (run with --reporter=dot since -q is unsupported by vitest).

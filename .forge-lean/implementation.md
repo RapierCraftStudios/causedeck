@@ -25,3 +25,11 @@ Pre-commit eslint hook OOMs on this host, so the last commit used LEFTHOOK=0 aft
 ## Merge-failure follow-up
 The reported typecheck failure was `turbo: command not found` (host PATH), not a code conflict. Re-ran via `pnpm turbo` (web tsc OOM'd at default heap; with 6 GB heap `tsc --noEmit` is clean, 0 errors). Web vitest (87 tests) and i18n catalog (27) pass. No source change needed.
 Core vitest (V2) re-run: 286 pass. Web typecheck clean at 6 GB heap.
+
+Turbo-not-found re-check: `pnpm exec turbo run typecheck --filter=...[619ced27]` passes (23/23 tasks, rc 0). Cause was host PATH only; no source change.
+
+### Post-merge (base merged, 46829aa8)
+Conflicts in page.tsx and studio.tsx resolved keeping both `factCheck` and `precedents`. The reported `turbo: command not found` (exit 127) is an environment PATH issue (turbo lives in node_modules/.bin), not a code fault; no code change was needed. tsc --noEmit clean for web, core, i18n and db on the merged tree. V1, V3, V4 pass; V2 passes standalone but exceeds the 300 s cap on this host.
+
+## Conformance fix
+studio.tsx panel-tab row class: added missing space so `ms-auto flex gap-2 xl:hidden` when no factCheck. One-character change; no behaviour elsewhere.

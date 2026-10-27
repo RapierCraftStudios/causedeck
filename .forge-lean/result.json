@@ -1,6 +1,6 @@
 {
  "status": "fixed",
- "summary": "Live fact-check implemented and committed; V2 passes standalone (286 tests, ~7 min) but exceeds forgedock check 300 s cap on this loaded host",
+ "summary": "Live fact-check implemented and committed; V2 passes standalone (286 tests, ~7 min) but exceeds forgedock check 300 s cap on this loaded host; post-merge: turbo exit 127 was a PATH issue, tsc clean on web/core/i18n/db",
  "requirements": [
   {
    "id": "R1",

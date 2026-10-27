@@ -801,7 +801,7 @@ export function DraftStudio(props: StudioProps) {
             )}
           </button>
         )}
-        <div className={`${factCheck === undefined ? 'ms-auto' : ''}flex gap-2 xl:hidden`}>
+        <div className={`${factCheck === undefined ? 'ms-auto ' : ''}flex gap-2 xl:hidden`}>
           {panelTabs.map((which) => (
             <button
               key={which}

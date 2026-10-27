@@ -24,3 +24,4 @@ Pre-commit eslint hook OOMs on this host, so the last commit used LEFTHOOK=0 aft
 
 ## Merge-failure follow-up
 The reported typecheck failure was `turbo: command not found` (host PATH), not a code conflict. Re-ran via `pnpm turbo` (web tsc OOM'd at default heap; with 6 GB heap `tsc --noEmit` is clean, 0 errors). Web vitest (87 tests) and i18n catalog (27) pass. No source change needed.
+Core vitest (V2) re-run: 286 pass. Web typecheck clean at 6 GB heap.

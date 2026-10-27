@@ -172,6 +172,7 @@ export const PURGE_ORDER = [
   'precedent_passage',
   'authority',
   'draft_consistency_report',
+  'draft_fact_ack',
   'draft_export',
   'draft',
   'draft_version',

@@ -40,12 +40,28 @@ export {
   type CitationActor,
 } from './citations.ts';
 export {
+  acknowledgeFactCheck,
   acknowledgeUnverified,
   assertCitationsClear,
+  assertFactCheckClear,
   exportBlockedByCitations,
+  exportBlockedByFactCheck,
+  type AcknowledgeFactCheckResult,
   type AcknowledgeResult,
   type CitationExportGate,
+  type FactCheckExportGate,
 } from './citation-ack.ts';
+export {
+  ignoreForMatter,
+  loadFactCheckFacts,
+  markAsAssertion,
+  recordFactFix,
+  runFactCheck,
+  type FactCheckResult,
+  type FactFixResult,
+  type FactResolution,
+  type FactVerdictView,
+} from './factcheck-service.ts';
 export {
   getDraft,
   listDrafts,

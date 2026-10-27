@@ -124,6 +124,7 @@ const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actio
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
 const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actions.ts');
+const draftFactcheck = await import('../app/(app)/w/[slug]/drafts/[id]/factcheck-actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
@@ -249,6 +250,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   acknowledgeUnverifiedAction: draftChecks,
   applyFixAction: draftChecks,
   exportDraftAction: draftChecks,
+  runFactCheckAction: draftFactcheck,
+  ignoreFactAction: draftFactcheck,
+  markAssertionAction: draftFactcheck,
+  acknowledgeFactCheckAction: draftFactcheck,
+  recordFactFixAction: draftFactcheck,
   downloadDraftExportAction: draftChecks,
   addTagAction: research,
   confirmOutcomeAction: hearingOutcome,
@@ -1025,6 +1031,29 @@ function inputs(workspaceId: string): Record<string, unknown> {
       confirm: true,
     },
     exportDraftAction: { workspaceId, draftId: t.a.rows.draft_version?.draftId, format: 'docx' },
+    // Fact-check (#914): ub may not check, ignore, assert, acknowledge or log a fix on A's draft.
+    runFactCheckAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
+    ignoreFactAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      claimKey: 'date:2024-01-01',
+    },
+    markAssertionAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      claimKey: 'date:2024-01-01',
+    },
+    acknowledgeFactCheckAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      reason: 'Cross-tenant probe',
+      confirm: true,
+    },
+    recordFactFixAction: {
+      workspaceId,
+      fromVersionId: t.a.rows.draft_version?.id,
+      toVersionId: t.a.rows.draft_version?.id,
+    },
     downloadDraftExportAction: { workspaceId, exportId: randomUUID() },
     // Hearing outcome (#62): ub may not confirm A's hearing outcome.
     confirmOutcomeAction: {
@@ -1727,6 +1756,11 @@ describe('cross-tenant server actions', () => {
       'applyFixAction',
       'exportDraftAction',
       'downloadDraftExportAction',
+      'runFactCheckAction',
+      'ignoreFactAction',
+      'markAssertionAction',
+      'acknowledgeFactCheckAction',
+      'recordFactFixAction',
     ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));

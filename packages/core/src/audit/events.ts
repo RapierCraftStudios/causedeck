@@ -187,6 +187,27 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A lawyer applied a consistency fix, which saved a new draft version',
   },
+  // Fact-check (#914). Metadata holds claim kinds, counts, the version id and the typed reason, never draft text.
+  'draft.factcheck.checked': {
+    security: false,
+    description: 'A draft version was fact-checked against the matter record',
+  },
+  'draft.factcheck.ignored': {
+    security: false,
+    description: 'A lawyer chose to ignore a fact-check claim for this matter',
+  },
+  'draft.factcheck.asserted': {
+    security: false,
+    description: 'A lawyer marked a fact-check claim as their own assertion',
+  },
+  'draft.factcheck.fixed': {
+    security: false,
+    description: 'A fact-check mismatch or unverified citation was fixed in a new draft version',
+  },
+  'draft.factcheck.acknowledged': {
+    security: true,
+    description: 'A member acknowledged unresolved fact-check findings before an export',
+  },
   // Workspace deletion (#302): fail-closed. Metadata holds the deletion job id and dates only. These
   // events are purged with the workspace in the final erase step; the receipt keeps the chain head.
   'workspace.deletion_requested': {

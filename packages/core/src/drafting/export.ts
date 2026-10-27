@@ -38,7 +38,12 @@ import { record } from '../audit/index.ts';
 import { collectNarratives } from '@causedeck/drafting';
 import { invalid, notFound } from '../shared/errors.ts';
 
-import { assertCitationsClear, exportBlockedByCitations } from './citation-ack.ts';
+import {
+  assertCitationsClear,
+  assertFactCheckClear,
+  exportBlockedByCitations,
+  exportBlockedByFactCheck,
+} from './citation-ack.ts';
 import { asDraftMember, requireDraft, type DraftActor } from './policy.ts';
 import { checkBlocksFor, draftNarratives, loadDraftFacts, type DraftExportRow } from './service.ts';
 
@@ -145,6 +150,7 @@ export async function runDraftingExport(
         checkBlocksFor(version.content),
       ),
     );
+    assertFactCheckClear(await exportBlockedByFactCheck(tx, workspaceId, draftVersionId));
     return {
       version,
       draft: row,

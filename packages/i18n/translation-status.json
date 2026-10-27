@@ -4627,7 +4627,22 @@
     "drafting.precedents.proposed": "draft",
     "drafting.precedents.skipped": "draft",
     "drafting.precedents.exportFirst": "draft",
-    "drafting.precedents.failed": "draft"
+    "drafting.precedents.failed": "draft",
+    "drafting.factCheck.status.match": "draft",
+    "drafting.factCheck.status.mismatch": "draft",
+    "drafting.factCheck.status.unsupported": "draft",
+    "drafting.factCheck.status.unverifiedCitation": "draft",
+    "drafting.factCheck.status.ambiguous": "draft",
+    "drafting.factCheck.source": "draft",
+    "drafting.factCheck.noSource": "draft",
+    "drafting.factCheck.page": "draft",
+    "drafting.factCheck.openPage": "draft",
+    "drafting.factCheck.actions.fix": "draft",
+    "drafting.factCheck.actions.ignore": "draft",
+    "drafting.factCheck.actions.ignoreForMatter": "draft",
+    "drafting.factCheck.actions.markAssertion": "draft",
+    "drafting.factCheck.announce": "draft",
+    "drafting.factCheck.noIssues": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -9045,6 +9060,21 @@
     "drafting.precedents.proposed": "draft",
     "drafting.precedents.skipped": "draft",
     "drafting.precedents.exportFirst": "draft",
-    "drafting.precedents.failed": "draft"
+    "drafting.precedents.failed": "draft",
+    "drafting.factCheck.status.match": "draft",
+    "drafting.factCheck.status.mismatch": "draft",
+    "drafting.factCheck.status.unsupported": "draft",
+    "drafting.factCheck.status.unverifiedCitation": "draft",
+    "drafting.factCheck.status.ambiguous": "draft",
+    "drafting.factCheck.source": "draft",
+    "drafting.factCheck.noSource": "draft",
+    "drafting.factCheck.page": "draft",
+    "drafting.factCheck.openPage": "draft",
+    "drafting.factCheck.actions.fix": "draft",
+    "drafting.factCheck.actions.ignore": "draft",
+    "drafting.factCheck.actions.ignoreForMatter": "draft",
+    "drafting.factCheck.actions.markAssertion": "draft",
+    "drafting.factCheck.announce": "draft",
+    "drafting.factCheck.noIssues": "draft"
   }
 }

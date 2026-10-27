@@ -160,13 +160,15 @@
     "tabs": {
       "editor": "Editor",
       "facts": "Facts",
-      "versions": "Versions"
+      "versions": "Versions",
+      "precedents": "Precedents"
     },
     "actions": {
       "title": "Draft actions",
       "save": "Save draft",
       "showFacts": "Show facts",
-      "showVersions": "Show versions"
+      "showVersions": "Show versions",
+      "showPrecedents": "Show precedents"
     },
     "checks": {
       "citations": {
@@ -220,6 +222,26 @@
         "close": "Close",
         "preparing": "Preparing the file…"
       }
+    },
+    "precedents": {
+      "title": "Precedents",
+      "hint": "Suggested from your own drafts. Nothing is inserted until you choose it.",
+      "noBlock": "Select a narrative block to see your passages for it.",
+      "loading": "Finding your passages",
+      "empty": "Passages you approve will appear here.",
+      "error": "Your passages could not be loaded.",
+      "retry": "Try again",
+      "denied": "Your role cannot read saved passages.",
+      "offline": "Offline. Passages load when you are back online.",
+      "why": "Why this is suggested",
+      "source": "Your draft",
+      "insert": "Insert",
+      "saveSelection": "Save selection as precedent",
+      "nothingSelected": "Select some text in a paragraph first.",
+      "proposed": "Proposed as a precedent. Review it in Memory.",
+      "skipped": "Already proposed, or dismissed recently.",
+      "exportFirst": "Export this version before saving a passage from it.",
+      "failed": "The passage could not be proposed."
     },
     "factCheck": {
       "status": {

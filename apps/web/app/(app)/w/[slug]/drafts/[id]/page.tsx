@@ -26,6 +26,7 @@ import {
   ignoreFactAction,
   markAssertionAction,
 } from './factcheck-actions.ts';
+import { proposePrecedentAction, searchPrecedentsForBlockAction } from './precedent-actions.ts';
 import { DraftStudio } from './studio.tsx';
 
 interface DraftPageProps {
@@ -67,6 +68,16 @@ async function pinnedAuthorities(
     const code = domainErrorCode(error);
     if (code === 'NOT_FOUND' || code === 'FORBIDDEN' || code === 'VALIDATION') return [];
     throw error;
+  }
+}
+
+/** The precedent picker (#904) is behind `m5_playbooks`: off unless the flag reads on. */
+async function precedentsEnabled(actor: { workspaceId: string; userId: string }) {
+  try {
+    const { isEnabled } = await import('@causedeck/flags/server');
+    return await isEnabled('m5_playbooks', actor);
+  } catch {
+    return false;
   }
 }
 
@@ -116,6 +127,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
   }
 
   const { detail, rendered, older, authorities, report, gate, found } = loaded;
+  const precedentsOn = await precedentsEnabled(actor);
   const slotValues = Object.fromEntries(
     Object.entries(rendered.slots).map(([key, resolution]) => [key, resolution.value]),
   );
@@ -184,6 +196,17 @@ export default async function DraftPage({ params }: DraftPageProps) {
         aiAssisted: Object.keys(aiTexts).length > 0,
       }}
       authorities={authorities}
+      {...(precedentsOn
+        ? {
+            precedents: {
+              search: searchPrecedentsForBlockAction,
+              propose: proposePrecedentAction,
+              versionId: detail.version.id,
+              language: 'en',
+              courtId: null,
+            },
+          }
+        : {})}
       versions={detail.versions.map((v) => ({
         versionNo: v.versionNo,
         createdAt: v.createdAt.toISOString(),

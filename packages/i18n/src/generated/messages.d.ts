@@ -3886,12 +3886,14 @@ export type Messages = {
       editor: string;
       facts: string;
       versions: string;
+      precedents: string;
     };
     actions: {
       title: string;
       save: string;
       showFacts: string;
       showVersions: string;
+      showPrecedents: string;
     };
     checks: {
       citations: {
@@ -3945,6 +3947,26 @@ export type Messages = {
         close: string;
         preparing: string;
       };
+    };
+    precedents: {
+      title: string;
+      hint: string;
+      noBlock: string;
+      loading: string;
+      empty: string;
+      error: string;
+      retry: string;
+      denied: string;
+      offline: string;
+      why: string;
+      source: string;
+      insert: string;
+      saveSelection: string;
+      nothingSelected: string;
+      proposed: string;
+      skipped: string;
+      exportFirst: string;
+      failed: string;
     };
     factCheck: {
       status: {
@@ -5513,6 +5535,103 @@ export type Messages = {
     errors: {
       generic: string;
       forbidden: string;
+    };
+  };
+  memoryM5: {
+    nav: {
+      label: string;
+      precedents: string;
+      playbooks: string;
+    };
+    denied: string;
+    offline: string;
+    readOnly: string;
+    loading: string;
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    errors: {
+      forbidden: string;
+      generic: string;
+    };
+    precedents: {
+      metaTitle: string;
+      title: string;
+      hint: string;
+      empty: string;
+      listLabel: string;
+    };
+    playbooks: {
+      metaTitle: string;
+      title: string;
+      hint: string;
+      empty: string;
+      listLabel: string;
+    };
+    proposal: {
+      heading: string;
+      precedent: string;
+      playbook: string;
+      evidence: string;
+      save: string;
+      edit: string;
+      dismiss: string;
+      shortcuts: string;
+      saved: string;
+      dismissed: string;
+      offline: string;
+    };
+    dismissDialog: {
+      title: string;
+      description: string;
+      confirm: string;
+      cancel: string;
+    };
+    reasons: {
+      not_reusable: string;
+      too_specific: string;
+      incorrect: string;
+      already_saved: string;
+      other: string;
+    };
+    editPassage: {
+      title: string;
+      label: string;
+      save: string;
+      cancel: string;
+    };
+    card: {
+      mine: string;
+      chamber: string;
+      details: string;
+      provenance: string;
+      lastUsed: string;
+      neverUsed: string;
+      retire: string;
+      delete: string;
+      retired: string;
+      deleted: string;
+      deleteTitle: string;
+      deleteBody: string;
+      cancel: string;
+    };
+    editor: {
+      title: string;
+      name: string;
+      court: string;
+      format: string;
+      prayers: string;
+      annexures: string;
+      submit: string;
+      proposed: string;
+    };
+    review: {
+      retire: string;
+      retired: string;
+      lastUsed: string;
+      neverUsed: string;
     };
   };
   outward: {

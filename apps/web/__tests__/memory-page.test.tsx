@@ -39,6 +39,8 @@ vi.mock('../lib/workspace-loader.ts', () => ({
 vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
 vi.mock('../lib/memory/deps.ts', () => ({ memoryDeps: (db: unknown) => ({ db }) }));
 vi.mock('@causedeck/core/runtime', () => runtime);
+// The M5 flag (#903) is off here; the M5 pages have their own tests.
+vi.mock('../lib/flags.ts', () => ({ workspaceFlagCheck: () => Promise.resolve(() => false) }));
 vi.mock('@causedeck/core/memory', () => core);
 vi.mock('../app/(app)/w/[slug]/memory/_components/memory-list.tsx', () => ({
   MemoryScreen: (props: { canWrite: boolean; cards: unknown[] }) => {

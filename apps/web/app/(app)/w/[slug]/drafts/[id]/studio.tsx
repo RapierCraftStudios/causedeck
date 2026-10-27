@@ -20,6 +20,7 @@ import type { CitationView } from '../../../../../../components/drafting/citatio
 import type { ExportLink } from '../../../../../../components/drafting/export-dialog.tsx';
 import type { PinnedAuthority } from '../../../../../../components/drafting/authorities-panel.tsx';
 import type { DraftFact } from '../../../../../../components/drafting/facts-panel.tsx';
+import type { PrecedentSearch } from '../../../../../../components/drafting/precedent-picker.tsx';
 import type { DraftVersionView } from '../../../../../../components/drafting/version-drawer.tsx';
 import { registerCommands } from '../../../../../../lib/commands/registry.ts';
 import {
@@ -48,6 +49,7 @@ import {
 import { DRAFT_STUDIO_SHORTCUTS } from '../../../../../../lib/shortcuts/registry.ts';
 
 import type { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
+import type { proposePrecedentAction } from './precedent-actions.ts';
 import type {
   checkFactsLiveAction,
   ignoreFactAction,
@@ -79,6 +81,13 @@ const AuthoritiesPanel = dynamic(
   () =>
     import('../../../../../../components/drafting/authorities-panel.tsx').then(
       (m) => m.AuthoritiesPanel,
+    ),
+  { ssr: false, loading: panelLoading },
+);
+const PrecedentPanel = dynamic(
+  () =>
+    import('../../../../../../components/drafting/precedent-picker.tsx').then(
+      (m) => m.PrecedentPanel,
     ),
   { ssr: false, loading: panelLoading },
 );
@@ -145,6 +154,8 @@ export interface StudioProps {
   checks?: StudioChecks;
   /** #916: the live fact-check; absent, or without a matter, the studio checks nothing. */
   factCheck?: StudioFactCheck;
+  /** #904: the precedent picker, present only when the `m5_playbooks` flag is on. */
+  precedents?: StudioPrecedents;
 }
 
 export interface StudioFactCheck {
@@ -155,6 +166,15 @@ export interface StudioFactCheck {
     ignore: typeof ignoreFactAction;
     assert: typeof markAssertionAction;
   };
+}
+
+export interface StudioPrecedents {
+  search: PrecedentSearch;
+  propose: typeof proposePrecedentAction;
+  /** The version being edited: where a proposed passage is read from. */
+  versionId: string;
+  language: string;
+  courtId: string | null;
 }
 
 export interface StudioChecks {
@@ -176,7 +196,7 @@ export interface StudioChecks {
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'queued' | 'conflict' | 'failed';
-type Panel = 'facts' | 'versions';
+type Panel = 'facts' | 'precedents' | 'versions';
 
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
@@ -208,6 +228,8 @@ export function DraftStudio(props: StudioProps) {
   const factCheck = props.factCheck;
 
   const readOnly = !online && cached;
+  const panelTabs: readonly Panel[] =
+    props.precedents === undefined ? ['facts', 'versions'] : ['facts', 'precedents', 'versions'];
 
   // Live fact-check of the text as it stands (#916): headings and paragraphs, as the editor shows them.
   const checkBlocks = useMemo(
@@ -407,6 +429,42 @@ export function DraftStudio(props: StudioProps) {
     t,
   ]);
 
+  // Inserting a precedent passage saves straight away, so the insert is its own new version.
+  const saveNext = useRef(false);
+  useEffect(() => {
+    if (saveNext.current && dirty) {
+      saveNext.current = false;
+      void save();
+    }
+  }, [dirty, save]);
+
+  const precedents = props.precedents;
+  const saveAsPrecedent = useCallback(async () => {
+    if (precedents === undefined) return;
+    const block = keyedBlocks(blocks).find((entry) => entry.key === selectedSlot)?.block;
+    const picked = window.getSelection()?.toString().trim() ?? '';
+    const text = picked !== '' ? picked : block?.type === 'paragraph' ? block.text.trim() : '';
+    if (selectedSlot === undefined || text === '') {
+      setAnnouncement(t('precedents.nothingSelected'));
+      return;
+    }
+    const result = await precedents.propose({
+      workspaceId: props.workspaceId,
+      passageText: text,
+      // Same rule as the picker's (kept here so the studio chunk does not load the picker).
+      kind: /prayer/i.test(selectedSlot) ? 'prayer' : 'other',
+      courtId: precedents.courtId,
+      language: precedents.language,
+      draftVersionId: precedents.versionId,
+      anchorId: selectedSlot,
+    });
+    setAnnouncement(
+      result.ok
+        ? t(result.data.status === 'proposed' ? 'precedents.proposed' : 'precedents.skipped')
+        : t(result.error.code === 'NOT_FOUND' ? 'precedents.exportFirst' : 'precedents.failed'),
+    );
+  }, [precedents, blocks, selectedSlot, props.workspaceId, t]);
+
   async function restore(versionNo: number) {
     const result = await props.actions.restore({
       workspaceId: props.workspaceId,
@@ -534,9 +592,9 @@ export function DraftStudio(props: StudioProps) {
     [findings, finding, t],
   );
 
-  const latest = useRef({ save, go });
+  const latest = useRef({ save, go, saveAsPrecedent });
   useEffect(() => {
-    latest.current = { save, go };
+    latest.current = { save, go, saveAsPrecedent };
   });
 
   useEffect(() => {
@@ -584,6 +642,24 @@ export function DraftStudio(props: StudioProps) {
         })),
       ),
     [],
+  );
+
+  const precedentsOn = precedents !== undefined;
+  useEffect(
+    () =>
+      precedentsOn
+        ? registerCommands('create', [
+            {
+              id: 'draft.saveAsPrecedent',
+              labelKey: 'drafting.precedents.saveSelection',
+              requires: 'memory.write',
+              perform: () => {
+                void latest.current.saveAsPrecedent();
+              },
+            },
+          ])
+        : undefined,
+    [precedentsOn],
   );
 
   const status = !online
@@ -663,6 +739,22 @@ export function DraftStudio(props: StudioProps) {
           }}
         />
       </div>
+    ) : which === 'precedents' && precedents !== undefined ? (
+      <PrecedentPanel
+        workspaceId={props.workspaceId}
+        blocks={blocks}
+        selectedBlock={selectedSlot}
+        language={precedents.language}
+        courtId={precedents.courtId}
+        online={online}
+        disabled={readOnly}
+        search={precedents.search}
+        onInsert={(key, passage) => {
+          setBlocks((current) => insertFact(current, key, passage.text));
+          setDirty(true);
+          saveNext.current = true;
+        }}
+      />
     ) : (
       <VersionDrawer
         versions={props.versions}
@@ -709,8 +801,8 @@ export function DraftStudio(props: StudioProps) {
             )}
           </button>
         )}
-        <div className="flex gap-2 xl:hidden">
-          {(['facts', 'versions'] as const).map((which) => (
+        <div className={`${factCheck === undefined ? 'ms-auto' : ''}flex gap-2 xl:hidden`}>
+          {panelTabs.map((which) => (
             <button
               key={which}
               type="button"
@@ -738,6 +830,7 @@ export function DraftStudio(props: StudioProps) {
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 xl:grid-cols-[18rem_minmax(0,1fr)_18rem]">
         <aside aria-label={t('panels.facts.title')} className="hidden xl:block xl:overflow-y-auto">
           {panelBody('facts')}
+          {precedentsOn ? <div className="mt-6">{panelBody('precedents')}</div> : null}
         </aside>
 
         <main ref={editorRef} className="mx-auto w-full max-w-3xl" aria-label={t('editor.label')}>
@@ -824,7 +917,7 @@ export function DraftStudio(props: StudioProps) {
           className="bg-surface border-line fixed inset-x-0 bottom-0 z-40 max-h-[70vh] overflow-y-auto rounded-t-lg border-t p-4 shadow-lg motion-safe:transition-transform md:inset-y-0 md:start-auto md:end-0 md:max-h-none md:w-80 md:rounded-none md:border-s md:border-t-0 xl:hidden"
         >
           <div role="tablist" className="mb-3 flex gap-2 md:hidden">
-            {(['editor', 'facts', 'versions'] as const).map((tab) => (
+            {(['editor', ...panelTabs] as const).map((tab) => (
               <button
                 key={tab}
                 role="tab"
@@ -869,7 +962,7 @@ export function DraftStudio(props: StudioProps) {
           >
             {t('actions.save')}
           </button>
-          {(['facts', 'versions'] as const).map((which) => (
+          {panelTabs.map((which) => (
             <button
               key={which}
               type="button"
@@ -879,9 +972,25 @@ export function DraftStudio(props: StudioProps) {
                 setPanel(which);
               }}
             >
-              {which === 'facts' ? t('actions.showFacts') : t('actions.showVersions')}
+              {which === 'facts'
+                ? t('actions.showFacts')
+                : which === 'precedents'
+                  ? t('actions.showPrecedents')
+                  : t('actions.showVersions')}
             </button>
           ))}
+          {precedentsOn ? (
+            <button
+              type="button"
+              className="min-h-11 rounded-md px-2 text-start text-sm"
+              onClick={() => {
+                setMenu(false);
+                void saveAsPrecedent();
+              }}
+            >
+              {t('precedents.saveSelection')}
+            </button>
+          ) : null}
         </div>
       ) : null}
 

@@ -81,6 +81,9 @@ jobs:
         if: steps.changed.outputs.docs_checks != 'false'
         run: pnpm docs:permissions:check
       - name: ESLint
+        env:
+          # Type-aware lint of apps/web needs most of the runner's memory: lint two packages at a time.
+          CI_TURBO_CONCURRENCY: '2'
         run: |
           args=()
           if [[ $GITHUB_EVENT_NAME == pull_request && $CI_BASE_REF == milestone/* ]]; then

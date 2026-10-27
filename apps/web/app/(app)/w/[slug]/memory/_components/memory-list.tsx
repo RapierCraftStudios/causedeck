@@ -44,11 +44,14 @@ export interface MemoryScreenProps {
   pausedAll: boolean;
   reviewDue: boolean;
   forceOffline: boolean;
+  /** `m5_playbooks` is on: link to the playbooks and precedents pages. */
+  m5Enabled?: boolean;
 }
 
 export function MemoryScreen(props: MemoryScreenProps) {
   const { workspaceId, slug, tab, cards, proposals, canWrite, isOwner, pausedAll } = props;
   const t = useTranslations('memory');
+  const tm5 = useTranslations('memoryM5');
   const router = useRouter();
   const pathname = usePathname();
   const online = useOnline() && !props.forceOffline;
@@ -99,6 +102,16 @@ export function MemoryScreen(props: MemoryScreenProps) {
         </p>
       ) : null}
       {canWrite ? null : <p className="text-ink-subtle text-xs">{t('readOnly')}</p>}
+      {props.m5Enabled === true ? (
+        <nav aria-label={tm5('nav.label')} className="flex flex-wrap gap-2">
+          <Button asChild variant="ghost">
+            <Link href={`/w/${slug}/memory/precedents`}>{tm5('precedents.title')}</Link>
+          </Button>
+          <Button asChild variant="ghost">
+            <Link href={`/w/${slug}/memory/playbooks`}>{tm5('playbooks.title')}</Link>
+          </Button>
+        </nav>
+      ) : null}
       {props.reviewDue && canWrite && cards.length > 0 ? (
         <section
           data-slot="review-reminder"

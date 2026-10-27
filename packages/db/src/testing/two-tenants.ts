@@ -30,6 +30,8 @@ import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
 import { authority } from '../schema/authority.ts';
+import { memoryItem } from '../schema/memory.ts';
+import { precedentPassage } from '../schema/precedent.ts';
 import {
   draft,
   draftConsistencyReport,
@@ -852,6 +854,50 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: authority.id });
     return { draftId, draftVersionId: version.id, id: first(rows, 'authority').id };
+  },
+  precedent_passage: async (tx, { workspaceId, ownerId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({
+          workspaceId,
+          draftId,
+          versionNo: 1,
+          content: [],
+          contentSha256: createHash('sha256').update(draftId).digest('hex'),
+        })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const item = first(
+      await tx
+        .insert(memoryItem)
+        .values({
+          workspaceId,
+          layer: 'M5',
+          key: 'M5.precedent',
+          scope: 'user',
+          ownerUserId: ownerId,
+          valueCiphertext: `seed-ciphertext-${tag}`,
+          sourceType: 'ai',
+          confirmationState: 'confirmed',
+        })
+        .returning({ id: memoryItem.id }),
+      'memory_item',
+    );
+    const rows = await tx
+      .insert(precedentPassage)
+      .values({
+        workspaceId,
+        memoryItemId: item.id,
+        kind: 'prayer',
+        bodyCiphertext: `seed-ciphertext-${tag}`,
+        sourceDraftVersionId: version.id,
+        anchorId: 'b.1',
+      })
+      .returning({ id: precedentPassage.id });
+    return { itemId: item.id, draftVersionId: version.id, id: first(rows, 'precedent_passage').id };
   },
   draft_consistency_report: async (tx, { workspaceId, tag }) => {
     const { draftId } = await seedDraft(tx, workspaceId, tag);

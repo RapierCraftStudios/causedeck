@@ -196,6 +196,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   memory_embedding: DB_TABLES_TEST,
   memory_usage: DB_TABLES_TEST,
   memory_pause: DB_TABLES_TEST,
+  // M5 precedent bank (#901).
+  precedent_passage: DB_TABLES_TEST,
   // Enterprise onboarding (#682).
   sso_provider: DB_TABLES_TEST,
   scim_token: DB_TABLES_TEST,

@@ -24,7 +24,7 @@ export interface ExportLink {
   filename: string;
 }
 
-export interface ExportDialogProps {
+export interface DraftExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** The template's court preset key, or null when it has none. */
@@ -38,7 +38,7 @@ export interface ExportDialogProps {
   onExport: (format: ExportFormat) => Promise<ExportLink | null>;
 }
 
-export function ExportDialog({
+export function DraftExportDialog({
   open,
   onOpenChange,
   courtPreset,
@@ -47,7 +47,7 @@ export function ExportDialog({
   disabled = false,
   onAcknowledge,
   onExport,
-}: ExportDialogProps) {
+}: DraftExportDialogProps) {
   const t = useTranslations('drafting.export');
   const tc = useTranslations('drafting.checks.export');
   const [format, setFormat] = useState<ExportFormat>('docx');
@@ -93,11 +93,15 @@ export function ExportDialog({
         <dl className="flex flex-col gap-1 text-sm">
           <div className="flex gap-2">
             <dt className="text-ink-muted">{tc('court')}</dt>
-            <dd data-export-court="">{courtPreset === null ? tc('noCourt') : courtPreset.replaceAll('_', ' ')}</dd>
+            <dd data-export-court="">
+              {courtPreset === null ? tc('noCourt') : courtPreset.replaceAll('_', ' ')}
+            </dd>
           </div>
           <div className="flex gap-2">
             <dt className="text-ink-muted">{tc('ai')}</dt>
-            <dd data-export-ai={aiAssisted ? 'yes' : 'no'}>{aiAssisted ? tc('aiYes') : tc('aiNo')}</dd>
+            <dd data-export-ai={aiAssisted ? 'yes' : 'no'}>
+              {aiAssisted ? tc('aiYes') : tc('aiNo')}
+            </dd>
           </div>
         </dl>
         {unacknowledged > 0 ? (

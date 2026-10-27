@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderWithIntl } from '../../shell/__tests__/helpers.tsx';
 import { AckDialog } from '../ack-dialog.tsx';
 import { ConsistencyPanel } from '../consistency-panel.tsx';
-import { ExportDialog } from '../export-dialog.tsx';
+import { DraftExportDialog } from '../export-dialog.tsx';
 
 afterEach(cleanup);
 
@@ -34,7 +34,7 @@ describe('AckDialog', () => {
   });
 });
 
-describe('ExportDialog', () => {
+describe('DraftExportDialog', () => {
   const props = {
     open: true,
     onOpenChange: vi.fn(),
@@ -45,13 +45,13 @@ describe('ExportDialog', () => {
   };
 
   it('is blocked while a not-found citation is unacknowledged', () => {
-    renderWithIntl(<ExportDialog {...props} unacknowledged={1} />);
+    renderWithIntl(<DraftExportDialog {...props} unacknowledged={1} />);
     const action = screen.getByRole('button', { name: 'Export' });
     expect((action as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('offers DOCX and PDF, downloads, and has no send, share or file button', async () => {
-    renderWithIntl(<ExportDialog {...props} unacknowledged={0} />);
+    renderWithIntl(<DraftExportDialog {...props} unacknowledged={0} />);
     expect(screen.getByRole('button', { name: 'Word document' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'PDF' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /send|share|file/i })).toBeNull();

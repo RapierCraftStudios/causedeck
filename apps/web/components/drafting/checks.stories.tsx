@@ -5,7 +5,7 @@ import { fn } from 'storybook/test';
 import { AckDialog } from './ack-dialog.tsx';
 import { CitationPanel, type CitationView } from './citation-panel.tsx';
 import { ConsistencyPanel } from './consistency-panel.tsx';
-import { ExportDialog } from './export-dialog.tsx';
+import { DraftExportDialog } from './export-dialog.tsx';
 
 const citations: CitationView[] = [
   {
@@ -74,7 +74,7 @@ export const Acknowledge: Story = {
 const link = { url: '#', filename: 'mention-memo.docx' };
 export const ExportReady: Story = {
   render: () => (
-    <ExportDialog
+    <DraftExportDialog
       open
       onOpenChange={fn()}
       courtPreset="madras_hc"
@@ -88,7 +88,7 @@ export const ExportReady: Story = {
 
 export const ExportBlocked: Story = {
   render: () => (
-    <ExportDialog
+    <DraftExportDialog
       open
       onOpenChange={fn()}
       courtPreset={null}

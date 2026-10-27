@@ -75,9 +75,11 @@ const AckDialog = dynamic(
   () => import('../../../../../../components/drafting/ack-dialog.tsx').then((m) => m.AckDialog),
   { ssr: false, loading: panelLoading },
 );
-const ExportDialog = dynamic(
+const DraftExportDialog = dynamic(
   () =>
-    import('../../../../../../components/drafting/export-dialog.tsx').then((m) => m.ExportDialog),
+    import('../../../../../../components/drafting/export-dialog.tsx').then(
+      (m) => m.DraftExportDialog,
+    ),
   { ssr: false, loading: panelLoading },
 );
 const DraftEditor = dynamic(() => import('../../../../../../components/drafting/editor.tsx'), {
@@ -621,7 +623,7 @@ export function DraftStudio(props: StudioProps) {
           />
         ) : null}
         {checks !== undefined && dialog === 'export' ? (
-          <ExportDialog
+          <DraftExportDialog
             open
             courtPreset={checks.courtPreset}
             aiAssisted={checks.aiAssisted}

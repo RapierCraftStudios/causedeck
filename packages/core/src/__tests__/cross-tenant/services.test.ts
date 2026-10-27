@@ -648,6 +648,12 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
         confirm: true,
       }),
     ),
+    checkFactsLive: denied((f, s) =>
+      core.checkFactsLive({ db: s }, inA(f), {
+        matterId: ids(f).matterId,
+        blocks: [{ key: 'b.0', text: 'Order dated 01/02/2024.' }],
+      }),
+    ),
     loadFactCheckFacts: denied((f, s) =>
       core.loadFactCheckFacts({ db: s }, inA(f), ids(f).matterId),
     ),

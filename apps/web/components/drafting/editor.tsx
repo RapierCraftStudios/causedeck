@@ -6,9 +6,11 @@
 // a narrative block carries a left rule and an AI-drafted marker that goes away on the first edit,
 // which reports a `{blockKey, before, after}` diff. `[[missing: …]]` markers are flagged with
 // warning text, not colour alone.
+import type { LiveFactVerdict } from '@causedeck/core/drafting';
+import { FactSquiggle } from '@causedeck/ui/patterns';
 import type { Block } from '@causedeck/validators/drafting';
 import { useTranslations } from 'next-intl';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import {
   editBlockText,
@@ -16,6 +18,17 @@ import {
   splitMissing,
   type EditDiff,
 } from '../../lib/drafting/blocks-edit.ts';
+import { fixText, useFactLabels } from '../../lib/drafting/use-fact-check.ts';
+
+/** Live fact-check wiring (#916): verdicts for the current text and what a click may do. */
+export interface EditorFacts {
+  verdicts: readonly LiveFactVerdict[];
+  /** Click-only; the host applies the edit and keeps it undoable. */
+  onFix?: ((verdict: LiveFactVerdict) => void) | undefined;
+  /** The matter-level decisions need a saved draft version; surfaces without one omit them. */
+  onIgnoreForMatter?: ((verdict: LiveFactVerdict) => void) | undefined;
+  onMarkAssertion?: ((verdict: LiveFactVerdict) => void) | undefined;
+}
 
 export interface DraftEditorProps {
   blocks: readonly Block[];
@@ -26,6 +39,8 @@ export interface DraftEditorProps {
   selectedSlot?: string | undefined;
   readOnly?: boolean;
   onSelectSlot?: (key: string | undefined) => void;
+  /** Verdicts to underline in a read-along line under each block's text area. */
+  facts?: EditorFacts | undefined;
   onChange: (blocks: Block[], diff?: EditDiff) => void;
 }
 
@@ -48,17 +63,107 @@ function Marked({ text }: { text: string }) {
   );
 }
 
+/**
+ * The block's text with each open claim issue underlined. A text area cannot hold inline markup, so
+ * the annotated line sits under it; a match, an ignored or an asserted claim carries no underline.
+ */
+export function FactLine({
+  text,
+  verdicts,
+  facts,
+}: {
+  text: string;
+  verdicts: readonly LiveFactVerdict[];
+  facts: EditorFacts;
+}) {
+  const labels = useFactLabels();
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
+  const issues = verdicts
+    .filter(
+      (v) =>
+        v.status !== 'match' &&
+        v.resolution === 'open' &&
+        !dismissed.has(v.claimId) &&
+        v.end <= text.length,
+    )
+    .sort((a, b) => a.start - b.start);
+  if (issues.length === 0) return null;
+  const parts: ReactNode[] = [];
+  let at = 0;
+  for (const v of issues) {
+    if (v.start < at) continue;
+    parts.push(text.slice(at, v.start));
+    const fix = fixText(v);
+    parts.push(
+      <FactSquiggle
+        key={v.claimId}
+        status={v.status}
+        labels={labels}
+        source={{ document: v.anchor.document, page: v.anchor.page, quote: v.anchor.quote }}
+        onFix={
+          fix === null || facts.onFix === undefined
+            ? undefined
+            : () => {
+                facts.onFix?.(v);
+              }
+        }
+        onIgnore={() => {
+          setDismissed((prev) => new Set(prev).add(v.claimId));
+        }}
+        onIgnoreForMatter={
+          facts.onIgnoreForMatter === undefined
+            ? undefined
+            : () => {
+                facts.onIgnoreForMatter?.(v);
+              }
+        }
+        onMarkAssertion={
+          facts.onMarkAssertion === undefined
+            ? undefined
+            : () => {
+                facts.onMarkAssertion?.(v);
+              }
+        }
+      >
+        {text.slice(v.start, v.end)}
+      </FactSquiggle>,
+    );
+    at = v.end;
+  }
+  parts.push(text.slice(at));
+  return (
+    <p
+      data-slot="fact-line"
+      className="text-ink-muted mt-1 border-s-2 ps-2 font-serif text-sm leading-relaxed"
+    >
+      {parts.map((part, i) => (
+        <span key={i}>{part}</span>
+      ))}
+    </p>
+  );
+}
+
 export function DraftEditor({
   blocks,
   slotValues = {},
   aiTexts = {},
   selectedSlot,
   readOnly = false,
+  facts,
   onSelectSlot,
   onChange,
 }: DraftEditorProps) {
   const t = useTranslations('drafting.editor');
   const ta = useTranslations('drafting.aiDrafted');
+
+  const factLine = (key: string, text: string): ReactNode =>
+    facts === undefined ? null : (
+      <FactLine
+        text={text}
+        verdicts={facts.verdicts.filter((v) => v.blockKey === key)}
+        facts={facts}
+      />
+    );
 
   function edit(key: string, text: string, ai?: string) {
     const result = editBlockText(blocks, key, text, ai);
@@ -72,18 +177,20 @@ export function DraftEditor({
       switch (block.type) {
         case 'heading':
           return (
-            <textarea
-              key={key}
-              data-block-key={key}
-              aria-label={t('label')}
-              readOnly={readOnly}
-              rows={1}
-              value={block.text}
-              onChange={(e) => {
-                edit(key, e.target.value);
-              }}
-              className={`${textClasses} text-2xl font-semibold`}
-            />
+            <div key={key}>
+              <textarea
+                data-block-key={key}
+                aria-label={t('label')}
+                readOnly={readOnly}
+                rows={1}
+                value={block.text}
+                onChange={(e) => {
+                  edit(key, e.target.value);
+                }}
+                className={`${textClasses} text-2xl font-semibold`}
+              />
+              {factLine(key, block.text)}
+            </div>
           );
         case 'paragraph':
         case 'narrative': {
@@ -120,6 +227,7 @@ export function DraftEditor({
                 className={`${textClasses} text-base`}
               />
               <Marked text={text} />
+              {factLine(key, text)}
             </div>
           );
         }

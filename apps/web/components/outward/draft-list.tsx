@@ -116,6 +116,7 @@ export interface DraftsWorkspaceProps {
   readOnly: boolean;
   onOpen: (id: string | null) => void;
   onSave: (draftId: string, body: string) => Promise<{ ok: boolean; warnings: string[] }>;
+  onBodyChange?: ((draftId: string, body: string) => void) | undefined;
   onShared: (draftId: string, channel: ShareChannel) => Promise<boolean>;
   onLanguageChange: (draftId: string, language: Language) => void;
 }
@@ -130,6 +131,7 @@ export function DraftsWorkspace({
   onSave,
   onShared,
   onLanguageChange,
+  onBodyChange,
 }: DraftsWorkspaceProps) {
   const t = useTranslations('outward');
   const [announce] = useState('');
@@ -158,6 +160,9 @@ export function DraftsWorkspace({
             offline={offline}
             readOnly={readOnly}
             onSave={(body) => onSave(open.id, body)}
+            onBodyChange={(body) => {
+              onBodyChange?.(open.id, body);
+            }}
             onShared={(channel) => onShared(open.id, channel)}
             onLanguageChange={(language) => {
               onLanguageChange(open.id, language);

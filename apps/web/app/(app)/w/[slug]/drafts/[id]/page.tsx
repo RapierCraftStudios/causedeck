@@ -21,6 +21,11 @@ import {
   exportDraftAction,
   runChecksAction,
 } from './checks-actions.ts';
+import {
+  checkFactsLiveAction,
+  ignoreFactAction,
+  markAssertionAction,
+} from './factcheck-actions.ts';
 import { DraftStudio } from './studio.tsx';
 
 interface DraftPageProps {
@@ -148,6 +153,14 @@ export default async function DraftPage({ params }: DraftPageProps) {
       slotValues={slotValues}
       aiTexts={aiTexts}
       facts={facts}
+      factCheck={{
+        matterId: detail.draft.matterId,
+        actions: {
+          check: checkFactsLiveAction,
+          ignore: ignoreFactAction,
+          assert: markAssertionAction,
+        },
+      }}
       checks={{
         actions: {
           run: runChecksAction,

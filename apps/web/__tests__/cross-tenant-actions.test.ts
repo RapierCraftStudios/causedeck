@@ -250,6 +250,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   applyFixAction: draftChecks,
   exportDraftAction: draftChecks,
   runFactCheckAction: draftFactcheck,
+  checkFactsLiveAction: draftFactcheck,
   ignoreFactAction: draftFactcheck,
   markAssertionAction: draftFactcheck,
   acknowledgeFactCheckAction: draftFactcheck,
@@ -1008,6 +1009,11 @@ function inputs(workspaceId: string): Record<string, unknown> {
     exportDraftAction: { workspaceId, draftId: t.a.rows.draft_version?.draftId, format: 'docx' },
     // Fact-check (#914): ub may not check, ignore, assert, acknowledge or log a fix on A's draft.
     runFactCheckAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
+    checkFactsLiveAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId,
+      blocks: [{ key: 'b.0', text: 'Order dated 01/02/2024.' }],
+    },
     ignoreFactAction: {
       workspaceId,
       draftVersionId: t.a.rows.draft_version?.id,
@@ -1732,6 +1738,7 @@ describe('cross-tenant server actions', () => {
       'exportDraftAction',
       'downloadDraftExportAction',
       'runFactCheckAction',
+      'checkFactsLiveAction',
       'ignoreFactAction',
       'markAssertionAction',
       'acknowledgeFactCheckAction',

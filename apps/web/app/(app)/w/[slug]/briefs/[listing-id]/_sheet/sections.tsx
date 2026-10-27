@@ -131,6 +131,7 @@ export function Sections({
           <SynopsisSection
             workspaceId={workspaceId}
             listingId={listingId}
+            matterId={brief.matter_id}
             synopsis={brief.synopsis}
             note={brief.note}
             canWrite={canWrite}

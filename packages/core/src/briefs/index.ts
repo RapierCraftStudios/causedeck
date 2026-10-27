@@ -9,6 +9,7 @@ export {
   type BriefEvent,
   type BriefEvents,
   type BriefStaleReason,
+  type CarryQuery,
   type CarryRule,
   type MemoryLine,
   type MemoryNote,
@@ -16,6 +17,11 @@ export {
   type MemoryQuery,
   type MemorySynopsis,
 } from './scope.ts';
+export {
+  applyBriefFormat,
+  createBriefMemoryProvider,
+  type BriefMemoryProvider,
+} from './memory-provider.ts';
 export { computeReadiness } from './readiness.ts';
 export { markPrepared, setBriefNote, setCarryItem, unmarkPrepared } from './state.ts';
 export {

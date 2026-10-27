@@ -46,6 +46,7 @@
         "heading": "What CauseDeck did today",
         "applied": "{count, plural, =0 {CauseDeck applied nothing on its own today.} one {CauseDeck applied # change on its own today. You can undo it for 7 days.} other {CauseDeck applied # changes on its own today. You can undo them for 7 days.}}",
         "pending": "{count, plural, =0 {Nothing is waiting for your confirmation.} one {# proposal is waiting for your confirmation.} other {# proposals are waiting for your confirmation.}}",
+        "attention": "{count, plural, one {# matter to check.} other {# matters to check.}}",
         "matters": "Matters touched today",
         "activityCta": "Review today's activity",
         "inboxCta": "Open your inbox",

@@ -38,6 +38,7 @@ import {
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { countAttention } from '../../attention/index.ts';
 import { countDigestActivities } from '../../automation/index.ts';
 import { getWhatsAppSendTarget } from '../../whatsapp-link/index.ts';
 import type { JobContext } from '../context.ts';
@@ -246,6 +247,12 @@ export async function runActivityDigestMember(
     { workspaceId, userId },
     { from: start, to: end, includeNames: pref.includeNames },
   );
+  // Stale-matter flags the member may see (#70): a count only, never a title or evidence. It rides
+  // on a digest that is already due and never makes an empty day send.
+  const attentionCount = await countAttention(
+    { db: ctx.db, ...(deps.now === undefined ? {} : { now: deps.now }) },
+    { workspaceId, userId },
+  ).catch(() => 0);
   const digest = buildEndOfDayDigest({
     localDate,
     userId,
@@ -317,7 +324,7 @@ export async function runActivityDigestMember(
           userId,
           category: 'digest.end_of_day',
           title: email.subject,
-          body: `${t('endOfDayDigest.applied', { count: digest.l3Count })} ${t('endOfDayDigest.pending', { count: digest.pendingL2Count })}`,
+          body: `${t('endOfDayDigest.applied', { count: digest.l3Count })} ${t('endOfDayDigest.pending', { count: digest.pendingL2Count })}${attentionCount > 0 ? ` ${t('endOfDayDigest.attention', { count: attentionCount })}` : ''}`,
           href: digest.links.activity,
           dedupeKey: `eod:${localDate}`,
         },

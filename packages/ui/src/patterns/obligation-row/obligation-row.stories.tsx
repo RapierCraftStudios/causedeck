@@ -8,7 +8,7 @@ import { ObligationEmpty, ObligationRow, ObligationRowSkeleton } from './obligat
 const meta = {
   title: 'Patterns/ObligationRow',
   component: ObligationRow,
-  args: { ...OBLIGATIONS.today, now: NOW, onDone: fn(), onSnooze: fn() },
+  args: { ...OBLIGATIONS.today, now: NOW, onDone: fn(), onReschedule: fn() },
   argTypes: {
     presentation: { control: 'inline-radio', options: ['auto', 'pointer', 'touch'] },
   },
@@ -51,14 +51,14 @@ export const FocusVisible: Story = {
   },
 };
 
-/** The non-gesture alternative: the overflow menu offers Done and Snooze from the keyboard. */
+/** The non-gesture alternative: the overflow menu offers Done and Reschedule from the keyboard. */
 export const Active: Story = {
   play: async ({ canvasElement, args }) => {
     moreOf(canvasElement).focus();
     await userEvent.keyboard('{Enter}');
     await waitFor(() => expect(body().getByRole('menuitem', { name: 'Mark done' })).toHaveFocus());
     await userEvent.keyboard('{ArrowDown}{Enter}');
-    await expect(args.onSnooze).toHaveBeenCalledOnce();
+    await expect(args.onReschedule).toHaveBeenCalledOnce();
   },
 };
 
@@ -75,7 +75,7 @@ export const Loading: Story = {
 };
 
 export const Invalid: Story = {
-  args: { error: 'Could not snooze. Try again.' },
+  args: { error: 'Could not reschedule. Try again.' },
 };
 
 /** Overdue: danger-soft background plus icon plus text, never colour alone. */
@@ -136,7 +136,7 @@ export const Upcoming: Story = {
   args: { ...OBLIGATIONS.upcoming },
 };
 
-/** Touch widths: swipe left for Done, right for Snooze. */
+/** Touch widths: swipe right for Done (the close dialog), left to Reschedule. */
 export const Touch: Story = {
   args: { presentation: 'touch' },
   play: async ({ canvasElement, args }) => {
@@ -146,9 +146,13 @@ export const Touch: Story = {
     const x = left + width / 2;
     const init = { pointerId: 1, pointerType: 'touch', bubbles: true, clientY: top + 10 };
     surface.dispatchEvent(new PointerEvent('pointerdown', { ...init, clientX: x }));
+    surface.dispatchEvent(new PointerEvent('pointermove', { ...init, clientX: x + 100 }));
+    surface.dispatchEvent(new PointerEvent('pointerup', { ...init, clientX: x + 100 }));
+    await expect(args.onDone).toHaveBeenCalledOnce();
+    surface.dispatchEvent(new PointerEvent('pointerdown', { ...init, clientX: x }));
     surface.dispatchEvent(new PointerEvent('pointermove', { ...init, clientX: x - 100 }));
     surface.dispatchEvent(new PointerEvent('pointerup', { ...init, clientX: x - 100 }));
-    await expect(args.onDone).toHaveBeenCalledOnce();
+    await expect(args.onReschedule).toHaveBeenCalledOnce();
   },
 };
 

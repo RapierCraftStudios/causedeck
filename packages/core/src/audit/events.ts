@@ -223,6 +223,17 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A member changed the sensitive-matter default or the raw audio retention window',
   },
+  // Fail-closed: it decides whether grid corrections may enter eval sets (#558). Owner-only; ids only,
+  // so the target is the workspace and no metadata is kept.
+  'workspace.eval_reuse_enabled': {
+    security: true,
+    description: 'An owner allowed corrections to be reused in evaluation sets (opt-in)',
+  },
+  'workspace.eval_reuse_disabled': {
+    security: true,
+    description:
+      'An owner stopped corrections being reused in evaluation sets; item consents withdrawn',
+  },
   // Fail-closed: it creates or replaces the intake address or ICS feed token, so the old one stops
   // working (#287). Metadata names the kind only, never the token or its hash.
   'workspace.integration_token_rotated': {
@@ -263,6 +274,12 @@ export const AUDIT_ACTIONS = {
   'memory.erased': {
     security: true,
     description: "The workspace's memory and embeddings were erased",
+  },
+  // Lawyer memory (#72): an owner changed whether an M4 court note is visible to the chamber.
+  // Metadata holds the note id and the new state, never its text.
+  'memory.sharing_changed': {
+    security: true,
+    description: 'An owner shared an M4 court note with the chamber or made it private again',
   },
   // Capture inbox (#43). Metadata holds the channel, MIME type, size and flags; never a filename or
   // file content. Channel changes and quarantines are fail-closed: they change where a lawyer's
@@ -346,6 +363,73 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: "A capture's results were moved to another matter",
   },
+  // Stale-matter attention (#70). Ids, the rule and the day only, never the reason.
+  'attention.snoozed': { security: false, description: 'A stale-matter flag was snoozed' },
+  'attention.dismissed': {
+    security: false,
+    description: 'A stale-matter flag was dismissed as intentionally dormant',
+  },
+  'attention.lifted': { security: false, description: 'A snooze or dismissal was lifted' },
+  'attention.threshold_changed': {
+    security: false,
+    description: 'The workspace stale-matter threshold was changed',
+  },
+  // Obligation service (#67). Ids and flags only, never the description.
+  'obligation.created': { security: false, description: 'An obligation was created' },
+  'obligation.updated': { security: false, description: 'An obligation was edited' },
+  'obligation.rescheduled': {
+    security: false,
+    description: 'An obligation was rescheduled, with a reason',
+  },
+  'obligation.closed': {
+    security: false,
+    description: 'An obligation was closed by a person, with a reason',
+  },
+  'obligation.reopened': { security: false, description: 'A closed obligation was reopened' },
+  'obligation.direction_not_applicable': {
+    security: false,
+    description: 'An order direction was marked not applicable, in words',
+  },
+  'obligation.defect_raised': { security: false, description: 'A registry defect was raised' },
+  'obligation.defect_cured': { security: false, description: 'A registry defect was cured' },
+  'obligation.represented': { security: false, description: 'A filing was re-presented' },
+  'obligation.registry_number': {
+    security: false,
+    description: 'A registry SR or FR number was stored',
+  },
+  'obligation.copy_applied': { security: false, description: 'A certified copy was applied for' },
+  'obligation.copy_transitioned': {
+    security: false,
+    description: 'A certified copy moved to its next step',
+  },
+  'outward.prepared': { security: false, description: 'An outward update draft was prepared' },
+  'outward.edited': { security: false, description: 'A lawyer saved an edit of an outward draft' },
+  'outward.shared': {
+    security: false,
+    description: 'A lawyer shared an outward draft from their own channel',
+  },
+  // Continuity (#71): who generated, read, saved or acknowledged a handover; ids only, never note text.
+  'handover.generated': {
+    security: false,
+    description: 'A handover note was assembled for a matter',
+  },
+  'handover.saved': {
+    security: false,
+    description: 'A handover note version was saved and addressed',
+  },
+  'handover.read': { security: false, description: 'Handover notes of a matter were read' },
+  'handover.acknowledged': { security: false, description: 'A handover note was acknowledged' },
+  'continuity.changes_read': {
+    security: false,
+    description: 'What changed on a matter since the last view was read',
+  },
+  // The WhatsApp number link (#711): ids only, never the number or the code.
+  'whatsapp.otp_requested': {
+    security: true,
+    description: 'A WhatsApp link code was requested and sent',
+  },
+  'whatsapp.otp_failed': { security: true, description: 'A wrong WhatsApp link code was entered' },
+  'whatsapp.linked': { security: true, description: 'A WhatsApp number was verified and linked' },
   // The lawyer's manual "court is at item N" hall marker (#58): an internal note, ids and numbers only.
   'court_day.marker_set': {
     security: false,

@@ -41,6 +41,17 @@ export function registerResearchTab(): void {
   });
 }
 
+/** Memory (#73): what is remembered for this matter, for members who may read memory. */
+export function registerMemoryTab(): void {
+  registerMatterTab({
+    id: 'memory',
+    order: 50,
+    labelKey: 'memory',
+    segment: 'memory',
+    visible: ({ can }) => can('memory.read'),
+  });
+}
+
 /** Register every matter tab. Idempotent: a tab registered again replaces itself (same id). */
 export function registerMatterTabs(): void {
   registerOverviewTab();
@@ -49,6 +60,7 @@ export function registerMatterTabs(): void {
   registerPeopleTab();
   registerDocumentsTab();
   registerResearchTab();
+  registerMemoryTab();
 }
 
 registerMatterTabs();

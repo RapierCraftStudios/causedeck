@@ -38,6 +38,7 @@ import { can } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 
 import { checkConflictsAction, createMatterAction } from './actions.ts';
+import { AttentionBadge } from './_components/attention-badge.tsx';
 import MattersLoading from './loading.tsx';
 
 interface MattersPageProps {
@@ -153,7 +154,15 @@ export default async function MattersPage({ params, searchParams }: MattersPageP
         openNew={openNew}
         createAction={createMatterAction}
         checkConflictsAction={conflictCheck ? checkConflictsAction : undefined}
-        header={<h1 className="font-serif text-2xl font-medium">{t('title')}</h1>}
+        header={
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="font-serif text-2xl font-medium">{t('title')}</h1>
+            <AttentionBadge
+              workspaceId={context.workspace.id}
+              canWrite={can(context.role, 'matter.write')}
+            />
+          </div>
+        }
         toolbar={
           empty === 'empty' ? null : (
             <MatterFilters

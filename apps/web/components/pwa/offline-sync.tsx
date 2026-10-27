@@ -7,7 +7,8 @@
 // The page-load run waits PREFETCH_DELAY_MS so it never competes with the page the member opened,
 // and is skipped when the last sync is fresher than PREFETCH_MIN_AGE_MS: the pull builds seven
 // court days and their briefs, and repeating it on every hard load stalled the server (#556).
-// Reconnecting and the worker's Background Sync still run it at once.
+// Reconnecting and the worker's Background Sync still run it at once. The page load and the
+// reconnect also drain the outbox of edits made offline.
 import { useEffect } from 'react';
 
 import { PREFETCH_MESSAGE } from '../../sw/court-day-cache.ts';
@@ -63,12 +64,42 @@ export function OfflineSync({
         running = false;
       }
     };
+    // Replays the offline edits (#851); conflicts and refusals stay in the outbox for the screens.
+    let draining = false;
+    const drain = async () => {
+      if (draining || !navigator.onLine) return;
+      draining = true;
+      try {
+        const [{ drainScope, OUTBOX_DRAINED }, { pushOutboxAction }] = await Promise.all([
+          import('../../lib/offline/use-outbox.ts'),
+          import('../../app/(app)/w/[slug]/_offline/actions.ts'),
+        ]);
+        const summary = await drainScope(slug, async (items) => {
+          const result = await pushOutboxAction({ workspaceId, items });
+          if (!result.ok) throw new Error(result.error.code);
+          return result.data;
+        });
+        if (summary && summary.sent + summary.conflicts + summary.failed > 0) {
+          window.dispatchEvent(new Event(OUTBOX_DRAINED));
+        }
+      } catch {
+        // Still offline: the entries stay queued for the next reconnect.
+      } finally {
+        draining = false;
+      }
+    };
     const initial = window.setTimeout(() => void run(true), PREFETCH_DELAY_MS);
-    const onOnline = () => void run();
+    const onDrainRequest = () => void drain();
+    const onOnline = () => {
+      void run();
+      void drain();
+    };
     const onMessage = (event: MessageEvent) => {
       if ((event.data as { type?: unknown } | null)?.type === PREFETCH_MESSAGE) void run();
     };
+    void drain();
     window.addEventListener('online', onOnline);
+    window.addEventListener('causedeck:outbox-drain-request', onDrainRequest);
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', onMessage);
       void navigator.serviceWorker.ready
@@ -81,6 +112,7 @@ export function OfflineSync({
     return () => {
       window.clearTimeout(initial);
       window.removeEventListener('online', onOnline);
+      window.removeEventListener('causedeck:outbox-drain-request', onDrainRequest);
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.removeEventListener('message', onMessage);
       }

@@ -515,6 +515,7 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
     citedVersionId: f.a.rows.authority?.draftVersionId ?? '',
     exportId: f.a.rows.draft_export?.id ?? '',
     reportVersionId: f.a.rows.draft_consistency_report?.draftVersionId ?? '',
+    factVersionId: f.a.rows.draft_fact_ack?.draftVersionId ?? '',
     matterId: f.a.rows.matter?.matterId ?? '00000000-0000-4000-8000-000000000000',
   });
   const inA = (f: Fixture) => ({ workspaceId: f.a.id, userId: f.ub });
@@ -524,6 +525,7 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
       versions: await s.select().from(schema.draftVersion),
       exports: await s.select().from(schema.draftExport),
       reports: await s.select().from(schema.draftConsistencyReport),
+      factAcks: await s.select().from(schema.draftFactAck),
     }));
   const unchanged = (run: (f: Fixture) => Promise<void>) => async (f: Fixture) => {
     const before = await aState(f);
@@ -616,6 +618,38 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
     ),
     loadConsistencyFacts: denied((f, s) =>
       core.loadConsistencyFacts({ db: s }, inA(f), ids(f).matterId),
+    ),
+    // Fact-check (#914): B on A's version checks nothing, decides nothing and stores nothing.
+    runFactCheck: denied((f, s) =>
+      core.runFactCheck({ db: s }, inA(f), { draftVersionId: ids(f).factVersionId }),
+    ),
+    ignoreForMatter: denied((f, s) =>
+      core.ignoreForMatter({ db: s }, inA(f), {
+        draftVersionId: ids(f).factVersionId,
+        claimKey: 'date:2024-01-01',
+      }),
+    ),
+    markAsAssertion: denied((f, s) =>
+      core.markAsAssertion({ db: s }, inA(f), {
+        draftVersionId: ids(f).factVersionId,
+        claimKey: 'date:2024-01-01',
+      }),
+    ),
+    recordFactFix: denied((f, s) =>
+      core.recordFactFix({ db: s }, inA(f), {
+        fromVersionId: ids(f).factVersionId,
+        toVersionId: ids(f).factVersionId,
+      }),
+    ),
+    acknowledgeFactCheck: denied((f, s) =>
+      core.acknowledgeFactCheck({ db: s }, inA(f), {
+        draftVersionId: ids(f).factVersionId,
+        reason: 'B on A',
+        confirm: true,
+      }),
+    ),
+    loadFactCheckFacts: denied((f, s) =>
+      core.loadFactCheckFacts({ db: s }, inA(f), ids(f).matterId),
     ),
     applyFix: denied((f, s) =>
       core.applyFix({ db: s }, inA(f), {

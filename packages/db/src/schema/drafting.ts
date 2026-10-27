@@ -191,3 +191,58 @@ export const draftConsistencyReport = tenantTable(
     check('draft_consistency_report_revision_chk', sql`graph_revision ~ '^[0-9a-f]{64}$'`),
   ],
 );
+
+export const DRAFT_FACT_ACK_KINDS = ['ignore', 'assertion', 'export_ack', 'blocker', 'checked'] as const;
+export type DraftFactAckKind = (typeof DRAFT_FACT_ACK_KINDS)[number];
+
+/**
+ * Fact-check state of a draft (#914, part 2 of #170). `ignore` and `assertion` are per matter (the
+ * lawyer dismissed a claim, or stands behind it; `user_id` records who) and match a claim by
+ * `claim_key` (`<kind>:<value>`), so they hold across versions. `blocker`, `checked` and `export_ack`
+ * belong to one immutable `draft_version`: a run stores one `checked` marker and one `blocker` per
+ * unresolved mismatch or unverified citation, and `export_ack` is the audited acknowledgement that
+ * lets the export through. Claim values stay in the draft; only the canonical key is stored.
+ */
+export const draftFactAck = tenantTable(
+  'draft_fact_ack',
+  {
+    id: id(),
+    kind: text('kind').notNull(),
+    matterId: uuid('matter_id'),
+    draftVersionId: uuid('draft_version_id'),
+    claimKey: text('claim_key').notNull().default('*'),
+    /** `<blockKey>:<start>-<end>` of a `blocker` claim, the key the citation `authority` row shares. */
+    claimId: text('claim_id'),
+    /** The verdict (`mismatch` or `unverified-citation`) of a `blocker`. */
+    status: text('status'),
+    reason: text('reason'),
+    /** Who decided; only ever set to null when that member is erased. */
+    userId: uuid('user_id').references(() => user.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({
+      name: 'draft_fact_ack_workspace_id_fk',
+      columns: [t.workspaceId],
+      foreignColumns: [organization.id],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'draft_fact_ack_matter_fk',
+      columns: [t.workspaceId, t.matterId],
+      foreignColumns: [matter.workspaceId, matter.id],
+    }).onDelete('cascade'),
+    foreignKey({
+      name: 'draft_fact_ack_version_fk',
+      columns: [t.workspaceId, t.draftVersionId],
+      foreignColumns: [draftVersion.workspaceId, draftVersion.id],
+    }).onDelete('cascade'),
+    unique('draft_fact_ack_uq')
+      .on(t.kind, t.matterId, t.draftVersionId, t.claimKey, t.claimId)
+      .nullsNotDistinct(),
+    check('draft_fact_ack_kind_chk', sql`kind in ${inList(DRAFT_FACT_ACK_KINDS)}`),
+    check(
+      'draft_fact_ack_scope_chk',
+      sql`(kind in ('ignore', 'assertion') and matter_id is not null and draft_version_id is null) or (kind not in ('ignore', 'assertion') and draft_version_id is not null)`,
+    ),
+  ],
+);

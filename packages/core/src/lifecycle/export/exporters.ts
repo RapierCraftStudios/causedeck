@@ -354,6 +354,7 @@ const draftingExporter = tablesExporter('drafting', [
   ws('draft_version', { userColumn: 'created_by' }),
   ws('authority'),
   ws('draft_consistency_report'),
+  ws('draft_fact_ack', { userColumn: 'user_id' }),
   ws('draft_export', { userColumn: 'created_by' }),
 ]);
 

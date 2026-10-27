@@ -35,6 +35,7 @@ import { precedentPassage } from '../schema/precedent.ts';
 import {
   draft,
   draftConsistencyReport,
+  draftFactAck,
   draftExport,
   draftVersion,
   template,
@@ -924,6 +925,28 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       draftVersionId: version.id,
       id: first(rows, 'draft_consistency_report').id,
     };
+  },
+  draft_fact_ack: async (tx, { workspaceId, ownerId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const contentSha256 = createHash('sha256').update(draftId).digest('hex');
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({ workspaceId, draftId, versionNo: 1, content: [], contentSha256 })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(draftFactAck)
+      .values({
+        workspaceId,
+        kind: 'export_ack',
+        draftVersionId: version.id,
+        userId: ownerId,
+        reason: `seed-${tag}`,
+      })
+      .returning({ id: draftFactAck.id });
+    return { draftId, draftVersionId: version.id, id: first(rows, 'draft_fact_ack').id };
   },
   forum: async (tx, { workspaceId, tag }) => ({ forumId: await seedForum(tx, workspaceId, tag) }),
   court_hall: async (tx, { workspaceId, tag }) => {

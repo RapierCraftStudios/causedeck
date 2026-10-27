@@ -269,7 +269,7 @@ export function DraftStudio(props: StudioProps) {
       `[data-block-key="${CSS.escape(v.blockKey)}"]`,
     );
     field?.focus();
-    field?.setSelectionRange?.(v.start, v.end);
+    field?.setSelectionRange(v.start, v.end);
     field?.scrollIntoView({ block: 'center' });
   };
 

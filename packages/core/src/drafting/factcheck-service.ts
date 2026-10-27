@@ -472,12 +472,12 @@ export async function checkFactsLive(
     deep?: boolean;
   },
 ): Promise<LiveFactCheckResult> {
-  const { blocks } = input;
+  const blocks = input.blocks;
+  const raw: readonly { key: unknown; text: unknown }[] = blocks;
   if (
     typeof input.matterId !== 'string' ||
-    !Array.isArray(blocks) ||
-    blocks.length > LIVE_MAX_BLOCKS ||
-    blocks.some(
+    raw.length > LIVE_MAX_BLOCKS ||
+    raw.some(
       (b) =>
         typeof b.key !== 'string' ||
         b.key === '' ||

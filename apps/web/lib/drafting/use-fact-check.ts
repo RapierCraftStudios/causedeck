@@ -86,6 +86,7 @@ export function useFactCheck({
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
+    const stale = () => cancelled;
     const store = (sent: FactCheckBlock[], verdicts: LiveFactVerdict[]) => {
       const current = new Map(latest.current.map((b) => [b.key, b.text]));
       for (const b of sent) {
@@ -100,7 +101,7 @@ export function useFactCheck({
     const timer = setTimeout(() => {
       // Drop what belongs to blocks that no longer exist.
       const keys = new Set(blocks.map((b) => b.key));
-      for (const k of [...cache.current.keys()]) if (!keys.has(k)) cache.current.delete(k);
+      for (const k of cache.current.keys()) if (!keys.has(k)) cache.current.delete(k);
       const changed = changedBlocks(cache.current, blocks);
       if (changed.length === 0) return;
       setChecking(true);
@@ -113,7 +114,7 @@ export function useFactCheck({
         store(changed, quick.verdicts);
         if (!deep) return;
         const extra = await run(changed, true); // non-blocking: the rule verdicts are already shown
-        if (!cancelled && extra?.deep === true) store(changed, extra.verdicts);
+        if (!stale() && extra?.deep === true) store(changed, extra.verdicts);
       })();
     }, debounceMs);
     return () => {
@@ -124,6 +125,7 @@ export function useFactCheck({
   }, [active, blocks, run, debounceMs, deep, nonce]);
 
   const verdicts = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-meaningless-void-operator -- `version` is the cache's change signal
     void version;
     const out: LiveFactVerdict[] = [];
     for (const b of blocks) {

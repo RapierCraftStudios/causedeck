@@ -17,7 +17,13 @@ export interface PrecedentCardProps {
   onDelete?: ((itemId: string) => void) | undefined;
 }
 
-export function PrecedentCard({ card, readOnly = false, busy = false, onRetire, onDelete }: PrecedentCardProps) {
+export function PrecedentCard({
+  card,
+  readOnly = false,
+  busy = false,
+  onRetire,
+  onDelete,
+}: PrecedentCardProps) {
   const t = useTranslations('memoryM5');
   const format = useFormatter();
   const retired = card.status === 'retired';
@@ -26,7 +32,7 @@ export function PrecedentCard({ card, readOnly = false, busy = false, onRetire, 
       data-slot="precedent-card"
       data-status={card.status}
       aria-label={card.kind}
-      className="border-line bg-surface-raised flex flex-col gap-3 rounded-xl border p-4 font-sans motion-safe:animate-fade-in"
+      className="border-line bg-surface-raised motion-safe:animate-fade-in flex flex-col gap-3 rounded-xl border p-4 font-sans"
     >
       <p className="font-serif text-base leading-relaxed whitespace-pre-wrap">{card.text}</p>
       <div className="flex flex-wrap items-center gap-2">
@@ -46,7 +52,9 @@ export function PrecedentCard({ card, readOnly = false, busy = false, onRetire, 
         <span className="text-ink-muted text-xs">
           {t('card.details', { kind: card.kind, language: card.language })}
         </span>
-        {retired ? <span className="text-ink-muted text-xs font-medium">{t('card.retired')}</span> : null}
+        {retired ? (
+          <span className="text-ink-muted text-xs font-medium">{t('card.retired')}</span>
+        ) : null}
       </div>
       <p className="text-ink-subtle text-xs">
         {card.lastUsedAt === null

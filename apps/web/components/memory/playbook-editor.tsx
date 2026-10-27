@@ -26,7 +26,12 @@ export interface PlaybookEditorProps {
 
 const FIELD = 'border-line bg-surface min-h-11 rounded-md border px-3 py-2 text-sm';
 
-export function PlaybookEditor({ initial, readOnly = false, busy = false, onPropose }: PlaybookEditorProps) {
+export function PlaybookEditor({
+  initial,
+  readOnly = false,
+  busy = false,
+  onPropose,
+}: PlaybookEditorProps) {
   const t = useTranslations('memoryM5.editor');
   const [name, setName] = useState(initial?.name ?? '');
   const [courtId, setCourtId] = useState(initial?.courtId ?? '');

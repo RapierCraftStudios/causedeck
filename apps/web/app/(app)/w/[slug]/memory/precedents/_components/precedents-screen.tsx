@@ -14,13 +14,7 @@ import {
 } from '@causedeck/ui/alert-dialog';
 import { Button } from '@causedeck/ui/button';
 import { PatternEmptyState, ProposalTray } from '@causedeck/ui/patterns';
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@causedeck/ui/sheet';
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from '@causedeck/ui/sheet';
 import { Textarea } from '@causedeck/ui/textarea';
 import { PRECEDENT_DISMISS_REASONS as PRECEDENT_REASONS } from '@causedeck/validators';
 import { useTranslations } from 'next-intl';
@@ -67,7 +61,11 @@ export function PrecedentsScreen({
   const [wording, setWording] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
   const readOnly = !canWrite || !online;
-  const state = m5ScreenState({ count: cards.length, proposals: proposals.length, offline: !online });
+  const state = m5ScreenState({
+    count: cards.length,
+    proposals: proposals.length,
+    offline: !online,
+  });
 
   return (
     <div className="flex flex-col gap-4" data-screen-state={state}>
@@ -97,7 +95,10 @@ export function PrecedentsScreen({
           viewOnly: t('readOnly'),
         }}
         onSave={(id) => {
-          void run(() => confirmPrecedentAction({ workspaceId, proposalId: id }), t('proposal.saved'));
+          void run(
+            () => confirmPrecedentAction({ workspaceId, proposalId: id }),
+            t('proposal.saved'),
+          );
         }}
         onEdit={(id) => {
           const found = proposals.find((p) => p.id === id) ?? null;
@@ -120,10 +121,7 @@ export function PrecedentsScreen({
                 readOnly={readOnly}
                 busy={busy}
                 onRetire={(itemId) => {
-                  void run(
-                    () => retirePrecedentAction({ workspaceId, itemId }),
-                    t('card.retired'),
-                  );
+                  void run(() => retirePrecedentAction({ workspaceId, itemId }), t('card.retired'));
                 }}
                 onDelete={setDeleting}
               />

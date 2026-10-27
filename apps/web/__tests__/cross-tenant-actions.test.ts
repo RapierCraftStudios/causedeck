@@ -131,6 +131,7 @@ const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const obligations = await import('../app/(app)/w/[slug]/obligations/actions.ts');
 const attention = await import('../app/(app)/w/[slug]/matters/_components/attention-actions.ts');
 const memory = await import('../app/(app)/w/[slug]/memory/actions.ts');
+const m5 = await import('../app/(app)/w/[slug]/memory/m5-actions.ts');
 const outward = await import('../app/(app)/w/[slug]/_outward/actions.ts');
 const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
@@ -339,6 +340,13 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   addNoteAction: memory,
   usageAction: memory,
   completeReviewAction: memory,
+  confirmPrecedentAction: m5,
+  dismissPrecedentAction: m5,
+  proposePlaybookAction: m5,
+  confirmPlaybookAction: m5,
+  deletePlaybookAction: m5,
+  retirePrecedentAction: m5,
+  deletePrecedentAction: m5,
   composeDraftAction: outward,
   saveDraftEditAction: outward,
   markDraftSharedAction: outward,
@@ -894,6 +902,23 @@ function inputs(workspaceId: string): Record<string, unknown> {
     addNoteAction: { workspaceId, key: 'M4.hall_note', value: 'Cross-tenant probe' },
     usageAction: { workspaceId, itemId: XT_ID },
     completeReviewAction: { workspaceId },
+    // Playbooks and precedents (#903): ub may not confirm, dismiss, propose, retire or delete A's.
+    confirmPrecedentAction: { workspaceId, proposalId: XT_ID },
+    dismissPrecedentAction: { workspaceId, proposalId: XT_ID, reason: 'not_reusable' },
+    proposePlaybookAction: {
+      workspaceId,
+      playbook: {
+        name: 'Cross-tenant probe',
+        courtId: null,
+        format: 'writ_petition',
+        standardPrayers: [],
+        annexureOrder: [],
+      },
+    },
+    confirmPlaybookAction: { workspaceId, proposalId: XT_ID },
+    deletePlaybookAction: { workspaceId, itemId: XT_ID },
+    retirePrecedentAction: { workspaceId, itemId: XT_ID },
+    deletePrecedentAction: { workspaceId, itemId: XT_ID },
     // Outward drafts (#736): ub may not draft on A's matter, nor edit or mark shared A's draft.
     composeDraftAction: {
       workspaceId,

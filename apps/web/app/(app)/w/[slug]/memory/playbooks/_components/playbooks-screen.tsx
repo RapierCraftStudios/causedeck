@@ -22,10 +22,7 @@ import {
   type PlaybookDraft,
 } from '../../../../../../../components/memory/playbook-editor.tsx';
 import { useOnline } from '../../../../../../../components/settings/settings-offline-banner.tsx';
-import {
-  m5ScreenState,
-  type PlaybookCardView,
-} from '../../../../../../../lib/memory/m5-state.ts';
+import { m5ScreenState, type PlaybookCardView } from '../../../../../../../lib/memory/m5-state.ts';
 import { dismissAction } from '../../actions.ts';
 import { useMemoryRun } from '../../_components/memory-cards.tsx';
 import {
@@ -62,7 +59,11 @@ export function PlaybooksScreen({
   const [editing, setEditing] = useState<PlaybookProposalView | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const readOnly = !canWrite || !online;
-  const state = m5ScreenState({ count: cards.length, proposals: proposals.length, offline: !online });
+  const state = m5ScreenState({
+    count: cards.length,
+    proposals: proposals.length,
+    offline: !online,
+  });
 
   const propose = (playbook: PlaybookDraft) => {
     void run(async () => {
@@ -112,7 +113,10 @@ export function PlaybooksScreen({
           viewOnly: t('readOnly'),
         }}
         onSave={(id) => {
-          void run(() => confirmPlaybookAction({ workspaceId, proposalId: id }), t('proposal.saved'));
+          void run(
+            () => confirmPlaybookAction({ workspaceId, proposalId: id }),
+            t('proposal.saved'),
+          );
         }}
         onEdit={(id) => {
           setEditing(proposals.find((p) => p.id === id) ?? null);

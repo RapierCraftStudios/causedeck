@@ -10,6 +10,7 @@ import { assertCan } from '@causedeck/auth/policy';
 import type { PrivacySettings } from '@causedeck/core/workspaces';
 import { UpdateWorkspacePrivacyInput } from '@causedeck/validators/workspace';
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 
 import type { Result } from '../../../../../../lib/safe-action.ts';
 import { WorkspaceScoped, workspaceAction } from '../../../../../../lib/workspace-action.ts';
@@ -17,6 +18,9 @@ import { WorkspaceScoped, workspaceAction } from '../../../../../../lib/workspac
 const UpdatePrivacy = WorkspaceScoped.extend(UpdateWorkspacePrivacyInput.shape).strict();
 
 export type PrivacySettingsView = PrivacySettings;
+export interface EvalReuseView {
+  allowEvalReuse: boolean;
+}
 
 const update = workspaceAction(
   UpdatePrivacy,
@@ -37,6 +41,30 @@ const update = workspaceAction(
   },
   { action: 'workspace.manage' },
 );
+
+const SetEvalReuse = WorkspaceScoped.extend({ allowEvalReuse: z.boolean() }).strict();
+
+// Owner-only (`member.role`): asserted by `guard`, here with `assertCan`, and again by the service.
+const setEvalReuse = workspaceAction(
+  SetEvalReuse,
+  async ({ allowEvalReuse }, ctx) => {
+    assertCan(ctx.actor, 'member.role');
+    const { setAllowEvalReuse } = await import('@causedeck/core/workspaces');
+    const result = await setAllowEvalReuse(ctx.tx, {
+      workspaceId: ctx.workspaceId,
+      actorUserId: ctx.userId,
+      allow: allowEvalReuse,
+      requestId: ctx.requestId,
+    });
+    revalidatePath('/w/[slug]/settings', 'layout');
+    return { allowEvalReuse: result.allowEvalReuse };
+  },
+  { action: 'member.role' },
+);
+
+export async function setAllowEvalReuseAction(raw: unknown): Promise<Result<EvalReuseView>> {
+  return setEvalReuse(raw);
+}
 
 export async function updateWorkspacePrivacyAction(
   raw: unknown,

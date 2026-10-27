@@ -66,6 +66,14 @@ the matrix, before the resource checks below.
 | `task.read` | ✓     | ✓        | ✓      | ✓     | ✓      |
 | `task.write` | ✓     | ✓        | ✓      | ✓     | —      |
 
+## obligation
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `obligation.read` | ✓     | ✓        | ✓      | ✓     | ✓      |
+| `obligation.write` | ✓     | ✓        | ✓      | —     | —      |
+| `obligation.track` | ✓     | ✓        | ✓      | ✓     | —      |
+
 ## listing
 
 | Action | owner | advocate | junior | clerk | viewer |

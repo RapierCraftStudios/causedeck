@@ -10,6 +10,8 @@ export const ACTIONS = {
   memory: ['memory.read', 'memory.write'],
   document: ['document.read', 'document.write'],
   task: ['task.read', 'task.write'],
+  // `obligation.track` is the clerk-level subset: tasks, registry defects and certified copies (#67).
+  obligation: ['obligation.read', 'obligation.write', 'obligation.track'],
   listing: ['listing.read'],
   draft: ['draft.write'],
   audit: ['audit.read'],

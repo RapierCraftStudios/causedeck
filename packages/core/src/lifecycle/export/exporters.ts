@@ -239,6 +239,13 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('case_status_snapshot'),
   // Corrections CauseDeck review fanned out to this workspace's watched proceedings (#518).
   ws('review_correction'),
+  // A0 grid corrections (#558): customer content, exported with the workspace.
+  ws('correction'),
+  ws('attention_snooze'),
+  // Continuity (#71): saved handover versions are workspace content (addressed to members, so no
+  // single user column) and each member's last-opened time per matter is exported with the workspace.
+  ws('handover_note'),
+  ws('matter_view'),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [
@@ -280,6 +287,12 @@ export const mattersExporter = tablesExporter('matters', [
   ws('appearance'),
   ws('order'),
   ws('obligation'),
+  ws('obligation_event'),
+  ws('defect'),
+  ws('certified_copy'),
+  ws('outward_draft'),
+  ws('outward_draft_version'),
+  ws('outward_share_log'),
   ws('task'),
   ws('person'),
   ws('organisation'),

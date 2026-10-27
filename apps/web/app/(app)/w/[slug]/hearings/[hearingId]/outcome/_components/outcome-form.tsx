@@ -2,11 +2,13 @@
 'use client';
 
 import { Textarea } from '@causedeck/ui/textarea';
-import { StageBadge, type Resolution } from '@causedeck/ui/patterns';
+import { SourceCompare, StageBadge, type Resolution } from '@causedeck/ui/patterns';
 import type { OutcomeProposal } from '@causedeck/validators/hearing-outcome';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 
+import { useOfflineEdits } from '../../../../../../../../lib/offline/use-outbox.ts';
 import { confirmOutcomeAction, recordManualOutcomeAction } from '../actions.ts';
 
 import { ConfirmBar } from './confirm-bar.tsx';
@@ -16,6 +18,7 @@ import { ProposalList, obligationRows } from './obligation-proposals.tsx';
 import { blocker, toConfirmation, type Decisions, type RowDecision } from './outcome-model.ts';
 import { TaskProposals } from './task-proposals.tsx';
 import { TranscriptDrawer } from './transcript-drawer.tsx';
+import { formatDate } from './outcome-model.ts';
 
 interface OutcomeFormProps {
   workspaceId: string;
@@ -32,7 +35,8 @@ const queueKey = (hearingId: string) => `outcome-queue:${hearingId}`;
  * The confirmation screen (#62). Nothing is pre-decided: the next date, a conflict and each
  * direction need a human action before Confirm enables. Offline, Confirm queues the decision on
  * this device; on reconnect it goes through the same action, which re-checks the canonical date and
- * never overwrites a confirmed one.
+ * never overwrites a confirmed one. The chosen next date also goes into the outbox (#851), where a
+ * server date that changed meanwhile stops as a conflict card instead of being applied.
  */
 export function OutcomeForm({
   workspaceId,
@@ -42,6 +46,8 @@ export function OutcomeForm({
   canWrite,
 }: OutcomeFormProps) {
   const t = useTranslations('outcome');
+  const { slug } = useParams<{ slug: string }>();
+  const { enqueue, stuck, resolve } = useOfflineEdits(slug, workspaceId);
   const [summary, setSummary] = useState(proposal.summary?.value ?? '');
   const [reason, setReason] = useState(proposal.adjournmentReason?.value ?? '');
   const [stage, setStage] = useState(proposal.stageAfter?.value ?? '');
@@ -89,6 +95,14 @@ export function OutcomeForm({
     const payload = toConfirmation(proposal, draft);
     if (!navigator.onLine) {
       localStorage.setItem(queueKey(proposal.hearingId), JSON.stringify(payload));
+      if (resolution.kind === 'value') {
+        await enqueue({
+          kind: 'next_date',
+          proceedingId: proposal.proceedingId,
+          date: resolution.value,
+          expectedCanonicalDate: proposal.conflict?.currentDate ?? null,
+        });
+      }
       setQueued(true);
       setStatus(t('offline.queued'));
       return;
@@ -118,6 +132,7 @@ export function OutcomeForm({
     obligations,
     tasks,
     send,
+    enqueue,
     t,
   ]);
 
@@ -266,6 +281,34 @@ export function OutcomeForm({
           disabled={readOnly}
         />
       )}
+      {stuck
+        .filter(
+          (entry) =>
+            entry.state === 'conflict' &&
+            (entry.item as { kind?: string; proceedingId?: string }).kind === 'next_date' &&
+            (entry.item as { proceedingId?: string }).proceedingId === proposal.proceedingId,
+        )
+        .map((entry) => (
+          <SourceCompare
+            key={entry.key}
+            title={t('offline.conflict.title')}
+            current={{
+              label: t('offline.conflict.server'),
+              value: entry.serverDate ? formatDate(entry.serverDate) : t('offline.conflict.none'),
+              source: null,
+              chooseLabel: t('offline.conflict.keepServer'),
+            }}
+            proposed={{
+              label: t('offline.conflict.mine'),
+              value: formatDate((entry.item as { date: string }).date),
+              source: null,
+              chooseLabel: t('offline.conflict.useMine'),
+            }}
+            onChoose={(side) => {
+              void resolve(entry, side === 'current' ? 'server' : 'mine');
+            }}
+          />
+        ))}
       {manual ? null : (
         <>
           <ProposalList

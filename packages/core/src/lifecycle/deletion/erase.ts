@@ -103,6 +103,22 @@ export const PURGE_ORDER = [
   'appearance',
   'hearing',
   'task',
+  // Obligation service (#67): children before the obligation they hang off.
+  'obligation_event',
+  'defect',
+  'certified_copy',
+  // A0 corrections (#558): cite their document, so before it.
+  'correction',
+  // Stale-matter snoozes (#70): cite their matter, so before it.
+  'attention_snooze',
+  // Continuity (#71): handover versions and per-member matter views cite their matter and the
+  // members, so they go before both.
+  'handover_note',
+  'matter_view',
+  // Outward drafts (#735): the share log and versions before their draft, then the matter rows.
+  'outward_share_log',
+  'outward_draft_version',
+  'outward_draft',
   'obligation',
   'order',
   // Brief state (#60): cites a listing, so it goes first.
@@ -181,6 +197,13 @@ export const PURGE_ORDER = [
   'workspace_settings',
   // AI gateway retry cache (#44): holds model output, unlike the append-only ai_call it points at.
   'ai_call_result',
+  // Lawyer memory (#72): usage, embeddings and proposals before the items they cite; the pause row
+  // cites the member's user only.
+  'memory_usage',
+  'memory_embedding',
+  'memory_proposal',
+  'memory_item',
+  'memory_pause',
   'job_effect',
   'member',
 ] as const;

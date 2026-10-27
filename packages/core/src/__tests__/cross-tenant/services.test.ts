@@ -31,6 +31,14 @@ import {
   invalidateEntitlements,
 } from '../../billing/index.ts';
 import * as core from '../../index.ts';
+import {
+  composeUpdate,
+  getDraft,
+  listDrafts,
+  recordCopied,
+  recordShared,
+  saveEdit,
+} from '../../outward/index.ts';
 
 const THIS_FILE = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
 const mailer: Mailer = { send: () => Promise.resolve() };
@@ -257,6 +265,16 @@ async function expectGraphDenied(
 const PROBE_ID = '00000000-0000-4000-8000-0000000000aa';
 const PROBE_PROVENANCE = { sourceType: 'manual' } as const;
 
+const asBInA = (f: Fixture) => ({ userId: f.ub, workspaceId: f.a.id });
+const asBInB = (f: Fixture) => ({ userId: f.ub, workspaceId: f.b.id });
+const aContinuityMatter = (f: Fixture) => f.a.rows.handover_note?.matterId ?? '';
+async function continuityRows(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => [
+    await s.select().from(schema.handoverNote),
+    await s.select().from(schema.matterView),
+  ]);
+}
+
 /** A's seeded listing (canonical) and its proceeding. */
 async function aListing(f: Fixture): Promise<{ listingId: string; proceedingId: string }> {
   const listingId = f.a.rows.listing?.listingId ?? '';
@@ -475,6 +493,12 @@ async function addAWatch(f: Fixture) {
   );
 }
 
+/** A's attention snoozes, to prove a B-scoped call left them unchanged. */
+const aSnoozes = (f: Fixture) =>
+  inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.attentionSnooze).orderBy(schema.attentionSnooze.id),
+  );
+
 const CASES: Record<string, Case> = {
   addCauseListWatch: async (f) => {
     // ub's watch lands in B; A has no watch from it.
@@ -590,13 +614,17 @@ const CASES: Record<string, Case> = {
         kind: 'holiday',
         title: 'XT holiday notice',
         issuedOn: '2026-11-02',
-        effectiveOn: '2026-12-25',
+        effectiveOn: '2026-12-24',
         url: `https://notices.example.test/xt/holiday/${randomUUID()}`,
         sourceType: 'adapter',
         sourceRef: 'xt',
       })
       .returning({ id: schema.notice.id });
     const noticeId = noticeRow?.id ?? '';
+    // The listing's date is named only by the holiday-list document (#628), not by effective_on.
+    await f.tx
+      .insert(schema.noticeHoliday)
+      .values({ noticeId, holidayOn: '2026-12-25', name: 'XT listed holiday' });
     const listingId = await inWorkspace(f.tx, f.b.id, async (s) => {
       const [m] = await s
         .insert(schema.matter)
@@ -664,9 +692,18 @@ const CASES: Record<string, Case> = {
         reason: 'forum',
       }),
     );
+    // A second date read out of the same notice's holiday-list document (#628).
+    await f.tx.insert(schema.noticeHoliday).values({
+      noticeId: noticeRow?.id ?? '',
+      holidayOn: '2026-12-26',
+      name: 'XT listed holiday',
+    });
     const range = { forumCode, from: '2026-12-01', to: '2026-12-31' };
     const own = await core.loadCourtCalendar(f.tx, f.b.id, range);
-    expect([...own.holidays]).toEqual([['2026-12-25', 'XT calendar holiday']]);
+    expect([...own.holidays]).toEqual([
+      ['2026-12-25', 'XT calendar holiday'],
+      ['2026-12-26', 'XT listed holiday'],
+    ]);
     const other = await core.loadCourtCalendar(f.tx, f.a.id, range);
     expect([...other.holidays]).toEqual([]);
   },
@@ -1450,6 +1487,23 @@ const CASES: Record<string, Case> = {
       core.DEFAULT_PRIVACY_SETTINGS,
     );
   },
+  getAllowEvalReuse: async (f) => {
+    await f.tx
+      .update(schema.workspaceSettings)
+      .set({ allowEvalReuse: true })
+      .where(eq(schema.workspaceSettings.workspaceId, f.a.id));
+    // Under B's scope A's settings row is invisible: B reads the opt-out default, not A's opt-in.
+    expect(await f.asB((s) => core.getAllowEvalReuse(s, f.a.id))).toBe(false);
+  },
+  setAllowEvalReuse: async (f) => {
+    const before = await core.getAllowEvalReuse(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.setAllowEvalReuse(s, { workspaceId: f.a.id, actorUserId: f.ub, allow: !before }),
+      ),
+    );
+    expect(await core.getAllowEvalReuse(f.tx, f.a.id)).toBe(before);
+  },
   updateWorkspacePrivacy: async (f) => {
     const before = await core.getPrivacySettings(f.tx, f.a.id);
     await expectDenied(
@@ -2189,6 +2243,55 @@ const CASES: Record<string, Case> = {
       ),
     ).rejects.toBeDefined();
     expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing))).toEqual(before);
+  },
+  // continuity (#71): B acting on A's matter or handover is denied; A's handovers and views are unchanged.
+  generateHandover: async (f) => {
+    await expectDenied(core.generateHandover({ db: f.tx }, asBInA(f), aContinuityMatter(f)));
+    await expectDenied(core.generateHandover({ db: f.tx }, asBInB(f), aContinuityMatter(f)));
+  },
+  saveHandover: async (f) => {
+    const before = await continuityRows(f);
+    const input = { matterId: aContinuityMatter(f), recipientMemberId: PROBE_ID };
+    await expectDenied(core.saveHandover({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.saveHandover({ db: f.tx }, asBInB(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  listHandovers: async (f) => {
+    const input = { matterId: aContinuityMatter(f) };
+    await expectDenied(core.listHandovers({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.listHandovers({ db: f.tx }, asBInB(f), input));
+  },
+  acknowledgeHandover: async (f) => {
+    const before = await continuityRows(f);
+    const input = { handoverId: f.a.rows.handover_note?.id ?? '' };
+    await expectDenied(core.acknowledgeHandover({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.acknowledgeHandover({ db: f.tx }, asBInB(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  generateHandoversForMember: async (f) => {
+    const before = await continuityRows(f);
+    const input = { fromMemberId: PROBE_ID, toMemberId: PROBE_ID };
+    await expectDenied(core.generateHandoversForMember({ db: f.tx }, asBInA(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  recordView: async (f) => {
+    const before = await continuityRows(f);
+    const input = { matterId: aContinuityMatter(f) };
+    await expectDenied(core.recordView({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.recordView({ db: f.tx }, asBInB(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  whatChangedSince: async (f) => {
+    await expectDenied(
+      core.whatChangedSince({ db: f.tx }, asBInA(f), aContinuityMatter(f), new Date(0)),
+    );
+  },
+  changesForViewer: async (f) => {
+    const before = await continuityRows(f);
+    await expectDenied(
+      core.changesForViewer({ db: f.tx }, asBInA(f), { matterId: aContinuityMatter(f) }),
+    );
+    expect(await continuityRows(f)).toEqual(before);
   },
   // briefs (#60): B acting on A's listing is denied and A's brief state is unchanged.
   assembleBrief: async (f) => {
@@ -3809,6 +3912,92 @@ const CASES: Record<string, Case> = {
     const alerts = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.judgmentAlert));
     expect(alerts.every((a) => a.notifiedAt === null)).toBe(true);
   },
+  // Stale-matter attention (#70): B on A's matter and snooze is denied or sees nothing; A is unchanged.
+  detectAttention: async (f) => {
+    const aMatter = String(f.a.rows.attention_snooze?.matterId);
+    const before = await aSnoozes(f);
+    const asB = { userId: f.ub, workspaceId: f.b.id };
+    const flags = await core.detectAttention({ db: f.tx }, asB, { matterId: aMatter });
+    expect(flags).toEqual([]);
+    expect((await core.detectAttention({ db: f.tx }, asB)).map((x) => x.matterId)).not.toContain(
+      aMatter,
+    );
+    await expectDenied(core.detectAttention({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }));
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  countAttention: async (f) => {
+    await expectDenied(core.countAttention({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }));
+  },
+  scanWorkspaceAttention: async (f) => {
+    // The scan opens the workspace it is given: from inside B's scope, A's is refused outright.
+    const before = await aSnoozes(f);
+    await expect(f.asB((s) => core.scanWorkspaceAttention({ db: s }, f.a.id))).rejects.toThrow(
+      /different workspace/,
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  snoozeFlag: async (f) => {
+    const before = await aSnoozes(f);
+    await expectDenied(
+      core.snoozeFlag(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        {
+          kind: 'snooze',
+          matterId: String(f.a.rows.attention_snooze?.matterId),
+          rule: null,
+          until: '2099-01-01',
+          reason: 'x',
+        },
+      ),
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  dismissFlag: async (f) => {
+    const before = await aSnoozes(f);
+    await expectDenied(
+      core.dismissFlag(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { kind: 'dismiss', matterId: String(f.a.rows.attention_snooze?.matterId), rule: null },
+      ),
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  liftSnooze: async (f) => {
+    const before = await aSnoozes(f);
+    const snoozeId = String(f.a.rows.attention_snooze?.snoozeId);
+    await expectDenied(
+      core.liftSnooze({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { snoozeId }),
+    );
+    // From B's own scope A's snooze does not exist.
+    await expectDenied(
+      core.liftSnooze({ db: f.tx }, { userId: f.ub, workspaceId: f.b.id }, { snoozeId }),
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  listSnoozes: async (f) => {
+    const matterId = String(f.a.rows.attention_snooze?.matterId);
+    await expectDenied(
+      core.listSnoozes({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, matterId),
+    );
+    await expectDenied(
+      core.listSnoozes({ db: f.tx }, { userId: f.ub, workspaceId: f.b.id }, matterId),
+    );
+  },
+  setStaleDays: async (f) => {
+    const read = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s
+          .select({ days: schema.workspaceSettings.attentionStaleDays })
+          .from(schema.workspaceSettings),
+      );
+    const before = await read();
+    await expectDenied(
+      core.setStaleDays({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { days: 90 }),
+    );
+    expect(await read()).toEqual(before);
+  },
 };
 
 const registered = Object.entries(SERVICE_TESTS)
@@ -3921,6 +4110,52 @@ describe('cross-tenant tracked-case metering: ub on workspace B against A', () =
       expect(naming.chargePaise).toBe(0);
       // A is untouched and still counts its own.
       expect(await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId))).toBe(aSeeded + 5);
+    });
+  });
+});
+
+// Outward update drafts (#735) live in the `@causedeck/core/outward` subpath, not the root index,
+// so the registry does not list them; they hold the same B-on-A contract.
+describe('cross-tenant outward drafts: ub on workspace B against A', () => {
+  it("denies B on A's draft and matter, and leaves A unchanged", async () => {
+    await withTestDb(async (tx) => {
+      const seeded = await seedTwoTenants(tx);
+      const draftId = seeded.a.rows.outward_draft?.draftId;
+      const matterId = seeded.a.rows.matter?.matterId;
+      if (typeof draftId !== 'string' || typeof matterId !== 'string') {
+        throw new TypeError('two-tenant outward seed rows missing');
+      }
+      const asBActor = { userId: seeded.ub, workspaceId: seeded.b.id };
+      const read = () =>
+        inWorkspace(tx, seeded.a.id, async (s) => ({
+          drafts: await s.select().from(schema.outwardDraft),
+          versions: await s.select().from(schema.outwardDraftVersion),
+          logs: await s.select().from(schema.outwardShareLog),
+        }));
+      const before = await read();
+      const deps = { db: tx };
+      await expect(
+        composeUpdate(deps, asBActor, {
+          matterId,
+          audience: 'senior_counsel',
+        }),
+      ).rejects.toBeDefined();
+      await expect(saveEdit(deps, asBActor, { draftId, body: 'x' })).rejects.toBeDefined();
+      await expect(
+        recordShared(deps, asBActor, { draftId, channel: 'download' }),
+      ).rejects.toBeDefined();
+      await expect(recordCopied(deps, asBActor, { draftId })).rejects.toBeDefined();
+      // The read model (#736): B's list holds nothing of A's and cannot open A's draft.
+      expect((await listDrafts(deps, asBActor)).map((d) => d.id)).not.toContain(draftId);
+      await expect(getDraft(deps, asBActor, draftId)).rejects.toBeDefined();
+      expect(await read()).toEqual(before);
+      const seenByB = await inWorkspace(
+        tx,
+        seeded.b.id,
+        (s) => s.select().from(schema.outwardDraft).where(eq(schema.outwardDraft.id, draftId)),
+        seeded.ub,
+      );
+      expect(seenByB).toEqual([]);
     });
   });
 });

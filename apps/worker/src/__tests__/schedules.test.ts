@@ -35,6 +35,8 @@ describe('registerSchedules', () => {
       'system.export.expire',
       'system.support.session-expire',
       'system.deletion.tick',
+      'system.memory.purge',
+      'system.memory.review-prepare',
       'system.capture.retention',
       'system.data-ops.evaluate',
       'system.corpus.poll',
@@ -46,6 +48,8 @@ describe('registerSchedules', () => {
       'system.status.poll',
       'system.webhook.sweep',
       'system.orders.poll',
+      'system.obligation.reminders',
+      'system.attention.scan',
       'system.brief.refresh-sweep',
       'system.reminder.schedule',
     ]);
@@ -108,6 +112,10 @@ describe('registerSchedules', () => {
       ['system.court-data.retention', '15 4 * * *', '2026-10-18T22:45:00.000Z'],
       // Capture raw-object retention: daily 02:00 IST.
       ['system.capture.retention', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
+      // Memory embedding purge (#72): hourly; 05:30 IST is 00:00 UTC, so the next hour is 06:00 IST.
+      ['system.memory.purge', '0 * * * *', '2026-10-18T00:30:00.000Z'],
+      // Memory monthly review (#72): the 1st at 06:00 IST.
+      ['system.memory.review-prepare', '0 6 1 * *', '2026-11-01T00:30:00.000Z'],
       // Data-ops evaluation (#515): every 15 minutes; 05:45 IST is 00:15 UTC.
       ['system.data-ops.evaluate', '*/15 * * * *', '2026-10-18T00:15:00.000Z'],
       // KHC cause-list poll (#482): 07:30 and 18:30 IST; 07:30 IST is 02:00 UTC.
@@ -117,6 +125,8 @@ describe('registerSchedules', () => {
       ['system.board.poll', '*/5 10-16 * * 1-5', '2026-10-19T04:30:00.000Z'],
       // Notices poll (#586): hourly on the hour IST; 06:00 IST is 00:30 UTC.
       ['system.notices.poll', '0 * * * *', '2026-10-18T00:30:00.000Z'],
+      // Obligation reminders (#67): daily 07:00 IST; 07:00 IST is 01:30 UTC.
+      ['system.obligation.reminders', '0 7 * * *', '2026-10-18T01:30:00.000Z'],
     ] as const;
     for (const [name, cron, firstRun] of others) {
       const row = await worker.boss.getSchedule(name);

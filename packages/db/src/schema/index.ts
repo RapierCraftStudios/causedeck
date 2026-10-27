@@ -42,6 +42,32 @@ export {
   whatsappLink,
   whatsappOtpChallenge,
 } from './whatsapp-link.ts';
+export {
+  CERTIFIED_COPY_STATUSES,
+  OBLIGATION_EVENT_KINDS,
+  certifiedCopy,
+  defect,
+  obligationEvent,
+  type CertifiedCopyStatus,
+  type ObligationEventKind,
+} from './obligation-tracking.ts';
+export { correction, CORRECTION_COLUMNS, type CorrectionColumn } from './correction.ts';
+export {
+  OUTWARD_AUDIENCES,
+  OUTWARD_DRAFT_STATUSES,
+  OUTWARD_LANGUAGES,
+  OUTWARD_SHARE_CHANNELS,
+  OUTWARD_TONES,
+  outwardDraft,
+  outwardDraftVersion,
+  outwardShareLog,
+  type OutwardAudience,
+  type OutwardDraftStatus,
+  type OutwardFact,
+  type OutwardLanguage,
+  type OutwardShareChannel,
+  type OutwardTone,
+} from './outward-draft.ts';
 export { billingEvent, entitlement, plan, subscription, usageCounter } from './billing.ts';
 export {
   CAPTURE_CHANNELS,
@@ -291,6 +317,7 @@ export {
   NOTICE_KINDS,
   NOTICE_MATCH_REASONS,
   notice,
+  noticeHoliday,
   noticeKind,
   noticeMatch,
   type NoticeKind,
@@ -321,6 +348,25 @@ export {
   type ReviewKind,
   type ReviewStatus,
 } from './review.ts';
+export {
+  MEMORY_ITEM_STATUSES,
+  MEMORY_LAYERS,
+  MEMORY_PROPOSAL_STATUS_VALUES,
+  MEMORY_SCOPE_VALUES,
+  MEMORY_USAGE_PURPOSES,
+  memoryEmbedding,
+  memoryItem,
+  memoryPause,
+  memoryProposal,
+  memoryUsage,
+  type MemoryItemStatus,
+  type MemoryLayerValue,
+  type MemoryProposalStatusValue,
+  type MemoryScopeValue,
+  type MemoryUsagePurpose,
+} from './memory.ts';
 export { briefState, type BriefCarryEntry } from './brief.ts';
+export { handoverNote, matterView } from './continuity.ts';
 export { briefShare, referral, referralCredit, type SharedBriefSnapshot } from './share.ts';
 export { reminderDispatch, REMINDER_KINDS, type ReminderKind } from './reminder.ts';
+export { attentionSnooze, ATTENTION_SNOOZE_RULES, type AttentionSnoozeRule } from './attention.ts';

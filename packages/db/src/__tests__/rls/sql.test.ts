@@ -130,6 +130,16 @@ describe('row-level security catalog', () => {
         'appearance',
         'order',
         'obligation',
+        'obligation_event',
+        'defect',
+        'certified_copy',
+        // Outward update drafts (#735).
+        'outward_draft',
+        'correction',
+        // Stale-matter attention (#70).
+        'attention_snooze',
+        'outward_draft_version',
+        'outward_share_log',
         'task',
         // People (#348).
         'person',
@@ -172,6 +182,13 @@ describe('row-level security catalog', () => {
         'whatsapp_link',
         'whatsapp_otp_challenge',
         'whatsapp_inbound_message',
+        // Lawyer memory (#72).
+        'memory_item',
+        'memory_proposal',
+        'memory_embedding',
+        'memory_usage',
+        'memory_pause',
+
         // Enterprise onboarding (#682).
         'sso_provider',
         'scim_token',
@@ -189,6 +206,10 @@ describe('row-level security catalog', () => {
 
         // Brief state (#60).
         'brief_state',
+
+        // Continuity (#71).
+        'matter_view',
+        'handover_note',
 
         // Brief sharing (#507).
         'brief_share',

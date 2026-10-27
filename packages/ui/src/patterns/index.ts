@@ -84,6 +84,9 @@ export {
 } from './activity-item/activity-item';
 export {
   DEFAULT_OBLIGATION_LABELS,
+  GroupHeader,
+  LAYOUT_MS,
+  REDUCED_FADE_MS,
   OBLIGATION_EMPTY_COPY,
   ObligationEmpty,
   ObligationRow,
@@ -92,6 +95,8 @@ export {
   SWIPE_THRESHOLD_PX,
   daysUntil,
   dueState,
+  type GroupHeaderProps,
+  type ObligationKind,
   type ObligationLabels,
   type ObligationRowProps,
 } from './obligation-row/obligation-row';
@@ -114,6 +119,20 @@ export {
   type MemoryLabels,
   type MemoryScopeMeta,
 } from './memory-card/memory-card';
+export {
+  DEFAULT_SCOPE_CHIP_LABELS,
+  ScopeChip,
+  type MemoryVisibility,
+  type ScopeChipLabels,
+  type ScopeChipProps,
+} from './scope-chip/scope-chip';
+export {
+  DEFAULT_PROPOSAL_TRAY_LABELS,
+  ProposalTray,
+  type ProposalTrayLabels,
+  type ProposalTrayProps,
+  type TrayProposal,
+} from './proposal-tray/proposal-tray';
 export * from './states';
 export {
   DEFAULT_RESOLUTION_FIELD_LABELS,
@@ -135,3 +154,5 @@ export {
 } from './court-day';
 export * from './delegation';
 export * from './brief';
+export * from './continuity';
+export * from './attention';

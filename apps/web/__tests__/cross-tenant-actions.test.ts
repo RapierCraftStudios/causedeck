@@ -124,6 +124,10 @@ const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
+const obligations = await import('../app/(app)/w/[slug]/obligations/actions.ts');
+const attention = await import('../app/(app)/w/[slug]/matters/_components/attention-actions.ts');
+const memory = await import('../app/(app)/w/[slug]/memory/actions.ts');
+const outward = await import('../app/(app)/w/[slug]/_outward/actions.ts');
 const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
 const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
@@ -131,11 +135,13 @@ const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calen
 const courtDay = await import('../app/(app)/w/[slug]/_court-day/actions.ts');
 const offlineActions = await import('../app/(app)/w/[slug]/_offline/actions.ts');
 const shareActions = await import('../app/(public)/share/[token]/actions.ts');
+const continuityActions = await import('../app/(app)/w/[slug]/matters/[id]/_continuity/actions.ts');
 const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
 const FAR_FUTURE = '9999-12-31T23:59:59.999999Z';
+const XT_ID = '00000000-0000-4000-8000-0000000000a1';
 /** A hall id no tenant owns: the court-day marker actions must refuse it, never write. */
 const PROBE_HALL_ID = '00000000-0000-4000-8000-0000000000a1';
 const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
@@ -187,6 +193,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   requestClerkSetupApprovalAction: welcome,
   approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
+  setAllowEvalReuseAction: privacy,
   rotateIntegrationTokenAction: integrations,
   createIntakeAddressAction: emailIntake,
   rotateIntakeAddressAction: emailIntake,
@@ -233,6 +240,12 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   addTagAction: research,
   confirmOutcomeAction: hearingOutcome,
   markPreparedAction: briefSheet,
+  generateHandoverAction: continuityActions,
+  saveHandoverAction: continuityActions,
+  listHandoversAction: continuityActions,
+  acknowledgeHandoverAction: continuityActions,
+  recordViewAction: continuityActions,
+  whatChangedAction: continuityActions,
   setCarryItemAction: briefSheet,
   setBriefNoteAction: briefSheet,
   setPrintNotesAction: briefSheet,
@@ -288,6 +301,27 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   outcomesLiveAction: planActions,
   typeKeyLineAction: inbox,
   markSentAction: inbox,
+  listAttentionAction: attention,
+  snoozeFlagAction: attention,
+  dismissFlagAction: attention,
+  liftSnoozeAction: attention,
+  closeObligationAction: obligations,
+  rescheduleAction: obligations,
+  reassignAction: obligations,
+  addObligationAction: obligations,
+  useNextStepAction: obligations,
+  confirmAction: memory,
+  dismissAction: memory,
+  editAction: memory,
+  deleteAction: memory,
+  pauseAction: memory,
+  pauseAllAction: memory,
+  addNoteAction: memory,
+  usageAction: memory,
+  completeReviewAction: memory,
+  composeDraftAction: outward,
+  saveDraftEditAction: outward,
+  markDraftSharedAction: outward,
   setCurrentItemAction: courtDay,
   clearCurrentItemAction: courtDay,
 };
@@ -611,6 +645,8 @@ function inputs(workspaceId: string): Record<string, unknown> {
       sensitiveDefaultRestricted: false,
       retentionAudioDays: 7,
     },
+    // Eval reuse consent (#558): ub, owner of B, may not opt A in.
+    setAllowEvalReuseAction: { workspaceId, allowEvalReuse: true },
     rotateIntegrationTokenAction: { workspaceId, kind: 'ics_feed' },
     // Email intake (#54): ub, owner of B, may not create, rotate or revoke an address, edit the
     // allow-list or enable the email channel on A.
@@ -789,6 +825,79 @@ function inputs(workspaceId: string): Record<string, unknown> {
     keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
     typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
     markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
+    // Stale-matter attention (#70): ub may not list, snooze, dismiss or lift on A's matters.
+    listAttentionAction: { workspaceId },
+    snoozeFlagAction: {
+      workspaceId,
+      matterId: t.a.rows.attention_snooze?.matterId ?? XT_ID,
+      rule: null,
+      until: '2099-01-01',
+      reason: 'Cross-tenant probe',
+    },
+    dismissFlagAction: {
+      workspaceId,
+      matterId: t.a.rows.attention_snooze?.matterId ?? XT_ID,
+      rule: null,
+    },
+    liftSnoozeAction: { workspaceId, snoozeId: t.a.rows.attention_snooze?.snoozeId ?? XT_ID },
+    // Obligation queue (#68): ub may not close, reschedule, reassign or add to A's obligations.
+    closeObligationAction: {
+      workspaceId,
+      obligationId: t.a.rows.obligation?.id ?? XT_ID,
+      reason: 'task_completed',
+    },
+    rescheduleAction: {
+      workspaceId,
+      obligationId: t.a.rows.obligation?.id ?? XT_ID,
+      dueDate: '2030-01-01',
+      reason: 'Cross-tenant probe',
+    },
+    reassignAction: {
+      workspaceId,
+      obligationId: t.a.rows.obligation?.id ?? XT_ID,
+      ownerMemberId: XT_ID,
+    },
+    addObligationAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId ?? XT_ID,
+      description: 'Cross-tenant probe',
+      dueDate: null,
+      ownerMemberId: XT_ID,
+    },
+    // Memory (#73): ub may not confirm, edit, delete, pause or read the usage of A's memory.
+    confirmAction: { workspaceId, proposalId: XT_ID },
+    dismissAction: { workspaceId, proposalId: XT_ID },
+    editAction: { workspaceId, itemId: XT_ID, value: 'Cross-tenant probe' },
+    deleteAction: { workspaceId, itemId: XT_ID },
+    pauseAction: { workspaceId, itemId: XT_ID, paused: true },
+    pauseAllAction: { workspaceId, paused: true },
+    addNoteAction: { workspaceId, key: 'M4.hall_note', value: 'Cross-tenant probe' },
+    usageAction: { workspaceId, itemId: XT_ID },
+    completeReviewAction: { workspaceId },
+    // Outward drafts (#736): ub may not draft on A's matter, nor edit or mark shared A's draft.
+    composeDraftAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId ?? XT_ID,
+      audience: 'client',
+    },
+    saveDraftEditAction: {
+      workspaceId,
+      draftId: t.a.rows.outward_draft?.id ?? XT_ID,
+      body: 'Cross-tenant probe',
+    },
+    markDraftSharedAction: {
+      workspaceId,
+      draftId: t.a.rows.outward_draft?.id ?? XT_ID,
+      channel: 'clipboard',
+    },
+    useNextStepAction: {
+      workspaceId,
+      type: 'task',
+      text: 'Cross-tenant probe',
+      matterId: t.a.rows.matter?.matterId ?? XT_ID,
+      dueDate: null,
+      ownerMemberId: XT_ID,
+    },
     // Delegation (#63): ub, owner of B, may not assign appearances in A.
     assignAppearanceAction: {
       workspaceId,
@@ -849,6 +958,21 @@ function inputs(workspaceId: string): Record<string, unknown> {
       hearingId: t.a.rows.hearing?.hearingId,
       outcome: 'Cross-tenant probe outcome',
       nextDate: { kind: 'none' },
+    },
+    // Continuity (#71): ub may not read, save, acknowledge or record views on A's matter or handover.
+    generateHandoverAction: { workspaceId, matterId: t.a.rows.handover_note?.matterId },
+    saveHandoverAction: {
+      workspaceId,
+      matterId: t.a.rows.handover_note?.matterId,
+      recipientMemberId: t.a.rows.handover_note?.matterId,
+    },
+    listHandoversAction: { workspaceId, matterId: t.a.rows.handover_note?.matterId },
+    acknowledgeHandoverAction: { workspaceId, handoverId: t.a.rows.handover_note?.id },
+    recordViewAction: { workspaceId, matterId: t.a.rows.handover_note?.matterId },
+    whatChangedAction: {
+      workspaceId,
+      matterId: t.a.rows.handover_note?.matterId,
+      since: '2026-01-01T00:00:00.000Z',
     },
     // Brief sheet (#61): ub may not mark, tick or note A's listing.
     markPreparedAction: { workspaceId, listingId: t.a.rows.listing?.listingId, prepared: true },

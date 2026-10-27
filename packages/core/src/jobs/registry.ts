@@ -10,6 +10,11 @@ import {
   activityDigestSchedule,
 } from './definitions/activity-digest.ts';
 import {
+  obligationReminders,
+  obligationRemindersSchedule,
+} from './definitions/obligation-reminders.ts';
+import { attentionScan, attentionScanSchedule } from './definitions/attention-scan.ts';
+import {
   reminderEvening,
   reminderMorning,
   reminderOutcomeMissing,
@@ -55,6 +60,11 @@ import { noticesPoll } from './definitions/notices-poll.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
 import { memoryErase } from './definitions/memory-erase.ts';
+import { memoryPurge, systemMemoryPurge } from './definitions/memory-purge.ts';
+import {
+  memoryReviewPrepare,
+  systemMemoryReviewPrepare,
+} from './definitions/memory-review-prepare.ts';
 import { notificationDeliver } from './definitions/notification-deliver.ts';
 import {
   notificationDigest,
@@ -198,6 +208,10 @@ export const registry = createRegistry([
   deletionErase,
   accountDelete,
   memoryErase,
+  systemMemoryPurge,
+  memoryPurge,
+  systemMemoryReviewPrepare,
+  memoryReviewPrepare,
   captureScan,
   captureProcess,
   systemCaptureRetention,
@@ -221,6 +235,10 @@ export const registry = createRegistry([
   webhookDeliver,
   systemWebhookSweep,
   ordersPoll,
+  obligationRemindersSchedule,
+  obligationReminders,
+  attentionScanSchedule,
+  attentionScan,
   briefRefresh,
   briefRefreshSweep,
   reminderSchedule,
@@ -264,6 +282,10 @@ export type JobMap = RegistryMap<
     typeof deletionErase,
     typeof accountDelete,
     typeof memoryErase,
+    typeof systemMemoryPurge,
+    typeof memoryPurge,
+    typeof systemMemoryReviewPrepare,
+    typeof memoryReviewPrepare,
     typeof captureScan,
     typeof captureProcess,
     typeof systemCaptureRetention,
@@ -287,6 +309,10 @@ export type JobMap = RegistryMap<
     typeof webhookDeliver,
     typeof systemWebhookSweep,
     typeof ordersPoll,
+    typeof obligationRemindersSchedule,
+    typeof obligationReminders,
+    typeof attentionScanSchedule,
+    typeof attentionScan,
     typeof briefRefresh,
     typeof briefRefreshSweep,
     typeof reminderSchedule,

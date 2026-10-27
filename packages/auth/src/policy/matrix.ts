@@ -26,6 +26,9 @@ export const MATRIX: Readonly<Record<Action, Role>> = {
   'document.write': 'clerk',
   'task.read': 'viewer',
   'task.write': 'clerk',
+  'obligation.read': 'viewer',
+  'obligation.write': 'junior',
+  'obligation.track': 'clerk',
   'listing.read': 'viewer',
   'draft.write': 'junior',
   'audit.read': 'advocate',
@@ -53,6 +56,9 @@ export const JUNIOR_MATTER_SCOPED: ReadonlySet<Action> = new Set<Action>([
   'document.write',
   'task.read',
   'task.write',
+  'obligation.read',
+  'obligation.write',
+  'obligation.track',
   'draft.write',
 ]);
 

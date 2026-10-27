@@ -11,7 +11,12 @@ import {
   type Database,
   type Transaction,
 } from '@causedeck/db';
-import { hasProvenance, type BriefLine, type BriefState } from '@causedeck/validators';
+import {
+  hasProvenance,
+  type BriefFormat,
+  type BriefLine,
+  type BriefState,
+} from '@causedeck/validators';
 import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 
@@ -43,6 +48,20 @@ export interface MemoryQuery {
   workspaceId: string;
   matterId: string;
   userId: string;
+  /** The listing being rendered: the output a memory use is recorded against. */
+  listingId?: string;
+  /** The role may read strategy-typed memory; absent means no. */
+  canStrategy?: boolean;
+}
+
+/** What decides which M2 always-carry rules suit a listing. */
+export interface CarryQuery {
+  workspaceId: string;
+  userId?: string;
+  matterId?: string;
+  listingId?: string;
+  /** No earlier listing of the proceeding: rules marked 'first_hearing' apply. */
+  firstHearing?: boolean;
 }
 
 export interface MemoryNote {
@@ -64,10 +83,14 @@ export interface CarryRule {
 
 /** The memory port (#72, #74 wire the real one): M2 always-carry rules, M3 synopsis, M4 court notes. */
 export interface MemoryProvider {
-  alwaysCarry(query: { workspaceId: string }): Promise<CarryRule[]>;
+  alwaysCarry(query: CarryQuery): Promise<CarryRule[]>;
   synopsis(query: MemoryQuery): Promise<MemorySynopsis | null>;
   lastHearing(query: MemoryQuery): Promise<MemoryLine | null>;
   courtNotes(query: MemoryQuery): Promise<MemoryNote[]>;
+  /** The member's M2 brief format; absent or null means the default format. */
+  format?(query: MemoryQuery): Promise<BriefFormat | null>;
+  /** A rule's carry item was removed from a brief: count it so a pattern can be proposed (M2). */
+  observeCarryRemoval?(query: MemoryQuery, rule: CarryRule): Promise<void>;
 }
 
 /** Until memory is wired: nothing. */

@@ -360,6 +360,7 @@
         "memory": "Matter memory",
         "document": "Documents",
         "task": "Tasks",
+        "obligation": "Obligations",
         "listing": "Cause list",
         "draft": "Drafts",
         "audit": "Audit log",
@@ -403,6 +404,11 @@
         "task": {
           "read": "See tasks",
           "write": "Create and update tasks"
+        },
+        "obligation": {
+          "read": "See obligations",
+          "write": "Manage all obligations",
+          "track": "Track tasks, defects and certified copies"
         },
         "listing": {
           "read": "See the cause list"
@@ -544,6 +550,11 @@
         "contributePublicCourtDocuments": {
           "label": "Share public court documents",
           "description": "Share public court documents (cause lists and published orders) so every workspace can use them. Only the public text is shared, with no workspace, matter or client information and nothing that identifies you. Sensitive and restricted matters are never shared. Your contributions are withdrawn when you delete the workspace."
+        },
+        "allowEvalReuse": {
+          "label": "Reuse corrections for evaluation",
+          "description": "When you correct a row in the confirmation grid, the correction is saved with its document. If you turn this on, corrections that a person also agrees to share, one by one, may be used to test and improve CauseDeck's reading of orders. It is off by default, and nothing is shared without that per-item agreement. Turning it off withdraws all agreements.",
+          "ownerOnly": "Only owners can change this."
         },
         "retentionAudioDays": {
           "label": "Keep raw audio for",

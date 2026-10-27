@@ -46,5 +46,5 @@ export const Loading: Story = { args: { status: 'loading', passages: [] } };
 export const ErrorState: Story = { args: { status: 'error', passages: [] } };
 export const Offline: Story = { args: { status: 'offline', passages: [] } };
 export const PermissionDenied: Story = { args: { status: 'denied', passages: [] } };
-export const NoBlockSelected: Story = { args: { selectedBlock: undefined } };
+export const PrecedentNoBlockSelected: Story = { args: { selectedBlock: undefined } };
 export const InsertDisabled: Story = { args: { disabled: true } };

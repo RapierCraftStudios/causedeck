@@ -192,7 +192,13 @@ export const draftConsistencyReport = tenantTable(
   ],
 );
 
-export const DRAFT_FACT_ACK_KINDS = ['ignore', 'assertion', 'export_ack', 'blocker', 'checked'] as const;
+export const DRAFT_FACT_ACK_KINDS = [
+  'ignore',
+  'assertion',
+  'export_ack',
+  'blocker',
+  'checked',
+] as const;
 export type DraftFactAckKind = (typeof DRAFT_FACT_ACK_KINDS)[number];
 
 /**

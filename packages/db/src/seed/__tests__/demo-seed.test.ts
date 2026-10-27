@@ -142,7 +142,9 @@ describe('demo seed (#182)', () => {
     expect(flags).toEqual([
       { key: 'm5_playbooks', enabled: true, workspace_id: DEMO_WORKSPACE_ID },
     ]);
-    expect(await count('select 1 from feature_flag where key = \'m5_playbooks\' and enabled')).toBe(0);
+    expect(await count("select 1 from feature_flag where key = 'm5_playbooks' and enabled")).toBe(
+      0,
+    );
   });
 
   it('seeds ~25 matters across Madras HC and the Bengaluru courts, every practice area', async () => {

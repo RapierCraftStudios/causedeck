@@ -103,12 +103,13 @@ export const MEMORY_KEYS = {
   'M5.precedent': {
     layer: 'M5',
     strategy: false,
-    description: 'A passage from the lawyer\'s own draft saved as a reusable precedent',
+    description: "A passage from the lawyer's own draft saved as a reusable precedent",
   },
   'M5.style': {
     layer: 'M5',
     strategy: false,
-    description: 'An explicit style preference (heading style, numbering, salutation, prayer wording)',
+    description:
+      'An explicit style preference (heading style, numbering, salutation, prayer wording)',
   },
   'M6.client_language': { layer: 'M6', strategy: false, description: 'Language a client prefers' },
   'M6.preferred_contact': {

@@ -21,11 +21,11 @@ A lawyer's drafts carry a house style: how prayers are worded, which grounds com
 
 ## Considered options
 
-| Option                                                              | Verdict  | Reason                                                              |
-| ------------------------------------------------------------------- | -------- | ------------------------------------------------------------------- |
-| Select and rank the lawyer's own approved passages by similarity    | Chosen   | Reversible, deletable, auditable; no model change                   |
-| Fine-tune a model per lawyer or per chamber                         | Rejected | Weights keep the text; deletion and residency cannot be shown       |
-| Train a shared style model across workspaces                        | Rejected | Cross-tenant leakage of privileged work product                     |
+| Option                                                           | Verdict  | Reason                                                        |
+| ---------------------------------------------------------------- | -------- | ------------------------------------------------------------- |
+| Select and rank the lawyer's own approved passages by similarity | Chosen   | Reversible, deletable, auditable; no model change             |
+| Fine-tune a model per lawyer or per chamber                      | Rejected | Weights keep the text; deletion and residency cannot be shown |
+| Train a shared style model across workspaces                     | Rejected | Cross-tenant leakage of privileged work product               |
 
 ## Decision
 

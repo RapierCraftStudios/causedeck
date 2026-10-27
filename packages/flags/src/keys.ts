@@ -109,7 +109,7 @@ export const FLAGS = {
   'insights.enabled': flag('insights.enabled', 'Practice insights dashboard.', false, [85]),
   m5_playbooks: flag(
     'm5_playbooks',
-    'M5 playbooks and the precedent bank (confirmed passages from the lawyer\'s own drafts).',
+    "M5 playbooks and the precedent bank (confirmed passages from the lawyer's own drafts).",
     false,
     [81, 901],
   ),

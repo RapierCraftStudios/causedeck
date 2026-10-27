@@ -61,9 +61,6 @@ export const precedentPassage = tenantTable(
     index('precedent_passage_court_idx').on(t.workspaceId, t.courtId, t.status),
     check('precedent_passage_kind_chk', sql`kind in ${inList(PRECEDENT_PASSAGE_KINDS)}`),
     check('precedent_passage_status_chk', sql`status in ${inList(PRECEDENT_PASSAGE_STATUSES)}`),
-    check(
-      'precedent_passage_body_chk',
-      sql`(status = 'deleted') = (body_ciphertext is null)`,
-    ),
+    check('precedent_passage_body_chk', sql`(status = 'deleted') = (body_ciphertext is null)`),
   ],
 );

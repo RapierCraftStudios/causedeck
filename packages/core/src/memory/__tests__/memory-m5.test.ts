@@ -82,8 +82,10 @@ async function saved(w: World) {
   return { versionId, proposalId: proposal?.id ?? '', ...out };
 }
 
-const rows = <T>(w: World, f: (s: Parameters<Parameters<typeof inWorkspace>[2]>[0]) => Promise<T>) =>
-  inWorkspace(w.tx, w.a.id, f);
+const rows = <T>(
+  w: World,
+  f: (s: Parameters<Parameters<typeof inWorkspace>[2]>[0]) => Promise<T>,
+) => inWorkspace(w.tx, w.a.id, f);
 
 describe('M5 precedent bank', () => {
   it('a proposal writes no item or passage; confirming saves both with provenance and a vector', async () => {
@@ -139,14 +141,25 @@ describe('M5 precedent bank', () => {
       expect(await proposePrecedent(w.at(T0), w.owner, input(versionId))).toBeNull();
       await dismissPrecedentProposal(w.at(T0), w.owner, first?.id ?? '', 'too_specific');
       const [row] = await rows(w, (s) =>
-        s.select().from(schema.memoryProposal).where(eq(schema.memoryProposal.id, first?.id ?? '')),
+        s
+          .select()
+          .from(schema.memoryProposal)
+          .where(eq(schema.memoryProposal.id, first?.id ?? '')),
       );
       expect(row?.evidence['dismissReason']).toBe('too_specific');
       expect(
-        await proposePrecedent(w.at(new Date(T0.getTime() + 29 * DAY_MS)), w.owner, input(versionId)),
+        await proposePrecedent(
+          w.at(new Date(T0.getTime() + 29 * DAY_MS)),
+          w.owner,
+          input(versionId),
+        ),
       ).toBeNull();
       expect(
-        await proposePrecedent(w.at(new Date(T0.getTime() + 31 * DAY_MS)), w.owner, input(versionId)),
+        await proposePrecedent(
+          w.at(new Date(T0.getTime() + 31 * DAY_MS)),
+          w.owner,
+          input(versionId),
+        ),
       ).not.toBeNull();
       expect(await codeOf(dismissPrecedentProposal(w.deps, w.owner, randomUUID(), 'other'))).toBe(
         'NOT_FOUND',

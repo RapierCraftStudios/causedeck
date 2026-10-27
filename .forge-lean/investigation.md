@@ -1,34 +1,30 @@
 **Verdict**: CONFIRMED
-**Confidence**: high
-**Severity**: low (feature; replaces a placeholder route, no defect)
-**Task Type**: feature
+**Confidence**: medium
+**Severity**: low (tracking issue; no defect, nothing deliverable in this lane)
+**Task Type**: chore
 
 ### What Was Claimed
-Part 2 of #79: replace the placeholder `drafts` page with an RSC list (title, matter, template, last edited, citation and consistency chips; matter filter), `components/drafting/template-picker.tsx`, `loading.tsx`, `error.tsx` (request id), empty/offline/permission-denied states, a create-draft server action in `drafts/actions.ts` listed in `ACTIONS`, stories for every component and state, next-intl strings, never send/share/file.
+#819 is a deferral tracker from #76. Two items: R12 (the routine documents: early-listing memo, memo of appearance, application for certified copy, adjournment note, covering letter to junior or senior counsel), already marked "defer" (counsel covering letter needs a non-client recipient model the client-letter rule forbids), and R14 (advocate review of wording before the flag-free release), already marked "post-deploy".
 
 ### What We Found
-- `apps/web/app/(app)/w/[slug]/drafts/page.tsx:1-3` is `placeholderPage('drafts')`; no `loading.tsx`, `error.tsx`, `actions.ts`; `apps/web/components/drafting/` does not exist.
-- Core is ready (#824 merged): `listDrafts`, `listTemplates`, `createDraft` exported from `packages/core/src/drafting/index.ts:42-49,8-13`. `listDrafts(deps,actor,{matterId})` returns `DraftListItem` with `citations{verified,not_found,unknown}` and `consistency|null` (`read.ts:41-55,116`); `listTemplates` returns up to 5 `TemplateSuggestion` (`read.ts:63,283`); `createDraft({templateId,matterId,title})` throws on bad input, FORBIDDEN for clerks (`service.ts:155-208`). Clerks have no `draft.*` permission (`policy.ts:3`).
-- `CitationStatus` UI pattern and `drafting` i18n namespace exist (#825). `drafting.json` `list` has only `title,newDraft,pickTemplate,empty,updated,untitled`; `states`/`offline` exist; no keys for matter filter, column labels, citation/consistency chip text, permission denied, request id, create-form (title, matter, submit, errors). New keys must be added to en/ta/kn plus `translation-status.json` and regenerated `src/generated/messages/*` (see the #825 notes in CLAUDE.md i18n checks).
-- Page pattern to copy: `notices/page.tsx` (RSC, `getWorkspaceContext`, dev `?__state=`, `PermissionDeniedPage`, `EmptyState`), `notices/loading.tsx`, `notices/error.tsx`; request id (digest) shown in `[slug]/error.tsx:29-50`. Matter filter options: `lib/matters/graph-deps.ts:86-100` `loadMatterFilterOptions`; offline banner/hook: `components/matters/matters-offline-banner.tsx` (`useOnline`, `MattersOfflineBanner`).
-- Action pattern: `news/actions.ts` (`workspaceAction`, `WorkspaceScoped`, ActionError mapping, async wrapper exporting). Registry: `apps/web/__tests__/cross-tenant-actions.test.ts:129` `ACTIONS` plus import at ~:97 and probe inputs; test asserts exported names equal `ACTIONS` keys (:916).
-- `apps/web/__tests__/workspace-shell.test.tsx:139,163-174`: `drafts` is rendered as a placeholder page; once real it must go into `REAL_PAGES`.
-- No `'use server'` outside `actions.ts`; core exports unchanged, so no core cross-tenant registry change.
+- Base `origin/milestone/drafting-citations-research` already ships the four non-counsel routine documents plus a client covering letter: `packages/i18n/src/messages/en/drafting-templates.json` names `early_listing_memo`, `memo_of_appearance`, `certified_copy_application`, `adjournment_note`, `client_covering_letter`. No counsel covering letter exists.
+- `template.reviewed_by` (null keeps the scaffold banner) was added by `packages/db/migrations/20261027114446_system_templates.sql:5`; `packages/core/src/drafting/export.ts:136-153` sets `bannerShown` while `reviewedBy == null`. So R14 is only checkable once an advocate sets `reviewed_by` on released scaffolds.
+- The stale comment and prior `.forge-lean` files on this issue describe #79 Part 2 (drafts list UI). That does not match the current issue body (deferred-from-#76 items); they were discarded and not used.
 
 ### Root Cause
-Not a defect: the studio list route has not been built (placeholder only).
+Not a defect: scope deliberately deferred from #76 (counsel letter needs its own recipient model; advocate review needs released scaffolds).
 
 ### Affected Files
-`apps/web/app/(app)/w/[slug]/drafts/{page.tsx,loading.tsx,error.tsx,actions.ts}`; `apps/web/components/drafting/{template-picker,drafts-list,...}.tsx` and `.stories.tsx`; `apps/web/lib/drafting/*` (view mapping); `packages/i18n/src/messages/{en,ta,kn}/drafting.json`, `translation-status.json`, `src/generated/messages/*`; `apps/web/__tests__/cross-tenant-actions.test.ts`, `workspace-shell.test.tsx`; a new page/component test.
+None in this change. Future follow-up (R12): the template catalog and seed under `packages/core/src/drafting`, `drafting-templates.json` (en/ta/kn).
 
 ### Sibling Sweep
-Other pages built on the same recipe (notices, matters) each carry loading/error/denied/offline states and dev `?__state` previews; copy those. Siblings #827/#828 build the studio itself and need the list's links (`drafts/[id]`), so link targets must not 404 the list: link rows to `/w/{slug}/drafts/{id}` (route owned by #827).
+Other deferred-from-#76 trackers follow the same shape; none are in scope here.
 
 ### History
-Placeholder from the workspace shell; core read services #824 (43591adb), UI/i18n #825 (c76d3d0a, 4ad140fd).
+#76 (system templates, completed, merged) declared both out of scope.
 
 ### Recommendation
-Implement against `milestone/drafting-citations-research`: server loader in `lib/drafting` calling `listDrafts`/`listTemplates` via `inWorkspace`, mapping FORBIDDEN to permission-denied; page with matter filter via `?matter=` search param (validated UUID); template picker dialog with title + matter + submit calling `createDraftAction`, which uses `workspaceAction` and `createDraft({db: ctx.tx})` and redirects/returns the new id; no enqueue of external effects, no send/share/file. Add missing i18n keys, stories for each component/state, register the action, tests.
+Disposition per the issue's own text: R12 defer (file follow-up with a recipient model), R14 post-deploy (engine files tracked follow-up). No code changes; contract has no deliverables.
 
 ### Related Issues
-Parent #79; depends on #824, #825 (merged); siblings #827, #828, #829.
+#76 (origin), #79 (drafting studio parent).

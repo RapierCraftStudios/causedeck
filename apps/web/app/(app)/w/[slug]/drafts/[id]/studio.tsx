@@ -7,12 +7,15 @@
 // region), Esc closes what is open. Offline, the loaded draft stays readable from the encrypted
 // device cache and edits queue until `online`. `panels` is where #828's citation and consistency
 // panels go.
-import type { Block } from '@causedeck/validators/drafting';
+import type { Finding } from '@causedeck/validators/consistency';
+import type { Block, ExportFormat } from '@causedeck/validators/drafting';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import type { CitationView } from '../../../../../../components/drafting/citation-panel.tsx';
+import type { ExportLink } from '../../../../../../components/drafting/export-dialog.tsx';
 import type { PinnedAuthority } from '../../../../../../components/drafting/authorities-panel.tsx';
 import type { DraftFact } from '../../../../../../components/drafting/facts-panel.tsx';
 import type { DraftVersionView } from '../../../../../../components/drafting/version-drawer.tsx';
@@ -36,6 +39,13 @@ import {
 import { DRAFT_STUDIO_SHORTCUTS } from '../../../../../../lib/shortcuts/registry.ts';
 
 import type { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
+import type {
+  acknowledgeUnverifiedAction,
+  applyFixAction,
+  downloadDraftExportAction,
+  exportDraftAction,
+  runChecksAction,
+} from './checks-actions.ts';
 
 // Heavy parts load on demand so the route's initial JS stays under its 40 KB budget: the editor,
 // the facts panel (Provenance Chips pull in popover/tooltip code) and the version drawer (diff).
@@ -54,6 +64,30 @@ const AuthoritiesPanel = dynamic(
 const VersionDrawer = dynamic(
   () =>
     import('../../../../../../components/drafting/version-drawer.tsx').then((m) => m.VersionDrawer),
+  { ssr: false, loading: panelLoading },
+);
+// #828: the checks panels and dialogs load on demand too.
+const CitationPanel = dynamic(
+  () =>
+    import('../../../../../../components/drafting/citation-panel.tsx').then((m) => m.CitationPanel),
+  { ssr: false, loading: panelLoading },
+);
+const ConsistencyPanel = dynamic(
+  () =>
+    import('../../../../../../components/drafting/consistency-panel.tsx').then(
+      (m) => m.ConsistencyPanel,
+    ),
+  { ssr: false, loading: panelLoading },
+);
+const AckDialog = dynamic(
+  () => import('../../../../../../components/drafting/ack-dialog.tsx').then((m) => m.AckDialog),
+  { ssr: false, loading: panelLoading },
+);
+const DraftExportDialog = dynamic(
+  () =>
+    import('../../../../../../components/drafting/export-dialog.tsx').then(
+      (m) => m.DraftExportDialog,
+    ),
   { ssr: false, loading: panelLoading },
 );
 const DraftEditor = dynamic(() => import('../../../../../../components/drafting/editor.tsx'), {
@@ -86,6 +120,26 @@ export interface StudioProps {
   findingKeys?: string[];
   /** #828's citation and consistency panels. */
   panels?: ReactNode;
+  /** #828: the checks of the version being edited, with the actions that run, fix and export. */
+  checks?: StudioChecks;
+}
+
+export interface StudioChecks {
+  actions: {
+    run: typeof runChecksAction;
+    acknowledge: typeof acknowledgeUnverifiedAction;
+    fix: typeof applyFixAction;
+    exportDraft: typeof exportDraftAction;
+    download: typeof downloadDraftExportAction;
+  };
+  /** The id of the version `versionNo` names (what the checks and the export read). */
+  versionId: string;
+  citations: CitationView[];
+  findings: Finding[];
+  /** A consistency report exists for this version. */
+  checked: boolean;
+  courtPreset: string | null;
+  aiAssisted: boolean;
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'queued' | 'conflict' | 'failed';
@@ -107,6 +161,11 @@ export function DraftStudio(props: StudioProps) {
   const [selectedSlot, setSelectedSlot] = useState<string | undefined>();
   const [panel, setPanel] = useState<Panel | null>(null);
   const [menu, setMenu] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [checkFailed, setCheckFailed] = useState(false);
+  const [dialog, setDialog] = useState<'ack' | 'export' | null>(null);
+  const [undoNo, setUndoNo] = useState<number | null>(null);
+  const [live, setLive] = useState<{ citations: CitationView[]; findings: Finding[] } | null>(null);
   const [finding, setFinding] = useState(-1);
   const [announcement, setAnnouncement] = useState('');
   const diffs = useRef<EditDiff[]>([]);
@@ -261,6 +320,98 @@ export function DraftStudio(props: StudioProps) {
     }
   }
 
+  const checks = props.checks;
+  const citations = live?.citations ?? checks?.citations ?? [];
+  const checkFindings = live?.findings ?? checks?.findings ?? [];
+  const unacknowledged = citations.filter(
+    (c) => c.status === 'not_found' && !c.acknowledged,
+  ).length;
+  const scope = { workspaceId: props.workspaceId, draftVersionId: checks?.versionId ?? '' };
+
+  async function runChecks() {
+    if (checks === undefined) return;
+    setChecking(true);
+    setCheckFailed(false);
+    const result = await checks.actions.run(scope);
+    setChecking(false);
+    if (!result.ok) {
+      setCheckFailed(true);
+      return;
+    }
+    setLive({
+      citations: result.data.citations.items.map((c) => ({
+        id: c.id,
+        blockId: c.blockId,
+        raw: c.raw,
+        status: c.status,
+        title: c.title,
+        acknowledged: false,
+      })),
+      findings: result.data.findings,
+    });
+  }
+
+  async function acknowledge(statement: string) {
+    if (checks === undefined) return false;
+    const ids = citations
+      .filter((c) => c.status === 'not_found' && !c.acknowledged)
+      .map((c) => c.id);
+    const result = await checks.actions.acknowledge({
+      ...scope,
+      citationIds: ids,
+      reason: statement,
+    });
+    if (!result.ok) return false;
+    const done = new Set(result.data.acknowledged);
+    setLive({
+      citations: citations.map((c) => (done.has(c.id) ? { ...c, acknowledged: true } : c)),
+      findings: checkFindings,
+    });
+    return true;
+  }
+
+  async function fix(target: Finding) {
+    if (checks === undefined) return false;
+    const result = await checks.actions.fix({ ...scope, findingId: target.id, confirm: true });
+    if (!result.ok) return false;
+    setUndoNo(props.versionNo);
+    router.refresh();
+    return true;
+  }
+
+  async function undo(versionNo: number) {
+    const result = await props.actions.restore({
+      workspaceId: props.workspaceId,
+      draftId: props.draftId,
+      versionNo,
+    });
+    if (!result.ok) return false;
+    setUndoNo(null);
+    router.refresh();
+    return true;
+  }
+
+  async function exportFile(format: ExportFormat): Promise<ExportLink | null> {
+    if (checks === undefined) return null;
+    const queued = await checks.actions.exportDraft({
+      workspaceId: props.workspaceId,
+      draftId: props.draftId,
+      versionNo: props.versionNo,
+      format,
+    });
+    if (!queued.ok || queued.data.status !== 'ready') return null;
+    const link = await checks.actions.download({
+      workspaceId: props.workspaceId,
+      exportId: queued.data.exportId,
+    });
+    return link.ok ? link.data : null;
+  }
+
+  const jump = (blockKey: string) => {
+    setPanel(null);
+    document.querySelector(`[data-block-key="${blockKey}"]`)?.scrollIntoView({ block: 'center' });
+  };
+
   const go = useCallback(
     (direction: 1 | -1) => {
       const next = stepFinding(findings.length, finding, direction);
@@ -350,8 +501,30 @@ export function DraftStudio(props: StudioProps) {
                 ? t('states.saved')
                 : '';
 
-  const panelBody = (which: Panel) =>
-    which === 'facts' ? (
+  const panelBody = (which: Panel | 'citations' | 'consistency') =>
+    which === 'citations' ? (
+      <CitationPanel
+        citations={citations}
+        checking={checking}
+        failed={checkFailed}
+        disabled={readOnly}
+        onCheck={() => void runChecks()}
+        onJump={jump}
+        onAcknowledge={() => {
+          setDialog('ack');
+        }}
+      />
+    ) : which === 'consistency' ? (
+      <ConsistencyPanel
+        findings={checkFindings}
+        checked={checks?.checked ?? false}
+        disabled={readOnly}
+        undoVersionNo={undoNo}
+        onJump={jump}
+        onFix={fix}
+        onUndo={undo}
+      />
+    ) : which === 'facts' ? (
       <div className="flex flex-col gap-6">
         <FactsPanel
           facts={props.facts}
@@ -445,7 +618,48 @@ export function DraftStudio(props: StudioProps) {
             }}
           />
           {props.panels}
+          {checks === undefined ? null : (
+            <div className="mt-6 flex flex-col gap-6">
+              {panelBody('citations')}
+              {panelBody('consistency')}
+              <button
+                type="button"
+                onClick={() => {
+                  setDialog('export');
+                }}
+                className="border-line min-h-11 self-start rounded-md border px-3 text-sm"
+              >
+                {t('export.action')}
+              </button>
+            </div>
+          )}
         </main>
+        {checks !== undefined && dialog === 'ack' ? (
+          <AckDialog
+            open
+            count={unacknowledged}
+            onOpenChange={(open) => {
+              if (!open) setDialog(null);
+            }}
+            onConfirm={acknowledge}
+          />
+        ) : null}
+        {checks !== undefined && dialog === 'export' ? (
+          <DraftExportDialog
+            open
+            courtPreset={checks.courtPreset}
+            aiAssisted={checks.aiAssisted}
+            unacknowledged={unacknowledged}
+            disabled={readOnly}
+            onOpenChange={(open) => {
+              if (!open) setDialog(null);
+            }}
+            onAcknowledge={() => {
+              setDialog('ack');
+            }}
+            onExport={exportFile}
+          />
+        ) : null}
 
         <aside
           aria-label={t('panels.versions.title')}

@@ -3891,6 +3891,59 @@
       "save": "Save draft",
       "showFacts": "Show facts",
       "showVersions": "Show versions"
+    },
+    "checks": {
+      "citations": {
+        "checking": "Checking…",
+        "checkFailed": "The citations could not be checked. Try again.",
+        "acknowledged": "Acknowledged",
+        "jump": "Go to {citation}",
+        "blocked": "{count, plural, one {# citation was not found and is not acknowledged.} other {# citations were not found and are not acknowledged.}} Export is blocked until you acknowledge them.",
+        "acknowledge": "Acknowledge not-found citations"
+      },
+      "consistency": {
+        "notRun": "Run the checks to see findings.",
+        "severity": {
+          "error": "{count, plural, one {# error} other {# errors}}",
+          "warn": "{count, plural, one {# warning} other {# warnings}}",
+          "info": "{count, plural, one {# note} other {# notes}}"
+        },
+        "found": "The draft says: {found}",
+        "expected": "The matter graph says: {expected}",
+        "source": "Source: {source}",
+        "jump": "Go to location",
+        "fix": "Fix to graph value",
+        "fixTitle": "Replace with the graph value?",
+        "fixBody": "Replace “{found}” with “{expected}”? This saves a new version; you can undo it.",
+        "fixConfirm": "Replace and save",
+        "cancel": "Cancel",
+        "fixed": "Fixed and saved as a new version.",
+        "fixFailed": "The fix could not be applied. Run the checks again.",
+        "undo": "Undo",
+        "undone": "The fix was undone.",
+        "undoFailed": "The fix could not be undone."
+      },
+      "ack": {
+        "title": "Acknowledge unverified citations",
+        "description": "{count, plural, one {# citation was not found.} other {# citations were not found.}} Confirm you have checked them yourself.",
+        "checkbox": "I have verified these authorities myself",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "failed": "The acknowledgement could not be saved. Try again."
+      },
+      "export": {
+        "description": "Choose a format. The file is only ever downloaded by you; nothing is sent, shared or filed.",
+        "format": "Format",
+        "court": "Court format",
+        "noCourt": "None",
+        "ai": "AI assistance",
+        "aiYes": "This draft has AI-assisted text.",
+        "aiNo": "No AI-assisted text.",
+        "acknowledge": "Acknowledge",
+        "download": "Download {filename}",
+        "close": "Close",
+        "preparing": "Preparing the file…"
+      }
     }
   },
   "calendar": {

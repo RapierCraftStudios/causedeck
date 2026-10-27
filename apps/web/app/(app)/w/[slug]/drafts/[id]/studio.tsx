@@ -32,6 +32,12 @@ import {
   type EditDiff,
 } from '../../../../../../lib/drafting/blocks-edit.ts';
 import {
+  fixText,
+  useFactCheck,
+  useFactLabels,
+  type FactCheckRunner,
+} from '../../../../../../lib/drafting/use-fact-check.ts';
+import {
   browserDraftEditStores,
   cacheDraft,
   flushDraftEdits,
@@ -40,21 +46,15 @@ import {
   readCachedDraft,
   type QueuedDraftEdit,
 } from '../../../../../../lib/pwa/outbox/draft-edits.ts';
-import {
-  fixText,
-  useFactCheck,
-  useFactLabels,
-  type FactCheckRunner,
-} from '../../../../../../lib/drafting/use-fact-check.ts';
 import { DRAFT_STUDIO_SHORTCUTS } from '../../../../../../lib/shortcuts/registry.ts';
 
 import type { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
-import type { proposePrecedentAction } from './precedent-actions.ts';
 import type {
   checkFactsLiveAction,
   ignoreFactAction,
   markAssertionAction,
 } from './factcheck-actions.ts';
+import type { proposePrecedentAction } from './precedent-actions.ts';
 import type {
   acknowledgeUnverifiedAction,
   applyFixAction,
@@ -801,7 +801,7 @@ export function DraftStudio(props: StudioProps) {
             )}
           </button>
         )}
-        <div className={`${factCheck === undefined ? 'ms-auto ' : ''}flex gap-2 xl:hidden`}>
+        <div className={`${factCheck === undefined ? 'ms-auto' : ''}flex gap-2 xl:hidden`}>
           {panelTabs.map((which) => (
             <button
               key={which}

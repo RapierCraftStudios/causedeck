@@ -76,8 +76,11 @@ export function useFactCheck({
 }: UseFactCheckOptions): UseFactCheck {
   const cache = useRef(new Map<string, Entry>());
   const latest = useRef(blocks);
-  latest.current = blocks;
-  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    latest.current = blocks;
+  }, [blocks]);
+  // What the render reads: a copy of the cache, refreshed whenever the cache changes.
+  const [shown, setShown] = useState<ReadonlyMap<string, Entry>>(() => new Map());
   const [checking, setChecking] = useState(false);
   const [failed, setFailed] = useState(false);
   const [nonce, setNonce] = useState(0);
@@ -96,7 +99,7 @@ export function useFactCheck({
           verdicts: verdicts.filter((v) => v.blockKey === b.key),
         });
       }
-      setVersion((n) => n + 1);
+      setShown(new Map(cache.current));
     };
     const timer = setTimeout(() => {
       // Drop what belongs to blocks that no longer exist.
@@ -125,15 +128,13 @@ export function useFactCheck({
   }, [active, blocks, run, debounceMs, deep, nonce]);
 
   const verdicts = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-meaningless-void-operator -- `version` is the cache's change signal
-    void version;
     const out: LiveFactVerdict[] = [];
     for (const b of blocks) {
-      const hit = cache.current.get(b.key);
+      const hit = shown.get(b.key);
       if (hit?.text === b.text) out.push(...hit.verdicts);
     }
     return out;
-  }, [blocks, version]);
+  }, [blocks, shown]);
 
   const resolve = useCallback((claimKey: string, resolution: FactResolution) => {
     for (const entry of cache.current.values()) {
@@ -141,11 +142,12 @@ export function useFactCheck({
         v.claimKey === claimKey ? { ...v, resolution } : v,
       );
     }
-    setVersion((n) => n + 1);
+    setShown(new Map(cache.current));
   }, []);
 
   const recheck = useCallback(() => {
     cache.current.clear();
+    setShown(new Map());
     setNonce((n) => n + 1);
   }, []);
 

@@ -33,3 +33,6 @@ Conflicts in page.tsx and studio.tsx resolved keeping both `factCheck` and `prec
 
 ## Conformance fix
 studio.tsx panel-tab row class: added missing space so `ms-auto flex gap-2 xl:hidden` when no factCheck. One-character change; no behaviour elsewhere.
+
+## Lint fix (CI lint failure)
+CI log was unavailable; ran ESLint on the changed web files. `use-fact-check.ts` failed `react-hooks/refs` (ref written and cache ref read during render): `latest` is now updated in an effect, and render reads a `shown` state copy of the cache refreshed on store/resolve/recheck. `studio.tsx` import order fixed (use-fact-check before pwa, factcheck-actions before precedent-actions). ESLint clean on both; use-fact-check tests pass.

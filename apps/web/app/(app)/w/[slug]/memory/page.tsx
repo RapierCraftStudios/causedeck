@@ -9,6 +9,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { isDev } from '../../../../../lib/env.ts';
+import { workspaceFlagCheck } from '../../../../../lib/flags.ts';
 import { memoryDeps } from '../../../../../lib/memory/deps.ts';
 import {
   parseMemoryTab,
@@ -68,9 +69,12 @@ export default async function MemoryPage({ params, searchParams }: MemoryPagePro
     },
   );
   const empty = preview === 'empty';
+  const m5 = (await workspaceFlagCheck(context))('m5_playbooks');
+  // M5 proposals bypass the passage write on the generic confirm: they live on their own pages.
+  const generic = m5 ? proposals.filter((p) => !p.key.startsWith('M5.')) : proposals;
   const proposalViews: ProposalView[] = empty
     ? []
-    : proposals.map((p) => ({
+    : generic.map((p) => ({
         id: p.id,
         title: keyTitle(p.key),
         value: valueText(p.proposedValue),
@@ -90,6 +94,7 @@ export default async function MemoryPage({ params, searchParams }: MemoryPagePro
         pausedAll={pausedAll}
         reviewDue={reviewDue(lastReview, new Date())}
         forceOffline={preview === 'offline'}
+        m5Enabled={m5}
       />
       {tenure === null ? null : <TenurePanel metrics={tenure} />}
     </>

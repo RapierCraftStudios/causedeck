@@ -127,6 +127,7 @@ describe('namespaced catalogs (#174)', () => {
         'members',
         'memory',
         'memoryCitations',
+        'memoryM5',
         'nav',
         'notFound',
         'notices',

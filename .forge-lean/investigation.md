@@ -1,34 +1,34 @@
 **Verdict**: CONFIRMED
 **Confidence**: high
-**Severity**: low (feature; replaces a placeholder route, no defect)
+**Severity**: low (feature; no defect)
 **Task Type**: feature
 
 ### What Was Claimed
-Part 2 of #79: replace the placeholder `drafts` page with an RSC list (title, matter, template, last edited, citation and consistency chips; matter filter), `components/drafting/template-picker.tsx`, `loading.tsx`, `error.tsx` (request id), empty/offline/permission-denied states, a create-draft server action in `drafts/actions.ts` listed in `ACTIONS`, stories for every component and state, next-intl strings, never send/share/file.
+Part 4 of #79: add `components/drafting/{citation-panel,consistency-panel,ack-dialog,export-dialog}.tsx` with stories and dialog interaction tests, wired into the studio (#827). Citation panel lists verified/not found/unknown and jumps to the span; not-found blocks export until the ack dialog is confirmed and audited (`acknowledgeUnverified`). Consistency panel groups by severity, confirm-first "Fix to graph value" (`applyFix`, new version), Undo for 7 days via Activity Feed. Export dialog: DOCX/PDF, court preset, AI-assisted state, presigned download (`createDraftExportDownload`); no send/share/file. Actions in `drafts/[id]/checks-actions.ts` listed in `cross-tenant-actions.test.ts`.
 
 ### What We Found
-- `apps/web/app/(app)/w/[slug]/drafts/page.tsx:1-3` is `placeholderPage('drafts')`; no `loading.tsx`, `error.tsx`, `actions.ts`; `apps/web/components/drafting/` does not exist.
-- Core is ready (#824 merged): `listDrafts`, `listTemplates`, `createDraft` exported from `packages/core/src/drafting/index.ts:42-49,8-13`. `listDrafts(deps,actor,{matterId})` returns `DraftListItem` with `citations{verified,not_found,unknown}` and `consistency|null` (`read.ts:41-55,116`); `listTemplates` returns up to 5 `TemplateSuggestion` (`read.ts:63,283`); `createDraft({templateId,matterId,title})` throws on bad input, FORBIDDEN for clerks (`service.ts:155-208`). Clerks have no `draft.*` permission (`policy.ts:3`).
-- `CitationStatus` UI pattern and `drafting` i18n namespace exist (#825). `drafting.json` `list` has only `title,newDraft,pickTemplate,empty,updated,untitled`; `states`/`offline` exist; no keys for matter filter, column labels, citation/consistency chip text, permission denied, request id, create-form (title, matter, submit, errors). New keys must be added to en/ta/kn plus `translation-status.json` and regenerated `src/generated/messages/*` (see the #825 notes in CLAUDE.md i18n checks).
-- Page pattern to copy: `notices/page.tsx` (RSC, `getWorkspaceContext`, dev `?__state=`, `PermissionDeniedPage`, `EmptyState`), `notices/loading.tsx`, `notices/error.tsx`; request id (digest) shown in `[slug]/error.tsx:29-50`. Matter filter options: `lib/matters/graph-deps.ts:86-100` `loadMatterFilterOptions`; offline banner/hook: `components/matters/matters-offline-banner.tsx` (`useOnline`, `MattersOfflineBanner`).
-- Action pattern: `news/actions.ts` (`workspaceAction`, `WorkspaceScoped`, ActionError mapping, async wrapper exporting). Registry: `apps/web/__tests__/cross-tenant-actions.test.ts:129` `ACTIONS` plus import at ~:97 and probe inputs; test asserts exported names equal `ACTIONS` keys (:916).
-- `apps/web/__tests__/workspace-shell.test.tsx:139,163-174`: `drafts` is rendered as a placeholder page; once real it must go into `REAL_PAGES`.
-- No `'use server'` outside `actions.ts`; core exports unchanged, so no core cross-tenant registry change.
+(verified on origin/milestone/drafting-citations-research)
+- #827 landed: `apps/web/app/(app)/w/[slug]/drafts/[id]/{page,studio,actions}.tsx|ts`; `studio.tsx:82` `type Panel = 'facts' | 'versions'`, panels lazy via `next/dynamic` (`studio.tsx:42-51`), tabs at `studio.tsx:443-455`. No `checks-actions.ts`, none of the four components exist.
+- Core is ready and exported from `packages/core/src/drafting/index.ts`: `checkDraft` (`citations.ts:161`, `draft.write`), `getCitationReport` (`:267`), `acknowledgeUnverified` (`citation-ack.ts:68`, `draft.export`, input `{draftVersionId,citationIds,reason}`, audits `draft.citations.acknowledged`), `exportBlockedByCitations`, `runConsistencyCheck`/`listFindings` (`consistency-service.ts:183,250`), `applyFix` (`:264`, needs `confirm:true`, saves new version, audits `draft.fix_applied`), `exportDraft` (`service.ts:435`, needs `enqueue` dep; `enqueueDraftingExport` in `packages/core/src/jobs/definitions/drafting-export.ts:80`), `createDraftExportDownload` (`export.ts:243`, 60 s presigned, needs `ObjectStore`; web store: `apps/web/lib/storage.ts:9` `objectStore()`).
+- `CitationStatus` pattern exists (`packages/ui/src/patterns/citation-status/citation-status.tsx:48`).
+- i18n `drafting.json` already has `panels.citations`, `panels.consistency`, `findings`, `acknowledgement`, `export` (title, docx, pdf, unverifiedWarning, action, failed). The existing `acknowledgement.statement` text differs from the issue's "I have verified these authorities myself"; keys for severity groups, fix/undo/confirm, court preset, AI-assisted, download are missing. New keys must go to en/ta/kn, `translation-status.json`, generated messages.
+- Undo gap: `applyFix` only writes an audit record (`consistency-service.ts:~318`), not an `activity` row with `undoExpiresAt`. The Activity Feed undo works through `activity` rows plus a `ProposalHandler.undo` (`automation/undo.ts:170`, `handlers/index.ts`, window `UNDO_WINDOW_DAYS=7` `automation/levels.ts:30`); `kind` there is a typed proposal kind, so wiring a draft fix in means core + possibly schema changes.
+- Registry: `apps/web/__tests__/cross-tenant-actions.test.ts` `ACTIONS` + probe inputs (own-workspace test pattern at :1660 for #827). No core export changes planned, so no core cross-tenant registry change.
 
 ### Root Cause
-Not a defect: the studio list route has not been built (placeholder only).
+Not a defect: the studio has no checks/ack/export UI or actions.
 
 ### Affected Files
-`apps/web/app/(app)/w/[slug]/drafts/{page.tsx,loading.tsx,error.tsx,actions.ts}`; `apps/web/components/drafting/{template-picker,drafts-list,...}.tsx` and `.stories.tsx`; `apps/web/lib/drafting/*` (view mapping); `packages/i18n/src/messages/{en,ta,kn}/drafting.json`, `translation-status.json`, `src/generated/messages/*`; `apps/web/__tests__/cross-tenant-actions.test.ts`, `workspace-shell.test.tsx`; a new page/component test.
+`apps/web/app/(app)/w/[slug]/drafts/[id]/{checks-actions.ts,page.tsx,studio.tsx}`; `apps/web/components/drafting/{citation-panel,consistency-panel,ack-dialog,export-dialog}.tsx` + stories + `__tests__`; `packages/i18n/src/messages/{en,ta,kn}/drafting.json`, `translation-status.json`, `src/generated/messages/*`; `apps/web/__tests__/cross-tenant-actions.test.ts`.
 
 ### Sibling Sweep
-Other pages built on the same recipe (notices, matters) each carry loading/error/denied/offline states and dev `?__state` previews; copy those. Siblings #827/#828 build the studio itself and need the list's links (`drafts/[id]`), so link targets must not 404 the list: link rows to `/w/{slug}/drafts/{id}` (route owned by #827).
+Other drafting actions (`drafts/[id]/actions.ts`) use `workspaceAction` + `rethrow` mapping; copy. Dialog patterns: `components/activity/undo-dialog.tsx`. The export enqueue must pass ids only; the export job is already registered (`apps/worker/src/__tests__/registry.test.ts:146`).
 
 ### History
-Placeholder from the workspace shell; core read services #824 (43591adb), UI/i18n #825 (c76d3d0a, 4ad140fd).
+Core services #768 era; read services #824, UI pattern #825, studio shell #827 (on base). #826 list on base.
 
 ### Recommendation
-Implement against `milestone/drafting-citations-research`: server loader in `lib/drafting` calling `listDrafts`/`listTemplates` via `inWorkspace`, mapping FORBIDDEN to permission-denied; page with matter filter via `?matter=` search param (validated UUID); template picker dialog with title + matter + submit calling `createDraftAction`, which uses `workspaceAction` and `createDraft({db: ctx.tx})` and redirects/returns the new id; no enqueue of external effects, no send/share/file. Add missing i18n keys, stories for each component/state, register the action, tests.
+Add `checks-actions.ts` with `workspaceAction` actions: run checks (`checkDraft` + `runConsistencyCheck`, `draft.write`), acknowledge (`draft.export`), fix (`confirm: z.literal(true)`), export (`exportDraft` with `enqueueDraftingExport`, and a download action returning `createDraftExportDownload` URL). Build the four components as client components, lazy-loaded in the studio as new `Panel` values, with jump-to-span via existing finding navigation. Fix Undo: in-lane Undo restores the pre-fix version with `restoreVersion` (new version); the Activity Feed 7-day undo needs an `activity` row + handler in core and is deferred. Ack text: use the issue's wording in a new key (keep the old key untouched).
 
 ### Related Issues
-Parent #79; depends on #824, #825 (merged); siblings #827, #828, #829.
+Parent #79; depends on #827 (on base); siblings #826, #829 (e2e, open).

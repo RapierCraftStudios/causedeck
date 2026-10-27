@@ -7,12 +7,15 @@
 // region), Esc closes what is open. Offline, the loaded draft stays readable from the encrypted
 // device cache and edits queue until `online`. `panels` is where #828's citation and consistency
 // panels go.
-import type { Block } from '@causedeck/validators/drafting';
+import type { Finding } from '@causedeck/validators/consistency';
+import type { Block, ExportFormat } from '@causedeck/validators/drafting';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import type { CitationView } from '../../../../../../components/drafting/citation-panel.tsx';
+import type { ExportLink } from '../../../../../../components/drafting/export-dialog.tsx';
 import type { DraftFact } from '../../../../../../components/drafting/facts-panel.tsx';
 import type { DraftVersionView } from '../../../../../../components/drafting/version-drawer.tsx';
 import { registerCommands } from '../../../../../../lib/commands/registry.ts';
@@ -35,6 +38,13 @@ import {
 import { DRAFT_STUDIO_SHORTCUTS } from '../../../../../../lib/shortcuts/registry.ts';
 
 import type { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
+import type {
+  acknowledgeUnverifiedAction,
+  applyFixAction,
+  downloadDraftExportAction,
+  exportDraftAction,
+  runChecksAction,
+} from './checks-actions.ts';
 
 // Heavy parts load on demand so the route's initial JS stays under its 40 KB budget: the editor,
 // the facts panel (Provenance Chips pull in popover/tooltip code) and the version drawer (diff).
@@ -48,6 +58,19 @@ const VersionDrawer = dynamic(
     import('../../../../../../components/drafting/version-drawer.tsx').then((m) => m.VersionDrawer),
   { ssr: false, loading: panelLoading },
 );
+// #828: the checks panels and dialogs load on demand too.
+const lazyChecks = <K extends string>(file: string, name: K) =>
+  dynamic(
+    () =>
+      import(`../../../../../../components/drafting/${file}.tsx`).then(
+        (m: Record<K, never>) => m[name],
+      ),
+    { ssr: false, loading: panelLoading },
+  );
+const CitationPanel = lazyChecks('citation-panel', 'CitationPanel');
+const ConsistencyPanel = lazyChecks('consistency-panel', 'ConsistencyPanel');
+const AckDialog = lazyChecks('ack-dialog', 'AckDialog');
+const ExportDialog = lazyChecks('export-dialog', 'ExportDialog');
 const DraftEditor = dynamic(() => import('../../../../../../components/drafting/editor.tsx'), {
   ssr: false,
   loading: () => <div aria-hidden="true" className="bg-surface-sunken h-64 rounded-md" />,
@@ -76,6 +99,26 @@ export interface StudioProps {
   findingKeys?: string[];
   /** #828's citation and consistency panels. */
   panels?: ReactNode;
+  /** #828: the checks of the version being edited, with the actions that run, fix and export. */
+  checks?: StudioChecks;
+}
+
+export interface StudioChecks {
+  actions: {
+    run: typeof runChecksAction;
+    acknowledge: typeof acknowledgeUnverifiedAction;
+    fix: typeof applyFixAction;
+    exportDraft: typeof exportDraftAction;
+    download: typeof downloadDraftExportAction;
+  };
+  /** The id of the version `versionNo` names (what the checks and the export read). */
+  versionId: string;
+  citations: CitationView[];
+  findings: Finding[];
+  /** A consistency report exists for this version. */
+  checked: boolean;
+  courtPreset: string | null;
+  aiAssisted: boolean;
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'queued' | 'conflict' | 'failed';

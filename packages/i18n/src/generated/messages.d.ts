@@ -3886,6 +3886,59 @@ export type Messages = {
       showFacts: string;
       showVersions: string;
     };
+    checks: {
+      citations: {
+        checking: string;
+        checkFailed: string;
+        acknowledged: string;
+        jump: string;
+        blocked: string;
+        acknowledge: string;
+      };
+      consistency: {
+        notRun: string;
+        severity: {
+          error: string;
+          warn: string;
+          info: string;
+        };
+        found: string;
+        expected: string;
+        source: string;
+        jump: string;
+        fix: string;
+        fixTitle: string;
+        fixBody: string;
+        fixConfirm: string;
+        cancel: string;
+        fixed: string;
+        fixFailed: string;
+        undo: string;
+        undone: string;
+        undoFailed: string;
+      };
+      ack: {
+        title: string;
+        description: string;
+        checkbox: string;
+        confirm: string;
+        cancel: string;
+        failed: string;
+      };
+      export: {
+        description: string;
+        format: string;
+        court: string;
+        noCourt: string;
+        ai: string;
+        aiYes: string;
+        aiNo: string;
+        acknowledge: string;
+        download: string;
+        close: string;
+        preparing: string;
+      };
+    };
   };
   calendar: {
     metaTitle: string;

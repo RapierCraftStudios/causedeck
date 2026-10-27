@@ -50,6 +50,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0040](0040-court-day-board-interaction-model.md) | The court-day board interaction model | Proposed | 2026-10-25 | — |
 | [0041](0041-brief-print-via-css.md) | Brief printing through a print stylesheet | Proposed | 2026-10-25 | — |
 | [0042](0042-offline-encrypted-store-and-key-lifecycle.md) | Offline encrypted store and key lifecycle | Proposed | 2026-10-25 | — |
+| [0043](0043-corpus-storage-enrichment-and-retrieval.md) | Corpus storage, enrichment and retrieval | Proposed | 2026-10-27 | — |
 
 ## Statuses
 

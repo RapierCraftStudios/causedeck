@@ -440,3 +440,26 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
 - **Why:** three features call out from core: data-ops Slack alerts (#515), the news digest (#481) and customer webhooks (#626, with an SSRF-safe `deliverWebhook`). The spike (§2) kept core free of `@causedeck/fetch`, and lanes started adding the dependency piecemeal (it was listed twice) to make lint pass. Injection through the worker for every sender adds wiring without adding safety, because the fetch layer itself is the governance boundary.
 - **Amends:** spike §2 (core dependencies).
 - **Revisit if:** core starts making external calls outside `@causedeck/fetch`, or the fetch layer grows code that should not run in request paths.
+
+### D-053 — Data posture: coverage first; an anonymised shared corpus
+- **Date:** 2026-10-27 · **Status:** Proposed (founder: "Dont worry too much about lawful its like a grey area right Scraping and everything Point is for us low cost high value for the user"; on names: "the name of the case I think is Supposed to be public … most cases and case laws Are basically ruled on facts … We necessarily dont even need to worry about the names") · **⚖** for the record, not a gate
+- **Decision:**
+  1. **Retrieval posture.** Scraping public court and government pages and solving captchas is treated as a business risk the founder accepts, not as something blocked until counsel replies.
+     - Public pages with no captcha may be fetched once a source is registered.
+     - Captchas may be solved on the server, for delegated lookups and for coverage of the courts we serve. Bulk coverage (#492) is unparked.
+     - Captchas are solved with our own solver where possible (eCourts uses simple image captchas). The paid AlterLab `captcha` tier is the fallback.
+     - Every source still goes through the governed fetch layer, with per-host rate and concurrency budgets, off-peak scheduling, caching and a kill switch. Overloading a court server gets us blocked and loses the source.
+     - Counsel (#118) and the Registry and official partnerships (#513) continue in parallel as upside, not as blockers.
+  2. **Anonymised shared corpus.** Judgments and orders in the shared corpus are served with party details replaced by role placeholders that stay consistent within a judgment ("the Appellant", "Accused 1", "the Complainant's wife").
+     - **Replaced:** parties, witnesses, relatives, addresses, phone numbers, Aadhaar/PAN, bank and vehicle numbers, and medical details.
+     - **Kept:** judges, advocates, courts, institutions and government bodies, statutes, dates and amounts.
+     - **Case title:** kept as published, because with the citation and case number it identifies the case. The stable key is the citation or case number, not the title.
+     - **Title masking:** titles are masked for sensitive categories (POCSO, sexual offences, juvenile, matrimonial and family, in-camera, acquittals of individuals) and on a court order or request. Reported or frequently cited landmark judgments stay searchable by title.
+     - **No name search** over judgment text. The raw text is kept for staff and for citation verification internals only. The placeholder mapping is not stored. Masking requests are handled within 72 hours.
+     - The lawyer's own matters keep real names inside their workspace (unchanged).
+  3. **Editorial rule narrowed.** No corpus field may hold content from an editorial source (SCC Online, Manupatra, other publishers' headnotes or citators). Our own machine-generated segment roles, tags, statute and citation references and outcomes are allowed (*EBC v. D.B. Modak* protects editorial additions, not original analysis).
+- **Bright lines, unchanged and never relaxed:** statutory identity bans (POCSO s.23, BNS s.72, JJ Act s.74, in-camera and matrimonial) are filtered at ingest; court-ordered masking is honoured; no judge ratings, predictions or profiles (D-050); no framing of court pages.
+- **Why:** coverage at low cost is the product (D-049). Competitors already work this way, and no Indian ruling has addressed scraping public court portals. Precedent value lies in facts and reasoning, not party identity. Removing identities from the shared corpus shrinks right-to-be-forgotten exposure (the Delhi HC in May 2026 and the Karnataka HC in August 2026 directed name masking and name-search removal at Indian Kanoon) and DPDP scope, and makes the corpus safe to embed, search and serve through the API. Research: [docs/strategy/13](docs/strategy/13-legal-data-competitive-research.md).
+- **Amends:** D-048 (the bright lines on captcha solving at scale and covert bulk crawling; the corpus rule on editorial content; DPDP posture for the shared corpus), D-001 (corpus content), #484 (static editorial test), #118 (its acceptance criterion "no server-side automation and no captcha circumvention" becomes "assess").
+- **Architecture:** [ADR 0043](docs/adr/0043-corpus-storage-enrichment-and-retrieval.md).
+- **Revisit if:** a court, Registry or NIC objects to or blocks our traffic (kill switch for that host, then review); counsel advises a specific mode is unlawful; the redaction evaluation shows the placeholders lose legal meaning.

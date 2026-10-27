@@ -2,6 +2,8 @@
 // flag list with evidence grouped by rule; `s` snoozes, `Enter` opens the evidence, `Esc` closes.
 // `@a11y` runs axe (zero serious or critical violations) in both themes; `@visual` compares
 // baselines per viewport x theme project. Runs in CI only.
+import { existsSync } from 'node:fs';
+
 import type { Page } from '@playwright/test';
 
 import type { AsUser } from '../../fixtures/auth.ts';
@@ -18,14 +20,18 @@ test.describe('stale-matter attention', () => {
   test(
     'the badge opens the flags grouped by rule, operable by keyboard',
     { tag: ['@a11y', '@visual'] },
-    async ({ page, asUser }) => {
+    async ({ page, asUser }, testInfo) => {
       await openMatters(page, asUser);
       const badge = page.locator('[data-attention-badge]');
       await expect(badge).toBeVisible();
       await badge.focus();
       await page.keyboard.press('Enter');
       await expect(page.getByRole('heading', { level: 3 }).first()).toBeVisible();
-      await expect(page).toHaveScreenshot('attention-open.png');
+      // Like the other @visual shots: compare only once a baseline exists (e2e/README.md).
+      const baseline = testInfo.snapshotPath('attention-open.png', { kind: 'screenshot' });
+      if (testInfo.config.updateSnapshots !== 'none' || existsSync(baseline)) {
+        await expect(page).toHaveScreenshot('attention-open.png');
+      }
 
       const item = page.getByRole('listitem').first();
       await item.focus();

@@ -264,11 +264,16 @@ export function QueueView(props: QueueViewProps) {
       else if (key === '/') {
         event.preventDefault();
         searchRef.current?.focus();
-      } else if (key === '?') setHelp(true);
+      } else if (key === '?') {
+        // Claim it: the shell's own `?` (on window, bubble) leaves a claimed key alone.
+        event.preventDefault();
+        setHelp(true);
+      }
     };
-    window.addEventListener('keydown', onKey);
+    // On document, so page keys run before the shell's window listener (lib/shortcuts/provider.tsx).
+    document.addEventListener('keydown', onKey);
     return () => {
-      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('keydown', onKey);
     };
   }, [flat, selectedId, current, canWrite, canTrack]);
 

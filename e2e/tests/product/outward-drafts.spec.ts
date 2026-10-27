@@ -44,7 +44,8 @@ test.describe('outward drafts journeys', () => {
       await asUser('owner', { path: DRAFTS_PATH });
       await contentReady(page);
       const list = page.getByRole('list', { name: 'Drafts waiting to be sent' });
-      await expect(list.getByRole('listitem')).toHaveCount(5);
+      // Five are seeded; the shared one has left the queue (listDrafts lists what still waits).
+      await expect(list.getByRole('listitem')).toHaveCount(4);
       await page.getByRole('button', { name: /^Open draft for Ramaswamy/ }).click();
       await expect(page).toHaveURL(new RegExp(`[?&]draft=${drafts.client}`));
       await expect(editorBox(page)).toHaveValue(CLIENT_TEXT);
@@ -165,7 +166,8 @@ test.describe('outward drafts journeys', () => {
       await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     }
     const drafts = await seedDrafts(db.name);
-    await asUser('owner', { path: `${DRAFTS_PATH}?draft=${drafts.client}` });
+    // The edited draft: an unedited one has no changes, so its diff shows no group.
+    await asUser('owner', { path: `${DRAFTS_PATH}?draft=${drafts.edited}` });
     await contentReady(page);
     await editorBox(page).focus();
     await page.keyboard.press('Control+Enter');
@@ -222,11 +224,10 @@ test.describe('outward drafts states', { tag: '@a11y' }, () => {
 
   test('error', async ({ page, asUser }) => {
     await asUser('owner', { path: `${DRAFTS_PATH}?__state=error` });
-    await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText(
-      'Something went wrong.',
-      { timeout: 15_000 },
-    );
-    await expect(page.locator('main').getByRole('button', { name: 'Try again' })).toBeVisible();
+    // The boundary keeps the page heading; the failure is the alert below it.
+    const alert = page.locator('main').getByRole('alert');
+    await expect(alert).toContainText('Drafts could not be loaded', { timeout: 15_000 });
+    await expect(alert.getByRole('button', { name: 'Try again' })).toBeVisible();
   });
 
   test('denied for a clerk', async ({ page, asUser }) => {

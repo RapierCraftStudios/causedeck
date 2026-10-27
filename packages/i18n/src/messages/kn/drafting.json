@@ -161,14 +161,14 @@
       "editor": "ಸಂಪಾದಕ",
       "facts": "ಸಂಗತಿಗಳು",
       "versions": "ಆವೃತ್ತಿಗಳು",
-      "precedents": "Precedents"
+      "precedents": "ಪೂರ್ವನಿದರ್ಶನಗಳು"
     },
     "actions": {
       "title": "ಕರಡು ಕ್ರಿಯೆಗಳು",
       "save": "ಕರಡು ಉಳಿಸಿ",
       "showFacts": "ಸಂಗತಿಗಳನ್ನು ತೋರಿಸಿ",
       "showVersions": "ಆವೃತ್ತಿಗಳನ್ನು ತೋರಿಸಿ",
-      "showPrecedents": "Show precedents"
+      "showPrecedents": "ಪೂರ್ವನಿದರ್ಶನಗಳನ್ನು ತೋರಿಸಿ"
     },
     "checks": {
       "citations": {
@@ -224,24 +224,24 @@
       }
     },
     "precedents": {
-      "title": "Precedents",
-      "hint": "Suggested from your own drafts. Nothing is inserted until you choose it.",
-      "noBlock": "Select a narrative block to see your passages for it.",
-      "loading": "Finding your passages",
-      "empty": "Passages you approve will appear here.",
-      "error": "Your passages could not be loaded.",
-      "retry": "Try again",
-      "denied": "Your role cannot read saved passages.",
-      "offline": "Offline. Passages load when you are back online.",
-      "why": "Why this is suggested",
-      "source": "Your draft",
-      "insert": "Insert",
-      "saveSelection": "Save selection as precedent",
-      "nothingSelected": "Select some text in a paragraph first.",
-      "proposed": "Proposed as a precedent. Review it in Memory.",
-      "skipped": "Already proposed, or dismissed recently.",
-      "exportFirst": "Export this version before saving a passage from it.",
-      "failed": "The passage could not be proposed."
+      "title": "ಪೂರ್ವನಿದರ್ಶನಗಳು",
+      "hint": "ನಿಮ್ಮ ಸ್ವಂತ ಕರಡುಗಳಿಂದ ಸೂಚಿಸಲಾಗಿದೆ. ನೀವು ಆಯ್ಕೆ ಮಾಡುವವರೆಗೆ ಏನನ್ನೂ ಸೇರಿಸಲಾಗುವುದಿಲ್ಲ.",
+      "noBlock": "ಅದಕ್ಕಾಗಿ ನಿಮ್ಮ ಭಾಗಗಳನ್ನು ನೋಡಲು ಒಂದು ನಿರೂಪಣಾ ಭಾಗವನ್ನು ಆಯ್ಕೆ ಮಾಡಿ.",
+      "loading": "ನಿಮ್ಮ ಭಾಗಗಳನ್ನು ಹುಡುಕಲಾಗುತ್ತಿದೆ",
+      "empty": "ನೀವು ಅನುಮೋದಿಸುವ ಭಾಗಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ.",
+      "error": "ನಿಮ್ಮ ಭಾಗಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ಆಗಲಿಲ್ಲ.",
+      "retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+      "denied": "ಉಳಿಸಿದ ಭಾಗಗಳನ್ನು ಓದಲು ನಿಮ್ಮ ಪಾತ್ರಕ್ಕೆ ಅನುಮತಿ ಇಲ್ಲ.",
+      "offline": "ಆಫ್‌ಲೈನ್. ನೀವು ಮತ್ತೆ ಆನ್‌ಲೈನ್ ಬಂದಾಗ ಭಾಗಗಳು ಲೋಡ್ ಆಗುತ್ತವೆ.",
+      "why": "ಇದನ್ನು ಏಕೆ ಸೂಚಿಸಲಾಗಿದೆ",
+      "source": "ನಿಮ್ಮ ಕರಡು",
+      "insert": "ಸೇರಿಸಿ",
+      "saveSelection": "ಆಯ್ಕೆಯನ್ನು ಪೂರ್ವನಿದರ್ಶನವಾಗಿ ಉಳಿಸಿ",
+      "nothingSelected": "ಮೊದಲು ಒಂದು ಪ್ಯಾರಾದಲ್ಲಿ ಸ್ವಲ್ಪ ಪಠ್ಯವನ್ನು ಆಯ್ಕೆ ಮಾಡಿ.",
+      "proposed": "ಪೂರ್ವನಿದರ್ಶನವಾಗಿ ಪ್ರಸ್ತಾಪಿಸಲಾಗಿದೆ. ಸ್ಮರಣೆಯಲ್ಲಿ ಅದನ್ನು ಪರಿಶೀಲಿಸಿ.",
+      "skipped": "ಈಗಾಗಲೇ ಪ್ರಸ್ತಾಪಿಸಲಾಗಿದೆ, ಅಥವಾ ಇತ್ತೀಚೆಗೆ ತಳ್ಳಿಹಾಕಲಾಗಿದೆ.",
+      "exportFirst": "ಈ ಆವೃತ್ತಿಯಿಂದ ಭಾಗವನ್ನು ಉಳಿಸುವ ಮೊದಲು ಅದನ್ನು ರಫ್ತು ಮಾಡಿ.",
+      "failed": "ಭಾಗವನ್ನು ಪ್ರಸ್ತಾಪಿಸಲು ಆಗಲಿಲ್ಲ."
     }
   }
 }

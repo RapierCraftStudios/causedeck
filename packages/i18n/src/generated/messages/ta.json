@@ -3885,14 +3885,14 @@
       "editor": "திருத்தி",
       "facts": "உண்மைகள்",
       "versions": "பதிப்புகள்",
-      "precedents": "Precedents"
+      "precedents": "முன்னுதாரணங்கள்"
     },
     "actions": {
       "title": "வரைவு செயல்கள்",
       "save": "வரைவைச் சேமி",
       "showFacts": "உண்மைகளைக் காட்டு",
       "showVersions": "பதிப்புகளைக் காட்டு",
-      "showPrecedents": "Show precedents"
+      "showPrecedents": "முன்னுதாரணங்களைக் காட்டு"
     },
     "checks": {
       "citations": {
@@ -3948,24 +3948,24 @@
       }
     },
     "precedents": {
-      "title": "Precedents",
-      "hint": "Suggested from your own drafts. Nothing is inserted until you choose it.",
-      "noBlock": "Select a narrative block to see your passages for it.",
-      "loading": "Finding your passages",
-      "empty": "Passages you approve will appear here.",
-      "error": "Your passages could not be loaded.",
-      "retry": "Try again",
-      "denied": "Your role cannot read saved passages.",
-      "offline": "Offline. Passages load when you are back online.",
-      "why": "Why this is suggested",
-      "source": "Your draft",
-      "insert": "Insert",
-      "saveSelection": "Save selection as precedent",
-      "nothingSelected": "Select some text in a paragraph first.",
-      "proposed": "Proposed as a precedent. Review it in Memory.",
-      "skipped": "Already proposed, or dismissed recently.",
-      "exportFirst": "Export this version before saving a passage from it.",
-      "failed": "The passage could not be proposed."
+      "title": "முன்னுதாரணங்கள்",
+      "hint": "உங்கள் சொந்த வரைவுகளிலிருந்து பரிந்துரைக்கப்பட்டது. நீங்கள் தேர்ந்தெடுக்கும் வரை எதுவும் செருகப்படாது.",
+      "noBlock": "அதற்கான உங்கள் பத்திகளைப் பார்க்க ஒரு விவரணப் பகுதியைத் தேர்ந்தெடுங்கள்.",
+      "loading": "உங்கள் பத்திகளைத் தேடுகிறது",
+      "empty": "நீங்கள் அங்கீகரிக்கும் பத்திகள் இங்கே தோன்றும்.",
+      "error": "உங்கள் பத்திகளை ஏற்ற முடியவில்லை.",
+      "retry": "மீண்டும் முயலவும்",
+      "denied": "சேமித்த பத்திகளைப் படிக்க உங்கள் பங்குக்கு அனுமதி இல்லை.",
+      "offline": "இணைப்பில் இல்லை. மீண்டும் இணைந்ததும் பத்திகள் ஏற்றப்படும்.",
+      "why": "இது ஏன் பரிந்துரைக்கப்படுகிறது",
+      "source": "உங்கள் வரைவு",
+      "insert": "செருகு",
+      "saveSelection": "தேர்வை முன்னுதாரணமாகச் சேமி",
+      "nothingSelected": "முதலில் ஒரு பத்தியில் சிறிது உரையைத் தேர்ந்தெடுங்கள்.",
+      "proposed": "முன்னுதாரணமாக முன்மொழியப்பட்டது. நினைவகத்தில் அதைச் சரிபாருங்கள்.",
+      "skipped": "ஏற்கெனவே முன்மொழியப்பட்டது, அல்லது சமீபத்தில் நிராகரிக்கப்பட்டது.",
+      "exportFirst": "இந்தப் பதிப்பிலிருந்து ஒரு பத்தியைச் சேமிப்பதற்கு முன் அதை ஏற்றுமதி செய்யுங்கள்.",
+      "failed": "பத்தியை முன்மொழிய முடியவில்லை."
     }
   },
   "calendar": {

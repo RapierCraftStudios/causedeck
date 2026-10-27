@@ -39,7 +39,7 @@ export const WithIcon: Story = {
   },
 };
 
-export const AllStatuses: Story = {
+export const AllFactStatuses: Story = {
   render: (args) => (
     <p className="max-w-xl leading-8">
       {FACT_STATUS_ORDER.map((status) => (
@@ -64,7 +64,7 @@ export const Dark: Story = {
   ],
 };
 
-export const Sheet: Story = {
+export const FactCardSheet: Story = {
   args: { presentation: 'sheet', defaultOpen: true },
 };
 

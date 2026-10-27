@@ -164,3 +164,22 @@ export * from './delegation';
 export * from './brief';
 export * from './continuity';
 export * from './attention';
+export {
+  DEFAULT_FACT_LABELS,
+  FACT_STATUS_META,
+  FACT_STATUS_ORDER,
+  FactLiveRegion,
+  FactSquiggle,
+  type FactLabels,
+  type FactSquiggleProps,
+  type FactStatus,
+  type FactStatusMeta,
+} from './fact-squiggle/fact-squiggle';
+export {
+  FactCardBody,
+  type FactCardActions,
+  type FactCardBodyProps,
+  type FactCardLabels,
+  type FactSource,
+} from './fact-squiggle/fact-card';
+export { nextIssueIndex, useFactNavigation } from './fact-squiggle/use-fact-navigation';

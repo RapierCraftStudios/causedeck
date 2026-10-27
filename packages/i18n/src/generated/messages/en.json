@@ -3944,6 +3944,27 @@
         "close": "Close",
         "preparing": "Preparing the file…"
       }
+    },
+    "factCheck": {
+      "status": {
+        "match": "Matches the record",
+        "mismatch": "Does not match the record",
+        "unsupported": "Not found in the record",
+        "unverifiedCitation": "Citation not verified",
+        "ambiguous": "Ambiguous in the record"
+      },
+      "source": "From the record",
+      "noSource": "The record has no passage for this.",
+      "page": "Page {page}",
+      "openPage": "Open page {page}",
+      "actions": {
+        "fix": "Fix",
+        "ignore": "Ignore",
+        "ignoreForMatter": "Ignore for this matter",
+        "markAssertion": "Mark as my assertion"
+      },
+      "announce": "Issue {index} of {total}: {status}",
+      "noIssues": "No fact-check issues."
     }
   },
   "calendar": {

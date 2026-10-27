@@ -124,6 +124,7 @@ const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actio
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
 const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actions.ts');
+const draftPrecedents = await import('../app/(app)/w/[slug]/drafts/[id]/precedent-actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
@@ -249,6 +250,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   applyFixAction: draftChecks,
   exportDraftAction: draftChecks,
   downloadDraftExportAction: draftChecks,
+  searchPrecedentsForBlockAction: draftPrecedents,
+  proposePrecedentAction: draftPrecedents,
   addTagAction: research,
   confirmOutcomeAction: hearingOutcome,
   markPreparedAction: briefSheet,
@@ -985,6 +988,23 @@ function inputs(workspaceId: string): Record<string, unknown> {
       draftId: t.a.rows.draft_version?.draftId,
       versionNo: 1,
     },
+    // Drafting precedents (#904): ub's search sees none of A's passages; ub may not propose from A's version.
+    searchPrecedentsForBlockAction: {
+      workspaceId,
+      query: 'prayer for interim relief',
+      courtId: null,
+      kind: null,
+      language: 'en',
+    },
+    proposePrecedentAction: {
+      workspaceId,
+      passageText: 'Cross-tenant probe',
+      kind: 'other',
+      courtId: null,
+      language: 'en',
+      draftVersionId: t.a.rows.draft_version?.id,
+      anchorId: 'b.0',
+    },
     // Drafting checks (#828): ub may not check, acknowledge, fix or export A's draft.
     runChecksAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
     acknowledgeUnverifiedAction: {
@@ -1707,6 +1727,18 @@ describe('cross-tenant server actions', () => {
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
       expect(result, name).not.toHaveProperty('data');
     }
+  });
+
+  it('precedent actions under B’s own workspace find none of A’s passages or draft (#904)', async () => {
+    const own = inputs(t.b.id);
+    const searched = await action('searchPrecedentsForBlockAction')(
+      own['searchPrecedentsForBlockAction'],
+    );
+    console.log('DBG', JSON.stringify(searched));
+    expect(searched).toHaveProperty('data.passages', []);
+    const proposed = await action('proposePrecedentAction')(own['proposePrecedentAction']);
+    expect(['NOT_FOUND', 'FORBIDDEN']).toContain(code(proposed));
+    expect(proposed).not.toHaveProperty('data');
   });
 
   it('hearing outcome actions under B’s own workspace find none of A’s hearing (#62)', async () => {

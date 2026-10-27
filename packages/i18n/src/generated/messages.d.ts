@@ -5279,6 +5279,7 @@ export type Messages = {
       M2: string;
       M3: string;
       M4: string;
+      M5: string;
       M6: string;
       M7: string;
     };

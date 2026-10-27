@@ -1,11 +1,11 @@
 'use server';
-// Stale-matter attention server actions (#70): snooze with a reason, dismiss as intentionally
-// dormant, lift. Each goes through `workspaceAction` (strict zod input, session, membership) and
+// Stale-matter attention server actions (#70): list the flags, snooze with a reason, dismiss as
+// intentionally dormant, lift. Each goes through `workspaceAction` (strict zod input, session, membership) and
 // `@causedeck/core/attention` on the workspace-scoped transaction, which checks the role again and
 // writes the audit entry. A flag never changes a matter, listing, hearing or obligation, and nothing
 // here sends a message.
 import { assertCan } from '@causedeck/auth/policy';
-import { LiftSnoozeInput, Snooze } from '@causedeck/validators/attention';
+import { LiftSnoozeInput, Snooze, type AttentionFlag } from '@causedeck/validators/attention';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -16,6 +16,7 @@ import {
   type WorkspaceActionCtx,
 } from '../../../../../../lib/workspace-action.ts';
 
+const ListAction = WorkspaceScoped.strict();
 const SnoozeAction = WorkspaceScoped.extend({
   matterId: z.uuid(),
   rule: z
@@ -53,6 +54,18 @@ const actor = (ctx: WorkspaceActionCtx) => ({ workspaceId: ctx.workspaceId, user
 const refresh = () => {
   revalidatePath('/w/[slug]/matters', 'page');
 };
+
+// The badge loads its flags after the list renders: detection reads every matter, so it stays off
+// the matters page's server render (p95 budget 300 ms on 500 matters).
+const list = workspaceAction(
+  ListAction,
+  async (_input, ctx) => {
+    assertCan(ctx.actor, 'matter.read');
+    const { detectAttention } = await import('@causedeck/core/attention');
+    return detectAttention(deps(ctx), actor(ctx));
+  },
+  { action: 'matter.read' },
+);
 
 const snooze = workspaceAction(
   SnoozeAction,
@@ -92,6 +105,9 @@ const lift = workspaceAction(
   { action: 'matter.write' },
 );
 
+export async function listAttentionAction(input: unknown): Promise<Result<AttentionFlag[]>> {
+  return list(input);
+}
 export async function snoozeFlagAction(input: unknown): Promise<Result<AttentionActionResult>> {
   return snooze(input);
 }

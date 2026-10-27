@@ -79,22 +79,6 @@ async function conflictCheckEnabled(
   }
 }
 
-/** The stale-matter flags the member may see (#70); a failed read shows no badge, never the page error. */
-async function loadAttention(
-  context: NonNullable<Awaited<ReturnType<typeof getWorkspaceContext>>>,
-) {
-  try {
-    const [{ detectAttention }, { inWorkspace }] = await Promise.all([
-      import('@causedeck/core/attention'),
-      import('@causedeck/core/runtime'),
-    ]);
-    const scope = { workspaceId: context.workspace.id, userId: context.user.id };
-    return await inWorkspace(scope, (tx) => detectAttention({ db: tx }, scope));
-  } catch {
-    return [];
-  }
-}
-
 export default async function MattersPage({ params, searchParams }: MattersPageProps) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   // The layout already checks membership; checking again keeps the page safe on its own.
@@ -108,12 +92,11 @@ export default async function MattersPage({ params, searchParams }: MattersPageP
 
   const state = parseMatterListState(query);
   // The filter options do not depend on the list: load both at once.
-  const [loaded, options, t, locale, flags] = await Promise.all([
+  const [loaded, options, t, locale] = await Promise.all([
     loadMatterList(context, toSearchMattersInput(state)),
     loadMatterFilterOptions(context),
     getTranslations('matters'),
     pageLocale(),
-    loadAttention(context),
   ]);
   if (loaded.kind === 'denied') return <MattersPermissionDenied />;
   if (loaded.kind === 'invalid' && state.cursor !== undefined) {
@@ -174,13 +157,10 @@ export default async function MattersPage({ params, searchParams }: MattersPageP
         header={
           <div className="flex items-center justify-between gap-3">
             <h1 className="font-serif text-2xl font-medium">{t('title')}</h1>
-            {flags.length === 0 ? null : (
-              <AttentionBadge
-                workspaceId={context.workspace.id}
-                flags={flags}
-                canWrite={can(context.role, 'matter.write')}
-              />
-            )}
+            <AttentionBadge
+              workspaceId={context.workspace.id}
+              canWrite={can(context.role, 'matter.write')}
+            />
           </div>
         }
         toolbar={

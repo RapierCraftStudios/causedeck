@@ -16,6 +16,8 @@ export interface AttentionFlagListProps {
   state?: AttentionState;
   canWrite: boolean;
   onRetry?: (() => void) | undefined;
+  /** Called after a snooze or dismiss succeeds. */
+  onChanged?: (() => void) | undefined;
 }
 
 export function AttentionFlagList({
@@ -24,6 +26,7 @@ export function AttentionFlagList({
   state = 'default',
   canWrite,
   onRetry,
+  onChanged,
 }: AttentionFlagListProps) {
   const t = useTranslations('attention');
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -42,7 +45,10 @@ export function AttentionFlagList({
         ? await dismissFlagAction(base)
         : await snoozeFlagAction({ ...base, until, reason });
       setFailed(!result.ok);
-      if (result.ok) setSnoozeKey(null);
+      if (result.ok) {
+        setSnoozeKey(null);
+        onChanged?.();
+      }
     });
   };
 

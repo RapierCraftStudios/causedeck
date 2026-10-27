@@ -3886,12 +3886,14 @@ export type Messages = {
       editor: string;
       facts: string;
       versions: string;
+      precedents: string;
     };
     actions: {
       title: string;
       save: string;
       showFacts: string;
       showVersions: string;
+      showPrecedents: string;
     };
     checks: {
       citations: {
@@ -3945,6 +3947,26 @@ export type Messages = {
         close: string;
         preparing: string;
       };
+    };
+    precedents: {
+      title: string;
+      hint: string;
+      noBlock: string;
+      loading: string;
+      empty: string;
+      error: string;
+      retry: string;
+      denied: string;
+      offline: string;
+      why: string;
+      source: string;
+      insert: string;
+      saveSelection: string;
+      nothingSelected: string;
+      proposed: string;
+      skipped: string;
+      exportFirst: string;
+      failed: string;
     };
     factCheck: {
       status: {

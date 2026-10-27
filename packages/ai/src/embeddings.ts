@@ -101,7 +101,7 @@ export function guardEmbedder(embedder: Embedder, audit: EmbeddingAuditSink): Em
       const vector = await embedder.embed(text);
       if (vector.length !== EMBEDDING_DIMENSIONS) {
         throw new RangeError(
-          `Embedding has ${vector.length} dimensions, expected ${EMBEDDING_DIMENSIONS}`,
+          `Embedding has ${String(vector.length)} dimensions, expected ${String(EMBEDDING_DIMENSIONS)}`,
         );
       }
       return vector;

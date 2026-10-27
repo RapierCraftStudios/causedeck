@@ -3,7 +3,7 @@
 // confirm-before-save path as every memory: `proposePlaybook` files a proposal, `confirmPlaybook`
 // saves it (and retires the playbook it replaces); nothing is written without that confirmation.
 // The value is a list of tagged lines, because a memory value holds only flat strings.
-import { Playbook, PlaybookSchema, type MemoryProposal } from '@causedeck/validators';
+import { PlaybookSchema, type MemoryProposal, type Playbook } from '@causedeck/validators';
 import { schema } from '@causedeck/db';
 import { and, eq } from 'drizzle-orm';
 
@@ -176,10 +176,7 @@ export async function deletePlaybook(
     await tx
       .delete(memoryEmbedding)
       .where(
-        and(
-          eq(memoryEmbedding.workspaceId, actor.workspaceId),
-          eq(memoryEmbedding.itemId, itemId),
-        ),
+        and(eq(memoryEmbedding.workspaceId, actor.workspaceId), eq(memoryEmbedding.itemId, itemId)),
       );
   });
 }

@@ -31,7 +31,7 @@ import {
   type MemoryDeps,
 } from '../scope.ts';
 
-import { saveConfirmedPassage, type M5Deps } from './precedent-bank.ts';
+import { memoryText, saveConfirmedPassage, type M5Deps } from './precedent-bank.ts';
 
 const { memoryProposal, draftVersion, draftExport, memoryItem } = schema;
 
@@ -83,10 +83,7 @@ export async function proposePrecedent(
         ),
       )
       .where(
-        and(
-          eq(draftVersion.workspaceId, actor.workspaceId),
-          eq(draftVersion.id, draftVersionId),
-        ),
+        and(eq(draftVersion.workspaceId, actor.workspaceId), eq(draftVersion.id, draftVersionId)),
       )
       .limit(1);
     if (version === undefined) throw notFound('Exported draft version not found');
@@ -226,7 +223,7 @@ export async function confirmPrecedentProposal(
     return row;
   });
   if (found?.key !== 'M5.precedent') throw notFound('Proposal not found');
-  const text = options.text ?? String(open(found.value));
+  const text = options.text ?? memoryText(open(found.value));
   const ev = found.evidence;
   const str = (k: string): string => (typeof ev[k] === 'string' ? ev[k] : '');
   const vector = await embedMemoryText(deps, actor, deps.embedder ?? localMemoryEmbedder, text);

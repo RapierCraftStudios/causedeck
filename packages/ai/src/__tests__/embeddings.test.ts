@@ -109,9 +109,7 @@ describe('no training client (ADR 0046)', () => {
   it.each(files.map((f) => [path.relative(srcDir, f), f]))(
     '%s has no fine-tuning or training client',
     (_name, file) => {
-      expect(
-        TRAINING.exec(stripComments(readFileSync(file as string, 'utf8')))?.[0],
-      ).toBeUndefined();
+      expect(TRAINING.exec(stripComments(readFileSync(file, 'utf8')))?.[0]).toBeUndefined();
     },
   );
 });

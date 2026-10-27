@@ -34,20 +34,31 @@ describe('M5 validators (#901)', () => {
   it('lets M5 live at user or workspace scope, never matter scope', () => {
     expect(LAYER_SCOPES.M5).toEqual(['user', 'workspace']);
     expect(
-      MemoryNoteInput.safeParse({ key: 'M5.playbook', value: 'x', scope: 'matter', matterId: MATTER })
-        .success,
+      MemoryNoteInput.safeParse({
+        key: 'M5.playbook',
+        value: 'x',
+        scope: 'matter',
+        matterId: MATTER,
+      }).success,
     ).toBe(false);
-    expect(MemoryNoteInput.safeParse({ key: 'M5.precedent', value: 'x', scope: 'user' }).success).toBe(
-      true,
-    );
+    expect(
+      MemoryNoteInput.safeParse({ key: 'M5.precedent', value: 'x', scope: 'user' }).success,
+    ).toBe(true);
   });
 
   it("allows the court's honorific in a passage but still refuses a bench key", () => {
-    expect(() =>
-      assertNotBench('M5.precedent', "It is prayed that this Hon'ble Court may be pleased to allow"),
-    ).not.toThrow();
-    expect(() => assertNotBench('M3.synopsis', "The Hon'ble judge is strict")).toThrow();
-    expect(() => assertNotBench('M5.judge_notes', 'x')).toThrow();
+    expect(() => {
+      assertNotBench(
+        'M5.precedent',
+        "It is prayed that this Hon'ble Court may be pleased to allow",
+      );
+    }).not.toThrow();
+    expect(() => {
+      assertNotBench('M3.synopsis', "The Hon'ble judge is strict");
+    }).toThrow();
+    expect(() => {
+      assertNotBench('M5.judge_notes', 'x');
+    }).toThrow();
   });
 
   it('parses a precedent proposal with its source anchor and a 30-day rest', () => {
@@ -73,11 +84,17 @@ describe('M5 validators (#901)', () => {
   });
 
   it('bounds a playbook', () => {
-    const base = { name: 'HC writs', courtId: null, format: 'writ', standardPrayers: ['a'], annexureOrder: [] };
+    const base = {
+      name: 'HC writs',
+      courtId: null,
+      format: 'writ',
+      standardPrayers: ['a'],
+      annexureOrder: [],
+    };
     expect(PlaybookSchema.safeParse(base).success).toBe(true);
-    expect(PlaybookSchema.safeParse({ ...base, standardPrayers: Array(11).fill('a') }).success).toBe(
-      false,
-    );
+    expect(
+      PlaybookSchema.safeParse({ ...base, standardPrayers: Array(11).fill('a') }).success,
+    ).toBe(false);
   });
 });
 

@@ -26,6 +26,11 @@ import {
 
 const { memoryItem, memoryProposal, memoryEmbedding, precedentPassage } = schema;
 
+/** A memory value as text: a passage is a string; anything else is kept as JSON. */
+export function memoryText(value: unknown): string {
+  return typeof value === 'string' ? value : JSON.stringify(value);
+}
+
 export interface M5Deps extends MemoryDeps {
   /** Defaults to the in-process mock; a provider embedder must run in India. */
   embedder?: MemoryEmbedder;
@@ -159,7 +164,7 @@ export async function searchPrecedents(
     return rows.map((r) => ({
       passageId: r.passage_id,
       itemId: r.item_id,
-      text: String(open(r.body_ciphertext)),
+      text: memoryText(open(r.body_ciphertext)),
       kind: r.kind,
       courtId: r.court_id,
       language: r.language,
@@ -167,7 +172,7 @@ export async function searchPrecedents(
       anchorId: r.anchor_id,
       status: r.status,
       sharedWithChamber: r.shared_with_chamber,
-      ...(r.distance === null ? {} : { distance: Number(r.distance) }),
+      ...(r.distance === null ? {} : { distance: r.distance }),
     }));
   });
 }
@@ -211,7 +216,7 @@ export async function listPrecedents(
             {
               passageId: p.id,
               itemId: p.memoryItemId,
-              text: String(open(p.bodyCiphertext)),
+              text: memoryText(open(p.bodyCiphertext)),
               kind: p.kind,
               courtId: p.courtId,
               language: p.language,
@@ -301,10 +306,7 @@ export async function deletePrecedent(
     await tx
       .delete(memoryEmbedding)
       .where(
-        and(
-          eq(memoryEmbedding.workspaceId, actor.workspaceId),
-          eq(memoryEmbedding.itemId, itemId),
-        ),
+        and(eq(memoryEmbedding.workspaceId, actor.workspaceId), eq(memoryEmbedding.itemId, itemId)),
       );
   });
 }

@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 
 import type { CitationView } from '../../../../../../components/drafting/citation-panel.tsx';
 import type { ExportLink } from '../../../../../../components/drafting/export-dialog.tsx';
+import type { PinnedAuthority } from '../../../../../../components/drafting/authorities-panel.tsx';
 import type { DraftFact } from '../../../../../../components/drafting/facts-panel.tsx';
 import type { DraftVersionView } from '../../../../../../components/drafting/version-drawer.tsx';
 import { registerCommands } from '../../../../../../lib/commands/registry.ts';
@@ -51,6 +52,13 @@ import type {
 const panelLoading = () => <div aria-hidden="true" className="bg-surface-sunken h-40 rounded-md" />;
 const FactsPanel = dynamic(
   () => import('../../../../../../components/drafting/facts-panel.tsx').then((m) => m.FactsPanel),
+  { ssr: false, loading: panelLoading },
+);
+const AuthoritiesPanel = dynamic(
+  () =>
+    import('../../../../../../components/drafting/authorities-panel.tsx').then(
+      (m) => m.AuthoritiesPanel,
+    ),
   { ssr: false, loading: panelLoading },
 );
 const VersionDrawer = dynamic(
@@ -105,6 +113,8 @@ export interface StudioProps {
   /** Model-written text by narrative block key; shown with the AI-drafted marker until edited. */
   aiTexts?: Record<string, string>;
   facts: DraftFact[];
+  /** Authorities pinned on the matter's research notes (#782). */
+  authorities?: PinnedAuthority[];
   versions: DraftVersionView[];
   /** Extra places `]` and `[` can go (#828's findings), by block key. */
   findingKeys?: string[];
@@ -515,16 +525,28 @@ export function DraftStudio(props: StudioProps) {
         onUndo={undo}
       />
     ) : which === 'facts' ? (
-      <FactsPanel
-        facts={props.facts}
-        selectedSlot={selectedSlot}
-        disabled={readOnly}
-        onInsert={(fact) => {
-          if (selectedSlot === undefined) return;
-          setBlocks((current) => insertFact(current, selectedSlot, fact.value));
-          setDirty(true);
-        }}
-      />
+      <div className="flex flex-col gap-6">
+        <FactsPanel
+          facts={props.facts}
+          selectedSlot={selectedSlot}
+          disabled={readOnly}
+          onInsert={(fact) => {
+            if (selectedSlot === undefined) return;
+            setBlocks((current) => insertFact(current, selectedSlot, fact.value));
+            setDirty(true);
+          }}
+        />
+        <AuthoritiesPanel
+          authorities={props.authorities ?? []}
+          selectedSlot={selectedSlot}
+          disabled={readOnly}
+          onInsert={(text) => {
+            if (selectedSlot === undefined) return;
+            setBlocks((current) => insertFact(current, selectedSlot, text));
+            setDirty(true);
+          }}
+        />
+      </div>
     ) : (
       <VersionDrawer
         versions={props.versions}

@@ -71,6 +71,13 @@
         "insert": "Insert {label} into the slot",
         "selectSlot": "Select a slot in the draft first."
       },
+      "authorities": {
+        "title": "Pinned authorities",
+        "empty": "No authorities are pinned on this matter's research notes.",
+        "selectBlock": "Select a block in the draft first.",
+        "insert": "Insert {label} into the block",
+        "noCitation": "No citation string; the label will be inserted."
+      },
       "citations": {
         "title": "Citations",
         "empty": "No citations found in the draft.",

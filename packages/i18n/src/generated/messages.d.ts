@@ -3796,6 +3796,13 @@ export type Messages = {
         insert: string;
         selectSlot: string;
       };
+      authorities: {
+        title: string;
+        empty: string;
+        selectBlock: string;
+        insert: string;
+        noCitation: string;
+      };
       citations: {
         title: string;
         empty: string;

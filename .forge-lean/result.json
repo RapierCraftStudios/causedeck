@@ -1,161 +1,21 @@
-{
- "status": "ok",
- "not_members": [
-  {
-   "symbol": "assertFactCheckClear",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts:549",
-   "why": "not a service: registered in NOT_A_SERVICE (cross-tenant-registry.ts), like assertCitationsClear/exportBlockedByCitations; the list at :549 holds only denied service cases"
-  },
-  {
-   "symbol": "exportBlockedByFactCheck",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts:549",
-   "why": "not a service: registered in NOT_A_SERVICE (cross-tenant-registry.ts), like assertCitationsClear/exportBlockedByCitations; the list at :549 holds only denied service cases"
-  },
-  {
-   "symbol": "factcheck-service",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts:48",
-   "why": "not a member: line 48 is the logger fixture; the service is covered through draftingCases"
-  },
-  {
-   "symbol": "factcheck",
-   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts:238",
-   "why": "not a member: line 238 is unrelated fixture code (validators module, not a service)"
-  },
-  {
-   "symbol": "DRAFT_FACT_ACK_KINDS",
-   "test": "apps/admin/__tests__/growth-page.test.tsx:27",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "draftFactAck",
-   "test": "apps/admin/__tests__/growth-page.test.tsx:27",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "DRAFT_FACT_ACK_KINDS",
-   "test": "apps/admin/__tests__/headers.test.ts:12",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "draftFactAck",
-   "test": "apps/admin/__tests__/headers.test.ts:12",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "DRAFT_FACT_ACK_KINDS",
-   "test": "apps/admin/__tests__/server-actions-audit.test.ts:59",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "draftFactAck",
-   "test": "apps/admin/__tests__/server-actions-audit.test.ts:59",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "DRAFT_FACT_ACK_KINDS",
-   "test": "apps/admin/__tests__/sources-actions.test.ts:27",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "draftFactAck",
-   "test": "apps/admin/__tests__/sources-actions.test.ts:27",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "DRAFT_FACT_ACK_KINDS",
-   "test": "apps/web/__tests__/activity-export-route.test.ts:7",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "draftFactAck",
-   "test": "apps/web/__tests__/activity-export-route.test.ts:7",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "DRAFT_FACT_ACK_KINDS",
-   "test": "apps/web/__tests__/billing-actions.test.ts:13",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "draftFactAck",
-   "test": "apps/web/__tests__/billing-actions.test.ts:13",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "DRAFT_FACT_ACK_KINDS",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts:18",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "draftFactAck",
-   "test": "apps/web/__tests__/case-watch-actions.test.ts:18",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "DRAFT_FACT_ACK_KINDS",
-   "test": "apps/web/__tests__/conflicts-action.test.ts:13",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "draftFactAck",
-   "test": "apps/web/__tests__/conflicts-action.test.ts:13",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "DRAFT_FACT_ACK_KINDS",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts:18",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "draftFactAck",
-   "test": "apps/web/__tests__/cross-tenant-actions.test.ts:18",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "DRAFT_FACT_ACK_KINDS",
-   "test": "apps/web/__tests__/document-preview-sheet.test.tsx:45",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "draftFactAck",
-   "test": "apps/web/__tests__/document-preview-sheet.test.tsx:45",
-   "why": "not a member: vi.hoisted/mock state, not a list of db schema exports"
-  },
-  {
-   "symbol": "factcheck-actions",
-   "test": "apps/web/__tests__/audit-feed.test.tsx:29",
-   "why": "not a member: hoisted mock state of an unrelated page; no list of drafts actions files"
-  },
-  {
-   "symbol": "factcheck-actions",
-   "test": "apps/web/__tests__/courts-rosters-page.test.tsx:30",
-   "why": "not a member: hoisted mock state of an unrelated page; no list of drafts actions files"
-  },
-  {
-   "symbol": "factcheck-actions",
-   "test": "apps/web/__tests__/matter-workspace-page.test.tsx:36",
-   "why": "not a member: hoisted mock state of an unrelated page; no list of drafts actions files"
-  },
-  {
-   "symbol": "factcheck-actions",
-   "test": "apps/web/__tests__/members-page.test.tsx:46",
-   "why": "not a member: hoisted mock state of an unrelated page; no list of drafts actions files"
-  },
-  {
-   "symbol": "factcheck-actions",
-   "test": "apps/web/__tests__/settings-shell.test.tsx:80",
-   "why": "not a member: hoisted mock state of an unrelated page; no list of drafts actions files"
-  },
-  {
-   "symbol": "factcheck",
-   "test": "e2e/tests/shell/layouts.spec.ts:26",
-   "why": "not a member: mobile-nav order assertion, unrelated to validators"
-  }
- ],
- "validate": {
-  "V1": "pass",
-  "V2": "pass",
-  "V3": "pass"
- },
- "note": "vitest has no -q; ran with --reporter=dot"
-}
+{"status":"blocked","block":{"kind":"toolchain","why":"Validate commands V1 and V2 pass -q, which the pinned vitest 3.2.7 rejects (Unknown option -q); the same tests pass with --reporter=dot. The contract cannot be amended for validate commands."},
+"summary":"Fact-check implemented and committed; V1/V2 fail only on the unsupported -q flag",
+"requirements":[
+{"id":"R1","status":"implemented","evidence":"packages/core/src/drafting/factcheck-service.ts:loadFactCheckFacts"},
+{"id":"R2","status":"implemented","evidence":"packages/core/src/drafting/factcheck-service.ts:ignoreForMatter"},
+{"id":"R3","status":"implemented","evidence":"packages/core/src/drafting/factcheck-service.ts:markAsAssertion"},
+{"id":"R4","status":"implemented","evidence":"packages/core/src/drafting/factcheck-service.ts:recordFactFix"},
+{"id":"R5","status":"implemented","evidence":"packages/core/src/drafting/citation-ack.ts:exportBlockedByFactCheck"},
+{"id":"R6","status":"implemented","evidence":"apps/web/app/(app)/w/[slug]/drafts/[id]/factcheck-actions.ts"},
+{"id":"R7","status":"implemented","evidence":"packages/db/src/testing/cross-tenant-registry.ts"}],
+"validation":[
+{"id":"V1","command":"pnpm --filter @causedeck/core exec vitest run src/drafting src/domains.test.ts -q --maxWorkers=${FORGE_HOST_PARALLELISM:-1}","exit":1},
+{"id":"V2","command":"pnpm --filter @causedeck/validators exec vitest run -q","exit":1},
+{"id":"V3","command":"node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research","exit":0}],
+"tests":[{"command":"vitest run src/drafting src/domains.test.ts --reporter=dot","result":"pass","fails_without_fix":"unknown"}],
+"self_review":[
+{"question":"1","answer":"yes","evidence":"R1-R7 implemented; see implementation.md"},
+{"question":"2","answer":"yes","evidence":"core drafting tests (35) and validators tests (205) pass"},
+{"question":"3","answer":"no","evidence":"V1/V2 exit 1 only because -q is unsupported by vitest 3.2.7"},
+{"question":"4","answer":"yes","evidence":"changes limited to contract deliverables, tests and registries"}],
+"amendments":[]}

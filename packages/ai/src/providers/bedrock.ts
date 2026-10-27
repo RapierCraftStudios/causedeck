@@ -25,6 +25,7 @@ export const BEDROCK_TASKS: readonly TaskId[] = [
   'tag_notice',
   'extract_issue_tags',
   'draft_narrative',
+  'outward_update',
 ];
 
 export interface BedrockConfig {

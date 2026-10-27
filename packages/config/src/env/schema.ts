@@ -217,6 +217,15 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 679,
   },
+  WHATSAPP_OTP_TEMPLATE_NAME: {
+    domain: 'server',
+    type: 'string',
+    description:
+      'Name of the provider-approved WhatsApp authentication template for link codes (#711). Set it only after the provider approved the template (#708, #488); without it, and without the provider env, link codes go to the console sender outside production and are not delivered in production.',
+    requiredWhen: 'never',
+    ownerIssue: 711,
+    credentialIssue: 488,
+  },
   OTEL_EXPORTER_OTLP_ENDPOINT: {
     domain: 'server',
     type: 'url',
@@ -493,6 +502,11 @@ export const serverShape = {
     .regex(/^v\d+\.\d+$/, 'must look like v21.0')
     .optional()
     .describe(d(serverKeys.WHATSAPP_API_VERSION)),
+  WHATSAPP_OTP_TEMPLATE_NAME: z
+    .string()
+    .regex(/^[a-z0-9_]{1,512}$/, 'must be a lowercase template name (a-z, 0-9, _)')
+    .optional()
+    .describe(d(serverKeys.WHATSAPP_OTP_TEMPLATE_NAME)),
   OTEL_EXPORTER_OTLP_ENDPOINT: z
     .url()
     .optional()

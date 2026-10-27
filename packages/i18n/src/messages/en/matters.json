@@ -120,7 +120,8 @@
         "timeline": "Timeline",
         "people": "People",
         "documents": "Documents",
-        "research": "Research"
+        "research": "Research",
+        "memory": "Memory"
       },
       "status": {
         "active": "Active",

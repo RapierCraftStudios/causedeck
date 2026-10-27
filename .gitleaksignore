@@ -58,3 +58,5 @@ ef57d9a422daa9e3f9942b18a6d63253a492b344:packages/core/src/status/status.test.ts
 07792d63a729ffd00ee2751502633df3da009f9c:infra/terraform/envs/stage-b/terraform.tfvars.example:cloudflare-api-key:24
 9a8c1f981aa64da0b35a9ee8d09219dd7723862a:infra/scripts/backup/lib/india-guard.sh:curl-auth-user:73
 f894bc0fa59be794a15ac28456a26fa0f469c144:.forge-lean/contract.json:generic-api-key:155
+# Test fixture key in the automation handler validation test (not a credential).
+f0d4e871d81af87606a5badef683c627b57338ab:packages/core/src/automation/__tests__/handlers.test.ts:generic-api-key:293

@@ -9,7 +9,8 @@ export async function synopsisSection(
   query: MemoryQuery,
   canStrategy: boolean,
 ): Promise<SynopsisSection | null> {
-  const synopsis = await memory.synopsis(query);
+  // The port only reads (and cites) the strategy note for a role that may see it.
+  const synopsis = await memory.synopsis({ ...query, canStrategy });
   if (synopsis === null) return null;
   const [line] = withProvenance([toBriefLine(synopsis.line)]);
   if (line === undefined) return null;

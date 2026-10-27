@@ -2,251 +2,358 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Replace the placeholder at apps/web/app/(app)/w/[slug]/drafts/page.tsx with an RSC list (title, matter, template, last edited, citation and consistency summary chips; matter filter)",
+   "quote": "Add layer M5 to packages/validators/src/memory.ts (MEMORY_LAYERS, LAYER_SCOPES user/workspace, M5 keys) and the memory_item layer/scope CHECKs",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "components/drafting/template-picker.tsx",
+   "quote": "add precedent_passage table (id, workspace_id, memory_item_id, court_id, kind, language, body, source_draft_version_id, anchor_id, status) with migration, RLS and clerk denial, chamber-sharing only when owner shared",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "loading.tsx, error.tsx (request id), empty, offline and permission-denied states",
+   "quote": "packages/core/src/memory/m5/{playbook,precedent-bank,proposals}.ts (passage saved only via confirmed L2 proposal; dismissal reason code, no re-proposal within 30 days)",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "a create-draft server action (drafts/actions.ts) listed in ACTIONS in apps/web/__tests__/cross-tenant-actions.test.ts",
+   "quote": "packages/ai/src/embeddings.ts using India-only route with mock embedder and refused+audited non-India providers, plus static test that no fine-tuning/training client exists",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "stories for every component and state",
+   "quote": "embedding deletion within 24h job with test",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Strings from next-intl.",
+   "quote": "flag m5_playbooks default off, on for demo workspace",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "Never send, share or file.",
+   "quote": "docs/adr/00xx-style-learning-without-training.md",
    "disposition": "deliver",
    "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "registries (cross-tenant services incl. vector search, RLS catalog, db index.test, core-domains, worker registry)",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "packages/core/test/memory-m5.integration.test.ts",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "Acceptance: criteria 1-6 and 13 of #81.",
+   "disposition": "deliver",
+   "verify": "in_lane",
+   "why": "Criteria text lives in #81: (1) passage saved only after confirmed L2 proposal, no write path without a confirmation record; (2) source draft version and anchor stored; (3) scope enforced in SQL, clerk denied, chamber-shared only if owner shared, no cross-tenant incl. vector search; (4) deleting passage/playbook removes memory_embedding rows within 24h, job tested; (5) no fine-tuning client in packages/ai (static test) and ADR states no-training; (6) embeddings India-only, non-India refused and audited; 13: flag m5_playbooks default off, on for demo workspace."
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "apps/web/app/(app)/w/[slug]/drafts/page.tsx",
-   "change": "RSC list modelled on notices/page.tsx and matters/page.tsx: getWorkspaceContext, dev ?__state=loading|error|denied|offline, matter filter from validated ?matter= UUID, loads listDrafts + listTemplates via lib/drafting loader inside inWorkspace; FORBIDDEN or no draft.read renders PermissionDeniedPage; empty state; rows link to /w/{slug}/drafts/{id}.",
+   "path": "packages/validators/src/memory.ts",
+   "change": "Add M5 to MEMORY_LAYERS, LAYER_SCOPES (user, workspace), M5 keys (playbook, precedent, style prefs), passage kinds, dismissal reason codes, PrecedentProposalSchema {passageText, kind, courtId, sourceAnchor, confidence}; update header comment. Extend memory.test.ts.",
    "requirements": [
     "R1",
     "R3",
-    "R6"
+    "R10"
    ]
   },
   {
    "id": "D2",
-   "path": "apps/web/app/(app)/w/[slug]/drafts/loading.tsx",
-   "change": "Skeleton loading state (copy notices/loading.tsx) with translated label.",
+   "path": "packages/db/src/schema/memory.ts",
+   "change": "Add M5 to MEMORY_LAYERS list and widen memory_item_shared_chk to M4 or M5.",
    "requirements": [
-    "R3"
+    "R1",
+    "R2"
    ]
   },
   {
    "id": "D3",
-   "path": "apps/web/app/(app)/w/[slug]/drafts/error.tsx",
-   "change": "Route error boundary showing translated copy and the request id (error.digest) with copy/retry, never error.message; copy [slug]/error.tsx:29-50 and reportError.",
+   "path": "packages/db/src/schema/precedent.ts",
+   "change": "New tenantTable precedent_passage (id, workspace_id, memory_item_id composite FK to memory_item, court_id, kind, language, body encrypted, source_draft_version_id, anchor_id, status active|retired|deleted) with checks and indexes; export from schema/index.ts.",
    "requirements": [
-    "R3"
+    "R2",
+    "R10"
    ]
   },
   {
    "id": "D4",
-   "path": "apps/web/app/(app)/w/[slug]/drafts/actions.ts",
-   "change": "'use server' createDraftAction via workspaceAction + WorkspaceScoped (input workspaceId, templateId uuid, matterId uuid|null, title 1..200); calls core createDraft with {db: ctx.tx} and actor from ctx; maps WorkspaceError FORBIDDEN/NOT_FOUND/VALIDATION to ActionError; returns draft id and slug-relative href only; async wrapper export like news/actions.ts. No enqueue, send, share or file.",
+   "path": "packages/db/src/schema/index.ts",
+   "change": "Export precedent schema.",
    "requirements": [
-    "R4",
-    "R7"
+    "R2"
    ]
   },
   {
    "id": "D5",
-   "path": "apps/web/lib/drafting/list.ts",
-   "change": "Server loader and view mapping: listDrafts/listTemplates via inWorkspace returning {kind:'page'|'denied'}; DraftRowView (title, matter, template, updatedAt formatted, citation counts, consistency counts or null); parseMatterParam.",
+   "path": "packages/db/migrations",
+   "change": "New migration at next free number (after 20261027114504_authority): drop/recreate memory_item and memory_proposal layer CHECKs with M5, widen shared CHECK, create precedent_passage with ws_isolation RLS (ENABLE+FORCE), restrictive owner/chamber-shared scope policy joined to memory_item, REVOKE ALL from causedeck_clerk, update app_memory_purge_targets if needed; generated snapshot/journal via db:generate; Reviewed-by header as in 20261026074215_memory.sql.",
    "requirements": [
     "R1",
-    "R3"
+    "R2",
+    "R10"
    ]
   },
   {
    "id": "D6",
-   "path": "apps/web/components/drafting/drafts-list.tsx",
-   "change": "List of rows with citation chips (use CitationStatus from @causedeck/ui/patterns) and consistency summary chips, matter filter select (URL-driven), empty and filtered-empty states.",
+   "path": "packages/ai/src/embeddings.ts",
+   "change": "Embedding client over the India-only route: mock embedder default (dev/CI), provider embedders accepted only in India regions (use policy/residency.ts), non-India refused and audited via an injected audit sink; export from packages/ai/src/index.ts. No fine-tuning/training client.",
    "requirements": [
-    "R1",
-    "R3",
-    "R6"
+    "R4",
+    "R10"
    ]
   },
   {
    "id": "D7",
-   "path": "apps/web/components/drafting/template-picker.tsx",
-   "change": "Client dialog/form: up to 5 suggested templates, title input, optional matter, submit calls createDraftAction then navigates to the new draft; hidden/disabled when offline; shows action error text.",
+   "path": "packages/ai/src/__tests__/embeddings.test.ts",
+   "change": "Tests: mock embedder, India provider allowed, non-India refused and audited; static test scanning packages/ai/src for fine-tune/training client identifiers and endpoints.",
    "requirements": [
-    "R2",
     "R4",
-    "R6"
+    "R10"
    ]
   },
   {
    "id": "D8",
-   "path": "apps/web/components/drafting/drafts-offline-banner.tsx",
-   "change": "Offline banner reusing useOnline/OfflineBanner pattern from components/matters/matters-offline-banner.tsx, drafting.offline strings.",
+   "path": "packages/core/src/memory/m5/proposals.ts",
+   "change": "Generate L2 PrecedentProposal from finalised exported drafts into memory_proposal only (status proposed); dismissal with reason code; no re-proposal of the same passage for 30 days; confirm path creates M5 memory_item and precedent_passage in one tx via confirmMemory.",
    "requirements": [
     "R3",
-    "R6"
+    "R10"
    ]
   },
   {
    "id": "D9",
-   "path": "apps/web/components/drafting/drafts.stories.tsx",
-   "change": "Stories for drafts list (populated, filtered-empty, empty), template picker (idle, submitting, error), offline banner, loading, error and permission-denied states, in the repo story style (e.g. components/inbox/inbox.stories.tsx).",
+   "path": "packages/core/src/memory/m5/precedent-bank.ts",
+   "change": "saveConfirmedPassage (internal, requires confirmation record), search (SQL-scoped pgvector: owner or chamber-shared, clerk/viewer denied, workspace pinned), list, retire and delete (marks memory_item deleted so memory.purge removes embeddings), embed on confirm via ai embeddings.",
    "requirements": [
-    "R5"
+    "R3",
+    "R10"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/i18n/src/messages/en/drafting.json",
-   "change": "Add keys under drafting.list/states: matter filter label and all-matters, column/field labels (matter, template, lastEdited), citation and consistency chip text, permission denied, request id, picker title/field labels/errors. Keep single top-level 'drafting' key.",
+   "path": "packages/core/src/memory/m5/playbook.ts",
+   "change": "Playbook model as M5 memory_item: preferred court format, standard prayers, annexure order; create/update only via confirm-before-save; delete removes embeddings.",
    "requirements": [
-    "R6"
+    "R3",
+    "R10"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/i18n/src/messages/ta/drafting.json",
-   "change": "Same keys as en with real Tamil text.",
+   "path": "packages/core/src/memory/index.ts",
+   "change": "Export m5 services (each runtime export must be registered in SERVICE_TESTS or NOT_A_SERVICE).",
    "requirements": [
-    "R6"
+    "R3",
+    "R8"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/i18n/src/messages/kn/drafting.json",
-   "change": "Same keys as en with real Kannada text.",
+   "path": "packages/core/src/memory/embedding.ts",
+   "change": "Audit refused non-India embedders; allow M5 items through a shared embed helper (matter_id null).",
    "requirements": [
-    "R6"
+    "R4",
+    "R10"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/i18n/translation-status.json",
-   "change": "Add 'draft' entries for each new ta/kn key.",
+   "path": "packages/flags/src/keys.ts",
+   "change": "Register flag m5_playbooks (default off, non-legal-gated, owner [81, 901]); update any flags test enumerating keys.",
    "requirements": [
-    "R6"
+    "R6",
+    "R10"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/i18n/src/generated/messages/en.json",
-   "change": "Regenerate with pnpm --filter @causedeck/i18n i18n:types (also ta.json, kn.json, messages.d.ts; add each as changed generated file).",
+   "path": "packages/db/src/seed/demo/index.ts",
+   "change": "Insert a workspace_feature_flag override enabling m5_playbooks for the demo workspace; extend seed/__tests__/demo-seed.test.ts.",
    "requirements": [
-    "R6"
+    "R6",
+    "R10"
    ]
   },
   {
    "id": "D15",
-   "path": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "change": "Import drafts/actions.ts, add createDraftAction to ACTIONS and its probe inputs (workspace B member cannot create a draft from A's matter/template; A unchanged).",
+   "path": "docs/adr/0046-style-learning-without-training.md",
+   "change": "ADR: style learning is selection and ranking of the lawyer's own approved passages; never trains or fine-tunes on customer data; India-only embeddings; confirm-before-save. Add to docs/adr/README.md index if it lists ADRs.",
    "requirements": [
-    "R4"
+    "R7",
+    "R10"
    ]
   },
   {
    "id": "D16",
-   "path": "apps/web/__tests__/workspace-shell.test.tsx",
-   "change": "Add 'drafts' to REAL_PAGES with a comment pointing at its own page test.",
+   "path": "docs/engineering/core-domains.md",
+   "change": "Document M5 in the memory row and add any new CORE_DOMAIN_DEPENDENCIES edge (memory -> drafting only through its index.ts, if used).",
    "requirements": [
-    "R1"
+    "R8"
    ]
   },
   {
    "id": "D17",
-   "path": "apps/web/components/drafting/__tests__/drafts-list.test.tsx",
-   "change": "Tests: rows render title, matter, template, chips with text labels; empty and filtered-empty; picker submits createDraftAction (mocked); offline disables create; denied page for FORBIDDEN loader result.",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add precedent_passage to the root table list.",
    "requirements": [
-    "R1",
+    "R8"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/db/src/__tests__/rls/sql.test.ts",
+   "change": "Add precedent_passage to the RLS catalog.",
+   "requirements": [
+    "R8",
+    "R10"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register precedent_passage table test; add SERVICE_TESTS entries (or NOT_A_SERVICE with reason) for each new core export.",
+   "requirements": [
+    "R8",
+    "R10"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/db/src/testing/two-tenants.ts",
+   "change": "Add seedPrecedentPassage two-tenant seeder.",
+   "requirements": [
+    "R8",
+    "R10"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real cases for new services (B on A denied or sees nothing; A unchanged), incl. vector search.",
+   "requirements": [
+    "R8",
+    "R10"
+   ]
+  },
+  {
+   "id": "D22",
+   "path": "packages/core/src/__tests__/cross-tenant/memory.test.ts",
+   "change": "Cross-tenant and chamber-sharing/clerk cases for M5 passages and search.",
+   "requirements": [
+    "R10"
+   ]
+  },
+  {
+   "id": "D23",
+   "path": "packages/core/src/memory/__tests__/memory-m5.test.ts",
+   "change": "Integration test (issue names packages/core/test/memory-m5.integration.test.ts; core has no test/ dir, so use this path unless vitest include admits test/): confirm-only write path, provenance stored, 30-day re-proposal block, clerk denied, chamber share, delete purges embeddings within the sweep.",
+   "requirements": [
+    "R9",
+    "R10"
+   ]
+  },
+  {
+   "id": "D24",
+   "path": "packages/core/src/lifecycle",
+   "change": "Include precedent_passage in memory export and erasure (exporters.ts, deletion/erase.ts) and their tests if they enumerate memory tables.",
+   "requirements": [
     "R2",
-    "R3",
-    "R4"
+    "R10"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "Core drafting exports and signatures in packages/core/src/drafting/index.ts and read.ts; no core changes."
+   "what": "confirmMemory (packages/core/src/memory/confirm.ts) remains the only writer of memory_item; existing M1-M7 behaviour, keys and the bench-profiling guard (validators/src/memory.ts) unchanged"
   },
   {
    "id": "P2",
-   "what": "Other workspace routes' placeholderPage behaviour and apps/web/__tests__/workspace-shell.test.tsx expectations for non-drafts routes; nav item 'drafts' in apps/web/lib/nav.ts unchanged."
+   "what": "Clerk access: memory_clerk_readable and memory_item_clerk_v (migration 20261026074215_memory.sql) still expose only M1,M2,M6,M7 non-strategy; M5 never readable by clerks (packages/core/src/memory/scope.ts:41)"
   },
   {
    "id": "P3",
-   "what": "i18n catalog invariants in packages/i18n/src/__tests__/catalog.test.ts: single top-level key 'drafting', ta/kn key sets equal en, generated files in sync."
+   "what": "Existing memory.purge / memory.review-prepare job names and schedules (apps/worker/src/__tests__/registry.test.ts:154-158) and purgeDeletedMemoryEmbeddings/purgeMemoryTargets signatures"
   },
   {
    "id": "P4",
-   "what": "Existing ACTIONS entries and the exported-actions equality check in apps/web/__tests__/cross-tenant-actions.test.ts."
+   "what": "Provider adapters in packages/ai/src/providers keep passing static-checks.test.ts; existing gateway India-only policy (policy/residency.ts) unchanged"
+  },
+  {
+   "id": "P5",
+   "what": "Existing migrations are immutable; only add a new migration at the next free number"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/web exec vitest run components/drafting __tests__/workspace-shell.test.tsx --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/validators exec vitest run src/memory.test.ts"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/cross-tenant-actions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/ai exec vitest run src/__tests__/embeddings.test.ts src/__tests__/static-checks.test.ts"
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/memory src/__tests__/cross-tenant/memory.test.ts src/__tests__/cross-tenant/services.test.ts src/__tests__/cross-tenant/registry.test.ts src/lifecycle/__tests__/memory-erasure.test.ts src/lifecycle/__tests__/export.memory.test.ts"
   },
   {
    "id": "V4",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/drafting-citations-research"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/rls/sql.test.ts src/__tests__/docket-schema.test.ts src/seed/__tests__/demo-seed.test.ts"
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/flags exec vitest run src/__tests__/evaluate.test.ts"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
+  },
+  {
+   "id": "V7",
+   "command": "pnpm --filter @causedeck/db run db:check"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Copy the notices/matters page pattern (dev ?__state previews, PermissionDeniedPage, useOnline banner) and the news workspaceAction pattern; no new workspace package dependency.",
-   "justification": "apps/web/app/(app)/w/[slug]/notices/page.tsx:1-60 and news/actions.ts:1-45 are the established recipes; @causedeck/core and @causedeck/ui are already web dependencies.",
+   "choice": "Reuse memory_item (layer M5) + memory_embedding and the existing memory.purge job instead of a new embedding table or job",
+   "justification": "memory_embedding.item_id FK and purgeDeletedMemoryEmbeddings (packages/core/src/memory/embedding.ts:150-160) already delete vectors of status='deleted' items within the hourly sweep; avoids worker registry churn",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Matter filter lives in the URL (?matter=\u003cuuid>) so the RSC re-queries listDrafts with matterId; invalid UUID is ignored.",
-   "justification": "listDrafts accepts matterId and throws on non-UUID (packages/core/src/drafting/read.ts:116-123); matters list is URL-driven (matters/page.tsx header).",
+   "choice": "Encrypt precedent_passage.body with encryptField (AAD = workspace id) like memory_item.value_ciphertext",
+   "justification": "Passages are privileged work product; memory_item stores values encrypted (packages/db/src/schema/memory.ts, value_ciphertext); similarity search runs on embeddings, so plaintext is not needed in SQL",
    "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "Studio route drafts/[id] is not built here; rows link to it (owned by #827).",
-   "justification": "Issue scope is the list page only; #827 is the studio shell.",
-   "source": "spec"
+   "choice": "Place the integration test under packages/core/src/memory/__tests__ if core vitest does not include test/",
+   "justification": "packages/core has no test/ directory; existing memory tests live in src/memory/__tests__",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "Next ADR number 0046; playbooks/apply, style-profile, web pages and picker excluded (siblings #902-#904)",
+   "justification": "docs/adr last is 0045-outward-drafts-no-send-path.md; sibling issues own those files",
+   "source": "doc"
   }
  ]
 }

@@ -87,6 +87,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   authority: DB_TABLES_TEST,
   // Consistency reports (#78): privileged matter data, one per draft version and graph revision.
   draft_consistency_report: DB_TABLES_TEST,
+  // Fact-check state (#914): per-matter ignores and assertions, per-version blockers and acknowledgements.
+  draft_fact_ack: DB_TABLES_TEST,
   // Matter and documents (#345).
   matter: DB_TABLES_TEST,
   document: DB_TABLES_TEST,
@@ -974,6 +976,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listFindings: denies,
   loadConsistencyFacts: denies,
   applyFix: denies,
+  // fact-check (#914): B running, ignoring, asserting, acknowledging or logging a fix on A's version is denied; A's rows are unchanged.
+  runFactCheck: denies,
+  ignoreForMatter: denies,
+  markAsAssertion: denies,
+  recordFactFix: denies,
+  acknowledgeFactCheck: denies,
+  loadFactCheckFacts: denies,
   // research notes, facts and provider templates (#80)
   listNotes: denies,
   createNote: denies,
@@ -1222,6 +1231,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   assertCitationsClear: 'pure (throws on a gate value the caller computed)',
   exportBlockedByCitations:
     "reads authority rows inside the caller's workspace scope; reached only through exportDraft and runDraftingExport, which are covered",
+  // fact-check (#914)
+  assertFactCheckClear: 'pure (throws on a gate value the caller computed)',
+  exportBlockedByFactCheck:
+    "reads draft_fact_ack rows inside the caller's workspace scope; reached only through exportDraft and runDraftingExport, which are covered",
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',

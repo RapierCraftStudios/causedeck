@@ -157,13 +157,16 @@ export {
 export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
 export {
   DRAFT_EXPORT_FORMATS,
+  DRAFT_FACT_ACK_KINDS,
   DRAFT_STATUSES,
   draft,
   draftConsistencyReport,
   draftExport,
+  draftFactAck,
   draftVersion,
   template,
   type DraftExportFormat,
+  type DraftFactAckKind,
   type DraftStatus,
   type DraftingBlocks,
 } from './drafting.ts';

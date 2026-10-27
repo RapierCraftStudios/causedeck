@@ -29,7 +29,12 @@ import { getMatterOverview, listMatterProceedingsTree } from '../matter-graph/in
 import type { GraphEvents, ProceedingNode } from '../matter-graph/index.ts';
 import { invalid, notFound } from '../shared/errors.ts';
 
-import { assertCitationsClear, exportBlockedByCitations } from './citation-ack.ts';
+import {
+  assertCitationsClear,
+  assertFactCheckClear,
+  exportBlockedByCitations,
+  exportBlockedByFactCheck,
+} from './citation-ack.ts';
 import { checkDraft, type CheckDraftDeps } from './citations.ts';
 
 import {
@@ -466,7 +471,8 @@ export async function exportDraft(
       .limit(1);
     const blocks = checkBlocksFor(version.content);
     const gate = await exportBlockedByCitations(tx, reader.workspaceId, version.id, blocks);
-    return { versionId: version.id, existing, userId: reader.userId, gate, blocks };
+    const factGate = await exportBlockedByFactCheck(tx, reader.workspaceId, version.id);
+    return { versionId: version.id, existing, userId: reader.userId, gate, factGate, blocks };
   });
   if (found.existing) return { status: 'ready', export: found.existing };
   if (found.gate.unchecked > 0) {
@@ -484,6 +490,7 @@ export async function exportDraft(
         )
       : found.gate;
   assertCitationsClear(gate);
+  assertFactCheckClear(found.factGate);
   await deps.enqueue({
     workspaceId: actor.workspaceId,
     draftVersionId: found.versionId,

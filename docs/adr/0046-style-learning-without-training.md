@@ -44,3 +44,8 @@ Style learning is selection and ranking of passages the lawyer already approved.
 - Style quality depends on retrieval and prompt assembly (#902 to #904), not on learned weights.
 - A provider change needs an India-region embedder before it can be used for style search.
 - Erasing a lawyer erases their passages and vectors; nothing remains in a model.
+
+## Revisit when
+
+- A provider offers an embedder in an India region that beats the default on legal text.
+- Prompt assembly (#902 to #904) shows that selection and ranking alone cannot carry a house style.

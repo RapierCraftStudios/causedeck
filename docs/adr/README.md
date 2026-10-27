@@ -53,7 +53,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0043](0043-obligation-model.md) | The obligation model: names, reschedule versus miss, no rule-derived dates | Proposed | 2026-10-25 | — |
 | [0044](0044-memory-scopes-and-confirmation.md) | Memory scopes, confirm-before-save, the clerk view and the no-judge rule | Proposed | 2026-10-25 | — |
 | [0045](0045-outward-drafts-no-send-path.md) | Outward update drafts: L4 only, no send path | Proposed | 2026-10-25 | — |
-| [0046](0046-style-learning-without-training.md) | Style learning without training: ranking a lawyer's own approved passages | Proposed | 2026-10-27 | — |
+| [0046](0046-style-learning-without-training.md) | Style learning without training | Proposed | 2026-10-27 | — |
 
 ## Statuses
 

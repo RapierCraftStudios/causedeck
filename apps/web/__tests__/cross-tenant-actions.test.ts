@@ -123,6 +123,7 @@ const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/act
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
+const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
@@ -243,6 +244,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   confirmNextDateAction: matterWorkspace,
   saveDraftAction: draftStudio,
   restoreDraftVersionAction: draftStudio,
+  runChecksAction: draftChecks,
+  acknowledgeUnverifiedAction: draftChecks,
+  applyFixAction: draftChecks,
+  exportDraftAction: draftChecks,
+  downloadDraftExportAction: draftChecks,
   addTagAction: research,
   confirmOutcomeAction: hearingOutcome,
   markPreparedAction: briefSheet,
@@ -979,6 +985,22 @@ function inputs(workspaceId: string): Record<string, unknown> {
       draftId: t.a.rows.draft_version?.draftId,
       versionNo: 1,
     },
+    // Drafting checks (#828): ub may not check, acknowledge, fix or export A's draft.
+    runChecksAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
+    acknowledgeUnverifiedAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      citationIds: [randomUUID()],
+      reason: 'Cross-tenant probe',
+    },
+    applyFixAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      findingId: 'probe',
+      confirm: true,
+    },
+    exportDraftAction: { workspaceId, draftId: t.a.rows.draft_version?.draftId, format: 'docx' },
+    downloadDraftExportAction: { workspaceId, exportId: randomUUID() },
     // Hearing outcome (#62): ub may not confirm A's hearing outcome.
     confirmOutcomeAction: {
       workspaceId,
@@ -1670,6 +1692,21 @@ describe('cross-tenant server actions', () => {
       expect(result, name).not.toHaveProperty('data');
     }
     expect(await versions()).toEqual(before);
+  });
+
+  it('drafting checks actions under B’s own workspace find none of A’s draft (#828)', async () => {
+    const own = inputs(t.b.id);
+    for (const name of [
+      'runChecksAction',
+      'acknowledgeUnverifiedAction',
+      'applyFixAction',
+      'exportDraftAction',
+      'downloadDraftExportAction',
+    ]) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
   });
 
   it('hearing outcome actions under B’s own workspace find none of A’s hearing (#62)', async () => {

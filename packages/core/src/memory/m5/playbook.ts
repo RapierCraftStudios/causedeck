@@ -81,6 +81,8 @@ export async function confirmPlaybook(
   actor: MemoryActor,
   proposalId: string,
 ): Promise<PlaybookView> {
+  const role = await requireRole(deps, actor);
+  if (!canWriteMemory(role)) throw forbidden('This role cannot change memory');
   const open = await opener(deps, actor.workspaceId);
   return inScope(deps, actor, async (tx) => {
     const [proposal] = await tx
@@ -156,6 +158,8 @@ export async function deletePlaybook(
   actor: MemoryActor,
   itemId: string,
 ): Promise<void> {
+  const role = await requireRole(deps, actor);
+  if (!canWriteMemory(role)) throw forbidden('This role cannot change memory');
   await inScope(deps, actor, async (tx) => {
     const [row] = await tx
       .select({ key: memoryItem.key })

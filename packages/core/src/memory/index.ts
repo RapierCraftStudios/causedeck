@@ -21,6 +21,30 @@ export {
   searchMatterMemory,
   type MemoryEmbedder,
 } from './embedding.ts';
+export {
+  confirmPlaybook,
+  deletePlaybook,
+  listPlaybooks,
+  playbookFromValue,
+  playbookToValue,
+  proposePlaybook,
+  type PlaybookView,
+} from './m5/playbook.ts';
+export {
+  deletePrecedent,
+  listPrecedents,
+  retirePrecedent,
+  searchPrecedents,
+  setM5Shared,
+  type M5Deps,
+  type PrecedentView,
+} from './m5/precedent-bank.ts';
+export {
+  confirmPrecedentProposal,
+  dismissPrecedentProposal,
+  proposePrecedent,
+  type ConfirmedPrecedent,
+} from './m5/proposals.ts';
 export { correctionRate, matchingWeeks, type MatchingWeek } from './metrics.ts';
 export { proposeFromCorrection, proposeFromEdit, proposeMemory } from './propose.ts';
 export {

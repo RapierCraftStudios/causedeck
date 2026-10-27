@@ -47,6 +47,14 @@ async function denied(f: Fixture, call: () => Promise<unknown>): Promise<void> {
 
 const note = { key: 'M2.brief_format', value: 'one page', scope: 'user' };
 
+const playbook = {
+  name: 'Writ petition',
+  courtId: null,
+  format: 'writ_petition',
+  standardPrayers: ['issue a writ of mandamus'],
+  annexureOrder: ['Annexure P-1'],
+};
+
 const CASES: Record<string, Case> = {
   acceptMemoryDraft: (f) => denied(f, () => core.acceptMemoryDraft(f.deps, asBInA(f), note)),
   confirmMemory: (f) => denied(f, () => core.confirmMemory(f.deps, asBInA(f), f.proposalA)),
@@ -90,6 +98,30 @@ const CASES: Record<string, Case> = {
   listReviewCandidates: (f) => denied(f, () => core.listReviewCandidates(f.deps, asBInA(f))),
   getLastMemoryReview: (f) => denied(f, () => core.getLastMemoryReview(f.deps, asBInA(f))),
   completeMemoryReview: (f) => denied(f, () => core.completeMemoryReview(f.deps, asBInA(f))),
+  // M5 (#901): the actor is not a member of A, so every call is NOT_FOUND and A is unchanged.
+  proposePlaybook: (f) => denied(f, () => core.proposePlaybook(f.deps, asBInA(f), playbook)),
+  confirmPlaybook: (f) => denied(f, () => core.confirmPlaybook(f.deps, asBInA(f), f.proposalA)),
+  listPlaybooks: (f) => denied(f, () => core.listPlaybooks(f.deps, asBInA(f))),
+  deletePlaybook: (f) => denied(f, () => core.deletePlaybook(f.deps, asBInA(f), f.itemA)),
+  proposePrecedent: (f) =>
+    denied(f, () =>
+      core.proposePrecedent(f.deps, asBInA(f), {
+        passageText: 'It is prayed that this Hon’ble Court may be pleased to issue a writ.',
+        kind: 'prayer',
+        courtId: null,
+        sourceAnchor: { draftVersionId: randomUUID(), anchorId: 'b1' },
+        confidence: 0.8,
+      }),
+    ),
+  dismissPrecedentProposal: (f) =>
+    denied(f, () => core.dismissPrecedentProposal(f.deps, asBInA(f), f.proposalA, 'other')),
+  confirmPrecedentProposal: (f) =>
+    denied(f, () => core.confirmPrecedentProposal(f.deps, asBInA(f), f.proposalA)),
+  searchPrecedents: (f) => denied(f, () => core.searchPrecedents(f.deps, asBInA(f), 'prayer')),
+  listPrecedents: (f) => denied(f, () => core.listPrecedents(f.deps, asBInA(f))),
+  retirePrecedent: (f) => denied(f, () => core.retirePrecedent(f.deps, asBInA(f), f.itemA)),
+  deletePrecedent: (f) => denied(f, () => core.deletePrecedent(f.deps, asBInA(f), f.itemA)),
+  setM5Shared: (f) => denied(f, () => core.setM5Shared(f.deps, asBInA(f), f.itemA, true)),
   monthlyReview: async (f) => {
     // A system body that takes a workspace id: B's review counts B's memory and nothing of A's.
     const review = await core.monthlyReview({ db: f.tx }, f.b.id);

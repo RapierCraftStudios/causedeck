@@ -1024,6 +1024,19 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   memoryFor: memoryDenies,
   recordUsage: memoryDenies,
   tenureMetrics: memoryDenies,
+  // M5 playbooks and the precedent bank (#901)
+  confirmPlaybook: memoryDenies,
+  deletePlaybook: memoryDenies,
+  listPlaybooks: memoryDenies,
+  proposePlaybook: memoryDenies,
+  deletePrecedent: memoryDenies,
+  listPrecedents: memoryDenies,
+  retirePrecedent: memoryDenies,
+  searchPrecedents: memoryDenies,
+  setM5Shared: memoryDenies,
+  confirmPrecedentProposal: memoryDenies,
+  dismissPrecedentProposal: memoryDenies,
+  proposePrecedent: memoryDenies,
   // memory screen read models and the review date (#73)
   listMemoryProposals: memoryDenies,
   listMemoryUsage: memoryDenies,
@@ -1051,6 +1064,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // M5 playbook value codec (#901): pure conversion between a playbook and its memory value lines.
+  playbookToValue: 'pure',
+  playbookFromValue: 'pure',
   // Stale-matter attention (#70): the rules are pure functions over loaded facts.
   evaluateRules: 'pure',
   noNextDate: 'pure',

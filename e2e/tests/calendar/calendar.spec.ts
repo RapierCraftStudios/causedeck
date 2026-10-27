@@ -64,17 +64,23 @@ test.describe('calendar', () => {
     ).toBeVisible();
   });
 
-  test('a month range answers within the p95 budget (300 ms)', async ({ page, asUser }) => {
-    await openCalendar(page, asUser, '?view=month');
-    const url = page.url();
-    const samples: number[] = [];
-    for (let i = 0; i < 20; i += 1) {
-      const started = performance.now();
-      const response = await page.request.get(url);
-      expect(response.ok()).toBe(true);
-      samples.push(performance.now() - started);
-    }
-    samples.sort((a, b) => a - b);
-    expect(samples[Math.ceil(samples.length * 0.95) - 1]).toBeLessThan(300);
-  });
+  // Timing runs in the perf project, alone (playwright.config.ts): beside the other workers the
+  // shared CI database made this p95 depend on whatever else the shard was running.
+  test(
+    'a month range answers within the p95 budget (300 ms)',
+    { tag: '@perf' },
+    async ({ page, asUser }) => {
+      await openCalendar(page, asUser, '?view=month');
+      const url = page.url();
+      const samples: number[] = [];
+      for (let i = 0; i < 20; i += 1) {
+        const started = performance.now();
+        const response = await page.request.get(url);
+        expect(response.ok()).toBe(true);
+        samples.push(performance.now() - started);
+      }
+      samples.sort((a, b) => a - b);
+      expect(samples[Math.ceil(samples.length * 0.95) - 1]).toBeLessThan(300);
+    },
+  );
 });

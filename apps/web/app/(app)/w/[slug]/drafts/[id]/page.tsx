@@ -2,10 +2,12 @@
 // member (`getDraft`, then `renderDraft` for the slot values and facts); a draft that does not
 // exist, belongs to another workspace or is not theirs to read is `notFound()`. The editor itself
 // is a lazy client chunk in studio.tsx.
+import type { inWorkspace } from '@causedeck/core/runtime';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import type { PinnedAuthority } from '../../../../../../components/drafting/authorities-panel.tsx';
 import type { DraftFact } from '../../../../../../components/drafting/facts-panel.tsx';
 import { domainErrorCode } from '../../../../../../lib/matters/graph-deps.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
@@ -20,6 +22,41 @@ interface DraftPageProps {
 
 /** Older versions whose blocks are loaded for the restore preview (newest first). */
 const PREVIEWED_VERSIONS = 5;
+
+type WorkspaceTx = Parameters<Parameters<typeof inWorkspace>[1]>[0];
+
+/**
+ * The authorities pinned on the draft's matter notes. Reading notes needs more than reading the
+ * draft (`memory.read`, matter visibility), so a refusal means no panel entries, never a failed page.
+ */
+async function pinnedAuthorities(
+  tx: WorkspaceTx,
+  actor: { workspaceId: string; userId: string },
+  matterId: string | null,
+): Promise<PinnedAuthority[]> {
+  if (matterId === null) return [];
+  try {
+    const { listNotes } = await import('@causedeck/core/research');
+    const notes = await listNotes(tx, actor, matterId);
+    return notes.flatMap((note) =>
+      note.authorities.flatMap((authority, index) =>
+        authority.pinned
+          ? [
+              {
+                id: `${note.id}.${String(index)}`,
+                label: authority.label,
+                citation: authority.citation,
+              },
+            ]
+          : [],
+      ),
+    );
+  } catch (error) {
+    const code = domainErrorCode(error);
+    if (code === 'NOT_FOUND' || code === 'FORBIDDEN' || code === 'VALIDATION') return [];
+    throw error;
+  }
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('drafting.list');
@@ -46,7 +83,8 @@ export default async function DraftPage({ params }: DraftPageProps) {
         const past = await renderDraft({ db: tx }, actor, { draftId: id, versionNo: v.versionNo });
         older.push({ versionNo: v.versionNo, blocks: past.blocks });
       }
-      return { detail, rendered, older };
+      const authorities = await pinnedAuthorities(tx, actor, detail.draft.matterId);
+      return { detail, rendered, older, authorities };
     });
   } catch (error) {
     const code = domainErrorCode(error);
@@ -55,7 +93,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
     throw error;
   }
 
-  const { detail, rendered, older } = loaded;
+  const { detail, rendered, older, authorities } = loaded;
   const slotValues = Object.fromEntries(
     Object.entries(rendered.slots).map(([key, resolution]) => [key, resolution.value]),
   );
@@ -93,6 +131,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
       slotValues={slotValues}
       aiTexts={aiTexts}
       facts={facts}
+      authorities={authorities}
       versions={detail.versions.map((v) => ({
         versionNo: v.versionNo,
         createdAt: v.createdAt.toISOString(),

@@ -18,6 +18,7 @@
     "./court": "./src/court/index.ts",
     "./court-day": "./src/court-day/index.ts",
     "./briefs": "./src/briefs/index.ts",
+    "./continuity": "./src/continuity/index.ts",
     "./hearings": "./src/hearings/index.ts",
     "./delegation": "./src/delegation/index.ts",
     "./email-intake": "./src/email-intake/index.ts",

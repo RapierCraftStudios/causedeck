@@ -392,6 +392,21 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A lawyer shared an outward draft from their own channel',
   },
+  // Continuity (#71): who generated, read, saved or acknowledged a handover; ids only, never note text.
+  'handover.generated': {
+    security: false,
+    description: 'A handover note was assembled for a matter',
+  },
+  'handover.saved': {
+    security: false,
+    description: 'A handover note version was saved and addressed',
+  },
+  'handover.read': { security: false, description: 'Handover notes of a matter were read' },
+  'handover.acknowledged': { security: false, description: 'A handover note was acknowledged' },
+  'continuity.changes_read': {
+    security: false,
+    description: 'What changed on a matter since the last view was read',
+  },
   // The WhatsApp number link (#711): ids only, never the number or the code.
   'whatsapp.otp_requested': {
     security: true,

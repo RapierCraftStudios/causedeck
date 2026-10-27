@@ -5496,6 +5496,59 @@ export type Messages = {
     };
     loading: string;
   };
+  continuity: {
+    handover: {
+      button: string;
+      title: string;
+      close: string;
+      loading: string;
+      error: string;
+      retry: string;
+      denied: string;
+      offline: string;
+      offlineNone: string;
+      empty: string;
+      emptyHint: string;
+      version: string;
+      acknowledge: string;
+      acknowledged: string;
+      recipient: string;
+      recipientNone: string;
+      save: string;
+      saved: string;
+      saveFailed: string;
+      edit: string;
+      questions: string;
+      history: string;
+      noneRecorded: string;
+      overdue: string;
+      synopsis: string;
+      pending: string;
+      sections: {
+        where_it_stands: string;
+        last_orders: string;
+        open_obligations: string;
+        coming_up: string;
+        key_documents: string;
+        open_questions: string;
+      };
+    };
+    changes: {
+      heading: string;
+      empty: string;
+      dismiss: string;
+      error: string;
+      loading: string;
+      kinds: {
+        order: string;
+        hearing: string;
+        listing: string;
+        next_date: string;
+        obligation: string;
+        document: string;
+      };
+    };
+  };
   share: {
     metaTitle: string;
     unavailable: string;

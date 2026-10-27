@@ -5473,6 +5473,103 @@
       "forbidden": "Your role cannot do that."
     }
   },
+  "memoryM5": {
+    "nav": {
+      "label": "Memory sections",
+      "precedents": "Precedents",
+      "playbooks": "Playbooks"
+    },
+    "denied": "Your role cannot view playbooks or precedents in this workspace. Ask an owner if you need access.",
+    "offline": "You are offline. You can read what is saved; changes return when you are back online.",
+    "readOnly": "View only",
+    "loading": "Loading",
+    "error": {
+      "title": "This page could not be loaded",
+      "reference": "Reference: {digest}",
+      "retry": "Try again"
+    },
+    "errors": {
+      "forbidden": "Your role cannot do that.",
+      "generic": "Something went wrong. Try again."
+    },
+    "precedents": {
+      "metaTitle": "Precedents",
+      "title": "Precedents",
+      "hint": "Passages from your own exported drafts that you chose to keep. Nothing is saved until you confirm it.",
+      "empty": "Passages you approve will appear here.",
+      "listLabel": "Saved precedents"
+    },
+    "playbooks": {
+      "metaTitle": "Playbooks",
+      "title": "Playbooks",
+      "hint": "Your preferred format per court, standard prayers and annexure order. A playbook is saved only after you confirm it.",
+      "empty": "No playbooks yet. Add one and confirm it to start.",
+      "listLabel": "Saved playbooks"
+    },
+    "proposal": {
+      "heading": "{count, plural, one {# suggestion} other {# suggestions}}",
+      "precedent": "Save this passage as a precedent? {text}",
+      "playbook": "Save the playbook {name}?",
+      "evidence": "Suggested from your own drafts",
+      "save": "Save",
+      "edit": "Edit",
+      "dismiss": "Dismiss",
+      "shortcuts": "S saves, E edits, X dismisses the focused suggestion.",
+      "saved": "Saved",
+      "dismissed": "Dismissed",
+      "offline": "You are offline. Suggestions can be decided when you are back online."
+    },
+    "dismissDialog": {
+      "title": "Why are you dismissing this?",
+      "description": "The same passage will not be suggested again for 30 days.",
+      "confirm": "Dismiss",
+      "cancel": "Cancel"
+    },
+    "reasons": {
+      "not_reusable": "Not reusable",
+      "too_specific": "Too specific to one matter",
+      "incorrect": "Incorrect",
+      "already_saved": "Already saved",
+      "other": "Other"
+    },
+    "editPassage": {
+      "title": "Edit passage",
+      "label": "Passage",
+      "save": "Save precedent",
+      "cancel": "Cancel"
+    },
+    "card": {
+      "mine": "Mine",
+      "chamber": "Chamber",
+      "details": "{kind} in {language}",
+      "provenance": "From a draft you exported",
+      "lastUsed": "Last used {date}",
+      "neverUsed": "Not used yet",
+      "retire": "Retire",
+      "delete": "Delete",
+      "retired": "Retired",
+      "deleted": "Deleted. Its embeddings are removed within 24 hours.",
+      "deleteTitle": "Delete this item?",
+      "deleteBody": "Its embeddings are removed within 24 hours.",
+      "cancel": "Cancel"
+    },
+    "editor": {
+      "title": "New playbook",
+      "name": "Name",
+      "court": "Court ID (optional)",
+      "format": "Preferred format",
+      "prayers": "Standard prayers (one per line)",
+      "annexures": "Annexure order (one per line)",
+      "submit": "Propose playbook",
+      "proposed": "Proposed. Confirm it below to save."
+    },
+    "review": {
+      "retire": "Retire",
+      "retired": "Retired",
+      "lastUsed": "Last used {date}",
+      "neverUsed": "Not used yet"
+    }
+  },
   "outward": {
     "metaTitle": "Drafts to send",
     "title": "Drafts to send",

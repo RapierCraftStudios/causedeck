@@ -165,6 +165,19 @@ describe('drafting studio copy (#825)', () => {
       expect(catalog.drafting.panels.citations.status.verified).not.toBe('');
       expect(catalog.drafting.panels.citations.status.notFound).not.toBe('');
       expect(catalog.drafting.panels.citations.status.unknown).not.toBe('');
+      const factCheck = catalog.drafting.factCheck;
+      for (const text of [
+        ...Object.values(factCheck.status),
+        ...Object.values(factCheck.actions),
+        factCheck.source,
+        factCheck.noSource,
+        factCheck.page,
+        factCheck.openPage,
+        factCheck.announce,
+        factCheck.noIssues,
+      ]) {
+        expect(text).not.toBe('');
+      }
       expect(catalog.drafting.acknowledgement.statement).not.toBe('');
     }
   });

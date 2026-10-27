@@ -4678,7 +4678,22 @@
     "memoryM5.review.retire": "draft",
     "memoryM5.review.retired": "draft",
     "memoryM5.review.lastUsed": "draft",
-    "memoryM5.review.neverUsed": "draft"
+    "memoryM5.review.neverUsed": "draft",
+    "drafting.factCheck.status.match": "draft",
+    "drafting.factCheck.status.mismatch": "draft",
+    "drafting.factCheck.status.unsupported": "draft",
+    "drafting.factCheck.status.unverifiedCitation": "draft",
+    "drafting.factCheck.status.ambiguous": "draft",
+    "drafting.factCheck.source": "draft",
+    "drafting.factCheck.noSource": "draft",
+    "drafting.factCheck.page": "draft",
+    "drafting.factCheck.openPage": "draft",
+    "drafting.factCheck.actions.fix": "draft",
+    "drafting.factCheck.actions.ignore": "draft",
+    "drafting.factCheck.actions.ignoreForMatter": "draft",
+    "drafting.factCheck.actions.markAssertion": "draft",
+    "drafting.factCheck.announce": "draft",
+    "drafting.factCheck.noIssues": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -9147,6 +9162,21 @@
     "memoryM5.review.retire": "draft",
     "memoryM5.review.retired": "draft",
     "memoryM5.review.lastUsed": "draft",
-    "memoryM5.review.neverUsed": "draft"
+    "memoryM5.review.neverUsed": "draft",
+    "drafting.factCheck.status.match": "draft",
+    "drafting.factCheck.status.mismatch": "draft",
+    "drafting.factCheck.status.unsupported": "draft",
+    "drafting.factCheck.status.unverifiedCitation": "draft",
+    "drafting.factCheck.status.ambiguous": "draft",
+    "drafting.factCheck.source": "draft",
+    "drafting.factCheck.noSource": "draft",
+    "drafting.factCheck.page": "draft",
+    "drafting.factCheck.openPage": "draft",
+    "drafting.factCheck.actions.fix": "draft",
+    "drafting.factCheck.actions.ignore": "draft",
+    "drafting.factCheck.actions.ignoreForMatter": "draft",
+    "drafting.factCheck.actions.markAssertion": "draft",
+    "drafting.factCheck.announce": "draft",
+    "drafting.factCheck.noIssues": "draft"
   }
 }

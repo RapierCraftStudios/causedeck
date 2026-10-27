@@ -220,7 +220,7 @@ jobs:
   tenancy:
     name: tenancy
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 10
     services:
       postgres:
         image: pgvector/pgvector:0.8.7-pg17
@@ -258,7 +258,8 @@ jobs:
       - name: RLS catalog check
         run: pnpm db:check-rls
       - name: Cross-tenant suite
-        timeout-minutes: 4
+        # 3m55s on staging after Follow-up; every milestone adds cases. Still blocking, just room.
+        timeout-minutes: 7
         run: pnpm test:tenancy
       # Export completeness (#301): every tenant table has an exporter or a documented exclusion.
       - name: Export coverage

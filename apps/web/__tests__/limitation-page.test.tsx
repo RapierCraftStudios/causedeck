@@ -75,7 +75,7 @@ vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/limitation', () => limitation);
 // Async server components cannot render under jsdom; stand in with the same copy.
 vi.mock('../app/(app)/w/[slug]/limitation/_components/gated-notice.tsx', () => ({
-  GatedNotice: () => <p>{catalogs.en.limitation.gatedNotice}</p>,
+  LimitationGatedNotice: () => <p>{catalogs.en.limitation.gatedNotice}</p>,
 }));
 vi.mock('../app/(app)/w/[slug]/limitation/_components/no-rules-notice.tsx', () => ({
   NoRulesNotice: () => <p>{catalogs.en.limitation.noRules.title}</p>,

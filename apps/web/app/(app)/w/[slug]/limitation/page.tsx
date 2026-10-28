@@ -17,7 +17,7 @@ import { loadLimitations } from '../../../../../lib/limitation/limitation-deps.t
 import { can } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 
-import { GatedNotice } from './_components/gated-notice.tsx';
+import { LimitationGatedNotice } from './_components/gated-notice.tsx';
 import { LimitationList } from './_components/limitation-list.tsx';
 import { NoRulesNotice } from './_components/no-rules-notice.tsx';
 import { computeLimitationAction, confirmLimitationAction } from './actions.ts';
@@ -58,7 +58,7 @@ export default async function LimitationPage({ params, searchParams }: Limitatio
         <h1 className="font-serif text-2xl font-medium">{t('title')}</h1>
         <p className="text-ink-muted max-w-prose text-sm">{t('description')}</p>
       </header>
-      <GatedNotice />
+      <LimitationGatedNotice />
       {noReviewedRule ? <NoRulesNotice /> : null}
       <LimitationList
         workspaceId={context.workspace.id}

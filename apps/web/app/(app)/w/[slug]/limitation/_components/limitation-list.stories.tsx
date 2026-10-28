@@ -10,7 +10,7 @@ import { PermissionDeniedPage } from '../../../../../components/shell/permission
 import type { Result } from '../../../../../lib/safe-action.ts';
 import LimitationError from '../error.tsx';
 import LimitationLoading from '../loading.tsx';
-import { GatedNotice } from './gated-notice.tsx';
+import { LimitationGatedNotice } from './gated-notice.tsx';
 import type { LimitationActions } from './limitation-actions.ts';
 import { LimitationList } from './limitation-list.tsx';
 import { NoRulesNotice } from './no-rules-notice.tsx';
@@ -105,7 +105,7 @@ export const LimitationListNoRules: Story = {
 export const LimitationListGatedNotice: Story = {
   render: (args) => (
     <div className="flex flex-col gap-4">
-      <GatedNotice />
+      <LimitationGatedNotice />
       <LimitationList {...args} />
     </div>
   ),

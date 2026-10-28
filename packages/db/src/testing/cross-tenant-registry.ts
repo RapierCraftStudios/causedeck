@@ -277,6 +277,13 @@ const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  // Limitation tracker (#940): a root export of the flag-gated services; the domain also has its own
+  // cross-tenant case in limitation.test.ts.
+  loadRuleTable: denies,
+  listRules: denies,
+  computeLimitation: denies,
+  confirmLimitation: denies,
+  listLimitations: denies,
   // Stale-matter attention (#70).
   detectAttention: empty,
   countAttention: denies,
@@ -1101,6 +1108,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // Limitation tracker (#940): the date engine is pure; the refusal is an error class.
+  computeExpiry: 'pure',
+  NoReviewedRuleError: 'error class',
   // M5 playbook value codec (#901): pure conversion between a playbook and its memory value lines.
   playbookToValue: 'pure',
   playbookFromValue: 'pure',

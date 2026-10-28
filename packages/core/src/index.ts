@@ -37,3 +37,18 @@ export * from './usage/index.ts';
 export * from './webhooks/index.ts';
 export * from './workspaces/index.ts';
 export * from './continuity/index.ts';
+export {
+  computeExpiry,
+  computeLimitation,
+  confirmLimitation,
+  listLimitations,
+  listRules,
+  loadRuleTable,
+  NoReviewedRuleError,
+} from './limitation/index.ts';
+export type {
+  ComputationView,
+  LimitationActor,
+  LimitationDeps,
+  RuleView,
+} from './limitation/index.ts';

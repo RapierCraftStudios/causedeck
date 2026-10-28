@@ -77,8 +77,10 @@ test.describe('shell nav crawl', () => {
     test.setTimeout(120_000);
     await openShell(page, asUser, { path: 'settings/profile' });
     const hrefs = await hrefsIn(page.locator('[data-slot="settings-nav"]'));
-    // Ten sections, plus Support access for owners (#313) and Court watch (#482).
-    expect(hrefs).toHaveLength(12);
+    // Ten sections, plus Support access for owners (#313), Court watch (#482), Research (#80) and
+    // SSO (#683).
+    expect(hrefs).toHaveLength(14);
+    expect(hrefs).toContain(`/w/${SHELL_WORKSPACE}/settings/sso`);
     expect(hrefs).toContain(`/w/${SHELL_WORKSPACE}/settings/support`);
     for (const href of hrefs) {
       const response = await page.goto(href);
@@ -106,12 +108,13 @@ test.describe('shell nav crawl', () => {
   });
 
   test('empty-state actions lead to real pages', async ({ page, asUser }) => {
-    // `today` is still a placeholder page (matters became a real page in #388); its action is Courts.
-    await openShell(page, asUser, { path: 'today' });
-    const action = page.locator('[data-route="today"] [data-empty-action]');
+    // `today` is the Court-Day Board (#59) and `matters` a real page (#388); `briefs` is still a
+    // placeholder (obligations became the queue in #68), and its action is Matters.
+    await openShell(page, asUser, { path: 'briefs' });
+    const action = page.locator('[data-route="briefs"] [data-empty-action]');
     await expect(action).toBeVisible();
     await action.click();
-    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/courts$`));
-    await expectRealPage(page, `/w/${SHELL_WORKSPACE}/courts`);
+    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/matters$`));
+    await expectRealPage(page, `/w/${SHELL_WORKSPACE}/matters`);
   });
 });

@@ -9,16 +9,20 @@ import { PgTransaction } from 'drizzle-orm/pg-core';
 
 import { activeMember, liveWorkspace } from './members.ts';
 
+export * from './clerk-setup.ts';
 export * from './errors.ts';
+export * from './eval-reuse.ts';
 export * from './integrations.ts';
 export * from './invitations.ts';
 export * from './members.ts';
 export * from './offboarding.ts';
 export * from './privacy-settings.ts';
+export * from './provisioned-member.ts';
 export * from './profile.ts';
 export * from './role-settings.ts';
 export * from './service.ts';
 export * from './slug.ts';
+export * from './sso.ts';
 
 export type Queryable = Database | Transaction;
 

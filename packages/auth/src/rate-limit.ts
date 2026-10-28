@@ -10,6 +10,10 @@ import { sql } from 'drizzle-orm';
 export const MAGIC_LINK_EMAIL_LIMIT = { max: 5, windowSeconds: 15 * 60 } as const;
 export const MAGIC_LINK_IP_LIMIT = { max: 20, windowSeconds: 60 * 60 } as const;
 
+/** SSO sign-in (#683): 20 starts per IP per hour (a `customRules` entry), 10 per domain per 15 minutes. */
+export const SSO_IP_LIMIT = { max: 20, windowSeconds: 60 * 60 } as const;
+export const SSO_DOMAIN_LIMIT = { max: 10, windowSeconds: 15 * 60 } as const;
+
 /** Same wording as Better Auth's own 429, so the two limits are indistinguishable. */
 export const RATE_LIMIT_MESSAGE = 'Too many requests. Please try again later.';
 
@@ -20,6 +24,12 @@ export function normaliseEmail(email: string): string {
 export function magicLinkEmailKey(email: string): string {
   const digest = createHash('sha256').update(normaliseEmail(email)).digest('hex');
   return `magic-link:email:${digest}`;
+}
+
+/** The per-domain SSO counter key; the domain is hashed like the magic-link address. */
+export function ssoDomainKey(domain: string): string {
+  const digest = createHash('sha256').update(domain.trim().toLowerCase()).digest('hex');
+  return `sso:domain:${digest}`;
 }
 
 /**
@@ -47,4 +57,16 @@ export async function consumeRateLimit(
     })
     .returning({ count: rateLimit.count });
   return (row?.count ?? 1) <= limit.max;
+}
+
+/** Phone OTP limits (#503): sends per number per 15 minutes, and per IP per hour. */
+export const PHONE_OTP_PHONE_LIMIT = { max: 5, windowSeconds: 15 * 60 } as const;
+export const PHONE_OTP_IP_LIMIT = { max: 20, windowSeconds: 60 * 60 } as const;
+/** Code checks per IP per hour; the per-code attempt cap is the plugin's `allowedAttempts`. */
+export const PHONE_VERIFY_IP_LIMIT = { max: 30, windowSeconds: 60 * 60 } as const;
+
+/** Hashed like the email key, so no plaintext number is stored in `rate_limit`. */
+export function phoneOtpKey(phoneNumber: string): string {
+  const digest = createHash('sha256').update(phoneNumber.replace(/\s+/g, '')).digest('hex');
+  return `phone-otp:phone:${digest}`;
 }

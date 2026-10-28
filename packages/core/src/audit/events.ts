@@ -108,6 +108,37 @@ export const AUDIT_ACTIONS = {
   // Public API keys (#624): fail-closed. Metadata holds the key's scopes (created) or nothing.
   'api_key.created': { security: true, description: 'An owner or admin issued a public API key' },
   'api_key.revoked': { security: true, description: 'An owner or admin revoked a public API key' },
+  // Per-organisation SSO (#683): fail-closed. Metadata holds the protocol, domain and enabled flag,
+  // never the provider settings (client secrets, certificates).
+  'sso.provider_created': { security: true, description: 'An owner added an SSO provider' },
+  'sso.provider_updated': { security: true, description: 'An owner changed an SSO provider' },
+  'sso.provider_deleted': { security: true, description: 'An owner removed an SSO provider' },
+  'sso.domain_verified': {
+    security: true,
+    description: 'An owner proved control of an SSO provider domain by DNS',
+  },
+  // Bulk provisioning (#684): fail-closed. A run's metadata holds its source, counts and a dry-run
+  // flag (never the addresses); a provisioned or deprovisioned member names the source and change.
+  'provisioning.run': {
+    security: true,
+    description: 'A bulk member provisioning run (CSV) finished',
+  },
+  'member.provisioned': {
+    security: true,
+    description: 'A member was added, reactivated or changed by SCIM provisioning',
+  },
+  'member.deprovisioned': {
+    security: true,
+    description: 'A member was suspended or removed by SCIM provisioning',
+  },
+  'scim_token.created': {
+    security: true,
+    description: 'An owner issued a SCIM provisioning token',
+  },
+  'scim_token.revoked': {
+    security: true,
+    description: 'An owner revoked a SCIM provisioning token',
+  },
   // Change webhooks (#626): fail-closed. Metadata holds the subscribed event types (created) or nothing.
   'webhook_endpoint.created': {
     security: true,
@@ -140,6 +171,43 @@ export const AUDIT_ACTIONS = {
     description: 'A download link for a workspace data export was issued to its requester',
   },
   'export.downloaded': { security: true, description: 'A workspace data export was downloaded' },
+  // Drafting export (#768): informational. Metadata holds the format and the version content hash only.
+  'draft.exported': { security: false, description: 'A draft version was exported to DOCX or PDF' },
+  // Citation checker (#77). Metadata holds counts, or the acknowledged citation ids and the reason, never draft text.
+  'draft.citations.checked': {
+    security: false,
+    description: 'The citations of a draft version were checked against an authority source',
+  },
+  'draft.citations.acknowledged': {
+    security: true,
+    description: 'A member acknowledged unverified citations of a draft version before an export',
+  },
+  // Consistency fix (#78): a lawyer confirmed one proposed replacement. Metadata holds the rule and hashes only, never draft text.
+  'draft.fix_applied': {
+    security: false,
+    description: 'A lawyer applied a consistency fix, which saved a new draft version',
+  },
+  // Fact-check (#914). Metadata holds claim kinds, counts, the version id and the typed reason, never draft text.
+  'draft.factcheck.checked': {
+    security: false,
+    description: 'A draft version was fact-checked against the matter record',
+  },
+  'draft.factcheck.ignored': {
+    security: false,
+    description: 'A lawyer chose to ignore a fact-check claim for this matter',
+  },
+  'draft.factcheck.asserted': {
+    security: false,
+    description: 'A lawyer marked a fact-check claim as their own assertion',
+  },
+  'draft.factcheck.fixed': {
+    security: false,
+    description: 'A fact-check mismatch or unverified citation was fixed in a new draft version',
+  },
+  'draft.factcheck.acknowledged': {
+    security: true,
+    description: 'A member acknowledged unresolved fact-check findings before an export',
+  },
   // Workspace deletion (#302): fail-closed. Metadata holds the deletion job id and dates only. These
   // events are purged with the workspace in the final erase step; the receipt keeps the chain head.
   'workspace.deletion_requested': {
@@ -175,6 +243,17 @@ export const AUDIT_ACTIONS = {
   'workspace.privacy_updated': {
     security: true,
     description: 'A member changed the sensitive-matter default or the raw audio retention window',
+  },
+  // Fail-closed: it decides whether grid corrections may enter eval sets (#558). Owner-only; ids only,
+  // so the target is the workspace and no metadata is kept.
+  'workspace.eval_reuse_enabled': {
+    security: true,
+    description: 'An owner allowed corrections to be reused in evaluation sets (opt-in)',
+  },
+  'workspace.eval_reuse_disabled': {
+    security: true,
+    description:
+      'An owner stopped corrections being reused in evaluation sets; item consents withdrawn',
   },
   // Fail-closed: it creates or replaces the intake address or ICS feed token, so the old one stops
   // working (#287). Metadata names the kind only, never the token or its hash.
@@ -216,6 +295,18 @@ export const AUDIT_ACTIONS = {
   'memory.erased': {
     security: true,
     description: "The workspace's memory and embeddings were erased",
+  },
+  // Lawyer memory (#72): an owner changed whether an M4 court note is visible to the chamber.
+  // Metadata holds the note id and the new state, never its text.
+  'memory.sharing_changed': {
+    security: true,
+    description: 'An owner shared an M4 court note with the chamber or made it private again',
+  },
+  // M5 embeddings (#901, ADR 0046): an embedder outside India was refused before any text was sent.
+  // Metadata holds the embedder id and its region, never the text.
+  'memory.embedding_refused': {
+    security: true,
+    description: 'Memory text was not embedded because the embedder runs outside India',
   },
   // Capture inbox (#43). Metadata holds the channel, MIME type, size and flags; never a filename or
   // file content. Channel changes and quarantines are fail-closed: they change where a lawyer's
@@ -298,6 +389,105 @@ export const AUDIT_ACTIONS = {
   'automation.reassigned': {
     security: true,
     description: "A capture's results were moved to another matter",
+  },
+  // Stale-matter attention (#70). Ids, the rule and the day only, never the reason.
+  'attention.snoozed': { security: false, description: 'A stale-matter flag was snoozed' },
+  'attention.dismissed': {
+    security: false,
+    description: 'A stale-matter flag was dismissed as intentionally dormant',
+  },
+  'attention.lifted': { security: false, description: 'A snooze or dismissal was lifted' },
+  'attention.threshold_changed': {
+    security: false,
+    description: 'The workspace stale-matter threshold was changed',
+  },
+  // Obligation service (#67). Ids and flags only, never the description.
+  'obligation.created': { security: false, description: 'An obligation was created' },
+  'obligation.updated': { security: false, description: 'An obligation was edited' },
+  'obligation.rescheduled': {
+    security: false,
+    description: 'An obligation was rescheduled, with a reason',
+  },
+  'obligation.closed': {
+    security: false,
+    description: 'An obligation was closed by a person, with a reason',
+  },
+  'obligation.reopened': { security: false, description: 'A closed obligation was reopened' },
+  'obligation.direction_not_applicable': {
+    security: false,
+    description: 'An order direction was marked not applicable, in words',
+  },
+  'obligation.defect_raised': { security: false, description: 'A registry defect was raised' },
+  'obligation.defect_cured': { security: false, description: 'A registry defect was cured' },
+  'obligation.represented': { security: false, description: 'A filing was re-presented' },
+  'obligation.registry_number': {
+    security: false,
+    description: 'A registry SR or FR number was stored',
+  },
+  'obligation.copy_applied': { security: false, description: 'A certified copy was applied for' },
+  'obligation.copy_transitioned': {
+    security: false,
+    description: 'A certified copy moved to its next step',
+  },
+  'outward.prepared': { security: false, description: 'An outward update draft was prepared' },
+  'outward.edited': { security: false, description: 'A lawyer saved an edit of an outward draft' },
+  'outward.shared': {
+    security: false,
+    description: 'A lawyer shared an outward draft from their own channel',
+  },
+  // Continuity (#71): who generated, read, saved or acknowledged a handover; ids only, never note text.
+  'handover.generated': {
+    security: false,
+    description: 'A handover note was assembled for a matter',
+  },
+  'handover.saved': {
+    security: false,
+    description: 'A handover note version was saved and addressed',
+  },
+  'handover.read': { security: false, description: 'Handover notes of a matter were read' },
+  'handover.acknowledged': { security: false, description: 'A handover note was acknowledged' },
+  'continuity.changes_read': {
+    security: false,
+    description: 'What changed on a matter since the last view was read',
+  },
+  // The WhatsApp number link (#711): ids only, never the number or the code.
+  'whatsapp.otp_requested': {
+    security: true,
+    description: 'A WhatsApp link code was requested and sent',
+  },
+  'whatsapp.otp_failed': { security: true, description: 'A wrong WhatsApp link code was entered' },
+  'whatsapp.linked': { security: true, description: 'A WhatsApp number was verified and linked' },
+  // The lawyer's manual "court is at item N" hall marker (#58): an internal note, ids and numbers only.
+  'court_day.marker_set': {
+    security: false,
+    description: 'A manual court-is-at-item marker was set for a hall',
+  },
+  'court_day.marker_cleared': {
+    security: false,
+    description: 'A manual court-is-at-item marker was cleared',
+  },
+  // A confirmed hearing outcome (#62): ids, kinds and counts only, never the outcome text.
+  'hearing.outcome_confirmed': {
+    security: true,
+    description: 'A person confirmed a hearing outcome, its next date, obligations and tasks',
+  },
+  // Chamber delegation of appearances (#63): ids only, never the delegator's note.
+  'appearance.assigned': {
+    security: false,
+    description: 'An appearance was assigned to a member',
+  },
+  'appearance.reassigned': {
+    security: false,
+    description: 'An appearance moved to another member; the previous assignee is recorded',
+  },
+  'appearance.unassigned': {
+    security: false,
+    description: 'A member was removed from an appearance',
+  },
+  'matter.access_granted': {
+    security: true,
+    description:
+      'An owner granted a member access to a restricted matter to delegate an appearance',
   },
 } as const satisfies Record<string, AuditActionSpec>;
 

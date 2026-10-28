@@ -53,7 +53,7 @@ describe('ObligationRow', () => {
     const { container } = render(<ObligationRow {...OBLIGATIONS.upcoming} now={NOW} />);
     const date = container.querySelector('[data-slot="obligation-date"]');
     expect(date).toHaveClass('tabular-nums');
-    expect(date).toHaveTextContent('14 Nov 2026');
+    expect(date).toHaveTextContent('Sat, 14 Nov');
     expect(date).toHaveAttribute('dateTime', '2026-11-14');
     expect(screen.getByText('Due in 27 days')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Meenakshi Sundaram' })).toHaveTextContent('MS');
@@ -75,31 +75,32 @@ describe('ObligationRow', () => {
     expect(screen.getByText('Due today')).toBeInTheDocument();
   });
 
-  it('on touch, swipe left marks done and swipe right snoozes', () => {
+  it('on touch, swipe right opens Done and swipe left opens Reschedule', () => {
     const onDone = vi.fn();
-    const onSnooze = vi.fn();
+    const onReschedule = vi.fn();
     const { container } = render(
       <ObligationRow
         {...OBLIGATIONS.today}
         now={NOW}
         presentation="touch"
         onDone={onDone}
-        onSnooze={onSnooze}
+        onReschedule={onReschedule}
       />,
     );
     expect(container.querySelector('[data-slot="obligation-swipe-done"]')).toHaveTextContent(
       'Done',
     );
-    expect(container.querySelector('[data-slot="obligation-swipe-snooze"]')).toHaveTextContent(
-      'Snooze',
+    expect(container.querySelector('[data-slot="obligation-swipe-reschedule"]')).toHaveTextContent(
+      'Reschedule',
     );
-    swipe(surface(container), -(SWIPE_THRESHOLD_PX + 10));
-    expect(onDone).toHaveBeenCalledOnce();
-    expect(onSnooze).not.toHaveBeenCalled();
+    expect(SWIPE_THRESHOLD_PX).toBe(72);
     swipe(surface(container), SWIPE_THRESHOLD_PX + 10);
-    expect(onSnooze).toHaveBeenCalledOnce();
+    expect(onDone).toHaveBeenCalledOnce();
+    expect(onReschedule).not.toHaveBeenCalled();
+    swipe(surface(container), -(SWIPE_THRESHOLD_PX + 10));
+    expect(onReschedule).toHaveBeenCalledOnce();
     // A short drag is not a swipe.
-    swipe(surface(container), -(SWIPE_THRESHOLD_PX - 20));
+    swipe(surface(container), SWIPE_THRESHOLD_PX - 20);
     expect(onDone).toHaveBeenCalledOnce();
     expect(surface(container).style.transform).toBe('');
   });
@@ -110,21 +111,21 @@ describe('ObligationRow', () => {
       <ObligationRow {...OBLIGATIONS.today} now={NOW} presentation="pointer" onDone={onDone} />,
     );
     expect(container.querySelector('[data-slot="obligation-swipe-done"]')).toBeNull();
-    swipe(surface(container), -200);
+    swipe(surface(container), 200);
     expect(onDone).not.toHaveBeenCalled();
   });
 
-  it('offers Done and Snooze in the overflow menu by keyboard', async () => {
+  it('offers Done and Reschedule in the overflow menu by keyboard', async () => {
     const user = userEvent.setup();
     const onDone = vi.fn();
-    const onSnooze = vi.fn();
+    const onReschedule = vi.fn();
     render(
       <ObligationRow
         {...OBLIGATIONS.today}
         now={NOW}
         presentation="touch"
         onDone={onDone}
-        onSnooze={onSnooze}
+        onReschedule={onReschedule}
       />,
     );
     const more = screen.getByRole('button', {
@@ -140,11 +141,27 @@ describe('ObligationRow', () => {
 
     more.focus();
     await user.keyboard('{Enter}');
-    await screen.findByRole('menuitem', { name: 'Snooze' });
+    await screen.findByRole('menuitem', { name: 'Reschedule' });
     await user.keyboard('{ArrowDown}');
-    expect(screen.getByRole('menuitem', { name: 'Snooze' })).toHaveFocus();
+    expect(screen.getByRole('menuitem', { name: 'Reschedule' })).toHaveFocus();
     await user.keyboard('{Enter}');
-    expect(onSnooze).toHaveBeenCalledOnce();
+    expect(onReschedule).toHaveBeenCalledOnce();
+  });
+
+  it('shows the case number, the kind icon and the status beside the matter and due text', () => {
+    const { container } = render(
+      <ObligationRow
+        {...OBLIGATIONS.today}
+        now={NOW}
+        kind="order_direction"
+        kindLabel="Order direction"
+        caseNumber="WP 1234/2026"
+        statusLabel="Open"
+      />,
+    );
+    expect(screen.getByText('WP 1234/2026')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Order direction' })).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="obligation-status"]')).toHaveTextContent('Open');
   });
 
   it('keeps the row at least 44 px tall', () => {
@@ -165,7 +182,7 @@ describe('ObligationRow', () => {
     );
     expect(screen.getByRole('button', { name: /More actions/ })).toBeDisabled();
     expect(screen.getByText(/You are offline/)).toBeInTheDocument();
-    swipe(surface(container), -200);
+    swipe(surface(container), 200);
     expect(onDone).not.toHaveBeenCalled();
     rerender(<ObligationRow {...OBLIGATIONS.today} now={NOW} viewOnly onDone={onDone} />);
     expect(screen.queryByRole('button', { name: /More actions/ })).toBeNull();

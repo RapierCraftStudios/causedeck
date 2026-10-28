@@ -4,11 +4,13 @@
 import type { Secret, ServerEnv } from '@causedeck/config/env';
 import type { Database } from '@causedeck/db';
 import { schema } from '@causedeck/db';
+import { eq } from 'drizzle-orm';
 import { passkey } from '@better-auth/passkey';
+import { sso } from '@better-auth/sso';
 import { betterAuth, type BetterAuthPlugin } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { APIError, createAuthMiddleware, isAPIError } from 'better-auth/api';
-import { magicLink, organization, twoFactor } from 'better-auth/plugins';
+import { APIError, createAuthMiddleware, getSessionFromCtx, isAPIError } from 'better-auth/api';
+import { magicLink, organization, phoneNumber, twoFactor } from 'better-auth/plugins';
 
 import { DEV_SIGN_IN_PATH, devSignIn } from './dev-provider';
 import { consoleLogger, type AuthLogger, type Mailer } from './mailer';
@@ -18,13 +20,40 @@ import {
   MAGIC_LINK_EMAIL_LIMIT,
   MAGIC_LINK_IP_LIMIT,
   magicLinkEmailKey,
+  PHONE_OTP_IP_LIMIT,
+  PHONE_OTP_PHONE_LIMIT,
+  PHONE_VERIFY_IP_LIMIT,
+  phoneOtpKey,
   RATE_LIMIT_MESSAGE,
+  SSO_DOMAIN_LIMIT,
+  SSO_IP_LIMIT,
+  ssoDomainKey,
 } from './rate-limit';
 import { ac, isRole, roles } from './roles';
+import {
+  isBlockedSsoPath,
+  isSsoPath,
+  isSsoReturnPath,
+  provisionSsoMember,
+  ssoDomainOf,
+  ssoEmailAllowed,
+  withSsoProviderLookup,
+} from './sso';
+import { type SmsSender } from './sms';
 import { markStepUp } from './step-up';
 
 export const MAGIC_LINK_PATH = '/sign-in/magic-link';
 export const MAGIC_LINK_EXPIRES_IN_SECONDS = 10 * 60;
+export const PHONE_OTP_SEND_PATH = '/phone-number/send-otp';
+export const PHONE_OTP_VERIFY_PATH = '/phone-number/verify';
+export const PHONE_OTP_LENGTH = 6;
+export const PHONE_OTP_EXPIRES_IN_SECONDS = 5 * 60;
+export const PHONE_OTP_ALLOWED_ATTEMPTS = 3;
+/** Lifetime of the email-verification link sent when a phone account adds an email. */
+export const EMAIL_VERIFICATION_EXPIRES_IN_SECONDS = 60 * 60;
+/** Phone-only accounts get this placeholder address (`user.email` is required and unique). */
+export const PHONE_TEMP_EMAIL_DOMAIN = 'phone.causedeck.invalid';
+const E164 = /^\+[1-9]\d{7,14}$/;
 export const SESSION_EXPIRES_IN_SECONDS = 30 * 24 * 60 * 60;
 export const SESSION_UPDATE_AGE_SECONDS = 24 * 60 * 60;
 
@@ -35,7 +64,8 @@ type GoogleEnv =
 /** The env keys auth reads. Secrets arrive only as #4 `Secret` values. */
 export type AuthEnv = Pick<ServerEnv, 'NODE_ENV' | 'APP_URL' | 'BETTER_AUTH_SECRET'> & GoogleEnv;
 
-export type SignInMethod = 'magic_link' | 'passkey' | 'google' | 'two_factor' | 'dev' | 'unknown';
+export type SignInMethod =
+  'magic_link' | 'phone_otp' | 'passkey' | 'google' | 'sso' | 'two_factor' | 'dev' | 'unknown';
 
 /** One auth security event as plain data; `@causedeck/core` turns it into an audit row (#228). */
 export interface SecurityEventInput {
@@ -82,6 +112,8 @@ export interface CreateAuthDeps {
   db: Database;
   env: AuthEnv;
   mailer: Mailer;
+  /** Delivers phone sign-in OTPs. Without it the phone sign-in endpoints are not mounted. */
+  sms?: SmsSender;
   logger?: AuthLogger;
   /** Defaults to `noopSecurityEventRecorder`. */
   securityEvents?: SecurityEventRecorder;
@@ -100,6 +132,9 @@ export function sessionUpdateAgeFor(expiresInSeconds: number): number {
 }
 
 const MAGIC_LINK_VERIFY_PATH = '/magic-link/verify';
+export const SSO_SIGN_IN_PATH = '/sign-in/sso';
+const SSO_CALLBACK_RULE = { window: SSO_IP_LIMIT.windowSeconds, max: SSO_IP_LIMIT.max };
+const PHONE_VERIFY_PATH = PHONE_OTP_VERIFY_PATH;
 const PASSKEY_SIGN_IN_PATH = '/passkey/verify-authentication';
 const TWO_FACTOR_VERIFY_PATHS: ReadonlySet<string> = new Set([
   '/two-factor/verify-totp',
@@ -120,7 +155,9 @@ const REVOKE_PATHS: ReadonlySet<string> = new Set([
 /** The sign-in method behind the request that created a session. */
 export function signInMethod(path: string | undefined): SignInMethod {
   if (path === MAGIC_LINK_VERIFY_PATH) return 'magic_link';
+  if (path === PHONE_VERIFY_PATH) return 'phone_otp';
   if (path === PASSKEY_SIGN_IN_PATH) return 'passkey';
+  if (path !== undefined && isSsoPath(path)) return 'sso';
   if (path?.startsWith('/callback/')) return 'google';
   if (path !== undefined && TWO_FACTOR_VERIFY_PATHS.has(path)) return 'two_factor';
   // Literal `process.env.NODE_ENV` so production bundles drop the dev path string with the dev provider.
@@ -200,8 +237,10 @@ export function securityEventHook(securityEvents: SecurityEventRecorder, logger:
     if (failed(returned)) {
       if (
         ctx.path === MAGIC_LINK_VERIFY_PATH ||
+        ctx.path === PHONE_VERIFY_PATH ||
         ctx.path === PASSKEY_SIGN_IN_PATH ||
-        TWO_FACTOR_VERIFY_PATHS.has(ctx.path)
+        TWO_FACTOR_VERIFY_PATHS.has(ctx.path) ||
+        (isSsoPath(ctx.path) && ctx.path !== SSO_SIGN_IN_PATH)
       ) {
         await securityEvents
           .signInFailed({ ...info, userId, method: signInMethod(ctx.path) })
@@ -257,10 +296,49 @@ export function stepUpHook(db: Database) {
   };
 }
 
+/** True for the placeholder address of a phone-only account. */
+export function isPhoneTempEmail(email: string): boolean {
+  return email.toLowerCase().endsWith(`@${PHONE_TEMP_EMAIL_DOMAIN}`);
+}
+
+/**
+ * Phone OTP sign-in (#503). The code is generated, stored hashed-by-expiry and checked by the
+ * plugin (3 attempts, 5 minutes); we add the SMS delivery, an E.164 check and sign-up on first
+ * verification (never when sign-up is disabled, as in the admin console). The send is not awaited,
+ * so transport latency does not reveal whether the number has an account.
+ */
+function phoneOtpPlugin(sms: SmsSender, logger: AuthLogger, disableSignUp: boolean) {
+  return phoneNumber({
+    otpLength: PHONE_OTP_LENGTH,
+    expiresIn: PHONE_OTP_EXPIRES_IN_SECONDS,
+    allowedAttempts: PHONE_OTP_ALLOWED_ATTEMPTS,
+    phoneNumberValidator: (value) => E164.test(value),
+    sendOTP: ({ phoneNumber: to, code }) => {
+      sms
+        .send({ phoneNumber: to, code, expiresInMinutes: PHONE_OTP_EXPIRES_IN_SECONDS / 60 })
+        .catch((error: unknown) => {
+          logger.error(
+            { err: error instanceof Error ? { name: error.name, message: error.message } : {} },
+            'phone otp sms failed',
+          );
+        });
+    },
+    ...(disableSignUp
+      ? {}
+      : {
+          signUpOnVerification: {
+            getTempEmail: (value: string) => `${value.slice(1)}@${PHONE_TEMP_EMAIL_DOMAIN}`,
+            getTempName: (value: string) => `***${value.slice(-4)}`,
+          },
+        }),
+  });
+}
+
 export function createAuth({
   db,
   env,
   mailer,
+  sms,
   logger = consoleLogger,
   securityEvents = noopSecurityEventRecorder,
   sessionExpiresInSeconds = SESSION_EXPIRES_IN_SECONDS,
@@ -295,6 +373,7 @@ export function createAuth({
           });
       },
     }),
+    ...(sms ? [phoneOtpPlugin(sms, logger, disableSignUp)] : []),
     passkey({ rpID: appUrl.hostname, rpName: 'CauseDeck', origin: appUrl.origin }),
     organization({
       ac,
@@ -318,6 +397,24 @@ export function createAuth({
     // Accounts have no password (magic link, passkeys, Google), so enabling and disabling 2FA rely on
     // the session alone (#289); a user who somehow has a credential password is still asked for it.
     twoFactor({ issuer: 'CauseDeck', allowPasswordless: true }),
+    // Per-organisation SAML and OIDC (#683). The plugin only reads the enabled providers of the
+    // keyed `app_sso_provider_lookup` function; the owner-only core service edits them, so its own provider
+    // endpoints are refused in `hooks.before`. Membership is ours (`provisionSsoMember`), not the
+    // plugin's organisation provisioning, because `member` is under row-level security.
+    sso({
+      // The plugin refuses a sign-in on a provider whose domain is not verified, and links an
+      // existing account only when the asserted email is at the verified domain. Verification
+      // itself is ours (DNS TXT, owner-only core service); the plugin's endpoints are blocked.
+      domainVerification: { enabled: true },
+      organizationProvisioning: { disabled: true },
+      provisionUserOnEveryLogin: true,
+      provisionUser: async ({ user, provider }) => {
+        const organizationId = (provider as { organizationId?: unknown }).organizationId;
+        if (typeof organizationId === 'string') {
+          await provisionSsoMember(db, organizationId, user.id);
+        }
+      },
+    }),
   ] satisfies BetterAuthPlugin[];
 
   // Literal `process.env.NODE_ENV` so production bundles drop the dev provider entirely.
@@ -330,7 +427,11 @@ export function createAuth({
     baseURL: appUrl.origin,
     secret: env.BETTER_AUTH_SECRET.reveal(),
     trustedOrigins: [appUrl.origin],
-    database: drizzleAdapter(db, { provider: 'pg', schema }),
+    database: withSsoProviderLookup(
+      db,
+      env.BETTER_AUTH_SECRET.reveal(),
+      drizzleAdapter(db, { provider: 'pg', schema }),
+    ),
     emailAndPassword: { enabled: false },
     socialProviders: env.AUTH_GOOGLE_ENABLED
       ? {
@@ -340,7 +441,37 @@ export function createAuth({
           },
         }
       : {},
+    account: {
+      // A phone account links Google later (`linkSocial` while signed in); Google verifies emails.
+      accountLinking: { enabled: true, trustedProviders: ['google'] },
+    },
+    emailVerification: {
+      expiresIn: EMAIL_VERIFICATION_EXPIRES_IN_SECONDS,
+      // Only reached when a signed-in phone account adds an email (`/change-email` below): the
+      // account's email changes (and is verified) only when the link is opened. It reuses the magic-link template, a link with an expiry.
+      sendVerificationEmail: ({ user, url }) => {
+        mailer
+          .send({
+            to: user.email,
+            template: 'auth.magicLink',
+            subjectKey: AUTH_EMAIL_KEYS.magicLink.subject,
+            bodyKey: AUTH_EMAIL_KEYS.magicLink.body,
+            url,
+            locale: toAuthLocale((user as { locale?: unknown }).locale),
+            expiresInMinutes: EMAIL_VERIFICATION_EXPIRES_IN_SECONDS / 60,
+          })
+          .catch((error: unknown) => {
+            logger.error(
+              { err: error instanceof Error ? { name: error.name, message: error.message } : {} },
+              'email verification email failed',
+            );
+          });
+        return Promise.resolve();
+      },
+    },
     user: {
+      // No `updateEmailWithoutVerification`: the address changes only when its owner opens the link.
+      changeEmail: { enabled: true },
       additionalFields: {
         locale: { type: 'string', required: false, defaultValue: 'en', input: false },
       },
@@ -366,6 +497,17 @@ export function createAuth({
           window: MAGIC_LINK_IP_LIMIT.windowSeconds,
           max: MAGIC_LINK_IP_LIMIT.max,
         },
+        [SSO_SIGN_IN_PATH]: { window: SSO_IP_LIMIT.windowSeconds, max: SSO_IP_LIMIT.max },
+        '/sso/callback/*': SSO_CALLBACK_RULE,
+        '/sso/saml2/sp/acs/*': SSO_CALLBACK_RULE,
+        [PHONE_OTP_SEND_PATH]: {
+          window: PHONE_OTP_IP_LIMIT.windowSeconds,
+          max: PHONE_OTP_IP_LIMIT.max,
+        },
+        [PHONE_OTP_VERIFY_PATH]: {
+          window: PHONE_VERIFY_IP_LIMIT.windowSeconds,
+          max: PHONE_VERIFY_IP_LIMIT.max,
+        },
       },
     },
     logger: {
@@ -377,6 +519,7 @@ export function createAuth({
     },
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
+        if (isBlockedSsoPath(ctx.path)) throw new APIError('NOT_FOUND', { message: 'Not found' });
         const body = ctx.body as Record<string, unknown> | undefined;
         if (ctx.path === MAGIC_LINK_PATH && typeof body?.email === 'string') {
           const allowed = await consumeRateLimit(
@@ -385,6 +528,42 @@ export function createAuth({
             MAGIC_LINK_EMAIL_LIMIT,
           );
           if (!allowed) throw new APIError('TOO_MANY_REQUESTS', { message: RATE_LIMIT_MESSAGE });
+        }
+        if (ctx.path === SSO_SIGN_IN_PATH) {
+          // Only the email domain picks a provider: a provider or organisation id would let a
+          // caller probe which organisations use SSO.
+          if (body?.providerId !== undefined || body?.organizationSlug !== undefined) {
+            throw new APIError('BAD_REQUEST', { message: 'Sign in with your work email' });
+          }
+          const domain = ssoDomainOf(
+            typeof body?.email === 'string'
+              ? body.email
+              : typeof body?.domain === 'string'
+                ? body.domain
+                : '',
+          );
+          if (domain === null) {
+            throw new APIError('BAD_REQUEST', { message: 'Sign in with your work email' });
+          }
+          if (!(await consumeRateLimit(db, ssoDomainKey(domain), SSO_DOMAIN_LIMIT))) {
+            throw new APIError('TOO_MANY_REQUESTS', { message: RATE_LIMIT_MESSAGE });
+          }
+        }
+        if (ctx.path === PHONE_OTP_SEND_PATH && typeof body?.phoneNumber === 'string') {
+          const allowed = await consumeRateLimit(
+            db,
+            phoneOtpKey(body.phoneNumber),
+            PHONE_OTP_PHONE_LIMIT,
+          );
+          if (!allowed) throw new APIError('TOO_MANY_REQUESTS', { message: RATE_LIMIT_MESSAGE });
+        }
+        // Changing the address is only for phone-only accounts adding their first email; email
+        // accounts keep today's behaviour (no self-service change).
+        if (ctx.path === '/change-email') {
+          const session = await getSessionFromCtx(ctx);
+          if (session && !isPhoneTempEmail(session.user.email)) {
+            throw new APIError('FORBIDDEN', { message: 'Email change is not available' });
+          }
         }
       }),
       // Security events (#228); session, 2FA and revocation events come from `databaseHooks`.
@@ -395,6 +574,25 @@ export function createAuth({
       }),
     },
     databaseHooks: {
+      // Takeover guard (#683): on an SSO return the user or linked account must sit at the
+      // provider's verified email domain, whatever the plugin decided about linking.
+      account: {
+        create: {
+          before: async (account, ctx) => {
+            if (isSsoReturnPath(ctx?.path)) {
+              const providerId = (ctx?.params as { providerId?: string } | undefined)?.providerId;
+              const [owner] = await db
+                .select({ email: schema.user.email })
+                .from(schema.user)
+                .where(eq(schema.user.id, account.userId));
+              if (owner === undefined || !(await ssoEmailAllowed(db, providerId, owner.email))) {
+                throw new APIError('FORBIDDEN', { message: 'Email is outside the SSO domain' });
+              }
+            }
+            return undefined;
+          },
+        },
+      },
       session: {
         create: {
           // A session created by a passkey or TOTP ceremony starts with a fresh step-up (#304).
@@ -426,6 +624,32 @@ export function createAuth({
         },
       },
       user: {
+        create: {
+          before: async (user, ctx) => {
+            if (isSsoReturnPath(ctx?.path)) {
+              const providerId = (ctx?.params as { providerId?: string } | undefined)?.providerId;
+              if (!(await ssoEmailAllowed(db, providerId, user.email))) {
+                throw new APIError('FORBIDDEN', { message: 'Email is outside the SSO domain' });
+              }
+            }
+            return undefined;
+          },
+          // The funnel's first step and cohort anchor (#509): the user id only, never the email.
+          // Measurement must not fail a sign-up.
+          after: async (user) => {
+            try {
+              await db
+                .insert(schema.activationEvent)
+                .values({ userId: user.id, step: 'signed_up' })
+                .onConflictDoNothing();
+            } catch (error) {
+              logger.warn(
+                { err: error instanceof Error ? { name: error.name } : {} },
+                'signed_up activation event not recorded',
+              );
+            }
+          },
+        },
         update: {
           // The two-factor plugin flips `twoFactorEnabled` only when it changes (first verify or
           // `enable` without verification, and `disable`).

@@ -14,6 +14,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { markReadySent } from '../../../../../lib/inbox/ready-providers.ts';
+import '../../../../../lib/outward/ready-provider.ts';
 import { graphDeps } from '../../../../../lib/matters/graph-deps.ts';
 import { objectStore } from '../../../../../lib/storage.ts';
 import { ActionError, type Result } from '../../../../../lib/safe-action.ts';

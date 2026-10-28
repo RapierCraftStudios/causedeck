@@ -1,18 +1,10 @@
-// Memory and embedding erasure (#303). The real `memory_item` / `memory_embedding` tables arrive in
-// a later milestone, so each test creates fixtures with their tenantPolicy() in a rolled-back owner
-// transaction (FORCE RLS binds the owner too), as packages/db/src/__tests__/rls/vector.test.ts:47
-// does. A request by an owner, run by the priority job on a fake clock, leaves no row of the
-// workspace in either table within 24 h, and never touches another workspace's rows.
+// Memory and embedding erasure (#303) on the real `memory_item` / `memory_embedding` tables (#72),
+// seeded in a rolled-back owner transaction (FORCE RLS binds the owner too). A request by an owner,
+// run by the priority job on a fake clock, leaves no row of the workspace in either table within
+// 24 h, and never touches another workspace's rows.
 
 import { Secret } from '@causedeck/config/env';
-import {
-  createDb,
-  schema,
-  tenantPolicy,
-  withWorkspace,
-  type Database,
-  type Transaction,
-} from '@causedeck/db';
+import { createDb, schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { testDatabaseUrls } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { eq, sql, TransactionRollbackError } from 'drizzle-orm';
@@ -58,36 +50,30 @@ async function codeOf(promise: Promise<unknown>): Promise<string | undefined> {
   return undefined;
 }
 
-async function createMemoryFixtures(tx: Transaction): Promise<void> {
-  await tx.execute(sql`create table memory_item (
-    id uuid primary key default gen_random_uuid(),
-    workspace_id uuid not null references organization (id) on delete cascade,
-    content_ref text not null)`);
-  await tx.execute(sql`create table memory_embedding (
-    id uuid primary key default gen_random_uuid(),
-    workspace_id uuid not null references organization (id) on delete cascade,
-    item_id uuid references memory_item (id),
-    content_ref text not null)`);
-  for (const table of ['memory_item', 'memory_embedding']) {
-    await tx.execute(sql.raw(`create index ${table}_workspace_id_idx on ${table} (workspace_id)`));
-    for (const statement of tenantPolicy(table)) await tx.execute(sql.raw(statement));
-  }
-}
+const ZERO_VECTOR = sql`('[' || array_to_string(array_fill(0, array[1024]), ',') || ']')::vector`;
 
-/** `items` memory items for `workspaceId`, each with one embedding, plus `extra` loose embeddings. */
-async function seedMemory(tx: Transaction, workspaceId: string, items: number, extra = 0) {
+/** `items` memory items for `workspaceId`, each with one embedding, plus `extra` more on the first. */
+async function seedMemory(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  items: number,
+  extra = 0,
+) {
   await withWorkspace(tx, { workspaceId }, async (s) => {
     await s.execute(sql`
       with i as (
-        insert into memory_item (workspace_id, content_ref)
-        select ${workspaceId}::uuid, 'item-' || g from generate_series(1, ${items}) g
+        insert into memory_item (workspace_id, layer, key, scope, owner_user_id, value_ciphertext, source_type, confirmation_state)
+        select ${workspaceId}::uuid, 'M2', 'M2.always_carry', 'workspace', ${ownerId}::uuid, 'ct-' || g, 'manual', 'confirmed'
+        from generate_series(1, ${items}) g
         returning id)
-      insert into memory_embedding (workspace_id, item_id, content_ref)
-      select ${workspaceId}::uuid, i.id, 'emb' from i`);
+      insert into memory_embedding (workspace_id, item_id, content_ref, embedding)
+      select ${workspaceId}::uuid, i.id, 'emb', ${ZERO_VECTOR} from i`);
     if (extra > 0) {
       await s.execute(sql`
-        insert into memory_embedding (workspace_id, content_ref)
-        select ${workspaceId}::uuid, 'loose-' || g from generate_series(1, ${extra}) g`);
+        insert into memory_embedding (workspace_id, item_id, content_ref, embedding)
+        select ${workspaceId}::uuid, (select id from memory_item where workspace_id = ${workspaceId}::uuid limit 1), 'extra-' || g, ${ZERO_VECTOR}
+        from generate_series(1, ${extra}) g`);
     }
   });
 }
@@ -95,10 +81,16 @@ async function seedMemory(tx: Transaction, workspaceId: string, items: number, e
 async function memoryRows(tx: Transaction, workspaceId: string) {
   return withWorkspace(tx, { workspaceId }, async (s) => {
     const [row] = await s.execute<{ items: number; embeddings: number }>(sql`
-      select (select count(*)::int from memory_item) as items,
-             (select count(*)::int from memory_embedding) as embeddings`);
+      select (select count(*)::int from memory_item where workspace_id = ${workspaceId}::uuid) as items,
+             (select count(*)::int from memory_embedding where workspace_id = ${workspaceId}::uuid) as embeddings`);
     return row;
   });
+}
+
+/** `seedTwoTenants` already holds one row of every memory table per workspace: the baseline. */
+async function baseline(tx: Transaction, workspaceId: string) {
+  const row = await memoryRows(tx, workspaceId);
+  return { items: row?.items ?? 0, embeddings: row?.embeddings ?? 0 };
 }
 
 const T0 = new Date('2026-10-20T10:00:00.000Z');
@@ -106,11 +98,12 @@ const T0 = new Date('2026-10-20T10:00:00.000Z');
 describe('memory erasure', () => {
   it('an owner request, run by the job, erases every memory row of the workspace within 24 h', async () => {
     await rolledBack(async (tx) => {
-      await createMemoryFixtures(tx);
       const seeded: TwoTenants = await seedTwoTenants(tx);
+      const baseA = await baseline(tx, seeded.a.id);
+      const baseB = await baseline(tx, seeded.b.id);
       // More embeddings than one batch, so the batched delete loops.
-      await seedMemory(tx, seeded.a.id, 3, MEMORY_ERASE_BATCH + 5);
-      await seedMemory(tx, seeded.b.id, 2);
+      await seedMemory(tx, seeded.a.id, seeded.ua, 3, MEMORY_ERASE_BATCH + 5);
+      await seedMemory(tx, seeded.b.id, seeded.ub, 2);
 
       const enqueue = vi.fn(() => Promise.resolve(null));
       const job = await requestMemoryErasure(
@@ -122,8 +115,8 @@ describe('memory erasure', () => {
       expect(enqueue).toHaveBeenCalledWith({ workspaceId: seeded.a.id, jobId: job.id });
       // Nothing is erased before the job runs.
       expect(await memoryRows(tx, seeded.a.id)).toEqual({
-        items: 3,
-        embeddings: MEMORY_ERASE_BATCH + 8,
+        items: baseA.items + 3,
+        embeddings: baseA.embeddings + MEMORY_ERASE_BATCH + 8,
       });
 
       const ranAt = new Date(T0.getTime() + 5 * 60_000);
@@ -134,11 +127,18 @@ describe('memory erasure', () => {
       );
       expect(outcome).toEqual({
         status: 'erased',
-        counts: { memory_embedding: MEMORY_ERASE_BATCH + 8, memory_item: 3 },
+        counts: {
+          memory_embedding: baseA.embeddings + MEMORY_ERASE_BATCH + 8,
+          memory_item: baseA.items + 3,
+          precedent_passage: 1,
+        },
       });
       expect(await memoryRows(tx, seeded.a.id)).toEqual({ items: 0, embeddings: 0 });
-      expect(await memoryRows(tx, seeded.b.id)).toEqual({ items: 2, embeddings: 2 });
-      expect(lines.join('\n')).not.toContain('item-');
+      expect(await memoryRows(tx, seeded.b.id)).toEqual({
+        items: baseB.items + 2,
+        embeddings: baseB.embeddings + 2,
+      });
+      expect(lines.join('\n')).not.toContain('ct-');
 
       const [row] = await withWorkspace(tx, { workspaceId: seeded.a.id }, (s) =>
         s.select().from(schema.deletionJob).where(eq(schema.deletionJob.id, job.id)),
@@ -177,18 +177,27 @@ describe('memory erasure', () => {
     });
   });
 
-  it('skips memory tables that do not exist yet', async () => {
+  it('erases the seeded fixture rows of one workspace and leaves the other', async () => {
     await rolledBack(async (tx) => {
       const seeded = await seedTwoTenants(tx);
-      expect(await eraseMemory(tx, seeded.a.id)).toEqual({});
+      const baseA = await baseline(tx, seeded.a.id);
+      const baseB = await baseline(tx, seeded.b.id);
+      expect(baseA.items).toBeGreaterThan(0);
+      expect(await eraseMemory(tx, seeded.a.id)).toEqual({
+        memory_embedding: baseA.embeddings,
+        memory_item: baseA.items,
+        precedent_passage: 1,
+      });
+      expect(await memoryRows(tx, seeded.a.id)).toEqual({ items: 0, embeddings: 0 });
+      expect(await memoryRows(tx, seeded.b.id)).toEqual(baseB);
     });
   });
 
   it("only owners may request it, and B can neither request nor run an erasure of A's memory", async () => {
     await rolledBack(async (tx) => {
-      await createMemoryFixtures(tx);
       const seeded = await seedTwoTenants(tx);
-      await seedMemory(tx, seeded.a.id, 2);
+      const baseA = await baseline(tx, seeded.a.id);
+      await seedMemory(tx, seeded.a.id, seeded.ua, 2);
       const enqueue = vi.fn(() => Promise.resolve(null));
       // uboth is an advocate of A; ub owns B only.
       expect(
@@ -219,7 +228,10 @@ describe('memory erasure', () => {
         await runMemoryErasure({ db: tx, log }, { workspaceId: seeded.b.id, jobId: aJob.id }),
       ).toEqual({ status: 'missing', counts: {} });
       await eraseMemory(tx, seeded.b.id);
-      expect(await memoryRows(tx, seeded.a.id)).toEqual({ items: 2, embeddings: 2 });
+      expect(await memoryRows(tx, seeded.a.id)).toEqual({
+        items: baseA.items + 2,
+        embeddings: baseA.embeddings + 2,
+      });
     });
   });
 });

@@ -6,7 +6,7 @@
 //
 // `notify` writes the in-app row, resolves the member's preferences against the category defaults
 // and, after the transaction commits, asks `enqueueDelivery` for one `notification.deliver` job per
-// enabled instant email/push channel. The job itself is defined by `@causedeck/core` (#196), which
+// enabled instant email/push/whatsapp channel. The job itself is defined by `@causedeck/core` (#196), which
 // depends on this package, so the producer is injected rather than imported.
 //
 // The digest is stored per category and channel; the preferences page's single selector
@@ -236,7 +236,7 @@ export async function notify(ctx: NotifyContext, input: NotifyInput): Promise<vo
     const row = rows[0];
     if (row === undefined) return undefined;
     const prefs = await prefRows(tx, ctx.workspaceId, n.userId);
-    const channels = (['email', 'push'] as const).filter((channel) => {
+    const channels = (['email', 'push', 'whatsapp'] as const).filter((channel) => {
       const p = resolve(key, channel, prefs);
       return p.enabled && p.digest === 'instant';
     });
@@ -514,6 +514,10 @@ const DIGEST_CATEGORIES = CATEGORY_KEYS.filter(
     key !== 'digest.daily' &&
     key !== 'digest.end_of_day' &&
     key !== 'digest.news' &&
+    // Court-day reminders (#64) are time-bound: batching them into a digest would defeat them.
+    key !== 'reminder.evening' &&
+    key !== 'reminder.morning' &&
+    key !== 'reminder.outcome_missing' &&
     !isLockedChannel(key, 'email'),
 );
 
@@ -672,5 +676,156 @@ export async function setEndOfDayPreference(
       }
     }
     return readEndOfDay(tx, ctx.workspaceId, p.userId);
+  });
+}
+
+/** One reminder kind's channel switches (#64). */
+export interface ReminderChannelPrefs {
+  in_app: boolean;
+  push: boolean;
+  email: boolean;
+}
+
+/** The member's court-day reminder preferences (#64), defaults filled in. */
+export interface ReminderPreferences {
+  evening: { enabled: boolean; time: string; channels: ReminderChannelPrefs };
+  morning: { enabled: boolean; time: string; channels: ReminderChannelPrefs };
+  outcome_missing: { enabled: boolean; delayMinutes: number; channels: ReminderChannelPrefs };
+}
+
+export const REMINDER_CATEGORIES = [
+  ['evening', 'reminder.evening'],
+  ['morning', 'reminder.morning'],
+  ['outcome_missing', 'reminder.outcome_missing'],
+] as const;
+const REMINDER_CHANNELS = ['in_app', 'push', 'email'] as const;
+const MORNING_REMINDER_TIME = '07:00';
+const DEFAULT_REMINDER_EVENING_TIME = '20:00';
+const DEFAULT_REMINDER_DELAY_MINUTES = 90;
+
+const reminderKindSchema = z.strictObject({
+  channels: z.strictObject({ in_app: z.boolean(), push: z.boolean(), email: z.boolean() }),
+});
+
+const setReminderSchema = z.strictObject({
+  userId: uuid,
+  evening: reminderKindSchema
+    .extend({
+      time: z
+        .string()
+        .refine(isDigestTimeOfDay, 'time must be HH:00 or HH:30 between 18:00 and 23:00'),
+    })
+    .partial({ time: true })
+    .optional(),
+  morning: reminderKindSchema.optional(),
+  outcome_missing: reminderKindSchema
+    .extend({ delayMinutes: z.int().min(15).max(360) })
+    .partial({ delayMinutes: true })
+    .optional(),
+});
+
+async function readReminders(
+  tx: Transaction,
+  workspaceId: string,
+  userId: string,
+): Promise<ReminderPreferences> {
+  const [row] = await tx
+    .select({
+      time: notificationSetting.reminderEveningTime,
+      delay: notificationSetting.reminderOutcomeDelayMin,
+    })
+    .from(notificationSetting)
+    .where(
+      and(eq(notificationSetting.workspaceId, workspaceId), eq(notificationSetting.userId, userId)),
+    );
+  const prefs = await prefRows(tx, workspaceId, userId);
+  const channelsOf = (category: CategoryKey): ReminderChannelPrefs => ({
+    in_app: resolve(category, 'in_app', prefs).enabled,
+    push: resolve(category, 'push', prefs).enabled,
+    email: resolve(category, 'email', prefs).enabled,
+  });
+  const kind = (category: CategoryKey) => {
+    const channels = channelsOf(category);
+    return { enabled: Object.values(channels).some(Boolean), channels };
+  };
+  return {
+    evening: {
+      ...kind('reminder.evening'),
+      time: row?.time ?? DEFAULT_REMINDER_EVENING_TIME,
+    },
+    morning: { ...kind('reminder.morning'), time: MORNING_REMINDER_TIME },
+    outcome_missing: {
+      ...kind('reminder.outcome_missing'),
+      delayMinutes: row?.delay ?? DEFAULT_REMINDER_DELAY_MINUTES,
+    },
+  };
+}
+
+/** The member's reminder preferences in the context workspace (#64). */
+export async function getReminderPreferences(
+  ctx: NotificationContext,
+  input: { userId: string },
+): Promise<ReminderPreferences> {
+  const { userId } = parse(userSchema, input);
+  return asMember(ctx, userId, (tx) => readReminders(tx, ctx.workspaceId, userId));
+}
+
+/**
+ * Change the member's reminder preferences (#64). Each kind's channels are `notification_pref` rows
+ * of its category, so an opt-out is honoured by the same resolver as every other category; the
+ * evening time and the outcome delay live on `notification_setting`.
+ */
+export async function setReminderPreferences(
+  ctx: NotificationContext,
+  input: {
+    userId: string;
+    evening?: { time?: string; channels: ReminderChannelPrefs };
+    morning?: { channels: ReminderChannelPrefs };
+    outcome_missing?: { delayMinutes?: number; channels: ReminderChannelPrefs };
+  },
+): Promise<ReminderPreferences> {
+  const p = parse(setReminderSchema, input);
+  return asMember(ctx, p.userId, async (tx) => {
+    const set = {
+      ...(p.evening?.time === undefined ? {} : { reminderEveningTime: p.evening.time }),
+      ...(p.outcome_missing?.delayMinutes === undefined
+        ? {}
+        : { reminderOutcomeDelayMin: p.outcome_missing.delayMinutes }),
+    };
+    if (Object.keys(set).length > 0) {
+      await tx
+        .insert(notificationSetting)
+        .values({ workspaceId: ctx.workspaceId, userId: p.userId, ...set })
+        .onConflictDoUpdate({
+          target: [notificationSetting.workspaceId, notificationSetting.userId],
+          set: { ...set, updatedAt: new Date() },
+        });
+    }
+    for (const [kind, category] of REMINDER_CATEGORIES) {
+      const channels = p[kind]?.channels;
+      if (channels === undefined) continue;
+      for (const channel of REMINDER_CHANNELS) {
+        await tx
+          .insert(notificationPref)
+          .values({
+            workspaceId: ctx.workspaceId,
+            userId: p.userId,
+            category,
+            channel,
+            enabled: channels[channel],
+            digest: 'instant',
+          })
+          .onConflictDoUpdate({
+            target: [
+              notificationPref.workspaceId,
+              notificationPref.userId,
+              notificationPref.category,
+              notificationPref.channel,
+            ],
+            set: { enabled: channels[channel], updatedAt: new Date() },
+          });
+      }
+    }
+    return readReminders(tx, ctx.workspaceId, p.userId);
   });
 }

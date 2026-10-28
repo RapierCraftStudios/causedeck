@@ -71,6 +71,10 @@ const nextConfig: NextConfig = {
     'mupdf',
     'sharp',
     'mammoth',
+    // Core's drafting domain (#768) renders DOCX and PDF with these and reads font files by path.
+    'docx',
+    'pdf-lib',
+    '@pdf-lib/fontkit',
   ],
   images: { remotePatterns: [] },
   experimental: {

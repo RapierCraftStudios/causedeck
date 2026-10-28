@@ -56,7 +56,7 @@ export function AcceptForm({ token, action }: AcceptFormProps) {
       if (!result.ok) {
         setFormError(result.error.code === 'UNAUTHENTICATED' ? 'signedOut' : 'generic');
       } else if (result.data.status === 'accepted') {
-        router.push(`/w/${encodeURIComponent(result.data.slug)}/today`);
+        router.push(result.data.next);
         router.refresh();
         return;
       } else {

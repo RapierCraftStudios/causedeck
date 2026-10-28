@@ -81,19 +81,36 @@ describe('namespaced catalogs (#174)', () => {
     expect(JSON.parse(generated['src/generated/messages/kn.json'] ?? '')).toEqual(kn);
   });
 
+  it('registers the offline namespace with the offline page keys and a ta/kn leaf for every en leaf (#742)', () => {
+    expect(NAMESPACES).toContain('offline');
+    const offlineLeaves = flattenKeys({ offline: en.offline });
+    expect(offlineLeaves).toContain('offline.title');
+    expect(offlineLeaves).toContain('offline.privacy.lostPhone');
+    for (const catalog of [ta, kn]) {
+      expect(flattenKeys({ offline: catalog.offline }).sort()).toEqual([...offlineLeaves].sort());
+    }
+  });
+
   it('keeps the top-level keys app call sites use', () => {
     expect(Object.keys(en).sort()).toEqual(
       [
         'activity',
+        'attention',
         'audit',
         'auth',
         'billing',
         'bootstrapImport',
+        'brief',
         'calendar',
+        'calendarView',
         'camera',
         'caseWatch',
         'common',
+        'continuity',
         'courtDay',
+        'drafting',
+        'draftingTemplates',
+        'delegation',
         'courtInsights',
         'courts',
         'courtsRosters',
@@ -108,24 +125,78 @@ describe('namespaced catalogs (#174)', () => {
         'matterTimeline',
         'matters',
         'members',
+        'memory',
+        'memoryCitations',
+        'memoryM5',
         'nav',
         'notFound',
         'notices',
         'notifications',
+        'obligations',
         'offline',
+        'onboardingDiscovery',
+        'outward',
+        'outcome',
         'palette',
         'portfolio',
+        'provisioning',
         'pwa',
+        'reminders',
         'settings',
+        'share',
         'shell',
         'shortcuts',
         'theme',
         'usage',
         'voice',
         'whatsappImport',
+        'whatsappLink',
+        'research',
+        'settingsResearch',
         'workspace',
       ].sort(),
     );
+  });
+});
+
+describe('drafting studio copy (#825)', () => {
+  it('has the drafting namespace in every locale with citation statuses and the acknowledgement', () => {
+    for (const catalog of [en, ta, kn]) {
+      expect(catalog.drafting.panels.citations.status.verified).not.toBe('');
+      expect(catalog.drafting.panels.citations.status.notFound).not.toBe('');
+      expect(catalog.drafting.panels.citations.status.unknown).not.toBe('');
+      const factCheck = catalog.drafting.factCheck;
+      for (const text of [
+        ...Object.values(factCheck.status),
+        ...Object.values(factCheck.actions),
+        factCheck.source,
+        factCheck.noSource,
+        factCheck.page,
+        factCheck.openPage,
+        factCheck.announce,
+        factCheck.noIssues,
+        ...Object.values(factCheck.panel.group),
+        factCheck.panel.title,
+        factCheck.panel.tab,
+        factCheck.panel.badge,
+        factCheck.panel.empty,
+        factCheck.panel.undo,
+      ]) {
+        expect(text).not.toBe('');
+      }
+      expect(catalog.drafting.acknowledgement.statement).not.toBe('');
+    }
+  });
+});
+
+describe('share namespace (#507)', () => {
+  it.each(LOCALES)('%s has the share page and import strings', (locale) => {
+    const catalog = { en, ta, kn }[locale] as { share?: { states?: Record<string, string> } };
+    expect(Object.keys(catalog.share?.states ?? {}).sort()).toEqual([
+      'expired',
+      'invalid',
+      'revoked',
+    ]);
   });
 });
 
@@ -175,5 +246,25 @@ describe('import review recovery copy (#551)', () => {
     ['kn', kn],
   ] as const)('%s reuses the standard unreadable-file sentence', (_locale, messages) => {
     expect(messages.importReview.issues.unreadableCopy).toBe(messages.inbox.unreadable.copy);
+  });
+});
+
+describe('whatsapp link copy (#681)', () => {
+  it('has the whatsappLink namespace in every locale with the opt-in and unlink strings', () => {
+    for (const catalog of [en, ta, kn]) {
+      expect(catalog.whatsappLink.consent).not.toBe('');
+      expect(catalog.whatsappLink.unlink).not.toBe('');
+      expect(catalog.whatsappLink.linked).toContain('{number}');
+    }
+  });
+});
+
+describe('research copy (#80)', () => {
+  it('has the research namespaces in every locale with the link-out hint', () => {
+    for (const catalog of [en, kn, ta]) {
+      expect(catalog.research.linkOut.hint).not.toBe('');
+      expect(catalog.research.notes.denied).not.toBe('');
+      expect(catalog.settingsResearch.templateHint).toContain('{q}');
+    }
   });
 });

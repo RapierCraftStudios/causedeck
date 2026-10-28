@@ -1,0 +1,30 @@
+// Outbound channels beyond email and web push: WhatsApp Business (#679).
+export {
+  buildTemplateBody,
+  createWhatsAppSender,
+  hasWhatsAppTemplate,
+  whatsappConfig,
+  WHATSAPP_CATEGORIES,
+  WHATSAPP_TEMPLATES,
+  WhatsAppDeliveryError,
+  type WhatsAppCategory,
+  type WhatsAppConfig,
+  type WhatsAppEnv,
+  type WhatsAppFetch,
+  type WhatsAppLogger,
+  type WhatsAppMessage,
+  type WhatsAppSender,
+  type WhatsAppSenderOptions,
+  type WhatsAppTarget,
+} from './whatsapp.ts';
+export {
+  buildOtpBody,
+  cloudWhatsAppOtpSender,
+  consoleWhatsAppOtpSender,
+  createWhatsAppOtpSender,
+  mockWhatsAppOtpSender,
+  WHATSAPP_OTP_TEMPLATE,
+  type WhatsAppOtpEnv,
+  type WhatsAppOtpMessage,
+  type WhatsAppOtpSender,
+} from './otp.ts';

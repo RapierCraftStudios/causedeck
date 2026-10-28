@@ -12,6 +12,17 @@ import { MattersPermissionDenied } from '../../../../../../../components/matters
 import { can } from '../../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../../lib/workspace-loader.ts';
 
+import { LinkOutMenu } from '../../../../../../../components/research/link-out-menu.tsx';
+import { NotesList } from '../../../../../../../components/research/notes-list.tsx';
+
+import {
+  addAuthorityAction,
+  createNoteAction,
+  deleteNoteAction,
+  removeAuthorityAction,
+  setAuthorityPinnedAction,
+  updateNoteAction,
+} from './actions.ts';
 import { ResearchTags } from './research-tags.tsx';
 
 interface ResearchPageProps {
@@ -30,18 +41,43 @@ export default async function MatterResearchPage({ params }: ResearchPageProps) 
   if (!can(context.role, 'matter.read')) return <MattersPermissionDenied />;
 
   const { inWorkspace } = await import('@causedeck/core/runtime');
-  const { listTags, listRelevantJudgments } = await import('@causedeck/core/research');
+  const {
+    listTags,
+    listRelevantJudgments,
+    getResearchFacts,
+    listLinkProviders,
+    listNotes,
+    buildResearchLinks,
+  } = await import('@causedeck/core/research');
   const scope = { workspaceId: context.workspace.id, userId: context.user.id };
   let loaded;
   try {
     loaded = await inWorkspace(scope, async (tx) => ({
       tags: await listTags(tx, scope, id),
       judgments: await listRelevantJudgments(tx, scope, id),
+      facts: await getResearchFacts(tx, scope, id),
+      providers: await listLinkProviders(tx, scope),
     }));
   } catch {
     notFound();
   }
+  // Notes are memory-adjacent: a role without `memory.read` (a clerk) gets the denied state.
+  const notesDenied = !can(context.role, 'memory.read');
+  let notes: Awaited<ReturnType<typeof listNotes>> = [];
+  let notesFailed = false;
+  if (!notesDenied) {
+    try {
+      notes = await inWorkspace(scope, (tx) => listNotes(tx, scope, id));
+    } catch {
+      notesFailed = true;
+    }
+  }
+  const links = loaded.facts.flatMap((facts) => buildResearchLinks(facts, loaded.providers));
+  const uniqueLinks = links.filter(
+    (link, index) => links.findIndex((other) => other.url === link.url) === index,
+  );
   const t = await getTranslations('matters.workspace.research');
+  const tn = await getTranslations('research.notes');
 
   return (
     <section className="flex flex-col gap-6" aria-labelledby="research-title">
@@ -62,6 +98,29 @@ export default async function MatterResearchPage({ params }: ResearchPageProps) 
         }))}
         canWrite={can(context.role, 'matter.write')}
       />
+      <LinkOutMenu links={uniqueLinks} />
+      <div className="flex flex-col gap-2">
+        <h3 className="font-medium">{tn('heading')}</h3>
+        <NotesList
+          workspaceId={context.workspace.id}
+          matterId={id}
+          state={notesDenied ? 'denied' : notesFailed ? 'error' : 'ready'}
+          notes={notes.map((note) => ({
+            id: note.id,
+            title: note.title,
+            body: note.body,
+            authorities: note.authorities,
+          }))}
+          actions={{
+            create: createNoteAction,
+            update: updateNoteAction,
+            remove: deleteNoteAction,
+            addAuthority: addAuthorityAction,
+            removeAuthority: removeAuthorityAction,
+            pinAuthority: setAuthorityPinnedAction,
+          }}
+        />
+      </div>
       <div className="flex flex-col gap-2">
         <h3 className="font-medium">{t('judgmentsHeading')}</h3>
         {loaded.judgments.length === 0 ? (

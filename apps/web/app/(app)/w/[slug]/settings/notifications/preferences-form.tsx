@@ -70,7 +70,14 @@ export interface PreferencesFormProps {
 }
 
 /** The digest selector drives this category's email, so it has no row of its own. */
-const ROWS = CATEGORY_KEYS.filter((key) => key !== 'digest.daily');
+/** The court-day reminders (#64) have their own card with a time per kind. */
+const REMINDER_CARD = ['reminder.evening', 'reminder.morning', 'reminder.outcome_missing'] as const;
+type CardCategory = (typeof REMINDER_CARD)[number];
+type RowCategory = Exclude<CategoryKey, CardCategory>;
+const ROWS = CATEGORY_KEYS.filter(
+  (key): key is RowCategory =>
+    key !== 'digest.daily' && !(REMINDER_CARD as readonly string[]).includes(key),
+);
 
 /** Message ids for the dotted category keys (next-intl keys cannot contain dots). */
 const CATEGORY_MESSAGE = {
@@ -93,12 +100,17 @@ const CATEGORY_MESSAGE = {
   'digest.end_of_day': 'digestEndOfDay',
   'digest.news': 'digestNews',
   'system.notice': 'systemNotice',
-} as const satisfies Record<CategoryKey, string>;
+} as const satisfies Record<Exclude<CategoryKey, CardCategory>, string>;
 
 const CHANNEL_MESSAGE = { in_app: 'inApp', email: 'email', push: 'push' } as const satisfies Record<
-  Channel,
+  Exclude<Channel, 'whatsapp'>,
   string
 >;
+
+// WhatsApp (#678) is opted in by linking a number and choosing categories there, not in this matrix.
+const MATRIX_CHANNELS = CHANNELS.filter(
+  (channel): channel is Exclude<Channel, 'whatsapp'> => channel !== 'whatsapp',
+);
 
 const cellKey = (category: CategoryKey, channel: Channel) => `${category}:${channel}`;
 
@@ -185,11 +197,12 @@ export function PreferencesForm({
     );
   };
 
-  const categoryLabel = (category: CategoryKey) =>
+  const categoryLabel = (category: RowCategory) =>
     t(`categories.${CATEGORY_MESSAGE[category]}.label`);
-  const channelLabel = (channel: Channel) => t(`channels.${CHANNEL_MESSAGE[channel]}`);
+  const channelLabel = (channel: Exclude<Channel, 'whatsapp'>) =>
+    t(`channels.${CHANNEL_MESSAGE[channel]}`);
 
-  const cellSwitch = (category: CategoryKey, channel: Channel) => {
+  const cellSwitch = (category: RowCategory, channel: Exclude<Channel, 'whatsapp'>) => {
     const cell = cells[cellKey(category, channel)];
     if (cell === undefined) return null;
     return (
@@ -215,10 +228,10 @@ export function PreferencesForm({
     );
   };
 
-  const isMandatory = (category: CategoryKey) =>
-    CHANNELS.some((channel) => cells[cellKey(category, channel)]?.locked === true);
+  const isMandatory = (category: RowCategory) =>
+    MATRIX_CHANNELS.some((channel) => cells[cellKey(category, channel)]?.locked === true);
 
-  const categoryText = (category: CategoryKey, withExplanationId: boolean) => (
+  const categoryText = (category: RowCategory, withExplanationId: boolean) => (
     <div className="flex flex-col gap-0.5">
       <span className="font-medium">{categoryLabel(category)}</span>
       <span className="text-ink-muted text-xs">
@@ -257,7 +270,7 @@ export function PreferencesForm({
           <TableHeader>
             <TableRow>
               <TableHead scope="col">{t('categoryHeader')}</TableHead>
-              {CHANNELS.map((channel) => (
+              {MATRIX_CHANNELS.map((channel) => (
                 <TableHead key={channel} scope="col" className="w-24 text-center">
                   {channelLabel(channel)}
                 </TableHead>
@@ -268,7 +281,7 @@ export function PreferencesForm({
             {ROWS.map((category) => (
               <TableRow key={category} data-category={category}>
                 <TableCell>{categoryText(category, true)}</TableCell>
-                {CHANNELS.map((channel) => (
+                {MATRIX_CHANNELS.map((channel) => (
                   <TableCell key={channel} className="text-center">
                     {cellSwitch(category, channel)}
                   </TableCell>
@@ -291,7 +304,7 @@ export function PreferencesForm({
           >
             {categoryText(category, false)}
             <div className="flex flex-col gap-2">
-              {CHANNELS.map((channel) => (
+              {MATRIX_CHANNELS.map((channel) => (
                 <div key={channel} className="flex items-center justify-between gap-3 text-sm">
                   <span aria-hidden>{channelLabel(channel)}</span>
                   {cellSwitch(category, channel)}

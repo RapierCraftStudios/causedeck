@@ -135,6 +135,18 @@ describe('demo seed (#182)', () => {
     expect(DEMO_USERS).toHaveLength(3);
   });
 
+  it('turns m5_playbooks on for the demo workspace only (#901)', async () => {
+    const flags = await rows<{ key: string; enabled: boolean; workspace_id: string }>(
+      'select key, enabled, workspace_id from workspace_feature_flag order by key',
+    );
+    expect(flags).toEqual([
+      { key: 'm5_playbooks', enabled: true, workspace_id: DEMO_WORKSPACE_ID },
+    ]);
+    expect(await count("select 1 from feature_flag where key = 'm5_playbooks' and enabled")).toBe(
+      0,
+    );
+  });
+
   it('seeds ~25 matters across Madras HC and the Bengaluru courts, every practice area', async () => {
     const matters = await count('select 1 from matter');
     expect(matters).toBe(DEMO_MATTER_COUNT);

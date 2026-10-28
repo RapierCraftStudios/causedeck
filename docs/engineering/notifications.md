@@ -21,6 +21,7 @@ pnpm --filter @causedeck/notifications vapid:generate   # a VAPID key pair for .
 | `packages/notifications/src/service.ts`                | `notify`, list/read, preferences and settings (`.`)                                                                        |
 | `packages/notifications/src/quiet-hours.ts`            | Court hours and `isQuietTime` (`/quiet-hours`, client-safe)                                                                |
 | `packages/notifications/src/email/`                    | Transports (SES, SMTP, console), React Email templates, suppression                                                        |
+| `packages/notifications/src/channels/`                 | WhatsApp Business sender, approved templates (`/whatsapp`, #679)                                                           |
 | `packages/notifications/src/push/`                     | VAPID config, subscribe/revoke, send (`/push`)                                                                             |
 | `packages/core/src/jobs/definitions/notification-*.ts` | `notification.deliver` and the daily digest jobs                                                                           |
 | `apps/web/app/(app)/w/[slug]/notifications/`           | Bell and panel server actions (#198)                                                                                       |
@@ -176,3 +177,29 @@ Every service opens `withWorkspace` and first checks that the user is an active 
 | `packages/core/src/jobs/definitions/notification-*.test.ts` | delivery, quiet hours, digest               |
 | `apps/web/__tests__/notification-preferences*.test.ts(x)`   | page, form, actions, copy                   |
 | `e2e/tests/notifications/{bell,push,preferences}.spec.ts`   | bell and panel, push subscribe, preferences |
+
+## WhatsApp channel (#679, D-029)
+
+Outbound WhatsApp goes to the member only, through `notification.deliver` (channel `whatsapp`) and the
+end-of-day digest. It is opt-in: no category has `whatsapp` in its defaults, the member turns the
+preference on and links a number (#678). Three categories have an approved template
+(`WHATSAPP_TEMPLATES`): `court.board`, `status.order` and `digest.end_of_day`. A template carries a
+link, or counts and a link, never a title, body or party name.
+
+- The destination is only ever `getWhatsAppSendTarget` (`@causedeck/core/whatsapp-link`): the owner's
+  verified number, when they chose the category. The sender takes that target as an argument and
+  re-checks the E.164 shape; nothing reads a number from a notification or a payload.
+- Skipped, with the reason on `notification.data.delivery.whatsapp`: `whatsapp_disabled` (no
+  provider env), `no_template`, `not_linked`, `disabled` (preference off), `quiet_hours`
+  (`court_hours_quiet` on, inside 10:30-17:00 workspace time), `not_member`.
+- A 4xx from the provider (not 429) is `failed` and never retried; 429, 5xx and network errors retry.
+- The evening summary is never sent inside court hours, and a failed WhatsApp send is logged, not
+  retried, so it cannot repeat the email.
+- Env: `WHATSAPP_PHONE_NUMBER_ID` and `WHATSAPP_ACCESS_TOKEN` together (absent: disabled),
+  optional `WHATSAPP_API_VERSION`. The provider's residency and processor review is #488.
+- Link code (#711): the code that links a member's number goes out as the provider's authentication
+  template (`WHATSAPP_OTP_TEMPLATE`, `channels/otp.ts`, `createWhatsAppOtpSender`). The real send
+  needs the provider env above plus `WHATSAPP_OTP_TEMPLATE_NAME`, set only once the provider approved
+  the template (a human step, #708, #488). Without it: the console sender outside production (logs
+  the masked number, never the code) and a refusal in production, so the member sees an error.
+  Sends are limited per number (5/hour) and per member (10/hour) plus a 60 second resend cooldown.

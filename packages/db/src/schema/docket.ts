@@ -13,8 +13,8 @@
 // A closed obligation needs a reason type and `closed_at` (and a note for `not_applicable`):
 // `obligation_closure_chk`. It also needs `closed_by`, but that member reference is cleared when the
 // closer's account is deleted (member rows cascade with the user), so the `obligation_closed_by_guard`
-// trigger enforces it instead, letting only that FK action through. `appearing_for_person_id` has no
-// FK until `person` exists (#348).
+// trigger enforces it instead, letting only that FK action through. `appearing_for_person_id` is a
+// composite SET NULL FK to `person` (#357, migration 20261026...).
 import { sql } from 'drizzle-orm';
 import {
   boolean,
@@ -45,6 +45,7 @@ import {
   orderType,
 } from './enums.ts';
 import { matter } from './matter-graph.ts';
+import { person } from './people.ts';
 import { proceeding } from './proceedings.ts';
 
 export const listing = tenantTable(
@@ -146,8 +147,12 @@ export const appearance = tenantTable(
     /** Null for a proxy or senior outside the workspace, or once the membership is gone. */
     memberId: uuid('member_id'),
     capacity: appearanceCapacity('capacity').notNull(),
-    /** References `person` once it exists (#348). */
+    /** A person of the same workspace (`appearance_appearing_for_person_fk`); null once they are gone. */
     appearingForPersonId: uuid('appearing_for_person_id'),
+    /** The member who delegated this appearance (#63); null for one not delegated, or once that membership is gone. */
+    assignedByMemberId: uuid('assigned_by_member_id'),
+    /** The delegator's optional instruction to the assignee. */
+    note: text('note'),
     ...timestamps(),
   },
   (t) => [
@@ -166,6 +171,16 @@ export const appearance = tenantTable(
     foreignKey({
       name: 'appearance_member_fk',
       columns: [t.workspaceId, t.memberId],
+      foreignColumns: [member.organizationId, member.id],
+    }).onDelete('set null'),
+    foreignKey({
+      name: 'appearance_appearing_for_person_fk',
+      columns: [t.workspaceId, t.appearingForPersonId],
+      foreignColumns: [person.workspaceId, person.id],
+    }).onDelete('set null'),
+    foreignKey({
+      name: 'appearance_assigned_by_fk',
+      columns: [t.workspaceId, t.assignedByMemberId],
       foreignColumns: [member.organizationId, member.id],
     }).onDelete('set null'),
   ],

@@ -13,6 +13,16 @@ import {
   type PlanReport,
 } from '@causedeck/core/business';
 import {
+  findMigrationOwner,
+  getMigrationProgress,
+  getMigrationReport,
+  listMigrationRuns,
+  type MigrationActor,
+  type MigrationDeps,
+  type MigrationProgress,
+  type MigrationReport,
+} from '@causedeck/core/migration';
+import {
   coverageReport,
   listSources,
   sourceFetchLogs,
@@ -27,6 +37,16 @@ import {
   type SourceOpsRow,
   type SourceRecord,
 } from '@causedeck/core/sources';
+import {
+  ACTIVATION_CHANNELS,
+  ACTIVATION_STEPS,
+  activationFunnel,
+  referralFunnel,
+  type ActivationChannel,
+  type ActivationStep,
+  type Funnel,
+  type ReferralFunnel,
+} from '@causedeck/core/activation';
 import {
   countActiveStaff,
   staffAuditEvents,
@@ -53,11 +73,16 @@ export {
   type StaffCall,
   type StaffQuery,
 } from './scope.ts';
+export { ACTIVATION_CHANNELS, ACTIVATION_STEPS };
+export type { MigrationProgress, MigrationReport };
 export type {
   BusinessConfig,
   BusinessReport,
   CostBreach,
   PlanReport,
+  ActivationChannel,
+  ActivationStep,
+  Funnel,
   StaffAuditCursor,
   StaffAuditEntry,
   StaffBudgetOverride,
@@ -173,6 +198,41 @@ export function adapterRegistry(
   );
 }
 
+/**
+ * The activation funnel by weekly sign-up cohort, optionally for one channel, with time to first
+ * court-day view (#509). Counts and durations only: no user id leaves the core read.
+ */
+export function growthFunnel(
+  staff: StaffActor,
+  options: { channel?: ActivationChannel; since?: Date } = {},
+  db?: Database,
+): Promise<Funnel> {
+  return staffQuery(
+    staff,
+    { purpose: 'growth.funnel', capability: 'growth', tables: ['activation_event'] },
+    (tx) => activationFunnel(tx, options),
+    db,
+  );
+}
+
+/** Brief-share referral funnel: invites sent, accepted, activated and credited (#507). Counts only. */
+export function growthReferralFunnel(
+  staff: StaffActor,
+  options: { since?: Date } = {},
+  db?: Database,
+): Promise<ReferralFunnel> {
+  return staffQuery(
+    staff,
+    {
+      purpose: 'growth.referral_funnel',
+      capability: 'growth',
+      tables: ['activation_event', 'referral', 'referral_credit'],
+    },
+    (tx) => referralFunnel(tx, options),
+    db,
+  );
+}
+
 /** Every external data source in the registry, for the Sources page (#478). */
 export function sourceRegistry(staff: StaffActor, db?: Database): Promise<SourceRecord[]> {
   return staffQuery(
@@ -254,6 +314,80 @@ export async function coverageOverview(
       functions: ['app_staff_watch_demand'],
     },
     async (handle) => coverageReport(await staffCoverageInputs(handle, staff.userId, now), now),
+    db,
+  );
+}
+
+/**
+ * Run `fn` as the owner of `workspaceId` for the migration console (#685), after recording
+ * `staff.read` (actor kind `staff`, purpose and capability only). `null` when the workspace has no
+ * active owner. Reads and writes of the migration run go through core, which keeps them to the
+ * workspace; no matter content is reachable from here.
+ */
+export function asMigrationOwner<T>(
+  staff: StaffActor,
+  purpose: string,
+  workspaceId: string,
+  fn: (deps: MigrationDeps, actor: MigrationActor) => Promise<T>,
+  db?: Database,
+): Promise<T | null> {
+  return staffCall(
+    staff,
+    { purpose, capability: 'migrations', functions: [] },
+    async (handle) => {
+      const deps: MigrationDeps = { db: handle, events: { emit: () => undefined } };
+      const userId = await findMigrationOwner(deps, workspaceId);
+      return userId === null ? null : fn(deps, { userId, workspaceId });
+    },
+    db,
+  );
+}
+
+/** A workspace's migration runs, newest first: counts and states only. */
+export async function workspaceMigrationRuns(
+  staff: StaffActor,
+  workspaceId: string,
+  db?: Database,
+): Promise<MigrationProgress[]> {
+  return (
+    (await asMigrationOwner(
+      staff,
+      'migrations.runs',
+      workspaceId,
+      (deps, actor) => listMigrationRuns(deps, actor),
+      db,
+    )) ?? []
+  );
+}
+
+/** One run's progress, or `null` (no such run, or no owner to read it as). */
+export async function migrationRunProgress(
+  staff: StaffActor,
+  workspaceId: string,
+  runId: string,
+  db?: Database,
+): Promise<MigrationProgress | null> {
+  return asMigrationOwner(
+    staff,
+    'migrations.progress',
+    workspaceId,
+    (deps, actor) => getMigrationProgress(deps, actor, { runId }).catch(() => null),
+    db,
+  );
+}
+
+/** One run's mapping issues as codes and row numbers, or `null`. */
+export async function migrationRunReport(
+  staff: StaffActor,
+  workspaceId: string,
+  runId: string,
+  db?: Database,
+): Promise<MigrationReport | null> {
+  return asMigrationOwner(
+    staff,
+    'migrations.report',
+    workspaceId,
+    (deps, actor) => getMigrationReport(deps, actor, { runId }).catch(() => null),
     db,
   );
 }

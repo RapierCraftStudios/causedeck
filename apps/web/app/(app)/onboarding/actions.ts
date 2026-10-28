@@ -21,6 +21,16 @@ const create = safeAction(
     const { createWorkspaceFor } = await import('@causedeck/core/runtime');
     try {
       const workspace = await createWorkspaceFor({ userId: session.user.id, input });
+      // The funnel's `workspace_created` step (#509); measurement never fails the action.
+      try {
+        const [{ db }, { recordActivation }] = await Promise.all([
+          import('@causedeck/core/runtime'),
+          import('@causedeck/core/activation'),
+        ]);
+        await recordActivation(db, { userId: session.user.id, step: 'workspace_created' });
+      } catch {
+        // dropped: the workspace exists and the user proceeds
+      }
       return { slug: workspace.slug };
     } catch (error) {
       throw toActionError(error);

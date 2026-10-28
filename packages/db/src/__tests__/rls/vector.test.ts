@@ -1,7 +1,8 @@
 // pgvector under row-level security (#19, #209): a similarity search as workspace A never returns
 // workspace B's rows, even when B holds the nearest vectors and the limit exceeds A's row count.
-// The `memory_embedding`-shaped fixture table is created with its tenantPolicy() in a rolled-back
-// owner transaction (FORCE RLS binds the owner too).
+// A `memory_embedding`-shaped fixture table (`vector_fixture`, apart from the real table of #72)
+// is created with its tenantPolicy() in a rolled-back owner transaction (FORCE RLS binds the owner
+// too).
 import { randomUUID } from 'node:crypto';
 
 import { Secret } from '@causedeck/config/env';
@@ -44,7 +45,7 @@ function vec(axis: number, jitter = 0): string {
 
 async function createMemoryEmbedding(tx: Transaction): Promise<void> {
   await tx.execute(
-    sql.raw(`create table memory_embedding (
+    sql.raw(`create table vector_fixture (
       id uuid primary key default gen_random_uuid(),
       workspace_id uuid not null references organization (id) on delete cascade,
       content_ref text not null,
@@ -52,9 +53,9 @@ async function createMemoryEmbedding(tx: Transaction): Promise<void> {
     )`),
   );
   await tx.execute(
-    sql.raw('create index memory_embedding_workspace_id_idx on memory_embedding (workspace_id)'),
+    sql.raw('create index vector_fixture_workspace_id_idx on vector_fixture (workspace_id)'),
   );
-  for (const statement of tenantPolicy('memory_embedding')) await tx.execute(sql.raw(statement));
+  for (const statement of tenantPolicy('vector_fixture')) await tx.execute(sql.raw(statement));
 }
 
 async function seed(tx: Transaction, workspaceId: string, rows: [string, string][]): Promise<void> {
@@ -64,7 +65,7 @@ async function seed(tx: Transaction, workspaceId: string, rows: [string, string]
       .values({ id: workspaceId, name: 'Vec', slug: `vec-${workspaceId}` });
     for (const [ref, embedding] of rows) {
       await s.execute(
-        sql`insert into memory_embedding (workspace_id, content_ref, embedding) values (${workspaceId}::uuid, ${ref}, ${embedding}::vector)`,
+        sql`insert into vector_fixture (workspace_id, content_ref, embedding) values (${workspaceId}::uuid, ${ref}, ${embedding}::vector)`,
       );
     }
   });
@@ -72,7 +73,7 @@ async function seed(tx: Transaction, workspaceId: string, rows: [string, string]
 
 function nearest(tx: Transaction, query: string, k: number) {
   return tx.execute<{ workspace_id: string; content_ref: string }>(
-    sql`select workspace_id::text as workspace_id, content_ref from memory_embedding
+    sql`select workspace_id::text as workspace_id, content_ref from vector_fixture
         order by embedding <=> ${query}::vector limit ${k}`,
   );
 }

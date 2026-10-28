@@ -36,6 +36,10 @@ export interface PolicySettings {
   advocatesCanInvite?: boolean;
   /** Default true: advocates may read and export the audit log (`audit.read`). */
   advocatesCanReadAudit?: boolean;
+  /** Default true: advocates may see the whole workspace's court day (`court_day.view_all`). */
+  advocatesCanViewAllCourtDay?: boolean;
+  /** Default true: advocates may assign appearances to members (`appearance.assign`). */
+  advocatesCanAssign?: boolean;
   /** Default true: owners see restricted matters they are not listed on. */
   ownersSeeRestrictedMatters?: boolean;
   /** Domains switched off for the workspace (feature flags, plan). */
@@ -84,6 +88,20 @@ export function can(
     action === 'audit.read' &&
     actor.role === 'advocate' &&
     settings.advocatesCanReadAudit === false
+  ) {
+    return deny('ROLE_DENIED');
+  }
+  if (
+    action === 'court_day.view_all' &&
+    actor.role === 'advocate' &&
+    settings.advocatesCanViewAllCourtDay === false
+  ) {
+    return deny('ROLE_DENIED');
+  }
+  if (
+    action === 'appearance.assign' &&
+    actor.role === 'advocate' &&
+    settings.advocatesCanAssign === false
   ) {
     return deny('ROLE_DENIED');
   }

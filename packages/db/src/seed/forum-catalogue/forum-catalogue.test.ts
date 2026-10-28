@@ -316,7 +316,11 @@ describe('seedForumCatalogue (#34)', () => {
         );
       const total = await countCatalogue();
       const again = await seedForumCatalogue(tx);
-      expect(again).toMatchObject({ inserted: 0, updated: 0, disabled: 0 });
+      // `disabled` is deliberately not asserted: it counts every enabled system forum outside the
+      // catalogue, and other test files commit (then delete) such forums in parallel workers, so a
+      // foreign one can appear between the two seeds. The catalogue's own rows being byte-identical
+      // below (enabled and updated_at included) is the idempotence guarantee.
+      expect(again).toMatchObject({ inserted: 0, updated: 0 });
       expect(again.unchanged).toBe(FORUM_CATALOGUE.length);
       expect(await catalogueRows(tx)).toEqual(first);
       expect(await countCatalogue()).toBe(total);

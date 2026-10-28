@@ -196,6 +196,8 @@ export const notificationsExporter = tablesExporter('notifications', [
   }),
   ws('notification_setting', { keys: ['user_id'], userColumn: 'user_id' }),
   ws('notification', { userColumn: 'user_id' }),
+  // Court-day reminder ledger (#64): which reminders went to which member, by date and channel.
+  ws('reminder_dispatch'),
   // News digest (#481): the member's followed practice areas and forums and their digest time.
   ws('news_pref', { keys: ['user_id'], userColumn: 'user_id' }),
 ]);
@@ -237,6 +239,13 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('case_status_snapshot'),
   // Corrections CauseDeck review fanned out to this workspace's watched proceedings (#518).
   ws('review_correction'),
+  // A0 grid corrections (#558): customer content, exported with the workspace.
+  ws('correction'),
+  ws('attention_snooze'),
+  // Continuity (#71): saved handover versions are workspace content (addressed to members, so no
+  // single user column) and each member's last-opened time per matter is exported with the workspace.
+  ws('handover_note'),
+  ws('matter_view'),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [
@@ -255,6 +264,13 @@ export const courtExporter = tablesExporter('court', [
   ws('bench_roster'),
   ws('bench_roster_entry'),
   ws('bench_change_alert'),
+  // Court day (#58): the lawyer's own "court is at item N" notes and the stored list snapshots.
+  ws('court_day_marker', { userColumn: 'set_by' }),
+  ws('list_snapshot'),
+  // Brief state (#60): the lawyer's prepared mark, carry edits and note.
+  ws('brief_state', { userColumn: 'updated_by' }),
+  // Brief shares (#507): the sanitised snapshot the workspace chose to share, by creator.
+  ws('brief_share', { userColumn: 'created_by' }),
 ]);
 
 // Matters, their proceedings, links (#346) and state history (#363), their docket: listings, hearings, appearances,
@@ -271,6 +287,12 @@ export const mattersExporter = tablesExporter('matters', [
   ws('appearance'),
   ws('order'),
   ws('obligation'),
+  ws('obligation_event'),
+  ws('defect'),
+  ws('certified_copy'),
+  ws('outward_draft'),
+  ws('outward_draft_version'),
+  ws('outward_share_log'),
   ws('task'),
   ws('person'),
   ws('organisation'),
@@ -285,6 +307,10 @@ export const mattersExporter = tablesExporter('matters', [
   // judgment itself is global corpus data, not the workspace's.
   ws('matter_issue_tag'),
   ws('judgment_alert'),
+  // Research notes (#80): the lawyer's own notes and chosen authorities, and the workspace's own
+  // https provider templates.
+  ws('research_note'),
+  ws('research_provider'),
 ]);
 
 // What the automation engine did and proposed (#47): proposals, the activity feed with its undo
@@ -314,6 +340,34 @@ const portfoliosExporter = tablesExporter('portfolios', [
   ws('portfolio_panel_advocate', { userColumn: 'advocate_user_id' }),
 ]);
 
+// WhatsApp number link (#678): the member's own linked number, opt-in time and chosen categories.
+// The pending challenge holds only a code hash and is never exported.
+const whatsappLinkExporter = tablesExporter('whatsapp-link', [
+  ws('whatsapp_link', { userColumn: 'user_id' }),
+]);
+
+// Drafting (#766): the workspace's own templates (system templates are not tenant data), its drafts
+// and their immutable versions with the content digest. Block trees hold the text the member drafted.
+const draftingExporter = tablesExporter('drafting', [
+  ws('template'),
+  ws('draft', { userColumn: 'created_by' }),
+  ws('draft_version', { userColumn: 'created_by' }),
+  ws('authority'),
+  ws('draft_consistency_report'),
+  ws('draft_fact_ack', { userColumn: 'user_id' }),
+  ws('draft_export', { userColumn: 'created_by' }),
+]);
+
+// Enterprise onboarding (#682): SSO providers without their config (client secrets), SCIM tokens
+// without the hash, and the provisioning and migration runs with their per-row state.
+const enterpriseExporter = tablesExporter('enterprise', [
+  ws('sso_provider', { exclude: ['config'], userColumn: 'created_by' }),
+  ws('scim_token', { exclude: ['token_hash'], userColumn: 'created_by' }),
+  ws('provisioning_run', { userColumn: 'created_by' }),
+  ws('migration_run', { userColumn: 'created_by' }),
+  ws('migration_run_row'),
+]);
+
 /** The platform exporters, registered once per process. */
 export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   workspaceExporter,
@@ -329,6 +383,9 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   automationExporter,
   webhooksExporter,
   portfoliosExporter,
+  whatsappLinkExporter,
+  draftingExporter,
+  enterpriseExporter,
 ];
 
 for (const exporter of PLATFORM_EXPORTERS) registerExporter(exporter);

@@ -52,7 +52,12 @@ vi.mock('../lib/auth.ts', () => ({
 }));
 vi.mock('../lib/env.ts', () => ({
   isProd: () => false,
-  serverEnv: () => ({ APP_URL: 'http://localhost:3000', EMAIL_PROVIDER: 'console' }),
+  serverEnv: () => ({
+    APP_URL: 'http://localhost:3000',
+    EMAIL_PROVIDER: 'console',
+    BETTER_AUTH_SECRET: { reveal: () => 'cross-tenant-test-secret-0123456789' },
+    KEK_BASE64: { reveal: () => Buffer.alloc(32, 7).toString('base64') },
+  }),
 }));
 vi.mock('../src/health.ts', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -87,13 +92,19 @@ vi.mock('next-intl/server', () => ({
 
 const members = await import('../app/(app)/w/[slug]/settings/members/actions.ts');
 const invite = await import('../app/(public)/invite/[token]/actions.ts');
+const welcome = await import('../app/(app)/w/[slug]/welcome/actions.ts');
 const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
+const whatsappLink =
+  await import('../app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts');
+const reminders = await import('../app/(app)/w/[slug]/settings/notifications/reminders-actions.ts');
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
+const drafts = await import('../app/(app)/w/[slug]/drafts/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
+const sso = await import('../app/(app)/w/[slug]/settings/sso/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
 const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
@@ -111,18 +122,42 @@ const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
+const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
+const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
+const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actions.ts');
+const draftPrecedents = await import('../app/(app)/w/[slug]/drafts/[id]/precedent-actions.ts');
+const draftFactcheck = await import('../app/(app)/w/[slug]/drafts/[id]/factcheck-actions.ts');
+const hearingOutcome =
+  await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
+const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
 const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
+const obligations = await import('../app/(app)/w/[slug]/obligations/actions.ts');
+const attention = await import('../app/(app)/w/[slug]/matters/_components/attention-actions.ts');
+const memory = await import('../app/(app)/w/[slug]/memory/actions.ts');
+const m5 = await import('../app/(app)/w/[slug]/memory/m5-actions.ts');
+const outward = await import('../app/(app)/w/[slug]/_outward/actions.ts');
+const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
+const discovery = await import('../app/(app)/w/[slug]/onboarding/actions.ts');
 const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calendar/actions.ts');
+const courtDay = await import('../app/(app)/w/[slug]/_court-day/actions.ts');
+const offlineActions = await import('../app/(app)/w/[slug]/_offline/actions.ts');
+const shareActions = await import('../app/(public)/share/[token]/actions.ts');
+const continuityActions = await import('../app/(app)/w/[slug]/matters/[id]/_continuity/actions.ts');
+const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
 
 /** Keyset position newer than any row: the next page then starts at the newest event. */
 const FAR_FUTURE = '9999-12-31T23:59:59.999999Z';
+const XT_ID = '00000000-0000-4000-8000-0000000000a1';
+/** A hall id no tenant owns: the court-day marker actions must refuse it, never write. */
+const PROBE_HALL_ID = '00000000-0000-4000-8000-0000000000a1';
 const APP_DIR = fileURLToPath(new URL('../app/', import.meta.url));
 
 /** Every exported server action and the module it comes from. */
 const ACTIONS: Record<string, Record<string, unknown>> = {
   inviteMembersAction: members,
+  provisionMembersCsvAction: members,
   changeRoleAction: members,
   openWorkAction: members,
   removeMemberAction: members,
@@ -131,6 +166,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   prepareTransferAction: members,
   confirmTransferAction: members,
   acceptInvitationAction: invite,
+  importSharedBriefAction: shareActions,
+  pullCourtDaySnapshotAction: offlineActions,
+  pushOutboxAction: offlineActions,
+  createBriefShareAction: briefShareActions,
+  revokeBriefShareAction: briefShareActions,
   createWorkspaceAction: onboarding,
   setLocaleAction: account,
   updateAccountProfileAction: account,
@@ -145,10 +185,24 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   setNotificationDigestAction: preferences,
   setCourtHoursQuietAction: preferences,
   setLockScreenDetailsAction: preferences,
+  getReminderPreferencesAction: reminders,
+  setReminderPreferencesAction: reminders,
+  requestWhatsAppOtpAction: whatsappLink,
+  verifyWhatsAppOtpAction: whatsappLink,
+  setWhatsAppCategoriesAction: whatsappLink,
+  unlinkWhatsAppAction: whatsappLink,
+  getWhatsAppLinkAction: whatsappLink,
   saveNewsPreferencesAction: news,
+  createDraftAction: drafts,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
+  saveSsoProviderAction: sso,
+  deleteSsoProviderAction: sso,
+  verifySsoDomainAction: sso,
+  requestClerkSetupApprovalAction: welcome,
+  approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
+  setAllowEvalReuseAction: privacy,
   rotateIntegrationTokenAction: integrations,
   createIntakeAddressAction: emailIntake,
   rotateIntakeAddressAction: emailIntake,
@@ -192,9 +246,44 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateMatterAction: matterWorkspace,
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
+  saveDraftAction: draftStudio,
+  restoreDraftVersionAction: draftStudio,
+  runChecksAction: draftChecks,
+  acknowledgeUnverifiedAction: draftChecks,
+  applyFixAction: draftChecks,
+  exportDraftAction: draftChecks,
+  runFactCheckAction: draftFactcheck,
+  checkFactsLiveAction: draftFactcheck,
+  ignoreFactAction: draftFactcheck,
+  markAssertionAction: draftFactcheck,
+  acknowledgeFactCheckAction: draftFactcheck,
+  recordFactFixAction: draftFactcheck,
+  downloadDraftExportAction: draftChecks,
+  searchPrecedentsForBlockAction: draftPrecedents,
+  proposePrecedentAction: draftPrecedents,
   addTagAction: research,
+  confirmOutcomeAction: hearingOutcome,
+  markPreparedAction: briefSheet,
+  generateHandoverAction: continuityActions,
+  saveHandoverAction: continuityActions,
+  listHandoversAction: continuityActions,
+  acknowledgeHandoverAction: continuityActions,
+  recordViewAction: continuityActions,
+  whatChangedAction: continuityActions,
+  setCarryItemAction: briefSheet,
+  setBriefNoteAction: briefSheet,
+  setPrintNotesAction: briefSheet,
+  recordManualOutcomeAction: hearingOutcome,
   confirmTagAction: research,
   dismissTagAction: research,
+  createNoteAction: research,
+  updateNoteAction: research,
+  deleteNoteAction: research,
+  addAuthorityAction: research,
+  removeAuthorityAction: research,
+  setAuthorityPinnedAction: research,
+  saveProviderTemplateAction: researchSettings,
+  removeProviderTemplateAction: researchSettings,
   chooseNextDateSourceAction: matterWorkspace,
   reportRecordErrorAction: matterWorkspace,
   createProceedingAction: proceedingsTab,
@@ -222,6 +311,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   saveImportPlanEditsAction: importer,
   applyImportPlanAction: importer,
   undoImportBatchAction: importer,
+  discoverAdvocateCasesAction: discovery,
+  discoveryProgressAction: discovery,
+  recordOnboardingStepAction: discovery,
   createCalendarFeedAction: calendar,
   rotateCalendarFeedAction: calendar,
   revokeCalendarFeedAction: calendar,
@@ -235,8 +327,42 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   undoActivityAction: inbox,
   reassignCaptureAction: inbox,
   keepAsAttachmentAction: inbox,
+  assignAppearanceAction: planActions,
+  acceptSuggestionAction: planActions,
+  acceptAllSuggestionsAction: planActions,
+  outcomesLiveAction: planActions,
   typeKeyLineAction: inbox,
   markSentAction: inbox,
+  listAttentionAction: attention,
+  snoozeFlagAction: attention,
+  dismissFlagAction: attention,
+  liftSnoozeAction: attention,
+  closeObligationAction: obligations,
+  rescheduleAction: obligations,
+  reassignAction: obligations,
+  addObligationAction: obligations,
+  useNextStepAction: obligations,
+  confirmAction: memory,
+  dismissAction: memory,
+  editAction: memory,
+  deleteAction: memory,
+  pauseAction: memory,
+  pauseAllAction: memory,
+  addNoteAction: memory,
+  usageAction: memory,
+  completeReviewAction: memory,
+  confirmPrecedentAction: m5,
+  dismissPrecedentAction: m5,
+  proposePlaybookAction: m5,
+  confirmPlaybookAction: m5,
+  deletePlaybookAction: m5,
+  retirePrecedentAction: m5,
+  deletePrecedentAction: m5,
+  composeDraftAction: outward,
+  saveDraftEditAction: outward,
+  markDraftSharedAction: outward,
+  setCurrentItemAction: courtDay,
+  clearCurrentItemAction: courtDay,
 };
 
 type Action = (raw: unknown) => Promise<unknown>;
@@ -263,7 +389,12 @@ function signInAs(userId: string): void {
 function snapshotA() {
   return withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => ({
     members: await tx
-      .select({ id: schema.member.id, role: schema.member.role, status: schema.member.status })
+      .select({
+        id: schema.member.id,
+        role: schema.member.role,
+        status: schema.member.status,
+        clerkSetupStatus: schema.member.clerkSetupStatus,
+      })
       .from(schema.member)
       .orderBy(schema.member.id),
     invitations: await tx
@@ -295,6 +426,12 @@ function snapshotA() {
       .orderBy(schema.auditEvent.id),
     notificationPrefs: await tx.select().from(schema.notificationPref),
     notificationSettings: await tx.select().from(schema.notificationSetting),
+    // A's WhatsApp links and pending codes (#681): no web action of B may touch them.
+    whatsappLinks: await tx.select().from(schema.whatsappLink).orderBy(schema.whatsappLink.id),
+    whatsappChallenges: await tx
+      .select()
+      .from(schema.whatsappOtpChallenge)
+      .orderBy(schema.whatsappOtpChallenge.id),
     supportSessions: await tx
       .select()
       .from(schema.supportSession)
@@ -442,6 +579,11 @@ afterAll(closeTestDb);
 function inputs(workspaceId: string): Record<string, unknown> {
   return {
     inviteMembersAction: { workspaceId, emails: ['xt-probe@example.test'], role: 'junior' },
+    provisionMembersCsvAction: {
+      workspaceId,
+      csv: 'email,role\nxt-probe-csv@example.test,viewer\n',
+      dryRun: false,
+    },
     changeRoleAction: { workspaceId, memberId: aMember.memberId, role: 'owner' },
     openWorkAction: { workspaceId, memberId: aMember.memberId },
     removeMemberAction: { workspaceId, memberId: aMember.memberId },
@@ -466,6 +608,45 @@ function inputs(workspaceId: string): Record<string, unknown> {
     setNotificationDigestAction: { workspaceId, digest: 'off' },
     setCourtHoursQuietAction: { workspaceId, enabled: true },
     setLockScreenDetailsAction: { workspaceId, enabled: true },
+    getReminderPreferencesAction: { workspaceId },
+    setReminderPreferencesAction: {
+      workspaceId,
+      evening: { time: '21:00', channels: { in_app: true, push: false, email: false } },
+      morning: { channels: { in_app: true, push: false, email: true } },
+      outcome_missing: { delayMinutes: 60, channels: { in_app: true, push: true, email: false } },
+    },
+    requestWhatsAppOtpAction: { workspaceId, e164: '+919812345678', consent: true },
+    verifyWhatsAppOtpAction: { workspaceId, code: '000000' },
+    setWhatsAppCategoriesAction: { workspaceId, categories: ['court.board'] },
+    setCurrentItemAction: {
+      workspaceId,
+      hallId: PROBE_HALL_ID,
+      listDate: '2030-01-02',
+      currentItem: 3,
+    },
+    clearCurrentItemAction: { workspaceId, hallId: PROBE_HALL_ID, listDate: '2030-01-02' },
+    // Offline pull and push (#743): ub may not pull A's days nor push edits to A's matters.
+    pullCourtDaySnapshotAction: { workspaceId, from: '2030-01-01', to: '2030-01-07' },
+    pushOutboxAction: {
+      workspaceId,
+      items: [
+        {
+          key: 'xt-probe-date',
+          kind: 'next_date',
+          proceedingId: t.a.rows.proceeding?.proceedingId,
+          date: '2031-05-05',
+          expectedCanonicalDate: null,
+        },
+        {
+          key: 'xt-probe-note',
+          kind: 'brief_note',
+          listingId: t.a.rows.listing?.listingId,
+          note: 'Cross-tenant probe note',
+        },
+      ],
+    },
+    unlinkWhatsAppAction: { workspaceId },
+    getWhatsAppLinkAction: { workspaceId },
     saveNewsPreferencesAction: {
       workspaceId,
       practiceAreas: ['tax'],
@@ -481,16 +662,30 @@ function inputs(workspaceId: string): Record<string, unknown> {
       practiceCity: 'Probe City',
       slug: `xt-probe-${workspaceId.slice(0, 8)}`,
     },
+    requestClerkSetupApprovalAction: { workspaceId },
+    approveClerkSetupAction: { workspaceId, memberId: randomUUID() },
     updateRoleSettingsAction: {
       workspaceId,
       advocatesCanInvite: false,
       ownersSeeRestrictedMatters: false,
     },
+    saveSsoProviderAction: {
+      workspaceId,
+      protocol: 'oidc',
+      issuer: 'https://idp.example.com',
+      domain: `xt-${workspaceId.slice(0, 8)}.example.com`,
+      enabled: false,
+      settings: { clientId: 'probe', clientSecret: 'probe-secret' },
+    },
+    deleteSsoProviderAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
+    verifySsoDomainAction: { workspaceId, providerId: '00000000-0000-4000-8000-00000000d0d0' },
     updateWorkspacePrivacyAction: {
       workspaceId,
       sensitiveDefaultRestricted: false,
       retentionAudioDays: 7,
     },
+    // Eval reuse consent (#558): ub, owner of B, may not opt A in.
+    setAllowEvalReuseAction: { workspaceId, allowEvalReuse: true },
     rotateIntegrationTokenAction: { workspaceId, kind: 'ics_feed' },
     // Email intake (#54): ub, owner of B, may not create, rotate or revoke an address, edit the
     // allow-list or enable the email channel on A.
@@ -609,6 +804,16 @@ function inputs(workspaceId: string): Record<string, unknown> {
       captureIds: [t.a.rows.capture?.id],
     },
     importProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    // Zero-entry onboarding (#501): ub may not search into A's workspace, read A's batch progress or record a step there.
+    discoverAdvocateCasesAction: {
+      workspaceId,
+      sourceIds: ['in.tn.madras-hc.chennai:advocate_search'],
+      enrolmentNumbers: ['KAR/1/2020'],
+      names: [],
+      batchId: t.a.rows.import_batch?.id,
+    },
+    discoveryProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
+    recordOnboardingStepAction: { workspaceId, step: 'confirm_grid_done' },
     getImportPlanAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
     saveImportPlanEditsAction: {
       workspaceId,
@@ -659,8 +864,138 @@ function inputs(workspaceId: string): Record<string, unknown> {
     keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
     typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
     markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
+    // Stale-matter attention (#70): ub may not list, snooze, dismiss or lift on A's matters.
+    listAttentionAction: { workspaceId },
+    snoozeFlagAction: {
+      workspaceId,
+      matterId: t.a.rows.attention_snooze?.matterId ?? XT_ID,
+      rule: null,
+      until: '2099-01-01',
+      reason: 'Cross-tenant probe',
+    },
+    dismissFlagAction: {
+      workspaceId,
+      matterId: t.a.rows.attention_snooze?.matterId ?? XT_ID,
+      rule: null,
+    },
+    liftSnoozeAction: { workspaceId, snoozeId: t.a.rows.attention_snooze?.snoozeId ?? XT_ID },
+    // Obligation queue (#68): ub may not close, reschedule, reassign or add to A's obligations.
+    closeObligationAction: {
+      workspaceId,
+      obligationId: t.a.rows.obligation?.id ?? XT_ID,
+      reason: 'task_completed',
+    },
+    rescheduleAction: {
+      workspaceId,
+      obligationId: t.a.rows.obligation?.id ?? XT_ID,
+      dueDate: '2030-01-01',
+      reason: 'Cross-tenant probe',
+    },
+    reassignAction: {
+      workspaceId,
+      obligationId: t.a.rows.obligation?.id ?? XT_ID,
+      ownerMemberId: XT_ID,
+    },
+    addObligationAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId ?? XT_ID,
+      description: 'Cross-tenant probe',
+      dueDate: null,
+      ownerMemberId: XT_ID,
+    },
+    // Memory (#73): ub may not confirm, edit, delete, pause or read the usage of A's memory.
+    confirmAction: { workspaceId, proposalId: XT_ID },
+    dismissAction: { workspaceId, proposalId: XT_ID },
+    editAction: { workspaceId, itemId: XT_ID, value: 'Cross-tenant probe' },
+    deleteAction: { workspaceId, itemId: XT_ID },
+    pauseAction: { workspaceId, itemId: XT_ID, paused: true },
+    pauseAllAction: { workspaceId, paused: true },
+    addNoteAction: { workspaceId, key: 'M4.hall_note', value: 'Cross-tenant probe' },
+    usageAction: { workspaceId, itemId: XT_ID },
+    completeReviewAction: { workspaceId },
+    // Playbooks and precedents (#903): ub may not confirm, dismiss, propose, retire or delete A's.
+    confirmPrecedentAction: { workspaceId, proposalId: XT_ID },
+    dismissPrecedentAction: { workspaceId, proposalId: XT_ID, reason: 'not_reusable' },
+    proposePlaybookAction: {
+      workspaceId,
+      playbook: {
+        name: 'Cross-tenant probe',
+        courtId: null,
+        format: 'writ_petition',
+        standardPrayers: [],
+        annexureOrder: [],
+      },
+    },
+    confirmPlaybookAction: { workspaceId, proposalId: XT_ID },
+    deletePlaybookAction: { workspaceId, itemId: XT_ID },
+    retirePrecedentAction: { workspaceId, itemId: XT_ID },
+    deletePrecedentAction: { workspaceId, itemId: XT_ID },
+    // Outward drafts (#736): ub may not draft on A's matter, nor edit or mark shared A's draft.
+    composeDraftAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId ?? XT_ID,
+      audience: 'client',
+    },
+    saveDraftEditAction: {
+      workspaceId,
+      draftId: t.a.rows.outward_draft?.id ?? XT_ID,
+      body: 'Cross-tenant probe',
+    },
+    markDraftSharedAction: {
+      workspaceId,
+      draftId: t.a.rows.outward_draft?.id ?? XT_ID,
+      channel: 'clipboard',
+    },
+    useNextStepAction: {
+      workspaceId,
+      type: 'task',
+      text: 'Cross-tenant probe',
+      matterId: t.a.rows.matter?.matterId ?? XT_ID,
+      dueDate: null,
+      ownerMemberId: XT_ID,
+    },
+    // Delegation (#63): ub, owner of B, may not assign appearances in A.
+    assignAppearanceAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      memberId: t.a.rows.listing?.listingId,
+      capacity: 'arguing',
+    },
+    acceptSuggestionAction: {
+      workspaceId,
+      suggestion: {
+        listingId: t.a.rows.listing?.listingId,
+        memberId: t.a.rows.listing?.listingId,
+        capacity: 'arguing',
+      },
+    },
+    acceptAllSuggestionsAction: {
+      workspaceId,
+      suggestions: [
+        {
+          listingId: t.a.rows.listing?.listingId,
+          memberId: t.a.rows.listing?.listingId,
+          capacity: 'arguing',
+        },
+      ],
+    },
+    outcomesLiveAction: { workspaceId, date: '2026-10-26' },
+    // Brief sharing (#507): ub, owner of B, may not share A's brief or revoke A's link.
+    createBriefShareAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      expiresInDays: 7,
+    },
+    revokeBriefShareAction: { workspaceId, shareId: crypto.randomUUID() },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
+    // Drafts (#826): ub may not create a draft in A, even from a real-looking template id.
+    createDraftAction: {
+      workspaceId,
+      templateId: '00000000-0000-4000-8000-0000000000d1',
+      matterId: null,
+      title: 'Cross-tenant probe draft',
+    },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
     checkConflictsAction: {
       workspaceId,
@@ -674,6 +1009,121 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
     confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    // Drafting studio (#827): ub may not save to or restore a version of A's draft.
+    saveDraftAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      baseVersionNo: 1,
+      blocks: [{ type: 'paragraph', text: 'Cross-tenant probe' }],
+    },
+    restoreDraftVersionAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      versionNo: 1,
+    },
+    // Drafting precedents (#904): ub's search sees none of A's passages; ub may not propose from A's version.
+    searchPrecedentsForBlockAction: {
+      workspaceId,
+      query: 'prayer for interim relief',
+      courtId: null,
+      kind: null,
+      language: 'en',
+    },
+    proposePrecedentAction: {
+      workspaceId,
+      passageText: 'Cross-tenant probe',
+      kind: 'other',
+      courtId: null,
+      language: 'en',
+      draftVersionId: t.a.rows.draft_version?.id,
+      anchorId: 'b.0',
+    },
+    // Drafting checks (#828): ub may not check, acknowledge, fix or export A's draft.
+    runChecksAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
+    acknowledgeUnverifiedAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      citationIds: [randomUUID()],
+      reason: 'Cross-tenant probe',
+    },
+    applyFixAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      findingId: 'probe',
+      confirm: true,
+    },
+    exportDraftAction: { workspaceId, draftId: t.a.rows.draft_version?.draftId, format: 'docx' },
+    // Fact-check (#914): ub may not check, ignore, assert, acknowledge or log a fix on A's draft.
+    runFactCheckAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
+    checkFactsLiveAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId,
+      blocks: [{ key: 'b.0', text: 'Order dated 01/02/2024.' }],
+    },
+    ignoreFactAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      claimKey: 'date:2024-01-01',
+    },
+    markAssertionAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      claimKey: 'date:2024-01-01',
+    },
+    acknowledgeFactCheckAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      reason: 'Cross-tenant probe',
+      confirm: true,
+    },
+    recordFactFixAction: {
+      workspaceId,
+      fromVersionId: t.a.rows.draft_version?.id,
+      toVersionId: t.a.rows.draft_version?.id,
+    },
+    downloadDraftExportAction: { workspaceId, exportId: randomUUID() },
+    // Hearing outcome (#62): ub may not confirm A's hearing outcome.
+    confirmOutcomeAction: {
+      workspaceId,
+      hearingId: t.a.rows.hearing?.hearingId,
+      outcome: 'Cross-tenant probe outcome',
+      nextDate: { kind: 'none' },
+    },
+    recordManualOutcomeAction: {
+      workspaceId,
+      hearingId: t.a.rows.hearing?.hearingId,
+      outcome: 'Cross-tenant probe outcome',
+      nextDate: { kind: 'none' },
+    },
+    // Continuity (#71): ub may not read, save, acknowledge or record views on A's matter or handover.
+    generateHandoverAction: { workspaceId, matterId: t.a.rows.handover_note?.matterId },
+    saveHandoverAction: {
+      workspaceId,
+      matterId: t.a.rows.handover_note?.matterId,
+      recipientMemberId: t.a.rows.handover_note?.matterId,
+    },
+    listHandoversAction: { workspaceId, matterId: t.a.rows.handover_note?.matterId },
+    acknowledgeHandoverAction: { workspaceId, handoverId: t.a.rows.handover_note?.id },
+    recordViewAction: { workspaceId, matterId: t.a.rows.handover_note?.matterId },
+    whatChangedAction: {
+      workspaceId,
+      matterId: t.a.rows.handover_note?.matterId,
+      since: '2026-01-01T00:00:00.000Z',
+    },
+    // Brief sheet (#61): ub may not mark, tick or note A's listing.
+    markPreparedAction: { workspaceId, listingId: t.a.rows.listing?.listingId, prepared: true },
+    setCarryItemAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      action: 'add',
+      label: 'Cross-tenant probe',
+    },
+    setBriefNoteAction: {
+      workspaceId,
+      listingId: t.a.rows.listing?.listingId,
+      note: 'Cross-tenant probe note',
+    },
+    setPrintNotesAction: { workspaceId, include: true },
     // Research tab (#497): ub may not tag A's matter or confirm A's tag.
     addTagAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId, statute: 'ipc' },
     confirmTagAction: {
@@ -686,6 +1136,46 @@ function inputs(workspaceId: string): Record<string, unknown> {
       matterId: t.a.rows.matter_issue_tag?.matterId,
       tagId: t.a.rows.matter_issue_tag?.id,
     },
+    // Research notes and provider templates (#80): ub may not write A's notes or A's templates.
+    createNoteAction: { workspaceId, matterId: t.a.rows.research_note?.matterId, title: 'x' },
+    updateNoteAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      title: 'x',
+      body: 'x',
+    },
+    deleteNoteAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+    },
+    addAuthorityAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      label: 'x',
+    },
+    removeAuthorityAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      index: 0,
+    },
+    setAuthorityPinnedAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      index: 0,
+      pinned: true,
+    },
+    saveProviderTemplateAction: {
+      workspaceId,
+      key: 'xt-provider',
+      label: 'B',
+      urlTemplate: 'https://b.example.test/?q={q}',
+    },
+    removeProviderTemplateAction: { workspaceId, key: 'xt-provider' },
     chooseNextDateSourceAction: {
       workspaceId,
       currentListingId: t.a.rows.listing?.listingId,
@@ -882,6 +1372,75 @@ describe('cross-tenant server actions', () => {
     );
   });
 
+  it('offline push under B’s own workspace refuses A’s ids per item and writes nothing (#743)', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    const pushed = (await action('pushOutboxAction')(all.pushOutboxAction)) as {
+      ok: boolean;
+      data?: { status: string }[];
+    };
+    expect(pushed.ok).toBe(true);
+    expect(pushed.data?.map((r) => r.status)).toEqual(['rejected', 'rejected']);
+    const pulled = (await action('pullCourtDaySnapshotAction')(all.pullCourtDaySnapshotAction)) as {
+      ok: boolean;
+      data?: { briefs: unknown[] };
+    };
+    expect(pulled.ok).toBe(true);
+    expect(pulled.data?.briefs).toEqual([]);
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('offline push replayed adds one proposal and the same keys answer duplicate (#743)', async () => {
+    signInAs(t.ua);
+    const proceedingId = t.a.rows.proceeding?.proceedingId;
+    const current = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+      tx
+        .select({
+          listDate: schema.listing.listDate,
+          proceedingId: schema.listing.proceedingId,
+          canonical: schema.listing.canonical,
+        })
+        .from(schema.listing),
+    );
+    const canonical = current.find((r) => r.proceedingId === proceedingId && r.canonical);
+    const item = {
+      key: 'xt-replay',
+      kind: 'next_date',
+      proceedingId,
+      date: '2031-06-06',
+      expectedCanonicalDate: canonical?.listDate ?? null,
+    };
+    const count = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => {
+        const rows = await tx.select({ date: schema.listing.listDate }).from(schema.listing);
+        return rows.filter((r) => r.date === '2031-06-06').length;
+      });
+    const push = async (items: unknown[]) =>
+      (await action('pushOutboxAction')({ workspaceId: t.a.id, items })) as {
+        ok: boolean;
+        data?: { status: string }[];
+      };
+    expect((await push([item, item])).data?.map((r) => r.status)).toEqual(['applied', 'duplicate']);
+    expect(await count()).toBe(1);
+    // A later batch with the same key finds the earlier proposal: no second row.
+    expect((await push([item])).data?.[0]?.status).toBe('applied');
+    expect(await count()).toBe(1);
+  });
+
+  it('court-day marker actions refuse a hall outside the workspace and write nothing', async () => {
+    const before = await snapshotA();
+    for (const workspaceId of [t.a.id, t.b.id]) {
+      const all = inputs(workspaceId);
+      const set = (await action('setCurrentItemAction')(all.setCurrentItemAction)) as {
+        ok: boolean;
+      };
+      expect(set.ok, `set ${workspaceId}`).toBe(false);
+      // Clearing a marker that does not exist is a no-op, never an error and never a write.
+      await action('clearCurrentItemAction')(all.clearCurrentItemAction);
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
   it('notifications under B’s own workspace never show or mark A’s notification', async () => {
     const before = await snapshotA();
     expect(before.notifications.map((row) => row.id)).toContain(aNotificationId);
@@ -925,6 +1484,46 @@ describe('cross-tenant server actions', () => {
     expect(mine(inB.settings)).toHaveLength(1);
   });
 
+  it('reminder preferences under B’s own workspace change only ub’s rows in B (#64)', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    expect(
+      await action('setReminderPreferencesAction')(all.setReminderPreferencesAction),
+    ).toMatchObject({ ok: true, data: { evening: { time: '21:00', channels: { push: false } } } });
+    expect(
+      await action('getReminderPreferencesAction')(all.getReminderPreferencesAction),
+    ).toMatchObject({ ok: true, data: { outcome_missing: { delayMinutes: 60 } } });
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('WhatsApp link actions under B’s own workspace touch only ub’s rows in B (#681)', async () => {
+    const before = await snapshotA();
+    const all = inputs(t.b.id);
+    // Unlink first: earlier probes may have left a pending code, and a new request waits a minute.
+    expect(await action('unlinkWhatsAppAction')(all.unlinkWhatsAppAction)).toMatchObject({
+      ok: true,
+    });
+    expect(await action('requestWhatsAppOtpAction')(all.requestWhatsAppOtpAction)).toMatchObject({
+      ok: true,
+    });
+    expect(await action('getWhatsAppLinkAction')(all.getWhatsAppLinkAction)).toMatchObject({
+      ok: true,
+      data: null,
+    });
+    // A wrong guess is refused, not linked.
+    expect(await action('verifyWhatsAppOtpAction')(all.verifyWhatsAppOtpAction)).toMatchObject({
+      ok: false,
+      error: { code: 'VALIDATION' },
+    });
+    expect(
+      await action('setWhatsAppCategoriesAction')(all.setWhatsAppCategoriesAction),
+    ).toMatchObject({
+      ok: false,
+      error: { code: 'CONFLICT' },
+    });
+    expect(await snapshotA()).toEqual(before);
+  });
+
   it('saveNewsPreferencesAction under B’s own workspace saves only ub’s row in B (#481)', async () => {
     const before = await snapshotA();
     const input = inputs(t.b.id).saveNewsPreferencesAction;
@@ -966,6 +1565,26 @@ describe('cross-tenant server actions', () => {
       advocatesCanInvite: true,
       ownersSeeRestrictedMatters: true,
     });
+  });
+
+  it('saveSsoProviderAction and deleteSsoProviderAction under B’s own workspace change only B', async () => {
+    const before = await snapshotA();
+    const saved = await action('saveSsoProviderAction')(inputs(t.b.id).saveSsoProviderAction);
+    expect(saved).toMatchObject({
+      ok: true,
+      data: { protocol: 'oidc', enabled: false, domainVerified: false },
+    });
+    // The result never carries the provider's settings.
+    expect(JSON.stringify(saved)).not.toContain('probe-secret');
+    expect(await snapshotA()).toEqual(before);
+    const { id } = (saved as { data: { id: string } }).data;
+    expect(
+      await action('deleteSsoProviderAction')({ workspaceId: t.b.id, providerId: id }),
+    ).toEqual({
+      ok: true,
+      data: { id },
+    });
+    expect(await snapshotA()).toEqual(before);
   });
 
   it('updateWorkspacePrivacyAction under B’s own workspace changes only B', async () => {
@@ -1124,10 +1743,88 @@ describe('cross-tenant server actions', () => {
       'addTagAction',
       'confirmTagAction',
       'dismissTagAction',
+      'createNoteAction',
+      'updateNoteAction',
+      'deleteNoteAction',
+      'addAuthorityAction',
+      'removeAuthorityAction',
+      'setAuthorityPinnedAction',
       // People tab (#393): A's matter and person
       'upsertPersonAction',
       'setRoleEdgeAction',
     ]) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('drafting studio actions under B’s own workspace find none of A’s draft (#827)', async () => {
+    const own = inputs(t.b.id);
+    const versions = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select({ id: schema.draftVersion.id }).from(schema.draftVersion),
+      );
+    const before = await versions();
+    for (const name of ['saveDraftAction', 'restoreDraftVersionAction']) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await versions()).toEqual(before);
+  });
+
+  it('drafting checks actions under B’s own workspace find none of A’s draft (#828)', async () => {
+    const own = inputs(t.b.id);
+    for (const name of [
+      'runChecksAction',
+      'acknowledgeUnverifiedAction',
+      'applyFixAction',
+      'exportDraftAction',
+      'downloadDraftExportAction',
+      'runFactCheckAction',
+      'checkFactsLiveAction',
+      'ignoreFactAction',
+      'markAssertionAction',
+      'acknowledgeFactCheckAction',
+      'recordFactFixAction',
+    ]) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+  });
+
+  it('precedent actions under B’s own workspace find none of A’s passages or draft (#904)', async () => {
+    const own = inputs(t.b.id);
+    const searched = await action('searchPrecedentsForBlockAction')(
+      own['searchPrecedentsForBlockAction'],
+    );
+    // The seeded workspace keys are random bytes, so the memory crypto may refuse; what must hold is
+    // that B never receives a passage.
+    if ((searched as { ok: boolean }).ok) expect(searched).toHaveProperty('data.passages', []);
+    else expect(searched).not.toHaveProperty('data');
+    const proposed = await action('proposePrecedentAction')(own['proposePrecedentAction']);
+    expect(['NOT_FOUND', 'FORBIDDEN']).toContain(code(proposed));
+    expect(proposed).not.toHaveProperty('data');
+  });
+
+  it('hearing outcome actions under B’s own workspace find none of A’s hearing (#62)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    for (const name of ['confirmOutcomeAction', 'recordManualOutcomeAction']) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('brief sheet actions under B’s own workspace find none of A’s listing (#61)', async () => {
+    const before = await snapshotA();
+    const own = inputs(t.b.id);
+    for (const name of ['markPreparedAction', 'setCarryItemAction', 'setBriefNoteAction']) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
       expect(result, name).not.toHaveProperty('data');
@@ -1296,6 +1993,57 @@ describe('cross-tenant server actions', () => {
     const result = await action('acceptInvitationAction')({ token: aInvitation.token });
     expect(result).toEqual({ ok: true, data: { status: 'rejected', reason: 'EMAIL_MISMATCH' } });
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('importSharedBriefAction with a token that names no share imports nothing and leaves A alone', async () => {
+    const before = await snapshotA();
+    const result = await action('importSharedBriefAction')({ token: 'not-a-real-token-at-all' });
+    expect(result).toEqual({ ok: true, data: { status: 'rejected', reason: 'INVALID' } });
+    expect(await snapshotA()).toEqual(before);
+  });
+
+  it('brief share actions under B’s workspace cannot share A’s listing or revoke A’s link (#507)', async () => {
+    const aShare = await withWorkspace(testAppDb(), { workspaceId: t.a.id }, async (tx) => {
+      const [row] = await tx
+        .insert(schema.briefShare)
+        .values({
+          workspaceId: t.a.id,
+          tokenHash: `xt-${crypto.randomUUID()}`,
+          snapshot: {
+            matterTitle: 'XT',
+            synopsis: null,
+            stage: null,
+            lastOrder: [],
+            lastHearing: null,
+            openObligations: [],
+            assembledAt: new Date().toISOString(),
+          },
+          createdBy: t.ua,
+          expiresAt: new Date(Date.now() + 86_400_000),
+        })
+        .returning({ id: schema.briefShare.id });
+      if (row === undefined) throw new Error('seed share');
+      return row.id;
+    });
+    const sharesOfA = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select().from(schema.briefShare),
+      );
+    const before = await sharesOfA();
+    const created = await action('createBriefShareAction')({
+      workspaceId: t.b.id,
+      listingId: t.a.rows.listing?.listingId,
+      expiresInDays: 7,
+    });
+    expect(code(created)).toBe('NOT_FOUND');
+    const revoked = await action('revokeBriefShareAction')({
+      workspaceId: t.b.id,
+      shareId: aShare,
+    });
+    expect(code(revoked)).toBe('NOT_FOUND');
+    const after = await sharesOfA();
+    expect(after).toEqual(before);
+    expect(after.find((row) => row.id === aShare)?.revokedAt).toBeNull();
   });
 
   it('createWorkspaceAction and setLocaleAction touch only the caller’s own data', async () => {

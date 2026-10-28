@@ -130,6 +130,11 @@ export const PURGE_ORDER = [
   'bench_roster_entry',
   'bench_roster',
   'role_edge',
+  // Proof-of-value (#86) cites appearances, matters and members (cascading FKs); before them.
+  'preparedness_rating',
+  'load_pulse',
+  'context_test_result',
+  'pov_prefs',
   // Fees (#83) cite their matter and person (composite FKs, NO ACTION): ledger lines and payments
   // before the invoice, lines before it, the invoice before its fee agreement; all before both.
   'client_ledger_entry',

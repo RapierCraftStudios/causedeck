@@ -279,6 +279,25 @@ const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  // Proof-of-value (#86).
+  requirePovMember: denies,
+  requirePovRecorder: denies,
+  promptsEnabled: denies,
+  getPovPrefs: denies,
+  setPovPrefs: denies,
+  listPov: denies,
+  deleteOwnRating: denies,
+  povAggregate: denies,
+  buildPovReport: denies,
+  shouldPrompt: denies,
+  recordPreparedness: denies,
+  recordSkip: denies,
+  dueForPulse: denies,
+  recordLoadPulse: denies,
+  dismissLoadPulse: denies,
+  startContextTest: denies,
+  answerQuestion: denies,
+  finishContextTest: denies,
   // Stale-matter attention (#70).
   detectAttention: empty,
   countAttention: denies,
@@ -1103,6 +1122,19 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // Proof-of-value (#86): rules and constants.
+  decidePrompt: 'pure',
+  requireUuidInput: 'pure',
+  STANDARD_QUESTIONS: 'constant',
+  MAX_PROMPTS_PER_DAY: 'constant',
+  SKIP_STREAK: 'constant',
+  SKIP_PAUSE_DAYS: 'constant',
+  POV_REPORT_HEADER: 'constant',
+  BASELINE_DAYS: 'constant',
+  isoWeekIst: 'pure',
+  istDay: 'pure',
+  pulseWindowOpen: 'pure',
+  isBaseline: 'pure',
   // M5 playbook value codec (#901): pure conversion between a playbook and its memory value lines.
   playbookToValue: 'pure',
   playbookFromValue: 'pure',

@@ -6,7 +6,7 @@ import { schema, withWorkspace, type Database, type Transaction } from '@causede
 import { and, avg, count, desc, eq, isNotNull, sql } from 'drizzle-orm';
 
 import { forbidden, invalid, notFound } from '../shared/errors.ts';
-import { memberRole } from '../workspaces/index.ts';
+import { memberRole, type WorkspaceRole } from '../workspaces/index.ts';
 
 const { contextTestResult, loadPulse, member, povPrefs, preparednessRating } = schema;
 
@@ -24,7 +24,7 @@ export interface PovDeps {
 
 export interface PovMember {
   memberId: string;
-  role: 'owner' | 'advocate' | 'junior' | 'clerk' | 'viewer';
+  role: WorkspaceRole;
 }
 
 /** The actor's active membership; NOT_FOUND to a non-member (the workspace is not revealed). */
@@ -50,11 +50,7 @@ export async function requirePovRecorder(db: Db, actor: PovActor): Promise<PovMe
 }
 
 /** Whether the member's prompts are on; no row means on. */
-export async function promptsEnabled(
-  db: Db,
-  actor: PovActor,
-  memberId: string,
-): Promise<boolean> {
+export async function promptsEnabled(db: Db, actor: PovActor, memberId: string): Promise<boolean> {
   const [row] = await withWorkspace(db, actor, (tx) =>
     tx
       .select({ enabled: povPrefs.promptsEnabled })
@@ -232,7 +228,9 @@ export async function povAggregate(deps: PovDeps, actor: PovActor): Promise<PovA
       .select({
         n: count(),
         avg: avg(preparednessRating.rating),
-        base: sql<string | null>`avg(${preparednessRating.rating}) filter (where ${preparednessRating.baseline})`,
+        base: sql<
+          string | null
+        >`avg(${preparednessRating.rating}) filter (where ${preparednessRating.baseline})`,
       })
       .from(preparednessRating)
       .where(and(eq(preparednessRating.workspaceId, ws), isNotNull(preparednessRating.rating)));
@@ -294,13 +292,33 @@ export async function buildPovReport(deps: PovDeps, actor: PovActor): Promise<st
   const lines = [POV_REPORT_HEADER];
   for (const r of rows.ratings)
     lines.push(
-      ['preparedness', r.memberId, r.createdAt.toISOString().slice(0, 10), r.baseline, r.rating, '', '', ''].join(','),
+      [
+        'preparedness',
+        r.memberId,
+        r.createdAt.toISOString().slice(0, 10),
+        r.baseline,
+        r.rating,
+        '',
+        '',
+        '',
+      ].join(','),
     );
   for (const p of rows.pulses)
-    lines.push(['load', p.memberId, p.isoWeek, p.baseline, p.demand, p.worry, p.effort, ''].join(','));
+    lines.push(
+      ['load', p.memberId, p.isoWeek, p.baseline, p.demand, p.worry, p.effort, ''].join(','),
+    );
   for (const t of rows.tests)
     lines.push(
-      ['context_test', t.memberId, t.startedAt.toISOString().slice(0, 10), '', '', '', '', t.elapsedMs].join(','),
+      [
+        'context_test',
+        t.memberId,
+        t.startedAt.toISOString().slice(0, 10),
+        '',
+        '',
+        '',
+        '',
+        t.elapsedMs,
+      ].join(','),
     );
   return `${lines.join('\r\n')}\r\n`;
 }

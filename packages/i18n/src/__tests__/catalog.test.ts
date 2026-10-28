@@ -141,6 +141,7 @@ describe('namespaced catalogs (#174)', () => {
         'palette',
         'people',
         'portfolio',
+        'pov',
         'provisioning',
         'pwa',
         'reminders',

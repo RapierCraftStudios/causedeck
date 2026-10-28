@@ -50,6 +50,7 @@ export const MATRIX: Readonly<Record<Action, Role>> = {
   // `STAFF_READ_ONLY` denies every action that is not a `.read`.
   'support.manage': 'owner',
   'limitation.read': 'junior',
+  'limitation.write': 'advocate',
   'insights.read': 'advocate',
   'settings.read': 'clerk',
 };

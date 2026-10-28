@@ -24,7 +24,7 @@ import { requireMatterAndPerson } from './agreements.ts';
 import { insertLedgerEntry } from './ledger.ts';
 import {
   auditCtx,
-  parse,
+  parseFeeInput,
   withFees,
   type FeesActor,
   type FeesDeps,
@@ -91,7 +91,7 @@ export async function prepareFeeInvoice(
   input: { invoice: unknown; supplier: unknown },
 ): Promise<FeePreview> {
   return withFees(deps, actor, 'fee.read', () => {
-    const data = parse(DraftInput, input);
+    const data = parseFeeInput(DraftInput, input);
     const invoice = priced(data.invoice, data.supplier);
     return Promise.resolve({ invoice, gstUnreviewed: isGstUnreviewed(invoice) });
   });
@@ -206,7 +206,7 @@ export async function createDraftInvoice(
   input: { invoice: unknown; supplier: unknown },
 ): Promise<FeeInvoiceView> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const data = parse(DraftInput, input);
+    const data = parseFeeInput(DraftInput, input);
     const prepared = priced(data.invoice, data.supplier);
     const parsed = InvoiceInput.parse(data.invoice);
     await requireMatterAndPerson(scope, parsed.matterId, parsed.personId);
@@ -236,7 +236,7 @@ export async function updateDraftInvoice(
   input: unknown,
 ): Promise<FeeInvoiceView> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const data = parse(UpdateDraftInput, input);
+    const data = parseFeeInput(UpdateDraftInput, input);
     const current = await loadInvoice(scope, data.invoiceId);
     requireDraft(current);
     const prepared = priced(data.invoice, data.supplier);
@@ -266,7 +266,7 @@ export async function discardDraftInvoice(
   input: unknown,
 ): Promise<void> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const { invoiceId } = parse(InvoiceId, input);
+    const { invoiceId } = parseFeeInput(InvoiceId, input);
     requireDraft(await loadInvoice(scope, invoiceId));
     await scope.tx
       .delete(feeInvoiceLine)
@@ -313,7 +313,7 @@ export async function issueInvoice(
   input: unknown,
 ): Promise<FeeInvoiceView> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const data = parse(IssueInput, input);
+    const data = parseFeeInput(IssueInput, input);
     const current = await loadInvoice(scope, data.invoiceId);
     requireDraft(current);
     const stored = await linesOf(scope, current.id);
@@ -414,7 +414,7 @@ export async function recordPayment(
   input: unknown,
 ): Promise<FeeInvoiceView> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const data = parse(PaymentRecord, input);
+    const data = parseFeeInput(PaymentRecord, input);
     const invoice = await loadInvoice(scope, data.invoiceId);
     if (invoice.status !== 'issued') throw conflict('Payments are recorded on issued invoices');
     const { paid, credited } = await settled(scope, invoice);
@@ -472,7 +472,7 @@ export async function issueCreditNote(
   input: unknown,
 ): Promise<FeeInvoiceView> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const data = parse(CreditNoteInput, input);
+    const data = parseFeeInput(CreditNoteInput, input);
     const invoice = await loadInvoice(scope, data.invoiceId);
     if (invoice.status !== 'issued' && invoice.status !== 'paid') {
       throw conflict('Credit notes are issued against an issued invoice');
@@ -506,7 +506,7 @@ export async function getInvoice(
   input: unknown,
 ): Promise<FeeInvoiceView> {
   return withFees(deps, actor, 'fee.read', async (scope) =>
-    view(scope, await loadInvoice(scope, parse(InvoiceId, input).invoiceId)),
+    view(scope, await loadInvoice(scope, parseFeeInput(InvoiceId, input).invoiceId)),
   );
 }
 
@@ -516,7 +516,7 @@ export async function listInvoices(
   input: unknown = {},
 ): Promise<FeeInvoiceRow[]> {
   return withFees(deps, actor, 'fee.read', async (scope) => {
-    const data = parse(ListInput, input);
+    const data = parseFeeInput(ListInput, input);
     return scope.tx
       .select()
       .from(feeInvoice)

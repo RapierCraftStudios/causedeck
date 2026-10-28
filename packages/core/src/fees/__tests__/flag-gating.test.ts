@@ -5,7 +5,7 @@ import {
   createDraftInvoice,
   createFeeAgreement,
   discardDraftInvoice,
-  FeatureDisabledError,
+  FeesDisabledError,
   getClientBalance,
   getFeeAgreement,
   getInvoice,
@@ -27,7 +27,7 @@ import { agreementInput, chamber, deps, invoiceInput, SUPPLIER } from './helpers
 const ID = '11111111-1111-4111-8111-111111111111';
 
 describe('invoices.enabled flag', () => {
-  it('rejects every service with FeatureDisabledError while off, writing nothing', async () => {
+  it('rejects every service with FeesDisabledError while off, writing nothing', async () => {
     await withTestDb(async (tx) => {
       const c = await chamber(tx);
       const off = deps(tx, { flagEnabled: () => Promise.resolve(false) });
@@ -54,7 +54,7 @@ describe('invoices.enabled flag', () => {
         () => getClientBalance(off, o, { personId: c.personId }),
       ];
       for (const call of calls) {
-        await expect(call()).rejects.toBeInstanceOf(FeatureDisabledError);
+        await expect(call()).rejects.toBeInstanceOf(FeesDisabledError);
       }
       expect(await listFeeAgreements(deps(tx), o)).toEqual([]);
       expect(await listInvoices(deps(tx), o)).toEqual([]);
@@ -66,7 +66,7 @@ describe('invoices.enabled flag', () => {
       const c = await chamber(tx);
       await expect(
         createFeeAgreement({ db: tx }, c.owner, agreementInput(c)),
-      ).rejects.toBeInstanceOf(FeatureDisabledError);
+      ).rejects.toBeInstanceOf(FeesDisabledError);
     });
   });
 });

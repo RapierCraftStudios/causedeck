@@ -7,7 +7,7 @@ import { withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { isEnabled } from '@causedeck/flags';
 import type { z } from 'zod';
 
-import { FeatureDisabledError } from './errors.ts';
+import { FeesDisabledError } from './errors.ts';
 import { forbidden, invalid, notFound } from '../shared/errors.ts';
 import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/index.ts';
 
@@ -35,7 +35,7 @@ export interface FeesScope {
   settings: PolicySettings;
 }
 
-export function parse<S extends z.ZodType>(schemaOf: S, input: unknown): z.output<S> {
+export function parseFeeInput<S extends z.ZodType>(schemaOf: S, input: unknown): z.output<S> {
   const parsed = schemaOf.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -53,7 +53,7 @@ export async function withFees<T>(
 ): Promise<T> {
   const flag =
     deps.flagEnabled ?? ((workspaceId) => isEnabled(FEES_FLAG, { workspaceId }, { db: deps.db }));
-  if (!(await flag(actor.workspaceId))) throw new FeatureDisabledError(FEES_FLAG);
+  if (!(await flag(actor.workspaceId))) throw new FeesDisabledError(FEES_FLAG);
   return withWorkspace(deps.db, actor, async (tx) => {
     const role = await memberRole(tx, actor.userId, actor.workspaceId);
     if (role === null || !isRole(role)) throw notFound('Fee record not found');

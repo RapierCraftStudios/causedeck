@@ -11,7 +11,7 @@ import { record } from '../audit/index.ts';
 import { requireMatterAndPerson } from './agreements.ts';
 import {
   auditCtx,
-  parse,
+  parseFeeInput,
   withFees,
   type FeesActor,
   type FeesDeps,
@@ -60,7 +60,7 @@ export async function recordClientExpense(
   input: unknown,
 ): Promise<LedgerEntryView> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const entry = parse(
+    const entry = parseFeeInput(
       z.custom<Parameters<typeof recordExpense>[0]>((v) => typeof v === 'object' && v !== null),
       input,
     );
@@ -77,7 +77,7 @@ export async function recordClientReceipt(
   input: unknown,
 ): Promise<LedgerEntryView> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const entry = parse(
+    const entry = parseFeeInput(
       z.custom<Parameters<typeof recordReceipt>[0]>((v) => typeof v === 'object' && v !== null),
       input,
     );
@@ -111,7 +111,7 @@ export async function listLedger(
   input: unknown,
 ): Promise<LedgerEntryView[]> {
   return withFees(deps, actor, 'fee.read', async (scope) => {
-    const data = parse(PersonScope, input);
+    const data = parseFeeInput(PersonScope, input);
     return entriesOf(scope, data.personId, data.matterId);
   });
 }
@@ -123,7 +123,7 @@ export async function getClientBalance(
   input: unknown,
 ): Promise<number> {
   return withFees(deps, actor, 'fee.read', async (scope) => {
-    const data = parse(PersonScope, input);
+    const data = parseFeeInput(PersonScope, input);
     const rows = await entriesOf(scope, data.personId, data.matterId);
     return clientBalance(
       rows.map((r) => ({

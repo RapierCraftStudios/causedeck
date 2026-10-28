@@ -11,7 +11,7 @@ import { submitProposals } from '../automation/index.ts';
 import { conflict, notFound } from '../shared/errors.ts';
 
 import {
-  parse,
+  parseFeeInput,
   auditCtx,
   withFees,
   type FeesActor,
@@ -86,7 +86,7 @@ export async function createFeeAgreement(
   origin: 'user' | 'automation' = 'user',
 ): Promise<FeeAgreementCreated> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const data = parse(FeeAgreementInput, input);
+    const data = parseFeeInput(FeeAgreementInput, input);
     await requireMatterAndPerson(scope, data.matterId, data.personId);
     if (origin === 'automation') {
       const { items } = await submitProposals(
@@ -138,7 +138,7 @@ export async function updateFeeAgreement(
   input: unknown,
 ): Promise<FeeAgreementView> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const { agreementId, ...changes } = parse(UpdateInput, input);
+    const { agreementId, ...changes } = parseFeeInput(UpdateInput, input);
     const current = await loadAgreement(scope, agreementId);
     if (current.status === 'ended') throw conflict('An ended fee agreement cannot be changed');
     const set: Partial<typeof feeAgreement.$inferInsert> = { updatedAt: scope.now };
@@ -175,7 +175,7 @@ export async function setFeeAgreementStatus(
   input: unknown,
 ): Promise<FeeAgreementView> {
   return withFees(deps, actor, 'fee.write', async (scope) => {
-    const data = parse(StatusInput, input);
+    const data = parseFeeInput(StatusInput, input);
     const current = await loadAgreement(scope, data.agreementId);
     const allowed = data.status === 'active' ? 'draft' : 'active';
     if (current.status !== allowed) {
@@ -202,7 +202,7 @@ export async function getFeeAgreement(
   input: unknown,
 ): Promise<FeeAgreementView> {
   return withFees(deps, actor, 'fee.read', async (scope) =>
-    loadAgreement(scope, parse(AgreementId, input).agreementId),
+    loadAgreement(scope, parseFeeInput(AgreementId, input).agreementId),
   );
 }
 
@@ -212,7 +212,7 @@ export async function listFeeAgreements(
   input: unknown = {},
 ): Promise<FeeAgreementView[]> {
   return withFees(deps, actor, 'fee.read', async (scope) => {
-    const { matterId } = parse(ListInput, input);
+    const { matterId } = parseFeeInput(ListInput, input);
     return scope.tx
       .select()
       .from(feeAgreement)

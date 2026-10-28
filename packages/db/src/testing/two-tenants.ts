@@ -12,6 +12,8 @@ import { registeredGlobalOrWorkspaceTables, registeredTenantTables } from '../rl
 import { withWorkspace } from '../rls.ts';
 import { adapterParseRun } from '../schema/adapters.ts';
 import { aiCall, aiCallResult } from '../schema/audit.ts';
+import { attentionSnooze } from '../schema/attention.ts';
+import { correction } from '../schema/correction.ts';
 import {
   activity,
   automationPreference,
@@ -22,10 +24,22 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { briefState } from '../schema/brief.ts';
+import { handoverNote, matterView } from '../schema/continuity.ts';
 import { briefShare } from '../schema/share.ts';
 import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
+import { authority } from '../schema/authority.ts';
+import { memoryItem } from '../schema/memory.ts';
+import { precedentPassage } from '../schema/precedent.ts';
+import {
+  draft,
+  draftConsistencyReport,
+  draftFactAck,
+  draftExport,
+  draftVersion,
+  template,
+} from '../schema/drafting.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
 import { reviewCorrection, reviewItem } from '../schema/review.ts';
 import { extraction } from '../schema/extraction.ts';
@@ -55,9 +69,12 @@ import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { judgment } from '../schema/corpus.ts';
 import { matter } from '../schema/matter-graph.ts';
 import { judgmentAlert, matterIssueTag } from '../schema/matter-issue.ts';
+import { researchNote, researchProvider } from '../schema/research-note.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
 import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
+import { certifiedCopy, defect, obligationEvent } from '../schema/obligation-tracking.ts';
+import { outwardDraft, outwardDraftVersion, outwardShareLog } from '../schema/outward-draft.ts';
 import { benchChangeAlert, benchRoster, benchRosterEntry } from '../schema/roster.ts';
 import { matterRestriction } from '../schema/matter-restriction.ts';
 import { newsPref } from '../schema/news.ts';
@@ -75,6 +92,13 @@ import { supportSession } from '../schema/staff.ts';
 import { capture, workspaceCaptureChannel } from '../schema/capture.ts';
 import { blob, workspaceKey } from '../schema/storage.ts';
 import { intakeAddress, intakeAllowlist, intakeMessage } from '../schema/email-intake.ts';
+import {
+  seedMemoryEmbedding,
+  seedMemoryItem,
+  seedMemoryPause,
+  seedMemoryProposal,
+  seedMemoryUsage,
+} from '../seed/memory-fixtures.ts';
 import { workspaceIntegration } from '../schema/workspace-integration.ts';
 import { workspaceSettings, workspaceSlugHistory } from '../schema/workspace.ts';
 
@@ -211,6 +235,35 @@ async function seedForum(tx: Transaction, workspaceId: string, tag: string): Pro
   return first(rows, 'forum').id;
 }
 
+/** A workspace-owned drafting template (#766). */
+async function seedTemplate(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(template)
+    .values({
+      workspaceId,
+      code: `xt.${tag}.${randomUUID().slice(0, 8)}`,
+      name: 'Seed template',
+      kind: 'notice',
+      courtPreset: 'generic',
+    })
+    .returning({ id: template.id });
+  return first(rows, 'template').id;
+}
+
+/** A draft of a fresh workspace-owned template (#766). */
+async function seedDraft(
+  tx: Transaction,
+  workspaceId: string,
+  tag: string,
+): Promise<{ templateId: string; draftId: string }> {
+  const templateId = await seedTemplate(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(draft)
+    .values({ workspaceId, templateId, title: 'Seed draft' })
+    .returning({ id: draft.id });
+  return { templateId, draftId: first(rows, 'draft').id };
+}
+
 /** A matter of the workspace (#345), for the matter graph and restriction seeds. */
 async function seedMatter(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
   const rows = await tx
@@ -341,6 +394,49 @@ function seededTables(): string[] {
  * One seeder per tenant table. A table registered for RLS without a seeder here fails the
  * cross-tenant registry test, so a new tenant table cannot skip the suite.
  */
+export async function ownerMemberId(tx: Transaction, workspaceId: string, ownerId: string) {
+  const rows = await tx
+    .select({ id: member.id })
+    .from(member)
+    .where(and(eq(member.organizationId, workspaceId), eq(member.userId, ownerId)));
+  return first(rows, 'member').id;
+}
+
+async function seedOutwardDraft(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  tag: string,
+): Promise<string> {
+  const matterId = await seedMatter(tx, workspaceId, tag);
+  const proceedingId = await seedProceeding(tx, workspaceId, `${tag}o`);
+  const documentId = await seedDocument(tx, workspaceId, `${tag}o`);
+  const orders = await tx
+    .insert(order)
+    .values({
+      workspaceId,
+      proceedingId,
+      documentId,
+      orderDate: '2026-11-02',
+      orderType: 'procedural',
+      sourceType: 'manual',
+    })
+    .returning({ id: order.id });
+  const rows = await tx
+    .insert(outwardDraft)
+    .values({
+      workspaceId,
+      matterId,
+      orderId: first(orders, 'order').id,
+      audience: 'senior_counsel',
+      language: 'en',
+      tone: 'formal',
+      createdBy: await ownerMemberId(tx, workspaceId, ownerId),
+    })
+    .returning({ id: outwardDraft.id });
+  return first(rows, 'outward_draft').id;
+}
+
 export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
   member: async (tx, { workspaceId, tag }) => {
     const userId = await newUser(tx, `viewer-${tag}`);
@@ -688,6 +784,169 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       'export_job',
     );
     return { id: row.id };
+  },
+  template: async (tx, { workspaceId, tag }) => ({
+    templateId: await seedTemplate(tx, workspaceId, tag),
+  }),
+  draft: async (tx, { workspaceId, tag }) => seedDraft(tx, workspaceId, tag),
+  draft_version: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(draftVersion)
+      .values({
+        workspaceId,
+        draftId,
+        versionNo: 1,
+        content: [],
+        contentSha256: createHash('sha256').update(draftId).digest('hex'),
+      })
+      .returning({ id: draftVersion.id });
+    return { draftId, id: first(rows, 'draft_version').id };
+  },
+  draft_export: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const contentSha256 = createHash('sha256').update(draftId).digest('hex');
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({ workspaceId, draftId, versionNo: 1, content: [], contentSha256 })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(draftExport)
+      .values({
+        workspaceId,
+        draftVersionId: version.id,
+        format: 'docx',
+        storageKey: `ws/${workspaceId}/export/2026/${draftId}`,
+        sizeBytes: 1,
+        contentSha256,
+      })
+      .returning({ id: draftExport.id });
+    return { draftId, draftVersionId: version.id, id: first(rows, 'draft_export').id };
+  },
+  authority: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({
+          workspaceId,
+          draftId,
+          versionNo: 1,
+          content: [],
+          contentSha256: createHash('sha256').update(draftId).digest('hex'),
+        })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(authority)
+      .values({
+        workspaceId,
+        draftVersionId: version.id,
+        blockId: 'b',
+        span: [0, 13],
+        rawText: '2023 INSC 123',
+        normalized: '2023 INSC 123',
+        kind: 'neutral',
+        status: 'unknown',
+      })
+      .returning({ id: authority.id });
+    return { draftId, draftVersionId: version.id, id: first(rows, 'authority').id };
+  },
+  precedent_passage: async (tx, { workspaceId, ownerId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({
+          workspaceId,
+          draftId,
+          versionNo: 1,
+          content: [],
+          contentSha256: createHash('sha256').update(draftId).digest('hex'),
+        })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const item = first(
+      await tx
+        .insert(memoryItem)
+        .values({
+          workspaceId,
+          layer: 'M5',
+          key: 'M5.precedent',
+          // Workspace scope so the suite can read it as any member (a user-scope item is hidden from all but its owner).
+          scope: 'workspace',
+          ownerUserId: ownerId,
+          valueCiphertext: `seed-ciphertext-${tag}`,
+          sourceType: 'ai',
+          confirmationState: 'confirmed',
+        })
+        .returning({ id: memoryItem.id }),
+      'memory_item',
+    );
+    const rows = await tx
+      .insert(precedentPassage)
+      .values({
+        workspaceId,
+        memoryItemId: item.id,
+        kind: 'prayer',
+        bodyCiphertext: `seed-ciphertext-${tag}`,
+        sourceDraftVersionId: version.id,
+        anchorId: 'b.1',
+      })
+      .returning({ id: precedentPassage.id });
+    return { itemId: item.id, draftVersionId: version.id, id: first(rows, 'precedent_passage').id };
+  },
+  draft_consistency_report: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const contentSha256 = createHash('sha256').update(draftId).digest('hex');
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({ workspaceId, draftId, versionNo: 1, content: [], contentSha256 })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(draftConsistencyReport)
+      .values({
+        workspaceId,
+        draftVersionId: version.id,
+        graphRevision: contentSha256,
+        report: { findings: [] },
+      })
+      .returning({ id: draftConsistencyReport.id });
+    return {
+      draftId,
+      draftVersionId: version.id,
+      id: first(rows, 'draft_consistency_report').id,
+    };
+  },
+  draft_fact_ack: async (tx, { workspaceId, ownerId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const contentSha256 = createHash('sha256').update(draftId).digest('hex');
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({ workspaceId, draftId, versionNo: 1, content: [], contentSha256 })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(draftFactAck)
+      .values({
+        workspaceId,
+        kind: 'export_ack',
+        draftVersionId: version.id,
+        userId: ownerId,
+        reason: `seed-${tag}`,
+      })
+      .returning({ id: draftFactAck.id });
+    return { draftId, draftVersionId: version.id, id: first(rows, 'draft_fact_ack').id };
   },
   forum: async (tx, { workspaceId, tag }) => ({ forumId: await seedForum(tx, workspaceId, tag) }),
   court_hall: async (tx, { workspaceId, tag }) => {
@@ -1150,6 +1409,11 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .returning({ id: whatsappInboundMessage.id });
     return { id: first(rows, 'whatsapp_inbound_message').id };
   },
+  memory_item: (tx, ctx) => seedMemoryItem(tx, ctx),
+  memory_proposal: (tx, ctx) => seedMemoryProposal(tx, ctx),
+  memory_embedding: (tx, ctx) => seedMemoryEmbedding(tx, ctx),
+  memory_usage: (tx, ctx) => seedMemoryUsage(tx, ctx),
+  memory_pause: (tx, ctx) => seedMemoryPause(tx, ctx),
   sso_provider: async (tx, { workspaceId, ownerId, tag }) => {
     const rows = await tx
       .insert(ssoProvider)
@@ -1252,6 +1516,26 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .returning({ id: judgmentAlert.id });
     return { matterId, tagId, id: first(rows, 'judgment_alert').id };
   },
+  research_note: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(researchNote)
+      .values({ workspaceId, matterId, title: 'xt note', createdBy: ownerId })
+      .returning({ id: researchNote.id });
+    return { matterId, id: first(rows, 'research_note').id };
+  },
+  research_provider: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(researchProvider)
+      .values({
+        workspaceId,
+        key: 'xt-provider',
+        label: 'XT provider',
+        urlTemplate: 'https://xt.example.test/search?q={q}',
+      })
+      .returning({ id: researchProvider.id });
+    return { id: first(rows, 'research_provider').id };
+  },
   import_plan: async (tx, { workspaceId, ownerId }) => {
     const batchId = await seedImportBatch(tx, workspaceId, ownerId);
     await tx.insert(importPlan).values({ workspaceId, batchId, plan: { rows: [] } });
@@ -1340,6 +1624,31 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .returning({ id: briefState.id });
     return { listingId, id: first(rows, 'brief_state').id };
   },
+  matter_view: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, `${tag}-view`);
+    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const rows = await tx
+      .insert(matterView)
+      .values({ workspaceId, matterId, memberId })
+      .returning({ id: matterView.id });
+    return { matterId, id: first(rows, 'matter_view').id };
+  },
+  handover_note: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, `${tag}-handover`);
+    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const rows = await tx
+      .insert(handoverNote)
+      .values({
+        workspaceId,
+        matterId,
+        authorId: memberId,
+        recipientId: memberId,
+        body: {},
+        version: 1,
+      })
+      .returning({ id: handoverNote.id });
+    return { matterId, id: first(rows, 'handover_note').id };
+  },
   brief_share: async (tx, { workspaceId, ownerId, tag }) => {
     const rows = await tx
       .insert(briefShare)
@@ -1420,6 +1729,107 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
   obligation: async (tx, { workspaceId, tag }) => ({
     obligationId: await seedObligation(tx, workspaceId, tag),
   }),
+  obligation_event: async (tx, { workspaceId, tag }) => {
+    const obligationId = await seedObligation(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(obligationEvent)
+      .values({ workspaceId, obligationId, kind: 'created' })
+      .returning({ id: obligationEvent.id });
+    return { obligationId, eventId: first(rows, 'obligation_event').id };
+  },
+  defect: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const obligationId = await seedObligation(tx, workspaceId, `${tag}d`);
+    const rows = await tx
+      .insert(defect)
+      .values({
+        workspaceId,
+        obligationId,
+        proceedingId,
+        raisedOn: '2026-11-02',
+        cureBy: '2026-11-09',
+        description: 'Court fee short',
+        sourceType: 'manual',
+      })
+      .returning({ id: defect.id });
+    return { obligationId, defectId: first(rows, 'defect').id };
+  },
+  certified_copy: async (tx, { workspaceId, tag }) => {
+    const proceedingId = await seedProceeding(tx, workspaceId, tag);
+    const obligationId = await seedObligation(tx, workspaceId, `${tag}c`);
+    const rows = await tx
+      .insert(certifiedCopy)
+      .values({
+        workspaceId,
+        obligationId,
+        proceedingId,
+        appliedOn: '2026-11-02',
+        sourceType: 'manual',
+      })
+      .returning({ id: certifiedCopy.id });
+    return { obligationId, certifiedCopyId: first(rows, 'certified_copy').id };
+  },
+  outward_draft: async (tx, { workspaceId, ownerId, tag }) => ({
+    draftId: await seedOutwardDraft(tx, workspaceId, ownerId, tag),
+  }),
+  outward_draft_version: async (tx, { workspaceId, ownerId, tag }) => {
+    const draftId = await seedOutwardDraft(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(outwardDraftVersion)
+      .values({ workspaceId, draftId, author: 'system', body: 'Update', facts: [] })
+      .returning({ id: outwardDraftVersion.id });
+    return { draftId, versionId: first(rows, 'outward_draft_version').id };
+  },
+  outward_share_log: async (tx, { workspaceId, ownerId, tag }) => {
+    const draftId = await seedOutwardDraft(tx, workspaceId, ownerId, tag);
+    const versions = await tx
+      .insert(outwardDraftVersion)
+      .values({ workspaceId, draftId, author: 'system', body: 'Update', facts: [] })
+      .returning({ id: outwardDraftVersion.id });
+    const rows = await tx
+      .insert(outwardShareLog)
+      .values({
+        workspaceId,
+        draftId,
+        memberId: await ownerMemberId(tx, workspaceId, ownerId),
+        channel: 'clipboard',
+        finalVersionId: first(versions, 'outward_draft_version').id,
+      })
+      .returning({ id: outwardShareLog.id });
+    return { draftId, shareId: first(rows, 'outward_share_log').id };
+  },
+  correction: async (tx, { workspaceId, tag }) => {
+    const documentId = await seedDocument(tx, workspaceId, `${tag}k`);
+    const rows = await tx
+      .insert(correction)
+      .values({
+        workspaceId,
+        documentId,
+        forumCode: 'generic.a0',
+        rowKey: `row-${tag}`,
+        columnName: 'stageText',
+        before: 'FOR ADMISSION',
+        after: 'FOR ORDERS',
+        page: 1,
+        quote: 'FOR ADMISSION',
+      })
+      .returning({ id: correction.id });
+    return { documentId, correctionId: first(rows, 'correction').id };
+  },
+  attention_snooze: async (tx, { workspaceId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, `${tag}z`);
+    const rows = await tx
+      .insert(attentionSnooze)
+      .values({
+        workspaceId,
+        matterId,
+        rule: 'no_next_date',
+        until: '2099-01-01',
+        reason: 'Waiting for the registry',
+      })
+      .returning({ id: attentionSnooze.id });
+    return { matterId, snoozeId: first(rows, 'attention_snooze').id };
+  },
   task: async (tx, { workspaceId, tag }) => {
     const obligationId = await seedObligation(tx, workspaceId, tag);
     const rows = await tx

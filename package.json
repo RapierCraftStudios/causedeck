@@ -21,7 +21,7 @@
     "test:golden": "turbo run test:golden",
     "test:export-coverage": "pnpm --filter @causedeck/core exec vitest run src/lifecycle/__tests__/export-coverage.test.ts",
     "db:generate": "turbo run db:generate --filter=@causedeck/db",
-    "db:migrate": "turbo run db:migrate --filter=@causedeck/db",
+    "db:migrate": "turbo run db:migrate --filter=@causedeck/db && pnpm --filter @causedeck/core seed:system-templates",
     "db:check": "turbo run db:check --filter=@causedeck/db",
     "db:studio": "turbo run db:studio --filter=@causedeck/db",
     "db:seed": "turbo run db:seed --filter=@causedeck/db",

@@ -10,6 +10,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { InboxShell } from '../../../../../components/inbox/inbox-shell.tsx';
 import { listReadyItems } from '../../../../../lib/inbox/ready-providers.ts';
+import '../../../../../lib/outward/ready-provider.ts';
 import { graphDeps } from '../../../../../lib/matters/graph-deps.ts';
 import { toInboxView, type ChannelView } from '../../../../../lib/inbox/view.ts';
 import { can } from '../../../../../lib/workspace-context.ts';

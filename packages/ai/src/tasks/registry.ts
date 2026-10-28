@@ -3,9 +3,11 @@
 import { UnknownTaskError } from '../errors.ts';
 import { TASK_IDS, type TaskDef, type TaskId } from '../types.ts';
 import { classifyDocument } from './classify-document.ts';
+import { draftNarrative } from './draft-narrative.ts';
 import { extractIssueTags } from './extract-issue-tags.ts';
 import { extractOrder } from './extract-order.ts';
 import { ocr } from './ocr.ts';
+import { outwardUpdate } from './outward-update.ts';
 import { parseListA0 } from './parse-list-a0.ts';
 import { parseOrderA0 } from './parse-order-a0.ts';
 import { structureChat } from './structure-chat.ts';
@@ -32,6 +34,8 @@ export const TASKS: Readonly<Record<TaskId, TaskDef>> = {
   tag_news: tagNews,
   tag_notice: tagNotice,
   extract_issue_tags: extractIssueTags,
+  draft_narrative: draftNarrative,
+  outward_update: outwardUpdate,
 };
 
 export function getTask(id: string): TaskDef {

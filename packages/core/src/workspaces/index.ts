@@ -11,6 +11,7 @@ import { activeMember, liveWorkspace } from './members.ts';
 
 export * from './clerk-setup.ts';
 export * from './errors.ts';
+export * from './eval-reuse.ts';
 export * from './integrations.ts';
 export * from './invitations.ts';
 export * from './members.ts';

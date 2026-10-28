@@ -72,6 +72,8 @@ Each action is either **security** or **informational**:
 | `billing.invoice_downloaded`          | security      | `openSaasInvoicePdf`, before the first byte (#258)                                                                         |
 | `workspace.role_settings_updated`     | security      | `updateRoleSettings` (#285)                                                                                                |
 | `workspace.privacy_updated`           | security      | `updateWorkspacePrivacy` (#286)                                                                                            |
+| `workspace.eval_reuse_enabled`        | security      | `setAllowEvalReuse` (#558; owner-only; ids only, no metadata)                                                              |
+| `workspace.eval_reuse_disabled`       | security      | `setAllowEvalReuse` (#558; also withdraws per-item consents)                                                               |
 | `workspace.integration_token_rotated` | security      | `rotateIntegrationToken` (#287; metadata `kind` only)                                                                      |
 | `capture.created`                     | informational | `createCapture`, `createManualCapture` (#43; metadata channel, mime, size, `aiBlocked`; never the filename)                |
 | `capture.completed`                   | informational | `completeUpload` (#43; metadata `status`, `reason` or `duplicateOf`)                                                       |

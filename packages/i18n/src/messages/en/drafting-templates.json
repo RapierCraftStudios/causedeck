@@ -1,0 +1,25 @@
+{
+  "draftingTemplates": {
+    "names": {
+      "madras_hc": {
+        "mention_memo": "Mention or adjournment memo",
+        "early_listing_memo": "Early-listing memo",
+        "memo_of_appearance": "Memo of appearance",
+        "certified_copy_application": "Application for certified copy",
+        "client_covering_letter": "Covering letter to the client"
+      },
+      "karnataka_hc": {
+        "mention_memo": "Mention or adjournment memo",
+        "early_listing_memo": "Early-listing memo",
+        "memo_of_appearance": "Memo of appearance",
+        "certified_copy_application": "Application for certified copy",
+        "client_covering_letter": "Covering letter to the client"
+      },
+      "generic_a0": {
+        "adjournment_note": "Adjournment note",
+        "client_covering_letter": "Covering letter to the client"
+      }
+    },
+    "scaffoldBanner": "Scaffold: review before use"
+  }
+}

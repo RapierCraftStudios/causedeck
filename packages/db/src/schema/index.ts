@@ -331,6 +331,7 @@ export {
   IMPORT_BATCH_STATUSES,
   importBatch,
   importBatchFile,
+  importColumnMapping,
   importPlan,
   type ImportBatchFileStatus,
   type ImportBatchStatus,

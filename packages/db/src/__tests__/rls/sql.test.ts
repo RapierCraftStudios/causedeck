@@ -236,6 +236,7 @@ describe('row-level security catalog', () => {
         'import_batch',
         'import_batch_file',
         'import_plan',
+        'import_column_mapping',
 
         // Advocate identifiers for the bootstrap import (#57, #550).
         'advocate_profile',

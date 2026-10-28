@@ -156,6 +156,7 @@ export const PURGE_ORDER = [
   'ics_feed',
   // Bootstrap import (#546): plan and files before their batch, all before the captures they cite.
   'import_plan',
+  'import_column_mapping',
   'import_batch_file',
   'import_batch',
   // The importing member's identifiers (#550): cites no capture, only the user.

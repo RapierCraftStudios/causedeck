@@ -1,9 +1,12 @@
 // Drafting studio journeys (#829) on `/w/chennai-solo/drafts`: create from a template, save and the
-// studio keys, the offline queue, reduced motion, and no send, share or file control. The check,
-// acknowledge and export flows wait for #828's panels and dialogs. Runs in CI only.
+// studio keys, the offline queue, reduced motion, and no send, share or file control; then (#910)
+// check citations, acknowledge not-found ones and the export dialog. The e2e stack has no worker,
+// so an export stays queued: the download link is not asserted. Runs in CI only.
 import { DRAFTING, DRAFTING_WORKSPACE } from '../../fixtures/drafting-data.ts';
 import { expect, test } from '../../fixtures/index.ts';
 import { contentReady } from '../shell/helpers.ts';
+
+import { CITED_STUDIO, checkCitations, citationPanel, seedCitedDraft } from './drafting-helpers.ts';
 
 const STUDIO = `drafts/${DRAFTING.draft.id}`;
 
@@ -73,5 +76,77 @@ test.describe('drafting studio', () => {
     await asUser('owner', { workspace: DRAFTING_WORKSPACE, path: STUDIO });
     await contentReady(page);
     await expect(page.getByRole('button', { name: /\b(send|share|file|email)\b/i })).toHaveCount(0);
+  });
+
+  test.describe('checks, acknowledgement and export', () => {
+    test.beforeEach(async ({ page, asUser, db }) => {
+      await seedCitedDraft(db.name);
+      await page.setViewportSize({ width: 1280, height: 900 });
+      await asUser('owner', { workspace: DRAFTING_WORKSPACE, path: CITED_STUDIO });
+      await contentReady(page);
+    });
+
+    test('checks citations and shows the consistency panel', async ({ page }) => {
+      await expect(page.locator('[data-slot="consistency-panel"]')).toBeVisible();
+      await checkCitations(page);
+      await expect(citationPanel(page).getByText('Verified').first()).toBeVisible();
+      await expect(citationPanel(page).getByText('Not found').first()).toBeVisible();
+      await expect(
+        citationPanel(page).getByRole('button', { name: 'Acknowledge not-found citations' }),
+      ).toBeVisible();
+    });
+
+    test('acknowledges not-found citations; Confirm waits for the checkbox', async ({ page }) => {
+      await checkCitations(page);
+      await citationPanel(page)
+        .getByRole('button', { name: 'Acknowledge not-found citations' })
+        .click();
+      const dialog = page.locator('[data-slot="ack-dialog"]');
+      await expect(dialog).toBeVisible();
+      const confirm = dialog.getByRole('button', { name: 'Confirm' });
+      await expect(confirm).toBeDisabled();
+      await dialog.getByLabel('I have verified these authorities myself').check();
+      await expect(confirm).toBeEnabled();
+      await confirm.click();
+      await expect(dialog).toBeHidden();
+      await expect(citationPanel(page).getByText('Acknowledged').first()).toBeVisible();
+    });
+
+    test('Escape cancels the acknowledgement without recording it', async ({ page }) => {
+      await checkCitations(page);
+      await citationPanel(page)
+        .getByRole('button', { name: 'Acknowledge not-found citations' })
+        .click();
+      const dialog = page.locator('[data-slot="ack-dialog"]');
+      await expect(dialog).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(dialog).toBeHidden();
+      await expect(citationPanel(page).getByText('Acknowledged')).toHaveCount(0);
+    });
+
+    test('export warns about unverified citations and clears once acknowledged', async ({
+      page,
+    }) => {
+      await checkCitations(page);
+      await page.getByRole('button', { name: 'Export', exact: true }).click();
+      const dialog = page.locator('[data-slot="export-dialog"]');
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByRole('button', { name: 'Word document' })).toBeVisible();
+      await expect(dialog.getByRole('button', { name: 'PDF' })).toBeVisible();
+      await expect(dialog.getByText('1 citation is not verified.')).toBeVisible();
+      await expect(dialog.getByRole('button', { name: 'Export', exact: true })).toBeDisabled();
+      await expect(
+        dialog.getByRole('button', { name: /\b(send|share|file|email)\b/i }),
+      ).toHaveCount(0);
+      await dialog.getByRole('button', { name: 'Acknowledge', exact: true }).click();
+      const ack = page.locator('[data-slot="ack-dialog"]');
+      await ack.getByLabel('I have verified these authorities myself').check();
+      await ack.getByRole('button', { name: 'Confirm' }).click();
+      await expect(ack).toBeHidden();
+      await page.getByRole('button', { name: 'Export', exact: true }).click();
+      await expect(
+        page.locator('[data-slot="export-dialog"]').getByText('1 citation is not verified.'),
+      ).toHaveCount(0);
+    });
   });
 });

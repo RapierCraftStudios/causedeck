@@ -1,4 +1,4 @@
-// `system.status_link.retention` (#88, ADR 0049): daily at 03:45 IST, clears the payload of status
+// `system.status-link.retention` (#88, ADR 0049): daily at 03:45 IST, clears the payload of status
 // links that expired more than 30 days ago. It has no workspace and `status_link` is under FORCE
 // row-level security, so it lists the workspaces (ids only) through the owner-defined
 // `app_status_link_purge_targets` function and sweeps each in its own scope. Idempotent. It never
@@ -30,7 +30,7 @@ export async function runStatusLinkRetention(
 }
 
 export const statusLinkRetention = defineJob({
-  name: 'system.status_link.retention',
+  name: 'system.status-link.retention',
   schema: z.object({ workspaceId: z.null().optional() }),
   concurrency: 1,
   singleton: { key: () => 'status-link-retention', policy: 'stately' },

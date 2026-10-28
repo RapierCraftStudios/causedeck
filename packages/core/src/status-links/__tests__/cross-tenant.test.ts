@@ -3,7 +3,12 @@ import { withTestDb } from '@causedeck/db/testing';
 import { describe, expect, it } from 'vitest';
 
 import { newWorkspace } from '../../__tests__/fixtures.ts';
-import { createStatusLink, extendStatusLink, listStatusLinks, revokeStatusLink } from '../create.ts';
+import {
+  createStatusLink,
+  extendStatusLink,
+  listStatusLinks,
+  revokeStatusLink,
+} from '../create.ts';
 import { purgeExpiredStatusLinks } from '../retention.ts';
 import { chamber, deps, inWs, input, NOW } from './helpers.ts';
 
@@ -17,7 +22,9 @@ describe('status links across workspaces', () => {
       await expect(listStatusLinks(deps(tx), bActor, a.matterId)).rejects.toMatchObject({
         code: 'NOT_FOUND',
       });
-      await expect(revokeStatusLink(deps(tx), bActor, id)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      await expect(revokeStatusLink(deps(tx), bActor, id)).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      });
       await expect(
         extendStatusLink(deps(tx), bActor, { linkId: id, expiryDays: 30 }),
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
@@ -34,7 +41,11 @@ describe('status links across workspaces', () => {
       const a = await chamber(tx);
       const b = await newWorkspace(tx);
       await expect(
-        listStatusLinks(deps(tx), { userId: a.owner.userId, workspaceId: b.workspaceId }, a.matterId),
+        listStatusLinks(
+          deps(tx),
+          { userId: a.owner.userId, workspaceId: b.workspaceId },
+          a.matterId,
+        ),
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     });
   });
@@ -45,9 +56,15 @@ describe('retention', () => {
     await withTestDb(async (tx) => {
       const a = await chamber(tx);
       const { id } = await createStatusLink(deps(tx), a.owner, input(a, { expiryDays: 1 }));
-      const early = await purgeExpiredStatusLinks({ db: tx, now: () => new Date(NOW.getTime() + 20 * 86400000) }, a.workspaceId);
+      const early = await purgeExpiredStatusLinks(
+        { db: tx, now: () => new Date(NOW.getTime() + 20 * 86400000) },
+        a.workspaceId,
+      );
       expect(early.purged).toBe(0);
-      const late = await purgeExpiredStatusLinks({ db: tx, now: () => new Date(NOW.getTime() + 32 * 86400000) }, a.workspaceId);
+      const late = await purgeExpiredStatusLinks(
+        { db: tx, now: () => new Date(NOW.getTime() + 32 * 86400000) },
+        a.workspaceId,
+      );
       expect(late.purged).toBe(1);
       const [row] = await inWs(tx, a.workspaceId, (t) => t.select().from(schema.statusLink));
       expect(row).toMatchObject({ id, payload: {} });

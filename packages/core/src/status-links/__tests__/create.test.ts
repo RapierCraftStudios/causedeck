@@ -44,7 +44,7 @@ describe('createStatusLink', () => {
       const c = await chamber(tx);
       const a = await createStatusLink(deps(tx), c.owner, input(c));
       const b = await createStatusLink(deps(tx), c.owner, input(c));
-      const token = a.url.split('/s/')[1]!;
+      const token = a.url.split('/s/')[1] ?? '';
       expect(Buffer.from(token, 'base64url')).toHaveLength(32);
       expect(a.url).not.toBe(b.url);
     });
@@ -58,7 +58,9 @@ describe('createStatusLink', () => {
           code: 'FORBIDDEN',
         });
       }
-      expect(await inWs(tx, c.workspaceId, (t) => t.select().from(schema.statusLink))).toHaveLength(0);
+      expect(await inWs(tx, c.workspaceId, (t) => t.select().from(schema.statusLink))).toHaveLength(
+        0,
+      );
     });
   });
 
@@ -91,7 +93,12 @@ describe('revoke, extend and list', () => {
         ]),
       );
       const [live] = await listStatusLinks(deps(tx), c.owner, c.matterId);
-      expect(live).toMatchObject({ id, state: 'active', views: 3, headline: 'Status as on 2 November' });
+      expect(live).toMatchObject({
+        id,
+        state: 'active',
+        views: 3,
+        headline: 'Status as on 2 November',
+      });
       await revokeStatusLink(deps(tx), c.owner, id);
       const [dead] = await listStatusLinks(deps(tx), c.owner, c.matterId);
       expect(dead?.state).toBe('revoked');

@@ -6,7 +6,7 @@
 import { createHmac } from 'node:crypto';
 
 import { consumeRateLimit } from '@causedeck/auth/rate-limit';
-import { type Database, type Queryable, type Transaction } from '@causedeck/db';
+import { type Database, type Transaction } from '@causedeck/db';
 import { isEnabled } from '@causedeck/flags';
 import type { StatusLinkLanguage, StatusLinkView } from '@causedeck/validators/status-link';
 import { sql } from 'drizzle-orm';
@@ -18,8 +18,7 @@ export const STATUS_LINK_RATE_LIMIT = { max: 30, windowSeconds: 60 } as const;
 export type StatusLinkUaClass = 'mobile' | 'desktop' | 'bot' | 'other';
 
 export type ResolvedStatusLink =
-  | { state: 'not_found' | 'unavailable' | 'rate_limited' }
-  | { state: 'ok'; view: StatusLinkView };
+  { state: 'not_found' | 'unavailable' | 'rate_limited' } | { state: 'ok'; view: StatusLinkView };
 
 export interface ResolveDeps {
   db: Database | Transaction;
@@ -29,7 +28,7 @@ export interface ResolveDeps {
   ipSecret?: string;
 }
 
-interface ViewRow {
+type ViewRow = {
   id: string;
   workspace_id: string;
   advocate_name: string | null;
@@ -38,7 +37,7 @@ interface ViewRow {
   expires_at: Date | string;
   revoked_at: Date | string | null;
   purged_at: Date | string | null;
-}
+};
 
 /** A coarse class of the user agent: never the string itself. */
 export function classifyUserAgent(ua: string | null | undefined): StatusLinkUaClass {
@@ -67,7 +66,7 @@ export async function resolveStatusLink(
   const { token } = input;
   if (token.length < 16 || token.length > 128) return { state: 'not_found' };
   const hash = hashStatusLinkToken(token);
-  const secret = deps.ipSecret ?? process.env['STATUS_LINKS_IP_SECRET'] ?? 'status-link';
+  const secret = deps.ipSecret ?? 'status-link';
   const limited = !(await consumeRateLimit(
     deps.db as Database,
     `status-link:${ipKey(input.ip ?? 'unknown', secret)}:${hash.slice(0, 16)}`,
@@ -75,7 +74,7 @@ export async function resolveStatusLink(
     now.getTime(),
   ));
   if (limited) return { state: 'rate_limited' };
-  const db = deps.db as Queryable;
+  const db = deps.db;
   const rows = await db.execute<ViewRow>(sql`select * from app_status_link_view(${hash})`);
   const row = rows[0];
   if (row === undefined) return { state: 'not_found' };

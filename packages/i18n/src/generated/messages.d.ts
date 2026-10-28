@@ -6277,6 +6277,76 @@ export type Messages = {
       };
     };
   };
+  statusLink: {
+    metaTitle: string;
+    page: {
+      unavailable: string;
+      unavailableBody: string;
+      preparedBy: string;
+      preparedByUnknown: string;
+      nextDate: string;
+      expires: string;
+      loading: string;
+    };
+    sheet: {
+      open: string;
+      title: string;
+      description: string;
+      headline: string;
+      note: string;
+      includeNextDate: string;
+      nextDate: string;
+      contact: string;
+      contactPlaceholder: string;
+      expiry: string;
+      expiryDays: string;
+      language: string;
+      prefill: string;
+      preview: string;
+      previewHint: string;
+      create: string;
+      creating: string;
+      cancel: string;
+      close: string;
+      shortcut: string;
+      loading: string;
+      empty: string;
+      error: string;
+      retry: string;
+      offline: string;
+      denied: string;
+    };
+    created: {
+      title: string;
+      once: string;
+      shareYourself: string;
+      copy: string;
+      copied: string;
+      url: string;
+    };
+    list: {
+      title: string;
+      empty: string;
+      loading: string;
+      viewed: string;
+      expires: string;
+      revoke: string;
+      revoked: string;
+      expired: string;
+      active: string;
+      error: string;
+      retry: string;
+    };
+    gated: {
+      title: string;
+      body: string;
+    };
+    languages: {
+      en: string;
+      ta: string;
+      kn: string;
+    };
+  };
   offline: {
     title: string;
     body: string;

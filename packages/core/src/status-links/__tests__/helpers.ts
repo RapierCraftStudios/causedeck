@@ -3,6 +3,10 @@ import { schema, withWorkspace, type Transaction } from '@causedeck/db';
 import { addMember, newWorkspace } from '../../__tests__/fixtures.ts';
 import type { StatusLinkDeps } from '../create.ts';
 
+function never(): never {
+  throw new Error('seed row missing');
+}
+
 export type Tx = Transaction;
 
 export const NOW = new Date('2026-11-02T10:00:00Z');
@@ -33,9 +37,14 @@ export async function chamber(tx: Tx) {
       .returning({ id: schema.person.id });
     const [contact] = await ws
       .insert(schema.clientContact)
-      .values({ workspaceId, personId: person!.id, phone: '+919876543210', createdBy: ownerId })
+      .values({
+        workspaceId,
+        personId: (person ?? never()).id,
+        phone: '+919876543210',
+        createdBy: ownerId,
+      })
       .returning({ id: schema.clientContact.id });
-    return { matter: matter!, contact: contact! };
+    return { matter: matter ?? never(), contact: contact ?? never() };
   });
   return {
     workspaceId,

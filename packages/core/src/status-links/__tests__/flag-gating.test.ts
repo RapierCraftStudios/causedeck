@@ -27,16 +27,18 @@ describe('status_links.enabled flag', () => {
         () => prefillFromDraft(off, c.owner, ID),
       ];
       for (const call of calls) await expect(call()).rejects.toBeInstanceOf(FeatureDisabledError);
-      expect(await inWs(tx, c.workspaceId, (t) => t.select().from(schema.statusLink))).toHaveLength(0);
+      expect(await inWs(tx, c.workspaceId, (t) => t.select().from(schema.statusLink))).toHaveLength(
+        0,
+      );
     });
   });
 
   it('is off by default on a fresh database (legal-gated)', async () => {
     await withTestDb(async (tx) => {
       const c = await chamber(tx);
-      await expect(
-        createStatusLink({ db: tx }, c.owner, input(c)),
-      ).rejects.toBeInstanceOf(FeatureDisabledError);
+      await expect(createStatusLink({ db: tx }, c.owner, input(c))).rejects.toBeInstanceOf(
+        FeatureDisabledError,
+      );
     });
   });
 });

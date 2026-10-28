@@ -11,15 +11,23 @@ const DAY = 24 * 60 * 60 * 1000;
 
 async function made(tx: Parameters<typeof deps>[0], expiryDays = 7) {
   const c = await chamber(tx);
-  const created = await createStatusLink(deps(tx), c.advocate, input(c, { expiryDays, nextDate: '2026-11-20' }));
-  return { c, token: created.url.split('/s/')[1]!, id: created.id };
+  const created = await createStatusLink(
+    deps(tx),
+    c.advocate,
+    input(c, { expiryDays, nextDate: '2026-11-20' }),
+  );
+  return { c, token: created.url.split('/s/')[1] ?? '', id: created.id };
 }
 
 describe('resolveStatusLink', () => {
   it('returns only the authored fields and the advocate name, and records a view', async () => {
     await withTestDb(async (tx) => {
       const { token, id, c } = await made(tx);
-      const result = await resolveStatusLink(deps(tx), { token, ip: '203.0.113.9', userAgent: 'Mozilla/5.0 (iPhone) Mobile' });
+      const result = await resolveStatusLink(deps(tx), {
+        token,
+        ip: '203.0.113.9',
+        userAgent: 'Mozilla/5.0 (iPhone) Mobile',
+      });
       expect(result.state).toBe('ok');
       if (result.state !== 'ok') return;
       expect(Object.keys(result.view).sort()).toEqual(
@@ -40,8 +48,12 @@ describe('resolveStatusLink', () => {
       const { token, c } = await made(tx);
       const off = deps(tx, { flagEnabled: () => Promise.resolve(false) });
       expect(await resolveStatusLink(off, { token })).toEqual({ state: 'not_found' });
-      expect(await resolveStatusLink(off, { token: 'x'.repeat(43) })).toEqual({ state: 'not_found' });
-      expect(await inWs(tx, c.workspaceId, (t) => t.select().from(schema.statusLinkAccess))).toHaveLength(0);
+      expect(await resolveStatusLink(off, { token: 'x'.repeat(43) })).toEqual({
+        state: 'not_found',
+      });
+      expect(
+        await inWs(tx, c.workspaceId, (t) => t.select().from(schema.statusLinkAccess)),
+      ).toHaveLength(0);
     });
   });
 
@@ -51,11 +63,15 @@ describe('resolveStatusLink', () => {
       const later = deps(tx, { now: () => new Date(NOW.getTime() + 8 * DAY) });
       expect(await resolveStatusLink(later, { token, ip: 'a' })).toEqual({ state: 'unavailable' });
       await revokeStatusLink(deps(tx), c.advocate, id);
-      expect(await resolveStatusLink(deps(tx), { token, ip: 'b' })).toEqual({ state: 'unavailable' });
+      expect(await resolveStatusLink(deps(tx), { token, ip: 'b' })).toEqual({
+        state: 'unavailable',
+      });
       expect(await resolveStatusLink(deps(tx), { token: 'y'.repeat(43), ip: 'c' })).toEqual({
         state: 'not_found',
       });
-      expect(await inWs(tx, c.workspaceId, (t) => t.select().from(schema.statusLinkAccess))).toHaveLength(0);
+      expect(
+        await inWs(tx, c.workspaceId, (t) => t.select().from(schema.statusLinkAccess)),
+      ).toHaveLength(0);
     });
   });
 

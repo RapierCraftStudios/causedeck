@@ -322,7 +322,7 @@ async function seedStatusLink(
       workspaceId,
       matterId,
       clientContactId: contactId,
-      tokenHash: `seed-sl-${tag}`,
+      tokenHash: `seed-sl-${tag}-${crypto.randomUUID()}`,
       payload: { headline: `Seed ${tag}`, note: 'Listed next month.', nextDate: null },
       expiresAt: new Date('2099-01-01T00:00:00Z'),
       createdBy: ownerId,

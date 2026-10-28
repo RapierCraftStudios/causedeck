@@ -9,6 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { domainErrorCode } from '../../../../../../../lib/matters/graph-deps.ts';
+import { serverEnv } from '../../../../../../../lib/env.ts';
 import { ActionError, type Result } from '../../../../../../../lib/safe-action.ts';
 import {
   WorkspaceScoped,
@@ -55,11 +56,13 @@ function withoutWorkspace<T extends { workspaceId: string }>(input: T): Omit<T, 
   >;
 }
 
-const revalidate = (): void => revalidatePath('/w/[slug]/matters/[id]', 'page');
+const revalidate = (): void => {
+  revalidatePath('/w/[slug]/matters/[id]', 'page');
+};
 
-/** The base the full URL is built on: `STATUS_LINKS_BASE_URL`, else the app origin (`APP_URL`). */
+/** The base the full URL is built on: the app origin (`APP_URL`). */
 function baseUrl(): string {
-  return process.env['STATUS_LINKS_BASE_URL'] || process.env['APP_URL'] || '';
+  return serverEnv().APP_URL;
 }
 
 export interface CreatedLinkView {

@@ -22,7 +22,6 @@ import type { z } from 'zod';
 import { record } from '../audit/index.ts';
 import { getDraft, type OutwardDeps } from '../outward/index.ts';
 import { WorkspaceError, conflict, forbidden, invalid, notFound } from '../shared/errors.ts';
-import { activeMember } from '../shared/membership.ts';
 import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/index.ts';
 
 export const STATUS_LINKS_FLAG = 'status_links.enabled';
@@ -100,7 +99,8 @@ async function inScope<T>(
   return withWorkspace(deps.db, actor, async (tx) => {
     const role = await memberRole(tx, actor.userId, actor.workspaceId);
     if (role === null || !isRole(role)) throw notFound('Link not found');
-    if (!atLeast(role, 'advocate')) throw forbidden('Only an advocate or an owner can use status links');
+    if (!atLeast(role, 'advocate'))
+      throw forbidden('Only an advocate or an owner can use status links');
     const settings =
       deps.settings ?? toPolicySettings(await getRoleSettings(tx, actor.workspaceId));
     return fn({ tx, actor: { ...actor, role }, settings, now: deps.now?.() ?? new Date() });
@@ -273,7 +273,8 @@ export async function extendStatusLink(
     if (expiresAt.getTime() > row.createdAt.getTime() + STATUS_LINK_MAX_EXPIRY_DAYS * DAY_MS) {
       throw invalid('A link can last at most 30 days');
     }
-    if (expiresAt <= row.expiresAt) throw invalid('The new expiry must be later than the current one');
+    if (expiresAt <= row.expiresAt)
+      throw invalid('The new expiry must be later than the current one');
     await tx
       .update(statusLink)
       .set({ expiresAt, updatedAt: now })

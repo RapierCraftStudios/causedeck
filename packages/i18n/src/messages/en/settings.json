@@ -371,7 +371,8 @@
         "shell": "Workspace areas",
         "appearance": "Appearances",
         "contact": "Client contacts",
-        "enquiry": "Enquiry log"
+        "enquiry": "Enquiry log",
+        "limitation": "Limitation tracker"
       },
       "actions": {
         "workspace": {
@@ -434,7 +435,8 @@
           "manage": "Allow and end support access"
         },
         "limitation": {
-          "read": "See limitation dates"
+          "read": "See limitation dates",
+          "write": "Compute and confirm limitation dates"
         },
         "insights": {
           "read": "See practice insights"

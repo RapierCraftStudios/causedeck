@@ -4468,7 +4468,69 @@ const CASES: Record<string, Case> = {
     );
     expect(await read()).toEqual(before);
   },
+  // Limitation tracker (#940): the flag is on; B claiming A's workspace is refused and A is unchanged.
+  loadRuleTable: async (f) => {
+    const before = await aLimitation(f);
+    await expectDenied(
+      core.loadRuleTable(limitationDeps(f), bActsOnA(f), {
+        version: 'x-1',
+        rules: [
+          {
+            code: 'x.rule',
+            title: 'x',
+            statute: 'x',
+            periodValue: 1,
+            periodUnit: 'days',
+            startEvent: 'order_date',
+            condonable: false,
+          },
+        ],
+      }),
+    );
+    expect(await aLimitation(f)).toEqual(before);
+  },
+  listRules: async (f) => {
+    await expectDenied(core.listRules(limitationDeps(f), bActsOnA(f)));
+  },
+  computeLimitation: async (f) => {
+    const before = await aLimitation(f);
+    await expectDenied(
+      core.computeLimitation(limitationDeps(f), bActsOnA(f), {
+        matterId: randomUUID(),
+        ruleCode: 'x.rule',
+        startDate: '2026-01-01',
+      }),
+    );
+    expect(await aLimitation(f)).toEqual(before);
+  },
+  confirmLimitation: async (f) => {
+    const before = await aLimitation(f);
+    await expectDenied(
+      core.confirmLimitation(limitationDeps(f), bActsOnA(f), { computationId: randomUUID() }),
+    );
+    await expectDenied(
+      core.confirmLimitation(
+        limitationDeps(f),
+        { userId: f.ub, workspaceId: f.b.id },
+        { computationId: randomUUID() },
+      ),
+    );
+    expect(await aLimitation(f)).toEqual(before);
+  },
+  listLimitations: async (f) => {
+    await expectDenied(core.listLimitations(limitationDeps(f), bActsOnA(f)));
+  },
 };
+
+const limitationDeps = (f: Fixture) => ({
+  db: f.tx,
+  flagEnabled: () => Promise.resolve(true),
+});
+const aLimitation = (f: Fixture) =>
+  inWorkspace(f.tx, f.a.id, async (s) => [
+    await s.select().from(schema.limitationRule),
+    await s.select().from(schema.limitationComputation),
+  ]);
 
 const registered = Object.entries(SERVICE_TESTS)
   .filter(([, entry]) => entry.test === THIS_FILE)

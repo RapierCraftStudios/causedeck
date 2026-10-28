@@ -261,6 +261,12 @@ describe('row-level security catalog', () => {
         'enquiry',
         'enquiry_party',
         'conflict_check_result',
+        // Fees (#83).
+        'fee_agreement',
+        'fee_invoice',
+        'fee_invoice_line',
+        'payment',
+        'client_ledger_entry',
       ].sort(),
     );
     for (const row of rows)

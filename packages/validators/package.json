@@ -13,6 +13,7 @@
     "./consistency": "./src/consistency.ts",
     "./drafting": "./src/drafting.ts",
     "./factcheck": "./src/factcheck.ts",
+    "./fees": "./src/fees.ts",
     "./forum": "./src/forum.ts",
     "./gstin": "./src/gstin.ts",
     "./hearing-outcome": "./src/hearing-outcome.ts",

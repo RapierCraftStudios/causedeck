@@ -6,8 +6,8 @@ import type { ComputationView, RuleView } from '@causedeck/core/limitation';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, screen, userEvent } from 'storybook/test';
 
-import { PermissionDeniedPage } from '../../../../../components/shell/permission-denied-page.tsx';
-import type { Result } from '../../../../../lib/safe-action.ts';
+import { PermissionDeniedPage } from '../../../../../../components/shell/permission-denied-page.tsx';
+import type { Result } from '../../../../../../lib/safe-action.ts';
 import LimitationError from '../error.tsx';
 import LimitationLoading from '../loading.tsx';
 import { LimitationGatedNotice } from './gated-notice.tsx';

@@ -173,6 +173,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   import_batch: DB_TABLES_TEST,
   import_batch_file: DB_TABLES_TEST,
   import_plan: DB_TABLES_TEST,
+  // The chamber's saved spreadsheet column mapping (#778).
+  import_column_mapping: DB_TABLES_TEST,
 
   // Advocate identifiers for the bootstrap import (#57, #550).
   advocate_profile: DB_TABLES_TEST,

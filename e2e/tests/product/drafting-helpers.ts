@@ -48,5 +48,5 @@ export const citationPanel = (page: Page) => page.locator('[data-slot="citation-
 /** Run `Check citations` and wait until the not-found result is listed. */
 export async function checkCitations(page: Page): Promise<void> {
   await citationPanel(page).getByRole('button', { name: 'Check citations' }).click();
-  await citationPanel(page).getByText('Not found').first().waitFor();
+  await citationPanel(page).getByText('Not found', { exact: true }).first().waitFor();
 }

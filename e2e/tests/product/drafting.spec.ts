@@ -89,8 +89,12 @@ test.describe('drafting studio', () => {
     test('checks citations and shows the consistency panel', async ({ page }) => {
       await expect(page.locator('[data-slot="consistency-panel"]')).toBeVisible();
       await checkCitations(page);
-      await expect(citationPanel(page).getByText('Verified').first()).toBeVisible();
-      await expect(citationPanel(page).getByText('Not found').first()).toBeVisible();
+      await expect(
+        citationPanel(page).getByText('Verified', { exact: true }).first(),
+      ).toBeVisible();
+      await expect(
+        citationPanel(page).getByText('Not found', { exact: true }).first(),
+      ).toBeVisible();
       await expect(
         citationPanel(page).getByRole('button', { name: 'Acknowledge not-found citations' }),
       ).toBeVisible();
@@ -109,7 +113,9 @@ test.describe('drafting studio', () => {
       await expect(confirm).toBeEnabled();
       await confirm.click();
       await expect(dialog).toBeHidden();
-      await expect(citationPanel(page).getByText('Acknowledged').first()).toBeVisible();
+      await expect(
+        citationPanel(page).getByText('Acknowledged', { exact: true }).first(),
+      ).toBeVisible();
     });
 
     test('Escape cancels the acknowledgement without recording it', async ({ page }) => {
@@ -121,7 +127,7 @@ test.describe('drafting studio', () => {
       await expect(dialog).toBeVisible();
       await page.keyboard.press('Escape');
       await expect(dialog).toBeHidden();
-      await expect(citationPanel(page).getByText('Acknowledged')).toHaveCount(0);
+      await expect(citationPanel(page).getByText('Acknowledged', { exact: true })).toHaveCount(0);
     });
 
     test('export warns about unverified citations and clears once acknowledged', async ({

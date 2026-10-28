@@ -131,8 +131,11 @@ describe('saas invoice schema (#252)', () => {
       ),
     );
     // `legal_hold_invoice` (#302, 0032) is the minimal statutory copy of an erased workspace's SaaS
-    // invoices, not a client-fee invoice.
+    // invoices, not a client-fee invoice. The client-fee tables (#83) are `fee_invoice*`, never a
+    // bare `invoice`.
     expect(rows.map((r) => r.name)).toEqual([
+      'fee_invoice',
+      'fee_invoice_line',
       'invoice_counter',
       'legal_hold_invoice',
       'saas_invoice',

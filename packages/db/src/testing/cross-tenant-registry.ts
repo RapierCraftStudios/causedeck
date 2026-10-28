@@ -164,6 +164,12 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   enquiry: DB_TABLES_TEST,
   enquiry_party: DB_TABLES_TEST,
   conflict_check_result: DB_TABLES_TEST,
+  // Fees (#83).
+  fee_agreement: DB_TABLES_TEST,
+  fee_invoice: DB_TABLES_TEST,
+  fee_invoice_line: DB_TABLES_TEST,
+  payment: DB_TABLES_TEST,
+  client_ledger_entry: DB_TABLES_TEST,
   // Court-day reminders (#64).
   reminder_dispatch: DB_TABLES_TEST,
 

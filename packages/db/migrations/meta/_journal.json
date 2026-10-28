@@ -869,6 +869,13 @@
       "when": 1793213863539,
       "tag": "20261028185743_enquiry_log",
       "breakpoints": true
+    },
+    {
+      "idx": 124,
+      "version": "7",
+      "when": 1793214181288,
+      "tag": "20261028190301_fees",
+      "breakpoints": true
     }
   ]
 }

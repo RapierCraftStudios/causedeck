@@ -301,6 +301,12 @@ export const mattersExporter = tablesExporter('matters', [
   ws('enquiry'),
   ws('enquiry_party'),
   ws('conflict_check_result'),
+  // Fees (#83): the workspace's own fee agreements, invoices, payments and client ledger lines.
+  ws('fee_agreement'),
+  ws('fee_invoice'),
+  ws('fee_invoice_line'),
+  ws('payment'),
+  ws('client_ledger_entry'),
   ws('organisation'),
   ws('role_edge'),
   ws('document', { exclude: ['storage_key'] }),

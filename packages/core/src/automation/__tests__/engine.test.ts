@@ -109,7 +109,7 @@ describe('submitProposals', () => {
       const { items } = await submitProposals(w.deps, w.owner, [
         draft({ kind: 'task', source: ai, payload: { title: 'A' } }),
         draft({ kind: 'task', payload: { title: 'B' }, confidence: 0.2 }),
-        draft({ kind: 'fee_entry', payload: { amount: 1 } }),
+        draft({ kind: 'outward_draft', payload: { amount: 1 } }),
         draft({ kind: 'task', payload: { title: 'D' }, ambiguous: true }),
       ]);
       expect(items.map((i) => i.status)).toEqual([
@@ -292,7 +292,7 @@ describe('acceptProposal, editAndAccept, dismissProposal', () => {
     await withTestDb(async (tx) => {
       const w = await world(tx);
       const { items } = await submitProposals(w.deps, w.owner, [
-        draft({ kind: 'fee_entry', payload: { amount: 1 } }),
+        draft({ kind: 'outward_draft', payload: { amount: 1 } }),
       ]);
       const proposalId = items[0]?.proposalId ?? '';
       await expect(acceptProposal(w.deps, w.owner, { proposalId })).rejects.toBeInstanceOf(

@@ -120,6 +120,13 @@ the matrix, before the resource checks below.
 | `enquiry.read` | ✓     | ✓        | —      | —     | —      |
 | `enquiry.write` | ✓     | ✓        | —      | —     | —      |
 
+## fee
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `fee.read` | ✓     | ✓        | —      | —     | —      |
+| `fee.write` | ✓     | ✓        | —      | —     | —      |
+
 ## export
 
 | Action | owner | advocate | junior | clerk | viewer |

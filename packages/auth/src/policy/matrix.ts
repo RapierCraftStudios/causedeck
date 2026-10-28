@@ -45,6 +45,9 @@ export const MATRIX: Readonly<Record<Action, Role>> = {
   // The enquiry log holds prospective clients' details: owners and advocates only (#87).
   'enquiry.read': 'advocate',
   'enquiry.write': 'advocate',
+  // Fees, invoices and the client ledger: owners and advocates only (#83).
+  'fee.read': 'advocate',
+  'fee.write': 'advocate',
   'export.run': 'owner',
   // Only the owner grants, denies or revokes support sessions (#313); staff never can, since
   // `STAFF_READ_ONLY` denies every action that is not a `.read`.

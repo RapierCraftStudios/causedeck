@@ -23,6 +23,7 @@
     "./delegation": "./src/delegation/index.ts",
     "./people": "./src/people/index.ts",
     "./intake": "./src/intake/index.ts",
+    "./fees": "./src/fees/index.ts",
     "./email-intake": "./src/email-intake/index.ts",
     "./import": "./src/import/index.ts",
     "./migration": "./src/migration/index.ts",

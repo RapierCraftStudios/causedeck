@@ -24,6 +24,8 @@ export const ACTIONS = {
   contact: ['contact.read', 'contact.write'],
   // The inbound enquiry log (#87, ADR 0047): advocate-level read and write.
   enquiry: ['enquiry.read', 'enquiry.write'],
+  // Fees and invoices (#83, ADR 0048): owners and advocates only.
+  fee: ['fee.read', 'fee.write'],
   export: ['export.run'],
   support: ['support.manage'],
   // Shell surfaces gated in apps/web/lib/workspace-context.ts.

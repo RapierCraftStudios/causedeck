@@ -75,6 +75,34 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'The retention job deleted closed enquiries past the workspace retention',
   },
+  // Fees (#83, ADR 0048). Metadata holds ids, counts and enum values only, never amounts' text,
+  // notes or ledger descriptions.
+  'fee.agreement_created': { security: false, description: 'A member created a fee agreement' },
+  'fee.agreement_updated': { security: false, description: 'A member changed a fee agreement' },
+  'fee.agreement_status_changed': {
+    security: false,
+    description: 'A member activated or ended a fee agreement',
+  },
+  'fee.invoice_drafted': { security: false, description: 'A member saved a draft fee invoice' },
+  'fee.invoice_discarded': { security: false, description: 'A member discarded a draft fee invoice' },
+  'fee.invoice_issued': { security: false, description: 'A member issued a fee invoice' },
+  'fee.gst_unreviewed_acknowledged': {
+    security: false,
+    description: 'An owner issued a fee invoice acknowledging the GST rates are unreviewed',
+  },
+  'fee.payment_recorded': {
+    security: false,
+    description: 'A member recorded a payment received against a fee invoice',
+  },
+  'fee.credit_note_issued': { security: false, description: 'A member issued a credit note' },
+  'fee.ledger_entry_recorded': {
+    security: false,
+    description: 'A member recorded an entry in a client ledger',
+  },
+  'fee.ledger_anonymised': {
+    security: false,
+    description: 'Erasure cleared the free text of a client ledger, keeping the amounts',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },

@@ -170,6 +170,11 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   fee_invoice_line: DB_TABLES_TEST,
   payment: DB_TABLES_TEST,
   client_ledger_entry: DB_TABLES_TEST,
+  // Proof-of-value (#86).
+  preparedness_rating: DB_TABLES_TEST,
+  load_pulse: DB_TABLES_TEST,
+  context_test_result: DB_TABLES_TEST,
+  pov_prefs: DB_TABLES_TEST,
   // Court-day reminders (#64).
   reminder_dispatch: DB_TABLES_TEST,
 

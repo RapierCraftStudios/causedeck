@@ -77,6 +77,12 @@ import { notice, noticeMatch } from '../schema/notices.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { judgment } from '../schema/corpus.ts';
 import { matter } from '../schema/matter-graph.ts';
+import {
+  contextTestResult,
+  loadPulse,
+  povPrefs,
+  preparednessRating,
+} from '../schema/proof-of-value.ts';
 import { judgmentAlert, matterIssueTag } from '../schema/matter-issue.ts';
 import { researchNote, researchProvider } from '../schema/research-note.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
@@ -1792,6 +1798,43 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: feeInvoiceLine.id });
     return { ...seeded, id: first(rows, 'fee_invoice_line').id };
+  },
+  // Proof-of-value (#86): the owner's own rows, content-free.
+  preparedness_rating: async (tx, { workspaceId, ownerId, tag }) => {
+    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const hearingId = await seedHearing(tx, workspaceId, tag);
+    const appearanceRows = await tx
+      .insert(appearance)
+      .values({ workspaceId, hearingId, memberId, capacity: 'arguing' })
+      .returning({ id: appearance.id });
+    const appearanceId = first(appearanceRows, 'appearance').id;
+    const rows = await tx
+      .insert(preparednessRating)
+      .values({ workspaceId, appearanceId, memberId, rating: 4 })
+      .returning({ id: preparednessRating.id });
+    return { appearanceId, hearingId, memberId, id: first(rows, 'preparedness_rating').id };
+  },
+  load_pulse: async (tx, { workspaceId, ownerId }) => {
+    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const rows = await tx
+      .insert(loadPulse)
+      .values({ workspaceId, memberId, isoWeek: '2026-W44', demand: 3, worry: 2, effort: 4 })
+      .returning({ id: loadPulse.id });
+    return { memberId, id: first(rows, 'load_pulse').id };
+  },
+  context_test_result: async (tx, { workspaceId, ownerId, tag }) => {
+    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const matterId = await seedMatter(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(contextTestResult)
+      .values({ workspaceId, matterId, memberId })
+      .returning({ id: contextTestResult.id });
+    return { matterId, memberId, id: first(rows, 'context_test_result').id };
+  },
+  pov_prefs: async (tx, { workspaceId, ownerId }) => {
+    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    await tx.insert(povPrefs).values({ workspaceId, memberId, promptsEnabled: false });
+    return { memberId };
   },
   payment: async (tx, { workspaceId, ownerId, tag }) => {
     const seeded = await seedInvoice(tx, workspaceId, ownerId, tag);

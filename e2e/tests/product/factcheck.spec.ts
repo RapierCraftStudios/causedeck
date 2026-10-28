@@ -103,7 +103,8 @@ test.describe('fact check in the studio', () => {
     await block(page, 'b1').click();
     await page.keyboard.press('F8');
     await expect(squiggles(page).first()).toBeFocused();
-    await expect(page.locator('[data-slot="fact-live-region"]')).toContainText(/Issue 1 of 2/);
+    // The studio announces through its own status region, shared with the save messages.
+    await expect(page.getByRole('status').filter({ hasText: /Issue 1 of 2/ })).toHaveCount(1);
     await page.keyboard.press('F8');
     await expect(squiggles(page).nth(1)).toBeFocused();
     await page.keyboard.press('Shift+F8');

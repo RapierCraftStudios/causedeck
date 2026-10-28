@@ -302,7 +302,6 @@ async function seedProceeding(tx: Transaction, workspaceId: string, tag: string)
   return first(rows, 'proceeding').id;
 }
 
-/** A fictional party (#348). */
 /** A matter, a client contact for it and one status link (#88) in `workspaceId`. */
 async function seedStatusLink(
   tx: Transaction,
@@ -332,6 +331,7 @@ async function seedStatusLink(
   return { matterId, contactId, linkId: first(rows, 'status_link').id };
 }
 
+/** A fictional party (#348). */
 async function seedPerson(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
   const rows = await tx
     .insert(person)

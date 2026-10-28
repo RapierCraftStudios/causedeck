@@ -148,6 +148,7 @@ describe('namespaced catalogs (#174)', () => {
         'share',
         'shell',
         'shortcuts',
+        'statusLink',
         'theme',
         'usage',
         'voice',

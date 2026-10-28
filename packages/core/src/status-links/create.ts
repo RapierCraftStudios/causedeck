@@ -202,6 +202,8 @@ export async function createStatusLink(
         language: parsed.language,
         expiresAt,
         createdBy: actor.userId,
+        createdAt: now,
+        updatedAt: now,
       })
       .returning({ id: statusLink.id });
     if (row === undefined) throw new Error('createStatusLink: insert returned no row');

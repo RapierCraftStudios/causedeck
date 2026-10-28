@@ -145,6 +145,7 @@ const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calen
 const courtDay = await import('../app/(app)/w/[slug]/_court-day/actions.ts');
 const offlineActions = await import('../app/(app)/w/[slug]/_offline/actions.ts');
 const shareActions = await import('../app/(public)/share/[token]/actions.ts');
+const statusLinkActions = await import('../app/(app)/w/[slug]/matters/[id]/_status-links/actions.ts');
 const continuityActions = await import('../app/(app)/w/[slug]/matters/[id]/_continuity/actions.ts');
 const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
@@ -271,6 +272,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   listHandoversAction: continuityActions,
   acknowledgeHandoverAction: continuityActions,
   recordViewAction: continuityActions,
+  createStatusLinkAction: statusLinkActions,
+  revokeStatusLinkAction: statusLinkActions,
+  extendStatusLinkAction: statusLinkActions,
+  listStatusLinksAction: statusLinkActions,
+  prefillStatusLinkAction: statusLinkActions,
   whatChangedAction: continuityActions,
   setCarryItemAction: briefSheet,
   setBriefNoteAction: briefSheet,
@@ -467,6 +473,12 @@ function snapshotA() {
       })
       .from(schema.apiKey)
       .orderBy(schema.apiKey.id),
+    // A's client status links and their views (#88).
+    statusLinks: await tx.select().from(schema.statusLink).orderBy(schema.statusLink.id),
+    statusLinkViews: await tx
+      .select()
+      .from(schema.statusLinkAccess)
+      .orderBy(schema.statusLinkAccess.id),
     // A's intake addresses, allow-list and messages (#54).
     intakeAddresses: await tx.select().from(schema.intakeAddress).orderBy(schema.intakeAddress.id),
     intakeAllowlist: await tx
@@ -1122,6 +1134,18 @@ function inputs(workspaceId: string): Record<string, unknown> {
       matterId: t.a.rows.handover_note?.matterId,
       since: '2026-01-01T00:00:00.000Z',
     },
+    // Client status links (#88): ub may not create, revoke, extend, list or pre-fill from A's matter, link or draft.
+    createStatusLinkAction: {
+      workspaceId,
+      matterId: t.a.rows.status_link?.matterId,
+      clientContactId: t.a.rows.status_link?.contactId,
+      headline: 'Cross-tenant probe',
+      note: 'Cross-tenant probe',
+    },
+    revokeStatusLinkAction: { workspaceId, linkId: t.a.rows.status_link?.id },
+    extendStatusLinkAction: { workspaceId, linkId: t.a.rows.status_link?.id, expiryDays: 30 },
+    listStatusLinksAction: { workspaceId, matterId: t.a.rows.status_link?.matterId },
+    prefillStatusLinkAction: { workspaceId, draftId: t.a.rows.status_link?.id },
     // Brief sheet (#61): ub may not mark, tick or note A's listing.
     markPreparedAction: { workspaceId, listingId: t.a.rows.listing?.listingId, prepared: true },
     setCarryItemAction: {

@@ -93,6 +93,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The enquiry log (#87): the flag-gated enquiry services over the conflict check, the automation
   // engine's `new_matter` proposals, audit events and membership roles.
   intake: Object.freeze(['audit', 'automation', 'conflicts', 'workspaces']),
+  // Client status links (#88, ADR 0049): flag-gated authored links; prefill reads an outward draft through its index.
+  'status-links': Object.freeze(['workspaces', 'audit', 'outward']),
   // Cross-checked facts (#499): source agreement and confidence over listing provenance; tables only.
   facts: Object.freeze([]),
   // The review and correction queue (#518, D-049): every staff read of an item's record is audited.

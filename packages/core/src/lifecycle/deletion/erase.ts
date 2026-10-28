@@ -125,6 +125,8 @@ export const PURGE_ORDER = [
   'brief_state',
   // Brief shares (#507): no listing reference; revoked by the workspace's deletion.
   'brief_share',
+  'status_link_access',
+  'status_link',
   'listing',
   'bench_change_alert',
   'bench_roster_entry',

@@ -75,6 +75,14 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'The retention job deleted closed enquiries past the workspace retention',
   },
+  // Client status links (#88, ADR 0049). Metadata holds ids, language and expiry days, never the note.
+  'status_link.created': { security: false, description: 'An advocate created a client status link' },
+  'status_link.revoked': { security: false, description: 'An advocate revoked a client status link' },
+  'status_link.extended': { security: false, description: 'An advocate extended a client status link' },
+  'status_link.purged': {
+    security: false,
+    description: 'The retention job cleared the payload of long-expired status links',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },

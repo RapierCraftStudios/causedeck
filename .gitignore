@@ -36,3 +36,7 @@ packages/adapters/fixtures/generated/
 # OS and editor noise
 .DS_Store
 *.log
+
+# Tool state, never committed: ForgeDock lane scratch and ESLint caches (lanes kept committing them; they conflicted in every base merge).
+.forge-lean/
+.eslintcache

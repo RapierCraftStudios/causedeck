@@ -1,0 +1,55 @@
+{
+  "continuity": {
+    "handover": {
+      "button": "Handover",
+      "title": "Handover note",
+      "close": "Close",
+      "loading": "Loading the handover note",
+      "error": "Couldn't load the handover note.",
+      "retry": "Retry",
+      "denied": "You don't have access to this handover note.",
+      "offline": "You are offline. Showing the last saved note.",
+      "offlineNone": "You are offline and no note is saved on this device.",
+      "empty": "No handover yet",
+      "emptyHint": "Write one for the next person on this matter.",
+      "version": "Version {version} · {date}",
+      "acknowledge": "Acknowledge",
+      "acknowledged": "Acknowledged",
+      "recipient": "Address to",
+      "recipientNone": "Choose a member",
+      "save": "Save and address",
+      "saved": "Saved as version {version}",
+      "saveFailed": "Couldn't save the note.",
+      "edit": "Your notes",
+      "questions": "Open questions, one per line",
+      "history": "Earlier versions",
+      "noneRecorded": "None recorded",
+      "overdue": "Overdue",
+      "synopsis": "Synopsis",
+      "pending": "Saving",
+      "sections": {
+        "where_it_stands": "Where it stands",
+        "last_orders": "Last orders",
+        "open_obligations": "Open obligations",
+        "coming_up": "Coming up",
+        "key_documents": "Key documents",
+        "open_questions": "Open questions"
+      }
+    },
+    "changes": {
+      "heading": "Since you last opened this, {days, plural, one {# day} other {# days}} ago",
+      "empty": "Nothing has changed.",
+      "dismiss": "Dismiss",
+      "error": "Couldn't load what changed.",
+      "loading": "Loading what changed",
+      "kinds": {
+        "order": "Order",
+        "hearing": "Hearing",
+        "listing": "Listing",
+        "next_date": "Next date",
+        "obligation": "Obligation",
+        "document": "Document"
+      }
+    }
+  }
+}

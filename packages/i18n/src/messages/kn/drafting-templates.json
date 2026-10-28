@@ -1,0 +1,28 @@
+{
+  "draftingTemplates": {
+    "names": {
+      "madras_hc": {
+        "mention_memo": "ಉಲ್ಲೇಖ ಅಥವಾ ಮುಂದೂಡಿಕೆ ಮೆಮೊ",
+        "early_listing_memo": "ಶೀಘ್ರ ಪಟ್ಟಿ ಮೆಮೊ",
+        "memo_of_appearance": "ಹಾಜರಾತಿ ಮೆಮೊ",
+        "certified_copy_application": "ಪ್ರಮಾಣೀಕೃತ ನಕಲಿಗಾಗಿ ಅರ್ಜಿ",
+        "client_covering_letter": "ಕಕ್ಷಿದಾರರಿಗೆ ಜೊತೆಯ ಪತ್ರ",
+        "counsel_covering_letter": "ವಕೀಲರಿಗೆ ಜೊತೆಯ ಪತ್ರ"
+      },
+      "karnataka_hc": {
+        "mention_memo": "ಉಲ್ಲೇಖ ಅಥವಾ ಮುಂದೂಡಿಕೆ ಮೆಮೊ",
+        "early_listing_memo": "ಶೀಘ್ರ ಪಟ್ಟಿ ಮೆಮೊ",
+        "memo_of_appearance": "ಹಾಜರಾತಿ ಮೆಮೊ",
+        "certified_copy_application": "ಪ್ರಮಾಣೀಕೃತ ನಕಲಿಗಾಗಿ ಅರ್ಜಿ",
+        "client_covering_letter": "ಕಕ್ಷಿದಾರರಿಗೆ ಜೊತೆಯ ಪತ್ರ",
+        "counsel_covering_letter": "ವಕೀಲರಿಗೆ ಜೊತೆಯ ಪತ್ರ"
+      },
+      "generic_a0": {
+        "adjournment_note": "ಮುಂದೂಡಿಕೆ ಟಿಪ್ಪಣಿ",
+        "client_covering_letter": "ಕಕ್ಷಿದಾರರಿಗೆ ಜೊತೆಯ ಪತ್ರ",
+        "counsel_covering_letter": "ವಕೀಲರಿಗೆ ಜೊತೆಯ ಪತ್ರ"
+      }
+    },
+    "scaffoldBanner": "ಕರಡು ಮಾತ್ರ: ಬಳಸುವ ಮೊದಲು ಪರಿಶೀಲಿಸಿ"
+  }
+}

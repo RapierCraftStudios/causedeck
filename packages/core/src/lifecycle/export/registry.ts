@@ -73,6 +73,18 @@ export const EXPORT_EXCLUSIONS: Readonly<Record<string, string>> = {
     'Short-lived (10 min) pending WhatsApp verification (#678): a hash of a one-time code, never exported; the verified link itself is exported, and the challenge is erased with the workspace.',
   whatsapp_inbound_message:
     'Dedupe ledger of provider message ids and media references for forwarded WhatsApp media (#680); the media itself is exported as captures, and the ledger is erased with the workspace.',
+  memory_item:
+    'Lawyer memory (#72) is sealed with the workspace key and holds private and matter-scoped notes of individual members; a table dump would ship ciphertext and cross members. The role-scoped, decrypted export is exportMemory, which takes a key provider the export pipeline does not carry yet.',
+  memory_proposal:
+    'Pending or dismissed memory proposals (#72): sealed candidates the lawyer has not saved; the confirmed memory is exported through exportMemory, and the rows are erased with the workspace.',
+  memory_embedding:
+    'Derived search vectors of memory items (#72); recomputed from the items, purged within 24 h of a delete, and erased with the workspace.',
+  precedent_passage:
+    'M5 precedent passages (#901): sealed with the workspace key and private to the member who confirmed them, like memory_item; the decrypted export is exportMemory. Erased with the workspace and with the member memory erasure (cascade from memory_item).',
+  memory_usage:
+    'Ledger of which memory item influenced which output (#72): ids and purpose only, no memory content; erased with the workspace.',
+  memory_pause:
+    "A member's pause-all memory switch (#72): one flag per member, no user content; erased with the workspace.",
   ai_call_result:
     'Short-lived (24 h) retry cache of validated AI gateway outputs (#44); derived from records that are exported themselves, and erased with the workspace.',
 };

@@ -15,6 +15,7 @@ interface BudgetModule {
   SW_BUDGET_BYTES: number;
   swBudget: (source: string, budget?: number) => { gzipBytes: number; budget: number; ok: boolean };
   WORKSPACE_ROUTE_MANIFEST: string;
+  commonChunks: (...lists: string[][]) => string[];
   shellDelta: (
     homeChunks: string[],
     routeChunks: string[],
@@ -25,6 +26,8 @@ interface BudgetModule {
   COURTS_ROUTE_MANIFESTS: string[];
   MATTERS_ROUTE_BUDGET_BYTES: number;
   MATTERS_ROUTE_MANIFEST: string;
+  DRAFTS_ROUTE_BUDGET_BYTES: number;
+  DRAFTS_ROUTE_MANIFEST: string;
   TIMELINE_ROUTE_BUDGET_BYTES: number;
   TIMELINE_ROUTE_MANIFEST: string;
   MATTER_WORKSPACE_MANIFEST: string;
@@ -90,6 +93,17 @@ describe('workspace shell budget (#155)', () => {
     expect(budget.WORKSPACE_ROUTE_MANIFEST).toBe(
       'server/app/(app)/w/[slug]/today/page_client-reference-manifest.js',
     );
+  });
+
+  it('defines the shell as the chunks every workspace route loads (#59: /today is a real route now)', () => {
+    expect(
+      budget.commonChunks(
+        ['static/chunks/shell.js', 'static/chunks/board.js', 'static/chunks/b.js'],
+        ['static/chunks/b.js', 'static/chunks/matters.js', 'static/chunks/shell.js'],
+        ['static/chunks/shell.js', 'static/chunks/courts.js', 'static/chunks/b.js'],
+      ),
+    ).toEqual(['static/chunks/b.js', 'static/chunks/shell.js']);
+    expect(budget.commonChunks()).toEqual([]);
   });
 
   it('counts only the workspace chunks the home route does not load, each once', () => {
@@ -193,6 +207,25 @@ describe('matters route budget (#388)', () => {
     expect(budget.shellDelta(shared, ['shell.js', 'matters.js', 'extra.js'], sizes, limit).ok).toBe(
       false,
     );
+  });
+});
+
+describe('drafting studio route budget (#827)', () => {
+  it('pins the budget and route', () => {
+    expect(budget.DRAFTS_ROUTE_BUDGET_BYTES).toBe(40 * 1024);
+    expect(budget.DRAFTS_ROUTE_MANIFEST).toBe(
+      'server/app/(app)/w/[slug]/drafts/[id]/page_client-reference-manifest.js',
+    );
+  });
+
+  it('keeps the lazy editor chunk out of the initial delta', () => {
+    const limit = budget.DRAFTS_ROUTE_BUDGET_BYTES;
+    const sizes = { 'shell.js': 28_000, 'studio.js': 30 * 1024, 'editor.js': 80 * 1024 };
+    const delta = budget.shellDelta(['shell.js'], ['shell.js', 'studio.js'], sizes, limit);
+    expect(delta.ok).toBe(true);
+    expect(
+      budget.shellDelta(['shell.js'], ['shell.js', 'studio.js', 'editor.js'], sizes, limit).ok,
+    ).toBe(false);
   });
 });
 

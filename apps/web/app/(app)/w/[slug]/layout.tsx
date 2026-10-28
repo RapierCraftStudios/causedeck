@@ -3,6 +3,7 @@ import { cookies, headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { OfflineSync } from '../../../../components/pwa/offline-sync.tsx';
 import { AppShell } from '../../../../components/shell/app-shell.tsx';
 import type { ShellSupportSession } from '../../../../components/shell/support-banner.tsx';
 import { getWorkspaceFlags } from '../../../../lib/flags.ts';
@@ -108,6 +109,11 @@ export default async function WorkspaceLayout({ children, params }: WorkspaceLay
       supportSession={supportSession}
       deletion={deletion}
     >
+      <OfflineSync
+        slug={result.context.workspace.slug}
+        userId={result.context.user.id}
+        workspaceId={result.context.workspace.id}
+      />
       {children}
     </AppShell>
   );

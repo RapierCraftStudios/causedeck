@@ -54,6 +54,8 @@ export const PURGE_ORDER = [
   'notification',
   'notification_pref',
   'notification_setting',
+  // Court-day reminder ledger (#64): cites the member, so it goes before the members.
+  'reminder_dispatch',
   // WhatsApp number link (#678): the pending challenge and the verified link cite only the user.
   'whatsapp_otp_challenge',
   'whatsapp_link',
@@ -101,8 +103,28 @@ export const PURGE_ORDER = [
   'appearance',
   'hearing',
   'task',
+  // Obligation service (#67): children before the obligation they hang off.
+  'obligation_event',
+  'defect',
+  'certified_copy',
+  // A0 corrections (#558): cite their document, so before it.
+  'correction',
+  // Stale-matter snoozes (#70): cite their matter, so before it.
+  'attention_snooze',
+  // Continuity (#71): handover versions and per-member matter views cite their matter and the
+  // members, so they go before both.
+  'handover_note',
+  'matter_view',
+  // Outward drafts (#735): the share log and versions before their draft, then the matter rows.
+  'outward_share_log',
+  'outward_draft_version',
+  'outward_draft',
   'obligation',
   'order',
+  // Brief state (#60): cites a listing, so it goes first.
+  'brief_state',
+  // Brief shares (#507): no listing reference; revoked by the workspace's deletion.
+  'brief_share',
   'listing',
   'bench_change_alert',
   'bench_roster_entry',
@@ -113,6 +135,10 @@ export const PURGE_ORDER = [
   // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.
   'case_status_snapshot',
   'case_watch',
+  // Court day (#58): the marker cites a hall and the snapshot a forum and a capture; all three
+  // are purged later, so both go before them.
+  'court_day_marker',
+  'list_snapshot',
   'review_correction',
   'proceeding_state_change',
   'proceeding_link',
@@ -140,9 +166,23 @@ export const PURGE_ORDER = [
   'capture',
   'workspace_capture_channel',
   'matter_restriction',
+  // Drafts (#766): the draft first (its versions are immutable and go with it by cascade), then
+  // the workspace's own templates (the system catalogue, null workspace_id, is never matched).
+  // M5 passages (#901) cite an immutable draft version (restrict) and a memory item.
+  'precedent_passage',
+  'authority',
+  'draft_consistency_report',
+  'draft_fact_ack',
+  'draft_export',
+  'draft',
+  'draft_version',
+  'template',
   // Judgment alerts (#497): alerts before the tag they cite, both before their matter.
   'judgment_alert',
   'matter_issue_tag',
+  // Research notes and provider templates (#80): notes cite their matter, so before it.
+  'research_note',
+  'research_provider',
   'matter',
   // Custom court reference rows (#344): halls and benches before their forum; the catalogue
   // (null workspace_id) is never matched.
@@ -171,6 +211,13 @@ export const PURGE_ORDER = [
   'workspace_settings',
   // AI gateway retry cache (#44): holds model output, unlike the append-only ai_call it points at.
   'ai_call_result',
+  // Lawyer memory (#72): usage, embeddings and proposals before the items they cite; the pause row
+  // cites the member's user only.
+  'memory_usage',
+  'memory_embedding',
+  'memory_proposal',
+  'memory_item',
+  'memory_pause',
   'job_effect',
   'member',
 ] as const;

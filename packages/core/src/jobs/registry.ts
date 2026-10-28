@@ -9,6 +9,17 @@ import {
   activityDigestMember,
   activityDigestSchedule,
 } from './definitions/activity-digest.ts';
+import {
+  obligationReminders,
+  obligationRemindersSchedule,
+} from './definitions/obligation-reminders.ts';
+import { attentionScan, attentionScanSchedule } from './definitions/attention-scan.ts';
+import {
+  reminderEvening,
+  reminderMorning,
+  reminderOutcomeMissing,
+  reminderSchedule,
+} from './definitions/reminders.ts';
 import { courtDataRetention } from './definitions/court-data-retention.ts';
 import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
 import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
@@ -28,6 +39,7 @@ import { captureRetention, systemCaptureRetention } from './definitions/capture-
 import { captureScan } from './definitions/capture-scan.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
+import { briefRefresh, briefRefreshSweep } from './definitions/brief-refresh.ts';
 import { portfolioAlertScan } from './definitions/portfolio-alert-scan.ts';
 import { ordersPoll } from './definitions/orders-poll.ts';
 import { statusPoll } from './definitions/status-poll.ts';
@@ -45,9 +57,17 @@ import { deletionTick } from './definitions/deletion-tick.ts';
 import { boardPoll } from './definitions/board-poll.ts';
 import { causelistPoll } from './definitions/causelist-poll.ts';
 import { noticesPoll } from './definitions/notices-poll.ts';
+import { draftingCitationsCheck } from './definitions/drafting-citations-check.ts';
+import { draftingConsistencyCheck } from './definitions/drafting-consistency-check.ts';
+import { draftingExport } from './definitions/drafting-export.ts';
 import { exportBuild } from './definitions/export-build.ts';
 import { exportExpire } from './definitions/export-expire.ts';
 import { memoryErase } from './definitions/memory-erase.ts';
+import { memoryPurge, systemMemoryPurge } from './definitions/memory-purge.ts';
+import {
+  memoryReviewPrepare,
+  systemMemoryReviewPrepare,
+} from './definitions/memory-review-prepare.ts';
 import { notificationDeliver } from './definitions/notification-deliver.ts';
 import {
   notificationDigest,
@@ -185,12 +205,19 @@ export const registry = createRegistry([
   auditVerify,
   auditRetention,
   exportBuild,
+  draftingExport,
+  draftingCitationsCheck,
+  draftingConsistencyCheck,
   exportExpire,
   supportSessionExpire,
   deletionTick,
   deletionErase,
   accountDelete,
   memoryErase,
+  systemMemoryPurge,
+  memoryPurge,
+  systemMemoryReviewPrepare,
+  memoryReviewPrepare,
   captureScan,
   captureProcess,
   systemCaptureRetention,
@@ -214,6 +241,16 @@ export const registry = createRegistry([
   webhookDeliver,
   systemWebhookSweep,
   ordersPoll,
+  obligationRemindersSchedule,
+  obligationReminders,
+  attentionScanSchedule,
+  attentionScan,
+  briefRefresh,
+  briefRefreshSweep,
+  reminderSchedule,
+  reminderEvening,
+  reminderMorning,
+  reminderOutcomeMissing,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -245,12 +282,19 @@ export type JobMap = RegistryMap<
     typeof auditVerify,
     typeof auditRetention,
     typeof exportBuild,
+    typeof draftingExport,
+    typeof draftingCitationsCheck,
+    typeof draftingConsistencyCheck,
     typeof exportExpire,
     typeof supportSessionExpire,
     typeof deletionTick,
     typeof deletionErase,
     typeof accountDelete,
     typeof memoryErase,
+    typeof systemMemoryPurge,
+    typeof memoryPurge,
+    typeof systemMemoryReviewPrepare,
+    typeof memoryReviewPrepare,
     typeof captureScan,
     typeof captureProcess,
     typeof systemCaptureRetention,
@@ -274,6 +318,16 @@ export type JobMap = RegistryMap<
     typeof webhookDeliver,
     typeof systemWebhookSweep,
     typeof ordersPoll,
+    typeof obligationRemindersSchedule,
+    typeof obligationReminders,
+    typeof attentionScanSchedule,
+    typeof attentionScan,
+    typeof briefRefresh,
+    typeof briefRefreshSweep,
+    typeof reminderSchedule,
+    typeof reminderEvening,
+    typeof reminderMorning,
+    typeof reminderOutcomeMissing,
   ]
 >;
 export type JobName = keyof JobMap;

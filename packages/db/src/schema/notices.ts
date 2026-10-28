@@ -116,3 +116,26 @@ export const noticeMatch = tenantTable(
     check('notice_match_reason_chk', sql`reason in ${inList(NOTICE_MATCH_REASONS)}`),
   ],
 );
+
+/**
+ * One date named by a holiday-list notice document (#628, D-048): a holiday-list notice carries many
+ * dates but `notice.effective_on` only one. Global like `notice` (GLOBAL_TABLES): the app role may
+ * SELECT and INSERT, never UPDATE or DELETE; the dates are read when a listing or deadline is checked.
+ */
+export const noticeHoliday = pgTable(
+  'notice_holiday',
+  {
+    id: id(),
+    noticeId: uuid('notice_id')
+      .notNull()
+      .references(() => notice.id, { onDelete: 'cascade' }),
+    holidayOn: date('holiday_on').notNull(),
+    name: text('name').notNull(),
+    ...timestamps(),
+  },
+  (t) => [
+    unique('notice_holiday_notice_date_uq').on(t.noticeId, t.holidayOn),
+    index('notice_holiday_holiday_on_idx').on(t.holidayOn),
+    check('notice_holiday_name_chk', sql`btrim(name) <> ''`),
+  ],
+);

@@ -14,7 +14,7 @@ const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (char) => ESCAPE
 
 const rupees = (paise: number) => `Rs. ${(paise / 100).toFixed(2)}`;
 
-export function renderInvoicePdf(invoice: PreparedFeeInvoice): string {
+export function renderFeeInvoiceHtml(invoice: PreparedFeeInvoice): string {
   const rows = invoice.lines
     .map(
       (line) =>

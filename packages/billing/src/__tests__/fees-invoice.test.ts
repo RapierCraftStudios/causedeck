@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { numberInvoice, prepareInvoice } from '../fees/invoice';
-import { renderInvoicePdf } from '../fees/render';
+import { renderFeeInvoiceHtml } from '../fees/render';
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 const input = (
@@ -67,9 +67,9 @@ describe('numberInvoice', () => {
   });
 });
 
-describe('renderInvoicePdf', () => {
+describe('renderFeeInvoiceHtml', () => {
   it('escapes values and shows the number', () => {
-    const html = renderInvoicePdf({
+    const html = renderFeeInvoiceHtml({
       ...prepareInvoice(input(), supplier),
       number: 'FE/26-27/000001',
       issueDate: '2026-04-01',

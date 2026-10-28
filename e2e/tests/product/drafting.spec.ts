@@ -48,11 +48,10 @@ test.describe('drafting studio', () => {
   test('queues edits offline and syncs when back online', async ({ page, asUser, context }) => {
     await asUser('owner', { workspace: DRAFTING_WORKSPACE, path: STUDIO });
     await contentReady(page);
-    // The editor loads as its own chunk: let it arrive before the network goes.
-    const editor = page.getByRole('textbox', { name: 'Draft editor' }).first();
-    await expect(editor).toBeVisible();
+    // Offline the studio shows its cached copy read-only; an unsaved edit made before the network
+    // went is what the outbox queues on save.
+    await page.getByRole('textbox', { name: 'Draft editor' }).first().fill('Edited before offline');
     await context.setOffline(true);
-    await editor.fill('Edited offline');
     await page.keyboard.press('Control+s');
     await expect(page.getByText('Offline, changes queued').first()).toBeVisible();
     await context.setOffline(false);

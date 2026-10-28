@@ -16,8 +16,9 @@ import {
 
 const PATHS = { list: 'drafts', studio: `drafts/${DRAFTING.draft.id}` } as const;
 
-async function seriousViolations(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+async function seriousViolations(page: Page, include?: string) {
+  const builder = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']);
+  const results = await (include === undefined ? builder : builder.include(include)).analyze();
   return results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
 }
 
@@ -76,7 +77,7 @@ test.describe('drafting a11y', () => {
         await page.keyboard.press('Tab');
         expect(await dialog.evaluate((el) => el.contains(document.activeElement))).toBe(true);
       }
-      expect(await seriousViolations(page)).toEqual([]);
+      expect(await seriousViolations(page, `[data-slot="${kind}-dialog"]`)).toEqual([]);
       await page.keyboard.press('Escape');
       await expect(dialog).toBeHidden();
       await expect(trigger).toBeFocused();

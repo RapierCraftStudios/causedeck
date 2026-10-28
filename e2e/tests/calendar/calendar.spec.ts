@@ -33,8 +33,11 @@ test.describe('calendar', () => {
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('link', { name: 'Open day' })).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(dialog).toBeHidden();
+    // The popover takes focus once it hydrates, and Escape is handled inside it: retry the key.
+    await expect(async () => {
+      await page.keyboard.press('Escape');
+      await expect(dialog).toBeHidden({ timeout: 1_000 });
+    }).toPass();
   });
 
   test('keyboard: arrows move across days, t jumps to today, w and m switch the view', async ({

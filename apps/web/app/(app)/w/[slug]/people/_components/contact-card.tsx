@@ -20,7 +20,6 @@ export function ContactCard({ contact, active = false }: ContactCardProps) {
       href={contact.href}
       data-contact-row={contact.id}
       data-active={active ? '' : undefined}
-      aria-label={t('list.open', { name: contact.personName })}
       className="border-line hover:bg-surface-muted focus-visible:ring-accent flex flex-col gap-2 rounded-md border p-4 focus-visible:ring-2 data-[active]:ring-2"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">

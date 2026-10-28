@@ -21,7 +21,7 @@ import {
 } from '@causedeck/validators/client-contact';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, type SyntheticEvent } from 'react';
+import { type SyntheticEvent, useId, useState } from 'react';
 
 import type { Result } from '../../../../../../lib/safe-action.ts';
 
@@ -43,6 +43,7 @@ export function ContactForm({
   createAction,
 }: ContactFormProps) {
   const t = useTranslations('people');
+  const kindId = useId();
   const router = useRouter();
   const [clientName, setClientName] = useState('');
   const [kind, setKind] = useState<ContactKind>('primary');
@@ -126,8 +127,9 @@ export function ContactForm({
               }}
             />
           </Field>
-          <Field label={t('form.kind')}>
+          <Field label={t('form.kind')} controlId={kindId}>
             <select
+              id={kindId}
               data-contact-field="kind"
               className="border-line-control bg-surface h-9 w-full rounded-md border px-2 text-sm"
               value={kind}

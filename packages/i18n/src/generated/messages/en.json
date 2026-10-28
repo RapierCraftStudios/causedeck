@@ -1331,6 +1331,7 @@
         "appearance": "Appearances",
         "contact": "Client contacts",
         "enquiry": "Enquiry log",
+        "fee": "Fees and invoices",
         "limitation": "Limitation tracker"
       },
       "actions": {
@@ -1416,6 +1417,10 @@
         "enquiry": {
           "read": "Read the enquiry log",
           "write": "Manage the enquiry log"
+        },
+        "fee": {
+          "read": "Read fees, invoices and the client ledger",
+          "write": "Manage fees, invoices and the client ledger"
         }
       },
       "settings": {

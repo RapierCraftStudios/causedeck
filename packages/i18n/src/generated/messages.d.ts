@@ -1332,6 +1332,7 @@ export type Messages = {
         appearance: string;
         contact: string;
         enquiry: string;
+        fee: string;
         limitation: string;
       };
       actions: {
@@ -1415,6 +1416,10 @@ export type Messages = {
           write: string;
         };
         enquiry: {
+          read: string;
+          write: string;
+        };
+        fee: {
           read: string;
           write: string;
         };

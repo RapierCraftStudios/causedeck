@@ -68,7 +68,9 @@ export function RatingScale({
           aria-label={labels.option(n)}
           tabIndex={value === n || (value === null && n === 1) ? 0 : -1}
           disabled={disabled}
-          onClick={() => onSelect(n)}
+          onClick={() => {
+            onSelect(n);
+          }}
           className={cn(
             'border-line focus-visible:ring-ring min-h-12 min-w-12 rounded-md border text-base font-medium focus-visible:ring-2 focus-visible:outline-none',
             value === n ? 'bg-primary text-primary-foreground' : 'bg-background text-foreground',
@@ -195,7 +197,9 @@ export function PulseCardView({
                 labels={{ legend: item.label, option: labels.option }}
                 value={values[item.id] ?? null}
                 disabled={state === 'saving'}
-                onSelect={(v) => onChange(item.id, v)}
+                onSelect={(v) => {
+                  onChange(item.id, v);
+                }}
               />
               <p className="text-muted-foreground flex justify-between text-xs" aria-hidden>
                 <span>{labels.low}</span>
@@ -300,18 +304,22 @@ export function ContextTestView({
                 {phase === 'running' ? (
                   <span className="flex gap-2" role="group" aria-label={q.label}>
                     <Button
-                      variant={q.mark === true ? 'default' : 'outline'}
+                      variant={q.mark === true ? 'primary' : 'outline'}
                       aria-pressed={q.mark === true}
                       className="min-h-12"
-                      onClick={() => onMark(q.id, true)}
+                      onClick={() => {
+                        onMark(q.id, true);
+                      }}
                     >
                       {labels.correct}
                     </Button>
                     <Button
-                      variant={q.mark === false ? 'default' : 'outline'}
+                      variant={q.mark === false ? 'primary' : 'outline'}
                       aria-pressed={q.mark === false}
                       className="min-h-12"
-                      onClick={() => onMark(q.id, false)}
+                      onClick={() => {
+                        onMark(q.id, false);
+                      }}
                     >
                       {labels.wrong}
                     </Button>

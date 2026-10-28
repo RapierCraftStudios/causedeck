@@ -29,7 +29,7 @@ import {
   PovPrefs,
   PreparednessRating,
   PreparednessSkip,
-} from '@causedeck/validators/proof-of-value';
+} from '@causedeck/validators';
 import { z } from 'zod';
 
 import { type Result } from '../../../../../lib/safe-action.ts';
@@ -43,7 +43,11 @@ const who = (ctx: { userId: string; workspaceId: string }) => ({
 });
 
 const rate = workspaceAction(scoped(PreparednessRating.shape), (input, ctx) =>
-  recordPreparedness(deps(ctx), who(ctx), input),
+  recordPreparedness(deps(ctx), who(ctx), {
+    hearingId: input.hearingId,
+    rating: input.rating,
+    ...(input.note === undefined ? {} : { note: input.note }),
+  }),
 );
 const skip = workspaceAction(scoped(PreparednessSkip.shape), (input, ctx) =>
   recordSkip(deps(ctx), who(ctx), input),
@@ -65,8 +69,8 @@ const prefs = workspaceAction(scoped(PovPrefs.shape), (input, ctx) =>
   setPovPrefs(deps(ctx), who(ctx), input),
 );
 const readPrefs = workspaceAction(scoped({}), (_input, ctx) => getPovPrefs(deps(ctx), who(ctx)));
-const own = workspaceAction(scoped({ memberId: z.string().uuid().optional() }), (input, ctx) =>
-  listPov(deps(ctx), who(ctx), input),
+const own = workspaceAction(scoped({ memberId: z.uuid().optional() }), (input, ctx) =>
+  listPov(deps(ctx), who(ctx), input.memberId === undefined ? {} : { memberId: input.memberId }),
 );
 const remove = workspaceAction(scoped(PovDeleteRating.shape), async (input, ctx) => {
   await deleteOwnRating(deps(ctx), who(ctx), input);

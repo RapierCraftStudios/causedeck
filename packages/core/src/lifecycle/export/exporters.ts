@@ -239,6 +239,13 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('case_status_snapshot'),
   // Corrections CauseDeck review fanned out to this workspace's watched proceedings (#518).
   ws('review_correction'),
+  // A0 grid corrections (#558): customer content, exported with the workspace.
+  ws('correction'),
+  ws('attention_snooze'),
+  // Continuity (#71): saved handover versions are workspace content (addressed to members, so no
+  // single user column) and each member's last-opened time per matter is exported with the workspace.
+  ws('handover_note'),
+  ws('matter_view'),
 ]);
 
 export const lifecycleExporter = tablesExporter('lifecycle', [
@@ -280,6 +287,12 @@ export const mattersExporter = tablesExporter('matters', [
   ws('appearance'),
   ws('order'),
   ws('obligation'),
+  ws('obligation_event'),
+  ws('defect'),
+  ws('certified_copy'),
+  ws('outward_draft'),
+  ws('outward_draft_version'),
+  ws('outward_share_log'),
   ws('task'),
   ws('person'),
   // Client contacts (#82): phone, email and language of a client; personal data the workspace owns.
@@ -300,6 +313,10 @@ export const mattersExporter = tablesExporter('matters', [
   // judgment itself is global corpus data, not the workspace's.
   ws('matter_issue_tag'),
   ws('judgment_alert'),
+  // Research notes (#80): the lawyer's own notes and chosen authorities, and the workspace's own
+  // https provider templates.
+  ws('research_note'),
+  ws('research_provider'),
 ]);
 
 // What the automation engine did and proposed (#47): proposals, the activity feed with its undo
@@ -335,6 +352,18 @@ const whatsappLinkExporter = tablesExporter('whatsapp-link', [
   ws('whatsapp_link', { userColumn: 'user_id' }),
 ]);
 
+// Drafting (#766): the workspace's own templates (system templates are not tenant data), its drafts
+// and their immutable versions with the content digest. Block trees hold the text the member drafted.
+const draftingExporter = tablesExporter('drafting', [
+  ws('template'),
+  ws('draft', { userColumn: 'created_by' }),
+  ws('draft_version', { userColumn: 'created_by' }),
+  ws('authority'),
+  ws('draft_consistency_report'),
+  ws('draft_fact_ack', { userColumn: 'user_id' }),
+  ws('draft_export', { userColumn: 'created_by' }),
+]);
+
 // Enterprise onboarding (#682): SSO providers without their config (client secrets), SCIM tokens
 // without the hash, and the provisioning and migration runs with their per-row state.
 const enterpriseExporter = tablesExporter('enterprise', [
@@ -361,6 +390,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   webhooksExporter,
   portfoliosExporter,
   whatsappLinkExporter,
+  draftingExporter,
   enterpriseExporter,
 ];
 

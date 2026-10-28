@@ -1,0 +1,208 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`system template registry > renders generic_a0.adjournment_note with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+Note for adjournment
+Court: Demo High Court
+Matter type: As printed in the cause list
+Case number: TNCH010001232024
+Matter: Asha Vellore v. Department of Roads
+Petitioner: Asha Vellore
+Respondent: Department of Roads
+Before: Justice A. Sample
+Listed on: 2025-03-12
+Request
+[[missing: narrative:b.9.0]]
+Submitted for the consideration of the forum.
+Advocate: K. Counsel
+Enrolment No.: MS/1/2020
+Date: 2025-01-01"
+`;
+
+exports[`system template registry > renders generic_a0.client_covering_letter with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+From: Counsel Chambers
+Date: 2025-01-01
+To: Asha Vellore
+Re: Asha Vellore v. Department of Roads
+Dear Sir or Madam,
+[[missing: narrative:b.5]]
+Please contact the office if any enclosure is unclear.
+Yours faithfully: K. Counsel"
+`;
+
+exports[`system template registry > renders karnataka_hc.certified_copy_application with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+Application for certified copy
+Court: Demo High Court
+Matter type: WP, WA, RFA, MFA
+Case number or FR number: TNCH010001232024
+Matter: Asha Vellore v. Department of Roads
+Petitioner: Asha Vellore
+Respondent: Department of Roads
+Before: Justice A. Sample
+Listed on: 2025-03-12
+Copy applied for
+[[missing: narrative:b.9.0]]
+The applicant requests the certified copy to be issued in the usual course.
+Advocate: K. Counsel
+Enrolment No.: MS/1/2020
+Date: 2025-01-01"
+`;
+
+exports[`system template registry > renders karnataka_hc.client_covering_letter with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+From: Counsel Chambers
+Date: 2025-01-01
+To: Asha Vellore
+Re: Asha Vellore v. Department of Roads
+Dear Sir or Madam,
+[[missing: narrative:b.5]]
+Please contact the office if any enclosure is unclear.
+Yours faithfully: K. Counsel"
+`;
+
+exports[`system template registry > renders karnataka_hc.early_listing_memo with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+Memo for early listing
+Court: Demo High Court
+Matter type: WP, WA, RFA, MFA
+Case number or FR number: TNCH010001232024
+Matter: Asha Vellore v. Department of Roads
+Petitioner: Asha Vellore
+Respondent: Department of Roads
+Before: Justice A. Sample
+Listed on: 2025-03-12
+Grounds for early listing
+[[missing: narrative:b.9.0]]
+Submitted for the consideration of the Court.
+Advocate: K. Counsel
+Enrolment No.: MS/1/2020
+Date: 2025-01-01"
+`;
+
+exports[`system template registry > renders karnataka_hc.memo_of_appearance with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+Memo of appearance
+Court: Demo High Court
+Matter type: WP, WA, RFA, MFA
+Case number or FR number: TNCH010001232024
+Matter: Asha Vellore v. Department of Roads
+Petitioner: Asha Vellore
+Respondent: Department of Roads
+Before: Justice A. Sample
+Listed on: 2025-03-12
+Appearance
+The advocate named below appears for the party named in the narrative that follows.
+[[missing: narrative:b.9.1]]
+Advocate: K. Counsel
+Enrolment No.: MS/1/2020
+Date: 2025-01-01"
+`;
+
+exports[`system template registry > renders karnataka_hc.mention_memo with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+Memo for mention or adjournment
+Court: Demo High Court
+Matter type: WP, WA, RFA, MFA
+Case number or FR number: TNCH010001232024
+Matter: Asha Vellore v. Department of Roads
+Petitioner: Asha Vellore
+Respondent: Department of Roads
+Before: Justice A. Sample
+Listed on: 2025-03-12
+Request
+[[missing: narrative:b.9.0]]
+Submitted for the consideration of the Court.
+Advocate: K. Counsel
+Enrolment No.: MS/1/2020
+Date: 2025-01-01"
+`;
+
+exports[`system template registry > renders madras_hc.certified_copy_application with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+Application for certified copy
+Court: Demo High Court
+Matter type: WP, WA, CMA, WMP
+Case number or S.R. number: TNCH010001232024
+Matter: Asha Vellore v. Department of Roads
+Petitioner: Asha Vellore
+Respondent: Department of Roads
+Before: Justice A. Sample
+Listed on: 2025-03-12
+Copy applied for
+[[missing: narrative:b.9.0]]
+The applicant requests the certified copy to be issued in the usual course.
+Advocate: K. Counsel
+Enrolment No.: MS/1/2020
+Date: 2025-01-01"
+`;
+
+exports[`system template registry > renders madras_hc.client_covering_letter with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+From: Counsel Chambers
+Date: 2025-01-01
+To: Asha Vellore
+Re: Asha Vellore v. Department of Roads
+Dear Sir or Madam,
+[[missing: narrative:b.5]]
+Please contact the office if any enclosure is unclear.
+Yours faithfully: K. Counsel"
+`;
+
+exports[`system template registry > renders madras_hc.early_listing_memo with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+Memo for early listing
+Court: Demo High Court
+Matter type: WP, WA, CMA, WMP
+Case number or S.R. number: TNCH010001232024
+Matter: Asha Vellore v. Department of Roads
+Petitioner: Asha Vellore
+Respondent: Department of Roads
+Before: Justice A. Sample
+Listed on: 2025-03-12
+Grounds for early listing
+[[missing: narrative:b.9.0]]
+Submitted for the consideration of the Court.
+Advocate: K. Counsel
+Enrolment No.: MS/1/2020
+Date: 2025-01-01"
+`;
+
+exports[`system template registry > renders madras_hc.memo_of_appearance with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+Memo of appearance
+Court: Demo High Court
+Matter type: WP, WA, CMA, WMP
+Case number or S.R. number: TNCH010001232024
+Matter: Asha Vellore v. Department of Roads
+Petitioner: Asha Vellore
+Respondent: Department of Roads
+Before: Justice A. Sample
+Listed on: 2025-03-12
+Appearance
+The advocate named below appears for the party named in the narrative that follows.
+[[missing: narrative:b.9.1]]
+Advocate: K. Counsel
+Enrolment No.: MS/1/2020
+Date: 2025-01-01"
+`;
+
+exports[`system template registry > renders madras_hc.mention_memo with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+Memo for mention or adjournment
+Court: Demo High Court
+Matter type: WP, WA, CMA, WMP
+Case number or S.R. number: TNCH010001232024
+Matter: Asha Vellore v. Department of Roads
+Petitioner: Asha Vellore
+Respondent: Department of Roads
+Before: Justice A. Sample
+Listed on: 2025-03-12
+Request
+[[missing: narrative:b.9.0]]
+Submitted for the consideration of the Court.
+Advocate: K. Counsel
+Enrolment No.: MS/1/2020
+Date: 2025-01-01"
+`;

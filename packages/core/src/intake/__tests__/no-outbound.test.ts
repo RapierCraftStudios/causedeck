@@ -1,4 +1,4 @@
-// The intake domain sends nothing (ADR 0043): a static check of its sources.
+// The intake domain sends nothing (ADR 0047): a static check of its sources.
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,7 +16,7 @@ const FORBIDDEN = [
   /\bfetch\(/,
 ];
 
-describe('intake sends nothing (ADR 0043)', () => {
+describe('intake sends nothing (ADR 0047)', () => {
   it('reads the domain sources', () => {
     expect(sources).toEqual(expect.arrayContaining(['enquiry.ts', 'conflict.ts', 'index.ts']));
   });

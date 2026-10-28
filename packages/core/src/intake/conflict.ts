@@ -1,4 +1,4 @@
-// `runConflictCheck` (#87, ADR 0043): checks the parties on an enquiry against the chamber's own
+// `runConflictCheck` (#87, ADR 0047): checks the parties on an enquiry against the chamber's own
 // matters by wrapping `checkConflicts` (which matches with `nameSimilarity`). The result is a ranked
 // list of hits with the matter, the chamber's role there and a plain reason; it never says
 // "conflicted" or "clear", because that call is the advocate's. The run is stored (hits only), moves a

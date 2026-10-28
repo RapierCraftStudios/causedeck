@@ -4,6 +4,8 @@
 export {
   NOTICE_PARSERS,
   pollNotices,
+  type NoticeDocument,
+  type NoticeDocumentFetcher,
   type NoticeFetcher,
   type NoticeParser,
   type PollNoticesDeps,

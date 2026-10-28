@@ -3,9 +3,11 @@
 // and when, and shows 'Brief changed since you marked it prepared' once a material change cleared it.
 import { Button } from '@causedeck/ui/button';
 import type { Brief } from '@causedeck/validators';
+import { useParams } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useEffect, useState, useSyncExternalStore, useTransition } from 'react';
 
+import { useOfflineEdits } from '../../../../../../../lib/offline/use-outbox.ts';
 import { markPreparedAction } from '../actions.ts';
 
 import { showStaleNote } from './model.ts';
@@ -37,6 +39,8 @@ export function PreparedControl({
   const [dismissed, setDismissed] = useState(false);
   const [error, setError] = useState(false);
   const [pending, start] = useTransition();
+  const { slug } = useParams<{ slug: string }>();
+  const { enqueue } = useOfflineEdits(slug, workspaceId);
 
   // The refresh clears the mark once; the note stays across a reload until the brief is marked again.
   const staleKey = `brief-stale:${listingId}`;
@@ -59,6 +63,18 @@ export function PreparedControl({
   const toggle = () => {
     const next = mark === null;
     setError(false);
+    if (offline) {
+      // Sealed on this device; the server stamps who and when on reconnect (#851).
+      void enqueue({ kind: 'brief_prepared', listingId, prepared: next }).then((queued) => {
+        if (!queued) {
+          setError(true);
+          return;
+        }
+        setDismissed(true);
+        setMark(next ? { by: null, at: new Date().toISOString() } : null);
+      });
+      return;
+    }
     start(async () => {
       const result = await markPreparedAction({ workspaceId, listingId, prepared: next });
       if (!result.ok) {
@@ -83,7 +99,7 @@ export function PreparedControl({
         size="sm"
         variant={mark ? 'secondary' : 'primary'}
         aria-pressed={mark !== null}
-        disabled={!canWrite || pending || offline}
+        disabled={!canWrite || pending}
         onClick={toggle}
       >
         {mark ? t('unmark') : t('mark')}

@@ -93,4 +93,14 @@ describe('MemoryCard', () => {
     expect(source).not.toMatch(/from\s+['"]@causedeck\/(core|db|web|mobile)/);
     expect(source).not.toMatch(/from\s+['"](\.\.\/){3,}/);
   });
+
+  it('dims a paused memory, labels it and toggles pause', async () => {
+    const onPause = vi.fn();
+    render(<MemoryCard {...MEMORIES.M2} paused onPause={onPause} lastUsed="Used 2 days ago" />);
+    expect(screen.getByRole('article')).toHaveAttribute('data-paused');
+    expect(screen.getByText('Paused')).toBeInTheDocument();
+    expect(screen.getByText('Used 2 days ago')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^Resume memory/ }));
+    expect(onPause).toHaveBeenCalledOnce();
+  });
 });

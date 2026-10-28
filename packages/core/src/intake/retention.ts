@@ -1,4 +1,4 @@
-// The enquiry retention sweep (#87, ADR 0043): a closed enquiry is deleted once it has been closed
+// The enquiry retention sweep (#87, ADR 0047): a closed enquiry is deleted once it has been closed
 // for the workspace's `enquiry_retention_months` (default 12). Its parties and stored conflict checks
 // go with it (cascade). The daily `system.enquiry.retention` job lists the workspaces with closed
 // enquiries through `app_enquiry_retention_targets` (ids only) and sweeps each in its own scope.

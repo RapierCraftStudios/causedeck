@@ -93,7 +93,10 @@ test.describe('activity feed', () => {
     await expect(items(page)).toHaveCount(1);
     // Filtered-empty state with Clear filters.
     await page.goto('/w/chennai-solo/activity?q=nothing-matches-this');
-    await expect(page.getByText('No activity matches these filters.')).toBeVisible();
+    // A navigation can briefly hold the streamed copy beside the hydrated one: read the visible one.
+    await expect(
+      page.getByText('No activity matches these filters.').filter({ visible: true }),
+    ).toBeVisible();
     await page.getByRole('button', { name: 'Clear filters' }).last().click();
     await expect(page).toHaveURL(/\/w\/chennai-solo\/activity$/);
     await expect(items(page)).toHaveCount(4);

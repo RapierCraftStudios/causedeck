@@ -10,7 +10,7 @@ import { GLOBAL_TABLES } from '../conventions.ts';
 import { registeredTenantTables } from '../rls-policies.ts';
 import { forum } from '../schema/court.ts';
 import { matter } from '../schema/matter-graph.ts';
-import { notice, noticeMatch } from '../schema/notices.ts';
+import { notice, noticeHoliday, noticeMatch } from '../schema/notices.ts';
 import { inWorkspace, withTestDb } from '../testing/index.ts';
 import { newWorkspace, sqlState } from './rls/fixtures.ts';
 
@@ -143,6 +143,32 @@ describe('notice and notice_match', () => {
           '23505',
         );
       });
+    });
+  });
+});
+
+describe('notice_holiday', () => {
+  it('is global, app-writable (select, insert) and keyed once per notice and date', async () => {
+    expect(GLOBAL_TABLES).toContain('notice_holiday');
+    await withTestDb(async (tx) => {
+      const [priv] = await tx.execute<{ write: boolean; change: boolean; clerk: boolean }>(sql`
+        select has_table_privilege('causedeck_app', 'notice_holiday', 'select, insert') as write,
+               has_table_privilege('causedeck_app', 'notice_holiday', 'update') or
+                 has_table_privilege('causedeck_app', 'notice_holiday', 'delete') as change,
+               has_table_privilege('causedeck_clerk', 'notice_holiday', 'select') as clerk`);
+      expect(priv).toEqual({ write: true, change: false, clerk: false });
+      const [row] = await tx
+        .insert(notice)
+        .values({ ...base, kind: 'holiday', url: url() })
+        .returning({ id: notice.id });
+      const noticeId = row?.id ?? '';
+      const add = (holidayOn: string, name: string) =>
+        sqlState(
+          tx.transaction((sp) => sp.insert(noticeHoliday).values({ noticeId, holidayOn, name })),
+        );
+      expect(await add('2026-12-25', 'Christmas')).toBeUndefined();
+      expect(await add('2026-12-25', 'Again')).toBe('23505');
+      expect(await add('2026-12-26', '  ')).toBe('23514');
     });
   });
 });

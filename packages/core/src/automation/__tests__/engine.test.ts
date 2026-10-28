@@ -109,7 +109,7 @@ describe('submitProposals', () => {
       const { items } = await submitProposals(w.deps, w.owner, [
         draft({ kind: 'task', source: ai, payload: { title: 'A' } }),
         draft({ kind: 'task', payload: { title: 'B' }, confidence: 0.2 }),
-        draft({ kind: 'memory_item', payload: { note: 'c' } }),
+        draft({ kind: 'fee_entry', payload: { amount: 1 } }),
         draft({ kind: 'task', payload: { title: 'D' }, ambiguous: true }),
       ]);
       expect(items.map((i) => i.status)).toEqual([

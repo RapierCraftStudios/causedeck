@@ -10,7 +10,8 @@ export async function courtNotesSection(
   query: MemoryQuery,
   userId: string,
 ): Promise<BriefLine[]> {
-  const notes = await memory.courtNotes(query);
+  // Called only for a role holding `strategy.read`; the port cites each note it returns.
+  const notes = await memory.courtNotes({ ...query, canStrategy: true });
   return withProvenance(
     notes.filter((n) => n.shared || n.authorUserId === userId).map((n) => toBriefLine(n.line)),
   );

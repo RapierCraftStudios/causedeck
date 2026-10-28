@@ -10,8 +10,10 @@ export const ACTIONS = {
   memory: ['memory.read', 'memory.write'],
   document: ['document.read', 'document.write'],
   task: ['task.read', 'task.write'],
+  // `obligation.track` is the clerk-level subset: tasks, registry defects and certified copies (#67).
+  obligation: ['obligation.read', 'obligation.write', 'obligation.track'],
   listing: ['listing.read'],
-  draft: ['draft.write'],
+  draft: ['draft.read', 'draft.write', 'draft.export'],
   audit: ['audit.read'],
   // The workspace-wide court-day view (#58); `mine` needs no action beyond `listing.read`.
   court_day: ['court_day.view_all'],
@@ -20,7 +22,7 @@ export const ACTIONS = {
   // Client contacts (#82): `contact.write` is the owner/advocate manage; a junior writes through
   // `matter.write` on an assigned matter (`@causedeck/core/people`).
   contact: ['contact.read', 'contact.write'],
-  // The inbound enquiry log (#87, ADR 0043): advocate-level read and write.
+  // The inbound enquiry log (#87, ADR 0047): advocate-level read and write.
   enquiry: ['enquiry.read', 'enquiry.write'],
   export: ['export.run'],
   support: ['support.manage'],

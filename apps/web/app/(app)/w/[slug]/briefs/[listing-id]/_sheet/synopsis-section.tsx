@@ -5,9 +5,17 @@
 import { Button } from '@causedeck/ui/button';
 import { Textarea } from '@causedeck/ui/textarea';
 import type { Brief } from '@causedeck/validators';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useId, useState, useTransition } from 'react';
+import { useId, useMemo, useState, useTransition } from 'react';
 
+import { FactLine } from '../../../../../../../components/drafting/editor.tsx';
+import {
+  singleTextRunner,
+  useFactCheck,
+} from '../../../../../../../lib/drafting/use-fact-check.ts';
+import { useOfflineEdits } from '../../../../../../../lib/offline/use-outbox.ts';
+import { checkFactsLiveAction } from '../../../drafts/[id]/factcheck-actions.ts';
 import { setBriefNoteAction } from '../actions.ts';
 
 import { StatementLine } from './lines.tsx';
@@ -15,6 +23,8 @@ import { StatementLine } from './lines.tsx';
 export interface SynopsisSectionProps {
   workspaceId: string;
   listingId: string;
+  /** The listing's matter: the note is fact-checked against its record while it is typed. */
+  matterId?: string | undefined;
   synopsis: NonNullable<Brief['synopsis']>;
   note: string | null;
   canWrite: boolean;
@@ -25,6 +35,7 @@ export interface SynopsisSectionProps {
 export function SynopsisSection({
   workspaceId,
   listingId,
+  matterId,
   synopsis,
   note,
   canWrite,
@@ -39,9 +50,35 @@ export function SynopsisSection({
   const [error, setError] = useState(false);
   const [pending, start] = useTransition();
   const id = useId();
+  const { slug } = useParams<{ slug: string }>();
+  const { enqueue } = useOfflineEdits(slug, workspaceId);
+  // Live fact-check (#916): only while the note is being edited and the device is online.
+  const blocks = useMemo(() => [{ key: 'text', text }], [text]);
+  const run = useMemo(
+    () => singleTextRunner(checkFactsLiveAction, workspaceId, matterId ?? null),
+    [workspaceId, matterId ?? null],
+  );
+  const facts = useFactCheck({
+    matterId: matterId ?? null,
+    blocks,
+    run,
+    enabled: editing && !offline,
+  });
 
   const save = () => {
     setError(false);
+    if (offline) {
+      // Sealed on this device; it replays on reconnect (#851).
+      void enqueue({ kind: 'brief_note', listingId, note: text }).then((queued) => {
+        if (queued) {
+          setSaved(text.trim() === '' ? null : text.trim());
+          setEditing(false);
+        } else {
+          setError(true);
+        }
+      });
+      return;
+    }
     start(async () => {
       const result = await setBriefNoteAction({ workspaceId, listingId, note: text });
       if (!result.ok) {
@@ -115,9 +152,10 @@ export function SynopsisSection({
               setText(event.target.value);
             }}
           />
+          <FactLine text={text} verdicts={facts.verdicts} facts={{ verdicts: facts.verdicts }} />
           <p className="text-muted-foreground font-sans text-xs">{t('hint')}</p>
           <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={pending || offline}>
+            <Button type="submit" size="sm" disabled={pending}>
               {t('save')}
             </Button>
             <Button

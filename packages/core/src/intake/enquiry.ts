@@ -1,4 +1,4 @@
-// The enquiry services (#87, ADR 0043): `logEnquiry`, `updateEnquiry`, `closeEnquiry`,
+// The enquiry services (#87, ADR 0047): `logEnquiry`, `updateEnquiry`, `closeEnquiry`,
 // `acceptEnquiry`, `listEnquiries` and `getEnquiry`. Each runs through `withIntake`: flag first, then
 // membership and the advocate-level policy check, all before any row is touched. An enquiry moves
 // logged -> checked (by `runConflictCheck`) -> accepted_as_matter (only through a `new_matter`

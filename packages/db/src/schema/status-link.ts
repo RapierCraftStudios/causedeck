@@ -4,7 +4,16 @@
 // coarse user-agent class; no IP is stored. Tenant tables under FORCE RLS via `tenantTable()`; the
 // signed-out read is the narrow `app_status_link_view()` function. There is no send path.
 import { sql } from 'drizzle-orm';
-import { check, foreignKey, index, jsonb, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
+import {
+  check,
+  foreignKey,
+  index,
+  jsonb,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 
 import { id, timestamps } from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';

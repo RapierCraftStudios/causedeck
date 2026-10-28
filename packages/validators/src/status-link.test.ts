@@ -31,7 +31,9 @@ describe('StatusLinkInput', () => {
   it('accepts only EN, TA and KN and an ISO next date', () => {
     expect(StatusLinkInput.safeParse({ ...base, language: 'hi' }).success).toBe(false);
     expect(StatusLinkInput.safeParse({ ...base, nextDate: '3 Nov' }).success).toBe(false);
-    expect(StatusLinkInput.safeParse({ ...base, nextDate: '2026-11-03', language: 'ta' }).success).toBe(true);
+    expect(
+      StatusLinkInput.safeParse({ ...base, nextDate: '2026-11-03', language: 'ta' }).success,
+    ).toBe(true);
   });
 });
 

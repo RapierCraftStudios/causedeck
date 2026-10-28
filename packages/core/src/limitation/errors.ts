@@ -1,13 +1,13 @@
 // Limitation tracker refusals (#940). Both are `WorkspaceError`s, so the API and server actions map
-// them like any other refusal. `FeatureDisabledError` is raised before anything is read or written.
+// them like any other refusal. `LimitationDisabledError` is raised before anything is read or written.
 import { WorkspaceError } from '../shared/errors.ts';
 
-export class FeatureDisabledError extends WorkspaceError {
+export class LimitationDisabledError extends WorkspaceError {
   readonly flag: string;
 
   constructor(flag: string) {
     super('FORBIDDEN', 'The limitation tracker is not enabled for this workspace');
-    this.name = 'FeatureDisabledError';
+    this.name = 'LimitationDisabledError';
     this.flag = flag;
   }
 }

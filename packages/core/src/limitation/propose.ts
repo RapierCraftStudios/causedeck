@@ -14,7 +14,7 @@ import { conflict, notFound } from '../shared/errors.ts';
 import { computeExpiry } from './engine.ts';
 import { findReviewedRule } from './rules.ts';
 import {
-  parse,
+  parseInput,
   withLimitation,
   type LimitationActor,
   type LimitationDeps,
@@ -62,7 +62,7 @@ export async function computeLimitation(
   actor: LimitationActor,
   input: unknown,
 ): Promise<ComputationView> {
-  const data = parse(ComputationInput, input);
+  const data = parseInput(ComputationInput, input);
   return withLimitation(deps, actor, 'write', async (scope) => {
     const [found] = await scope.tx
       .select({ id: matter.id })
@@ -124,7 +124,7 @@ export async function confirmLimitation(
   actor: LimitationActor,
   input: unknown,
 ): Promise<{ computationId: string; obligationId: string; dueDate: string }> {
-  const data = parse(ConfirmInput, input);
+  const data = parseInput(ConfirmInput, input);
   return withLimitation(deps, actor, 'write', async (scope) => {
     const [row] = await scope.tx
       .select()
@@ -194,7 +194,7 @@ export async function listLimitations(
   actor: LimitationActor,
   input: unknown = {},
 ): Promise<ComputationView[]> {
-  const data = parse(ListInput, input);
+  const data = parseInput(ListInput, input);
   return withLimitation(deps, actor, 'read', async (scope) => {
     const rows = await scope.tx
       .select()

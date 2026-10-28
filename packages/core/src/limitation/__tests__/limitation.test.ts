@@ -11,7 +11,7 @@ import { createObligation } from '../../obligations/index.ts';
 import {
   computeLimitation,
   confirmLimitation,
-  FeatureDisabledError,
+  LimitationDisabledError,
   listLimitations,
   listRules,
   loadRuleTable,
@@ -59,7 +59,7 @@ const INPUT = (matterId: string) => ({
 });
 
 describe('limitation.enabled flag', () => {
-  it('refuses every service with FeatureDisabledError while off', async () => {
+  it('refuses every service with LimitationDisabledError while off', async () => {
     await withTestDb(async (tx) => {
       const c = await chamber(tx);
       const off = deps(tx, { flagEnabled: () => Promise.resolve(false) });
@@ -71,7 +71,7 @@ describe('limitation.enabled flag', () => {
         () => confirmLimitation(off, c.owner, { computationId: id }),
         () => listLimitations(off, c.owner),
       ]) {
-        await expect(call()).rejects.toBeInstanceOf(FeatureDisabledError);
+        await expect(call()).rejects.toBeInstanceOf(LimitationDisabledError);
       }
     });
   });

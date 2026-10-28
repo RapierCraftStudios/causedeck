@@ -9,7 +9,7 @@ import { record } from '../audit/index.ts';
 
 import { NoReviewedRuleError } from './errors.ts';
 import {
-  parse,
+  parseInput,
   withLimitation,
   type LimitationActor,
   type LimitationDeps,
@@ -83,7 +83,7 @@ export async function loadRuleTable(
   actor: LimitationActor,
   table: unknown,
 ): Promise<{ version: string; imported: number; skipped: number; draft: true }> {
-  const data = parse(RuleTable, table);
+  const data = parseInput(RuleTable, table);
   return withLimitation(deps, actor, 'write', async (scope) => {
     const rows = await scope.tx
       .insert(limitationRule)

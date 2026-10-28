@@ -13,7 +13,7 @@ function formatDay(date: Date): string {
 }
 
 /** `day` plus `n` calendar days. */
-export function addDays(day: string, n: number): string {
+export function addCalendarDays(day: string, n: number): string {
   return formatDay(new Date(parseDay(day).getTime() + n * DAY_MS));
 }
 
@@ -40,7 +40,7 @@ export function computeExpiry(
 ): string {
   const end =
     periodUnit === 'days'
-      ? addDays(startDate, periodValue)
+      ? addCalendarDays(startDate, periodValue)
       : addMonths(startDate, periodUnit === 'months' ? periodValue : periodValue * 12);
-  return addDays(end, excludedDays);
+  return addCalendarDays(end, excludedDays);
 }

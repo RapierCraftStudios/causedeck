@@ -12,7 +12,7 @@ import type { z } from 'zod';
 import { forbidden, invalid, notFound } from '../shared/errors.ts';
 import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/index.ts';
 
-import { FeatureDisabledError } from './errors.ts';
+import { LimitationDisabledError } from './errors.ts';
 
 export const LIMITATION_FLAG = 'limitation.enabled';
 
@@ -40,7 +40,7 @@ export interface LimitationScope {
   canSeeRules: boolean;
 }
 
-export function parse<S extends z.ZodType>(schemaOf: S, input: unknown): z.output<S> {
+export function parseInput<S extends z.ZodType>(schemaOf: S, input: unknown): z.output<S> {
   const parsed = schemaOf.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
@@ -59,7 +59,7 @@ export async function withLimitation<T>(
   const flag =
     deps.flagEnabled ??
     ((workspaceId) => isEnabled(LIMITATION_FLAG, { workspaceId }, { db: deps.db }));
-  if (!(await flag(actor.workspaceId))) throw new FeatureDisabledError(LIMITATION_FLAG);
+  if (!(await flag(actor.workspaceId))) throw new LimitationDisabledError(LIMITATION_FLAG);
   return withWorkspace(deps.db, actor, async (tx) => {
     const role = await memberRole(tx, actor.userId, actor.workspaceId);
     if (role === null || !isRole(role)) throw notFound('Matter not found');

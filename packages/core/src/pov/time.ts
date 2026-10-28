@@ -16,7 +16,7 @@ function ist(at: Date): Date {
 }
 
 /** `YYYY-MM-DD` of the IST day containing `at`. */
-export function istDay(at: Date): string {
+export function povIstDay(at: Date): string {
   return ist(at).toISOString().slice(0, 10);
 }
 

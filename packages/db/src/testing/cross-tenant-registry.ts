@@ -1132,7 +1132,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   POV_REPORT_HEADER: 'constant',
   BASELINE_DAYS: 'constant',
   isoWeekIst: 'pure',
-  istDay: 'pure',
+  povIstDay: 'pure',
   pulseWindowOpen: 'pure',
   isBaseline: 'pure',
   // M5 playbook value codec (#901): pure conversion between a playbook and its memory value lines.

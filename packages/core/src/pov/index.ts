@@ -5,4 +5,4 @@ export * from './prefs.ts';
 export * from './preparedness.ts';
 export * from './load-pulse.ts';
 export * from './context-test.ts';
-export { isoWeekIst, istDay, pulseWindowOpen, isBaseline, BASELINE_DAYS } from './time.ts';
+export { isoWeekIst, povIstDay, pulseWindowOpen, isBaseline, BASELINE_DAYS } from './time.ts';

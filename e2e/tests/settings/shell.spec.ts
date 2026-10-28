@@ -54,6 +54,7 @@ test.describe('settings shell', () => {
         'Audit log',
         'Support access',
         'Court watch',
+        'Research',
         'Single sign-on',
       ]);
       await expect(subNav(page).getByRole('link', { name: 'Profile' })).toHaveAttribute(
@@ -89,6 +90,7 @@ test.describe('settings shell', () => {
       'Privacy',
       'Audit log',
       'Court watch',
+      'Research',
     ]);
     await page.goto(`/w/${SHELL_WORKSPACE}/settings/danger`);
     await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText('No access');

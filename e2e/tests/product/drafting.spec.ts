@@ -33,7 +33,8 @@ test.describe('drafting studio', () => {
   }) => {
     await asUser('owner', { workspace: DRAFTING_WORKSPACE, path: STUDIO });
     await contentReady(page);
-    const editor = page.getByLabel('Draft editor').first();
+    // The <main> landmark carries the same name as each text area: target the text box.
+    const editor = page.getByRole('textbox', { name: 'Draft editor' }).first();
     await editor.fill('Memo of appearance (edited)');
     await page.keyboard.press('Control+s');
     await expect(page.getByText('Saved', { exact: true }).first()).toBeVisible();
@@ -48,6 +49,8 @@ test.describe('drafting studio', () => {
     await asUser('owner', { workspace: DRAFTING_WORKSPACE, path: STUDIO });
     await contentReady(page);
     await context.setOffline(true);
+    await page.getByRole('textbox', { name: 'Draft editor' }).first().fill('Edited offline');
+    await page.keyboard.press('Control+s');
     await expect(page.getByText('Offline, changes queued').first()).toBeVisible();
     await context.setOffline(false);
     await expect(page.getByText('All changes synced').first()).toBeVisible();

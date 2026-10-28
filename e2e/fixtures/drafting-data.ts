@@ -34,7 +34,7 @@ export async function seedDraftingFixtures(tx: postgres.TransactionSql): Promise
   await tx`
     insert into template (id, workspace_id, code, name, kind, court_preset, blocks, locale, version,
       enabled)
-    values (${DRAFTING.template.id}, ${ws}, ${DRAFTING.template.code}, ${DRAFTING.template.name},
+    values (${DRAFTING.template.id}, null, ${DRAFTING.template.code}, ${DRAFTING.template.name},
             'memo', 'madras_hc', ${tx.json(BLOCKS)}, 'en', 1, true)`;
   await tx`
     insert into draft (id, workspace_id, template_id, title, status)

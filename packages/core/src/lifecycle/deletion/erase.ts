@@ -137,6 +137,10 @@ export const PURGE_ORDER = [
   'fee_invoice_line',
   'fee_invoice',
   'fee_agreement',
+  // Limitation tracker (#84): computations before the rule they cite (RESTRICT) and before matter;
+  // platform rules (null workspace_id) are never matched.
+  'limitation_computation',
+  'limitation_rule',
   // Client contacts (#82) cite their person (composite FK); before it.
   'client_contact',
   // Inbound enquiries (#87): parties and conflict checks cite their enquiry (composite FK); before it.

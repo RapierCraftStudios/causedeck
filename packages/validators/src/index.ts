@@ -6,6 +6,8 @@ export * from './capture';
 export * from './workspace';
 export * from './proposal-draft';
 export * from './digest-preferences';
+export * from './drafting';
+export * from './research';
 export * from './outward-draft';
 export * from './memory';
 export * from './court-day';

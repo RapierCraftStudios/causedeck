@@ -1,17 +1,29 @@
-// `/w/[slug]/drafts` (#736): the update drafts waiting for the lawyer, with the open draft beside
-// the list. Read through `@causedeck/core/outward` in the member's workspace scope, so matter
-// visibility is already applied. A role without `draft.write` (a clerk) gets the permission-denied
-// explanation. In development `?__state=loading|error|denied|offline|empty` previews a state.
-import { PermissionDenied } from '@causedeck/ui/patterns';
+// `/w/[slug]/drafts` (#826, #79 part 2): the workspace's drafts. Rows come from `listDrafts`
+// (`@causedeck/core/drafting`) in the member's workspace scope, so another workspace's drafts never
+// reach the page; a role without `draft.read` (a clerk) gets permission-denied. `?matter=<id>`
+// filters to one matter. The five suggested templates feed the New draft picker, whose server
+// action is `createDraftAction`. Nothing here sends, shares or files anything.
+//
+// States: loading (skeleton rows), error (request id and `Try again`), empty and filtered-empty,
+// offline (banner, New draft off) and permission-denied. In development
+// `?__state=loading|error|denied|offline` previews them.
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import { DraftsList } from '../../../../../components/drafting/drafts-list.tsx';
+import { PermissionDeniedPage } from '../../../../../components/shell/permission-denied-page.tsx';
 import { isDev } from '../../../../../lib/env.ts';
+import { loadDrafts, parseMatterParam, toDraftRowView } from '../../../../../lib/drafting/list.ts';
+import { loadMatterList } from '../../../../../lib/matters/graph-deps.ts';
+import {
+  parseMatterListState,
+  toSearchMattersInput,
+} from '../../../../../lib/matters/list-params.ts';
 import { can } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 
-import { DraftsScreen } from './_components/drafts-screen.tsx';
+import { createDraftAction } from './actions.ts';
 import DraftsLoading from './loading.tsx';
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -21,67 +33,52 @@ interface DraftsPageProps {
   searchParams: Promise<SearchParams>;
 }
 
+/** `?__state=loading|error|denied|offline` previews a state in development. Ignored in production. */
+function devState(searchParams: SearchParams): string | undefined {
+  if (!isDev()) return undefined;
+  const value = searchParams.__state;
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('outward');
+  const t = await getTranslations('drafting.list');
   return { title: t('metaTitle') };
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export default async function DraftsPage({ params, searchParams }: DraftsPageProps) {
-  const { slug } = await params;
-  const query = await searchParams;
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
+  // The layout already checks membership; checking again keeps the page safe on its own.
   const context = await getWorkspaceContext(slug);
   if (!context) notFound();
-  const t = await getTranslations('outward');
-  const preview = isDev() ? [query.__state].flat()[0] : undefined;
-  if (preview === 'loading') return <DraftsLoading />;
-  if (preview === 'error') throw new Error('Drafts preview error');
-  if (preview === 'denied' || !can(context.role, 'draft.write')) {
-    return <PermissionDenied message={t('denied')} />;
-  }
 
-  const scope = { workspaceId: context.workspace.id, userId: context.user.id };
-  const [runtime, outward] = await Promise.all([
-    import('@causedeck/core/runtime'),
-    import('@causedeck/core/outward'),
+  const dev = devState(query);
+  if (dev === 'loading') return <DraftsLoading />;
+  if (dev === 'error') throw new Error('Drafts error state (dev toggle)');
+  if (dev === 'denied' || !can(context.role, 'draft.read')) return <PermissionDeniedPage />;
+
+  const matterFilter = parseMatterParam(query.matter);
+  const [loaded, mattersLoad] = await Promise.all([
+    loadDrafts(context, matterFilter),
+    // The matter filter and the picker offer the first page of the member's matters.
+    loadMatterList(context, toSearchMattersInput(parseMatterListState({}))),
   ]);
-  const wanted = [query.draft].flat()[0];
-  const { drafts, open } = await runtime.inWorkspace(scope, async (tx) => {
-    const deps = { db: tx };
-    const list = preview === 'empty' ? [] : await outward.listDrafts(deps, scope);
-    const detail =
-      wanted !== undefined && UUID.test(wanted)
-        ? await outward.getDraft(deps, scope, wanted).catch(() => null)
-        : null;
-    return { drafts: list, open: detail };
-  });
+  if (loaded.kind === 'denied') return <PermissionDeniedPage />;
+  const matters =
+    mattersLoad.kind === 'page'
+      ? mattersLoad.page.items.map((row) => ({ id: row.id, title: row.title }))
+      : [];
+
   return (
-    <DraftsScreen
+    <DraftsList
       workspaceId={context.workspace.id}
-      drafts={drafts}
-      open={
-        open === null
-          ? null
-          : {
-              id: open.id,
-              matterId: open.matterId,
-              matterTitle: open.matterTitle,
-              audience: open.audience,
-              language: open.language,
-              body: open.body,
-              systemBody: open.systemBody,
-              memoryCitations: open.memoryCitations,
-              facts: open.facts.map((f) => ({
-                kind: f.kind,
-                text: f.text,
-                confirmed: f.confirmed,
-                source: `${f.provenance.table} · ${f.provenance.sourceType}`,
-              })),
-            }
-      }
-      readOnly={false}
-      forceOffline={preview === 'offline'}
+      slug={slug}
+      rows={loaded.drafts.map((item) => toDraftRowView(item, slug))}
+      matters={matters}
+      matterFilter={matterFilter}
+      templates={loaded.templates.map((template) => ({ id: template.id, name: template.name }))}
+      createAction={createDraftAction}
+      canCreate={can(context.role, 'draft.write')}
+      forceOffline={dev === 'offline'}
     />
   );
 }

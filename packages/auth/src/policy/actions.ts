@@ -13,7 +13,7 @@ export const ACTIONS = {
   // `obligation.track` is the clerk-level subset: tasks, registry defects and certified copies (#67).
   obligation: ['obligation.read', 'obligation.write', 'obligation.track'],
   listing: ['listing.read'],
-  draft: ['draft.write'],
+  draft: ['draft.read', 'draft.write', 'draft.export'],
   audit: ['audit.read'],
   // The workspace-wide court-day view (#58); `mine` needs no action beyond `listing.read`.
   court_day: ['court_day.view_all'],

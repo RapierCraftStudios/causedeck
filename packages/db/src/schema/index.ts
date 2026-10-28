@@ -156,6 +156,28 @@ export {
 } from './network.ts';
 export { bench, courtHall, forum, type ForumLanguageProfile } from './court.ts';
 export {
+  DRAFT_EXPORT_FORMATS,
+  DRAFT_FACT_ACK_KINDS,
+  DRAFT_STATUSES,
+  draft,
+  draftConsistencyReport,
+  draftExport,
+  draftFactAck,
+  draftVersion,
+  template,
+  type DraftExportFormat,
+  type DraftFactAckKind,
+  type DraftStatus,
+  type DraftingBlocks,
+} from './drafting.ts';
+export { AUTHORITY_KINDS, AUTHORITY_STATUSES, authority } from './authority.ts';
+export {
+  PRECEDENT_PASSAGE_KINDS,
+  PRECEDENT_PASSAGE_STATUSES,
+  precedentPassage,
+  type PrecedentPassageStatus,
+} from './precedent.ts';
+export {
   ANCHOR_KINDS,
   ANCHOR_QUOTE_MAX,
   anchor,
@@ -337,6 +359,7 @@ export {
   type IssueTagSource,
   type IssueTagStatus,
 } from './matter-issue.ts';
+export { researchNote, researchProvider, type ResearchAuthority } from './research-note.ts';
 export { courtDayMarker, listSnapshot, type ListSnapshotRow } from './court-day.ts';
 export {
   REVIEW_FIELDS,

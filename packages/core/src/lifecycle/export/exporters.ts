@@ -307,6 +307,10 @@ export const mattersExporter = tablesExporter('matters', [
   // judgment itself is global corpus data, not the workspace's.
   ws('matter_issue_tag'),
   ws('judgment_alert'),
+  // Research notes (#80): the lawyer's own notes and chosen authorities, and the workspace's own
+  // https provider templates.
+  ws('research_note'),
+  ws('research_provider'),
 ]);
 
 // What the automation engine did and proposed (#47): proposals, the activity feed with its undo
@@ -342,6 +346,18 @@ const whatsappLinkExporter = tablesExporter('whatsapp-link', [
   ws('whatsapp_link', { userColumn: 'user_id' }),
 ]);
 
+// Drafting (#766): the workspace's own templates (system templates are not tenant data), its drafts
+// and their immutable versions with the content digest. Block trees hold the text the member drafted.
+const draftingExporter = tablesExporter('drafting', [
+  ws('template'),
+  ws('draft', { userColumn: 'created_by' }),
+  ws('draft_version', { userColumn: 'created_by' }),
+  ws('authority'),
+  ws('draft_consistency_report'),
+  ws('draft_fact_ack', { userColumn: 'user_id' }),
+  ws('draft_export', { userColumn: 'created_by' }),
+]);
+
 // Enterprise onboarding (#682): SSO providers without their config (client secrets), SCIM tokens
 // without the hash, and the provisioning and migration runs with their per-row state.
 const enterpriseExporter = tablesExporter('enterprise', [
@@ -368,6 +384,7 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   webhooksExporter,
   portfoliosExporter,
   whatsappLinkExporter,
+  draftingExporter,
   enterpriseExporter,
 ];
 

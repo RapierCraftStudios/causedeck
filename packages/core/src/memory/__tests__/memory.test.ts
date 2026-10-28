@@ -127,11 +127,11 @@ describe('R1: confirm before save', () => {
 });
 
 describe('R2: layers, keys and fields', () => {
-  it('rejects a layer outside M1, M2, M3, M4, M6 and M7', async () => {
-    expect(MemoryLayer.safeParse('M5').success).toBe(false);
+  it('rejects a layer outside M1 to M7', async () => {
+    expect(MemoryLayer.safeParse('M5').success).toBe(true);
     expect(MemoryLayer.safeParse('M8').success).toBe(false);
     await inWorld(async (w) => {
-      for (const key of ['M5.anything', 'M2.not_registered', 'brief_format']) {
+      for (const key of ['M5.not_registered', 'M2.not_registered', 'brief_format']) {
         expect(
           await codeOf(proposeMemory(w.deps, w.owner, { key, value: 'x', scope: 'user' })),
         ).toBe('VALIDATION');

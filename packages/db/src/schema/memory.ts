@@ -1,6 +1,6 @@
 // Lawyer memory tables (#72; PRD ME-1..ME-4, ADR 0044). `memory_item` is what the OS learned about
 // one lawyer: a layer (M1 profile, M2 working preferences, M3 matter memory, M4 private court notes,
-// M6 relationship memory, M7 recognition memory), a registered key and an envelope-encrypted value.
+// M5 playbooks and precedents (#901), M6 relationship memory, M7 recognition memory), a registered key and an envelope-encrypted value.
 // A row exists only after a person confirmed a `memory_proposal` or wrote the note themselves.
 // `memory_embedding` holds matter-scoped vectors of items, `memory_usage` each time an item
 // influenced an output, and `memory_pause` the per-member "pause all memory" switch. Tenant tables
@@ -33,7 +33,7 @@ import { inList, organization, user } from './auth.ts';
 import { matter } from './matter-graph.ts';
 import { person } from './people.ts';
 
-export const MEMORY_LAYERS = ['M1', 'M2', 'M3', 'M4', 'M6', 'M7'] as const;
+export const MEMORY_LAYERS = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7'] as const;
 export type MemoryLayerValue = (typeof MEMORY_LAYERS)[number];
 export const MEMORY_SCOPE_VALUES = ['user', 'workspace', 'matter'] as const;
 export type MemoryScopeValue = (typeof MEMORY_SCOPE_VALUES)[number];
@@ -76,7 +76,7 @@ export const memoryItem = tenantTable(
     status: text('status').$type<MemoryItemStatus>().notNull().default('active'),
     /** Denormalised from the key registry: strategy values are hidden from clerks. */
     strategy: boolean('strategy').notNull().default(false),
-    /** M4 only, set by an owner: the note is visible to the chamber, not just its author. */
+    /** M4 and M5, set by an owner: the item is visible to the chamber, not just its author. */
     sharedWithChamber: boolean('shared_with_chamber').notNull().default(false),
     proposalId: uuid('proposal_id'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -110,7 +110,7 @@ export const memoryItem = tenantTable(
     check('memory_item_matter_scope_chk', sql`(scope = 'matter') = (matter_id is not null)`),
     check('memory_item_layer_scope_chk', sql`(layer = 'M3') = (scope = 'matter')`),
     check('memory_item_person_chk', sql`(layer = 'M6') = (person_id is not null)`),
-    check('memory_item_shared_chk', sql`not shared_with_chamber or layer = 'M4'`),
+    check('memory_item_shared_chk', sql`not shared_with_chamber or layer in ('M4', 'M5')`),
     check(
       'memory_item_value_chk',
       sql`(status = 'deleted') = (value_ciphertext is null) and (status = 'deleted') = (deleted_at is not null)`,

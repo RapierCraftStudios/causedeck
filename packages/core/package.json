@@ -30,6 +30,7 @@
     "./capture": "./src/capture/index.ts",
     "./case-watch": "./src/case-watch/index.ts",
     "./deadlines": "./src/deadlines/index.ts",
+    "./drafting": "./src/drafting/index.ts",
     "./notices": "./src/notices/index.ts",
     "./onboarding": "./src/onboarding/index.ts",
     "./conflicts": "./src/conflicts/index.ts",
@@ -62,6 +63,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "seed:system-templates": "tsx scripts/seed-system-templates.ts",
     "test:tenancy": "vitest run src/__tests__/cross-tenant"
   },
   "dependencies": {
@@ -72,6 +74,7 @@
     "@causedeck/capture": "workspace:*",
     "@causedeck/config": "workspace:*",
     "@causedeck/db": "workspace:*",
+    "@causedeck/drafting": "workspace:*",
     "@causedeck/fetch": "workspace:*",
     "@causedeck/flags": "workspace:*",
     "@causedeck/intelligence": "workspace:*",
@@ -91,6 +94,7 @@
     "eslint": "catalog:",
     "fast-check": "catalog:",
     "pdf-lib": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

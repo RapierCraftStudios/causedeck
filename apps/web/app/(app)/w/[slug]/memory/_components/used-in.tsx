@@ -8,7 +8,7 @@ import { useState } from 'react';
 
 import { usageAction, type UsageResult } from '../actions.ts';
 
-const HREF = { brief: 'briefs', draft: 'drafts', matching: 'matters' } as const;
+const HREF = { brief: 'briefs', draft: 'updates', matching: 'matters' } as const;
 
 export interface UsedInProps {
   workspaceId: string;

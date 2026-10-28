@@ -29,6 +29,17 @@ import { briefShare } from '../schema/share.ts';
 import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
+import { authority } from '../schema/authority.ts';
+import { memoryItem } from '../schema/memory.ts';
+import { precedentPassage } from '../schema/precedent.ts';
+import {
+  draft,
+  draftConsistencyReport,
+  draftFactAck,
+  draftExport,
+  draftVersion,
+  template,
+} from '../schema/drafting.ts';
 import { caseStatusSnapshot, caseWatch } from '../schema/case-watch.ts';
 import { reviewCorrection, reviewItem } from '../schema/review.ts';
 import { extraction } from '../schema/extraction.ts';
@@ -58,6 +69,7 @@ import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { judgment } from '../schema/corpus.ts';
 import { matter } from '../schema/matter-graph.ts';
 import { judgmentAlert, matterIssueTag } from '../schema/matter-issue.ts';
+import { researchNote, researchProvider } from '../schema/research-note.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
 import { proceeding, proceedingLink, proceedingStateChange } from '../schema/proceedings.ts';
 import { appearance, hearing, listing, obligation, order, task } from '../schema/docket.ts';
@@ -221,6 +233,35 @@ async function seedForum(tx: Transaction, workspaceId: string, tag: string): Pro
     })
     .returning({ id: forum.id });
   return first(rows, 'forum').id;
+}
+
+/** A workspace-owned drafting template (#766). */
+async function seedTemplate(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
+  const rows = await tx
+    .insert(template)
+    .values({
+      workspaceId,
+      code: `xt.${tag}.${randomUUID().slice(0, 8)}`,
+      name: 'Seed template',
+      kind: 'notice',
+      courtPreset: 'generic',
+    })
+    .returning({ id: template.id });
+  return first(rows, 'template').id;
+}
+
+/** A draft of a fresh workspace-owned template (#766). */
+async function seedDraft(
+  tx: Transaction,
+  workspaceId: string,
+  tag: string,
+): Promise<{ templateId: string; draftId: string }> {
+  const templateId = await seedTemplate(tx, workspaceId, tag);
+  const rows = await tx
+    .insert(draft)
+    .values({ workspaceId, templateId, title: 'Seed draft' })
+    .returning({ id: draft.id });
+  return { templateId, draftId: first(rows, 'draft').id };
 }
 
 /** A matter of the workspace (#345), for the matter graph and restriction seeds. */
@@ -743,6 +784,169 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       'export_job',
     );
     return { id: row.id };
+  },
+  template: async (tx, { workspaceId, tag }) => ({
+    templateId: await seedTemplate(tx, workspaceId, tag),
+  }),
+  draft: async (tx, { workspaceId, tag }) => seedDraft(tx, workspaceId, tag),
+  draft_version: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(draftVersion)
+      .values({
+        workspaceId,
+        draftId,
+        versionNo: 1,
+        content: [],
+        contentSha256: createHash('sha256').update(draftId).digest('hex'),
+      })
+      .returning({ id: draftVersion.id });
+    return { draftId, id: first(rows, 'draft_version').id };
+  },
+  draft_export: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const contentSha256 = createHash('sha256').update(draftId).digest('hex');
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({ workspaceId, draftId, versionNo: 1, content: [], contentSha256 })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(draftExport)
+      .values({
+        workspaceId,
+        draftVersionId: version.id,
+        format: 'docx',
+        storageKey: `ws/${workspaceId}/export/2026/${draftId}`,
+        sizeBytes: 1,
+        contentSha256,
+      })
+      .returning({ id: draftExport.id });
+    return { draftId, draftVersionId: version.id, id: first(rows, 'draft_export').id };
+  },
+  authority: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({
+          workspaceId,
+          draftId,
+          versionNo: 1,
+          content: [],
+          contentSha256: createHash('sha256').update(draftId).digest('hex'),
+        })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(authority)
+      .values({
+        workspaceId,
+        draftVersionId: version.id,
+        blockId: 'b',
+        span: [0, 13],
+        rawText: '2023 INSC 123',
+        normalized: '2023 INSC 123',
+        kind: 'neutral',
+        status: 'unknown',
+      })
+      .returning({ id: authority.id });
+    return { draftId, draftVersionId: version.id, id: first(rows, 'authority').id };
+  },
+  precedent_passage: async (tx, { workspaceId, ownerId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({
+          workspaceId,
+          draftId,
+          versionNo: 1,
+          content: [],
+          contentSha256: createHash('sha256').update(draftId).digest('hex'),
+        })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const item = first(
+      await tx
+        .insert(memoryItem)
+        .values({
+          workspaceId,
+          layer: 'M5',
+          key: 'M5.precedent',
+          // Workspace scope so the suite can read it as any member (a user-scope item is hidden from all but its owner).
+          scope: 'workspace',
+          ownerUserId: ownerId,
+          valueCiphertext: `seed-ciphertext-${tag}`,
+          sourceType: 'ai',
+          confirmationState: 'confirmed',
+        })
+        .returning({ id: memoryItem.id }),
+      'memory_item',
+    );
+    const rows = await tx
+      .insert(precedentPassage)
+      .values({
+        workspaceId,
+        memoryItemId: item.id,
+        kind: 'prayer',
+        bodyCiphertext: `seed-ciphertext-${tag}`,
+        sourceDraftVersionId: version.id,
+        anchorId: 'b.1',
+      })
+      .returning({ id: precedentPassage.id });
+    return { itemId: item.id, draftVersionId: version.id, id: first(rows, 'precedent_passage').id };
+  },
+  draft_consistency_report: async (tx, { workspaceId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const contentSha256 = createHash('sha256').update(draftId).digest('hex');
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({ workspaceId, draftId, versionNo: 1, content: [], contentSha256 })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(draftConsistencyReport)
+      .values({
+        workspaceId,
+        draftVersionId: version.id,
+        graphRevision: contentSha256,
+        report: { findings: [] },
+      })
+      .returning({ id: draftConsistencyReport.id });
+    return {
+      draftId,
+      draftVersionId: version.id,
+      id: first(rows, 'draft_consistency_report').id,
+    };
+  },
+  draft_fact_ack: async (tx, { workspaceId, ownerId, tag }) => {
+    const { draftId } = await seedDraft(tx, workspaceId, tag);
+    const contentSha256 = createHash('sha256').update(draftId).digest('hex');
+    const version = first(
+      await tx
+        .insert(draftVersion)
+        .values({ workspaceId, draftId, versionNo: 1, content: [], contentSha256 })
+        .returning({ id: draftVersion.id }),
+      'draft_version',
+    );
+    const rows = await tx
+      .insert(draftFactAck)
+      .values({
+        workspaceId,
+        kind: 'export_ack',
+        draftVersionId: version.id,
+        userId: ownerId,
+        reason: `seed-${tag}`,
+      })
+      .returning({ id: draftFactAck.id });
+    return { draftId, draftVersionId: version.id, id: first(rows, 'draft_fact_ack').id };
   },
   forum: async (tx, { workspaceId, tag }) => ({ forumId: await seedForum(tx, workspaceId, tag) }),
   court_hall: async (tx, { workspaceId, tag }) => {
@@ -1311,6 +1515,26 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: judgmentAlert.id });
     return { matterId, tagId, id: first(rows, 'judgment_alert').id };
+  },
+  research_note: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(researchNote)
+      .values({ workspaceId, matterId, title: 'xt note', createdBy: ownerId })
+      .returning({ id: researchNote.id });
+    return { matterId, id: first(rows, 'research_note').id };
+  },
+  research_provider: async (tx, { workspaceId }) => {
+    const rows = await tx
+      .insert(researchProvider)
+      .values({
+        workspaceId,
+        key: 'xt-provider',
+        label: 'XT provider',
+        urlTemplate: 'https://xt.example.test/search?q={q}',
+      })
+      .returning({ id: researchProvider.id });
+    return { id: first(rows, 'research_provider').id };
   },
   import_plan: async (tx, { workspaceId, ownerId }) => {
     const batchId = await seedImportBatch(tx, workspaceId, ownerId);

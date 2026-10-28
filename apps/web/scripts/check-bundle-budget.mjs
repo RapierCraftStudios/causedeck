@@ -66,6 +66,15 @@ export const MATTER_WORKSPACE_MANIFEST =
 export const TIMELINE_ROUTE_MANIFEST =
   'server/app/(app)/w/[slug]/matters/[id]/timeline/page_client-reference-manifest.js';
 
+/**
+ * The drafting studio route (#827): same 40 KB as the Court-Day Board. Editor, facts panel and version
+ * drawer are lazy chunks, so the route's initial JS beyond
+ * shared code stays small (#40: editor chunk lazy-loaded).
+ */
+export const DRAFTS_ROUTE_BUDGET_BYTES = ROUTE_CHUNK_BUDGET_BYTES;
+export const DRAFTS_ROUTE_MANIFEST =
+  'server/app/(app)/w/[slug]/drafts/[id]/page_client-reference-manifest.js';
+
 /** Unique `.js` chunk paths (relative to `.next/`) the home route loads initially. */
 export function initialChunks(buildManifest, clientReferenceManifest) {
   const files = [
@@ -172,6 +181,7 @@ function main() {
   const mattersChunks = chunksOf(MATTERS_ROUTE_MANIFEST);
   const timelineChunks = chunksOf(TIMELINE_ROUTE_MANIFEST);
   const workspaceChunks = chunksOf(MATTER_WORKSPACE_MANIFEST);
+  const draftsChunks = chunksOf(DRAFTS_ROUTE_MANIFEST);
   const gzipBytes = {};
   for (const file of new Set([
     ...homeChunks,
@@ -180,6 +190,7 @@ function main() {
     ...mattersChunks,
     ...timelineChunks,
     ...workspaceChunks,
+    ...draftsChunks,
   ])) {
     gzipBytes[file] = gzipSync(readFileSync(path.join(nextDir, file))).length;
   }
@@ -227,6 +238,11 @@ function main() {
   console.log(
     `${kb(timeline.total).padStart(10)}  route delta (budget ${kb(timeline.budget)} gzip)`,
   );
+
+  const drafts = shellDelta(sharedChunks, draftsChunks, gzipBytes, DRAFTS_ROUTE_BUDGET_BYTES);
+  console.log(`\nDrafting studio route ${DRAFTS_ROUTE_MANIFEST}, chunks beyond shared code:`);
+  for (const file of drafts.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
+  console.log(`${kb(drafts.total).padStart(10)}  route delta (budget ${kb(drafts.budget)} gzip)`);
 
   const readCatalog = (locale) =>
     JSON.parse(readFileSync(path.join(appDir, GENERATED_MESSAGES, `${locale}.json`), 'utf8'));
@@ -278,6 +294,12 @@ function main() {
   if (!timeline.ok) {
     console.error(
       `Timeline route ${TIMELINE_ROUTE_MANIFEST} adds more initial JS than its budget.`,
+    );
+    failed = true;
+  }
+  if (!drafts.ok) {
+    console.error(
+      `Drafting studio route ${DRAFTS_ROUTE_MANIFEST} adds more initial JS than its budget.`,
     );
     failed = true;
   }

@@ -84,7 +84,9 @@ the matrix, before the resource checks below.
 
 | Action | owner | advocate | junior | clerk | viewer |
 | ------ | ----- | -------- | ------ | ----- | ------ |
+| `draft.read` | ✓     | ✓        | ✓      | —     | —      |
 | `draft.write` | ✓     | ✓        | ✓      | —     | —      |
+| `draft.export` | ✓     | ✓        | ✓      | —     | —      |
 
 ## audit
 

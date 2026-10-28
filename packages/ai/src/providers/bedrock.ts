@@ -24,6 +24,7 @@ export const BEDROCK_TASKS: readonly TaskId[] = [
   'tag_news',
   'tag_notice',
   'extract_issue_tags',
+  'draft_narrative',
   'outward_update',
 ];
 

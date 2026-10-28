@@ -14,6 +14,7 @@ import {
   editAction,
   type ReviewResult,
 } from '../../actions.ts';
+import { retirePrecedentAction } from '../../m5-actions.ts';
 import { useMemoryRun } from '../../_components/memory-cards.tsx';
 import { DeleteDialog, EditSheet } from '../../_components/memory-dialogs.tsx';
 
@@ -21,11 +22,20 @@ export interface ReviewStepperProps {
   workspaceId: string;
   slug: string;
   isOwner: boolean;
+  /** `m5_playbooks` is on: M5 items can be retired from the review. */
+  m5Enabled?: boolean;
   cards: CardView[];
 }
 
-export function ReviewStepper({ workspaceId, slug, isOwner, cards }: ReviewStepperProps) {
+export function ReviewStepper({
+  workspaceId,
+  slug,
+  isOwner,
+  cards,
+  m5Enabled = false,
+}: ReviewStepperProps) {
   const t = useTranslations('memory');
+  const tm5 = useTranslations('memoryM5');
   const { run, busy } = useMemoryRun();
   const [index, setIndex] = useState(0);
   const [counts, setCounts] = useState({ kept: 0, edited: 0, deleted: 0 });
@@ -118,8 +128,12 @@ export function ReviewStepper({ workspaceId, slug, isOwner, cards }: ReviewStepp
             paused={false}
             lastUsed={
               card.lastUsedAt === null
-                ? t('neverUsed')
-                : t('lastUsed', { date: card.lastUsedAt.slice(0, 10) })
+                ? card.layer === 'M5'
+                  ? tm5('review.neverUsed')
+                  : t('neverUsed')
+                : card.layer === 'M5'
+                  ? tm5('review.lastUsed', { date: card.lastUsedAt.slice(0, 10) })
+                  : t('lastUsed', { date: card.lastUsedAt.slice(0, 10) })
             }
             labels={{
               action: (action, title) => t('actions.cardAction', { action, title }),
@@ -151,6 +165,22 @@ export function ReviewStepper({ workspaceId, slug, isOwner, cards }: ReviewStepp
             >
               {t('review.edit')}
             </Button>
+            {m5Enabled && card.layer === 'M5' ? (
+              <Button
+                variant="ghost"
+                disabled={busy}
+                onClick={() => {
+                  void run(
+                    () => retirePrecedentAction({ workspaceId, itemId: card.id }),
+                    tm5('review.retired'),
+                  ).then((ok) => {
+                    if (ok) next('deleted');
+                  });
+                }}
+              >
+                {tm5('review.retire')}
+              </Button>
+            ) : null}
             <Button
               variant="ghost"
               disabled={busy}

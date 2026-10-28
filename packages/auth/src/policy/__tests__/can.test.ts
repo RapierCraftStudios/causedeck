@@ -166,7 +166,14 @@ describe('role rules', () => {
     for (const action of ['listing.read', 'task.read', 'document.read'] as const) {
       expect(can(actor('clerk'), action, matter()), action).toEqual({ allow: true });
     }
-    for (const action of ['strategy.read', 'memory.read', 'memory.write', 'draft.write'] as const) {
+    for (const action of [
+      'strategy.read',
+      'memory.read',
+      'memory.write',
+      'draft.read',
+      'draft.write',
+      'draft.export',
+    ] as const) {
       expect(reasonOf(can(actor('clerk'), action, matter())), action).toBe('ROLE_DENIED');
     }
   });

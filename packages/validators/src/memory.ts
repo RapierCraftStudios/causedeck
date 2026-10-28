@@ -1,13 +1,14 @@
 // Lawyer memory (#72; PRD ME-1..ME-4, docs/product/10 §3). Memory is what the OS learns about how
 // one lawyer practises, in layers M1 profile, M2 working preferences, M3 matter memory, M4 private
-// court notes, M6 relationship memory and M7 recognition memory (M5 playbooks are #81). Every key
+// court notes, M5 playbooks and the precedent bank (#901), M6 relationship memory and M7
+// recognition memory. Every key
 // is registered here per layer; a key outside the registry, or one that describes a judge or a
 // bench, is rejected, because memory never profiles the bench (permanent guardrail).
 import { z } from 'zod';
 
 import { BRIEF_SECTION_KEYS } from './brief';
 
-export const MEMORY_LAYERS = ['M1', 'M2', 'M3', 'M4', 'M6', 'M7'] as const;
+export const MEMORY_LAYERS = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7'] as const;
 export const MemoryLayer = z.enum(MEMORY_LAYERS);
 export type MemoryLayer = z.output<typeof MemoryLayer>;
 
@@ -33,6 +34,7 @@ export const LAYER_SCOPES: Readonly<Record<MemoryLayer, readonly MemoryScope[]>>
   M2: ['user', 'workspace'],
   M3: ['matter'],
   M4: ['user'],
+  M5: ['user', 'workspace'],
   M6: ['user', 'workspace'],
   M7: ['user', 'workspace'],
 };
@@ -92,6 +94,22 @@ export const MEMORY_KEYS = {
     layer: 'M4',
     strategy: false,
     description: 'A practical registry or filing tip',
+  },
+  'M5.playbook': {
+    layer: 'M5',
+    strategy: false,
+    description: 'A playbook: preferred court format, standard prayers and annexure order',
+  },
+  'M5.precedent': {
+    layer: 'M5',
+    strategy: false,
+    description: "A passage from the lawyer's own draft saved as a reusable precedent",
+  },
+  'M5.style': {
+    layer: 'M5',
+    strategy: false,
+    description:
+      'An explicit style preference (heading style, numbering, salutation, prayer wording)',
   },
   'M6.client_language': { layer: 'M6', strategy: false, description: 'Language a client prefers' },
   'M6.preferred_contact': {
@@ -155,7 +173,9 @@ export function benchContentReason(value: MemoryValue): string | null {
 
 /** Throws `MemoryGuardError` for a bench-describing key or value. */
 export function assertNotBench(key: string, value: MemoryValue): void {
-  const reason = benchKeyReason(key) ?? benchContentReason(value);
+  // M5 holds the lawyer's own drafting text, which addresses "the Hon'ble Court" by necessity; the
+  // key check still applies, and nothing in M5 describes a judge (it is a passage, not a profile).
+  const reason = benchKeyReason(key) ?? (key.startsWith('M5.') ? null : benchContentReason(value));
   if (reason) throw new MemoryGuardError(reason);
 }
 
@@ -438,3 +458,62 @@ export const MatchingHintInput = z.strictObject({
   target: z.enum(['party', 'matter']).default('party'),
 });
 export type MatchingHintInput = z.input<typeof MatchingHintInput>;
+
+// M5 precedent bank (#901). A passage is proposed from a draft the lawyer exported (L2), and saved
+// only when they confirm it; dismissing records a reason code and the same passage rests 30 days.
+export const PRECEDENT_KINDS = [
+  'prayer',
+  'ground',
+  'facts',
+  'averment',
+  'argument',
+  'annexure_list',
+  'other',
+] as const;
+export const PrecedentKind = z.enum(PRECEDENT_KINDS);
+export type PrecedentKind = z.output<typeof PrecedentKind>;
+
+export const PRECEDENT_STATUSES = ['active', 'retired', 'deleted'] as const;
+export type PrecedentStatus = (typeof PRECEDENT_STATUSES)[number];
+
+export const PRECEDENT_DISMISS_REASONS = [
+  'not_reusable',
+  'too_specific',
+  'incorrect',
+  'already_saved',
+  'other',
+] as const;
+export const PrecedentDismissReason = z.enum(PRECEDENT_DISMISS_REASONS);
+export type PrecedentDismissReason = z.output<typeof PrecedentDismissReason>;
+
+/** The same passage is not proposed again for this long after a dismissal. */
+export const PRECEDENT_DISMISS_REST_DAYS = 30;
+
+/** Where a passage came from: one block of one immutable draft version. */
+export const PrecedentSourceAnchor = z.strictObject({
+  draftVersionId: uuid,
+  anchorId: z.string().min(1).max(200),
+});
+export type PrecedentSourceAnchor = z.output<typeof PrecedentSourceAnchor>;
+
+export const PrecedentProposalSchema = z.strictObject({
+  passageText: text,
+  kind: PrecedentKind,
+  courtId: uuid.nullable(),
+  language: z.string().trim().min(2).max(16).default('en'),
+  sourceAnchor: PrecedentSourceAnchor,
+  confidence: z.number().min(0).max(1),
+});
+export type PrecedentProposalInput = z.input<typeof PrecedentProposalSchema>;
+
+/** A playbook: the lawyer's preferred format per court, standard prayers and annexure order. */
+export const PlaybookSchema = z.strictObject({
+  name: z.string().trim().min(1).max(120),
+  courtId: uuid.nullable(),
+  /** The preferred document format for the court, e.g. `writ_petition`. */
+  format: z.string().trim().min(1).max(80),
+  standardPrayers: z.array(z.string().trim().min(1).max(500)).max(10),
+  annexureOrder: z.array(z.string().trim().min(1).max(100)).max(20),
+});
+export type Playbook = z.output<typeof PlaybookSchema>;
+export type PlaybookInput = z.input<typeof PlaybookSchema>;

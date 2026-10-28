@@ -108,6 +108,8 @@ describe('namespaced catalogs (#174)', () => {
         'common',
         'continuity',
         'courtDay',
+        'drafting',
+        'draftingTemplates',
         'delegation',
         'courtInsights',
         'courts',
@@ -125,6 +127,7 @@ describe('namespaced catalogs (#174)', () => {
         'members',
         'memory',
         'memoryCitations',
+        'memoryM5',
         'nav',
         'notFound',
         'notices',
@@ -148,9 +151,41 @@ describe('namespaced catalogs (#174)', () => {
         'voice',
         'whatsappImport',
         'whatsappLink',
+        'research',
+        'settingsResearch',
         'workspace',
       ].sort(),
     );
+  });
+});
+
+describe('drafting studio copy (#825)', () => {
+  it('has the drafting namespace in every locale with citation statuses and the acknowledgement', () => {
+    for (const catalog of [en, ta, kn]) {
+      expect(catalog.drafting.panels.citations.status.verified).not.toBe('');
+      expect(catalog.drafting.panels.citations.status.notFound).not.toBe('');
+      expect(catalog.drafting.panels.citations.status.unknown).not.toBe('');
+      const factCheck = catalog.drafting.factCheck;
+      for (const text of [
+        ...Object.values(factCheck.status),
+        ...Object.values(factCheck.actions),
+        factCheck.source,
+        factCheck.noSource,
+        factCheck.page,
+        factCheck.openPage,
+        factCheck.announce,
+        factCheck.noIssues,
+        ...Object.values(factCheck.panel.group),
+        factCheck.panel.title,
+        factCheck.panel.tab,
+        factCheck.panel.badge,
+        factCheck.panel.empty,
+        factCheck.panel.undo,
+      ]) {
+        expect(text).not.toBe('');
+      }
+      expect(catalog.drafting.acknowledgement.statement).not.toBe('');
+    }
   });
 });
 
@@ -220,6 +255,16 @@ describe('whatsapp link copy (#681)', () => {
       expect(catalog.whatsappLink.consent).not.toBe('');
       expect(catalog.whatsappLink.unlink).not.toBe('');
       expect(catalog.whatsappLink.linked).toContain('{number}');
+    }
+  });
+});
+
+describe('research copy (#80)', () => {
+  it('has the research namespaces in every locale with the link-out hint', () => {
+    for (const catalog of [en, kn, ta]) {
+      expect(catalog.research.linkOut.hint).not.toBe('');
+      expect(catalog.research.notes.denied).not.toBe('');
+      expect(catalog.settingsResearch.templateHint).toContain('{q}');
     }
   });
 });

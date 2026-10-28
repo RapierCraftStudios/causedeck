@@ -1188,6 +1188,7 @@ export type Messages = {
       support: string;
       more: string;
       'court-watch': string;
+      research: string;
       sso: string;
     };
     placeholder: {
@@ -1373,7 +1374,9 @@ export type Messages = {
           read: string;
         };
         draft: {
+          read: string;
           write: string;
+          export: string;
         };
         audit: {
           read: string;
@@ -3698,6 +3701,315 @@ export type Messages = {
       selectMore: string;
     };
   };
+  draftingTemplates: {
+    names: {
+      madras_hc: {
+        mention_memo: string;
+        early_listing_memo: string;
+        memo_of_appearance: string;
+        certified_copy_application: string;
+        client_covering_letter: string;
+      };
+      karnataka_hc: {
+        mention_memo: string;
+        early_listing_memo: string;
+        memo_of_appearance: string;
+        certified_copy_application: string;
+        client_covering_letter: string;
+      };
+      generic_a0: {
+        adjournment_note: string;
+        client_covering_letter: string;
+      };
+    };
+    scaffoldBanner: string;
+  };
+  drafting: {
+    list: {
+      title: string;
+      newDraft: string;
+      pickTemplate: string;
+      empty: string;
+      updated: string;
+      untitled: string;
+      metaTitle: string;
+      description: string;
+      loading: string;
+      matter: string;
+      template: string;
+      lastEdited: string;
+      noMatter: string;
+      filterLabel: string;
+      filterAll: string;
+      emptyFiltered: string;
+      open: string;
+      chips: {
+        verified: string;
+        notFound: string;
+        unknown: string;
+        consistencyError: string;
+        consistencyWarn: string;
+        consistencyInfo: string;
+        consistencyClear: string;
+        consistencyPending: string;
+      };
+      picker: {
+        title: string;
+        description: string;
+        suggested: string;
+        noTemplates: string;
+        titleLabel: string;
+        matterLabel: string;
+        noMatterOption: string;
+        submit: string;
+        submitting: string;
+        offline: string;
+        cancel: string;
+        errors: {
+          forbidden: string;
+          validation: string;
+          generic: string;
+        };
+      };
+    };
+    states: {
+      loading: string;
+      error: string;
+      retry: string;
+      notFound: string;
+      saving: string;
+      saved: string;
+      offlineQueued: string;
+      conflict: string;
+      saveFailed: string;
+      unsaved: string;
+      cachedCopy: string;
+      requestId: string;
+      copyId: string;
+      copied: string;
+      listError: string;
+    };
+    panels: {
+      facts: {
+        title: string;
+        empty: string;
+        insert: string;
+        selectSlot: string;
+      };
+      authorities: {
+        title: string;
+        empty: string;
+        selectBlock: string;
+        insert: string;
+        noCitation: string;
+      };
+      citations: {
+        title: string;
+        empty: string;
+        check: string;
+        checkedAt: string;
+        status: {
+          verified: string;
+          notFound: string;
+          unknown: string;
+        };
+      };
+      consistency: {
+        title: string;
+        empty: string;
+      };
+      versions: {
+        title: string;
+        current: string;
+        restore: string;
+        number: string;
+        diffTitle: string;
+        noChanges: string;
+        added: string;
+        removed: string;
+        confirm: string;
+        restored: string;
+        close: string;
+      };
+    };
+    findings: {
+      count: string;
+      factMismatch: string;
+      unsupported: string;
+      goTo: string;
+      position: string;
+      none: string;
+    };
+    aiDrafted: {
+      label: string;
+      notice: string;
+    };
+    acknowledgement: {
+      title: string;
+      statement: string;
+      confirm: string;
+      cancel: string;
+    };
+    export: {
+      title: string;
+      docx: string;
+      pdf: string;
+      unverifiedWarning: string;
+      action: string;
+      failed: string;
+    };
+    shortcuts: {
+      title: string;
+      save: string;
+      checkCitations: string;
+      togglePanel: string;
+      export: string;
+      prevFinding: string;
+      nextFinding: string;
+      close: string;
+      actions: string;
+    };
+    offline: {
+      banner: string;
+      queued: string;
+      synced: string;
+      listBanner: string;
+    };
+    editor: {
+      label: string;
+      missing: string;
+      slot: string;
+      narrative: string;
+      edited: string;
+    };
+    tabs: {
+      editor: string;
+      facts: string;
+      versions: string;
+      precedents: string;
+    };
+    actions: {
+      title: string;
+      save: string;
+      showFacts: string;
+      showVersions: string;
+      showPrecedents: string;
+    };
+    checks: {
+      citations: {
+        checking: string;
+        checkFailed: string;
+        acknowledged: string;
+        jump: string;
+        blocked: string;
+        acknowledge: string;
+      };
+      consistency: {
+        notRun: string;
+        severity: {
+          error: string;
+          warn: string;
+          info: string;
+        };
+        found: string;
+        expected: string;
+        source: string;
+        jump: string;
+        fix: string;
+        fixTitle: string;
+        fixBody: string;
+        fixConfirm: string;
+        cancel: string;
+        fixed: string;
+        fixFailed: string;
+        undo: string;
+        undone: string;
+        undoFailed: string;
+      };
+      ack: {
+        title: string;
+        description: string;
+        checkbox: string;
+        confirm: string;
+        cancel: string;
+        failed: string;
+      };
+      export: {
+        description: string;
+        format: string;
+        court: string;
+        noCourt: string;
+        ai: string;
+        aiYes: string;
+        aiNo: string;
+        acknowledge: string;
+        download: string;
+        close: string;
+        preparing: string;
+      };
+    };
+    precedents: {
+      title: string;
+      hint: string;
+      noBlock: string;
+      loading: string;
+      empty: string;
+      error: string;
+      retry: string;
+      denied: string;
+      offline: string;
+      why: string;
+      source: string;
+      insert: string;
+      saveSelection: string;
+      nothingSelected: string;
+      proposed: string;
+      skipped: string;
+      exportFirst: string;
+      failed: string;
+    };
+    factCheck: {
+      status: {
+        match: string;
+        mismatch: string;
+        unsupported: string;
+        unverifiedCitation: string;
+        ambiguous: string;
+      };
+      source: string;
+      noSource: string;
+      page: string;
+      openPage: string;
+      actions: {
+        fix: string;
+        ignore: string;
+        ignoreForMatter: string;
+        markAssertion: string;
+      };
+      announce: string;
+      noIssues: string;
+      panel: {
+        title: string;
+        tab: string;
+        badge: string;
+        empty: string;
+        noMatter: string;
+        checking: string;
+        failed: string;
+        jump: string;
+        fixed: string;
+        undo: string;
+        ignored: string;
+        asserted: string;
+        group: {
+          mismatch: string;
+          'unverified-citation': string;
+          unsupported: string;
+          ambiguous: string;
+        };
+      };
+    };
+  };
   calendar: {
     metaTitle: string;
     title: string;
@@ -4346,6 +4658,58 @@ export type Messages = {
       conflict: string;
       generic: string;
     };
+  };
+  research: {
+    linkOut: {
+      button: string;
+      menuLabel: string;
+      hint: string;
+      preview: string;
+      empty: string;
+      noQuery: string;
+    };
+    notes: {
+      heading: string;
+      loading: string;
+      empty: string;
+      error: string;
+      offline: string;
+      denied: string;
+      add: string;
+      titleLabel: string;
+      bodyLabel: string;
+      save: string;
+      saving: string;
+      delete: string;
+      edit: string;
+      saveError: string;
+      authoritiesHeading: string;
+      authoritiesEmpty: string;
+      authorityLabel: string;
+      authorityCitation: string;
+      authorityUrl: string;
+      addAuthority: string;
+      removeAuthority: string;
+      pin: string;
+      unpin: string;
+      pinned: string;
+      pinHint: string;
+    };
+  };
+  settingsResearch: {
+    title: string;
+    description: string;
+    builtInHeading: string;
+    ownHeading: string;
+    ownEmpty: string;
+    keyLabel: string;
+    labelLabel: string;
+    templateLabel: string;
+    templateHint: string;
+    enabledLabel: string;
+    save: string;
+    remove: string;
+    saveError: string;
   };
   bootstrapImport: {
     metaTitle: string;
@@ -5038,6 +5402,7 @@ export type Messages = {
       M2: string;
       M3: string;
       M4: string;
+      M5: string;
       M6: string;
       M7: string;
     };
@@ -5170,6 +5535,103 @@ export type Messages = {
     errors: {
       generic: string;
       forbidden: string;
+    };
+  };
+  memoryM5: {
+    nav: {
+      label: string;
+      precedents: string;
+      playbooks: string;
+    };
+    denied: string;
+    offline: string;
+    readOnly: string;
+    loading: string;
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    errors: {
+      forbidden: string;
+      generic: string;
+    };
+    precedents: {
+      metaTitle: string;
+      title: string;
+      hint: string;
+      empty: string;
+      listLabel: string;
+    };
+    playbooks: {
+      metaTitle: string;
+      title: string;
+      hint: string;
+      empty: string;
+      listLabel: string;
+    };
+    proposal: {
+      heading: string;
+      precedent: string;
+      playbook: string;
+      evidence: string;
+      save: string;
+      edit: string;
+      dismiss: string;
+      shortcuts: string;
+      saved: string;
+      dismissed: string;
+      offline: string;
+    };
+    dismissDialog: {
+      title: string;
+      description: string;
+      confirm: string;
+      cancel: string;
+    };
+    reasons: {
+      not_reusable: string;
+      too_specific: string;
+      incorrect: string;
+      already_saved: string;
+      other: string;
+    };
+    editPassage: {
+      title: string;
+      label: string;
+      save: string;
+      cancel: string;
+    };
+    card: {
+      mine: string;
+      chamber: string;
+      details: string;
+      provenance: string;
+      lastUsed: string;
+      neverUsed: string;
+      retire: string;
+      delete: string;
+      retired: string;
+      deleted: string;
+      deleteTitle: string;
+      deleteBody: string;
+      cancel: string;
+    };
+    editor: {
+      title: string;
+      name: string;
+      court: string;
+      format: string;
+      prayers: string;
+      annexures: string;
+      submit: string;
+      proposed: string;
+    };
+    review: {
+      retire: string;
+      retired: string;
+      lastUsed: string;
+      neverUsed: string;
     };
   };
   outward: {

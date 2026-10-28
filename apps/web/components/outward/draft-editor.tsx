@@ -43,6 +43,8 @@ export interface DraftEditorProps {
   offline: boolean;
   readOnly: boolean;
   onSave: (body: string) => Promise<{ ok: boolean; warnings: string[] }>;
+  /** The text as typed, unsaved (the live fact-check reads it). */
+  onBodyChange?: ((body: string) => void) | undefined;
   onShared: (channel: ShareChannel) => Promise<boolean>;
   onLanguageChange: (language: Language) => void;
   onClose: () => void;
@@ -53,6 +55,7 @@ export function DraftEditor({
   offline,
   readOnly,
   onSave,
+  onBodyChange,
   onShared,
   onLanguageChange,
   onClose,
@@ -143,6 +146,7 @@ export function DraftEditor({
               rows={14}
               onChange={(event) => {
                 setBody(event.target.value);
+                onBodyChange?.(event.target.value);
               }}
               className="text-ink font-serif leading-[1.7]"
               style={{

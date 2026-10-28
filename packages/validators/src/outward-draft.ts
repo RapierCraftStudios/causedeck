@@ -19,8 +19,9 @@ export const Tone = z.enum(TONES);
 export type Tone = z.infer<typeof Tone>;
 
 /** `drafted` -> `edited` (a lawyer's version exists) -> `shared` (the lawyer shared it). */
-export const DRAFT_STATUSES = ['drafted', 'edited', 'shared'] as const;
-export type DraftStatus = (typeof DRAFT_STATUSES)[number];
+// Named apart from the drafting studio's DRAFT_STATUSES (draft, final): both reach the root barrel.
+export const OUTWARD_DRAFT_STATUSES = ['drafted', 'edited', 'shared'] as const;
+export type DraftStatus = (typeof OUTWARD_DRAFT_STATUSES)[number];
 
 /** How the lawyer shared it: copy, a user-initiated link, or a download. */
 export const SHARE_CHANNELS = ['clipboard', 'whatsapp_link', 'mailto', 'download'] as const;

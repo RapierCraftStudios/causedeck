@@ -175,7 +175,7 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'obligations',
   // Its own page test since #73 (memory-page.test.tsx).
   'memory',
-  // Its own component tests since #736 (components/outward/__tests__/outward.test.tsx).
+  // Its own component test since #826 (components/drafting/__tests__/drafts-list.test.tsx).
   'drafts',
   // The court-day board since #59 (_court-day/__tests__/court-day.test.ts, e2e court-day-board).
   'today',

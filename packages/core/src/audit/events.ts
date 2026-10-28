@@ -171,6 +171,43 @@ export const AUDIT_ACTIONS = {
     description: 'A download link for a workspace data export was issued to its requester',
   },
   'export.downloaded': { security: true, description: 'A workspace data export was downloaded' },
+  // Drafting export (#768): informational. Metadata holds the format and the version content hash only.
+  'draft.exported': { security: false, description: 'A draft version was exported to DOCX or PDF' },
+  // Citation checker (#77). Metadata holds counts, or the acknowledged citation ids and the reason, never draft text.
+  'draft.citations.checked': {
+    security: false,
+    description: 'The citations of a draft version were checked against an authority source',
+  },
+  'draft.citations.acknowledged': {
+    security: true,
+    description: 'A member acknowledged unverified citations of a draft version before an export',
+  },
+  // Consistency fix (#78): a lawyer confirmed one proposed replacement. Metadata holds the rule and hashes only, never draft text.
+  'draft.fix_applied': {
+    security: false,
+    description: 'A lawyer applied a consistency fix, which saved a new draft version',
+  },
+  // Fact-check (#914). Metadata holds claim kinds, counts, the version id and the typed reason, never draft text.
+  'draft.factcheck.checked': {
+    security: false,
+    description: 'A draft version was fact-checked against the matter record',
+  },
+  'draft.factcheck.ignored': {
+    security: false,
+    description: 'A lawyer chose to ignore a fact-check claim for this matter',
+  },
+  'draft.factcheck.asserted': {
+    security: false,
+    description: 'A lawyer marked a fact-check claim as their own assertion',
+  },
+  'draft.factcheck.fixed': {
+    security: false,
+    description: 'A fact-check mismatch or unverified citation was fixed in a new draft version',
+  },
+  'draft.factcheck.acknowledged': {
+    security: true,
+    description: 'A member acknowledged unresolved fact-check findings before an export',
+  },
   // Workspace deletion (#302): fail-closed. Metadata holds the deletion job id and dates only. These
   // events are purged with the workspace in the final erase step; the receipt keeps the chain head.
   'workspace.deletion_requested': {
@@ -264,6 +301,12 @@ export const AUDIT_ACTIONS = {
   'memory.sharing_changed': {
     security: true,
     description: 'An owner shared an M4 court note with the chamber or made it private again',
+  },
+  // M5 embeddings (#901, ADR 0046): an embedder outside India was refused before any text was sent.
+  // Metadata holds the embedder id and its region, never the text.
+  'memory.embedding_refused': {
+    security: true,
+    description: 'Memory text was not embedded because the embedder runs outside India',
   },
   // Capture inbox (#43). Metadata holds the channel, MIME type, size and flags; never a filename or
   // file content. Channel changes and quarantines are fail-closed: they change where a lawyer's

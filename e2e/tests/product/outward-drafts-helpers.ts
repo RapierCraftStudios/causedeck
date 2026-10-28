@@ -7,7 +7,7 @@ import { MATTERS } from '../../fixtures/matters-data.ts';
 import { databaseUrl } from '../../support/db-reset.ts';
 import { SHELL_WORKSPACE } from '../shell/helpers.ts';
 
-export const DRAFTS_PATH = 'drafts';
+export const DRAFTS_PATH = 'updates';
 
 export type DraftKind = 'client' | 'edited' | 'shared' | 'tamil' | 'kannada';
 

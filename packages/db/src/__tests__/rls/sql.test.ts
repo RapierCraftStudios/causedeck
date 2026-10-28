@@ -90,6 +90,7 @@ describe('row-level security catalog', () => {
       [
         ...BASELINE_TENANT_TABLES,
         'audit_event',
+        'authority',
         'ai_call',
         'ai_call_result',
         'news_pref',
@@ -114,10 +115,17 @@ describe('row-level security catalog', () => {
         'forum',
         'court_hall',
         'bench',
+        'template',
         // Matter and documents (#345).
         'matter',
         'document',
         'document_page',
+        // Drafting (#766).
+        'draft',
+        'draft_consistency_report',
+        'draft_export',
+        'draft_fact_ack',
+        'draft_version',
         'anchor',
         // Proceedings (#346).
         'proceeding',
@@ -188,6 +196,8 @@ describe('row-level security catalog', () => {
         'memory_embedding',
         'memory_usage',
         'memory_pause',
+        // M5 precedent bank (#901).
+        'precedent_passage',
 
         // Enterprise onboarding (#682).
         'sso_provider',
@@ -235,6 +245,9 @@ describe('row-level security catalog', () => {
         // Judgment alerts (#497).
         'matter_issue_tag',
         'judgment_alert',
+        // Research notes and providers (#80).
+        'research_note',
+        'research_provider',
         // Court document network (#485).
         'contribution_ledger',
 
@@ -323,12 +336,12 @@ describe('row-level security catalog', () => {
 });
 
 describe('global-or-workspace reference tables (#344)', () => {
-  it('forum, court_hall and bench have exactly ws_isolation, global_read and owner_catalogue', async () => {
+  it('forum, court_hall, bench and template have exactly ws_isolation, global_read and owner_catalogue', async () => {
     const rows = await owner.execute<{ tablename: string; policyname: string; cmd: string }>(sql`
       select tablename::text, policyname::text, cmd::text from pg_policies
-      where tablename in ('forum', 'court_hall', 'bench') order by 1, 2`);
+      where tablename in ('forum', 'court_hall', 'bench', 'template') order by 1, 2`);
     expect(rows).toEqual(
-      ['bench', 'court_hall', 'forum'].flatMap((t) => [
+      ['bench', 'court_hall', 'forum', 'template'].flatMap((t) => [
         { tablename: t, policyname: 'global_read', cmd: 'SELECT' },
         { tablename: t, policyname: 'owner_catalogue', cmd: 'ALL' },
         { tablename: t, policyname: 'ws_isolation', cmd: 'ALL' },

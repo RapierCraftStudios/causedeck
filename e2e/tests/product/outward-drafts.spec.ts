@@ -1,4 +1,4 @@
-// Outward drafts journeys (#737, part 3 of #69) on `/w/chennai-solo/drafts`: edit and save, copy,
+// Outward drafts journeys (#737, part 3 of #69) on `/w/chennai-solo/updates`: edit and save, copy,
 // the `wa.me` and `mailto:` hand-offs (opened by the lawyer in a new window with the text filled
 // in; the server only records the share), mark shared, the keyboard-only flow and every state.
 // Drafts are seeded (outward-drafts-helpers.ts: the e2e stack has no AI or job worker). `@a11y`

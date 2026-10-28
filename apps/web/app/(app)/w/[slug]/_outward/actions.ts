@@ -48,7 +48,7 @@ const deps = (ctx: WorkspaceActionCtx) => ({ db: ctx.tx });
 const composeDeps = (ctx: WorkspaceActionCtx) => ({ db: ctx.tx, memory: memoryDeps(ctx.tx) });
 const actor = (ctx: WorkspaceActionCtx) => ({ workspaceId: ctx.workspaceId, userId: ctx.userId });
 const refresh = () => {
-  revalidatePath('/w/[slug]/drafts', 'page');
+  revalidatePath('/w/[slug]/updates', 'page');
   revalidatePath('/w/[slug]/inbox', 'page');
 };
 

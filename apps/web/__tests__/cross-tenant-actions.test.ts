@@ -56,6 +56,7 @@ vi.mock('../lib/env.ts', () => ({
     APP_URL: 'http://localhost:3000',
     EMAIL_PROVIDER: 'console',
     BETTER_AUTH_SECRET: { reveal: () => 'cross-tenant-test-secret-0123456789' },
+    KEK_BASE64: { reveal: () => Buffer.alloc(32, 7).toString('base64') },
   }),
 }));
 vi.mock('../src/health.ts', () => ({
@@ -100,6 +101,7 @@ const whatsappLink =
   await import('../app/(app)/w/[slug]/settings/notifications/whatsapp-actions.ts');
 const reminders = await import('../app/(app)/w/[slug]/settings/notifications/reminders-actions.ts');
 const news = await import('../app/(app)/w/[slug]/news/actions.ts');
+const drafts = await import('../app/(app)/w/[slug]/drafts/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const sso = await import('../app/(app)/w/[slug]/settings/sso/actions.ts');
@@ -120,6 +122,11 @@ const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
+const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
+const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
+const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actions.ts');
+const draftPrecedents = await import('../app/(app)/w/[slug]/drafts/[id]/precedent-actions.ts');
+const draftFactcheck = await import('../app/(app)/w/[slug]/drafts/[id]/factcheck-actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
@@ -127,6 +134,7 @@ const inbox = await import('../app/(app)/w/[slug]/inbox/actions.ts');
 const obligations = await import('../app/(app)/w/[slug]/obligations/actions.ts');
 const attention = await import('../app/(app)/w/[slug]/matters/_components/attention-actions.ts');
 const memory = await import('../app/(app)/w/[slug]/memory/actions.ts');
+const m5 = await import('../app/(app)/w/[slug]/memory/m5-actions.ts');
 const outward = await import('../app/(app)/w/[slug]/_outward/actions.ts');
 const planActions = await import('../app/(app)/w/[slug]/tomorrow/plan/actions.ts');
 const importer = await import('../app/(app)/w/[slug]/import/actions.ts');
@@ -185,6 +193,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   unlinkWhatsAppAction: whatsappLink,
   getWhatsAppLinkAction: whatsappLink,
   saveNewsPreferencesAction: news,
+  createDraftAction: drafts,
   updateWorkspaceProfileAction: profile,
   updateRoleSettingsAction: roles,
   saveSsoProviderAction: sso,
@@ -237,6 +246,21 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   updateMatterAction: matterWorkspace,
   setSensitiveAction: matterWorkspace,
   confirmNextDateAction: matterWorkspace,
+  saveDraftAction: draftStudio,
+  restoreDraftVersionAction: draftStudio,
+  runChecksAction: draftChecks,
+  acknowledgeUnverifiedAction: draftChecks,
+  applyFixAction: draftChecks,
+  exportDraftAction: draftChecks,
+  runFactCheckAction: draftFactcheck,
+  checkFactsLiveAction: draftFactcheck,
+  ignoreFactAction: draftFactcheck,
+  markAssertionAction: draftFactcheck,
+  acknowledgeFactCheckAction: draftFactcheck,
+  recordFactFixAction: draftFactcheck,
+  downloadDraftExportAction: draftChecks,
+  searchPrecedentsForBlockAction: draftPrecedents,
+  proposePrecedentAction: draftPrecedents,
   addTagAction: research,
   confirmOutcomeAction: hearingOutcome,
   markPreparedAction: briefSheet,
@@ -252,6 +276,14 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   recordManualOutcomeAction: hearingOutcome,
   confirmTagAction: research,
   dismissTagAction: research,
+  createNoteAction: research,
+  updateNoteAction: research,
+  deleteNoteAction: research,
+  addAuthorityAction: research,
+  removeAuthorityAction: research,
+  setAuthorityPinnedAction: research,
+  saveProviderTemplateAction: researchSettings,
+  removeProviderTemplateAction: researchSettings,
   chooseNextDateSourceAction: matterWorkspace,
   reportRecordErrorAction: matterWorkspace,
   createProceedingAction: proceedingsTab,
@@ -319,6 +351,13 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   addNoteAction: memory,
   usageAction: memory,
   completeReviewAction: memory,
+  confirmPrecedentAction: m5,
+  dismissPrecedentAction: m5,
+  proposePlaybookAction: m5,
+  confirmPlaybookAction: m5,
+  deletePlaybookAction: m5,
+  retirePrecedentAction: m5,
+  deletePrecedentAction: m5,
   composeDraftAction: outward,
   saveDraftEditAction: outward,
   markDraftSharedAction: outward,
@@ -874,6 +913,23 @@ function inputs(workspaceId: string): Record<string, unknown> {
     addNoteAction: { workspaceId, key: 'M4.hall_note', value: 'Cross-tenant probe' },
     usageAction: { workspaceId, itemId: XT_ID },
     completeReviewAction: { workspaceId },
+    // Playbooks and precedents (#903): ub may not confirm, dismiss, propose, retire or delete A's.
+    confirmPrecedentAction: { workspaceId, proposalId: XT_ID },
+    dismissPrecedentAction: { workspaceId, proposalId: XT_ID, reason: 'not_reusable' },
+    proposePlaybookAction: {
+      workspaceId,
+      playbook: {
+        name: 'Cross-tenant probe',
+        courtId: null,
+        format: 'writ_petition',
+        standardPrayers: [],
+        annexureOrder: [],
+      },
+    },
+    confirmPlaybookAction: { workspaceId, proposalId: XT_ID },
+    deletePlaybookAction: { workspaceId, itemId: XT_ID },
+    retirePrecedentAction: { workspaceId, itemId: XT_ID },
+    deletePrecedentAction: { workspaceId, itemId: XT_ID },
     // Outward drafts (#736): ub may not draft on A's matter, nor edit or mark shared A's draft.
     composeDraftAction: {
       workspaceId,
@@ -933,6 +989,13 @@ function inputs(workspaceId: string): Record<string, unknown> {
     revokeBriefShareAction: { workspaceId, shareId: crypto.randomUUID() },
     // Matters (#388): ub, owner of B, may not add a matter to A or search A's matters.
     createMatterAction: { workspaceId, title: 'Cross-tenant probe matter' },
+    // Drafts (#826): ub may not create a draft in A, even from a real-looking template id.
+    createDraftAction: {
+      workspaceId,
+      templateId: '00000000-0000-4000-8000-0000000000d1',
+      matterId: null,
+      title: 'Cross-tenant probe draft',
+    },
     searchMattersAction: { workspaceId, q: 'XT Matter' },
     checkConflictsAction: {
       workspaceId,
@@ -946,6 +1009,79 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     setSensitiveAction: { workspaceId, matterId: t.a.rows.matter?.matterId, sensitive: true },
     confirmNextDateAction: { workspaceId, listingId: t.a.rows.listing?.listingId },
+    // Drafting studio (#827): ub may not save to or restore a version of A's draft.
+    saveDraftAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      baseVersionNo: 1,
+      blocks: [{ type: 'paragraph', text: 'Cross-tenant probe' }],
+    },
+    restoreDraftVersionAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      versionNo: 1,
+    },
+    // Drafting precedents (#904): ub's search sees none of A's passages; ub may not propose from A's version.
+    searchPrecedentsForBlockAction: {
+      workspaceId,
+      query: 'prayer for interim relief',
+      courtId: null,
+      kind: null,
+      language: 'en',
+    },
+    proposePrecedentAction: {
+      workspaceId,
+      passageText: 'Cross-tenant probe',
+      kind: 'other',
+      courtId: null,
+      language: 'en',
+      draftVersionId: t.a.rows.draft_version?.id,
+      anchorId: 'b.0',
+    },
+    // Drafting checks (#828): ub may not check, acknowledge, fix or export A's draft.
+    runChecksAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
+    acknowledgeUnverifiedAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      citationIds: [randomUUID()],
+      reason: 'Cross-tenant probe',
+    },
+    applyFixAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      findingId: 'probe',
+      confirm: true,
+    },
+    exportDraftAction: { workspaceId, draftId: t.a.rows.draft_version?.draftId, format: 'docx' },
+    // Fact-check (#914): ub may not check, ignore, assert, acknowledge or log a fix on A's draft.
+    runFactCheckAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
+    checkFactsLiveAction: {
+      workspaceId,
+      matterId: t.a.rows.matter?.matterId,
+      blocks: [{ key: 'b.0', text: 'Order dated 01/02/2024.' }],
+    },
+    ignoreFactAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      claimKey: 'date:2024-01-01',
+    },
+    markAssertionAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      claimKey: 'date:2024-01-01',
+    },
+    acknowledgeFactCheckAction: {
+      workspaceId,
+      draftVersionId: t.a.rows.draft_version?.id,
+      reason: 'Cross-tenant probe',
+      confirm: true,
+    },
+    recordFactFixAction: {
+      workspaceId,
+      fromVersionId: t.a.rows.draft_version?.id,
+      toVersionId: t.a.rows.draft_version?.id,
+    },
+    downloadDraftExportAction: { workspaceId, exportId: randomUUID() },
     // Hearing outcome (#62): ub may not confirm A's hearing outcome.
     confirmOutcomeAction: {
       workspaceId,
@@ -1000,6 +1136,46 @@ function inputs(workspaceId: string): Record<string, unknown> {
       matterId: t.a.rows.matter_issue_tag?.matterId,
       tagId: t.a.rows.matter_issue_tag?.id,
     },
+    // Research notes and provider templates (#80): ub may not write A's notes or A's templates.
+    createNoteAction: { workspaceId, matterId: t.a.rows.research_note?.matterId, title: 'x' },
+    updateNoteAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      title: 'x',
+      body: 'x',
+    },
+    deleteNoteAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+    },
+    addAuthorityAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      label: 'x',
+    },
+    removeAuthorityAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      index: 0,
+    },
+    setAuthorityPinnedAction: {
+      workspaceId,
+      matterId: t.a.rows.research_note?.matterId,
+      noteId: t.a.rows.research_note?.id,
+      index: 0,
+      pinned: true,
+    },
+    saveProviderTemplateAction: {
+      workspaceId,
+      key: 'xt-provider',
+      label: 'B',
+      urlTemplate: 'https://b.example.test/?q={q}',
+    },
+    removeProviderTemplateAction: { workspaceId, key: 'xt-provider' },
     chooseNextDateSourceAction: {
       workspaceId,
       currentListingId: t.a.rows.listing?.listingId,
@@ -1567,6 +1743,12 @@ describe('cross-tenant server actions', () => {
       'addTagAction',
       'confirmTagAction',
       'dismissTagAction',
+      'createNoteAction',
+      'updateNoteAction',
+      'deleteNoteAction',
+      'addAuthorityAction',
+      'removeAuthorityAction',
+      'setAuthorityPinnedAction',
       // People tab (#393): A's matter and person
       'upsertPersonAction',
       'setRoleEdgeAction',
@@ -1576,6 +1758,56 @@ describe('cross-tenant server actions', () => {
       expect(result, name).not.toHaveProperty('data');
     }
     expect(await snapshotA()).toEqual(before);
+  });
+
+  it('drafting studio actions under B’s own workspace find none of A’s draft (#827)', async () => {
+    const own = inputs(t.b.id);
+    const versions = () =>
+      withWorkspace(testAppDb(), { workspaceId: t.a.id }, (tx) =>
+        tx.select({ id: schema.draftVersion.id }).from(schema.draftVersion),
+      );
+    const before = await versions();
+    for (const name of ['saveDraftAction', 'restoreDraftVersionAction']) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+    expect(await versions()).toEqual(before);
+  });
+
+  it('drafting checks actions under B’s own workspace find none of A’s draft (#828)', async () => {
+    const own = inputs(t.b.id);
+    for (const name of [
+      'runChecksAction',
+      'acknowledgeUnverifiedAction',
+      'applyFixAction',
+      'exportDraftAction',
+      'downloadDraftExportAction',
+      'runFactCheckAction',
+      'checkFactsLiveAction',
+      'ignoreFactAction',
+      'markAssertionAction',
+      'acknowledgeFactCheckAction',
+      'recordFactFixAction',
+    ]) {
+      const result = await action(name)(own[name]);
+      expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
+      expect(result, name).not.toHaveProperty('data');
+    }
+  });
+
+  it('precedent actions under B’s own workspace find none of A’s passages or draft (#904)', async () => {
+    const own = inputs(t.b.id);
+    const searched = await action('searchPrecedentsForBlockAction')(
+      own['searchPrecedentsForBlockAction'],
+    );
+    // The seeded workspace keys are random bytes, so the memory crypto may refuse; what must hold is
+    // that B never receives a passage.
+    if ((searched as { ok: boolean }).ok) expect(searched).toHaveProperty('data.passages', []);
+    else expect(searched).not.toHaveProperty('data');
+    const proposed = await action('proposePrecedentAction')(own['proposePrecedentAction']);
+    expect(['NOT_FOUND', 'FORBIDDEN']).toContain(code(proposed));
+    expect(proposed).not.toHaveProperty('data');
   });
 
   it('hearing outcome actions under B’s own workspace find none of A’s hearing (#62)', async () => {

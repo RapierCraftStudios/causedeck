@@ -166,9 +166,23 @@ export const PURGE_ORDER = [
   'capture',
   'workspace_capture_channel',
   'matter_restriction',
+  // Drafts (#766): the draft first (its versions are immutable and go with it by cascade), then
+  // the workspace's own templates (the system catalogue, null workspace_id, is never matched).
+  // M5 passages (#901) cite an immutable draft version (restrict) and a memory item.
+  'precedent_passage',
+  'authority',
+  'draft_consistency_report',
+  'draft_fact_ack',
+  'draft_export',
+  'draft',
+  'draft_version',
+  'template',
   // Judgment alerts (#497): alerts before the tag they cite, both before their matter.
   'judgment_alert',
   'matter_issue_tag',
+  // Research notes and provider templates (#80): notes cite their matter, so before it.
+  'research_note',
+  'research_provider',
   'matter',
   // Custom court reference rows (#344): halls and benches before their forum; the catalogue
   // (null workspace_id) is never matched.

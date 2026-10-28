@@ -116,6 +116,7 @@ describe('namespaced catalogs (#174)', () => {
         'courtsRosters',
         'emailIntake',
         'enquiry',
+        'limitation',
         'error',
         'home',
         'importReview',
@@ -279,6 +280,20 @@ describe('people namespace (#848)', () => {
     expect(Object.keys(en.people.languages).sort()).toEqual(
       ['en', 'hi', 'kn', 'ml', 'mr', 'ta', 'te'].sort(),
     );
+  });
+});
+
+describe('limitation namespace (#941)', () => {
+  it('is registered with en complete, the verify label and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('limitation');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('limitation.'));
+    expect(leaves).toContain('limitation.verifyLabel');
+    expect(getPath(en, 'limitation.verifyLabel')).toBe(
+      "Computed from your counsel's rule table. Verify before relying on it.",
+    );
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+    }
   });
 });
 

@@ -3757,6 +3757,73 @@
       "retry": "Retry"
     }
   },
+  "limitation": {
+    "metaTitle": "Limitation",
+    "title": "Limitation",
+    "description": "Last dates to file, computed from your counsel's reviewed rule table.",
+    "verifyLabel": "Computed from your counsel's rule table. Verify before relying on it.",
+    "gatedNotice": "A computed date is a proposal. Nothing is filed or scheduled until you confirm it, and confirming adds an obligation to the matter.",
+    "loading": "Loading limitation dates",
+    "offline": "You are offline. Limitation dates are read-only until you are back online.",
+    "empty": {
+      "title": "No limitation dates yet",
+      "body": "Propose a date for a matter from a reviewed rule, then confirm it once you have checked it."
+    },
+    "noRules": {
+      "title": "No reviewed rule table",
+      "body": "A date is only computed from a rule your counsel has reviewed. Ask your administrator to import and review a rule table."
+    },
+    "list": {
+      "label": "Limitation computations"
+    },
+    "status": {
+      "proposed": "Proposed",
+      "confirmed": "Confirmed",
+      "superseded": "Superseded"
+    },
+    "card": {
+      "expires": "Last day to file",
+      "matter": "Matter {id}",
+      "confirm": "Confirm",
+      "details": "Show working",
+      "hideDetails": "Hide working"
+    },
+    "steps": {
+      "title": "How this date was computed",
+      "rule": "Rule {code}, version {version}",
+      "period": "Period: {value} {unit}, from {event}",
+      "start": "Clock starts on {date}",
+      "excluded": "Excluded days: {count}",
+      "expires": "Last day to file: {date}",
+      "condonable": "Delay may be condoned on application."
+    },
+    "form": {
+      "trigger": "Propose a date",
+      "title": "Propose a limitation date",
+      "matter": "Matter ID",
+      "rule": "Rule",
+      "start": "Start date",
+      "excluded": "Excluded days",
+      "submit": "Compute",
+      "cancel": "Cancel",
+      "error": {
+        "forbidden": "You cannot compute limitation dates.",
+        "invalid": "Check the matter, rule and start date.",
+        "conflict": "No reviewed rule is available for that choice.",
+        "failed": "Could not complete that. Try again."
+      }
+    },
+    "error": {
+      "title": "Could not load limitation dates",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "shortcuts": {
+      "propose": "P: propose a date",
+      "confirm": "Enter: confirm the selected proposal",
+      "close": "Esc: close"
+    }
+  },
   "matterTimeline": {
     "title": "ಕಾಲರೇಖೆ",
     "loading": "ಕಾಲರೇಖೆ ಲೋಡ್ ಆಗುತ್ತಿದೆ",

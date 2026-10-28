@@ -158,3 +158,12 @@ export const Offline: Story = {
     await expect(button(canvasElement, /^Edit memory/)).toBeDisabled();
   },
 };
+
+/** A paused memory is dimmed and says so; it is not used until resumed. */
+export const Paused: Story = {
+  args: { paused: true, onPause: fn(), lastUsed: 'Last used 3 days ago' },
+  play: async ({ canvasElement }) => {
+    await expect(within(canvasElement).getByText('Paused')).toBeInTheDocument();
+    await expect(button(canvasElement, /^Resume memory/)).toBeEnabled();
+  },
+};

@@ -1,5 +1,5 @@
-import { Check, CircleAlert, Pencil, Trash2 } from 'lucide-react';
-import type { ComponentProps } from 'react';
+import { Check, CircleAlert, Pause, Pencil, Play, Trash2 } from 'lucide-react';
+import type { ComponentProps, ReactNode } from 'react';
 
 import { Button } from '../../components/button';
 import { Skeleton, SkeletonGroup } from '../../components/skeleton';
@@ -31,6 +31,10 @@ export interface MemoryLabels {
   action: (action: string, title: string) => string;
   offline: string;
   viewOnly: string;
+  /** The dimmed-card label of a paused memory. */
+  paused: string;
+  pause: string;
+  resume: string;
 }
 
 export const DEFAULT_MEMORY_LABELS: MemoryLabels = {
@@ -40,6 +44,9 @@ export const DEFAULT_MEMORY_LABELS: MemoryLabels = {
   action: (action, title) => `${action} memory: ${title}`,
   offline: 'You are offline. Changes return when you are back online.',
   viewOnly: 'View only',
+  paused: 'Paused',
+  pause: 'Pause',
+  resume: 'Resume',
 };
 
 export interface MemoryCardProps extends Omit<ComponentProps<'article'>, 'children' | 'title'> {
@@ -58,6 +65,15 @@ export interface MemoryCardProps extends Omit<ComponentProps<'article'>, 'childr
   viewOnly?: boolean | undefined;
   error?: string | undefined;
   scopeLabel?: string | undefined;
+  /** A paused memory is dimmed, labelled and not used; `onPause` toggles it. */
+  paused?: boolean | undefined;
+  onPause?: (() => void) | undefined;
+  /** Who can see it (a `ScopeChip`), shown beside the layer pill. */
+  scopeChip?: ReactNode;
+  /** When it was last used, already formatted by the caller. */
+  lastUsed?: string | undefined;
+  /** Where it was used (a "Used in" trigger). */
+  usedIn?: ReactNode;
   labels?: Partial<MemoryLabels> | undefined;
 }
 
@@ -76,6 +92,11 @@ export function MemoryCard({
   viewOnly = false,
   error,
   scopeLabel,
+  paused = false,
+  onPause,
+  scopeChip,
+  lastUsed,
+  usedIn,
   labels,
   className,
   ...props
@@ -89,10 +110,12 @@ export function MemoryCard({
       data-slot="memory-card"
       data-scope={scope}
       data-source-state={source.state}
+      data-paused={paused ? '' : undefined}
       aria-label={title}
       className={cn(
         'border-line bg-surface-raised flex flex-col gap-3 rounded-xl border p-4 font-sans',
         proposed && 'border-s-level-l2 border-s-3',
+        paused && 'bg-surface-sunken',
         className,
       )}
       {...props}
@@ -110,11 +133,29 @@ export function MemoryCard({
           <span aria-hidden="true">·</span>
           {scopeLabel ?? meta.label}
         </span>
+        {scopeChip}
+        {paused ? (
+          <span data-slot="memory-paused" className="text-ink-muted text-xs font-medium">
+            {text.paused}
+          </span>
+        ) : null}
         <h3 className="text-ink min-w-0 text-sm font-medium wrap-break-word">{title}</h3>
       </header>
-      <p data-slot="memory-value" className="text-ink text-base wrap-anywhere">
+      <p
+        data-slot="memory-value"
+        className={cn('text-ink text-base wrap-anywhere', paused && 'opacity-70')}
+      >
         {value}
       </p>
+      {lastUsed === undefined && usedIn === undefined ? null : (
+        <p
+          data-slot="memory-usage-meta"
+          className="text-ink-muted flex flex-wrap items-center gap-2 text-xs"
+        >
+          {lastUsed === undefined ? null : <span>{lastUsed}</span>}
+          {usedIn}
+        </p>
+      )}
       {error === undefined ? null : (
         <p
           role="alert"
@@ -153,6 +194,19 @@ export function MemoryCard({
               >
                 <Check aria-hidden="true" />
                 {text.confirm}
+              </Button>
+            ) : null}
+            {onPause ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={offline}
+                aria-pressed={paused}
+                aria-label={text.action(paused ? text.resume : text.pause, title)}
+                onClick={onPause}
+              >
+                {paused ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
+                {paused ? text.resume : text.pause}
               </Button>
             ) : null}
             {onEdit ? (

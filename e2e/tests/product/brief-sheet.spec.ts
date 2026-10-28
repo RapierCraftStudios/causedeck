@@ -50,9 +50,13 @@ test.describe('brief sheet', () => {
 
   test('carry items can be added, ticked and removed', async ({ page, asUser }) => {
     await openBrief(page, asUser);
-    const list = page.locator('[data-carry-list]');
+    // A reload can show the streamed copy of the sheet beside the hydrated one: read visible rows.
+    const list = page.locator('[data-carry-list]').filter({ visible: true });
     await list.getByRole('textbox').fill('Vakalatnama');
+    // The row shows before the server action returns: wait for it, or the reload can beat the write.
+    const saved = page.waitForResponse((response) => response.request().method() === 'POST');
     await list.getByRole('button', { name: /add/i }).click();
+    await saved;
     await expect(list.getByText('Vakalatnama')).toBeVisible();
     await page.reload();
     await expect(list.getByText('Vakalatnama')).toBeVisible();

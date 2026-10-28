@@ -1,0 +1,14 @@
+{
+  "output": {
+    "blocks": [
+      {
+        "kind": "opening",
+        "text": "Dear client, here is the latest on your matter."
+      },
+      {
+        "kind": "closing",
+        "text": "Please let me know if you have any questions."
+      }
+    ]
+  }
+}

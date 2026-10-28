@@ -21,8 +21,8 @@ import { requireOwner } from '../../workspaces/index.ts';
 
 const { deletionJob } = schema;
 
-/** Memory tables, children first (embeddings reference items). */
-export const MEMORY_TABLES = ['memory_embedding', 'memory_item'] as const;
+/** Memory tables, children first (embeddings and M5 passages reference items). */
+export const MEMORY_TABLES = ['memory_embedding', 'precedent_passage', 'memory_item'] as const;
 
 /** A memory erasure completes within this long of its request (NFR Privacy). */
 export const MEMORY_ERASURE_SLA_MS = 24 * 60 * 60 * 1000;

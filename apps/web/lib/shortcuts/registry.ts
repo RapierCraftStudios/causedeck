@@ -102,6 +102,18 @@ export function findDuplicateShortcuts(
     }));
 }
 
+/**
+ * The drafting studio's keys (#827). The studio handles them itself while it is open and lists them
+ * in the `?` sheet as palette commands; `[` and `mod+k` keep their shell meaning everywhere else.
+ */
+export const DRAFT_STUDIO_SHORTCUTS = [
+  { id: 'draft.save', keys: 'mod+s', labelKey: 'drafting.shortcuts.save' },
+  { id: 'draft.actions', keys: 'mod+k', labelKey: 'drafting.shortcuts.actions' },
+  { id: 'draft.nextFinding', keys: ']', labelKey: 'drafting.shortcuts.nextFinding' },
+  { id: 'draft.prevFinding', keys: '[', labelKey: 'drafting.shortcuts.prevFinding' },
+  { id: 'draft.close', keys: 'esc', labelKey: 'drafting.shortcuts.close' },
+] as const;
+
 /** The keys of an action shortcut, e.g. `c` for capture. */
 export function actionKeys(id: ShortcutAction): string {
   const found = SHORTCUTS.find((shortcut) => shortcut.action === id);

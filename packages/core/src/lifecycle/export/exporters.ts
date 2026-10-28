@@ -307,6 +307,10 @@ export const mattersExporter = tablesExporter('matters', [
   ws('fee_invoice_line'),
   ws('payment'),
   ws('client_ledger_entry'),
+  // Limitation tracker (#84): the workspace's own rules and its computations. Platform rules
+  // (null workspace_id) are public reference data, not the workspace's, so they are never matched.
+  ws('limitation_rule'),
+  ws('limitation_computation'),
   ws('organisation'),
   ws('role_edge'),
   ws('document', { exclude: ['storage_key'] }),

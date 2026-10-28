@@ -170,6 +170,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   fee_invoice_line: DB_TABLES_TEST,
   payment: DB_TABLES_TEST,
   client_ledger_entry: DB_TABLES_TEST,
+  // Limitation tracker (#84): rules are global-or-workspace; the reviewed-only read is in limitation-schema.test.ts.
+  limitation_rule: DB_TABLES_TEST,
+  limitation_computation: DB_TABLES_TEST,
   // Court-day reminders (#64).
   reminder_dispatch: DB_TABLES_TEST,
 

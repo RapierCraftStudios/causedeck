@@ -393,6 +393,7 @@ export { clientContact } from './client-contact.ts';
 export { conflictCheckResult, enquiry, enquiryParty } from './enquiry.ts';
 export { handoverNote, matterView } from './continuity.ts';
 export { clientLedgerEntry, feeAgreement, feeInvoice, feeInvoiceLine, payment } from './fees.ts';
+export { limitationComputation, limitationRule } from './limitation.ts';
 export { briefShare, referral, referralCredit, type SharedBriefSnapshot } from './share.ts';
 export { reminderDispatch, REMINDER_KINDS, type ReminderKind } from './reminder.ts';
 export { attentionSnooze, ATTENTION_SNOOZE_RULES, type AttentionSnoozeRule } from './attention.ts';

@@ -3858,6 +3858,7 @@ export type Messages = {
       docx: string;
       pdf: string;
       unverifiedWarning: string;
+      factWarning: string;
       action: string;
       failed: string;
     };

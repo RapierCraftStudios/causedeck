@@ -1332,6 +1332,7 @@ export type Messages = {
         appearance: string;
         contact: string;
         enquiry: string;
+        limitation: string;
       };
       actions: {
         workspace: {
@@ -1395,6 +1396,7 @@ export type Messages = {
         };
         limitation: {
           read: string;
+          write: string;
         };
         insights: {
           read: string;

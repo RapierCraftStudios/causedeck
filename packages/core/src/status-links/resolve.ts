@@ -1,4 +1,4 @@
-// The signed-out read of a client status link (#88, ADR 0049). The flag is checked first: with it
+// The signed-out read of a client status link (#88, ADR 0050). The flag is checked first: with it
 // off every token, even a previously created one, is NOT_FOUND. Dead links (unknown, expired, revoked,
 // purged) are one generic `unavailable` result. The only cross-workspace read is the owner-defined
 // `app_status_link_view` by token hash. Each valid view writes one access row (time and a coarse

@@ -1,5 +1,5 @@
 'use client';
-// The Share a status link button and sheet (#88, ADR 0049): note editor, optional next date,
+// The Share a status link button and sheet (#88, ADR 0050): note editor, optional next date,
 // expiry, language, an exact preview, and Create, which shows the URL once with Copy. Nothing is
 // sent: the advocate shares the link themselves. Keys: Cmd/Ctrl+Enter creates, Esc closes. States:
 // skeleton, empty (no client contact), error with retry, offline (creation disabled), denied.

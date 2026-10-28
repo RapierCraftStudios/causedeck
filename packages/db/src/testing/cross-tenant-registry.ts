@@ -174,6 +174,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   fee_invoice_line: DB_TABLES_TEST,
   payment: DB_TABLES_TEST,
   client_ledger_entry: DB_TABLES_TEST,
+  // Limitation tracker (#84): rules are global-or-workspace; the reviewed-only read is in limitation-schema.test.ts.
+  limitation_rule: DB_TABLES_TEST,
+  limitation_computation: DB_TABLES_TEST,
   // Court-day reminders (#64).
   reminder_dispatch: DB_TABLES_TEST,
 
@@ -278,6 +281,13 @@ const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  // Limitation tracker (#940): a root export of the flag-gated services; the domain also has its own
+  // cross-tenant case in limitation.test.ts.
+  loadRuleTable: denies,
+  listRules: denies,
+  computeLimitation: denies,
+  confirmLimitation: denies,
+  listLimitations: denies,
   // Stale-matter attention (#70).
   detectAttention: empty,
   countAttention: denies,
@@ -1102,6 +1112,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // Limitation tracker (#940): the date engine is pure; the refusal is an error class.
+  computeExpiry: 'pure',
+  NoReviewedRuleError: 'error class',
   // M5 playbook value codec (#901): pure conversion between a playbook and its memory value lines.
   playbookToValue: 'pure',
   playbookFromValue: 'pure',

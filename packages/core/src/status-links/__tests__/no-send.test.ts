@@ -1,4 +1,4 @@
-// The status links domain sends nothing (ADR 0049): a static check of its sources.
+// The status links domain sends nothing (ADR 0050): a static check of its sources.
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,7 +17,7 @@ const FORBIDDEN = [
   /\bfetch\(/,
 ];
 
-describe('status links send nothing (ADR 0049)', () => {
+describe('status links send nothing (ADR 0050)', () => {
   it('reads the domain sources', () => {
     expect(sources).toEqual(expect.arrayContaining(['create.ts', 'resolve.ts', 'index.ts']));
   });

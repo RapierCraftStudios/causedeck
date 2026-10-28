@@ -1,4 +1,4 @@
-# 0049. Client status links: hashed token, security-definer read, no send
+# 0050. Client status links: hashed token, security-definer read, no send
 
 ## Status
 

@@ -1,4 +1,4 @@
-// Client status links (#88, ADR 0049): `status_link` is an advocate-authored, expiring, revocable
+// Client status links (#88, ADR 0050): `status_link` is an advocate-authored, expiring, revocable
 // link for one existing client contact. It stores only the authored fields (`payload`) and the
 // sha-256 of the token, never the token. `status_link_access` is one row per view: the time and a
 // coarse user-agent class; no IP is stored. Tenant tables under FORCE RLS via `tenantTable()`; the

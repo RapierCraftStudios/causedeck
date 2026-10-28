@@ -1,5 +1,5 @@
 'use server';
-// Client status link server actions (#88, ADR 0049). Each goes through `workspaceAction` (zod input,
+// Client status link server actions (#88, ADR 0050). Each goes through `workspaceAction` (zod input,
 // session, membership); the core services decide the role again (advocate or owner only). The
 // legal-gated `status_links.enabled` flag is read first: off means NOT_FOUND, as if the feature did
 // not exist. Nothing here sends anything: `createStatusLinkAction` returns the URL once and the

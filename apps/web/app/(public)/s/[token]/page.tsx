@@ -28,7 +28,7 @@ function firstIp(forwarded: string | null): string | null {
 }
 
 /**
- * `/s/<token>` (#88, ADR 0049). Public and read-only (GET only: no form, no action): the advocate's
+ * `/s/<token>` (#88, ADR 0050). Public and read-only (GET only: no form, no action): the advocate's
  * headline, note, optional next date and a "prepared by" line. A dead link, a rate-limited viewer
  * and an unknown token get the same generic page, or a 404 while the legal-gated flag is off.
  */

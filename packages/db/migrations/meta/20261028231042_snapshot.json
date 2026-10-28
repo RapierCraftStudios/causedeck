@@ -1,6 +1,6 @@
 {
-  "id": "1a9e14f5-50a8-45b4-8469-89080b007528",
-  "prevId": "3a186778-4d99-465f-bcda-b53152efa32c",
+  "id": "9ed74e03-ebd6-4f56-b6f8-f14819da6571",
+  "prevId": "09bc2d9b-2aed-4c98-b713-40edc2774418",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -13292,6 +13292,385 @@
         "legal_hold_invoice_status_chk": {
           "name": "legal_hold_invoice_status_chk",
           "value": "status in ('issued', 'paid', 'void')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.limitation_computation": {
+      "name": "limitation_computation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "matter_id": {
+          "name": "matter_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rule_id": {
+          "name": "rule_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input": {
+          "name": "input",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "result": {
+          "name": "result",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_on": {
+          "name": "expires_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'proposed'"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "limitation_computation_workspace_id_idx": {
+          "name": "limitation_computation_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "limitation_computation_matter_idx": {
+          "name": "limitation_computation_matter_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "matter_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "limitation_computation_rule_id_idx": {
+          "name": "limitation_computation_rule_id_idx",
+          "columns": [
+            {
+              "expression": "rule_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "limitation_computation_rule_id_limitation_rule_id_fk": {
+          "name": "limitation_computation_rule_id_limitation_rule_id_fk",
+          "tableFrom": "limitation_computation",
+          "tableTo": "limitation_rule",
+          "columnsFrom": [
+            "rule_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "limitation_computation_created_by_user_id_fk": {
+          "name": "limitation_computation_created_by_user_id_fk",
+          "tableFrom": "limitation_computation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "limitation_computation_workspace_id_fk": {
+          "name": "limitation_computation_workspace_id_fk",
+          "tableFrom": "limitation_computation",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "limitation_computation_matter_fk": {
+          "name": "limitation_computation_matter_fk",
+          "tableFrom": "limitation_computation",
+          "tableTo": "matter",
+          "columnsFrom": [
+            "workspace_id",
+            "matter_id"
+          ],
+          "columnsTo": [
+            "workspace_id",
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "limitation_computation_workspace_id_id_uq": {
+          "name": "limitation_computation_workspace_id_id_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workspace_id",
+            "id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "limitation_computation_status_chk": {
+          "name": "limitation_computation_status_chk",
+          "value": "status in ('proposed', 'confirmed', 'superseded')"
+        },
+        "limitation_computation_dates_chk": {
+          "name": "limitation_computation_dates_chk",
+          "value": "expires_on >= start_date"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.limitation_rule": {
+      "name": "limitation_rule",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "statute": {
+          "name": "statute",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_value": {
+          "name": "period_value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period_unit": {
+          "name": "period_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_event": {
+          "name": "start_event",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "condonable": {
+          "name": "condonable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "citation": {
+          "name": "citation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed": {
+          "name": "reviewed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "table_version": {
+          "name": "table_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "limitation_rule_workspace_id_idx": {
+          "name": "limitation_rule_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "limitation_rule_workspace_id_fk": {
+          "name": "limitation_rule_workspace_id_fk",
+          "tableFrom": "limitation_rule",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "limitation_rule_scope_code_version_uq": {
+          "name": "limitation_rule_scope_code_version_uq",
+          "nullsNotDistinct": true,
+          "columns": [
+            "workspace_id",
+            "code",
+            "table_version"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "limitation_rule_period_unit_chk": {
+          "name": "limitation_rule_period_unit_chk",
+          "value": "period_unit in ('days', 'months', 'years')"
+        },
+        "limitation_rule_start_event_chk": {
+          "name": "limitation_rule_start_event_chk",
+          "value": "start_event in ('cause_of_action', 'knowledge', 'order_date', 'filing_date', 'custom')"
+        },
+        "limitation_rule_period_value_chk": {
+          "name": "limitation_rule_period_value_chk",
+          "value": "period_value > 0"
+        },
+        "limitation_rule_reviewed_chk": {
+          "name": "limitation_rule_reviewed_chk",
+          "value": "not reviewed or reviewed_at is not null"
         }
       },
       "isRLSEnabled": false

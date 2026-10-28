@@ -1,4 +1,4 @@
-// Client status links (#88, ADR 0049): the zod inputs of the `@causedeck/core` status-links service.
+// Client status links (#88, ADR 0050): the zod inputs of the `@causedeck/core` status-links service.
 // A link carries only what the advocate authored: a headline, a short note and, if they choose, the
 // next date. Objects are strict; nothing here describes a send.
 import { z } from 'zod';

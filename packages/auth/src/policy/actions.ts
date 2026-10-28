@@ -26,6 +26,8 @@ export const ACTIONS = {
   enquiry: ['enquiry.read', 'enquiry.write'],
   export: ['export.run'],
   support: ['support.manage'],
+  // Limitation tracker (#84, #940): `limitation.write` computes, imports and confirms.
+  limitation: ['limitation.write'],
   // Shell surfaces gated in apps/web/lib/workspace-context.ts.
   shell: ['limitation.read', 'insights.read', 'settings.read'],
 } as const;

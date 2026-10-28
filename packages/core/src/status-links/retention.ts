@@ -1,4 +1,4 @@
-// The status link retention sweep (#88, ADR 0049): the payload of a link expired for 30 days is
+// The status link retention sweep (#88, ADR 0050): the payload of a link expired for 30 days is
 // cleared (`{}`) and the link marked purged. The nightly job lists the workspaces through the
 // owner-defined `app_status_link_purge_targets` (ids only) and sweeps each in its own scope. It never
 // reads the legal-gated flag: deleting expired data is not the feature.

@@ -75,7 +75,7 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'The retention job deleted closed enquiries past the workspace retention',
   },
-  // Client status links (#88, ADR 0049). Metadata holds ids, language and expiry days, never the note.
+  // Client status links (#88, ADR 0050). Metadata holds ids, language and expiry days, never the note.
   'status_link.created': {
     security: false,
     description: 'An advocate created a client status link',
@@ -430,6 +430,16 @@ export const AUDIT_ACTIONS = {
   'attention.threshold_changed': {
     security: false,
     description: 'The workspace stale-matter threshold was changed',
+  },
+  // Limitation tracker (#84, #940). Ids and counts only, never rule text or dates.
+  'limitation.rules_imported': {
+    security: false,
+    description: 'A member imported a limitation rule table as an unreviewed draft',
+  },
+  'limitation.computed': { security: false, description: 'A limitation date was computed' },
+  'limitation.confirmed': {
+    security: false,
+    description: 'A member confirmed a limitation date as an obligation',
   },
   // Obligation service (#67). Ids and flags only, never the description.
   'obligation.created': { security: false, description: 'An obligation was created' },

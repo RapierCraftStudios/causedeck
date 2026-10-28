@@ -1,4 +1,4 @@
-// Client status links (#88, ADR 0049): advocate-authored, expiring, revocable links, behind the
+// Client status links (#88, ADR 0050): advocate-authored, expiring, revocable links, behind the
 // legal-gated `status_links.enabled` flag (`FeatureDisabledError` while off). Sends nothing. Not
 // re-exported from the package root.
 export {

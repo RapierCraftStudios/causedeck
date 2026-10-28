@@ -1,4 +1,4 @@
-// Client status links (#88, ADR 0049): an advocate turns a short note they wrote for an existing
+// Client status links (#88, ADR 0050): an advocate turns a short note they wrote for an existing
 // client contact into an expiring, revocable link and shares it themselves. The link stores only
 // the authored fields and the sha-256 of the token. The full URL is returned once, at creation.
 // This module never sends anything: it imports no transport, and there is no job or system caller.

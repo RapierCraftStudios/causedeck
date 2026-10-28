@@ -2,7 +2,7 @@
 // states, the keyboard shortcuts (n, j, c, Esc) and Tamil/Kannada names. Actions are mocked. Export
 // names carry the `EnquiryList` prefix: story names are unique across apps/web.
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { expect, fn, screen, userEvent } from 'storybook/test';
+import { expect, fn, screen, userEvent, within } from 'storybook/test';
 
 import { PermissionDeniedPage } from '../../../../../../../components/shell/permission-denied-page.tsx';
 import type {
@@ -145,8 +145,10 @@ export const EnquiryListCheckShortcut: Story = {
     await userEvent.keyboard('j');
     await userEvent.click(canvas.getAllByRole('button', { name: 'Review' })[0] as HTMLElement);
     await userEvent.keyboard('c');
-    await expect(await canvas.findByText('1 match found')).toBeVisible();
-    await expect(canvas.getByText('Possible conflict. Review before you proceed.')).toBeVisible();
+    // The review sheet renders in a portal outside the story canvas.
+    const page = within(document.body);
+    await expect(await page.findByText('1 match found')).toBeVisible();
+    await expect(page.getByText('Possible conflict. Review before you proceed.')).toBeVisible();
   },
 };
 

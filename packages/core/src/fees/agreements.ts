@@ -10,15 +10,21 @@ import { record } from '../audit/index.ts';
 import { submitProposals } from '../automation/index.ts';
 import { conflict, notFound } from '../shared/errors.ts';
 
-import { parse, auditCtx, withFees, type FeesActor, type FeesDeps, type FeesScope } from './scope.ts';
+import {
+  parse,
+  auditCtx,
+  withFees,
+  type FeesActor,
+  type FeesDeps,
+  type FeesScope,
+} from './scope.ts';
 
 const { feeAgreement, matter, person } = schema;
 
 export type FeeAgreementView = typeof feeAgreement.$inferSelect;
 
 export type FeeAgreementCreated =
-  | { status: 'created'; agreement: FeeAgreementView }
-  | { status: 'proposed'; proposalId: string };
+  { status: 'created'; agreement: FeeAgreementView } | { status: 'proposed'; proposalId: string };
 
 const NO_EVENTS = {
   emit() {
@@ -150,9 +156,7 @@ export async function updateFeeAgreement(
     const [row] = await scope.tx
       .update(feeAgreement)
       .set(set)
-      .where(
-        and(eq(feeAgreement.workspaceId, actor.workspaceId), eq(feeAgreement.id, agreementId)),
-      )
+      .where(and(eq(feeAgreement.workspaceId, actor.workspaceId), eq(feeAgreement.id, agreementId)))
       .returning();
     if (row === undefined) throw notFound('Fee agreement not found');
     await record(auditCtx(scope), {
@@ -180,9 +184,7 @@ export async function setFeeAgreementStatus(
     const [row] = await scope.tx
       .update(feeAgreement)
       .set({ status: data.status, updatedAt: scope.now })
-      .where(
-        and(eq(feeAgreement.workspaceId, actor.workspaceId), eq(feeAgreement.id, current.id)),
-      )
+      .where(and(eq(feeAgreement.workspaceId, actor.workspaceId), eq(feeAgreement.id, current.id)))
       .returning();
     if (row === undefined) throw notFound('Fee agreement not found');
     await record(auditCtx(scope), {

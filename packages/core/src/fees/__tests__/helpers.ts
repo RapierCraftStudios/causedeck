@@ -1,4 +1,4 @@
-import { schema } from '@causedeck/db';
+import { schema, withWorkspace } from '@causedeck/db';
 import type { Transaction } from '@causedeck/db';
 
 import { addMember, newWorkspace } from '../../__tests__/fixtures.ts';
@@ -19,14 +19,18 @@ export function deps(tx: Tx, over: Partial<FeesDeps> = {}): FeesDeps {
 export async function chamber(tx: Tx) {
   const { ownerId, workspaceId } = await newWorkspace(tx);
   const as = (userId: string) => ({ userId, workspaceId });
-  const [matter] = await tx
-    .insert(schema.matter)
-    .values({ workspaceId, title: 'Rao v Meena' })
-    .returning({ id: schema.matter.id });
-  const [client] = await tx
-    .insert(schema.person)
-    .values({ workspaceId, name: 'A. Rao', kind: 'client' })
-    .returning({ id: schema.person.id });
+  const [matter] = await withWorkspace(tx, { workspaceId }, (s) =>
+    s
+      .insert(schema.matter)
+      .values({ workspaceId, title: 'Rao v Meena' })
+      .returning({ id: schema.matter.id }),
+  );
+  const [client] = await withWorkspace(tx, { workspaceId }, (s) =>
+    s
+      .insert(schema.person)
+      .values({ workspaceId, name: 'A. Rao', kind: 'client', sourceType: 'manual' })
+      .returning({ id: schema.person.id }),
+  );
   if (!matter || !client) throw new Error('fixture insert failed');
   return {
     workspaceId,
@@ -48,7 +52,7 @@ export function agreementInput(c: { matterId: string; personId: string }) {
     personId: c.personId,
     basis: 'fixed',
     amountPaise: 500_000,
-    gstTreatment: 'regular',
+    gstTreatment: 'forward_charge',
     startsOn: '2026-11-01',
   };
 }
@@ -64,7 +68,7 @@ export function invoiceInput(c: { matterId: string; personId: string }) {
         quantity: 2,
         unitPricePaise: 100_000,
         amountPaise: 200_000,
-        gstTreatment: 'regular',
+        gstTreatment: 'forward_charge',
       },
     ],
   };

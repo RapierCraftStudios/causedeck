@@ -9,7 +9,14 @@ import { z } from 'zod';
 import { record } from '../audit/index.ts';
 
 import { requireMatterAndPerson } from './agreements.ts';
-import { auditCtx, parse, withFees, type FeesActor, type FeesDeps, type FeesScope } from './scope.ts';
+import {
+  auditCtx,
+  parse,
+  withFees,
+  type FeesActor,
+  type FeesDeps,
+  type FeesScope,
+} from './scope.ts';
 
 const { clientLedgerEntry } = schema;
 
@@ -91,7 +98,11 @@ async function entriesOf(scope: FeesScope, personId: string, matterId?: string) 
         matterId === undefined ? undefined : eq(clientLedgerEntry.matterId, matterId),
       ),
     )
-    .orderBy(asc(clientLedgerEntry.occurredOn), asc(clientLedgerEntry.createdAt), asc(clientLedgerEntry.id));
+    .orderBy(
+      asc(clientLedgerEntry.occurredOn),
+      asc(clientLedgerEntry.createdAt),
+      asc(clientLedgerEntry.id),
+    );
 }
 
 export async function listLedger(

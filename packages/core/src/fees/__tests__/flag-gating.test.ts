@@ -64,9 +64,9 @@ describe('invoices.enabled flag', () => {
   it('is off by default on a fresh database (legal-gated)', async () => {
     await withTestDb(async (tx) => {
       const c = await chamber(tx);
-      await expect(createFeeAgreement({ db: tx }, c.owner, agreementInput(c))).rejects.toBeInstanceOf(
-        FeatureDisabledError,
-      );
+      await expect(
+        createFeeAgreement({ db: tx }, c.owner, agreementInput(c)),
+      ).rejects.toBeInstanceOf(FeatureDisabledError);
     });
   });
 });

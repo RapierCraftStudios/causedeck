@@ -84,7 +84,10 @@ export const AUDIT_ACTIONS = {
     description: 'A member activated or ended a fee agreement',
   },
   'fee.invoice_drafted': { security: false, description: 'A member saved a draft fee invoice' },
-  'fee.invoice_discarded': { security: false, description: 'A member discarded a draft fee invoice' },
+  'fee.invoice_discarded': {
+    security: false,
+    description: 'A member discarded a draft fee invoice',
+  },
   'fee.invoice_issued': { security: false, description: 'A member issued a fee invoice' },
   'fee.gst_unreviewed_acknowledged': {
     security: false,

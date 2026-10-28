@@ -1,4 +1,4 @@
-import { schema } from '@causedeck/db';
+import { schema, withWorkspace } from '@causedeck/db';
 import { withTestDb } from '@causedeck/db/testing';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
@@ -23,8 +23,11 @@ import {
 } from '../index.ts';
 import { agreementInput, chamber, deps, invoiceInput, SUPPLIER } from './helpers.ts';
 
-const draft = (d: ReturnType<typeof deps>, who: { userId: string; workspaceId: string }, c: Parameters<typeof invoiceInput>[0]) =>
-  createDraftInvoice(d, who, { invoice: invoiceInput(c), supplier: SUPPLIER });
+const draft = (
+  d: ReturnType<typeof deps>,
+  who: { userId: string; workspaceId: string },
+  c: Parameters<typeof invoiceInput>[0],
+) => createDraftInvoice(d, who, { invoice: invoiceInput(c), supplier: SUPPLIER });
 
 describe('roles', () => {
   it('lets owner and advocate in; refuses junior, clerk and viewer', async () => {
@@ -51,7 +54,10 @@ describe('fee agreements', () => {
       const made = await createFeeAgreement(d, c.advocate, agreementInput(c));
       if (made.status !== 'created') throw new Error('expected created');
       const id = made.agreement.id;
-      const upd = await updateFeeAgreement(d, c.advocate, { agreementId: id, amountPaise: 700_000 });
+      const upd = await updateFeeAgreement(d, c.advocate, {
+        agreementId: id,
+        amountPaise: 700_000,
+      });
       expect(upd.amountPaise).toBe(700_000);
       await setFeeAgreementStatus(d, c.advocate, { agreementId: id, status: 'active' });
       await expect(
@@ -172,10 +178,12 @@ describe('invoice lifecycle', () => {
         supplier: SUPPLIER,
         acknowledgeUnreviewedGst: true,
       });
-      const ack = await tx
-        .select()
-        .from(schema.auditEvent)
-        .where(eq(schema.auditEvent.action, 'fee.gst_unreviewed_acknowledged'));
+      const ack = await withWorkspace(tx, { workspaceId: c.workspaceId }, (s) =>
+        s
+          .select()
+          .from(schema.auditEvent)
+          .where(eq(schema.auditEvent.action, 'fee.gst_unreviewed_acknowledged')),
+      );
       expect(ack).toHaveLength(1);
     });
   });

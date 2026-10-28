@@ -60,12 +60,16 @@ export const feeEntryHandler: ProposalHandler<Payload> = {
 
   async undo(scope, activity) {
     const agreementId = activity.undoPayload?.['agreementId'];
-    if (typeof agreementId !== 'string') throw conflict('Nothing to undo: the agreement id is missing');
+    if (typeof agreementId !== 'string')
+      throw conflict('Nothing to undo: the agreement id is missing');
     const [row] = await scope.tx
       .select({ status: feeAgreement.status })
       .from(feeAgreement)
       .where(
-        and(eq(feeAgreement.workspaceId, scope.actor.workspaceId), eq(feeAgreement.id, agreementId)),
+        and(
+          eq(feeAgreement.workspaceId, scope.actor.workspaceId),
+          eq(feeAgreement.id, agreementId),
+        ),
       );
     if (row === undefined) return;
     if (row.status !== 'draft') throw conflict('The fee agreement is already in use');
@@ -73,7 +77,10 @@ export const feeEntryHandler: ProposalHandler<Payload> = {
       await scope.tx
         .delete(feeAgreement)
         .where(
-          and(eq(feeAgreement.workspaceId, scope.actor.workspaceId), eq(feeAgreement.id, agreementId)),
+          and(
+            eq(feeAgreement.workspaceId, scope.actor.workspaceId),
+            eq(feeAgreement.id, agreementId),
+          ),
         );
     } catch {
       throw conflict('The fee agreement is already in use');

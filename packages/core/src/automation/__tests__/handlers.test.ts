@@ -273,14 +273,11 @@ describe('handler round trips restore the graph', () => {
 });
 
 describe('kinds that are registered but not enabled', () => {
-  it.each(['outward_draft', 'hearing_outcome'] as const)(
-    '%s throws KindNotEnabled',
-    (kind) => {
-      const handler = HANDLERS[kind];
-      expect(handler.enabled).toBe(false);
-      expect(() => handler.validate({})).toThrow(KindNotEnabled);
-    },
-  );
+  it.each(['outward_draft', 'hearing_outcome'] as const)('%s throws KindNotEnabled', (kind) => {
+    const handler = HANDLERS[kind];
+    expect(handler.enabled).toBe(false);
+    expect(() => handler.validate({})).toThrow(KindNotEnabled);
+  });
 });
 
 describe('fee_entry (#83)', () => {
@@ -294,7 +291,7 @@ describe('fee_entry (#83)', () => {
         personId: '22222222-2222-4222-8222-222222222222',
         basis: 'fixed',
         amountPaise: 100,
-        gstTreatment: 'regular',
+        gstTreatment: 'forward_charge',
         startsOn: '2026-11-01',
       }),
     ).toMatchObject({ basis: 'fixed' });

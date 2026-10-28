@@ -22,7 +22,14 @@ import { conflict, forbidden, invalid, notFound } from '../shared/errors.ts';
 
 import { requireMatterAndPerson } from './agreements.ts';
 import { insertLedgerEntry } from './ledger.ts';
-import { auditCtx, parse, withFees, type FeesActor, type FeesDeps, type FeesScope } from './scope.ts';
+import {
+  auditCtx,
+  parse,
+  withFees,
+  type FeesActor,
+  type FeesDeps,
+  type FeesScope,
+} from './scope.ts';
 
 const { feeInvoice, feeInvoiceLine, clientLedgerEntry, payment, feeAgreement } = schema;
 
@@ -83,10 +90,10 @@ export async function prepareFeeInvoice(
   actor: FeesActor,
   input: { invoice: unknown; supplier: unknown },
 ): Promise<FeePreview> {
-  return withFees(deps, actor, 'fee.read', async () => {
+  return withFees(deps, actor, 'fee.read', () => {
     const data = parse(DraftInput, input);
     const invoice = priced(data.invoice, data.supplier);
-    return { invoice, gstUnreviewed: isGstUnreviewed(invoice) };
+    return Promise.resolve({ invoice, gstUnreviewed: isGstUnreviewed(invoice) });
   });
 }
 
@@ -129,7 +136,11 @@ function requireDraft(row: FeeInvoiceRow): void {
 async function requireAgreement(scope: FeesScope, input: z.output<typeof InvoiceInput>) {
   if (input.feeAgreementId === undefined) return;
   const [row] = await scope.tx
-    .select({ id: feeAgreement.id, matterId: feeAgreement.matterId, personId: feeAgreement.personId })
+    .select({
+      id: feeAgreement.id,
+      matterId: feeAgreement.matterId,
+      personId: feeAgreement.personId,
+    })
     .from(feeAgreement)
     .where(
       and(
@@ -202,7 +213,11 @@ export async function createDraftInvoice(
     await requireAgreement(scope, parsed);
     const [row] = await scope.tx
       .insert(feeInvoice)
-      .values({ workspaceId: actor.workspaceId, createdBy: actor.userId, ...headerValues(parsed, prepared) })
+      .values({
+        workspaceId: actor.workspaceId,
+        createdBy: actor.userId,
+        ...headerValues(parsed, prepared),
+      })
       .returning();
     if (row === undefined) throw new Error('fee_invoice insert returned no row');
     await writeLines(scope, row.id, parsed);
@@ -273,11 +288,13 @@ export async function discardDraftInvoice(
 }
 
 /** The next gapless sequence of the workspace's `FE` series for the financial year, inside the txn. */
-async function allocator(scope: FeesScope) {
+function allocator(scope: FeesScope) {
   return {
     async allocate(series: string, fy: string): Promise<number> {
       const ws = scope.actor.workspaceId;
-      await scope.tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`fee-invoice:${ws}:${fy}`}))`);
+      await scope.tx.execute(
+        sql`select pg_advisory_xact_lock(hashtext(${`fee-invoice:${ws}:${fy}`}))`,
+      );
       const [last] = await scope.tx
         .select({ number: feeInvoice.number })
         .from(feeInvoice)
@@ -334,7 +351,7 @@ export async function issueInvoice(
         metadata: { lines: prepared.lines.length },
       });
     }
-    const { number, issueDate } = await numberInvoice(await allocator(scope), scope.now);
+    const { number, issueDate } = await numberInvoice(allocator(scope), scope.now);
     const [row] = await scope.tx
       .update(feeInvoice)
       .set({
@@ -443,9 +460,7 @@ async function markSettled(scope: FeesScope, invoice: FeeInvoiceRow): Promise<Fe
   const [row] = await scope.tx
     .update(feeInvoice)
     .set({ status: 'paid', updatedAt: scope.now })
-    .where(
-      and(eq(feeInvoice.workspaceId, scope.actor.workspaceId), eq(feeInvoice.id, invoice.id)),
-    )
+    .where(and(eq(feeInvoice.workspaceId, scope.actor.workspaceId), eq(feeInvoice.id, invoice.id)))
     .returning();
   return view(scope, row ?? invoice);
 }

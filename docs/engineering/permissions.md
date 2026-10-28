@@ -139,6 +139,12 @@ the matrix, before the resource checks below.
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `support.manage` | ✓     | —        | —      | —     | —      |
 
+## limitation
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `limitation.write` | ✓     | ✓        | —      | —     | —      |
+
 ## shell
 
 | Action | owner | advocate | junior | clerk | viewer |

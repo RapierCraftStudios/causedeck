@@ -1,8 +1,8 @@
 // `createObligation` (#67): the one writer of new obligations. The input needs provenance (a
 // non-manual fact names its anchor or source), an owner who is an active member, and a due date
-// unless it is an undated task (`internal`). A `rule` source is refused: deadlines are never
-// computed from a generated legal rule (limitation dates live in #84 behind a flag). Writes the
-// `created` event and an `audit_event`.
+// unless it is an undated task (`internal`). A `rule` source is refused here: deadlines are never
+// computed from a generated legal rule (limitation dates use `createRuleObligation`, behind a
+// flag). Writes the `created` event and an `audit_event`.
 import { schema, type Transaction } from '@causedeck/db';
 import { ObligationInput } from '@causedeck/validators/obligation';
 import { and, eq } from 'drizzle-orm';
@@ -31,10 +31,11 @@ type Parsed = ReturnType<typeof ObligationInput.parse>;
 export async function insertObligation(
   scope: ObligationScope,
   data: Parsed,
+  options: { allowRule?: boolean } = {},
 ): Promise<ObligationRow> {
   const { tx, actor } = scope;
-  if (data.source === 'rule') {
-    throw invalid('source: rule-derived dates are not created here (limitation dates are #84)');
+  if (data.source === 'rule' && options.allowRule !== true) {
+    throw invalid('source: rule-derived dates are created only by the limitation service');
   }
   if (data.dueDate === null && data.source !== 'internal') {
     throw invalid('dueDate: only an undated task may have no due date');
@@ -115,6 +116,30 @@ export async function createObligationFromProposal(
   input: Omit<ObligationInput, 'ownerMemberId'> & { ownerMemberId?: string | null },
   now: Date = new Date(),
 ): Promise<ObligationRow> {
+  return insertFromConfirmer(tx, actor, input, now, false);
+}
+
+/**
+ * The dedicated path for a confirmed limitation computation (#940): the only writer of a
+ * `source: 'rule'` obligation. The caller (the limitation service) has already checked the
+ * flag and the role; provenance names the rule and its table version.
+ */
+export async function createRuleObligation(
+  tx: Transaction,
+  actor: ObligationActor,
+  input: Omit<ObligationInput, 'ownerMemberId' | 'source'> & { ownerMemberId?: string | null },
+  now: Date = new Date(),
+): Promise<ObligationRow> {
+  return insertFromConfirmer(tx, actor, { ...input, source: 'rule' }, now, true);
+}
+
+async function insertFromConfirmer(
+  tx: Transaction,
+  actor: ObligationActor,
+  input: Omit<ObligationInput, 'ownerMemberId'> & { ownerMemberId?: string | null },
+  now: Date,
+  allowRule: boolean,
+): Promise<ObligationRow> {
   const { member } = schema;
   const [self] = await tx
     .select({ id: member.id })
@@ -133,5 +158,5 @@ export async function createObligationFromProposal(
     settings: {},
     now,
   };
-  return insertObligation(scope, data);
+  return insertObligation(scope, data, { allowRule });
 }

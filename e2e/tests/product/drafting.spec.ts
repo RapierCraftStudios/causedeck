@@ -8,6 +8,9 @@ import { contentReady } from '../shell/helpers.ts';
 
 import { CITED_STUDIO, checkCitations, citationPanel, seedCitedDraft } from './drafting-helpers.ts';
 
+// Two distinct citations are seeded, so the count is plural; match either form.
+const UNVERIFIED = /citations? (is|are) not verified\./;
+
 const STUDIO = `drafts/${DRAFTING.draft.id}`;
 
 test.describe('drafting studio', () => {
@@ -136,7 +139,7 @@ test.describe('drafting studio', () => {
       await expect(dialog).toBeVisible();
       await expect(dialog.getByRole('button', { name: 'Word document' })).toBeVisible();
       await expect(dialog.getByRole('button', { name: 'PDF' })).toBeVisible();
-      await expect(dialog.getByText('1 citation is not verified.')).toBeVisible();
+      await expect(dialog.getByText(UNVERIFIED)).toBeVisible();
       await expect(dialog.getByRole('button', { name: 'Export', exact: true })).toBeDisabled();
       await expect(
         dialog.getByRole('button', { name: /\b(send|share|file|email)\b/i }),
@@ -147,9 +150,9 @@ test.describe('drafting studio', () => {
       await ack.getByRole('button', { name: 'Confirm' }).click();
       await expect(ack).toBeHidden();
       await page.getByRole('button', { name: 'Export', exact: true }).click();
-      await expect(
-        page.locator('[data-slot="export-dialog"]').getByText('1 citation is not verified.'),
-      ).toHaveCount(0);
+      await expect(page.locator('[data-slot="export-dialog"]').getByText(UNVERIFIED)).toHaveCount(
+        0,
+      );
     });
   });
 });

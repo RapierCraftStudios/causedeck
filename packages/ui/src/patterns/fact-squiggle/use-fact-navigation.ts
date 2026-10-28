@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type RefObject } from 'react';
 
-import { DEFAULT_FACT_LABELS, type FactLabels, type FactStatus } from './fact-squiggle';
+import { DEFAULT_FACT_LABELS, type FactLabels, type FactStatus } from './fact-labels';
 
 const SELECTOR = '[data-slot="fact-squiggle"]:not([data-status="match"])';
 

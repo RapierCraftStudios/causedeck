@@ -10,12 +10,14 @@
 import {
   createMockResolver,
   extractClaims,
+  extractWithPort,
   validateBlockTree,
   verify,
   walkBlocks,
   type Block,
   type Claim,
   type CitationResolver,
+  type ClaimPort,
   type ClaimVerdict,
   type FactStatus,
   type MatterFacts,
@@ -39,7 +41,7 @@ import {
 } from '../matter-graph/index.ts';
 import { conflict, invalid, notFound } from '../shared/errors.ts';
 
-import { asDraftMember, requireDraft, type DraftActor } from './policy.ts';
+import { asDraftMember, requireDraft, requireMatterAccess, type DraftActor } from './policy.ts';
 import type { DraftingDeps } from './service.ts';
 
 const { authority, draft, draftFactAck, draftVersion } = schema;
@@ -50,7 +52,12 @@ const NO_EVENTS: GraphEvents = {
   },
 };
 
-type Deps = DraftingDeps & { db: Database | Transaction; resolver?: CitationResolver };
+type Deps = DraftingDeps & {
+  db: Database | Transaction;
+  resolver?: CitationResolver;
+  /** Optional model-backed claim finder; only the `deep` live check uses it. */
+  claimPort?: ClaimPort;
+};
 
 /** Statuses that hold an export back until the lawyer decides. */
 const BLOCKING: readonly FactStatus[] = ['mismatch', 'unverified-citation'];
@@ -431,4 +438,84 @@ export async function recordFactFix(
     }
     return { toVersionId, fixed: fixed.length };
   });
+}
+
+export interface LiveFactVerdict extends FactVerdictView {
+  blockKey: string;
+  /** `[start, end)` in the block text as sent. */
+  start: number;
+  end: number;
+}
+
+export interface LiveFactCheckResult {
+  verdicts: LiveFactVerdict[];
+  /** True when a model-backed claim finder ran; false means the rule pass is all there is. */
+  deep: boolean;
+}
+
+const LIVE_MAX_BLOCKS = 300;
+const LIVE_MAX_TEXT = 20_000;
+
+/**
+ * The live, read-only check of unsaved text (#916): claims in `blocks` against one matter's record.
+ * It stores nothing (no `draft_fact_ack` rows, no audit event) so it can run on every pause in
+ * typing; the matter must be readable by the actor (NOT_FOUND otherwise) and the role needs
+ * `draft.read`. Ignored and asserted claims come back resolved, as in `runFactCheck`. With
+ * `deep` and an injected claim port the model's extra claims are added; no draft text is logged.
+ */
+export async function checkFactsLive(
+  deps: Deps,
+  actor: DraftActor,
+  input: {
+    matterId: string;
+    blocks: readonly { key: string; text: string }[];
+    deep?: boolean;
+  },
+): Promise<LiveFactCheckResult> {
+  const blocks = input.blocks;
+  const raw: readonly { key: unknown; text: unknown }[] = blocks;
+  if (
+    typeof input.matterId !== 'string' ||
+    raw.length > LIVE_MAX_BLOCKS ||
+    raw.some(
+      (b) =>
+        typeof b.key !== 'string' ||
+        b.key === '' ||
+        typeof b.text !== 'string' ||
+        b.text.length > LIVE_MAX_TEXT,
+    )
+  ) {
+    throw invalid('Give the matter and the text blocks to check');
+  }
+  await asDraftMember(deps.db, actor, (tx, reader, settings) =>
+    requireMatterAccess(tx, reader, settings, input.matterId, 'draft.read'),
+  );
+  const port = input.deep === true ? deps.claimPort : undefined;
+  const claims: Claim[] = [];
+  for (const b of blocks) claims.push(...(await extractWithPort(b.text, b.key, port)));
+  const facts = await loadFactCheckFacts(deps, actor, input.matterId);
+  const verdicts = await verify(claims, facts, {
+    resolver: deps.resolver ?? createMockResolver(),
+    workspaceId: actor.workspaceId,
+  });
+  const decided = await asDraftMember(deps.db, actor, (tx, reader) =>
+    decisionsOf(tx, reader.workspaceId, input.matterId),
+  );
+  return {
+    deep: port !== undefined,
+    verdicts: verdicts.map((v): LiveFactVerdict => {
+      const key = claimKeyOf(v.claim);
+      return {
+        claimId: v.claim.id,
+        claimKey: key,
+        kind: v.claim.kind,
+        status: v.status,
+        resolution: BLOCKING.includes(v.status) ? (decided.get(key) ?? 'open') : 'open',
+        anchor: v.anchor,
+        blockKey: v.claim.blockKey,
+        start: v.claim.start,
+        end: v.claim.end,
+      };
+    }),
+  };
 }

@@ -983,6 +983,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   recordFactFix: denies,
   acknowledgeFactCheck: denies,
   loadFactCheckFacts: denies,
+  // live fact-check (#916): B checking text against A's matter is denied; nothing is stored.
+  checkFactsLive: denies,
   // research notes, facts and provider templates (#80)
   listNotes: denies,
   createNote: denies,

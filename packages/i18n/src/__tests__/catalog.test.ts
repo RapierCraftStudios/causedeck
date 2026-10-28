@@ -175,6 +175,12 @@ describe('drafting studio copy (#825)', () => {
         factCheck.openPage,
         factCheck.announce,
         factCheck.noIssues,
+        ...Object.values(factCheck.panel.group),
+        factCheck.panel.title,
+        factCheck.panel.tab,
+        factCheck.panel.badge,
+        factCheck.panel.empty,
+        factCheck.panel.undo,
       ]) {
         expect(text).not.toBe('');
       }

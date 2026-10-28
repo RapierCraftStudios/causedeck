@@ -13,15 +13,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '../../components/popove
 import { useMediaQuery } from '../../hooks/use-media-query';
 import { cn } from '../../lib/cn';
 import { HOVER_CLOSE_DELAY_MS, POINTER_QUERY } from '../provenance-chip/provenance-chip';
-import {
-  FactCardBody,
-  type FactCardActions,
-  type FactCardLabels,
-  type FactSource,
-} from './fact-card';
+import { FactCardBody, type FactCardActions, type FactSource } from './fact-card';
+import { DEFAULT_FACT_LABELS, type FactLabels, type FactStatus } from './fact-labels';
 
-/** Mirrors the drafting fact-check verdicts; kept local so the UI package does not import drafting. */
-export type FactStatus = 'match' | 'mismatch' | 'unsupported' | 'unverified-citation' | 'ambiguous';
+export { DEFAULT_FACT_LABELS, type FactLabels, type FactStatus };
 
 export const FACT_STATUS_ORDER: readonly FactStatus[] = [
   'mismatch',
@@ -69,33 +64,6 @@ export const FACT_STATUS_META: Record<FactStatus, FactStatusMeta> = {
     classes: 'cursor-text bg-transparent p-0 text-inherit [font:inherit] no-underline',
     tone: 'text-success',
   },
-};
-
-export interface FactLabels extends FactCardLabels {
-  status: Record<FactStatus, string>;
-  /** Live-region text when keyboard navigation lands on an issue. */
-  announce: (args: { index: number; total: number; status: string }) => string;
-  noIssues: string;
-}
-
-export const DEFAULT_FACT_LABELS: FactLabels = {
-  status: {
-    mismatch: 'Does not match the record',
-    ambiguous: 'Ambiguous in the record',
-    'unverified-citation': 'Citation not verified',
-    unsupported: 'Not found in the record',
-    match: 'Matches the record',
-  },
-  source: 'From the record',
-  noSource: 'The record has no passage for this.',
-  fix: 'Fix',
-  ignore: 'Ignore',
-  ignoreForMatter: 'Ignore for this matter',
-  markAssertion: 'Mark as my assertion',
-  page: (page) => `Page ${String(page)}`,
-  openPage: (page) => `Open page ${String(page)}`,
-  announce: ({ index, total, status }) => `Issue ${String(index)} of ${String(total)}: ${status}`,
-  noIssues: 'No fact-check issues.',
 };
 
 export interface FactSquiggleProps

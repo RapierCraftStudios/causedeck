@@ -3988,6 +3988,26 @@ export type Messages = {
       };
       announce: string;
       noIssues: string;
+      panel: {
+        title: string;
+        tab: string;
+        badge: string;
+        empty: string;
+        noMatter: string;
+        checking: string;
+        failed: string;
+        jump: string;
+        fixed: string;
+        undo: string;
+        ignored: string;
+        asserted: string;
+        group: {
+          mismatch: string;
+          'unverified-citation': string;
+          unsupported: string;
+          ambiguous: string;
+        };
+      };
     };
   };
   calendar: {

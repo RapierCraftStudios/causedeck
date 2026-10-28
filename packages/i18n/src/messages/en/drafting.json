@@ -262,7 +262,27 @@
         "markAssertion": "Mark as my assertion"
       },
       "announce": "Issue {index} of {total}: {status}",
-      "noIssues": "No fact-check issues."
+      "noIssues": "No fact-check issues.",
+      "panel": {
+        "title": "Fact check",
+        "tab": "Fact check",
+        "badge": "{count, plural, one {# fact-check issue} other {# fact-check issues}}",
+        "empty": "Nothing to flag. Every claim the record can check agrees with it.",
+        "noMatter": "Link this draft to a matter to check it against the record.",
+        "checking": "Checking against the record…",
+        "failed": "The fact check could not run. Your text is unchanged.",
+        "jump": "Go to claim",
+        "fixed": "Fixed. You can undo this.",
+        "undo": "Undo fix",
+        "ignored": "Ignored for this matter",
+        "asserted": "Your assertion",
+        "group": {
+          "mismatch": "Does not match the record",
+          "unverified-citation": "Citation not verified",
+          "unsupported": "Not found in the record",
+          "ambiguous": "Ambiguous in the record"
+        }
+      }
     }
   }
 }

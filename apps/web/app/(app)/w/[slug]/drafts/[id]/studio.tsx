@@ -7,6 +7,8 @@
 // region), Esc closes what is open. Offline, the loaded draft stays readable from the encrypted
 // device cache and edits queue until `online`. `panels` is where #828's citation and consistency
 // panels go.
+import type { LiveFactVerdict } from '@causedeck/core/drafting';
+import { useFactNavigation } from '@causedeck/ui/patterns/fact-navigation';
 import type { Finding } from '@causedeck/validators/consistency';
 import type { Block, ExportFormat } from '@causedeck/validators/drafting';
 import dynamic from 'next/dynamic';
@@ -22,12 +24,19 @@ import type { PrecedentSearch } from '../../../../../../components/drafting/prec
 import type { DraftVersionView } from '../../../../../../components/drafting/version-drawer.tsx';
 import { registerCommands } from '../../../../../../lib/commands/registry.ts';
 import {
+  editBlockText,
   hasMissing,
   insertFact,
   keyedBlocks,
   stepFinding,
   type EditDiff,
 } from '../../../../../../lib/drafting/blocks-edit.ts';
+import {
+  fixText,
+  useFactCheck,
+  useFactLabels,
+  type FactCheckRunner,
+} from '../../../../../../lib/drafting/use-fact-check.ts';
 import {
   browserDraftEditStores,
   cacheDraft,
@@ -40,6 +49,11 @@ import {
 import { DRAFT_STUDIO_SHORTCUTS } from '../../../../../../lib/shortcuts/registry.ts';
 
 import type { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
+import type {
+  checkFactsLiveAction,
+  ignoreFactAction,
+  markAssertionAction,
+} from './factcheck-actions.ts';
 import type { proposePrecedentAction } from './precedent-actions.ts';
 import type {
   acknowledgeUnverifiedAction,
@@ -54,6 +68,13 @@ import type {
 const panelLoading = () => <div aria-hidden="true" className="bg-surface-sunken h-40 rounded-md" />;
 const FactsPanel = dynamic(
   () => import('../../../../../../components/drafting/facts-panel.tsx').then((m) => m.FactsPanel),
+  { ssr: false, loading: panelLoading },
+);
+const FactCheckPanel = dynamic(
+  () =>
+    import('../../../../../../components/drafting/fact-check-panel.tsx').then(
+      (m) => m.FactCheckPanel,
+    ),
   { ssr: false, loading: panelLoading },
 );
 const AuthoritiesPanel = dynamic(
@@ -131,8 +152,20 @@ export interface StudioProps {
   panels?: ReactNode;
   /** #828: the checks of the version being edited, with the actions that run, fix and export. */
   checks?: StudioChecks;
+  /** #916: the live fact-check; absent, or without a matter, the studio checks nothing. */
+  factCheck?: StudioFactCheck;
   /** #904: the precedent picker, present only when the `m5_playbooks` flag is on. */
   precedents?: StudioPrecedents;
+}
+
+export interface StudioFactCheck {
+  /** The matter whose record the draft is checked against. */
+  matterId: string | null;
+  actions: {
+    check: typeof checkFactsLiveAction;
+    ignore: typeof ignoreFactAction;
+    assert: typeof markAssertionAction;
+  };
 }
 
 export interface StudioPrecedents {
@@ -188,11 +221,79 @@ export function DraftStudio(props: StudioProps) {
   const [live, setLive] = useState<{ citations: CitationView[]; findings: Finding[] } | null>(null);
   const [finding, setFinding] = useState(-1);
   const [announcement, setAnnouncement] = useState('');
+  const [fixUndo, setFixUndo] = useState<Block[] | null>(null);
   const diffs = useRef<EditDiff[]>([]);
+  const editorRef = useRef<HTMLElement | null>(null);
+  const factLabels = useFactLabels();
+  const factCheck = props.factCheck;
 
   const readOnly = !online && cached;
   const panelTabs: readonly Panel[] =
     props.precedents === undefined ? ['facts', 'versions'] : ['facts', 'precedents', 'versions'];
+
+  // Live fact-check of the text as it stands (#916): headings and paragraphs, as the editor shows them.
+  const checkBlocks = useMemo(
+    () =>
+      keyedBlocks(blocks).flatMap(({ block, key }) =>
+        block.type === 'heading' || block.type === 'paragraph' ? [{ key, text: block.text }] : [],
+      ),
+    [blocks],
+  );
+  const runFacts = useCallback<FactCheckRunner>(
+    async (sent, deep) => {
+      if (factCheck?.matterId == null) return null;
+      const result = await factCheck.actions.check({
+        workspaceId: props.workspaceId,
+        matterId: factCheck.matterId,
+        blocks: sent,
+        deep,
+      });
+      return result.ok ? result.data : null;
+    },
+    [factCheck, props.workspaceId],
+  );
+  const facts = useFactCheck({
+    matterId: factCheck?.matterId ?? null,
+    blocks: checkBlocks,
+    run: runFacts,
+    enabled: !readOnly && online,
+    deep: true,
+  });
+  const factAnnouncement = useFactNavigation(editorRef, factLabels);
+  const blockTexts = useMemo(
+    () => Object.fromEntries(checkBlocks.map((b) => [b.key, b.text])),
+    [checkBlocks],
+  );
+
+  /** Click-only: the record's own passage replaces the claim; one step back restores the text. */
+  const applyFactFix = (v: LiveFactVerdict) => {
+    const text = blockTexts[v.blockKey];
+    const fix = fixText(v);
+    if (text === undefined || fix === null) return;
+    setFixUndo(blocks);
+    setBlocks(
+      editBlockText(blocks, v.blockKey, text.slice(0, v.start) + fix + text.slice(v.end)).blocks,
+    );
+    setDirty(true);
+  };
+  const decideFact = async (v: LiveFactVerdict, kind: 'ignored' | 'asserted') => {
+    const draftVersionId = checks?.versionId;
+    if (factCheck === undefined || draftVersionId === undefined) return;
+    const input = { workspaceId: props.workspaceId, draftVersionId, claimKey: v.claimKey };
+    const result = await (kind === 'ignored'
+      ? factCheck.actions.ignore(input)
+      : factCheck.actions.assert(input));
+    if (result.ok) facts.resolve(v.claimKey, kind);
+  };
+  const jumpToFact = (v: LiveFactVerdict) => {
+    setPanel(null);
+    const field = document.querySelector<HTMLTextAreaElement>(
+      `[data-block-key="${CSS.escape(v.blockKey)}"]`,
+    );
+    field?.focus();
+    field?.setSelectionRange(v.start, v.end);
+    field?.scrollIntoView({ block: 'center' });
+  };
 
   // A fresh server version (after a restore or reload) replaces the local tree.
   /* eslint-disable react-hooks/set-state-in-effect -- adopting a new server version is the point of this effect */
@@ -602,6 +703,21 @@ export function DraftStudio(props: StudioProps) {
       />
     ) : which === 'facts' ? (
       <div className="flex flex-col gap-6">
+        {factCheck === undefined ? null : (
+          <FactCheckPanel
+            verdicts={facts.verdicts}
+            blockTexts={blockTexts}
+            hasMatter={factCheck.matterId !== null}
+            checking={facts.checking}
+            failed={facts.failed}
+            canUndo={fixUndo !== null}
+            onJump={jumpToFact}
+            onUndo={() => {
+              if (fixUndo !== null) setBlocks(fixUndo);
+              setFixUndo(null);
+            }}
+          />
+        )}
         <FactsPanel
           facts={props.facts}
           selectedSlot={selectedSlot}
@@ -664,7 +780,28 @@ export function DraftStudio(props: StudioProps) {
         {pending > 0 ? (
           <span className="text-ink-muted text-sm">{t('offline.queued', { count: pending })}</span>
         ) : null}
-        <div className="ms-auto flex gap-2 xl:hidden">
+        {factCheck === undefined ? null : (
+          <button
+            type="button"
+            aria-pressed={panel === 'facts'}
+            onClick={() => {
+              setPanel(panel === 'facts' ? null : 'facts');
+            }}
+            className="border-line focus-visible:ring-focus ms-auto min-h-11 rounded-md border px-3 text-sm focus-visible:ring-2 xl:hidden"
+          >
+            {t('factCheck.panel.tab')}
+            {facts.count === 0 ? null : (
+              <span
+                data-slot="fact-check-badge"
+                aria-label={t('factCheck.panel.badge', { count: facts.count })}
+                className="bg-warn-subtle text-warn ms-1 rounded-full px-1.5 text-xs tabular-nums"
+              >
+                {facts.count}
+              </span>
+            )}
+          </button>
+        )}
+        <div className={`${factCheck === undefined ? 'ms-auto' : ''}flex gap-2 xl:hidden`}>
           {panelTabs.map((which) => (
             <button
               key={which}
@@ -696,13 +833,23 @@ export function DraftStudio(props: StudioProps) {
           {precedentsOn ? <div className="mt-6">{panelBody('precedents')}</div> : null}
         </aside>
 
-        <main className="mx-auto w-full max-w-3xl" aria-label={t('editor.label')}>
+        <main ref={editorRef} className="mx-auto w-full max-w-3xl" aria-label={t('editor.label')}>
           <DraftEditor
             blocks={blocks}
             slotValues={props.slotValues}
             aiTexts={props.aiTexts ?? {}}
             selectedSlot={selectedSlot}
             readOnly={readOnly}
+            facts={
+              factCheck?.matterId == null
+                ? undefined
+                : {
+                    verdicts: facts.verdicts,
+                    onFix: applyFactFix,
+                    onIgnoreForMatter: (v) => void decideFact(v, 'ignored'),
+                    onMarkAssertion: (v) => void decideFact(v, 'asserted'),
+                  }
+            }
             onSelectSlot={setSelectedSlot}
             onChange={(next, diff) => {
               setBlocks(next);
@@ -849,6 +996,7 @@ export function DraftStudio(props: StudioProps) {
 
       <div aria-live="polite" role="status" className="sr-only">
         {announcement}
+        {factAnnouncement}
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { WorkspaceError } from '../../shared/errors.ts';
 import {
   acknowledgeFactCheck,
+  checkFactsLive,
   createDraft,
   exportDraft,
   ignoreForMatter,
@@ -64,6 +65,24 @@ async function setup(tx: Parameters<Parameters<typeof withTestDb>[0]>[0]) {
 }
 
 describe('fact-check service', () => {
+  it('live check reports verdicts with offsets for unsaved text and writes nothing', async () => {
+    await withTestDb(async (tx) => {
+      const { actor, matterId, workspaceId, deps } = await setup(tx);
+      const result = await checkFactsLive(deps, actor, {
+        matterId,
+        blocks: [{ key: 'b1', text: TEXT }],
+      });
+      const bad = result.verdicts.find((v) => v.status === 'unverified-citation');
+      expect(bad?.blockKey).toBe('b1');
+      expect(TEXT.slice(bad?.start, bad?.end)).toContain('INSC');
+      expect(result.deep).toBe(false);
+      const rows = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.draftFactAck).where(eq(schema.draftFactAck.matterId, matterId)),
+      );
+      expect(rows).toHaveLength(0);
+    });
+  });
+
   it('blocks the export on an unverified citation until an audited acknowledgement', async () => {
     await withTestDb(async (tx) => {
       const { actor, version, created, workspaceId, deps } = await setup(tx);

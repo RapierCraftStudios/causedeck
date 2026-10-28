@@ -52,6 +52,7 @@ export {
   type FactCheckExportGate,
 } from './citation-ack.ts';
 export {
+  checkFactsLive,
   ignoreForMatter,
   loadFactCheckFacts,
   markAsAssertion,
@@ -61,6 +62,8 @@ export {
   type FactFixResult,
   type FactResolution,
   type FactVerdictView,
+  type LiveFactCheckResult,
+  type LiveFactVerdict,
 } from './factcheck-service.ts';
 export {
   getDraft,

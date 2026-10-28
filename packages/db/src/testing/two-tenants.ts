@@ -477,6 +477,19 @@ export async function ownerMemberId(tx: Transaction, workspaceId: string, ownerI
   return first(rows, 'member').id;
 }
 
+/**
+ * The owner's member id for a proof-of-value seeder. Seeding into another workspace (the denied
+ * insert in the cross-tenant suite) cannot see that member under RLS, so a throwaway id lets the
+ * insert reach the policy and fail with 42501 there.
+ */
+async function povMemberId(tx: Transaction, workspaceId: string, ownerId: string) {
+  const rows = await tx
+    .select({ id: member.id })
+    .from(member)
+    .where(and(eq(member.organizationId, workspaceId), eq(member.userId, ownerId)));
+  return rows[0]?.id ?? randomUUID();
+}
+
 async function seedOutwardDraft(
   tx: Transaction,
   workspaceId: string,
@@ -1801,7 +1814,7 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
   },
   // Proof-of-value (#86): the owner's own rows, content-free.
   preparedness_rating: async (tx, { workspaceId, ownerId, tag }) => {
-    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const memberId = await povMemberId(tx, workspaceId, ownerId);
     const hearingId = await seedHearing(tx, workspaceId, tag);
     const appearanceRows = await tx
       .insert(appearance)
@@ -1815,7 +1828,7 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     return { appearanceId, hearingId, memberId, id: first(rows, 'preparedness_rating').id };
   },
   load_pulse: async (tx, { workspaceId, ownerId }) => {
-    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const memberId = await povMemberId(tx, workspaceId, ownerId);
     const rows = await tx
       .insert(loadPulse)
       .values({ workspaceId, memberId, isoWeek: '2026-W44', demand: 3, worry: 2, effort: 4 })
@@ -1823,7 +1836,7 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     return { memberId, id: first(rows, 'load_pulse').id };
   },
   context_test_result: async (tx, { workspaceId, ownerId, tag }) => {
-    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const memberId = await povMemberId(tx, workspaceId, ownerId);
     const matterId = await seedMatter(tx, workspaceId, tag);
     const rows = await tx
       .insert(contextTestResult)
@@ -1832,7 +1845,7 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     return { matterId, memberId, id: first(rows, 'context_test_result').id };
   },
   pov_prefs: async (tx, { workspaceId, ownerId }) => {
-    const memberId = await ownerMemberId(tx, workspaceId, ownerId);
+    const memberId = await povMemberId(tx, workspaceId, ownerId);
     await tx.insert(povPrefs).values({ workspaceId, memberId, promptsEnabled: false });
     return { memberId };
   },

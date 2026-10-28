@@ -90,9 +90,6 @@ test.describe('drafting studio', () => {
       await expect(page.locator('[data-slot="consistency-panel"]')).toBeVisible();
       await checkCitations(page);
       await expect(
-        citationPanel(page).getByText('Verified', { exact: true }).first(),
-      ).toBeVisible();
-      await expect(
         citationPanel(page).getByText('Not found', { exact: true }).first(),
       ).toBeVisible();
       await expect(

@@ -1,6 +1,6 @@
 // Seeds and locators for the drafting check, acknowledge and export journeys (#910). The e2e stack
-// resolves citations with the offline mock resolver, which knows three authorities, so a draft
-// citing `2023 INSC 999` gets a not-found result on `Check citations`. The draft is inserted
+// resolves citations against stored authorities only, so a draft citing `2023 INSC 999` gets a
+// not-found result on `Check citations`. The draft is inserted
 // straight into the worker database, as factcheck-helpers.ts does. Fictional data only.
 import { createHash } from 'node:crypto';
 
@@ -22,10 +22,10 @@ export const CITED_STUDIO = `drafts/${CITED_DRAFT.id}`;
 const BLOCKS = [
   { id: 'b1', type: 'heading', level: 1, text: 'Memo of appearance' },
   { id: 'b2', type: 'paragraph', text: 'Reliance is placed on 2023 INSC 999 for the point.' },
-  { id: 'b3', type: 'paragraph', text: 'The mock authority 2023 INSC 123 is also cited.' },
+  { id: 'b3', type: 'paragraph', text: 'The same point is also made in 2023 INSC 123.' },
 ];
 
-/** Insert a draft with one citation the mock resolver cannot find and one it verifies. */
+/** Insert a draft with citations that no stored authority resolves. */
 export async function seedCitedDraft(database: string): Promise<void> {
   const sql = postgres(databaseUrl(database, 'superuser'), { max: 1, onnotice: () => undefined });
   try {

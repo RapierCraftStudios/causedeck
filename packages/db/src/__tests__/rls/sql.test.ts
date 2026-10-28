@@ -254,6 +254,10 @@ describe('row-level security catalog', () => {
         // Official notices feed (#584).
         'notice_match',
 
+        // Client status links (#88).
+        'status_link',
+        'status_link_access',
+
         // Client contacts (#82).
         'client_contact',
 

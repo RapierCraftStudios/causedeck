@@ -194,6 +194,8 @@ describe('@causedeck/db root entry point', () => {
       'source_parse_run',
       'sso_provider',
       'staff_user',
+      'status_link',
+      'status_link_access',
       'subscription',
       'support_session',
       'task',

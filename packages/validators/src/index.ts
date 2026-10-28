@@ -9,6 +9,7 @@ export * from './digest-preferences';
 export * from './drafting';
 export * from './research';
 export * from './outward-draft';
+export * from './status-link';
 export * from './memory';
 export * from './court-day';
 export * from './delegation';

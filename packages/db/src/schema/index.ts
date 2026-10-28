@@ -394,5 +394,11 @@ export { conflictCheckResult, enquiry, enquiryParty } from './enquiry.ts';
 export { handoverNote, matterView } from './continuity.ts';
 export { clientLedgerEntry, feeAgreement, feeInvoice, feeInvoiceLine, payment } from './fees.ts';
 export { briefShare, referral, referralCredit, type SharedBriefSnapshot } from './share.ts';
+export {
+  statusLink,
+  statusLinkAccess,
+  type StatusLinkPayloadJson,
+  type StatusLinkUaClass,
+} from './status-link.ts';
 export { reminderDispatch, REMINDER_KINDS, type ReminderKind } from './reminder.ts';
 export { attentionSnooze, ATTENTION_SNOOZE_RULES, type AttentionSnoozeRule } from './attention.ts';

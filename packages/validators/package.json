@@ -25,6 +25,7 @@
     "./plans": "./src/plans.ts",
     "./proposal-draft": "./src/proposal-draft.ts",
     "./roster": "./src/roster.ts",
+    "./status-link": "./src/status-link.ts",
     "./workspace": "./src/workspace.ts"
   },
   "scripts": {

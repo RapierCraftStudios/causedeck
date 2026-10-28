@@ -31,7 +31,7 @@ export const ContextTestQuestionId = z.enum(CONTEXT_TEST_QUESTIONS);
 /** A preparedness rating for the member's own appearance at a hearing. */
 export const PreparednessRating = z
   .object({
-    hearingId: z.string().uuid(),
+    hearingId: z.uuid(),
     rating: PovScale,
     note: PovNote.optional(),
   })
@@ -39,13 +39,11 @@ export const PreparednessRating = z
 export type PreparednessRatingInput = z.infer<typeof PreparednessRating>;
 
 /** The member skipped the tap for a hearing. */
-export const PreparednessSkip = z.object({ hearingId: z.string().uuid() }).strict();
+export const PreparednessSkip = z.object({ hearingId: z.uuid() }).strict();
 export type PreparednessSkipInput = z.infer<typeof PreparednessSkip>;
 
 /** The weekly pulse: mental demand, worry about forgetting, effort to prepare. */
-export const LoadPulse = z
-  .object({ demand: PovScale, worry: PovScale, effort: PovScale })
-  .strict();
+export const LoadPulse = z.object({ demand: PovScale, worry: PovScale, effort: PovScale }).strict();
 export type LoadPulseInput = z.infer<typeof LoadPulse>;
 
 /** One question answered in a context test run: the tester's own correctness mark. */
@@ -54,29 +52,33 @@ export const ContextTestAnswer = z
     question: ContextTestQuestionId,
     correct: z.boolean(),
     /** Milliseconds from the start of the run to this answer. */
-    atMs: z.number().int().min(0).max(24 * 60 * 60 * 1000),
+    atMs: z
+      .number()
+      .int()
+      .min(0)
+      .max(24 * 60 * 60 * 1000),
   })
   .strict();
 export type ContextTestAnswerEntry = z.infer<typeof ContextTestAnswer>;
 
 /** Start a timed run on a matter the owner chose. */
-export const ContextTestStart = z.object({ matterId: z.string().uuid() }).strict();
+export const ContextTestStart = z.object({ matterId: z.uuid() }).strict();
 export type ContextTestStartInput = z.infer<typeof ContextTestStart>;
 
 /** Answer one standard question of a running test. */
 export const ContextTestAnswerInput = ContextTestAnswer.extend({
-  runId: z.string().uuid(),
+  runId: z.uuid(),
 }).strict();
 export type ContextTestAnswerInputType = z.infer<typeof ContextTestAnswerInput>;
 
 /** Finish a running test. */
-export const ContextTestFinish = z.object({ runId: z.string().uuid() }).strict();
+export const ContextTestFinish = z.object({ runId: z.uuid() }).strict();
 
 /** A stored run: the five answers with the stopwatch time. */
 export const ContextTestRun = z
   .object({
-    id: z.string().uuid(),
-    matterId: z.string().uuid(),
+    id: z.uuid(),
+    matterId: z.uuid(),
     startedAt: z.date(),
     finishedAt: z.date().nullable(),
     elapsedMs: z.number().int().min(0).nullable(),
@@ -90,4 +92,4 @@ export const PovPrefs = z.object({ promptsEnabled: z.boolean() }).strict();
 export type PovPrefsInput = z.infer<typeof PovPrefs>;
 
 /** Delete one of the member's own ratings. */
-export const PovDeleteRating = z.object({ ratingId: z.string().uuid() }).strict();
+export const PovDeleteRating = z.object({ ratingId: z.uuid() }).strict();

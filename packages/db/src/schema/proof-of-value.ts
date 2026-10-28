@@ -51,7 +51,11 @@ export const preparednessRating = tenantTable(
     ...timestamps(),
   },
   (t) => [
-    unique('preparedness_rating_member_appearance_uq').on(t.workspaceId, t.appearanceId, t.memberId),
+    unique('preparedness_rating_member_appearance_uq').on(
+      t.workspaceId,
+      t.appearanceId,
+      t.memberId,
+    ),
     foreignKey({
       name: 'preparedness_rating_workspace_id_fk',
       columns: [t.workspaceId],
@@ -72,7 +76,10 @@ export const preparednessRating = tenantTable(
       'preparedness_rating_answer_chk',
       sql`not (rating is not null and skipped_at is not null)`,
     ),
-    check('preparedness_rating_note_chk', sql`note is null or (position(chr(10) in note) = 0 and position(chr(13) in note) = 0)`),
+    check(
+      'preparedness_rating_note_chk',
+      sql`note is null or (position(chr(10) in note) = 0 and position(chr(13) in note) = 0)`,
+    ),
   ],
 );
 
@@ -104,7 +111,10 @@ export const loadPulse = tenantTable(
       foreignColumns: [member.organizationId, member.id],
     }).onDelete('cascade'),
     check('load_pulse_iso_week_chk', sql`iso_week ~ '^[0-9]{4}-W[0-9]{2}$'`),
-    check('load_pulse_scale_chk', sql`${scaleCheck('demand')} and ${scaleCheck('worry')} and ${scaleCheck('effort')}`),
+    check(
+      'load_pulse_scale_chk',
+      sql`${scaleCheck('demand')} and ${scaleCheck('worry')} and ${scaleCheck('effort')}`,
+    ),
     check(
       'load_pulse_answer_chk',
       sql`(dismissed_at is null and demand is not null and worry is not null and effort is not null) or (dismissed_at is not null and demand is null and worry is null and effort is null)`,
@@ -144,10 +154,7 @@ export const contextTestResult = tenantTable(
       foreignColumns: [member.organizationId, member.id],
     }).onDelete('cascade'),
     check('context_test_result_elapsed_chk', sql`elapsed_ms is null or elapsed_ms >= 0`),
-    check(
-      'context_test_result_finished_chk',
-      sql`(finished_at is null) = (elapsed_ms is null)`,
-    ),
+    check('context_test_result_finished_chk', sql`(finished_at is null) = (elapsed_ms is null)`),
     check('context_test_result_questions_chk', sql`jsonb_typeof(questions) = 'array'`),
   ],
 );

@@ -6,6 +6,7 @@ import {
   PreparednessTapView,
   PulseCardView,
   type ContextTestLabels,
+  type ContextTestPhase,
   type PovState,
   type PulseLabels,
   type TapLabels,
@@ -15,7 +16,7 @@ const tapLabels: TapLabels = {
   title: 'How prepared did you feel?',
   hint: 'Optional. Press 1 to 5, or S to skip.',
   legend: 'Preparedness from 1 to 5',
-  option: (n) => `${n} of 5`,
+  option: (n) => `${String(n)} of 5`,
   skip: 'Skip',
   retry: 'Try again',
   messages: {
@@ -33,7 +34,7 @@ const meta = {
   component: PreparednessTapView,
   args: {
     labels: tapLabels,
-    state: 'default' as PovState,
+    state: 'default',
     value: null,
     onRate: fn(),
     onSkip: fn(),
@@ -80,7 +81,7 @@ const pulseLabels: PulseLabels = {
   intro: 'Three quick questions.',
   low: 'Low',
   high: 'High',
-  option: (n) => `${n} of 5`,
+  option: (n) => `${String(n)} of 5`,
   submit: 'Save',
   dismiss: 'Not now',
   retry: 'Try again',
@@ -174,14 +175,14 @@ const testLabels: ContextTestLabels = {
 };
 const questions = ['Stage', 'Last order', 'Next date', 'Obligations', 'Documents'].map(
   (label, i) => ({
-    id: `q${i}`,
+    id: `q${String(i)}`,
     label,
     mark: null as boolean | null,
   }),
 );
 const test = {
   labels: testLabels,
-  phase: 'ready' as const,
+  phase: 'ready' as ContextTestPhase,
   questions,
   elapsed: '0:00',
   matterPicker: <p>Matter: Fictional v Fictional</p>,

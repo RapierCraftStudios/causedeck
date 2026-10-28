@@ -12,6 +12,8 @@ export interface Facts {
   workspace?: { name?: string };
   /** An existing client of the matter's workspace; never a free-text recipient. */
   client?: { name?: string };
+  /** Junior or senior counsel receiving a covering letter; a non-client recipient. */
+  counsel?: { name?: string };
   /** ISO date used for `date.today`; supplied so resolution stays pure. */
   today?: string;
 }
@@ -35,6 +37,7 @@ const SOURCES: Record<SlotResolver, (facts: Facts) => string | undefined> = {
   'advocate.enrolment_no': (f) => f.advocate?.enrolmentNo,
   'workspace.name': (f) => f.workspace?.name,
   'client.name': (f) => f.client?.name,
+  'counsel.name': (f) => f.counsel?.name,
   'date.today': (f) => f.today,
 };
 

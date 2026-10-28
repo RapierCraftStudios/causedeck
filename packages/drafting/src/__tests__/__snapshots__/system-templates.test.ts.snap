@@ -31,6 +31,18 @@ Please contact the office if any enclosure is unclear.
 Yours faithfully: K. Counsel"
 `;
 
+exports[`system template registry > renders generic_a0.counsel_covering_letter with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+From: Counsel Chambers
+Date: 2025-01-01
+To: Meera Rao
+Re: Asha Vellore v. Department of Roads
+Dear Sir or Madam,
+[[missing: narrative:b.5]]
+Please contact the office if any enclosure is unclear.
+Yours faithfully: K. Counsel"
+`;
+
 exports[`system template registry > renders karnataka_hc.certified_copy_application with its court preset (DOCX text snapshot) 1`] = `
 "Scaffold: review before use
 Application for certified copy
@@ -55,6 +67,18 @@ exports[`system template registry > renders karnataka_hc.client_covering_letter 
 From: Counsel Chambers
 Date: 2025-01-01
 To: Asha Vellore
+Re: Asha Vellore v. Department of Roads
+Dear Sir or Madam,
+[[missing: narrative:b.5]]
+Please contact the office if any enclosure is unclear.
+Yours faithfully: K. Counsel"
+`;
+
+exports[`system template registry > renders karnataka_hc.counsel_covering_letter with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+From: Counsel Chambers
+Date: 2025-01-01
+To: Meera Rao
 Re: Asha Vellore v. Department of Roads
 Dear Sir or Madam,
 [[missing: narrative:b.5]]
@@ -143,6 +167,18 @@ exports[`system template registry > renders madras_hc.client_covering_letter wit
 From: Counsel Chambers
 Date: 2025-01-01
 To: Asha Vellore
+Re: Asha Vellore v. Department of Roads
+Dear Sir or Madam,
+[[missing: narrative:b.5]]
+Please contact the office if any enclosure is unclear.
+Yours faithfully: K. Counsel"
+`;
+
+exports[`system template registry > renders madras_hc.counsel_covering_letter with its court preset (DOCX text snapshot) 1`] = `
+"Scaffold: review before use
+From: Counsel Chambers
+Date: 2025-01-01
+To: Meera Rao
 Re: Asha Vellore v. Department of Roads
 Dear Sir or Madam,
 [[missing: narrative:b.5]]

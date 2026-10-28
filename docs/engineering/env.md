@@ -25,6 +25,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `EMAIL_PROVIDER` | `console` | `ses`, `smtp` |
 | `SMS_PROVIDER` | `console` | `msg91` |
 | `AI_PROVIDER` | `mock` | `bedrock`, `sarvam` |
+| `CITATION_RESOLVER` | `mock` | `indian-kanoon` |
 | `STORAGE_PROVIDER` | `minio` | `minio`, `s3` |
 | `BILLING_PROVIDER` | `mock` | `razorpay` |
 | `AUTH_GOOGLE_ENABLED` | `false` | `true` |
@@ -90,6 +91,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `WHATSAPP_PHONE_NUMBER_ID` | string | — | WHATSAPP_ACCESS_TOKEN is set | #679 | #488 |
 | `WHATSAPP_ACCESS_TOKEN` | secret | — | WHATSAPP_PHONE_NUMBER_ID is set | #679 | #488 |
 | `WHATSAPP_API_VERSION` | string (vNN.N) | — | never | #679 | — |
+| `WHATSAPP_OTP_TEMPLATE_NAME` | string | — | never | #711 | #488 |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | url | — | never | #13 | — |
 | `API_PORT` | port | `3001` | never (defaults to 3001) | #14 | — |
 | `WORKER_PORT` | port | `3003` | never (defaults to 3003) | #15 | — |
@@ -132,6 +134,8 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `AI_MAX_CONCURRENCY_PER_WORKSPACE` | integer (1-32) | `4` | never (defaults to 4) | #44 | — |
 | `SARVAM_NO_TRAINING_CONFIRMED` | literal(true) | — | NODE_ENV=production and AI_PROVIDER=sarvam | #44 | #113 |
 | `SARVAM_API_KEY` | secret | — | AI_PROVIDER=sarvam | #44 | #113 |
+| `CITATION_RESOLVER` | enum(mock\|indian-kanoon) | `mock` | never (defaults to mock) | #77 | — |
+| `INDIAN_KANOON_API_TOKEN` | secret | — | CITATION_RESOLVER=indian-kanoon | #77 | #114 |
 | `STORAGE_PROVIDER` | enum(minio\|s3) | `minio` | never (defaults to minio) | #21 | — |
 | `S3_ENDPOINT` | url | `http://localhost:9000` (non-prod only) | STORAGE_PROVIDER=minio | #21 | — |
 | `S3_REGION` | string | `ap-south-1` | never (defaults to ap-south-1); India only unless `AWS_REGION_OVERRIDE_ACK` | #21 | — |

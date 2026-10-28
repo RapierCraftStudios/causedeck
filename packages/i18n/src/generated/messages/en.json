@@ -736,6 +736,7 @@
         "heading": "What CauseDeck did today",
         "applied": "{count, plural, =0 {CauseDeck applied nothing on its own today.} one {CauseDeck applied # change on its own today. You can undo it for 7 days.} other {CauseDeck applied # changes on its own today. You can undo them for 7 days.}}",
         "pending": "{count, plural, =0 {Nothing is waiting for your confirmation.} one {# proposal is waiting for your confirmation.} other {# proposals are waiting for your confirmation.}}",
+        "attention": "{count, plural, one {# matter to check.} other {# matters to check.}}",
         "matters": "Matters touched today",
         "activityCta": "Review today's activity",
         "inboxCta": "Open your inbox",
@@ -1186,6 +1187,7 @@
       "support": "Support access",
       "more": "More",
       "court-watch": "Court watch",
+      "research": "Research",
       "sso": "Single sign-on"
     },
     "placeholder": {
@@ -1317,6 +1319,7 @@
         "memory": "Matter memory",
         "document": "Documents",
         "task": "Tasks",
+        "obligation": "Obligations",
         "listing": "Cause list",
         "draft": "Drafts",
         "audit": "Audit log",
@@ -1361,11 +1364,18 @@
           "read": "See tasks",
           "write": "Create and update tasks"
         },
+        "obligation": {
+          "read": "See obligations",
+          "write": "Manage all obligations",
+          "track": "Track tasks, defects and certified copies"
+        },
         "listing": {
           "read": "See the cause list"
         },
         "draft": {
-          "write": "Write drafts"
+          "read": "See drafts",
+          "write": "Write drafts",
+          "export": "Export drafts"
         },
         "audit": {
           "read": "Read and export the audit log"
@@ -1501,6 +1511,11 @@
         "contributePublicCourtDocuments": {
           "label": "Share public court documents",
           "description": "Share public court documents (cause lists and published orders) so every workspace can use them. Only the public text is shared, with no workspace, matter or client information and nothing that identifies you. Sensitive and restricted matters are never shared. Your contributions are withdrawn when you delete the workspace."
+        },
+        "allowEvalReuse": {
+          "label": "Reuse corrections for evaluation",
+          "description": "When you correct a row in the confirmation grid, the correction is saved with its document. If you turn this on, corrections that a person also agrees to share, one by one, may be used to test and improve CauseDeck's reading of orders. It is off by default, and nothing is shared without that per-item agreement. Turning it off withdraws all agreements.",
+          "ownerOnly": "Only owners can change this."
         },
         "retentionAudioDays": {
           "label": "Keep raw audio for",
@@ -3086,7 +3101,8 @@
         "timeline": "Timeline",
         "people": "People",
         "documents": "Documents",
-        "research": "Research"
+        "research": "Research",
+        "memory": "Memory"
       },
       "status": {
         "active": "Active",
@@ -3682,6 +3698,315 @@
       "expandAll": "Expand all groups",
       "select": "Select a proceeding or open a group",
       "selectMore": "Add to the selection"
+    }
+  },
+  "draftingTemplates": {
+    "names": {
+      "madras_hc": {
+        "mention_memo": "Mention or adjournment memo",
+        "early_listing_memo": "Early-listing memo",
+        "memo_of_appearance": "Memo of appearance",
+        "certified_copy_application": "Application for certified copy",
+        "client_covering_letter": "Covering letter to the client"
+      },
+      "karnataka_hc": {
+        "mention_memo": "Mention or adjournment memo",
+        "early_listing_memo": "Early-listing memo",
+        "memo_of_appearance": "Memo of appearance",
+        "certified_copy_application": "Application for certified copy",
+        "client_covering_letter": "Covering letter to the client"
+      },
+      "generic_a0": {
+        "adjournment_note": "Adjournment note",
+        "client_covering_letter": "Covering letter to the client"
+      }
+    },
+    "scaffoldBanner": "Scaffold: review before use"
+  },
+  "drafting": {
+    "list": {
+      "title": "Drafts",
+      "newDraft": "New draft",
+      "pickTemplate": "Choose a template",
+      "empty": "No drafts yet. Start one from a template.",
+      "updated": "Updated {date}",
+      "untitled": "Untitled draft",
+      "metaTitle": "Drafts",
+      "description": "Drafts across your matters. Nothing is sent, shared or filed from here.",
+      "loading": "Loading drafts",
+      "matter": "Matter",
+      "template": "Template",
+      "lastEdited": "Last edited",
+      "noMatter": "No matter",
+      "filterLabel": "Matter",
+      "filterAll": "All matters",
+      "emptyFiltered": "No drafts for this matter.",
+      "open": "Open draft {title}",
+      "chips": {
+        "verified": "{count} verified",
+        "notFound": "{count} not found",
+        "unknown": "{count} unknown",
+        "consistencyError": "{count, plural, one {# error} other {# errors}}",
+        "consistencyWarn": "{count, plural, one {# warning} other {# warnings}}",
+        "consistencyInfo": "{count, plural, one {# note} other {# notes}}",
+        "consistencyClear": "Consistent",
+        "consistencyPending": "Consistency not checked"
+      },
+      "picker": {
+        "title": "New draft",
+        "description": "Pick a template, name the draft and optionally link it to a matter.",
+        "suggested": "Suggested templates",
+        "noTemplates": "No templates are available.",
+        "titleLabel": "Draft title",
+        "matterLabel": "Matter (optional)",
+        "noMatterOption": "No matter",
+        "submit": "Create draft",
+        "submitting": "Creating",
+        "offline": "You are offline. Reconnect to create a draft.",
+        "cancel": "Cancel",
+        "errors": {
+          "forbidden": "You cannot create drafts here.",
+          "validation": "Check the title and template, then try again.",
+          "generic": "The draft could not be created. Try again."
+        }
+      }
+    },
+    "states": {
+      "loading": "Loading the draft",
+      "error": "The draft could not be loaded.",
+      "retry": "Try again",
+      "notFound": "This draft does not exist or you cannot open it.",
+      "saving": "Saving",
+      "saved": "Saved",
+      "offlineQueued": "Offline, changes queued",
+      "conflict": "This draft changed elsewhere. Reload to see the latest version.",
+      "saveFailed": "The draft could not be saved.",
+      "unsaved": "Unsaved changes",
+      "cachedCopy": "Showing the copy saved on this device.",
+      "requestId": "Request ID: {digest}",
+      "copyId": "Copy request ID",
+      "copied": "Copied",
+      "listError": "Could not load drafts."
+    },
+    "panels": {
+      "facts": {
+        "title": "Facts",
+        "empty": "No facts are linked to this draft.",
+        "insert": "Insert {label} into the slot",
+        "selectSlot": "Select a slot in the draft first."
+      },
+      "authorities": {
+        "title": "Pinned authorities",
+        "empty": "No authorities are pinned on this matter's research notes.",
+        "selectBlock": "Select a block in the draft first.",
+        "insert": "Insert {label} into the block",
+        "noCitation": "No citation string; the label will be inserted."
+      },
+      "citations": {
+        "title": "Citations",
+        "empty": "No citations found in the draft.",
+        "check": "Check citations",
+        "checkedAt": "Checked {date}",
+        "status": {
+          "verified": "Verified",
+          "notFound": "Not found",
+          "unknown": "Unknown"
+        }
+      },
+      "consistency": {
+        "title": "Consistency",
+        "empty": "No consistency findings."
+      },
+      "versions": {
+        "title": "Versions",
+        "current": "Current version",
+        "restore": "Restore this version",
+        "number": "Version {number}",
+        "diffTitle": "Changes if you restore version {number}",
+        "noChanges": "This version matches the current draft.",
+        "added": "Added",
+        "removed": "Removed",
+        "confirm": "Restore as a new version",
+        "restored": "Version restored",
+        "close": "Close versions"
+      }
+    },
+    "findings": {
+      "count": "{count, plural, one {# finding} other {# findings}}",
+      "factMismatch": "A figure or date differs from the facts.",
+      "unsupported": "This statement has no source fact.",
+      "goTo": "Go to location",
+      "position": "Finding {index} of {total}",
+      "none": "No findings to go to."
+    },
+    "aiDrafted": {
+      "label": "AI-drafted",
+      "notice": "Parts of this draft were written by AI. Review every line before use."
+    },
+    "acknowledgement": {
+      "title": "Confirm your review",
+      "statement": "I have read this draft in full and checked its citations and facts. I take responsibility for its contents.",
+      "confirm": "I acknowledge",
+      "cancel": "Cancel"
+    },
+    "export": {
+      "title": "Export draft",
+      "docx": "Word document",
+      "pdf": "PDF",
+      "unverifiedWarning": "{count, plural, one {# citation is not verified.} other {# citations are not verified.}}",
+      "action": "Export",
+      "failed": "The export failed. Try again."
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "save": "Save",
+      "checkCitations": "Check citations",
+      "togglePanel": "Show or hide the side panel",
+      "export": "Export",
+      "prevFinding": "Previous finding",
+      "nextFinding": "Next finding",
+      "close": "Close the open panel",
+      "actions": "Draft actions"
+    },
+    "offline": {
+      "banner": "You are offline. Edits are saved on this device.",
+      "queued": "{count, plural, one {# change waiting to sync} other {# changes waiting to sync}}",
+      "synced": "All changes synced",
+      "listBanner": "You are offline. This is the last saved list; new drafts cannot be created."
+    },
+    "editor": {
+      "label": "Draft editor",
+      "missing": "Missing: {name}",
+      "slot": "Fact: {label}",
+      "narrative": "Narrative: {prompt}",
+      "edited": "Edited by you"
+    },
+    "tabs": {
+      "editor": "Editor",
+      "facts": "Facts",
+      "versions": "Versions",
+      "precedents": "Precedents"
+    },
+    "actions": {
+      "title": "Draft actions",
+      "save": "Save draft",
+      "showFacts": "Show facts",
+      "showVersions": "Show versions",
+      "showPrecedents": "Show precedents"
+    },
+    "checks": {
+      "citations": {
+        "checking": "Checking…",
+        "checkFailed": "The citations could not be checked. Try again.",
+        "acknowledged": "Acknowledged",
+        "jump": "Go to {citation}",
+        "blocked": "{count, plural, one {# citation was not found and is not acknowledged.} other {# citations were not found and are not acknowledged.}} Export is blocked until you acknowledge them.",
+        "acknowledge": "Acknowledge not-found citations"
+      },
+      "consistency": {
+        "notRun": "Run the checks to see findings.",
+        "severity": {
+          "error": "{count, plural, one {# error} other {# errors}}",
+          "warn": "{count, plural, one {# warning} other {# warnings}}",
+          "info": "{count, plural, one {# note} other {# notes}}"
+        },
+        "found": "The draft says: {found}",
+        "expected": "The matter graph says: {expected}",
+        "source": "Source: {source}",
+        "jump": "Go to location",
+        "fix": "Fix to graph value",
+        "fixTitle": "Replace with the graph value?",
+        "fixBody": "Replace “{found}” with “{expected}”? This saves a new version; you can undo it.",
+        "fixConfirm": "Replace and save",
+        "cancel": "Cancel",
+        "fixed": "Fixed and saved as a new version.",
+        "fixFailed": "The fix could not be applied. Run the checks again.",
+        "undo": "Undo",
+        "undone": "The fix was undone.",
+        "undoFailed": "The fix could not be undone."
+      },
+      "ack": {
+        "title": "Acknowledge unverified citations",
+        "description": "{count, plural, one {# citation was not found.} other {# citations were not found.}} Confirm you have checked them yourself.",
+        "checkbox": "I have verified these authorities myself",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "failed": "The acknowledgement could not be saved. Try again."
+      },
+      "export": {
+        "description": "Choose a format. The file is only ever downloaded by you; nothing is sent, shared or filed.",
+        "format": "Format",
+        "court": "Court format",
+        "noCourt": "None",
+        "ai": "AI assistance",
+        "aiYes": "This draft has AI-assisted text.",
+        "aiNo": "No AI-assisted text.",
+        "acknowledge": "Acknowledge",
+        "download": "Download {filename}",
+        "close": "Close",
+        "preparing": "Preparing the file…"
+      }
+    },
+    "precedents": {
+      "title": "Precedents",
+      "hint": "Suggested from your own drafts. Nothing is inserted until you choose it.",
+      "noBlock": "Select a narrative block to see your passages for it.",
+      "loading": "Finding your passages",
+      "empty": "Passages you approve will appear here.",
+      "error": "Your passages could not be loaded.",
+      "retry": "Try again",
+      "denied": "Your role cannot read saved passages.",
+      "offline": "Offline. Passages load when you are back online.",
+      "why": "Why this is suggested",
+      "source": "Your draft",
+      "insert": "Insert",
+      "saveSelection": "Save selection as precedent",
+      "nothingSelected": "Select some text in a paragraph first.",
+      "proposed": "Proposed as a precedent. Review it in Memory.",
+      "skipped": "Already proposed, or dismissed recently.",
+      "exportFirst": "Export this version before saving a passage from it.",
+      "failed": "The passage could not be proposed."
+    },
+    "factCheck": {
+      "status": {
+        "match": "Matches the record",
+        "mismatch": "Does not match the record",
+        "unsupported": "Not found in the record",
+        "unverifiedCitation": "Citation not verified",
+        "ambiguous": "Ambiguous in the record"
+      },
+      "source": "From the record",
+      "noSource": "The record has no passage for this.",
+      "page": "Page {page}",
+      "openPage": "Open page {page}",
+      "actions": {
+        "fix": "Fix",
+        "ignore": "Ignore",
+        "ignoreForMatter": "Ignore for this matter",
+        "markAssertion": "Mark as my assertion"
+      },
+      "announce": "Issue {index} of {total}: {status}",
+      "noIssues": "No fact-check issues.",
+      "panel": {
+        "title": "Fact check",
+        "tab": "Fact check",
+        "badge": "{count, plural, one {# fact-check issue} other {# fact-check issues}}",
+        "empty": "Nothing to flag. Every claim the record can check agrees with it.",
+        "noMatter": "Link this draft to a matter to check it against the record.",
+        "checking": "Checking against the record…",
+        "failed": "The fact check could not run. Your text is unchanged.",
+        "jump": "Go to claim",
+        "fixed": "Fixed. You can undo this.",
+        "undo": "Undo fix",
+        "ignored": "Ignored for this matter",
+        "asserted": "Your assertion",
+        "group": {
+          "mismatch": "Does not match the record",
+          "unverified-citation": "Citation not verified",
+          "unsupported": "Not found in the record",
+          "ambiguous": "Ambiguous in the record"
+        }
+      }
     }
   },
   "calendar": {
@@ -4295,6 +4620,16 @@
       }
     }
   },
+  "memoryCitations": {
+    "carryRule": "because you usually carry this",
+    "chipLabel": "From your memory: {reason}",
+    "usedMemory": "Used memory: {reason}",
+    "draftTitle": "From your memory",
+    "draftTone": "your usual tone and sign-off",
+    "draftLanguage": "the language you use with this client",
+    "draftOther": "a saved memory",
+    "noteDate": "Saved {date}"
+  },
   "whatsappLink": {
     "title": "WhatsApp",
     "description": "Get court-day alerts and your evening summary on your own WhatsApp. Messages go only to the number you verify here, never to clients.",
@@ -4426,6 +4761,58 @@
       }
     },
     "footer": "This is software documentation, not legal advice."
+  },
+  "research": {
+    "linkOut": {
+      "button": "Research on…",
+      "menuLabel": "Research providers",
+      "hint": "Opens in a new window on a site we do not control.",
+      "preview": "Link: {url}",
+      "empty": "Add a confirmed issue tag or a forum to build research links.",
+      "noQuery": "No research links yet"
+    },
+    "notes": {
+      "heading": "Research notes",
+      "loading": "Loading notes",
+      "empty": "No notes yet. Write down what you found and the authorities you chose.",
+      "error": "Notes could not be loaded. Try again.",
+      "offline": "You are offline. Notes are shown read-only.",
+      "denied": "You do not have access to research notes.",
+      "add": "New note",
+      "titleLabel": "Title",
+      "bodyLabel": "Note",
+      "save": "Save note",
+      "saving": "Saving…",
+      "delete": "Delete note",
+      "edit": "Edit",
+      "saveError": "The note was not saved. Try again.",
+      "authoritiesHeading": "Authorities",
+      "authoritiesEmpty": "No authorities chosen.",
+      "authorityLabel": "Authority",
+      "authorityCitation": "Citation (optional)",
+      "authorityUrl": "Link (https, optional)",
+      "addAuthority": "Add authority",
+      "removeAuthority": "Remove",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "pinned": "Pinned",
+      "pinHint": "Pinning keeps an authority at the top of this note. It does not add a citation to any draft."
+    }
+  },
+  "settingsResearch": {
+    "title": "Research providers",
+    "description": "Where research links on a matter may point. Links open in a new window; CauseDeck never fetches these sites.",
+    "builtInHeading": "Built-in providers",
+    "ownHeading": "Your providers",
+    "ownEmpty": "No providers of your own yet. Add the link of a subscription you hold, such as SCC Online or Manupatra.",
+    "keyLabel": "Key",
+    "labelLabel": "Name",
+    "templateLabel": "Link template",
+    "templateHint": "An https link with {q} where the query goes, for example https://www.scconline.com/search?q={q}.",
+    "enabledLabel": "Enabled",
+    "save": "Save provider",
+    "remove": "Remove",
+    "saveError": "The provider was not saved. Check the link."
   },
   "bootstrapImport": {
     "metaTitle": "Import your cases",
@@ -4868,6 +5255,570 @@
       "full": "The device outbox is full. Let uploads finish, then try again."
     }
   },
+  "attention": {
+    "title": "Needs you",
+    "badge": "{count, plural, =0 {No matters need attention} one {# matter needs attention} other {# matters need attention}}",
+    "badgeLabel": "Attention: {count}",
+    "loading": "Loading what needs you",
+    "empty": "Nothing needs you right now.",
+    "error": "Could not load what needs you. Try again.",
+    "retry": "Try again",
+    "offline": "You are offline. Showing the last loaded flags.",
+    "denied": "You do not have access to these flags in this workspace.",
+    "readOnly": "View only",
+    "close": "Close",
+    "openEvidence": "Open evidence",
+    "since": "Since {date}",
+    "rules": {
+      "no_next_date": "No next date",
+      "past_date_no_outcome": "Past date, no outcome",
+      "no_recent_update": "No recent update",
+      "obligation_overdue_unowned": "Overdue obligation, no owner"
+    },
+    "groupCount": "{rule}: {count}",
+    "actions": {
+      "record_outcome": "Record the outcome",
+      "set_next_date": "Set the next date",
+      "ask_junior": "Ask the junior"
+    },
+    "snooze": {
+      "action": "Snooze",
+      "until": "Snooze until",
+      "reason": "Reason",
+      "submit": "Snooze flag",
+      "dismiss": "Dismiss as intentionally dormant",
+      "lift": "Lift snooze",
+      "hint": "Press s to snooze, Enter to open the evidence, Esc to close."
+    },
+    "snoozes": {
+      "title": "Snoozes and dismissals",
+      "empty": "No snoozes or dismissals on this matter.",
+      "until": "Snoozed until {date}",
+      "dismissed": "Dismissed as intentionally dormant",
+      "allRules": "All flags",
+      "reason": "Reason: {reason}"
+    }
+  },
+  "obligations": {
+    "metaTitle": "Obligations",
+    "title": "Obligations",
+    "denied": "You do not have access to obligations in this workspace.",
+    "loading": "Loading obligations",
+    "readOnly": "View only",
+    "offline": "You are offline. Showing the last saved queue. Changes will sync when you are back online.",
+    "willSync": "Will sync",
+    "tabs": {
+      "label": "Obligation views",
+      "queue": "Queue",
+      "defects": "Defects",
+      "copies": "Certified copies"
+    },
+    "groups": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "this_week": "This week",
+      "later": "Later",
+      "undated": "Undated"
+    },
+    "empty": {
+      "title": "Nothing outstanding.",
+      "description": "Orders you confirm will add obligations here.",
+      "filtered": "No obligation matches these filters."
+    },
+    "error": {
+      "title": "Obligations could not be loaded.",
+      "reference": "Reference {digest}",
+      "retry": "Retry"
+    },
+    "row": {
+      "done": "Done",
+      "reschedule": "Reschedule",
+      "markDone": "Mark done",
+      "more": "More actions for {title}",
+      "swipeHint": "Swipe right for Done, left to Reschedule, or use More actions.",
+      "viewOnly": "View only",
+      "overdueDays": "Overdue by {days, plural, one {# day} other {# days}}",
+      "dueToday": "Due today",
+      "dueTomorrow": "Due tomorrow",
+      "dueInDays": "Due in {days, plural, one {# day} other {# days}}",
+      "undated": "No date",
+      "open": "Open details",
+      "select": "Select {title}",
+      "unowned": "No owner"
+    },
+    "kind": {
+      "order_direction": "Order direction",
+      "rule": "Rule",
+      "registry_defect": "Registry defect",
+      "client": "Client",
+      "internal": "Task",
+      "certified_copy": "Certified copy"
+    },
+    "status": {
+      "open": "Open",
+      "done": "Done",
+      "not_applicable": "Not applicable",
+      "superseded": "Superseded"
+    },
+    "filters": {
+      "label": "Filter obligations",
+      "search": "Search",
+      "searchPlaceholder": "Search obligations",
+      "matter": "Matter",
+      "owner": "Owner",
+      "kind": "Kind",
+      "source": "Source",
+      "group": "Group",
+      "all": "All",
+      "clear": "Clear filters"
+    },
+    "sourceType": {
+      "manual": "Typed in",
+      "document": "Document",
+      "capture": "Capture",
+      "adapter": "Court source",
+      "ai": "Suggested",
+      "import": "Import",
+      "system": "System"
+    },
+    "close": {
+      "title": "Close obligation",
+      "description": "Say why this is closed. Closing is never silent.",
+      "reason": "Reason",
+      "reasons": {
+        "task_completed": "The task was completed",
+        "lawyer_action": "A lawyer acted on it",
+        "not_applicable": "Not applicable"
+      },
+      "note": "Note",
+      "noteRequired": "Say in words why this does not apply.",
+      "submit": "Close obligation",
+      "cancel": "Cancel"
+    },
+    "rescheduleDialog": {
+      "title": "Reschedule",
+      "description": "Pick the new date and say why it moves.",
+      "date": "New date",
+      "reason": "Reason",
+      "reasonRequired": "A reason is required.",
+      "submit": "Reschedule",
+      "cancel": "Cancel"
+    },
+    "nextStep": {
+      "title": "Suggested next step",
+      "show": "Show suggestion",
+      "hide": "Hide suggestion",
+      "use": "Use",
+      "task": "Create a task: {text}",
+      "reminder": "Remind the clerk: {text}",
+      "letter": "Draft a letter to the client: {text}",
+      "draftOnly": "Saved as a draft task. Nothing is sent."
+    },
+    "detail": {
+      "title": "Obligation",
+      "close": "Close details",
+      "matter": "Matter",
+      "owner": "Owner",
+      "due": "Due",
+      "source": "Source",
+      "quote": "Source line",
+      "noQuote": "No source line.",
+      "history": "History",
+      "created": "Created {date}",
+      "closed": "Closed {date}",
+      "reassign": "Reassign to"
+    },
+    "defects": {
+      "empty": "No registry defects.",
+      "raised": "Raised {date}",
+      "cureBy": "Cure by {date}",
+      "cured": "Cured {date}",
+      "state": "Proceeding: {state}"
+    },
+    "copies": {
+      "empty": "No certified copies.",
+      "applied": "Applied {date}",
+      "next": "Next: {date}",
+      "noNext": "No next action",
+      "status": {
+        "applied": "Applied",
+        "ready": "Ready",
+        "collected": "Collected"
+      }
+    },
+    "add": {
+      "open": "Add obligation",
+      "title": "Add a task",
+      "description": "A task for the team. It does not send anything.",
+      "text": "Task",
+      "matter": "Matter",
+      "owner": "Owner",
+      "due": "Due date",
+      "submit": "Add",
+      "cancel": "Cancel"
+    },
+    "toast": {
+      "closed": "Obligation closed.",
+      "rescheduled": "Rescheduled.",
+      "added": "Task added.",
+      "used": "Next step created.",
+      "reassigned": "Reassigned.",
+      "failed": "That did not work. Try again.",
+      "queued": "Saved. Will sync when you are back online."
+    },
+    "shortcuts": {
+      "title": "Obligation shortcuts",
+      "description": "Shortcuts work anywhere except while you are typing in a field.",
+      "close": "Close",
+      "help": "Keyboard shortcuts",
+      "group": "Obligations",
+      "next": "Next obligation",
+      "previous": "Previous obligation",
+      "select": "Select obligation",
+      "done": "Mark done (opens the close dialog)",
+      "reschedule": "Reschedule",
+      "add": "Add a task",
+      "open": "Open details",
+      "search": "Search",
+      "goQueue": "Go to the obligation queue",
+      "helpItem": "Show this list"
+    }
+  },
+  "memory": {
+    "metaTitle": "Memory",
+    "title": "Memory",
+    "intro": "What CauseDeck remembers about how you work. Nothing is saved until you say so.",
+    "denied": "Your role cannot view memory in this workspace. Ask an owner if you need access.",
+    "loading": "Loading memory",
+    "offline": "You are offline. You can read what is saved; changes return when you are back online.",
+    "readOnly": "View only",
+    "empty": "Nothing saved yet. As you work, CauseDeck will suggest things to remember and ask first.",
+    "emptyLayer": "Nothing saved in this section yet.",
+    "error": {
+      "title": "Memory could not be loaded",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "tabListLabel": "Memory sections",
+    "layers": {
+      "M1": "Profile",
+      "M2": "Preferences",
+      "M3": "Matters",
+      "M4": "Court notes",
+      "M5": "Playbook",
+      "M6": "Clients",
+      "M7": "Recognition"
+    },
+    "scope": {
+      "user": "Only you",
+      "workspace": "Chamber",
+      "matter": "This matter"
+    },
+    "source": {
+      "manual": "Added by you",
+      "edit": "Learned from your edits",
+      "correction": "Learned from a correction",
+      "capture": "Learned from a capture",
+      "ai": "Suggested by CauseDeck"
+    },
+    "lastUsed": "Last used {date}",
+    "neverUsed": "Not used yet",
+    "actions": {
+      "confirm": "Save",
+      "edit": "Edit",
+      "delete": "Delete",
+      "pause": "Pause",
+      "resume": "Resume",
+      "paused": "Paused",
+      "cardAction": "{action} memory: {title}"
+    },
+    "pauseAll": {
+      "pause": "Pause all memory",
+      "resume": "Resume all memory",
+      "paused": "All memory is paused. Nothing saved is used until you resume."
+    },
+    "tray": {
+      "heading": "{count, plural, one {# suggestion} other {# suggestions}}",
+      "evidence": "Seen {count, plural, one {# time} other {# times}}",
+      "evidenceNone": "Noticed while you worked",
+      "statement": "Remember {title}: {value}?",
+      "shortcuts": "S saves, E edits, X dismisses the focused suggestion.",
+      "offline": "You are offline. Suggestions can be decided when you are back online.",
+      "dismiss": "Dismiss",
+      "dismissed": "Suggestion dismissed",
+      "saved": "Saved to memory"
+    },
+    "usedIn": {
+      "trigger": "Used in {count, plural, one {# place} other {# places}}",
+      "none": "Not used yet",
+      "title": "Where this was used",
+      "brief": "Brief",
+      "draft": "Draft",
+      "matching": "Matching",
+      "open": "Open {kind}",
+      "loading": "Loading",
+      "failed": "Could not load where this was used."
+    },
+    "edit": {
+      "title": "Edit memory",
+      "description": "Change what is remembered. The change applies from the next use.",
+      "value": "What to remember",
+      "scope": "Who can see this",
+      "scopeUser": "Only you",
+      "scopeWorkspace": "Chamber (owner only)",
+      "chamberHint": "Only an owner can share a note with the chamber.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "valueRequired": "Write what to remember.",
+      "saved": "Memory updated",
+      "failed": "Could not save. Try again."
+    },
+    "delete": {
+      "title": "Delete this memory?",
+      "description": "{title} stops being used at once. Its embeddings are removed within 24 hours.",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "done": "Memory deleted"
+    },
+    "add": {
+      "title": "Add a note",
+      "description": "Court notes are your own notes.",
+      "value": "Note",
+      "submit": "Add note",
+      "judgeNote": "Do not record analysis of individual judges or benches. Note the court, the registry and practical details only.",
+      "open": "Add note"
+    },
+    "notes": {
+      "label": "Your own notes"
+    },
+    "review": {
+      "reminderTitle": "Time for your monthly memory review",
+      "reminderBody": "It has been a month since your last review.",
+      "reminderNever": "You have not reviewed your memory yet.",
+      "start": "Start review",
+      "metaTitle": "Memory review",
+      "title": "Monthly memory review",
+      "nothing": "Nothing needs a look. Every saved memory was used or changed in the last 60 days.",
+      "step": "Item {current} of {total}",
+      "keep": "Keep",
+      "edit": "Edit",
+      "delete": "Delete",
+      "finish": "Finish review",
+      "back": "Back to memory",
+      "summaryTitle": "Review complete",
+      "summary": "{active, plural, one {# active memory} other {# active memories}} and {paused, plural, one {# paused memory} other {# paused memories}} remain.",
+      "kept": "Kept {count}",
+      "deleted": "Deleted {count}",
+      "edited": "Edited {count}",
+      "hint": "Not confirmed, edited or used in 60 days. Keep, edit or delete it.",
+      "failed": "Could not record the review. Try again."
+    },
+    "tenure": {
+      "title": "How memory is working",
+      "description": "Your own workspace only; there is no comparison with any other workspace.",
+      "correctionRate": "Correction rate",
+      "briefRate": "Briefs accepted unedited",
+      "week": "Week {week}",
+      "noData": "Not enough activity yet.",
+      "tableLabel": "Rates by week, as a table",
+      "chartLabel": "Rates by week",
+      "colWeek": "Week",
+      "colSaved": "Items saved",
+      "colCorrected": "Corrected",
+      "colCorrection": "Correction rate",
+      "briefSummary": "{unedited} of {briefs} briefs accepted unedited",
+      "noBriefs": "No briefs yet",
+      "percent": "{value, number, percent}"
+    },
+    "matter": {
+      "title": "Matter memory",
+      "intro": "What is remembered for this matter only. Other matters' memory never appears here.",
+      "empty": "Nothing is remembered for this matter yet."
+    },
+    "errors": {
+      "generic": "That did not work. Try again.",
+      "forbidden": "Your role cannot do that."
+    }
+  },
+  "memoryM5": {
+    "nav": {
+      "label": "Memory sections",
+      "precedents": "Precedents",
+      "playbooks": "Playbooks"
+    },
+    "denied": "Your role cannot view playbooks or precedents in this workspace. Ask an owner if you need access.",
+    "offline": "You are offline. You can read what is saved; changes return when you are back online.",
+    "readOnly": "View only",
+    "loading": "Loading",
+    "error": {
+      "title": "This page could not be loaded",
+      "reference": "Reference: {digest}",
+      "retry": "Try again"
+    },
+    "errors": {
+      "forbidden": "Your role cannot do that.",
+      "generic": "Something went wrong. Try again."
+    },
+    "precedents": {
+      "metaTitle": "Precedents",
+      "title": "Precedents",
+      "hint": "Passages from your own exported drafts that you chose to keep. Nothing is saved until you confirm it.",
+      "empty": "Passages you approve will appear here.",
+      "listLabel": "Saved precedents"
+    },
+    "playbooks": {
+      "metaTitle": "Playbooks",
+      "title": "Playbooks",
+      "hint": "Your preferred format per court, standard prayers and annexure order. A playbook is saved only after you confirm it.",
+      "empty": "No playbooks yet. Add one and confirm it to start.",
+      "listLabel": "Saved playbooks"
+    },
+    "proposal": {
+      "heading": "{count, plural, one {# suggestion} other {# suggestions}}",
+      "precedent": "Save this passage as a precedent? {text}",
+      "playbook": "Save the playbook {name}?",
+      "evidence": "Suggested from your own drafts",
+      "save": "Save",
+      "edit": "Edit",
+      "dismiss": "Dismiss",
+      "shortcuts": "S saves, E edits, X dismisses the focused suggestion.",
+      "saved": "Saved",
+      "dismissed": "Dismissed",
+      "offline": "You are offline. Suggestions can be decided when you are back online."
+    },
+    "dismissDialog": {
+      "title": "Why are you dismissing this?",
+      "description": "The same passage will not be suggested again for 30 days.",
+      "confirm": "Dismiss",
+      "cancel": "Cancel"
+    },
+    "reasons": {
+      "not_reusable": "Not reusable",
+      "too_specific": "Too specific to one matter",
+      "incorrect": "Incorrect",
+      "already_saved": "Already saved",
+      "other": "Other"
+    },
+    "editPassage": {
+      "title": "Edit passage",
+      "label": "Passage",
+      "save": "Save precedent",
+      "cancel": "Cancel"
+    },
+    "card": {
+      "mine": "Mine",
+      "chamber": "Chamber",
+      "details": "{kind} in {language}",
+      "provenance": "From a draft you exported",
+      "lastUsed": "Last used {date}",
+      "neverUsed": "Not used yet",
+      "retire": "Retire",
+      "delete": "Delete",
+      "retired": "Retired",
+      "deleted": "Deleted. Its embeddings are removed within 24 hours.",
+      "deleteTitle": "Delete this item?",
+      "deleteBody": "Its embeddings are removed within 24 hours.",
+      "cancel": "Cancel"
+    },
+    "editor": {
+      "title": "New playbook",
+      "name": "Name",
+      "court": "Court ID (optional)",
+      "format": "Preferred format",
+      "prayers": "Standard prayers (one per line)",
+      "annexures": "Annexure order (one per line)",
+      "submit": "Propose playbook",
+      "proposed": "Proposed. Confirm it below to save."
+    },
+    "review": {
+      "retire": "Retire",
+      "retired": "Retired",
+      "lastUsed": "Last used {date}",
+      "neverUsed": "Not used yet"
+    }
+  },
+  "outward": {
+    "metaTitle": "Drafts to send",
+    "title": "Drafts to send",
+    "banner": "Draft for you to review and send yourself. CauseDeck does not send messages.",
+    "denied": "You do not have access to outward drafts in this workspace.",
+    "loading": "Loading drafts",
+    "generating": "Preparing the draft",
+    "readOnly": "View only",
+    "offline": "You are offline. You can keep editing; preparing a new draft needs a connection.",
+    "empty": {
+      "title": "No updates waiting",
+      "description": "After a hearing or an order, prepare an update for a client or counsel from the matter."
+    },
+    "error": {
+      "title": "Drafts could not be loaded",
+      "reference": "Reference {digest}",
+      "retry": "Try again"
+    },
+    "list": {
+      "label": "Drafts waiting to be sent",
+      "open": "Open draft for {matter}",
+      "age": "Prepared {age}",
+      "templateOnly": "Template only"
+    },
+    "audience": {
+      "client": "Client",
+      "senior_counsel": "Senior counsel",
+      "briefing_counsel": "Briefing counsel"
+    },
+    "status": {
+      "drafted": "Prepared",
+      "edited": "Edited",
+      "shared": "Shared"
+    },
+    "language": {
+      "label": "Language",
+      "enName": "English",
+      "taName": "Tamil",
+      "knName": "Kannada",
+      "changed": "Language changed to {language}"
+    },
+    "editor": {
+      "label": "Draft text for {matter}",
+      "save": "Save edit",
+      "saved": "Edit saved",
+      "saveFailed": "The edit could not be saved",
+      "close": "Close",
+      "back": "Back to drafts",
+      "warnings": "The wording below may read as advice, a commitment or a fee term: {phrases}",
+      "facts": "Facts used",
+      "factToConfirm": "To be confirmed",
+      "factConfirmed": "Confirmed",
+      "noFacts": "No facts were used in this draft."
+    },
+    "diff": {
+      "toggle": "Compare with the prepared text",
+      "label": "Changes from the prepared text",
+      "added": "Added",
+      "removed": "Removed",
+      "unchanged": "No changes from the prepared text."
+    },
+    "share": {
+      "label": "Share",
+      "copy": "Copy",
+      "copied": "Copied to the clipboard",
+      "copyFailed": "Could not copy. Select the text and copy it yourself.",
+      "whatsapp": "Open in WhatsApp",
+      "email": "Open in email",
+      "download": "Download",
+      "markShared": "Mark shared",
+      "shared": "Recorded as shared by you",
+      "failed": "That could not be recorded",
+      "emailSubject": "Update on {matter}",
+      "note": "These open your own app with the text filled in. You press send."
+    },
+    "shortcuts": {
+      "copy": "Copy the draft",
+      "language": "Next language",
+      "diff": "Show or hide the changes",
+      "close": "Close the draft"
+    }
+  },
   "outcome": {
     "metaTitle": "Hearing outcome",
     "title": "What happened at the hearing",
@@ -4889,7 +5840,15 @@
     "loading": "Loading the hearing outcome",
     "offline": {
       "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
-      "queued": "Saved on this device. It will be applied when you are back online."
+      "queued": "Saved on this device. It will be applied when you are back online.",
+      "conflict": {
+        "title": "The next date changed while you were offline",
+        "server": "On file now",
+        "none": "No date",
+        "mine": "Your offline date",
+        "keepServer": "Keep the date on file",
+        "useMine": "Propose my date"
+      }
     },
     "summary": {
       "label": "What happened",
@@ -5032,7 +5991,12 @@
       },
       "willSync": "Will sync",
       "reviewed": "Mark list reviewed",
-      "empty": "Nothing to carry."
+      "empty": "Nothing to carry.",
+      "suggested": "Suggested from your memory: {label}",
+      "suggestAdd": "Add",
+      "suggestAddLabel": "Add {label} to the carry list",
+      "suggestSkip": "Not now",
+      "suggestSkipLabel": "Not now: {label}"
     },
     "synopsis": {
       "edit": "Edit synopsis",
@@ -5096,6 +6060,59 @@
       "back": "Back to briefs"
     },
     "loading": "Loading brief"
+  },
+  "continuity": {
+    "handover": {
+      "button": "Handover",
+      "title": "Handover note",
+      "close": "Close",
+      "loading": "Loading the handover note",
+      "error": "Couldn't load the handover note.",
+      "retry": "Retry",
+      "denied": "You don't have access to this handover note.",
+      "offline": "You are offline. Showing the last saved note.",
+      "offlineNone": "You are offline and no note is saved on this device.",
+      "empty": "No handover yet",
+      "emptyHint": "Write one for the next person on this matter.",
+      "version": "Version {version} · {date}",
+      "acknowledge": "Acknowledge",
+      "acknowledged": "Acknowledged",
+      "recipient": "Address to",
+      "recipientNone": "Choose a member",
+      "save": "Save and address",
+      "saved": "Saved as version {version}",
+      "saveFailed": "Couldn't save the note.",
+      "edit": "Your notes",
+      "questions": "Open questions, one per line",
+      "history": "Earlier versions",
+      "noneRecorded": "None recorded",
+      "overdue": "Overdue",
+      "synopsis": "Synopsis",
+      "pending": "Saving",
+      "sections": {
+        "where_it_stands": "Where it stands",
+        "last_orders": "Last orders",
+        "open_obligations": "Open obligations",
+        "coming_up": "Coming up",
+        "key_documents": "Key documents",
+        "open_questions": "Open questions"
+      }
+    },
+    "changes": {
+      "heading": "Since you last opened this, {days, plural, one {# day} other {# days}} ago",
+      "empty": "Nothing has changed.",
+      "dismiss": "Dismiss",
+      "error": "Couldn't load what changed.",
+      "loading": "Loading what changed",
+      "kinds": {
+        "order": "Order",
+        "hearing": "Hearing",
+        "listing": "Listing",
+        "next_date": "Next date",
+        "obligation": "Obligation",
+        "document": "Document"
+      }
+    }
   },
   "share": {
     "metaTitle": "Shared brief",

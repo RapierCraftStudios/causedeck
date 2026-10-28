@@ -21,6 +21,7 @@ import { appearance, hearing, listing, obligation, order, task } from '../schema
 import { anchor } from '../schema/documents.ts';
 import { matter } from '../schema/matter-graph.ts';
 import { proceeding } from '../schema/proceedings.ts';
+import { buildPerson } from '../testing/matter-graph-fixtures.ts';
 import {
   createScratchDatabase,
   inWorkspace,
@@ -295,6 +296,8 @@ describe('docket tables in the catalog (#347)', () => {
         'FOREIGN KEY (workspace_id, assigned_by_member_id) REFERENCES member(workspace_id, id) ON DELETE SET NULL (assigned_by_member_id)',
       appearance_hearing_fk:
         'FOREIGN KEY (workspace_id, hearing_id) REFERENCES hearing(workspace_id, id) ON DELETE CASCADE',
+      appearance_appearing_for_person_fk:
+        'FOREIGN KEY (workspace_id, appearing_for_person_id) REFERENCES person(workspace_id, id) ON DELETE SET NULL (appearing_for_person_id)',
       appearance_member_fk:
         'FOREIGN KEY (workspace_id, member_id) REFERENCES member(workspace_id, id) ON DELETE SET NULL (member_id)',
       hearing_anchor_fk: anchorFk,
@@ -653,6 +656,7 @@ describe('composite foreign keys (#347)', () => {
         };
       });
       const bMember = bg.memberIds[0] ?? '';
+      const bPerson = await inWorkspace(tx, b.id, (s) => buildPerson(s, b.id));
       await inWorkspace(tx, a.id, async (s) => {
         const g = await newGraph(s, a.id);
         const lid = await newListing(s, g);
@@ -682,6 +686,16 @@ describe('composite foreign keys (#347)', () => {
                 hearingId: hid,
                 memberId: bMember,
                 capacity: 'proxy',
+              }),
+          ],
+          [
+            'appearance.appearing_for_person_id',
+            (sp) =>
+              sp.insert(appearance).values({
+                workspaceId: a.id,
+                hearingId: hid,
+                appearingForPersonId: bPerson.id,
+                capacity: 'aor',
               }),
           ],
           ['order.proceeding_id', (sp) => newOrder(sp, { ...g, proceedingId: bg.proceedingId })],
@@ -875,5 +889,62 @@ describe('migration 0041', () => {
         ),
       ).toBe('23514');
     });
+  }, 240_000);
+  it('nulls a dangling or cross-workspace appearing_for_person_id when the person FK lands (#357)', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'docket-migrations-'));
+    cleanups.push(() => {
+      rmSync(dir, { recursive: true, force: true });
+    });
+    cpSync(MIGRATIONS_FOLDER, dir, { recursive: true });
+    const journalPath = path.join(dir, 'meta', '_journal.json');
+    const journal = JSON.parse(readFileSync(journalPath, 'utf8')) as {
+      entries: { tag: string }[];
+    };
+    const head = journal.entries.findIndex((e) => e.tag.endsWith('_appearance_person_fk'));
+    expect(head).toBeGreaterThan(0);
+    journal.entries = journal.entries.slice(0, head);
+    writeFileSync(journalPath, JSON.stringify(journal));
+
+    const db = await createScratchDatabase(testDatabaseUrls(), 'appearance_person_fk');
+    cleanups.push(db.drop);
+    await runMigrations({ url: new Secret(db.owner), migrationsFolder: dir });
+    const scratch = createOwnerDb(new Secret(db.owner));
+    cleanups.push(() => scratch.$client.end());
+
+    const seedWorkspace = (otherPersonId: string) =>
+      scratch.transaction(async (o) => {
+        const { id } = await newWorkspaceAsOwner(o);
+        const g = await newGraph(o, id);
+        const hearingId = await newHearing(o, g, await newListing(o, g));
+        const own = await buildPerson(o, id);
+        const rows = await o
+          .insert(appearance)
+          .values([
+            { workspaceId: id, hearingId, capacity: 'aor', appearingForPersonId: own.id },
+            { workspaceId: id, hearingId, capacity: 'aor', appearingForPersonId: otherPersonId },
+            { workspaceId: id, hearingId, capacity: 'aor', appearingForPersonId: randomUUID() },
+          ])
+          .returning({ id: appearance.id });
+        return { id, own: own.id, rows: rows.map((r) => r.id) };
+      });
+    const first = await seedWorkspace(randomUUID());
+    // Workspace two's second appearance points at workspace one's person before the FK exists.
+    const second = await seedWorkspace(first.own);
+    expect(second.id).not.toBe(first.id);
+
+    await runMigrations({ url: new Secret(db.owner) });
+
+    for (const ws of [first, second]) {
+      await scratch.transaction(async (o) => {
+        await o.execute(sql`select set_config('app.workspace_id', ${ws.id}, true)`);
+        const rows = await o
+          .select({ id: appearance.id, person: appearance.appearingForPersonId })
+          .from(appearance);
+        const byId = new Map(rows.map((r) => [r.id, r.person]));
+        expect(byId.get(ws.rows[0] ?? '')).toBe(ws.own);
+        expect(byId.get(ws.rows[1] ?? '')).toBeNull();
+        expect(byId.get(ws.rows[2] ?? '')).toBeNull();
+      });
+    }
   }, 240_000);
 });

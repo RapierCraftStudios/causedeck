@@ -32,7 +32,7 @@ import { SettingSection } from '../../../../../../components/settings/setting-se
 import { useOnline } from '../../../../../../components/settings/settings-offline-banner.tsx';
 import type { Result } from '../../../../../../lib/safe-action.ts';
 
-import type { PrivacySettingsView } from './actions.ts';
+import type { EvalReuseView, PrivacySettingsView } from './actions.ts';
 
 type Editable = Pick<
   PrivacySettingsView,
@@ -56,9 +56,73 @@ export interface PrivacyFormProps {
   /** `workspace.manage`: owners and advocates. */
   canEdit: boolean;
   save: (input: unknown) => Promise<Result<PrivacySettingsView>>;
+  /** Opt-in to reusing grid corrections in eval sets (#558); owners only. Omitted: not shown. */
+  evalReuse?: {
+    allow: boolean;
+    /** `member.role`: owners only. */
+    canEdit: boolean;
+    save: (input: unknown) => Promise<Result<EvalReuseView>>;
+  };
 }
 
-export function PrivacyForm({ workspaceId, settings, canEdit, save }: PrivacyFormProps) {
+function EvalReuseRow({
+  workspaceId,
+  evalReuse,
+}: {
+  workspaceId: string;
+  evalReuse: NonNullable<PrivacyFormProps['evalReuse']>;
+}) {
+  const t = useTranslations('settings.privacy');
+  const id = useId();
+  const online = useOnline();
+  const [allow, setAllow] = useState(evalReuse.allow);
+  const [pending, setPending] = useState(false);
+  const readOnly = !evalReuse.canEdit || !online;
+
+  async function change(next: boolean) {
+    if (readOnly || pending) return;
+    const previous = allow;
+    setAllow(next);
+    setPending(true);
+    let result: Result<EvalReuseView>;
+    try {
+      result = await evalReuse.save({ workspaceId, allowEvalReuse: next });
+    } catch {
+      result = { ok: false, error: { code: 'INTERNAL', message: '' } };
+    }
+    setPending(false);
+    if (!result.ok) {
+      setAllow(previous);
+      toast(t(result.error.code === 'FORBIDDEN' ? 'toast.forbidden' : 'toast.error'));
+      return;
+    }
+    setAllow(result.data.allowEvalReuse);
+    toast(t('toast.saved'));
+  }
+
+  return (
+    <SettingRow
+      id={`${id}-allowEvalReuse`}
+      label={t('settings.allowEvalReuse.label')}
+      description={t('settings.allowEvalReuse.description')}
+      {...(evalReuse.canEdit ? {} : { note: t('settings.allowEvalReuse.ownerOnly') })}
+    >
+      <Switch
+        name="allowEvalReuse"
+        checked={allow}
+        readOnly={readOnly}
+        aria-busy={pending || undefined}
+        aria-labelledby={`${id}-allowEvalReuse-label`}
+        aria-describedby={settingDescriptionId(`${id}-allowEvalReuse`)}
+        onCheckedChange={(value) => {
+          void change(value);
+        }}
+      />
+    </SettingRow>
+  );
+}
+
+export function PrivacyForm({ workspaceId, settings, canEdit, save, evalReuse }: PrivacyFormProps) {
   const t = useTranslations('settings.privacy');
   const id = useId();
   const online = useOnline();
@@ -192,6 +256,7 @@ export function PrivacyForm({ workspaceId, settings, canEdit, save }: PrivacyFor
             }}
           />
         </SettingRow>
+        {evalReuse ? <EvalReuseRow workspaceId={workspaceId} evalReuse={evalReuse} /> : null}
         <SettingRow
           id={`${id}-retentionAudioDays`}
           label={t('settings.retentionAudioDays.label')}

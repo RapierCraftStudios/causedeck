@@ -52,6 +52,60 @@ export function savedRows(page: Page, store: OfflineStore): Promise<number> {
   }, store);
 }
 
+/** Rows in `store` of every offline database of the profile, keyed by database name. */
+export function savedRowsByDb(page: Page, store: OfflineStore): Promise<Record<string, number>> {
+  return page.evaluate(async (storeName) => {
+    const rows: Record<string, number> = {};
+    for (const entry of await indexedDB.databases()) {
+      if (!entry.name?.startsWith('causedeck-offline:')) continue;
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const request = indexedDB.open(entry.name as string);
+        request.onsuccess = () => {
+          resolve(request.result);
+        };
+        request.onerror = () => {
+          reject(request.error ?? new Error('indexedDB.open failed'));
+        };
+      });
+      try {
+        rows[entry.name] = !db.objectStoreNames.contains(storeName)
+          ? 0
+          : await new Promise<number>((resolve, reject) => {
+              const count = db.transaction(storeName, 'readonly').objectStore(storeName).count();
+              count.onsuccess = () => {
+                resolve(count.result);
+              };
+              count.onerror = () => {
+                reject(count.error ?? new Error('count failed'));
+              };
+            });
+      } finally {
+        db.close();
+      }
+    }
+    return rows;
+  }, store);
+}
+
+/**
+ * Wait until `count` offline databases exist and each one has saved a court day and a brief. The
+ * profile-wide `waitForPrefetch` is already satisfied by the first member's rows, so it cannot tell
+ * when a second member's own store is filled (the page-load prefetch starts 10 s after sign-in).
+ */
+export async function waitForEveryStore(page: Page, count: number): Promise<void> {
+  for (const store of ['courtDay', 'briefs'] as const) {
+    await expect
+      .poll(
+        async () => {
+          const rows = Object.values(await savedRowsByDb(page, store));
+          return rows.length === count && rows.every((n) => n > 0);
+        },
+        { timeout: 45_000 },
+      )
+      .toBe(true);
+  }
+}
+
 /** Wait until the prefetch after sign-in has saved at least one court day and one brief. */
 export async function waitForPrefetch(page: Page): Promise<void> {
   await expect.poll(() => savedRows(page, 'courtDay'), { timeout: 30_000 }).toBeGreaterThan(0);
@@ -85,4 +139,13 @@ export async function briefHref(page: Page, title: string): Promise<string> {
     .getAttribute('href');
   if (href === null) throw new Error(`e2e: no saved brief link for "${title}"`);
   return href;
+}
+
+/**
+ * Come back online the way a reconnect does: lift the network block and fire `online`, which makes
+ * the shell drain the outbox (apps/web/components/pwa/offline-sync.tsx) and run a prefetch.
+ */
+export async function reconnect(page: Page, context: BrowserContext): Promise<void> {
+  await context.setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
 }

@@ -43,6 +43,7 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * `bench_sitting_fact` (#521, D-050) is the global, staff-only bench-facts store (neutral counts and pace per hall and day); the app and clerk roles have no table grants and reach it only through the owner-defined `app_bench_*` functions.
  * `notice` (#584, D-048) is the global official notices feed read from cleared sources; the app role may SELECT, INSERT and UPDATE it (no DELETE).
  * `incident` and `incident_update` (#769) are the platform incident log behind the public status page: public text only, no workspace data.
+ * `notice_holiday` (#628) holds the dates named by a holiday-list notice; the app role may SELECT and INSERT it.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -81,6 +82,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'notice',
   'incident',
   'incident_update',
+  'notice_holiday',
   'review_item',
   'bench_sitting_fact',
   'activation_event',
@@ -104,7 +106,12 @@ export const NULLABLE_WORKSPACE_TABLES: readonly string[] = ['audit_event', 'del
  * from `globalOrWorkspacePolicy()`. A foreign key into them is single-column (a composite FK cannot
  * express "global or same workspace") and guarded by the `app_reference_scope_guard` trigger.
  */
-export const GLOBAL_OR_WORKSPACE_TABLES: readonly string[] = ['forum', 'court_hall', 'bench'];
+export const GLOBAL_OR_WORKSPACE_TABLES: readonly string[] = [
+  'forum',
+  'court_hall',
+  'bench',
+  'template',
+];
 
 export const WORKSPACE_COLUMN = 'workspace_id';
 

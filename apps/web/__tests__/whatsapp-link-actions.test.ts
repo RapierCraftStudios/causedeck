@@ -34,6 +34,8 @@ const core = vi.hoisted(() => ({
   setWhatsAppCategories: vi.fn(),
   unlinkWhatsApp: vi.fn(),
   getWhatsAppLink: vi.fn(),
+  sendOtp: vi.fn(),
+  whatsappOtpSendFromProcess: vi.fn(() => core.sendOtp),
 }));
 
 const withWorkspace = vi.hoisted(() =>
@@ -135,7 +137,7 @@ describe('actions', () => {
       userId: OTHER,
     });
     expect(result).toEqual({ ok: true, data: { expiresAt: '2026-10-24T10:10:00.000Z' } });
-    expect(core.requestWhatsAppOtp).toHaveBeenCalledWith({ db: TX }, actor, {
+    expect(core.requestWhatsAppOtp).toHaveBeenCalledWith({ db: TX, sendOtp: core.sendOtp }, actor, {
       e164: '+919812345678',
       consent: true,
     });

@@ -277,6 +277,25 @@ const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  // Fees (#83): flag-gated, owner and advocate only; B claiming A's workspace is refused and A is unchanged.
+  createFeeAgreement: denies,
+  updateFeeAgreement: denies,
+  setFeeAgreementStatus: denies,
+  getFeeAgreement: denies,
+  listFeeAgreements: denies,
+  prepareFeeInvoice: denies,
+  createDraftInvoice: denies,
+  updateDraftInvoice: denies,
+  discardDraftInvoice: denies,
+  issueInvoice: denies,
+  recordPayment: denies,
+  issueCreditNote: denies,
+  getInvoice: denies,
+  listInvoices: denies,
+  recordClientExpense: denies,
+  recordClientReceipt: denies,
+  listLedger: denies,
+  getClientBalance: denies,
   // Limitation tracker (#940): a root export of the flag-gated services; the domain also has its own
   // cross-tenant case in limitation.test.ts.
   loadRuleTable: denies,
@@ -1108,6 +1127,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // Fees (#83): the refusal while the legal-gated flag is off is an error class.
+  FeesDisabledError: 'error class',
   // Limitation tracker (#940): the date engine is pure; the refusal is an error class.
   computeExpiry: 'pure',
   NoReviewedRuleError: 'error class',

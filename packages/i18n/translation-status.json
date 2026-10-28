@@ -4713,7 +4713,23 @@
     "memoryM5.review.retire": "draft",
     "memoryM5.review.retired": "draft",
     "memoryM5.review.lastUsed": "draft",
-    "memoryM5.review.neverUsed": "draft"
+    "memoryM5.review.neverUsed": "draft",
+    "drafting.factCheck.panel.title": "draft",
+    "drafting.factCheck.panel.tab": "draft",
+    "drafting.factCheck.panel.badge": "draft",
+    "drafting.factCheck.panel.empty": "draft",
+    "drafting.factCheck.panel.noMatter": "draft",
+    "drafting.factCheck.panel.checking": "draft",
+    "drafting.factCheck.panel.failed": "draft",
+    "drafting.factCheck.panel.jump": "draft",
+    "drafting.factCheck.panel.fixed": "draft",
+    "drafting.factCheck.panel.undo": "draft",
+    "drafting.factCheck.panel.ignored": "draft",
+    "drafting.factCheck.panel.asserted": "draft",
+    "drafting.factCheck.panel.group.mismatch": "draft",
+    "drafting.factCheck.panel.group.unverified-citation": "draft",
+    "drafting.factCheck.panel.group.unsupported": "draft",
+    "drafting.factCheck.panel.group.ambiguous": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -9217,6 +9233,22 @@
     "memoryM5.review.retire": "draft",
     "memoryM5.review.retired": "draft",
     "memoryM5.review.lastUsed": "draft",
-    "memoryM5.review.neverUsed": "draft"
+    "memoryM5.review.neverUsed": "draft",
+    "drafting.factCheck.panel.title": "draft",
+    "drafting.factCheck.panel.tab": "draft",
+    "drafting.factCheck.panel.badge": "draft",
+    "drafting.factCheck.panel.empty": "draft",
+    "drafting.factCheck.panel.noMatter": "draft",
+    "drafting.factCheck.panel.checking": "draft",
+    "drafting.factCheck.panel.failed": "draft",
+    "drafting.factCheck.panel.jump": "draft",
+    "drafting.factCheck.panel.fixed": "draft",
+    "drafting.factCheck.panel.undo": "draft",
+    "drafting.factCheck.panel.ignored": "draft",
+    "drafting.factCheck.panel.asserted": "draft",
+    "drafting.factCheck.panel.group.mismatch": "draft",
+    "drafting.factCheck.panel.group.unverified-citation": "draft",
+    "drafting.factCheck.panel.group.unsupported": "draft",
+    "drafting.factCheck.panel.group.ambiguous": "draft"
   }
 }

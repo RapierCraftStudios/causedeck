@@ -8,7 +8,7 @@
 // device cache and edits queue until `online`. `panels` is where #828's citation and consistency
 // panels go.
 import type { LiveFactVerdict } from '@causedeck/core/drafting';
-import { useFactNavigation } from '@causedeck/ui/patterns';
+import { useFactNavigation } from '@causedeck/ui/patterns/fact-navigation';
 import type { Finding } from '@causedeck/validators/consistency';
 import type { Block, ExportFormat } from '@causedeck/validators/drafting';
 import dynamic from 'next/dynamic';

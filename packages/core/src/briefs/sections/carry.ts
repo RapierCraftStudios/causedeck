@@ -6,9 +6,9 @@ import { schema } from '@causedeck/db';
 import type { BriefState, CarryItem } from '@causedeck/validators';
 
 type BriefCarryEntry = BriefState['carry'][number];
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, lt, sql } from 'drizzle-orm';
 
-import type { BriefScope, ListingContext, MemoryProvider } from '../scope.ts';
+import type { BriefScope, ListingContext, MemoryProvider, MemoryQuery } from '../scope.ts';
 import { shortDate } from './obligations.ts';
 
 /** The reserved `brief_state.carry` entry that marks the list as reviewed. */
@@ -21,10 +21,11 @@ export interface CarryResult {
 
 export async function carrySection(
   scope: BriefScope,
-  _listing: ListingContext,
+  listing: ListingContext,
   documentIds: string[],
   state: BriefState,
   memory: MemoryProvider,
+  query: MemoryQuery,
 ): Promise<CarryResult> {
   const { tx, actor } = scope;
   const edits = new Map<string, BriefCarryEntry>(state.carry.map((e) => [e.key, e]));
@@ -52,7 +53,16 @@ export async function carrySection(
       });
     }
   }
-  for (const rule of await memory.alwaysCarry({ workspaceId: actor.workspaceId })) {
+  const rules = await memory.alwaysCarry({
+    workspaceId: actor.workspaceId,
+    userId: query.userId,
+    matterId: listing.matterId,
+    listingId: listing.listingId,
+    firstHearing: await isFirstHearing(scope, listing),
+  });
+  for (const rule of rules) {
+    // A removed suggestion is a signal the lawyer can later be asked about (3 removals: a proposal).
+    if (edits.get(`rule:${rule.id}`)?.removed) await memory.observeCarryRemoval?.(query, rule);
     derived.push({
       key: `rule:${rule.id}`,
       kind: 'rule',
@@ -79,4 +89,19 @@ export async function carrySection(
     });
   }
   return { items, reviewed: edits.get(CARRY_REVIEWED_KEY)?.ticked === true };
+}
+
+/** No earlier listing of the proceeding: the first hearing, when 'first_hearing' rules apply. */
+async function isFirstHearing(scope: BriefScope, listing: ListingContext): Promise<boolean> {
+  const [earlier] = await scope.tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(schema.listing)
+    .where(
+      and(
+        eq(schema.listing.workspaceId, scope.actor.workspaceId),
+        eq(schema.listing.proceedingId, listing.proceedingId),
+        lt(schema.listing.listDate, listing.listDate),
+      ),
+    );
+  return (earlier?.n ?? 0) === 0;
 }

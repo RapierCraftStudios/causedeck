@@ -12,6 +12,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { newWorkspace } from '../__tests__/fixtures.ts';
 import { runNoticesPoll } from '../jobs/index.ts';
 
+import { loadCourtCalendar } from '../deadlines/index.ts';
+
 import { listHolidayListings } from './holidays.ts';
 import { listMatterNotices, listWorkspaceNotices } from './list.ts';
 import { matchNotices } from './match.ts';
@@ -362,6 +364,93 @@ describe('listing notices (#588)', () => {
       const rows = await listWorkspaceNotices(tx, actor);
       // The forum-level match remains; the sensitive matter is not counted.
       expect(rows.map((n) => n.matterCount)).toEqual([0]);
+    });
+  });
+});
+
+describe('holiday-list documents (#628)', () => {
+  const LIST = '1. 26.01.2027 Republic Day\n2. 14-Apr-2027 Tamil New Year\n3. 14.04.2027 Repeat';
+  const documentFetcher =
+    (text = LIST) =>
+    (): Promise<{ text: string; contentType: string }> =>
+      Promise.resolve({ text, contentType: 'text/plain' });
+
+  it('stores every date of a holiday notice document once and flags listings and the calendar', async () => {
+    await withTestDb(async (tx) => {
+      const user = await usesForum(tx, MADURAI);
+      const other = await usesForum(tx, 'in.ka.karnataka-hc.bengaluru');
+      const listOn = (workspaceId: string, matterId: string, date: string) =>
+        inWorkspace(tx, workspaceId, async (s) => {
+          const [p] = await s
+            .select({ id: schema.proceeding.id })
+            .from(schema.proceeding)
+            .where(eq(schema.proceeding.matterId, matterId));
+          await s.insert(schema.listing).values({
+            workspaceId,
+            proceedingId: p?.id ?? '',
+            listDate: date,
+            listType: 'daily',
+            stageRaw: 'For Orders',
+            sourceType: 'manual',
+          });
+        });
+      await listOn(user.workspaceId, user.matterId, '2027-04-14');
+      await listOn(user.workspaceId, user.matterId, '2027-04-15');
+      await listOn(other.workspaceId, other.matterId, '2027-04-14');
+
+      const report = await pollNotices(
+        deps(tx, fakeFetcher(), { documentFetcher: documentFetcher() }),
+      );
+      expect(report).toMatchObject({ holidayDates: 2, holidayFailed: 0 });
+      const dates = await tx.select().from(schema.noticeHoliday);
+      expect(dates.map((d) => [d.holidayOn, d.name]).sort()).toEqual([
+        ['2027-01-26', 'Republic Day'],
+        ['2027-04-14', 'Tamil New Year'],
+      ]);
+      // A repeat poll finds no new notice, so it reads no document and adds no date.
+      const again = await pollNotices(
+        deps(tx, fakeFetcher(), { documentFetcher: documentFetcher() }),
+      );
+      expect(again).toMatchObject({ inserted: 0, holidayDates: 0 });
+
+      const range = { from: '2027-01-01', to: '2027-12-31' };
+      const flagged = await listHolidayListings(tx, user.workspaceId, range);
+      expect(flagged.map((f) => f.listDate)).toEqual(['2027-04-14']);
+      expect(await listHolidayListings(tx, other.workspaceId, range)).toEqual([]);
+
+      const calendar = await loadCourtCalendar(tx, user.workspaceId, {
+        forumCode: MADURAI,
+        ...range,
+      });
+      expect([...calendar.holidays]).toEqual([
+        ['2027-01-26', 'Republic Day'],
+        ['2027-04-14', 'Tamil New Year'],
+      ]);
+    });
+  });
+
+  it('stores nothing without a document fetcher, and an unreadable or failing document never fails the poll', async () => {
+    await withTestDb(async (tx) => {
+      const plain = await pollNotices(deps(tx, fakeFetcher()));
+      expect(plain).toMatchObject({ inserted: 2, holidayDates: 0, holidayFailed: 0 });
+      expect(await tx.select().from(schema.noticeHoliday)).toEqual([]);
+    });
+    await withTestDb(async (tx) => {
+      const events: string[] = [];
+      const report = await pollNotices(
+        deps(tx, fakeFetcher(), {
+          documentFetcher: documentFetcher('no dates in here'),
+          log: (event) => events.push(event),
+        }),
+      );
+      expect(report).toMatchObject({ inserted: 2, holidayDates: 0, holidayFailed: 1 });
+      expect(events).toContain('holiday list unreadable');
+    });
+    await withTestDb(async (tx) => {
+      const report = await pollNotices(
+        deps(tx, fakeFetcher(), { documentFetcher: () => Promise.reject(new Error('down')) }),
+      );
+      expect(report).toMatchObject({ sources: 1, inserted: 2, holidayFailed: 1 });
     });
   });
 });

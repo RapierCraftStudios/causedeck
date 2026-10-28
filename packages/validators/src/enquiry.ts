@@ -1,4 +1,4 @@
-// The inbound enquiry log (#87, part 1; ADR 0043): the zod inputs of the `@causedeck/core/intake`
+// The inbound enquiry log (#87, part 1; ADR 0047): the zod inputs of the `@causedeck/core/intake`
 // services. An enquiry is a person asking the chamber to take work; it is logged, checked for a
 // conflict of interest and then accepted as a matter (only through the automation engine), declined,
 // referred or closed. Nothing here sends anything: there is no reply, template or auto-response.

@@ -1,4 +1,4 @@
-// `system.enquiry.retention` (#87, ADR 0043): daily at 03:30 IST, deletes closed enquiries past each
+// `system.enquiry.retention` (#87, ADR 0047): daily at 03:30 IST, deletes closed enquiries past each
 // workspace's `enquiry_retention_months`. It has no workspace and `enquiry` is under FORCE row-level
 // security, so it lists the workspaces with closed enquiries (ids only) through the owner-defined
 // `app_enquiry_retention_targets` function and sweeps each in its own scope. Idempotent: swept rows

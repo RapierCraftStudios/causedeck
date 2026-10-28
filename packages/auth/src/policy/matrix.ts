@@ -26,8 +26,13 @@ export const MATRIX: Readonly<Record<Action, Role>> = {
   'document.write': 'clerk',
   'task.read': 'viewer',
   'task.write': 'clerk',
+  'obligation.read': 'viewer',
+  'obligation.write': 'junior',
+  'obligation.track': 'clerk',
   'listing.read': 'viewer',
+  'draft.read': 'junior',
   'draft.write': 'junior',
+  'draft.export': 'junior',
   'audit.read': 'advocate',
   // Advocates see every item of the day unless the workspace turns `advocatesCanViewAllCourtDay` off.
   'court_day.view_all': 'advocate',
@@ -60,7 +65,12 @@ export const JUNIOR_MATTER_SCOPED: ReadonlySet<Action> = new Set<Action>([
   'document.write',
   'task.read',
   'task.write',
+  'draft.read',
+  'obligation.read',
+  'obligation.write',
+  'obligation.track',
   'draft.write',
+  'draft.export',
 ]);
 
 /** Roles the matrix grants `action` to, most privileged first. */

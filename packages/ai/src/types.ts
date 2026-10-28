@@ -17,6 +17,8 @@ export const TASK_IDS = [
   'tag_news',
   'tag_notice',
   'extract_issue_tags',
+  'draft_narrative',
+  'outward_update',
 ] as const;
 
 export type TaskId = (typeof TASK_IDS)[number];

@@ -1,4 +1,4 @@
-// The inbound enquiry log (#87, part 1; ADR 0043): `enquiry` is a person asking the chamber to take
+// The inbound enquiry log (#87, part 1; ADR 0047): `enquiry` is a person asking the chamber to take
 // work, `enquiry_party` the names on it (our prospective client, the adverse side) and
 // `conflict_check_result` one stored run of the conflict check (hits, never a verdict). All three are
 // tenant tables under FORCE RLS. Closed enquiries are deleted by the retention job after the

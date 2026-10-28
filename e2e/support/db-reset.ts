@@ -24,6 +24,7 @@ import {
   ROSTER_MATTERS,
   ROSTERS,
 } from '../fixtures/courts-data.ts';
+import { seedDraftingFixtures } from '../fixtures/drafting-data.ts';
 import { matterForumId, seedMatterFixtures } from '../fixtures/matters-data.ts';
 
 const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
@@ -259,6 +260,7 @@ async function seedCourtFixtures(): Promise<void> {
       }
       await seedRosterFixtures(tx);
       await seedMatterFixtures(tx, forumId);
+      await seedDraftingFixtures(tx);
     });
   } finally {
     await sql.end();

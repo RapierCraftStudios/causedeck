@@ -25,8 +25,9 @@ Every flag is off by default and ships dark. ⚖ marks a legal-gated flag. A leg
 | `insights.enabled` | no | `KILL_INSIGHTS_ENABLED` | #85 insights dashboard |
 | `workspace.export` | no | `KILL_WORKSPACE_EXPORT` | #31 export service, #288 export settings page (enables `Export workspace`) |
 | `conflicts.check` | ⚖ yes | `KILL_CONFLICTS_CHECK` | #500 conflict-of-interest check on new-matter intake, counsel sign-off through #486 |
-| `intake.enquiry_log` | ⚖ yes | `KILL_INTAKE_ENQUIRY_LOG` | #87 inbound enquiry log with conflict check and no auto-reply (ADR 0043), off until counsel clears it, #117 counsel deliverables |
+| `intake.enquiry_log` | ⚖ yes | `KILL_INTAKE_ENQUIRY_LOG` | #87 inbound enquiry log with conflict check and no auto-reply (ADR 0047), off until counsel clears it, #117 counsel deliverables |
 | `bench_facts` | ⚖ yes | `KILL_BENCH_FACTS` | #521 factual bench card (D-050), off until counsel clears it, #118 counsel clearance |
+| `m5_playbooks` | no | `KILL_M5_PLAYBOOKS` | #81 M5 playbooks and precedent bank, #901 backend (confirmed passages only; on for the demo workspace) |
 
 ## Evaluation
 

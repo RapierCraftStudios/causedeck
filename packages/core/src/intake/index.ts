@@ -1,4 +1,4 @@
-// The intake domain (#87, part 1 of 3; ADR 0043): the inbound enquiry log. An enquiry is a person
+// The intake domain (#87, part 1 of 3; ADR 0047): the inbound enquiry log. An enquiry is a person
 // asking the chamber to take work; it is logged, checked for a conflict of interest (hits for the
 // advocate to weigh, never a verdict), then accepted as a matter (only through a `new_matter`
 // proposal), declined, referred or closed. Everything is behind the legal-gated `intake.enquiry_log`

@@ -24,6 +24,7 @@ export const FLAG_KILL_SWITCHES = [
   'KILL_WORKSPACE_EXPORT',
   'KILL_CONFLICTS_CHECK',
   'KILL_BENCH_FACTS',
+  'KILL_M5_PLAYBOOKS',
 ] as const;
 
 export type FlagKillSwitch = (typeof FLAG_KILL_SWITCHES)[number];

@@ -35,6 +35,7 @@ const workspaces = vi.hoisted(() => ({
           contributePublicCourtDocuments: false,
         }),
   ),
+  getAllowEvalReuse: vi.fn(() => Promise.resolve(false)),
 }));
 const logger = vi.hoisted(() => ({ error: vi.fn() }));
 
@@ -57,6 +58,7 @@ vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/workspaces', () => workspaces);
 vi.mock('../app/(app)/w/[slug]/settings/privacy/actions.ts', () => ({
   updateWorkspacePrivacyAction: vi.fn(),
+  setAllowEvalReuseAction: vi.fn(),
 }));
 
 const { default: PrivacyPage } = await import('../app/(app)/w/[slug]/settings/privacy/page.tsx');

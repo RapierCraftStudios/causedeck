@@ -1,12 +1,12 @@
 // Holiday notices on the court calendar (#587, D-048): a listing is on a holiday when a `holiday`
 // notice matched to the workspace names the listing's forum and takes effect on the listing's date.
-// It is a read, not a stored flag, so a notice that arrives after the listing still flags it. Only a
-// holiday notice with a machine-readable `effective_on` flags anything; the dates inside a holiday-list
-// document are not parsed yet.
+// It is a read, not a stored flag, so a notice that arrives after the listing still flags it. A holiday
+// notice flags the date of its machine-readable `effective_on` and every date of its `notice_holiday`
+// rows, the dates the poll read out of a holiday-list document (#628).
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
-import { and, asc, eq, gte, lte, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, isNotNull, lte, or, sql } from 'drizzle-orm';
 
-const { forum, listing, notice, noticeMatch, proceeding } = schema;
+const { forum, listing, notice, noticeHoliday, noticeMatch, proceeding } = schema;
 
 export interface HolidayListing {
   listingId: string;
@@ -52,11 +52,11 @@ export async function listHolidayListings(
       .innerJoin(forum, eq(forum.id, proceeding.forumId))
       .innerJoin(
         notice,
-        and(
-          eq(notice.kind, 'holiday'),
-          eq(notice.effectiveOn, listing.listDate),
-          sql`${forum.code} = any(${notice.forumCodes})`,
-        ),
+        and(eq(notice.kind, 'holiday'), sql`${forum.code} = any(${notice.forumCodes})`),
+      )
+      .leftJoin(
+        noticeHoliday,
+        and(eq(noticeHoliday.noticeId, notice.id), eq(noticeHoliday.holidayOn, listing.listDate)),
       )
       .innerJoin(
         noticeMatch,
@@ -67,6 +67,7 @@ export async function listHolidayListings(
           eq(listing.workspaceId, workspaceId),
           gte(listing.listDate, range.from),
           lte(listing.listDate, range.to),
+          or(eq(notice.effectiveOn, listing.listDate), isNotNull(noticeHoliday.id)),
         ),
       )
       .orderBy(asc(listing.listDate), asc(listing.id), asc(notice.id)),

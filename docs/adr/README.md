@@ -50,8 +50,12 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0040](0040-court-day-board-interaction-model.md) | The court-day board interaction model | Proposed | 2026-10-25 | — |
 | [0041](0041-brief-print-via-css.md) | Brief printing through a print stylesheet | Proposed | 2026-10-25 | — |
 | [0042](0042-offline-encrypted-store-and-key-lifecycle.md) | Offline encrypted store and key lifecycle | Proposed | 2026-10-25 | — |
-| [0043](0043-incident-and-key-rotation-policy.md) | Incident and key rotation policy | Proposed | 2026-10-25 | — |
-| [0044](0044-stage-b-c-scale-path.md) | Stage B and C scale path | Proposed | 2026-10-25 | — |
+| [0043](0043-obligation-model.md) | The obligation model: names, reschedule versus miss, no rule-derived dates | Proposed | 2026-10-25 | — |
+| [0044](0044-memory-scopes-and-confirmation.md) | Memory scopes, confirm-before-save, the clerk view and the no-judge rule | Proposed | 2026-10-25 | — |
+| [0045](0045-outward-drafts-no-send-path.md) | Outward update drafts: L4 only, no send path | Proposed | 2026-10-25 | — |
+| [0046](0046-style-learning-without-training.md) | Style learning without training | Proposed | 2026-10-27 | — |
+| [0047](0047-incident-and-key-rotation-policy.md) | Incident and key rotation policy | Proposed | 2026-10-25 | — |
+| [0048](0048-stage-b-c-scale-path.md) | Stage B and C scale path | Proposed | 2026-10-25 | — |
 
 ## Statuses
 

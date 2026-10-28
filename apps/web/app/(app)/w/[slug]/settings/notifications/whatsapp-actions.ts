@@ -4,8 +4,8 @@
 // link. Each goes through `workspaceAction` (zod input, session, membership) and calls
 // `@causedeck/core/whatsapp-link` on the workspace-scoped transaction `ctx.tx`. The input never names
 // a user: the actor is always the signed-in member, so a member only touches their own link. The
-// client only ever sees the masked number. The code is not sent yet (no approved OTP template, so no
-// `sendOtp` is passed here).
+// client only ever sees the masked number. The request action passes the env-selected `sendOtp`
+// (#711): the real provider only with its env and approved template, else the console sender.
 import { z } from 'zod';
 
 import { domainErrorCode } from '../../../../../../lib/matters/graph-deps.ts';
@@ -71,9 +71,12 @@ const toState = (view: {
 });
 
 const requestOtp = workspaceAction(RequestInput, async (input, ctx) => {
-  const { requestWhatsAppOtp } = await core();
+  const { requestWhatsAppOtp, whatsappOtpSendFromProcess } = await core();
   const { expiresAt } = await guarded(() =>
-    requestWhatsAppOtp(deps(ctx), actorOf(ctx), { e164: input.e164, consent: input.consent }),
+    requestWhatsAppOtp({ ...deps(ctx), sendOtp: whatsappOtpSendFromProcess() }, actorOf(ctx), {
+      e164: input.e164,
+      consent: input.consent,
+    }),
   );
   return { expiresAt: expiresAt.toISOString() };
 });

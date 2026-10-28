@@ -90,3 +90,136 @@ const dismiss = workspaceAction(
 export async function dismissTagAction(raw: unknown): Promise<Result<TagResult>> {
   return dismiss(raw);
 }
+
+// Research notes (#80). `memory.write` at the action; the core service checks `memory.write` and
+// matter visibility again. A pinned authority is data only: no action here touches a draft.
+export interface NoteResult {
+  id: string;
+}
+
+const NoteRef = WorkspaceScoped.extend({ matterId: z.uuid(), noteId: z.uuid() });
+const AuthorityRef = NoteRef.extend({ index: z.number().int().min(0) });
+
+const createNote = workspaceAction(
+  WorkspaceScoped.extend({
+    matterId: z.uuid(),
+    title: z.string().max(200),
+    body: z.string().max(20_000).optional(),
+  }),
+  async (input, ctx): Promise<NoteResult> => {
+    const { createNote: create } = await import('@causedeck/core/research');
+    const row = await create(ctx.tx, actorOf(ctx), {
+      matterId: input.matterId,
+      title: input.title,
+      ...(input.body === undefined ? {} : { body: input.body }),
+    });
+    revalidateResearch();
+    return { id: row.id };
+  },
+  { action: 'memory.write' },
+);
+
+export async function createNoteAction(raw: unknown): Promise<Result<NoteResult>> {
+  return createNote(raw);
+}
+
+const updateNote = workspaceAction(
+  NoteRef.extend({ title: z.string().max(200), body: z.string().max(20_000) }),
+  async (input, ctx): Promise<NoteResult> => {
+    const { updateNote: update } = await import('@causedeck/core/research');
+    const row = await update(ctx.tx, actorOf(ctx), {
+      matterId: input.matterId,
+      noteId: input.noteId,
+      title: input.title,
+      body: input.body,
+    });
+    revalidateResearch();
+    return { id: row.id };
+  },
+  { action: 'memory.write' },
+);
+
+export async function updateNoteAction(raw: unknown): Promise<Result<NoteResult>> {
+  return updateNote(raw);
+}
+
+const deleteNote = workspaceAction(
+  NoteRef,
+  async (input, ctx): Promise<{ removed: true }> => {
+    const { deleteNote: remove } = await import('@causedeck/core/research');
+    await remove(ctx.tx, actorOf(ctx), { matterId: input.matterId, noteId: input.noteId });
+    revalidateResearch();
+    return { removed: true };
+  },
+  { action: 'memory.write' },
+);
+
+export async function deleteNoteAction(raw: unknown): Promise<Result<{ removed: true }>> {
+  return deleteNote(raw);
+}
+
+const addAuthority = workspaceAction(
+  NoteRef.extend({
+    label: z.string().max(300),
+    citation: z.string().max(300).optional(),
+    url: z.string().max(500).optional(),
+  }),
+  async (input, ctx): Promise<NoteResult> => {
+    const { addAuthority: add } = await import('@causedeck/core/research');
+    const row = await add(ctx.tx, actorOf(ctx), {
+      matterId: input.matterId,
+      noteId: input.noteId,
+      authority: {
+        label: input.label,
+        ...(input.citation ? { citation: input.citation } : {}),
+        ...(input.url ? { url: input.url } : {}),
+      },
+    });
+    revalidateResearch();
+    return { id: row.id };
+  },
+  { action: 'memory.write' },
+);
+
+export async function addAuthorityAction(raw: unknown): Promise<Result<NoteResult>> {
+  return addAuthority(raw);
+}
+
+const removeAuthority = workspaceAction(
+  AuthorityRef,
+  async (input, ctx): Promise<NoteResult> => {
+    const { removeAuthority: remove } = await import('@causedeck/core/research');
+    const row = await remove(ctx.tx, actorOf(ctx), {
+      matterId: input.matterId,
+      noteId: input.noteId,
+      index: input.index,
+    });
+    revalidateResearch();
+    return { id: row.id };
+  },
+  { action: 'memory.write' },
+);
+
+export async function removeAuthorityAction(raw: unknown): Promise<Result<NoteResult>> {
+  return removeAuthority(raw);
+}
+
+const pinAuthority = workspaceAction(
+  AuthorityRef.extend({ pinned: z.boolean() }),
+  async (input, ctx): Promise<NoteResult> => {
+    const { setAuthorityPinned } = await import('@causedeck/core/research');
+    const row = await setAuthorityPinned(ctx.tx, actorOf(ctx), {
+      matterId: input.matterId,
+      noteId: input.noteId,
+      index: input.index,
+      pinned: input.pinned,
+    });
+    revalidateResearch();
+    return { id: row.id };
+  },
+  { action: 'memory.write' },
+);
+
+export async function setAuthorityPinnedAction(raw: unknown): Promise<Result<NoteResult>> {
+  return pinAuthority(raw);
+}

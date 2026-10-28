@@ -169,6 +169,24 @@ export const providerKeys = {
     credentialIssue: 113,
     secret: true,
   },
+  CITATION_RESOLVER: {
+    domain: 'ai',
+    type: 'enum(mock|indian-kanoon)',
+    description:
+      'Citation checker resolver (#77). `mock` is deterministic and offline; `indian-kanoon` calls the Indian Kanoon API.',
+    default: 'mock',
+    requiredWhen: 'never (defaults to mock)',
+    ownerIssue: 77,
+  },
+  INDIAN_KANOON_API_TOKEN: {
+    domain: 'ai',
+    type: 'secret',
+    description: 'Indian Kanoon API token for the citation checker.',
+    requiredWhen: 'CITATION_RESOLVER=indian-kanoon',
+    ownerIssue: 77,
+    credentialIssue: 114,
+    secret: true,
+  },
   STORAGE_PROVIDER: {
     domain: 'storage',
     type: 'enum(minio|s3)',
@@ -360,6 +378,14 @@ export const aiProvider = z.discriminatedUnion('AI_PROVIDER', [
   }),
 ]);
 
+export const citationResolver = z.discriminatedUnion('CITATION_RESOLVER', [
+  z.object({ CITATION_RESOLVER: z.literal('mock').describe(d('CITATION_RESOLVER')) }),
+  z.object({
+    CITATION_RESOLVER: z.literal('indian-kanoon'),
+    INDIAN_KANOON_API_TOKEN: secret(required).describe(d('INDIAN_KANOON_API_TOKEN')),
+  }),
+]);
+
 const s3Credentials = {
   S3_REGION: required.describe(d('S3_REGION')),
   S3_BUCKET: required.describe(d('S3_BUCKET')),
@@ -408,6 +434,7 @@ export const providerSchemas = [
   emailProvider,
   smsProvider,
   aiProvider,
+  citationResolver,
   storageProvider,
   billingProvider,
   googleAuth,
@@ -427,6 +454,7 @@ export const MOCK_PROVIDERS = {
 export type ProviderEnv = z.output<typeof emailProvider> &
   z.output<typeof smsProvider> &
   z.output<typeof aiProvider> &
+  z.output<typeof citationResolver> &
   z.output<typeof storageProvider> &
   z.output<typeof billingProvider> &
   z.output<typeof googleAuth> &

@@ -1,15 +1,16 @@
-// `obligation_from_direction` (#47): an obligation read from an order's operative direction, as a
-// basic insert with provenance. Always a proposal (compliance dates are date-critical). It is
-// inserted `open`: closing one needs a reason and a closer (`obligation_closure_chk` and the
+// `obligation_from_direction` (#47): an obligation read from an order's operative direction,
+// created through the obligation service's guards (#67). Always a proposal (compliance dates are
+// date-critical). It is inserted `open`: closing one needs a reason and a closer (`obligation_closure_chk` and the
 // closure trigger, C01), which is a person's act and not this handler's.
 import { schema } from '@causedeck/db';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { createObligationFromProposal } from '../../obligations/index.ts';
 import { conflict } from '../../shared/errors.ts';
 import type { ProposalHandler } from '../types.ts';
 
-import { day, parsePayload, provenanceValues, uuid } from './common.ts';
+import { day, parsePayload, uuid } from './common.ts';
 
 const Payload = z.strictObject({
   matterId: uuid,
@@ -28,11 +29,13 @@ export const obligationFromDirectionHandler: ProposalHandler<Payload> = {
   validate: (payload) => parsePayload(Payload, payload),
 
   async apply(scope, ctx) {
-    const { obligation } = schema;
-    const [row] = await scope.tx
-      .insert(obligation)
-      .values({
-        workspaceId: scope.actor.workspaceId,
+    // The same guards as `createObligation` (provenance, active owner, dated unless a task), with
+    // the confirmer recorded on the `created` event. An undated direction needs a date first.
+    const p = ctx.provenance;
+    const row = await createObligationFromProposal(
+      scope.tx,
+      { workspaceId: scope.actor.workspaceId, userId: scope.actor.userId },
+      {
         matterId: ctx.payload.matterId,
         proceedingId: ctx.payload.proceedingId ?? null,
         source: 'order_direction',
@@ -41,11 +44,16 @@ export const obligationFromDirectionHandler: ProposalHandler<Payload> = {
         basis: ctx.payload.basis ?? null,
         sourceOrderId: ctx.payload.sourceOrderId ?? null,
         ownerMemberId: ctx.payload.ownerMemberId ?? null,
-        status: 'open',
-        ...provenanceValues(ctx.provenance),
-      })
-      .returning({ id: obligation.id, proceedingId: obligation.proceedingId });
-    if (!row) throw new Error('obligation handler: insert returned no row');
+        provenance: {
+          sourceType: p.sourceType,
+          ...(p.sourceRef === null ? {} : { sourceRef: p.sourceRef }),
+          ...(p.anchorId === null ? {} : { anchorId: p.anchorId }),
+          ...(p.confidence === null ? {} : { confidence: p.confidence }),
+          confirmationState: p.confirmationState,
+        },
+      },
+      scope.now(),
+    );
     return {
       undoPayload: { obligationId: row.id },
       entityRefs: {

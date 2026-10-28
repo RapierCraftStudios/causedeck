@@ -16,7 +16,7 @@ variable "residency_decision_ref" {
 }
 
 variable "approval_doc" {
-  description = "Path or URL of the documented approval, for example docs/adr/0044-stage-b-c-scale-path.md#approval."
+  description = "Path or URL of the documented approval, for example docs/adr/0048-stage-b-c-scale-path.md#approval."
   type        = string
   default     = ""
 }

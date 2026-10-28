@@ -1,0 +1,25 @@
+{
+  "draftingTemplates": {
+    "names": {
+      "madras_hc": {
+        "mention_memo": "குறிப்பிடல் அல்லது ஒத்திவைப்பு மனு",
+        "early_listing_memo": "விரைவு பட்டியலிடல் மனு",
+        "memo_of_appearance": "ஆஜராகும் மனு",
+        "certified_copy_application": "சான்றிட்ட நகலுக்கான விண்ணப்பம்",
+        "client_covering_letter": "கட்சிக்காரருக்கான உடன்இணைப்புக் கடிதம்"
+      },
+      "karnataka_hc": {
+        "mention_memo": "குறிப்பிடல் அல்லது ஒத்திவைப்பு மனு",
+        "early_listing_memo": "விரைவு பட்டியலிடல் மனு",
+        "memo_of_appearance": "ஆஜராகும் மனு",
+        "certified_copy_application": "சான்றிட்ட நகலுக்கான விண்ணப்பம்",
+        "client_covering_letter": "கட்சிக்காரருக்கான உடன்இணைப்புக் கடிதம்"
+      },
+      "generic_a0": {
+        "adjournment_note": "ஒத்திவைப்புக் குறிப்பு",
+        "client_covering_letter": "கட்சிக்காரருக்கான உடன்இணைப்புக் கடிதம்"
+      }
+    },
+    "scaffoldBanner": "வரைவு மட்டும்: பயன்படுத்தும் முன் சரிபார்க்கவும்"
+  }
+}

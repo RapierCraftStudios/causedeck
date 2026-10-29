@@ -176,8 +176,18 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   import: Object.freeze(['matter-graph', 'usage', 'automation']),
   // Zero-entry onboarding (#501, D-048): discovery stages the advocate's matched listings as
   // proposals on an import batch through the import and automation indexes, reads the fetch policy
-  // through sources, and types its actor through matter-graph. Nothing is applied here.
-  onboarding: Object.freeze(['import', 'automation', 'sources', 'matter-graph']),
+  // through sources, and types its actor through matter-graph. Nothing is applied here. The wizard
+  // (#92) saves the M1 profile through memory, checks forum codes through court and the member
+  // through workspaces.
+  onboarding: Object.freeze([
+    'import',
+    'automation',
+    'sources',
+    'matter-graph',
+    'memory',
+    'court',
+    'workspaces',
+  ]),
   // The migration concierge (#685): runs matter imports through the import domain's apply and undo
   // (imports `index.ts` only) and checks the actor's role through workspaces.
   migration: Object.freeze(['import', 'workspaces']),

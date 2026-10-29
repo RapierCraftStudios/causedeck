@@ -5600,6 +5600,338 @@ export type Messages = {
       confirm: string;
     };
   };
+  onboarding: {
+    metaTitle: string;
+    brand: string;
+    chooser: {
+      title: string;
+      description: string;
+      solo: {
+        title: string;
+        body: string;
+        cta: string;
+      };
+      chamber: {
+        title: string;
+        body: string;
+        cta: string;
+      };
+      resume: {
+        title: string;
+        body: string;
+        cta: string;
+      };
+    };
+    india: {
+      body: string;
+      link: string;
+    };
+    stepper: {
+      label: string;
+      progress: string;
+      done: string;
+      skipped: string;
+    };
+    steps: {
+      workspace: {
+        label: string;
+        title: string;
+        purpose: string;
+        why: string;
+      };
+      profile: {
+        label: string;
+        title: string;
+        purpose: string;
+        why: string;
+      };
+      courts: {
+        label: string;
+        title: string;
+        purpose: string;
+        why: string;
+      };
+      import: {
+        label: string;
+        title: string;
+        purpose: string;
+        why: string;
+      };
+      confirm: {
+        label: string;
+        title: string;
+        purpose: string;
+        why: string;
+      };
+      done: {
+        label: string;
+        title: string;
+        purpose: string;
+        why: string;
+      };
+      invite: {
+        label: string;
+        title: string;
+        purpose: string;
+        why: string;
+      };
+      roles: {
+        label: string;
+        title: string;
+        purpose: string;
+        why: string;
+      };
+      delegation: {
+        label: string;
+        title: string;
+        purpose: string;
+        why: string;
+      };
+      'brief-format': {
+        label: string;
+        title: string;
+        purpose: string;
+        why: string;
+      };
+    };
+    nav: {
+      back: string;
+      next: string;
+      saving: string;
+      skip: string;
+      skipHint: string;
+      shortcuts: string;
+    };
+    workspace: {
+      nameLabel: string;
+      namePlaceholder: {
+        solo: string;
+        chamber: string;
+      };
+      submit: string;
+      creating: string;
+      errors: {
+        nameRequired: string;
+        nameTooLong: string;
+        nameInvalid: string;
+        generic: string;
+      };
+    };
+    profile: {
+      enrolmentLabel: string;
+      enrolmentHint: string;
+      barCouncilLabel: string;
+      barCouncilPlaceholder: string;
+      councils: {
+        tamil_nadu_puducherry: string;
+        karnataka: string;
+        kerala: string;
+        andhra_pradesh: string;
+        telangana: string;
+        maharashtra_goa: string;
+        delhi: string;
+        other: string;
+      };
+      practiceAreasLegend: string;
+      areas: {
+        civil: string;
+        criminal: string;
+        writ: string;
+        family: string;
+        property: string;
+        corporate: string;
+        labour_service: string;
+        tax: string;
+        consumer: string;
+        arbitration: string;
+      };
+      languagesLegend: string;
+      languagesHint: string;
+      languages: {
+        en: string;
+        ta: string;
+        kn: string;
+        hi: string;
+        te: string;
+        ml: string;
+      };
+      errors: {
+        summary: string;
+        enrolment: string;
+        barCouncil: string;
+        practiceAreas: string;
+        languages: string;
+        generic: string;
+      };
+    };
+    courts: {
+      searchLabel: string;
+      searchPlaceholder: string;
+      defaultNote: string;
+      selected: string;
+      none: string;
+      remove: string;
+      listLabel: string;
+      errors: {
+        required: string;
+        generic: string;
+      };
+    };
+    import: {
+      lanes: {
+        forward: {
+          title: string;
+          body: string;
+          addressLabel: string;
+          copy: string;
+          copied: string;
+          revoke: string;
+          revoked: string;
+          create: string;
+          unavailable: string;
+        };
+        share: {
+          title: string;
+          body: string;
+          hint: string;
+        };
+        upload: {
+          title: string;
+          body: string;
+        };
+      };
+      empty: string;
+      skipNote: string;
+      continueEmpty: string;
+      offline: string;
+      denied: string;
+      forwardFailed: string;
+    };
+    confirm: {
+      intro: string;
+      noBatch: string;
+      loadFailed: string;
+      retry: string;
+      applied: string;
+    };
+    done: {
+      reveal: string;
+      revealNone: string;
+      revealNoneHint: string;
+      open: string;
+      openBriefs: string;
+      demo: string;
+      demoHint: string;
+      summary: {
+        briefs: string;
+        obligations: string;
+      };
+      finishing: string;
+      failed: string;
+    };
+    invite: {
+      tableLabel: string;
+      emailLabel: string;
+      emailPlaceholder: string;
+      roleLabel: string;
+      roles: {
+        advocate: string;
+        junior: string;
+        clerk: string;
+      };
+      add: string;
+      removeRow: string;
+      send: string;
+      sent: string;
+      devLink: string;
+      failed: {
+        forbidden: string;
+        rateLimited: string;
+        invalid: string;
+        conflict: string;
+        failed: string;
+        seatLimit: string;
+      };
+      errors: {
+        summary: string;
+        email: string;
+        none: string;
+      };
+      privacy: string;
+    };
+    roles: {
+      explainerTitle: string;
+      explainer: string;
+      matrixLabel: string;
+      columns: {
+        role: string;
+        board: string;
+        briefs: string;
+        strategy: string;
+        memory: string;
+      };
+      can: string;
+      cannot: string;
+      limited: string;
+      owner: string;
+      advocate: string;
+      junior: string;
+      clerk: string;
+      change: string;
+    };
+    delegation: {
+      suggest: string;
+      suggestHint: string;
+      capacityLabel: string;
+      capacity: {
+        arguing: string;
+        assisting: string;
+        proxy: string;
+      };
+      notify: string;
+      notifyHint: string;
+      errors: {
+        generic: string;
+      };
+    };
+    briefFormat: {
+      legend: string;
+      short: string;
+      shortHint: string;
+      full: string;
+      fullHint: string;
+      preview: string;
+      errors: {
+        generic: string;
+      };
+    };
+    preview: {
+      title: string;
+      boardEmpty: string;
+      matrixTitle: string;
+      profileTitle: string;
+    };
+    states: {
+      loading: string;
+      offline: string;
+      denied: string;
+      deniedTitle: string;
+      notFound: string;
+      error: {
+        title: string;
+        body: string;
+        reference: string;
+        retry: string;
+      };
+    };
+    shortcuts: {
+      title: string;
+      description: string;
+      next: string;
+      back: string;
+      open: string;
+    };
+  };
   emailIntake: {
     metaTitle: string;
     title: string;

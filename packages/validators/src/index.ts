@@ -4,6 +4,7 @@ export const packageName: string = '@causedeck/validators';
 export * from './api/index';
 export * from './capture';
 export * from './workspace';
+export * from './onboarding';
 export * from './proposal-draft';
 export * from './digest-preferences';
 export * from './drafting';

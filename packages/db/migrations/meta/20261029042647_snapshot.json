@@ -1,5 +1,5 @@
 {
-  "id": "2d1763a8-cdaf-4ec0-98ef-a0d9478215cc",
+  "id": "e52782d3-193a-4ab3-b910-d89959b1701d",
   "prevId": "a1a1415e-b311-4f32-b0fc-56682a6fee2b",
   "version": "7",
   "dialect": "postgresql",
@@ -18653,6 +18653,136 @@
       },
       "isRLSEnabled": false
     },
+    "public.onboarding_state": {
+      "name": "onboarding_state",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step": {
+          "name": "step",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "completed": {
+          "name": "completed",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "skipped": {
+          "name": "skipped",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "onboarding_state_workspace_id_idx": {
+          "name": "onboarding_state_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "onboarding_state_user_id_user_id_fk": {
+          "name": "onboarding_state_user_id_user_id_fk",
+          "tableFrom": "onboarding_state",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "onboarding_state_workspace_id_fk": {
+          "name": "onboarding_state_workspace_id_fk",
+          "tableFrom": "onboarding_state",
+          "tableTo": "organization",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "onboarding_state_workspace_user_uq": {
+          "name": "onboarding_state_workspace_user_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "workspace_id",
+            "user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "onboarding_state_path_chk": {
+          "name": "onboarding_state_path_chk",
+          "value": "path in ('solo', 'chamber')"
+        },
+        "onboarding_state_step_chk": {
+          "name": "onboarding_state_step_chk",
+          "value": "step ~ '^[a-z][a-z-]{0,31}$'"
+        },
+        "onboarding_state_lists_chk": {
+          "name": "onboarding_state_lists_chk",
+          "value": "jsonb_typeof(completed) = 'array' and jsonb_typeof(skipped) = 'array'"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.order": {
       "name": "order",
       "schema": "",
@@ -19072,13 +19202,6 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
-        },
-        "is_demo": {
-          "name": "is_demo",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "created_at": {
           "name": "created_at",
@@ -28327,11 +28450,19 @@
           "notNull": true,
           "default": 30
         },
-        "demo_version": {
-          "name": "demo_version",
+        "delegation_defaults": {
+          "name": "delegation_defaults",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "brief_format": {
+          "name": "brief_format",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "'full'"
         },
         "created_at": {
           "name": "created_at",
@@ -28394,6 +28525,10 @@
         "workspace_settings_attention_stale_days_chk": {
           "name": "workspace_settings_attention_stale_days_chk",
           "value": "attention_stale_days between 7 and 180"
+        },
+        "workspace_settings_brief_format_chk": {
+          "name": "workspace_settings_brief_format_chk",
+          "value": "brief_format in ('short', 'full')"
         }
       },
       "isRLSEnabled": false

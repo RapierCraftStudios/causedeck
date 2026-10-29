@@ -47,6 +47,7 @@ export const NAMESPACES = [
   'research',
   'bootstrap-import',
   'onboarding-discovery',
+  'onboarding',
   'email-intake',
   'import',
   'camera',

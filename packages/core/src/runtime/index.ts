@@ -6,9 +6,12 @@
 import { isRole } from '@causedeck/auth';
 import { assertCan, ForbiddenError } from '@causedeck/auth/policy';
 import {
+  authDb,
   closeDb,
   db,
+  hasDedicatedAuthPool,
   isUuid as isUuidValue,
+  probeDbPool,
   schema,
   withWorkspace,
   type Database,
@@ -68,7 +71,23 @@ import type {
 export type { Database, Transaction };
 
 /** The app-role database handle (lazy). Only for adapters that need a handle, e.g. Better Auth. */
-export { db };
+export { authDb, db };
+
+/**
+ * Report the runtime pool (and the dedicated auth pool when on) as metrics: connection wait and
+ * idle-in-transaction signals for alerting (#805). `auth: false` skips the auth pool (the worker never
+ * opens it). Call once after `initTelemetry`; without a metrics
+ * provider it does nothing. Probes run on each metrics export, so it opens no connection at import.
+ */
+export async function startDbPoolMetrics(options: { auth?: boolean } = {}): Promise<void> {
+  const { registerDbPoolMetrics } = await import('@causedeck/observability/db-pool-metrics');
+  registerDbPoolMetrics({
+    app: () => probeDbPool(db),
+    ...((options.auth ?? true) && hasDedicatedAuthPool()
+      ? { auth: () => probeDbPool(authDb) }
+      : {}),
+  });
+}
 
 export {
   createIdempotencyStore,

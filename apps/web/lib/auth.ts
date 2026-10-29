@@ -6,7 +6,7 @@ import { createAuth, type Auth } from '@causedeck/auth/server';
 import { createSessionHelpers } from '@causedeck/auth/session';
 import { createSmsSender } from '@causedeck/auth/sms';
 import { createSecurityEventRecorder } from '@causedeck/core/audit';
-import { db } from '@causedeck/core/runtime';
+import { authDb, db } from '@causedeck/core/runtime';
 import { headers } from 'next/headers';
 
 import { logger } from '../src/health.ts';
@@ -21,6 +21,8 @@ export function getAuth(): Auth {
     const env = serverEnv();
     instance = createAuth({
       db,
+      // Session lookups get their own small pool (#805).
+      sessionDb: authDb,
       env,
       mailer: createMailer(env, logger),
       sms: createSmsSender(env, logger),

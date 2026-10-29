@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./adapter-metrics": "./src/adapter-metrics.ts",
     "./context": "./src/context.ts",
+    "./db-pool-metrics": "./src/db-pool-metrics.ts",
     "./health": "./src/health.ts",
     "./http": "./src/http.ts",
     "./logger": "./src/logger.ts",

@@ -2020,6 +2020,10 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 /** Every other runtime export of `@causedeck/core/runtime`, with why it needs no test. */
 export const RUNTIME_NOT_A_SERVICE: Readonly<Record<string, string>> = {
   db: 'the lazy app-role handle (Better Auth adapter); tenant reads go through the services above',
+  authDb:
+    'the small app-role pool for Better Auth session lookups (#805): same handle type as db, no tenant reads of its own',
+  startDbPoolMetrics:
+    'registers pool health gauges; probes read pg_stat_activity for the app role only',
   isUuid: 'pure',
   closeAppDb: 'closes the app-role pool on shutdown; reads no rows',
   createIdempotencyStore:

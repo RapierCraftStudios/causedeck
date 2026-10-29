@@ -3,6 +3,13 @@ export const packageName: string = '@causedeck/observability';
 
 export { ADAPTER_METRICS, recordAdapterRun, resetAdapterMetrics } from './adapter-metrics.ts';
 export {
+  DB_POOL_METRICS,
+  registerDbPoolMetrics,
+  resetDbPoolMetrics,
+  type DbPoolProbes,
+  type DbPoolSample,
+} from './db-pool-metrics.ts';
+export {
   getRequestContext,
   REQUEST_ID_HEADER,
   requestIdFrom,

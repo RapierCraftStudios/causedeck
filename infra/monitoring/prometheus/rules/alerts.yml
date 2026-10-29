@@ -5,6 +5,8 @@
 #   walg_last_archive_age_seconds, walg_last_backup_age_seconds, walg_last_backup_ok,
 #   restore_drill_last_success_timestamp, restore_drill_rto_seconds,
 #   restore_drill_last_ok                                             backups (#101)
+#   causedeck_db_pool_wait_seconds, causedeck_db_idle_in_transaction_max_seconds,
+#   causedeck_db_pool_probe_errors_total                               app DB pools (#805)
 #   adapter_parse_success_ratio, adapter_last_success_timestamp        court adapters
 groups:
   - name: availability
@@ -81,6 +83,27 @@ groups:
         labels: { severity: ticket, priority: P1 }
         annotations:
           summary: 'Dead-letter queue {{ $labels.queue }} grew by more than 5 in 15 minutes'
+  - name: database-pools
+    rules:
+      # The probe queues behind busy connections, so its time is the pool wait plus one round trip.
+      - alert: DbPoolWaitHigh
+        expr: max by (pool) (causedeck_db_pool_wait_seconds) > 1
+        for: 3m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Waiting over 1 s for a database connection (pool {{ $labels.pool }})'
+      - alert: DbIdleInTransactionLong
+        expr: max by (pool) (causedeck_db_idle_in_transaction_max_seconds) > 5
+        for: 2m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'A connection (pool {{ $labels.pool }}) has been idle in a transaction for over 5 s'
+      - alert: DbConnectFailures
+        expr: sum by (pool) (increase(causedeck_db_pool_probe_errors_total[5m])) > 0
+        for: 1m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'Cannot get a database connection (pool {{ $labels.pool }}): connect timeout or database down'
   - name: backups
     # system.backup.health runs every minute and the scrape is 30s; `for` keeps the end-to-end
     # delay (job + scrape + for + group_wait 10s) under the 10 minutes R9 allows. A value of -1 means

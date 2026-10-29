@@ -11,6 +11,11 @@ on:
       target_time:
         description: 'Recovery target (UTC ISO 8601) or "latest"'
         default: latest
+      source:
+        description: 'Backup source: staging primary or the Hyderabad S3 replica (#884)'
+        type: choice
+        options: [primary, replica]
+        default: primary
 
 permissions:
   contents: read
@@ -21,7 +26,7 @@ concurrency:
 
 jobs:
   drill:
-    name: restore drill (staging)
+    name: restore drill (staging, ${{ inputs.source || 'primary' }})
     runs-on: ubuntu-latest
     timeout-minutes: 300
     environment: staging
@@ -38,12 +43,12 @@ jobs:
       - name: Drill
         env:
           DRILL_IMAGE: ${{ vars.STAGING_POSTGRES_IMAGE }}
-          WALG_S3_PREFIX: ${{ vars.STAGING_WALG_S3_PREFIX }}
-          AWS_ENDPOINT: ${{ vars.STAGING_WALG_AWS_ENDPOINT }}
-          AWS_REGION: ${{ vars.STAGING_S3_REGION }}
+          WALG_S3_PREFIX: ${{ inputs.source == 'replica' && format('s3://{0}/causedeck-wal', vars.STAGING_REPLICA_BUCKET) || vars.STAGING_WALG_S3_PREFIX }}
+          AWS_ENDPOINT: ${{ inputs.source == 'replica' && vars.STAGING_REPLICA_ENDPOINT || vars.STAGING_WALG_AWS_ENDPOINT }}
+          AWS_REGION: ${{ inputs.source == 'replica' && vars.STAGING_REPLICA_REGION || vars.STAGING_S3_REGION }}
           # Read-only restore credentials; never the archiver or admin keys.
-          AWS_ACCESS_KEY_ID: ${{ secrets.STAGING_WALG_RESTORE_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.STAGING_WALG_RESTORE_SECRET_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ inputs.source == 'replica' && secrets.STAGING_REPLICA_RESTORE_ACCESS_KEY || secrets.STAGING_WALG_RESTORE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ inputs.source == 'replica' && secrets.STAGING_REPLICA_RESTORE_SECRET_KEY || secrets.STAGING_WALG_RESTORE_SECRET_KEY }}
           OPS_ENDPOINT: ${{ vars.STAGING_WALG_AWS_ENDPOINT }}
           OPS_BUCKET: causedeck-ops
           OPS_REGION: ${{ vars.STAGING_S3_REGION }}
@@ -63,6 +68,30 @@ jobs:
           path: ${{ runner.temp }}/drill-report.json
           if-no-files-found: ignore
           retention-days: 90
+
+  replica-dry-run:
+    name: replica drill dry run (stubs)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Dry run against the Hyderabad replica settings
+        env:
+          DRILL_IMAGE: stub
+          WALG_S3_PREFIX: s3://stub-replica-bucket/causedeck-wal
+          AWS_ENDPOINT: https://s3.ap-south-2.amazonaws.com
+          AWS_REGION: ap-south-2
+          AWS_ACCESS_KEY_ID: stub
+          AWS_SECRET_ACCESS_KEY: stub
+        run: |
+          set -euo pipefail
+          install -m 0400 /dev/null "$RUNNER_TEMP/walg.key"
+          printf %s stub >"$RUNNER_TEMP/walg.key"
+          export WALG_LIBSODIUM_KEY_PATH="$RUNNER_TEMP/walg.key"
+          bash infra/scripts/restore/restore-drill.sh --dry-run --report "$RUNNER_TEMP/dry-run.json"
+          jq -e '.ok' "$RUNNER_TEMP/dry-run.json"
 
   integration:
     name: backup -> PITR -> restore (local MinIO)

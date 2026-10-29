@@ -6,7 +6,8 @@ Last drilled: not yet drilled (record: [drills](drills/README.md))
 ## Purpose
 
 Stage A: WAL-G on the single India VPS archives to the stack's MinIO bucket `causedeck-wal`;
-`minio-replicate` copies it nightly to a second India location. Targets (PRD §8): RPO ≤ 15 min,
+`minio-replicate` copies it nightly (and the WAL bucket continuously) to an AWS S3 bucket in ap-south-2
+(Hyderabad), see [dr-hyderabad](dr-hyderabad.md). Targets (PRD §8): RPO ≤ 15 min,
 RTO ≤ 4 h. Scripts: `infra/scripts/backup/`, `infra/scripts/restore/`.
 
 Measured values: the weekly drill report (`.github/workflows/restore-drill.yml` artifact) and the signed records in
@@ -42,10 +43,22 @@ and `BACKUP_RETAIN_WEEKLY=8` weekly backups (the Sunday backup is marked permane
 `wal-g backup-mark`, unmarked after 8 weeks). Each base backup is verified with
 `wal-g backup-list`; a missing backup fails the run.
 
+### Restoring from the Hyderabad replica
+
+The replica bucket holds each source bucket under its own prefix, so WAL is at
+`s3://<REPLICA_BUCKET>/causedeck-wal`. Restore with `WALG_S3_PREFIX=s3://<REPLICA_BUCKET>/causedeck-wal`,
+`AWS_ENDPOINT=https://s3.ap-south-2.amazonaws.com`, `AWS_REGION=ap-south-2` and read-only restore credentials.
+The workflow `restore-drill.yml` does the same with `source: replica`; `restore-drill.sh --dry-run` checks the
+settings without restoring.
+
+Bucket lifecycle (set on the bucket by #108, matching the 30-day object lock in `replication.json`): WAL and
+base backups expire after 30 days; logs (the India log archive, #886) after 180 days.
+
 ## Encryption and key custody
 
 Backups are encrypted client-side with WAL-G libsodium. Without the key, `wal-push`,
-`backup-fetch` and `wal-fetch` fail, so a stolen bucket is unreadable.
+`backup-fetch` and `wal-fetch` fail, so a stolen bucket is unreadable. The replica adds server-side encryption (SSE-S3, or SSE-KMS when
+`REPLICA_SSE_KMS_KEY` is set); WAL stays libsodium ciphertext end to end.
 
 - The key is a 32-byte hex file. It is never in an env file, an image or the data volume.
 - On the host it exists only on tmpfs (`/run/causedeck/walg.key`, 0440), written at boot from

@@ -34,6 +34,7 @@ import {
   feeInvoiceLine,
   payment,
 } from '../schema/fees.ts';
+import { limitationComputation, limitationRule } from '../schema/limitation.ts';
 import { briefShare } from '../schema/share.ts';
 import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
@@ -314,6 +315,28 @@ async function seedPerson(tx: Transaction, workspaceId: string, tag: string): Pr
     .values({ workspaceId, name: `Party ${tag}`, kind: 'party', sourceType: 'manual' })
     .returning({ id: person.id });
   return first(rows, 'person').id;
+}
+
+/** A workspace's own (reviewed) limitation rule (#84). */
+async function seedLimitationRule(
+  tx: Transaction,
+  workspaceId: string,
+  tag: string,
+): Promise<string> {
+  const rows = await tx
+    .insert(limitationRule)
+    .values({
+      workspaceId,
+      code: `xt.${tag}`,
+      title: 'Seed rule',
+      statute: 'Seed Act',
+      periodValue: 3,
+      periodUnit: 'years',
+      startEvent: 'cause_of_action',
+      tableVersion: 'seed',
+    })
+    .returning({ id: limitationRule.id });
+  return first(rows, 'limitation_rule').id;
 }
 
 /** A fee agreement for a fresh matter and client (#83). */
@@ -1790,6 +1813,27 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: handoverNote.id });
     return { matterId, id: first(rows, 'handover_note').id };
+  },
+  limitation_rule: async (tx, { workspaceId, tag }) => ({
+    id: await seedLimitationRule(tx, workspaceId, tag),
+  }),
+  limitation_computation: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, `${tag}-limitation`);
+    const ruleId = await seedLimitationRule(tx, workspaceId, `${tag}-computation`);
+    const rows = await tx
+      .insert(limitationComputation)
+      .values({
+        workspaceId,
+        matterId,
+        ruleId,
+        input: { ruleCode: `xt.${tag}` },
+        result: { status: 'proposed' },
+        startDate: '2026-04-01',
+        expiresOn: '2029-04-01',
+        createdBy: ownerId,
+      })
+      .returning({ id: limitationComputation.id });
+    return { matterId, ruleId, id: first(rows, 'limitation_computation').id };
   },
   fee_agreement: async (tx, { workspaceId, ownerId, tag }) => ({
     ...(await seedFeeAgreement(tx, workspaceId, ownerId, tag)),

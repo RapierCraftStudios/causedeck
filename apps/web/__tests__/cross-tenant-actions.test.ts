@@ -124,6 +124,7 @@ const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedi
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
 const peopleContacts = await import('../app/(app)/w/[slug]/people/actions.ts');
 const enquiries = await import('../app/(app)/w/[slug]/people/enquiries/actions.ts');
+const limitation = await import('../app/(app)/w/[slug]/limitation/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
@@ -325,6 +326,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   runConflictCheckAction: enquiries,
   acceptEnquiryAction: enquiries,
   closeEnquiryAction: enquiries,
+  computeLimitationAction: limitation,
+  confirmLimitationAction: limitation,
   enableChannelAction: inbox,
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
@@ -1280,6 +1283,14 @@ function inputs(workspaceId: string): Record<string, unknown> {
     runConflictCheckAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id },
     acceptEnquiryAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id },
     closeEnquiryAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id },
+    // Limitation tracker (#941): ub may not compute against A's matter or confirm A's computation.
+    computeLimitationAction: {
+      workspaceId,
+      matterId: t.a.rows.limitation_computation?.matterId,
+      ruleCode: 'xt.probe',
+      startDate: '2026-04-01',
+    },
+    confirmLimitationAction: { workspaceId, computationId: t.a.rows.limitation_computation?.id },
     // Proceedings tab (#392): ub may not add to, change, link, move, merge or split A's matters and
     // proceedings, nor undo a merge or split naming them.
     ...proceedingsInputs(workspaceId),
@@ -1836,6 +1847,9 @@ describe('cross-tenant server actions', () => {
       'runConflictCheckAction',
       'acceptEnquiryAction',
       'closeEnquiryAction',
+      // Limitation tracker (#941): A's matter and computation
+      'computeLimitationAction',
+      'confirmLimitationAction',
     ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));

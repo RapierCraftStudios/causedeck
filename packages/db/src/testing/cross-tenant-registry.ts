@@ -175,6 +175,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   load_pulse: DB_TABLES_TEST,
   context_test_result: DB_TABLES_TEST,
   pov_prefs: DB_TABLES_TEST,
+  // Limitation tracker (#84): rules are global-or-workspace; the reviewed-only read is in limitation-schema.test.ts.
+  limitation_rule: DB_TABLES_TEST,
+  limitation_computation: DB_TABLES_TEST,
   // Court-day reminders (#64).
   reminder_dispatch: DB_TABLES_TEST,
 
@@ -298,6 +301,32 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   startContextTest: denies,
   answerQuestion: denies,
   finishContextTest: denies,
+  // Fees (#83): flag-gated, owner and advocate only; B claiming A's workspace is refused and A is unchanged.
+  createFeeAgreement: denies,
+  updateFeeAgreement: denies,
+  setFeeAgreementStatus: denies,
+  getFeeAgreement: denies,
+  listFeeAgreements: denies,
+  prepareFeeInvoice: denies,
+  createDraftInvoice: denies,
+  updateDraftInvoice: denies,
+  discardDraftInvoice: denies,
+  issueInvoice: denies,
+  recordPayment: denies,
+  issueCreditNote: denies,
+  getInvoice: denies,
+  listInvoices: denies,
+  recordClientExpense: denies,
+  recordClientReceipt: denies,
+  listLedger: denies,
+  getClientBalance: denies,
+  // Limitation tracker (#940): a root export of the flag-gated services; the domain also has its own
+  // cross-tenant case in limitation.test.ts.
+  loadRuleTable: denies,
+  listRules: denies,
+  computeLimitation: denies,
+  confirmLimitation: denies,
+  listLimitations: denies,
   // Stale-matter attention (#70).
   detectAttention: empty,
   countAttention: denies,
@@ -1135,6 +1164,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   povIstDay: 'pure',
   pulseWindowOpen: 'pure',
   isBaseline: 'pure',
+  // Fees (#83): the refusal while the legal-gated flag is off is an error class.
+  FeesDisabledError: 'error class',
+  // Limitation tracker (#940): the date engine is pure; the refusal is an error class.
+  computeExpiry: 'pure',
+  NoReviewedRuleError: 'error class',
   // M5 playbook value codec (#901): pure conversion between a playbook and its memory value lines.
   playbookToValue: 'pure',
   playbookFromValue: 'pure',

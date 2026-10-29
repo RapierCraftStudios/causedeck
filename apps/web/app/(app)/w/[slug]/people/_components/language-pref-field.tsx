@@ -4,6 +4,7 @@
 import { Field } from '@causedeck/ui/field';
 import { LANGUAGE_PREFS, type LanguagePref } from '@causedeck/validators/client-contact';
 import { useTranslations } from 'next-intl';
+import { useId } from 'react';
 
 export interface LanguagePrefFieldProps {
   value: LanguagePref;
@@ -13,9 +14,11 @@ export interface LanguagePrefFieldProps {
 
 export function LanguagePrefField({ value, onChange, disabled = false }: LanguagePrefFieldProps) {
   const t = useTranslations('people');
+  const languageId = useId();
   return (
-    <Field label={t('language.label')} hint={t('language.hint')}>
+    <Field label={t('language.label')} controlId={languageId} hint={t('language.hint')}>
       <select
+        id={languageId}
         data-contact-field="language"
         className="border-line-control bg-surface h-9 w-full rounded-md border px-2 text-sm"
         value={value}

@@ -29,6 +29,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import { record } from '../../audit/index.ts';
 import { withdrawContributions } from '../../network/index.ts';
 
+import { anonymiseLedgerOnErasure } from './ledger.ts';
 import { retainInvoicesForLegalHold } from './legal-hold.ts';
 import { buildDeletionReceipt, receiptHash, type DeletionReceipt } from './receipt.ts';
 
@@ -142,6 +143,10 @@ export const PURGE_ORDER = [
   'fee_invoice_line',
   'fee_invoice',
   'fee_agreement',
+  // Limitation tracker (#84): computations before the rule they cite (RESTRICT) and before matter;
+  // platform rules (null workspace_id) are never matched.
+  'limitation_computation',
+  'limitation_rule',
   // Client contacts (#82) cite their person (composite FK); before it.
   'client_contact',
   // Inbound enquiries (#87): parties and conflict checks cite their enquiry (composite FK); before it.
@@ -466,6 +471,10 @@ export async function runWorkspaceErase(
         ? state.legalHoldInvoices
         : await withWorkspace(ctx.db, scope, (tx) => retainInvoicesForLegalHold(tx, workspaceId));
     await save('rows', { ...state, tables, legalHoldInvoices });
+    // Fees (#83, ADR 0048): clear the free text of every client ledger line before any purge batch,
+    // so a crash mid-purge never leaves a described line behind. Idempotent on resume.
+    await withWorkspace(ctx.db, scope, (tx) => anonymiseLedgerOnErasure(tx, workspaceId, now()));
+    crash('rows:ledger_anonymised');
     // Withdraw this workspace's contributed court documents (#485) before its ledger rows go.
     await withdrawContributions(ctx.db, workspaceId);
     for (const table of PURGE_ORDER) {

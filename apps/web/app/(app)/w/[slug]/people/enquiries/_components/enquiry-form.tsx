@@ -19,7 +19,7 @@ import { Textarea } from '@causedeck/ui/textarea';
 import { ENQUIRY_CHANNELS, type EnquiryChannel } from '@causedeck/validators/enquiry';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { enquiryErrorKey, type EnquiryActions } from './enquiry-actions.ts';
 
@@ -47,6 +47,7 @@ export function EnquiryForm({
   log,
 }: EnquiryFormProps) {
   const t = useTranslations('enquiry');
+  const channelId = useId();
   const router = useRouter();
   const [enquirerName, setEnquirerName] = useState('');
   const [channel, setChannel] = useState<EnquiryChannel>('phone');
@@ -139,8 +140,9 @@ export function EnquiryForm({
               }}
             />
           </Field>
-          <Field label={t('form.channel')}>
+          <Field label={t('form.channel')} controlId={channelId}>
             <select
+              id={channelId}
               data-enquiry-field="channel"
               className="border-line-control bg-surface h-9 w-full rounded-md border px-2 text-sm"
               value={channel}

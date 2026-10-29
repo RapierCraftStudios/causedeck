@@ -65,7 +65,8 @@ export const ConflictPanelNoHits: Story = {
 export const ConflictPanelHits: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByText('Possible conflict. Review before you proceed.')).toBeVisible();
-    await expect(canvas.getByRole('status')).toHaveTextContent('1 match found');
+    // The warning alert is a status too: read the count line.
+    await expect(canvas.getByText('1 match found')).toBeVisible();
     await expect(canvas.getByRole('list', { name: 'Possible conflicts' })).toBeVisible();
   },
 };

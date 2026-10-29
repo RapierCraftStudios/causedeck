@@ -30,6 +30,7 @@ export const NAMESPACES = [
   'people',
   'pov',
   'enquiry',
+  'limitation',
   'matter-timeline',
   'drafting-templates',
   'drafting',

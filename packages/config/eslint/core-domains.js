@@ -93,6 +93,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The enquiry log (#87): the flag-gated enquiry services over the conflict check, the automation
   // engine's `new_matter` proposals, audit events and membership roles.
   intake: Object.freeze(['audit', 'automation', 'conflicts', 'workspaces']),
+  // Fees (#83, ADR 0048): the member's role through workspaces, events through audit, automation-origin
+  // agreements as `fee_entry` proposals through automation (whose handler writes the draft itself).
+  fees: Object.freeze(['audit', 'automation', 'workspaces']),
   // Cross-checked facts (#499): source agreement and confidence over listing provenance; tables only.
   facts: Object.freeze([]),
   // The review and correction queue (#518, D-049): every staff read of an item's record is audited.
@@ -171,6 +174,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The obligation service (#67): roles through workspaces, audit events through audit, defect
   // transitions through the matter-graph state machine (imports `index.ts` only).
   obligations: Object.freeze(['workspaces', 'audit', 'matter-graph']),
+  // Limitation tracker (#84, #940): the flag-gated engine over counsel's rule tables; roles through
+  // workspaces, audit events through audit, the confirmed rule obligation through the obligations
+  // index (`createRuleObligation`).
+  limitation: Object.freeze(['workspaces', 'audit', 'obligations']),
   // Stale-matter attention (#70): roles and the threshold through workspaces, audit events through
   // audit, date arithmetic through the obligations index.
   attention: Object.freeze(['workspaces', 'audit', 'obligations']),

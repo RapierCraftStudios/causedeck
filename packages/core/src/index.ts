@@ -38,3 +38,42 @@ export * from './usage/index.ts';
 export * from './webhooks/index.ts';
 export * from './workspaces/index.ts';
 export * from './continuity/index.ts';
+// Fees (#83, ADR 0048): flag-gated services, owners and advocates only; registered in the
+// cross-tenant registry. `anonymiseClientLedger` (the erasure step, no membership check by design), `isGstUnreviewed` and `FEES_FLAG` stay on `@causedeck/core/fees`.
+export {
+  createDraftInvoice,
+  createFeeAgreement,
+  discardDraftInvoice,
+  FeesDisabledError,
+  getClientBalance,
+  getFeeAgreement,
+  getInvoice,
+  issueCreditNote,
+  issueInvoice,
+  listFeeAgreements,
+  listInvoices,
+  listLedger,
+  prepareFeeInvoice,
+  recordClientExpense,
+  recordClientReceipt,
+  recordPayment,
+  setFeeAgreementStatus,
+  updateDraftInvoice,
+  updateFeeAgreement,
+} from './fees/index.ts';
+export type { FeesActor, FeesDeps } from './fees/index.ts';
+export {
+  computeExpiry,
+  computeLimitation,
+  confirmLimitation,
+  listLimitations,
+  listRules,
+  loadRuleTable,
+  NoReviewedRuleError,
+} from './limitation/index.ts';
+export type {
+  ComputationView,
+  LimitationActor,
+  LimitationDeps,
+  RuleView,
+} from './limitation/index.ts';

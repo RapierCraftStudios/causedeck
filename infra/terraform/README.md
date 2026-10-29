@@ -1,5 +1,16 @@
 # Terraform: Cloudflare and the India VPS
 
+> **Provider direction (D-037 amendment, 2026-10-27, #882).** Stage A runs on OVH Mumbai: prod on a
+> VPS-3 (₹1,160/mo) and staging on its own VPS-1 (₹420/mo), on separate hosts (OVH India catalogue,
+> 2026-10-27, ex-GST, 12-month term). OVH VPS are ordered by hand (#108) and are not managed by the
+> VPS modules below. The DigitalOcean and Lightsail modules remain as alternatives. Stage B is a
+> Postgres box (VPS-4 or dedicated) with a streaming replica and PgBouncer plus 2+ app VPS behind
+> Cloudflare LB or DNS; Stage C is k3s or Docker Swarm. The AWS modules (RDS, S3, ALB, ECS) are
+> optional, no longer the default ([ADR 0053](../../docs/adr/0053-stage-b-c-scale-path.md)).
+> Residency (D-009) is unchanged: MinIO on the Mumbai host, off-host backups to S3 ap-south-2. App
+> and API stay DNS-only by default (D-037, #788). Trade-offs: shared vCores, a traffic quota
+> (500 GB/month on VPS-1, about 1 TB/month on VPS-3, then 10 Mbps), and a 12-month term.
+
 Infrastructure that is not the application (#99): Cloudflare (zone, DNS, DNSSEC, Pages for
 `apps/site`, the `static.<tld>` CDN host, optional Access and WAF) and the India VPS (DigitalOcean
 BLR1 or AWS Lightsail ap-south-1) for `prod` and `staging`. The VPS runs `infra/scripts/bootstrap-vps.sh`
@@ -61,6 +72,8 @@ state bucket). Real values come from #107 (domain and Cloudflare token), #108 (V
 - Every VPS resource is tagged `project`, `env`, `owner`, `data_residency=in`.
 
 ## Stage B (#106)
+
+These AWS modules are the optional Stage B path. The default is OVH Mumbai (see the note at the top).
 
 `envs/stage-b` composes the RDS, S3, ALB and optional Cloudflare LB modules and the disabled Stage C
 skeletons. Region variables (`aws_region`, `replica_region`, each module's `region`) accept only

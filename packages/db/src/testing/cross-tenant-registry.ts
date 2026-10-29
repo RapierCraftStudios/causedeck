@@ -222,6 +222,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   whatsapp_inbound_message: DB_TABLES_TEST,
   // In-app help state (#94).
   help_state: DB_TABLES_TEST,
+  // Onboarding wizard state (#92).
+  onboarding_state: DB_TABLES_TEST,
   // Lawyer memory (#72).
   memory_item: DB_TABLES_TEST,
   memory_proposal: DB_TABLES_TEST,

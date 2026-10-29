@@ -5582,6 +5582,338 @@
       "confirm": "These {count, plural, one {# matter is} other {# matters are}} mine"
     }
   },
+  "onboarding": {
+    "metaTitle": "Set up CauseDeck",
+    "brand": "CauseDeck",
+    "chooser": {
+      "title": "How do you practise?",
+      "description": "Two short set-ups. Either one ends on your court day, with the briefs for the next listed day.",
+      "solo": {
+        "title": "Just me",
+        "body": "A solo advocate. Add your profile, import your cause lists and orders, then see your court day.",
+        "cta": "Set up as a solo advocate"
+      },
+      "chamber": {
+        "title": "A chamber",
+        "body": "An advocate with juniors and a clerk. Invite your colleagues, set who sees what, then import together.",
+        "cta": "Set up a chamber"
+      },
+      "resume": {
+        "title": "You have a set-up in progress",
+        "body": "Carry on from step {step} of {total} in {workspace}.",
+        "cta": "Resume set-up"
+      }
+    },
+    "india": {
+      "body": "Your data is stored in India. AI runs in India-only mode by default.",
+      "link": "Read about security"
+    },
+    "stepper": {
+      "label": "Set-up steps",
+      "progress": "Step {current} of {total}",
+      "done": "Done",
+      "skipped": "Skipped"
+    },
+    "steps": {
+      "workspace": {
+        "label": "Workspace",
+        "title": "Name your workspace",
+        "purpose": "This is where your matters, briefs and court days will live.",
+        "why": "Why we ask: your workspace keeps your data apart from everyone else's."
+      },
+      "profile": {
+        "label": "Profile",
+        "title": "Your practice profile",
+        "purpose": "Tell us who you are, so we can recognise your matters in a cause list.",
+        "why": "Why we ask: your enrolment number is how we match listings to you, and nothing else."
+      },
+      "courts": {
+        "label": "Courts",
+        "title": "Where do you appear?",
+        "purpose": "Choose the courts you appear in. Add more any time.",
+        "why": "Why we ask: we only look for your matters in the courts you choose."
+      },
+      "import": {
+        "label": "Import",
+        "title": "Bring your matters in",
+        "purpose": "Forward, share or upload what you already have. You never retype a case.",
+        "why": "Why we ask: your own papers are the only source. We do not search courts for you without your say."
+      },
+      "confirm": {
+        "label": "Confirm",
+        "title": "Confirm what we found",
+        "purpose": "Approve, merge or split each proposed matter. Nothing is saved until you confirm.",
+        "why": "Why we ask: you stay in charge of your record."
+      },
+      "done": {
+        "label": "Ready",
+        "title": "You are set up",
+        "purpose": "Your court day is the first thing you will see.",
+        "why": "Your data stays in India, and nothing is sent to anyone."
+      },
+      "invite": {
+        "label": "Invite",
+        "title": "Invite your chamber",
+        "purpose": "Add your juniors and your clerk by email. Only colleagues you already work with.",
+        "why": "Why we ask: invitations are the only way people join. We send no marketing."
+      },
+      "roles": {
+        "label": "Roles",
+        "title": "Who can see what",
+        "purpose": "Check what each role can see before anyone joins. The clerk starts restricted.",
+        "why": "Why we show this: strategy notes and matter memory are for advocates and juniors only."
+      },
+      "delegation": {
+        "label": "Delegation",
+        "title": "Delegation defaults",
+        "purpose": "Choose how appearances are handed out by default. Change them any time.",
+        "why": "Why we ask: these are only defaults, and you can reassign any appearance."
+      },
+      "brief-format": {
+        "label": "Brief format",
+        "title": "Your brief format",
+        "purpose": "Pick how long a brief is by default. Everyone can set their own later.",
+        "why": "Why we ask: the first brief you open will use this."
+      }
+    },
+    "nav": {
+      "back": "Back",
+      "next": "Continue",
+      "saving": "Saving",
+      "skip": "Skip for now",
+      "skipHint": "You can do this later from Settings.",
+      "shortcuts": "Keyboard shortcuts"
+    },
+    "workspace": {
+      "nameLabel": "Workspace name",
+      "namePlaceholder": {
+        "solo": "For example, Meera Raman, Advocate",
+        "chamber": "For example, Mylapore Chambers"
+      },
+      "submit": "Create workspace",
+      "creating": "Creating workspace",
+      "errors": {
+        "nameRequired": "Enter a name for the workspace.",
+        "nameTooLong": "Use at most {max} characters.",
+        "nameInvalid": "That name cannot be used. Try another.",
+        "generic": "We could not create the workspace. Nothing was saved. Try again."
+      }
+    },
+    "profile": {
+      "enrolmentLabel": "Enrolment number",
+      "enrolmentHint": "As on your bar council certificate, for example MS/1234/2019.",
+      "barCouncilLabel": "Bar council",
+      "barCouncilPlaceholder": "Choose your bar council",
+      "councils": {
+        "tamil_nadu_puducherry": "Bar Council of Tamil Nadu and Puducherry",
+        "karnataka": "Karnataka State Bar Council",
+        "kerala": "Bar Council of Kerala",
+        "andhra_pradesh": "Bar Council of Andhra Pradesh",
+        "telangana": "Telangana State Bar Council",
+        "maharashtra_goa": "Bar Council of Maharashtra and Goa",
+        "delhi": "Bar Council of Delhi",
+        "other": "Another bar council"
+      },
+      "practiceAreasLegend": "Practice areas",
+      "areas": {
+        "civil": "Civil",
+        "criminal": "Criminal",
+        "writ": "Writs",
+        "family": "Family",
+        "property": "Property",
+        "corporate": "Corporate",
+        "labour_service": "Labour and service",
+        "tax": "Tax",
+        "consumer": "Consumer",
+        "arbitration": "Arbitration"
+      },
+      "languagesLegend": "Working languages",
+      "languagesHint": "Names and notes can be typed in English, Tamil or Kannada.",
+      "languages": {
+        "en": "English",
+        "ta": "Tamil (தமிழ்)",
+        "kn": "Kannada (ಕನ್ನಡ)",
+        "hi": "Hindi (हिन्दी)",
+        "te": "Telugu (తెలుగు)",
+        "ml": "Malayalam (മലയാളം)"
+      },
+      "errors": {
+        "summary": "Fix the highlighted fields to continue.",
+        "enrolment": "Enter your enrolment number, for example MS/1234/2019.",
+        "barCouncil": "Choose your bar council.",
+        "practiceAreas": "Choose at least one practice area.",
+        "languages": "Choose at least one language.",
+        "generic": "We could not save your profile. Nothing was changed. Try again."
+      }
+    },
+    "courts": {
+      "searchLabel": "Search courts",
+      "searchPlaceholder": "Type a court or a city",
+      "defaultNote": "We preselected the principal seat of the High Court in {city}. Change it if you appear elsewhere.",
+      "selected": "{count, plural, one {# court chosen} other {# courts chosen}}",
+      "none": "No court matches your search.",
+      "remove": "Remove {court}",
+      "listLabel": "Courts you appear in",
+      "errors": {
+        "required": "Choose at least one court.",
+        "generic": "We could not save your courts. Nothing was changed. Try again."
+      }
+    },
+    "import": {
+      "lanes": {
+        "forward": {
+          "title": "Forward",
+          "body": "Forward cause lists and orders from your email to your own address. Only you can read it, and you can switch it off.",
+          "addressLabel": "Your forwarding address",
+          "copy": "Copy address",
+          "copied": "Copied",
+          "revoke": "Turn this address off",
+          "revoked": "This address is off. Create a new one to forward again.",
+          "create": "Create my address",
+          "unavailable": "Forwarding by email is not switched on for this workspace yet. Use Share or Upload below, nothing is lost."
+        },
+        "share": {
+          "title": "Share",
+          "body": "On your phone, share a cause list, an order or a photo to CauseDeck from any app. Install CauseDeck to your home screen first.",
+          "hint": "Shared files arrive in your inbox and join this import."
+        },
+        "upload": {
+          "title": "Upload",
+          "body": "Upload cause lists, orders, a calendar file (.ics) or photos of your diary pages. Each file shows its progress."
+        }
+      },
+      "empty": "Nothing imported yet. Pick any lane above, or skip and start with an empty board.",
+      "skipNote": "Skipping is fine. You will land on a guided board, and the demo workspace is one click away.",
+      "continueEmpty": "Continue with an empty board",
+      "offline": "You are offline. Importing needs a connection, so it is paused. Skip for now, or come back when you are online.",
+      "denied": "Only people who can edit matters can import. Ask the chamber owner to import, or to change your role.",
+      "forwardFailed": "We could not create the address. Share or Upload still work."
+    },
+    "confirm": {
+      "intro": "Check each proposed matter. You can approve, merge or split. Nothing is saved to your matters until you confirm.",
+      "noBatch": "There is nothing to confirm yet. Import something first, or skip this step.",
+      "loadFailed": "We could not load the proposed matters. Nothing was saved. Try again.",
+      "retry": "Try again",
+      "applied": "{count, plural, one {# matter saved} other {# matters saved}}."
+    },
+    "done": {
+      "reveal": "Your court day for {date} is ready.",
+      "revealNone": "Your board is ready. No hearings are listed yet.",
+      "revealNoneHint": "Import a cause list or add a matter, and your court day fills in here.",
+      "open": "Open my court day",
+      "openBriefs": "See the briefs for this day",
+      "demo": "Look around the demo workspace",
+      "demoHint": "Fictional data, one click away. Your own workspace is untouched.",
+      "summary": {
+        "briefs": "{count, plural, one {# brief ready} other {# briefs ready}}",
+        "obligations": "{count, plural, one {# obligation in your starter queue} other {# obligations in your starter queue}}"
+      },
+      "finishing": "Opening your court day",
+      "failed": "We could not finish. Your set-up is saved. Try again."
+    },
+    "invite": {
+      "tableLabel": "People to invite",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "junior@example.com",
+      "roleLabel": "Role",
+      "roles": {
+        "advocate": "Advocate",
+        "junior": "Junior",
+        "clerk": "Clerk (restricted)"
+      },
+      "add": "Add another person",
+      "removeRow": "Remove this row",
+      "send": "Send invitations",
+      "sent": "{count, plural, one {# invitation sent} other {# invitations sent}}",
+      "devLink": "Invitation link for {email}: {link}",
+      "failed": {
+        "forbidden": "{email}: you cannot invite people to this chamber.",
+        "rateLimited": "{email}: too many invitations just now. Try again shortly.",
+        "invalid": "{email}: that address cannot be invited.",
+        "conflict": "{email}: already invited or already a member.",
+        "failed": "{email}: the invitation could not be sent.",
+        "seatLimit": "{email}: your plan has no seat left for this role."
+      },
+      "errors": {
+        "summary": "Fix the highlighted rows to continue.",
+        "email": "Enter a valid email address.",
+        "none": "Add at least one person, or skip for now."
+      },
+      "privacy": "Invitations go only to the addresses you enter, and only now. No marketing, ever."
+    },
+    "roles": {
+      "explainerTitle": "What the clerk cannot see",
+      "explainer": "The clerk starts restricted. A clerk cannot see strategy notes or matter memory. A clerk does see the court day, hearing times and the papers to carry.",
+      "matrixLabel": "What each role can see",
+      "columns": {
+        "role": "Role",
+        "board": "Court day",
+        "briefs": "Briefs",
+        "strategy": "Strategy notes",
+        "memory": "Matter memory"
+      },
+      "can": "Can see",
+      "cannot": "Cannot see",
+      "limited": "Limited view",
+      "owner": "Owner",
+      "advocate": "Advocate",
+      "junior": "Junior",
+      "clerk": "Clerk",
+      "change": "You can change any role later in Settings, under Members."
+    },
+    "delegation": {
+      "suggest": "Suggest who should appear",
+      "suggestHint": "We suggest an assignment for each listed item. You approve it.",
+      "capacityLabel": "Default capacity",
+      "capacity": {
+        "arguing": "Arguing",
+        "assisting": "Assisting",
+        "proxy": "Proxy"
+      },
+      "notify": "Tell the person when they are assigned",
+      "notifyHint": "A notice in CauseDeck only. Nothing leaves the chamber.",
+      "errors": {
+        "generic": "We could not save the defaults. Nothing was changed. Try again."
+      }
+    },
+    "briefFormat": {
+      "legend": "How long should a brief be?",
+      "short": "Short",
+      "shortHint": "The stage, the last order and what to carry.",
+      "full": "Full",
+      "fullHint": "Everything in Short, plus context, obligations and court notes.",
+      "preview": "Preview",
+      "errors": {
+        "generic": "We could not save the format. Nothing was changed. Try again."
+      }
+    },
+    "preview": {
+      "title": "Your court day, taking shape",
+      "boardEmpty": "Your imported matters will appear here.",
+      "matrixTitle": "Who sees what",
+      "profileTitle": "Your profile"
+    },
+    "states": {
+      "loading": "Loading this step",
+      "offline": "You are offline. Steps that need a connection are paused until you are back online.",
+      "denied": "Only the chamber owner can do this step. Ask the owner to set it up, or to make you an owner.",
+      "deniedTitle": "This step is for the owner",
+      "notFound": "That step does not exist on this path.",
+      "error": {
+        "title": "Something went wrong",
+        "body": "Your progress is saved. Nothing was sent to anyone.",
+        "reference": "Reference: {digest}",
+        "retry": "Try again"
+      }
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "description": "Shortcuts work anywhere except while you are typing in a field.",
+      "next": "Continue to the next step",
+      "back": "Go back one step",
+      "open": "Show this list"
+    }
+  },
   "emailIntake": {
     "metaTitle": "Email intake",
     "title": "Email intake",

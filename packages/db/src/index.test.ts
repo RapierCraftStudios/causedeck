@@ -163,6 +163,7 @@ describe('@causedeck/db root entry point', () => {
       'notification_setting',
       'obligation',
       'obligation_event',
+      'onboarding_state',
       'order',
       'organisation',
       'organization',

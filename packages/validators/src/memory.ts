@@ -54,6 +54,16 @@ export const MEMORY_KEYS = {
     description: 'Courts and forums the lawyer appears in',
   },
   'M1.practice_areas': { layer: 'M1', strategy: false, description: 'Practice areas' },
+  'M1.enrolment_number': {
+    layer: 'M1',
+    strategy: false,
+    description: 'Bar enrolment number (entered in onboarding)',
+  },
+  'M1.bar_council': {
+    layer: 'M1',
+    strategy: false,
+    description: 'State bar council of enrolment (entered in onboarding)',
+  },
   'M1.languages': { layer: 'M1', strategy: false, description: 'Working languages' },
   'M1.approach': { layer: 'M1', strategy: true, description: 'How the lawyer approaches a matter' },
   'M1.last_memory_review': {

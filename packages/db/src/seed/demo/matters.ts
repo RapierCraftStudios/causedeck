@@ -24,7 +24,7 @@ import type { person, roleEdge } from '../../schema/people.ts';
 import type { proceeding, proceedingLink } from '../../schema/proceedings.ts';
 
 import { benchId, forumId, hallId, type DemoForumKey } from './courts.ts';
-import { demoOrderPdf } from './pdf.ts';
+import { demoOrderPdf, type DemoPdfInput } from './pdf.ts';
 import { demoMember, fictional, OPPOSING_ADVOCATES, type DemoMemberKey } from './people.ts';
 import { addDays, createPrng, demoId, demoProvenance, ID_KIND } from './shared.ts';
 import type { DemoWorkspaceSpec } from './workspaces.ts';
@@ -344,6 +344,8 @@ export interface DemoMatterRows {
   proceedings: InferInsertModel<typeof proceeding>[];
   proceedingLinks: InferInsertModel<typeof proceedingLink>[];
   documents: InferInsertModel<typeof document>[];
+  /** The input of each order's sample PDF, by document id (the file step regenerates the bytes). */
+  pdfs: { documentId: string; input: DemoPdfInput }[];
   anchors: InferInsertModel<typeof anchor>[];
   orders: InferInsertModel<typeof order>[];
   listings: InferInsertModel<typeof listing>[];
@@ -363,6 +365,7 @@ export function demoMatterRows(ws: DemoWorkspaceSpec, today: string, at: Date): 
     proceedings: [],
     proceedingLinks: [],
     documents: [],
+    pdfs: [],
     anchors: [],
     orders: [],
     listings: [],
@@ -610,11 +613,13 @@ export function demoMatterRows(ws: DemoWorkspaceSpec, today: string, at: Date): 
             ? `The ${spec.clientIsPetitioner ? 'respondent' : 'petitioner'} shall file a counter affidavit within two weeks; the petitioner may file a reply within one week thereafter.`
             : 'Notice to the respondents, returnable in four weeks. Interim directions to continue.';
       const orderType = isLast && spec.disposed ? 'final' : 'interim';
-      const pdf = demoOrderPdf({
+      const pdfInput: DemoPdfInput = {
         caseNumber,
         title: `${orderType === 'final' ? 'Final' : 'Interim'} order dated ${orderDate}`,
         lines: [`${petitioner} v. ${respondent}`, direction],
-      });
+      };
+      const pdf = demoOrderPdf(pdfInput);
+      rows.pdfs.push({ documentId, input: pdfInput });
       rows.documents.push({
         id: documentId,
         ...stamp,

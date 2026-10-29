@@ -1,5 +1,5 @@
 // Demo mode (#93): sample workspaces anyone can enter, resettable, with no outward channel. See
-// mode.ts. Imports `audit` only; the `is_demo` guard itself lives in `shared`.
+// mode.ts. Imports `audit` only (and `@causedeck/storage` for the sealed content); the `is_demo` guard itself lives in `shared`.
 export {
   DEMO_SESSION_TTL_MS,
   DEMO_VISITOR_ROLE,
@@ -13,6 +13,13 @@ export {
   type DemoWorkspaceSummary,
   type EnteredDemo,
 } from './mode.ts';
+export {
+  seedDemoFiles,
+  seedDemoMemory,
+  type DemoContentDeps,
+  type DemoContentResult,
+  type DemoFilesDeps,
+} from './content.ts';
 export {
   assertNotDemoWorkspace,
   DEMO_BLOCKED_MESSAGE,

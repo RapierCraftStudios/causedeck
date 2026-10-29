@@ -3,7 +3,8 @@
 // the catalogue (every public table with a `workspace_id`) and deleted children first by their
 // foreign keys, so a table added later is reset without touching this file. Append-only tables
 // (the audit chain, AI call log) and tables the connecting role may not delete from (the deletion
-// tombstones) keep their rows. The workspace row itself stays, so ids, slug and
+// tombstones) keep their rows. A table whose rows only a parent's cascade may delete (the drafting
+// versions) is skipped too: deleting its parent removes it. The workspace row itself stays, so ids, slug and
 // `is_demo` are stable and sessions of the seeded members survive.
 import { sql } from 'drizzle-orm';
 
@@ -65,7 +66,7 @@ export async function resetDemoWorkspace(
         and has_table_privilege(format('%I.%I', c.table_schema, c.table_name), 'DELETE')
         and not exists (
           select 1 from pg_trigger g join pg_class k on k.oid = g.tgrelid
-          where k.relname = c.table_name and not g.tgisinternal and g.tgfoid = 'app_audit_immutable'::regproc
+          where k.relname = c.table_name and not g.tgisinternal and (g.tgtype & 8) <> 0 and g.tgfoid::regproc::text ~ '^app_.*immutable$'
         )`);
     const names = [...found].map((r) => String(r.name));
     const fks = await tx.execute<Row>(sql`

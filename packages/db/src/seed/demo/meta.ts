@@ -7,10 +7,12 @@ import { createHash } from 'node:crypto';
 
 import { demoCourtRows } from './courts.ts';
 import { demoMatterRows } from './matters.ts';
+import { demoMemory } from './memory.ts';
+import { demoModuleRows } from './modules.ts';
 import { seedInstant } from './shared.ts';
 import { DEMO_WORKSPACES, type DemoWorkspaceKey } from './workspaces.ts';
 
-export const DEMO_VERSION = '2026.10.1';
+export const DEMO_VERSION = '2026.10.2';
 
 /** The day the content hash is computed for; the rows of any other day differ only by dates. */
 export const DEMO_HASH_DAY = '2026-01-15';
@@ -30,6 +32,13 @@ function canonical(value: unknown): string {
 export function demoContentHash(key: DemoWorkspaceKey): string {
   const ws = DEMO_WORKSPACES[key];
   const at = seedInstant(DEMO_HASH_DAY);
-  const rows = { courts: demoCourtRows(ws, at), graph: demoMatterRows(ws, DEMO_HASH_DAY, at) };
+  const courts = demoCourtRows(ws, at);
+  const graph = demoMatterRows(ws, DEMO_HASH_DAY, at);
+  const rows = {
+    courts,
+    graph,
+    modules: demoModuleRows(ws, DEMO_HASH_DAY, at, graph, courts),
+    memory: demoMemory(ws, DEMO_HASH_DAY),
+  };
   return createHash('sha256').update(canonical(rows)).digest('hex');
 }

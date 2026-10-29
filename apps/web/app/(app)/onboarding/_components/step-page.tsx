@@ -134,13 +134,18 @@ async function loadDone(context: WorkspaceContext): Promise<DoneData> {
   const { getFirstCourtDay } = await import('@causedeck/core/onboarding');
   const { istDay } = await import('@causedeck/core/import');
   const { isDemoWorkspaceSlug } = await import('@causedeck/validators/workspace');
+  const { listDemoWorkspaces } = await import('@causedeck/core/demo');
   const actor = { workspaceId: context.workspace.id, userId: context.user.id };
   const now = new Date();
   const firstDay = await runtime.inWorkspace(actor, (tx) => getFirstCourtDay(tx, actor, now));
   return {
     firstDay,
     today: istDay(now),
-    hasDemo: context.memberships.some((m) => isDemoWorkspaceSlug(m.workspace.slug)),
+    // The sample workspaces are entered through `/demo` (#93, #985): the link shows when the member
+    // already belongs to one or when the deployment has them seeded.
+    hasDemo:
+      context.memberships.some((m) => isDemoWorkspaceSlug(m.workspace.slug)) ||
+      (await listDemoWorkspaces(runtime.db).catch(() => [])).length > 0,
   };
 }
 
@@ -300,7 +305,7 @@ export async function OnboardingStepPage(path: OnboardingPath, props: StepPagePr
             firstDay={done.firstDay}
             boardHref={courtDayHref(slug, done.firstDay.date, done.today)}
             briefsHref={`${base}/briefs`}
-            demoHref={done.hasDemo ? '/w/demo/today' : undefined}
+            demoHref={done.hasDemo ? '/demo' : undefined}
           />
         </WizardShell>
       );

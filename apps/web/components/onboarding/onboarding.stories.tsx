@@ -179,7 +179,7 @@ export const OnboardingFirstDay: Story = {
         firstDay={{ date: '2026-11-03', briefs: 4, openObligations: 7 }}
         boardHref="/w/meera-raman/today"
         briefsHref="/w/meera-raman/briefs"
-        demoHref="/w/demo/today"
+        demoHref="/demo"
       />,
       'You are set up',
     ),
@@ -193,7 +193,7 @@ export const OnboardingFirstDayEmpty: Story = {
         firstDay={{ date: null, briefs: 0, openObligations: 0 }}
         boardHref="/w/meera-raman/today"
         briefsHref="/w/meera-raman/briefs"
-        demoHref="/w/demo/today"
+        demoHref="/demo"
       />,
       'You are set up',
     ),

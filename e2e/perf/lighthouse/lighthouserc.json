@@ -3,9 +3,9 @@
     "collect": {
       "url": [
         "http://localhost:3100/sign-in",
-        "http://localhost:3100/w/chennai-solo/today",
-        "http://localhost:3100/w/chennai-solo/briefs",
-        "http://localhost:3100/w/chennai-solo/obligations",
+        "http://localhost:3100/w/demo-chennai-solo/today",
+        "http://localhost:3100/w/demo-chennai-solo/briefs",
+        "http://localhost:3100/w/demo-chennai-solo/obligations",
         "http://localhost:3200/",
         "http://localhost:3200/pricing/",
         "http://localhost:3200/status/"

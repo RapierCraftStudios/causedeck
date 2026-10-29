@@ -166,6 +166,18 @@ describe('Lighthouse config', () => {
   });
 });
 
+describe('Lighthouse runner and workflow', () => {
+  it('signs in before auditing and the workflow step can fail the job', () => {
+    expect(read('lighthouse/run.mjs')).toContain('extraHeaders');
+    const workflow = readFileSync(
+      fileURLToPath(new URL('../../../.github/workflows/perf.yml', import.meta.url)),
+      'utf8',
+    );
+    expect(workflow).toContain('perf:lighthouse android');
+    expect(workflow).not.toContain('continue-on-error');
+  });
+});
+
 describe('bundle budget', () => {
   const budget = (JSON.parse(read('budgets/bundle-budget.json')) as { budgetBytes: number })
     .budgetBytes;

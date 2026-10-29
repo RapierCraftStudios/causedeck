@@ -137,17 +137,10 @@ jobs:
             --label performance --body-file e2e/perf/results/regression.md
       - name: Install Chromium for Lighthouse
         run: pnpm --filter @causedeck/e2e exec playwright install --with-deps chromium
-      - name: Lighthouse (mobile profile, then the throttled Android-class profile)
-        continue-on-error: true
-        working-directory: e2e
+      - name: Lighthouse (mobile profile, then the throttled Android-class profile; signed in)
         run: |
-          pnpm exec lhci autorun --config=perf/lighthouse/lighthouserc.json
-          pnpm exec lhci autorun --config=perf/lighthouse/lighthouserc.json \
-            --collect.settings.throttlingMethod=simulate \
-            --collect.settings.throttling.cpuSlowdownMultiplier=4 \
-            --collect.settings.throttling.rttMs=150 \
-            --collect.settings.throttling.throughputKbps=1638.4 \
-            --upload.outputDir=.lighthouseci/perf-android
+          pnpm --filter @causedeck/e2e perf:lighthouse mobile
+          pnpm --filter @causedeck/e2e perf:lighthouse android
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ always() }}
         with:

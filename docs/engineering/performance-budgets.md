@@ -14,7 +14,7 @@ Verification of the budgets in the technical spike (§3.2 Stage B triggers, §10
 | Readiness flaps (a failed `/readyz` poll in the run) | none                    | k6 counter `readiness_flaps`                         |
 | Cross-tenant requests under load                     | always 403 or 404       | k6 counter `cross_tenant_leaks`                      |
 | Initial JS of `/w/[slug]/today`                      | at most 180 KB gzip     | `scripts/check-bundle-budget.ts` (with a diff report) |
-| Lighthouse performance and accessibility             | at least 95             | `e2e/perf/lighthouse/lighthouserc.json`              |
+| Lighthouse performance and accessibility             | at least 95             | `e2e/perf/lighthouse/run.mjs` (signs in, then lhci)  |
 | Cold start, 4 GB Android-class profile               | under 2.5 s (`interactive`) | the same config with `ANDROID_PROFILE_FLAGS`     |
 | p95 regression against the previous nightly          | at most 15%             | `compare.ts`, opens an issue                         |
 
@@ -53,4 +53,4 @@ Spike §3.2 moves to Stage B when **any** of these holds: p95 latency above 400 
 
 ## Known gaps
 
-The scaled seed multiplies tenants and seats, not matters: the extra workspaces have no matters or listings of their own, so the DB-side numbers understate a real 1,000-seat dataset until the demo seed can generate workspaces beyond the two fixed ones (tracked as a follow-up).
+`perf:seed` calls `seedDemo` (the two demo workspaces with their 40 matters each) and adds fictional tenants, users and seats around them. The extra tenants have no matters or listings of their own: the demo seed's row ids and content are keyed to its two fixed workspaces (`demoId` allows nine workspace indexes), so generating matters for hundreds of tenants needs a change to `@causedeck/db`'s seed (tracked as a follow-up). Until then the DB-side numbers understate a real 1,000-seat dataset.

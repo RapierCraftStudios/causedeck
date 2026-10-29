@@ -1,11 +1,13 @@
 // Scale the demo seed to a 1,000-seat equivalent (#105). Run `pnpm db:seed:demo` first (the two
-// fictional demo workspaces: 40 matters each, 60+ orders, 120+ obligations); this adds fictional
+// fictional demo workspaces: 40 matters each, 60+ orders, 120+ obligations; this also calls seedDemo); this adds fictional
 // tenants and seats around them. It refuses production and any database host off the allow-list.
 //
 //   DATABASE_URL_OWNER=... node --experimental-strip-types --no-warnings e2e/perf/seed-scale.ts [seats]
 import { fileURLToPath } from 'node:url';
 
-import postgres from 'postgres';
+import { Secret } from '@causedeck/config/env';
+import { createDb } from '@causedeck/db';
+import { seedDemo } from '@causedeck/db/seed/demo';
 
 import { assertAllowedTarget } from './guard.ts';
 
@@ -51,41 +53,51 @@ export function scaleSlug(n: number): string {
   return `demo-scale-${String(n).padStart(4, '0')}`;
 }
 
+export function scaleWorkspaceId(n: number): string {
+  return `00000000-0000-4000-9${n.toString(16).padStart(3, '0')}-000000000000`;
+}
+
 export async function seedScale(databaseUrl: string, seats: number): Promise<ScalePlan> {
   // eslint-disable-next-line no-process-env -- a CLI guard on the process environment.
   if (process.env.NODE_ENV === 'production') throw new Error('seed-scale never runs in production');
   // eslint-disable-next-line no-process-env -- allow-list host comes from the environment.
   assertAllowedTarget(databaseUrl.replace(/^postgres(ql)?:/, 'http:'), process.env);
   const plan = planScale(seats);
-  const sql = postgres(databaseUrl, { max: 2 });
+  const db = createDb({ url: new Secret(databaseUrl), role: 'owner', max: 1, idleTimeout: 0 });
+  const sql = db.$client;
   try {
-    await sql.begin(async (tx) => {
-      await tx`
-        insert into "user" (id, name, email, email_verified)
-        select ('00000000-0000-4000-9' || lpad(to_hex(n), 3, '0') || '-' || lpad(to_hex(m), 12, '0'))::uuid,
-               'Scale user ' || n || '-' || m || ' (fictional)',
-               'scale.' || n || '.' || m || '@demo.causedeck.test', true
-        from generate_series(1, ${plan.workspaces}) n, generate_series(1, 3) m
-        where m <= case when n % 3 = 0 then 3 else 2 end
-        on conflict do nothing`;
-      await tx`
-        insert into organization (id, name, slug, kind, is_demo)
-        select ('00000000-0000-4000-9' || lpad(to_hex(n), 3, '0') || '-000000000000')::uuid,
-               'Scale workspace ' || n || ' (fictional)',
-               'demo-scale-' || lpad(n::text, 4, '0'),
-               case when n % 3 = 0 then 'chamber' else 'solo' end, true
-        from generate_series(1, ${plan.workspaces}) n
-        on conflict do nothing`;
-      await tx`
-        insert into member (id, workspace_id, user_id, role)
-        select gen_random_uuid(), o.id, u.id, case when u.email like '%.1@%' then 'advocate' else 'clerk' end
-        from organization o
-        join "user" u on u.email like 'scale.' || right(o.slug, 4)::int || '.%'
-        where o.slug like 'demo-scale-%'
-        on conflict do nothing`;
-    });
+    // The two demo workspaces with their matters, listings, orders and obligations.
+    await seedDemo(db);
+    // Synthetic tenants and seats around them (roles: owner, junior or clerk; solo 2 seats, chamber 3).
+    await sql`
+      insert into "user" (id, name, email, email_verified)
+      select ('00000000-0000-4000-9' || lpad(to_hex(n), 3, '0') || '-' || lpad(to_hex(m), 12, '0'))::uuid,
+             'Scale user ' || n || '-' || m || ' (fictional)',
+             'scale.' || n || '.' || m || '@demo.causedeck.test', true
+      from generate_series(1, ${plan.workspaces}) n, generate_series(1, 3) m
+      where m <= case when n % 3 = 0 then 3 else 2 end
+      on conflict do nothing`;
+    // Workspace tables are under FORCE RLS: one workspace-scoped transaction per tenant.
+    for (let n = 1; n <= plan.workspaces; n += 1) {
+      const id = scaleWorkspaceId(n);
+      await sql.begin(async (tx) => {
+        await tx`select set_config('app.workspace_id', ${id}, true)`;
+        await tx`
+          insert into organization (id, name, slug, kind, is_demo)
+          values (${id}::uuid, ${`Scale workspace ${String(n)} (fictional)`}, ${scaleSlug(n)},
+                  ${n % 3 === 0 ? 'chamber' : 'solo'}, true)
+          on conflict do nothing`;
+        await tx`
+          insert into member (id, workspace_id, user_id, role)
+          select gen_random_uuid(), ${id}::uuid, u.id,
+                 case split_part(split_part(u.email, '@', 1), '.', 3) when '1' then 'owner' when '2' then 'clerk' else 'junior' end
+          from "user" u
+          where u.email like ${`scale.${String(n)}.%@demo.causedeck.test`}
+            and not exists (select 1 from member x where x.workspace_id = ${id}::uuid and x.user_id = u.id)`;
+      });
+    }
   } finally {
-    await sql.end();
+    await db.$client.end();
   }
   return plan;
 }

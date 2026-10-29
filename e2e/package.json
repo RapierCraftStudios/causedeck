@@ -18,6 +18,7 @@
     "lhci:matters": "node --experimental-strip-types --no-warnings support/lighthouse-matters.mjs",
     "perf:test": "vitest run",
     "perf:seed": "node --experimental-strip-types --no-warnings perf/seed-scale.ts",
+    "perf:lighthouse": "node --experimental-strip-types --no-warnings perf/lighthouse/run.mjs",
     "perf:bundle": "node --experimental-strip-types --no-warnings ../scripts/check-bundle-budget.ts",
     "lhci:drafting": "node --experimental-strip-types --no-warnings support/lighthouse-matters.mjs lighthouserc.drafting.json"
   },

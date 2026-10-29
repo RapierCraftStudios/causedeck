@@ -1,15 +1,7 @@
-'use client';
-
 import { Button } from '@causedeck/ui/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-  SheetTrigger,
-} from '@causedeck/ui/sheet';
 import Link from 'next/link';
 
+import { MobileMenu } from './mobile-menu.tsx';
 import { ThemeToggle } from './theme-toggle.tsx';
 
 const NAV = [
@@ -43,29 +35,7 @@ export function SiteHeader({ appUrl }: { appUrl: string }) {
           <Button asChild variant="secondary" size="sm">
             <a href={`${appUrl}/sign-in`}>Sign in</a>
           </Button>
-          <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" aria-label="Open menu">
-                  Menu
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="end">
-                <SheetTitle>Menu</SheetTitle>
-                <SheetDescription className="sr-only">Site navigation</SheetDescription>
-                <nav aria-label="Mobile" className="flex flex-col gap-3">
-                  {NAV.map((item) => (
-                    <Link key={item.href} href={item.href} className="text-ink text-base">
-                      {item.label}
-                    </Link>
-                  ))}
-                  <a href={`${appUrl}/sign-in`} className="text-ink text-base">
-                    Sign in
-                  </a>
-                </nav>
-              </SheetContent>
-            </Sheet>
-          </div>
+          <MobileMenu items={NAV} signInHref={`${appUrl}/sign-in`} />
         </div>
       </div>
     </header>

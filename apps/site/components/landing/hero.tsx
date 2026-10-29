@@ -16,9 +16,9 @@ export function Hero({
     <section
       aria-labelledby="hero-title"
       lang={locale}
-      className="grid items-center gap-10 py-6 lg:grid-cols-[2fr_3fr] lg:gap-12 lg:py-12"
+      className="grid grid-cols-[minmax(0,1fr)] items-center gap-10 py-6 lg:grid-cols-[2fr_3fr] lg:gap-12 lg:py-12"
     >
-      <div>
+      <div className="min-w-0">
         <h1
           id="hero-title"
           className="text-ink font-serif text-4xl leading-tight font-semibold text-balance md:text-5xl"
@@ -35,7 +35,7 @@ export function Hero({
           </Button>
         </div>
       </div>
-      <div>
+      <div className="min-w-0">
         <CourtDayPreview locale={locale} />
         <p className="text-ink-muted mt-3 max-w-[60ch] text-sm">{hero.boardSummary}</p>
       </div>

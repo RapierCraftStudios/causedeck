@@ -23,7 +23,9 @@ test('pricing shows the plans in rupees, the GST note and UPI Autopay', async ({
 test('the billing toggle switches the Advocate price with no script', async ({ page }) => {
   await page.goto('/pricing/');
   await expect(page.getByText('₹4,990')).toBeHidden();
-  await page.getByLabel('Annual').check({ force: true });
+  // The radio is visually hidden (sr-only); a visitor clicks its label.
+  await page.locator('label[for="bill-year"]').click();
+  await expect(page.locator('#bill-year')).toBeChecked();
   await expect(page.getByText('₹4,990')).toBeVisible();
   await expect(page.getByText('₹499 ').first()).toBeHidden();
 });

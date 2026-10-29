@@ -46,6 +46,7 @@ export function SiteFooter() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
+                      prefetch={false}
                       className="cd-link text-ink-muted hover:text-ink text-sm"
                     >
                       {link.label}

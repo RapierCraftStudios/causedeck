@@ -27,7 +27,11 @@ export default async function LegalIndexPage() {
       <ul className="mt-8 space-y-4">
         {pages.map((page) => (
           <li key={page.slug.join('/')}>
-            <Link href={`/${page.slug.join('/')}/`} className="font-serif text-xl underline">
+            <Link
+              href={`/${page.slug.join('/')}/`}
+              prefetch={false}
+              className="font-serif text-xl underline"
+            >
               {page.frontmatter.title}
             </Link>{' '}
             {page.legal.status === 'draft' ? (

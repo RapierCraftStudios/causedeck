@@ -1,6 +1,7 @@
 import { schema } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { buildMatter, buildPerson } from '@causedeck/db/testing/matter-graph-fixtures';
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { seedChamber } from './helpers.ts';
@@ -109,6 +110,62 @@ describe('client contacts (#82)', () => {
       expect(out.purgeRequested).toBe(true);
       expect(await listContacts(d, owner)).toHaveLength(0);
       expect(await listContacts(d, owner, { includeArchived: true })).toHaveLength(1);
+    });
+  });
+
+  it("purge anonymises that person's ledger text only, in workspace A (#959)", async () => {
+    await withTestDb(async (tx) => {
+      const a = await seedChamber(tx);
+      const b = await newWorkspace(tx);
+      const owner = { userId: a.users.owner, workspaceId: a.workspaceId };
+      const x = await client(tx, a.workspaceId);
+      const y = await client(tx, a.workspaceId);
+      const z = await client(tx, b.workspaceId);
+      const { d } = deps(tx);
+      const cx = await createContact(d, owner, { personId: x.id, email: 'x@example.com' });
+      await createContact(d, owner, { personId: y.id, kind: 'family', email: 'y@example.com' });
+      const entry = (workspaceId: string, personId: string, description: string) => ({
+        workspaceId,
+        personId,
+        kind: 'disbursement',
+        direction: 'debit',
+        amountPaise: 7_000,
+        description,
+        occurredOn: '2026-11-02',
+      });
+      await inWorkspace(tx, a.workspaceId, (s) =>
+        s
+          .insert(schema.clientLedgerEntry)
+          .values([
+            entry(a.workspaceId, x.id, 'Travel for X'),
+            entry(a.workspaceId, y.id, 'Travel for Y'),
+          ]),
+      );
+      await inWorkspace(tx, b.workspaceId, (s) =>
+        s.insert(schema.clientLedgerEntry).values(entry(b.workspaceId, z.id, 'Travel for Z')),
+      );
+
+      // Archiving without a purge leaves the ledger alone.
+      await archiveContact(d, owner, { contactId: cx.id });
+      const read = async (workspaceId: string) =>
+        inWorkspace(tx, workspaceId, (s) =>
+          s
+            .select()
+            .from(schema.clientLedgerEntry)
+            .where(eq(schema.clientLedgerEntry.workspaceId, workspaceId)),
+        );
+      expect((await read(a.workspaceId)).every((r) => r.anonymisedAt === null)).toBe(true);
+
+      await archiveContact(d, owner, { contactId: cx.id, purge: true });
+      const rowsA = await read(a.workspaceId);
+      const rx = rowsA.find((r) => r.personId === x.id);
+      const ry = rowsA.find((r) => r.personId === y.id);
+      expect(rx).toMatchObject({ description: null, amountPaise: 7_000 });
+      expect(rx?.anonymisedAt).toBeInstanceOf(Date);
+      expect(ry).toMatchObject({ description: 'Travel for Y', anonymisedAt: null });
+      expect(await read(b.workspaceId)).toMatchObject([
+        { description: 'Travel for Z', anonymisedAt: null },
+      ]);
     });
   });
 

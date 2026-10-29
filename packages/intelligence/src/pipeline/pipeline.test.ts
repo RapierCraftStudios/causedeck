@@ -109,16 +109,20 @@ describe('text-layer PDF', () => {
     expect(events.events.map((e) => e.type)).toEqual(['document.processed', 'capture.classified']);
   }, 30_000); // the first test pays the cold load of the PDF and image libraries on a shared runner
 
-  it('processes 20 text pages in under 5 seconds and renders 20 pages in under 20', async () => {
-    const { deps } = setup();
+  // Wall-clock budgets on a shared CI runner measure the runner, not the work (#975): the counts
+  // are always asserted, the 20 s budget only where the machine is quiet (PERF_GATE=1, nightly).
+  it('processes and renders 20 text pages, within the render budget when PERF_GATE=1', async () => {
+    const { deps, persister } = setup();
     const bytes = await textPdf(longTextPages(20));
     const started = performance.now();
     const outcome = await processCapture(deps, input(bytes));
     const seconds = (performance.now() - started) / 1000;
     expect(outcome.status).toBe('ready');
-    // Text extraction plus rendering all 20 pages must fit the render budget.
-    expect(seconds).toBeLessThan(20);
-  }, 30_000); // budgets are 5 s + 20 s, asserted inside; the default 5 s test timeout would cut them off
+    expect(persister.inputs[0]?.pages).toHaveLength(20);
+    expect(persister.inputs[0]?.pages.every((p) => p.text.length > 0)).toBe(true);
+    // eslint-disable-next-line no-process-env -- an opt-in perf gate for the quiet nightly job.
+    if (process.env['PERF_GATE'] === '1') expect(seconds).toBeLessThan(20);
+  }, 60_000);
 
   it('never executes PDF JavaScript', async () => {
     const alerts: string[] = [];

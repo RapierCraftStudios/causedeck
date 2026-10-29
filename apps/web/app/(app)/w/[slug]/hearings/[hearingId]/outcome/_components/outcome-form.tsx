@@ -231,7 +231,9 @@ export function OutcomeForm({
           {confirmedHere ? status : t('confirmedHint')}
         </p>
       ) : null}
-      {done && canWrite && (askPreparedness || confirmedHere) ? (
+      {/* Only when the server said to ask: with no appearance row the rating could not be saved (#970).
+          After confirming here, the action revalidates the page and the server's answer arrives as the prop. */}
+      {done && canWrite && askPreparedness ? (
         <PreparednessTap workspaceId={workspaceId} hearingId={hearingId} canWrite={canWrite} />
       ) : null}
       <div className="grid gap-2">

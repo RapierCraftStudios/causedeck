@@ -29,6 +29,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import { record } from '../../audit/index.ts';
 import { withdrawContributions } from '../../network/index.ts';
 
+import { anonymiseLedgerOnErasure } from './ledger.ts';
 import { retainInvoicesForLegalHold } from './legal-hold.ts';
 import { buildDeletionReceipt, receiptHash, type DeletionReceipt } from './receipt.ts';
 
@@ -127,11 +128,35 @@ export const PURGE_ORDER = [
   'brief_state',
   // Brief shares (#507): no listing reference; revoked by the workspace's deletion.
   'brief_share',
+  'status_link_access',
+  'status_link',
   'listing',
   'bench_change_alert',
   'bench_roster_entry',
   'bench_roster',
   'role_edge',
+  // Proof-of-value (#86) cites appearances, matters and members (cascading FKs); before them.
+  'preparedness_rating',
+  'load_pulse',
+  'context_test_result',
+  'pov_prefs',
+  // Fees (#83) cite their matter and person (composite FKs, NO ACTION): ledger lines and payments
+  // before the invoice, lines before it, the invoice before its fee agreement; all before both.
+  'client_ledger_entry',
+  'payment',
+  'fee_invoice_line',
+  'fee_invoice',
+  'fee_agreement',
+  // Limitation tracker (#84): computations before the rule they cite (RESTRICT) and before matter;
+  // platform rules (null workspace_id) are never matched.
+  'limitation_computation',
+  'limitation_rule',
+  // Client contacts (#82) cite their person (composite FK); before it.
+  'client_contact',
+  // Inbound enquiries (#87): parties and conflict checks cite their enquiry (composite FK); before it.
+  'conflict_check_result',
+  'enquiry_party',
+  'enquiry',
   'person',
   'organisation',
   // Case-status watch (#589): snapshots before their watch, the watch before its proceeding.
@@ -158,6 +183,7 @@ export const PURGE_ORDER = [
   'ics_feed',
   // Bootstrap import (#546): plan and files before their batch, all before the captures they cite.
   'import_plan',
+  'import_column_mapping',
   'import_batch_file',
   'import_batch',
   // The importing member's identifiers (#550): cites no capture, only the user.
@@ -450,6 +476,10 @@ export async function runWorkspaceErase(
         ? state.legalHoldInvoices
         : await withWorkspace(ctx.db, scope, (tx) => retainInvoicesForLegalHold(tx, workspaceId));
     await save('rows', { ...state, tables, legalHoldInvoices });
+    // Fees (#83, ADR 0048): clear the free text of every client ledger line before any purge batch,
+    // so a crash mid-purge never leaves a described line behind. Idempotent on resume.
+    await withWorkspace(ctx.db, scope, (tx) => anonymiseLedgerOnErasure(tx, workspaceId, now()));
+    crash('rows:ledger_anonymised');
     // Withdraw this workspace's contributed court documents (#485) before its ledger rows go.
     await withdrawContributions(ctx.db, workspaceId);
     for (const table of PURGE_ORDER) {

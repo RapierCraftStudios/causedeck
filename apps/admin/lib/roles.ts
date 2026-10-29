@@ -25,6 +25,7 @@ export const STAFF_CAPABILITIES = [
   'growth',
   'migrations',
   'status',
+  'limitation-rules',
 ] as const;
 export type StaffCapability = (typeof STAFF_CAPABILITIES)[number];
 
@@ -41,6 +42,7 @@ export const STAFF_ROLE_MATRIX: Readonly<Record<StaffRole, readonly StaffCapabil
     'growth',
     'migrations',
     'status',
+    'limitation-rules',
   ],
   admin: STAFF_CAPABILITIES,
 };

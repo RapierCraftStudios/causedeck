@@ -56,6 +56,7 @@ describe('ConsoleNav', () => {
       'Business',
       'Growth',
       'Migrations',
+      'Limitation rules',
     ]);
   });
 
@@ -81,6 +82,7 @@ describe('ConsoleNav', () => {
       'Business',
       'Growth',
       'Migrations',
+      'Limitation rules',
     ]);
   });
 
@@ -103,6 +105,7 @@ describe('ConsoleNav', () => {
       '/audit',
       '/growth',
       '/migrations',
+      '/limitation-rules',
     ]);
   });
 });

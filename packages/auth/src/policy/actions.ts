@@ -19,8 +19,17 @@ export const ACTIONS = {
   court_day: ['court_day.view_all'],
   // Chamber delegation of appearances (#63).
   appearance: ['appearance.assign'],
+  // Client contacts (#82): `contact.write` is the owner/advocate manage; a junior writes through
+  // `matter.write` on an assigned matter (`@causedeck/core/people`).
+  contact: ['contact.read', 'contact.write'],
+  // The inbound enquiry log (#87, ADR 0047): advocate-level read and write.
+  enquiry: ['enquiry.read', 'enquiry.write'],
+  // Fees and invoices (#83, ADR 0048): owners and advocates only.
+  fee: ['fee.read', 'fee.write'],
   export: ['export.run'],
   support: ['support.manage'],
+  // Limitation tracker (#84, #940): `limitation.write` computes, imports and confirms.
+  limitation: ['limitation.write'],
   // Shell surfaces gated in apps/web/lib/workspace-context.ts.
   shell: ['limitation.read', 'insights.read', 'settings.read'],
 } as const;

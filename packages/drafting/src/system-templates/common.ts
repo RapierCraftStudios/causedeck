@@ -131,3 +131,26 @@ export function clientLetter(code: string, name: string, preset: CourtPreset): S
     ],
   });
 }
+
+/** A letter to junior or senior counsel: the only recipient slot is `counsel.name`, never a client or party. */
+export function counselLetter(code: string, name: string, preset: CourtPreset): SystemTemplateSeed {
+  return defineTemplate({
+    code,
+    name,
+    kind: 'other',
+    courtPreset: preset,
+    blocks: [
+      slot('workspace.name', 'From'),
+      slot('date.today', 'Date'),
+      slot('counsel.name', 'To'),
+      slot('matter.title', 'Re'),
+      p('Dear Sir or Madam,'),
+      narrative(
+        'Write two or three sentences stating which documents are enclosed with this letter and what the receiving counsel is asked to look at.',
+        1200,
+      ),
+      p('Please contact the office if any enclosure is unclear.'),
+      slot('advocate.name', 'Yours faithfully'),
+    ],
+  });
+}

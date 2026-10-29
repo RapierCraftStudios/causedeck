@@ -30,6 +30,7 @@ const facts: Facts = {
   advocate: { name: 'K. Counsel', enrolmentNo: 'MS/1/2020' },
   workspace: { name: 'Counsel Chambers' },
   client: { name: 'Asha Vellore' },
+  counsel: { name: 'Meera Rao' },
   today: '2025-01-01',
 };
 
@@ -52,7 +53,7 @@ const textOf = (blocks: readonly Block[]): string[] => {
 const byCourt = (preset: string) => SYSTEM_TEMPLATES.filter((t) => t.courtPreset === preset);
 
 describe('system template registry', () => {
-  it('has the catalogue: five kinds for each launch court, two kinds for A0, stable codes', () => {
+  it('has the catalogue: six kinds for each launch court, three kinds for A0, stable codes', () => {
     const codes = SYSTEM_TEMPLATES.map((t) => t.code);
     expect(new Set(codes).size).toBe(codes.length);
     for (const court of ['madras_hc', 'karnataka_hc']) {
@@ -63,6 +64,7 @@ describe('system template registry', () => {
       ).toEqual([
         'certified_copy_application',
         'client_covering_letter',
+        'counsel_covering_letter',
         'early_listing_memo',
         'memo_of_appearance',
         'mention_memo',
@@ -71,6 +73,7 @@ describe('system template registry', () => {
     expect(byCourt('generic').map((t) => t.code)).toEqual([
       'generic_a0.adjournment_note',
       'generic_a0.client_covering_letter',
+      'generic_a0.counsel_covering_letter',
     ]);
     for (const t of SYSTEM_TEMPLATES) {
       expect(SystemTemplateSeedSchema.safeParse(t).success, t.code).toBe(true);
@@ -96,7 +99,7 @@ describe('system template registry', () => {
       const lookup = t.courtPreset === 'madras_hc' ? caseTypeInfo : karnatakaCaseTypeInfo;
       const line = textOf(t.blocks).find((s) => s.startsWith('Matter type: '));
       if (line === undefined) {
-        expect(t.code, 'only letters carry no matter type').toMatch(/client_covering_letter$/);
+        expect(t.code, 'only letters carry no matter type').toMatch(/covering_letter$/);
         continue;
       }
       const labels = line.slice('Matter type: '.length).split(', ');
@@ -114,6 +117,20 @@ describe('system template registry', () => {
           /['"`][^'"`\n]*(W\.P\.|W\.A\.|C\.M\.A\.|R\.F\.A\.|Writ Petition|Writ Appeal|Hon'ble)/,
         );
       }
+    }
+  });
+
+  it('counsel covering letters address counsel, never a client or a party', () => {
+    const letters = SYSTEM_TEMPLATES.filter((t) => t.code.endsWith('counsel_covering_letter'));
+    expect(letters).toHaveLength(3);
+    for (const t of letters) {
+      const resolvers = collectSlots(t.blocks).map((s) => s.block.resolver);
+      expect(resolvers, t.code).toContain('counsel.name');
+      expect(resolvers, t.code).not.toContain('client.name');
+      expect(
+        resolvers.filter((r) => r.startsWith('party.')),
+        t.code,
+      ).toEqual([]);
     }
   });
 

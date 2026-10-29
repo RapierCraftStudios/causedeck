@@ -32,6 +32,8 @@ describe('registerSchedules', () => {
       'system.coverage.weekly',
       'system.audit.verify',
       'system.audit.retention',
+      'system.enquiry.retention',
+      'system.status-link.retention',
       'system.export.expire',
       'system.support.session-expire',
       'system.deletion.tick',
@@ -109,6 +111,10 @@ describe('registerSchedules', () => {
       ['system.audit.verify', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
       // Audit retention: daily 03:00 IST.
       ['system.audit.retention', '0 3 * * *', '2026-10-18T21:30:00.000Z'],
+      // Enquiry retention (#87): daily 03:30 IST.
+      ['system.enquiry.retention', '30 3 * * *', '2026-10-18T22:00:00.000Z'],
+      // Status link retention (#88): daily 03:45 IST.
+      ['system.status-link.retention', '45 3 * * *', '2026-10-18T22:15:00.000Z'],
       // Court data retention: daily 04:15 IST.
       ['system.court-data.retention', '15 4 * * *', '2026-10-18T22:45:00.000Z'],
       // Capture raw-object retention: daily 02:00 IST.

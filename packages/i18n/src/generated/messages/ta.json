@@ -44,7 +44,8 @@
       "followup": "தொடர்நடவடிக்கை",
       "practice": "தொழில்",
       "settings": "அமைப்புகள்"
-    }
+    },
+    "enquiries": "Enquiries"
   },
   "palette": {
     "title": "கட்டளைத் தட்டு",
@@ -1327,7 +1328,11 @@
         "export": "ஏற்றுமதி",
         "support": "ஆதரவு",
         "shell": "பணியிடப் பகுதிகள்",
-        "appearance": "ஆஜர்கள்"
+        "appearance": "ஆஜர்கள்",
+        "contact": "வாடிக்கையாளர் தொடர்புகள்",
+        "enquiry": "விசாரணைப் பதிவு",
+        "limitation": "காலவரம்புக் கண்காணிப்பு",
+        "fee": "கட்டணங்களும் விலைப்பட்டியல்களும்"
       },
       "actions": {
         "workspace": {
@@ -1390,7 +1395,8 @@
           "manage": "ஆதரவு அணுகலை அனுமதித்தல் மற்றும் முடித்தல்"
         },
         "limitation": {
-          "read": "காலவரம்புத் தேதிகளைப் பார்த்தல்"
+          "read": "காலவரம்புத் தேதிகளைப் பார்த்தல்",
+          "write": "காலவரம்புத் தேதிகளைக் கணக்கிட்டு உறுதிசெய்தல்"
         },
         "insights": {
           "read": "நடைமுறை நுண்ணறிவுகளைப் பார்த்தல்"
@@ -1403,6 +1409,18 @@
         },
         "appearance": {
           "assign": "ஆஜர்களை உறுப்பினர்களுக்கு ஒதுக்கு"
+        },
+        "contact": {
+          "read": "வாடிக்கையாளர் தொடர்புகளைப் பார்க்க",
+          "write": "வாடிக்கையாளர் தொடர்புகளை நிர்வகிக்க"
+        },
+        "enquiry": {
+          "read": "விசாரணைப் பதிவைப் பார்க்க",
+          "write": "விசாரணைப் பதிவை நிர்வகிக்க"
+        },
+        "fee": {
+          "read": "கட்டண ஒப்பந்தங்கள், விலைப்பட்டியல்கள், பேரேட்டைப் பார்த்தல்",
+          "write": "கட்டண ஒப்பந்தங்கள், விலைப்பட்டியல்கள், பேரேட்டை நிர்வகித்தல்"
         }
       },
       "settings": {
@@ -3538,6 +3556,630 @@
       }
     }
   },
+  "people": {
+    "metaTitle": "People",
+    "title": "People",
+    "description": "Phone, email and language for your clients, and the matters they are linked to.",
+    "new": {
+      "trigger": "New contact"
+    },
+    "search": {
+      "label": "Search contacts",
+      "placeholder": "Search by name, phone or email"
+    },
+    "filters": {
+      "kind": "Kind",
+      "language": "Language",
+      "all": "All",
+      "clear": "Clear filters"
+    },
+    "kinds": {
+      "primary": "Primary",
+      "instructing": "Instructing",
+      "accounts": "Accounts",
+      "family": "Family"
+    },
+    "languages": {
+      "en": "English",
+      "hi": "Hindi",
+      "ta": "Tamil",
+      "kn": "Kannada",
+      "te": "Telugu",
+      "ml": "Malayalam",
+      "mr": "Marathi"
+    },
+    "list": {
+      "label": "Client contacts",
+      "linked": "{count, plural, =0 {No linked matters} one {# linked matter} other {# linked matters}}",
+      "unlinked": "Not linked to a matter",
+      "unlinkedHint": "No matter was linked within 24 hours of adding this contact.",
+      "archived": "Archived",
+      "redacted": "Phone and email are hidden for your role",
+      "noDetails": "No phone or email",
+      "open": "Open {name}"
+    },
+    "empty": {
+      "title": "No contacts yet",
+      "body": "Add the phone, email and language of a client you already act for."
+    },
+    "filteredEmpty": {
+      "title": "No contacts match these filters",
+      "clear": "Clear filters"
+    },
+    "loading": "Loading contacts",
+    "error": {
+      "title": "Couldn't load contacts.",
+      "retry": "Retry",
+      "reference": "Reference: {digest}"
+    },
+    "offline": "You are offline. This is the last saved list; changes will not save until you reconnect.",
+    "denied": "You don't have permission to see client contacts.",
+    "notFound": "This contact does not exist or you cannot see it.",
+    "form": {
+      "titleNew": "New contact",
+      "titleEdit": "Edit contact",
+      "client": "Client name",
+      "clientHint": "The client this contact belongs to.",
+      "kind": "Kind",
+      "phone": "Phone",
+      "phoneHint": "With country code, e.g. +919876543210",
+      "email": "Email",
+      "save": "Save contact",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "needOne": "Give a phone or an email.",
+      "failed": "The contact could not be saved. Try again.",
+      "forbidden": "You cannot change client contacts.",
+      "invalid": "Check the phone (with country code) and email."
+    },
+    "language": {
+      "label": "Language for messages",
+      "hint": "Messages to this client are written in this language."
+    },
+    "detail": {
+      "back": "All contacts",
+      "details": "Details",
+      "phone": "Phone",
+      "email": "Email",
+      "language": "Language",
+      "kind": "Kind",
+      "edit": "Edit",
+      "archive": "Archive",
+      "archiveConfirm": "Archive this contact?",
+      "purge": "Archive and erase details",
+      "archivedOn": "Archived",
+      "linkedMatters": "Linked matters",
+      "noMatters": "Not linked to a matter you can see.",
+      "relation": {
+        "represents": "We represent",
+        "instructed_by": "Instructs us"
+      },
+      "log": {
+        "title": "Outward-action log",
+        "readOnly": "A read-only record of changes to this contact's details.",
+        "empty": "No changes recorded.",
+        "undone": "Undone"
+      }
+    },
+    "shortcuts": {
+      "new": "New contact",
+      "search": "Search",
+      "open": "Open contact",
+      "close": "Close"
+    }
+  },
+  "pov": {
+    "tap": {
+      "title": "எவ்வளவு தயாராக இருந்தீர்கள்?",
+      "hint": "விருப்பத்திற்குரியது. 1 முதல் 5 வரை அழுத்தவும், தவிர்க்க S அழுத்தவும்.",
+      "scale": "தயார்நிலை 1 (தயாரில்லை) முதல் 5 (முழுமையாகத் தயார்) வரை",
+      "option": "5-இல் {value}",
+      "skip": "தவிர்",
+      "saved": "நன்றி, சேமிக்கப்பட்டது. மாற்ற வேறு எண்ணைத் தொடவும்.",
+      "skipped": "தவிர்க்கப்பட்டது. மதிப்பிட இன்னும் ஓர் எண்ணைத் தொடலாம்.",
+      "error": "உங்கள் மதிப்பீட்டைச் சேமிக்க முடியவில்லை.",
+      "retry": "மீண்டும் முயலவும்",
+      "offline": "நீங்கள் இணைப்பில் இல்லை. உங்கள் மதிப்பீடு இங்கே வைக்கப்பட்டு பின்னர் ஒத்திசைக்கப்படும்.",
+      "synced": "ஒத்திசைக்கப்பட்டது.",
+      "denied": "பார்வையாளர்களிடம் இது கேட்கப்படாது.",
+      "loading": "சேமிக்கிறது"
+    },
+    "pulse": {
+      "title": "இந்த வாரம்",
+      "intro": "மூன்று சிறு கேள்விகள். எந்த வாரமும் தவிர்க்கலாம்.",
+      "demand": "உங்கள் பணி மனதளவில் எவ்வளவு சுமையாக இருந்தது?",
+      "worry": "எதையாவது மறந்துவிடுவோமோ என்று எவ்வளவு கவலைப்பட்டீர்கள்?",
+      "effort": "தயார் செய்ய எவ்வளவு முயற்சி தேவைப்பட்டது?",
+      "low": "குறைவு",
+      "high": "அதிகம்",
+      "option": "5-இல் {value}",
+      "submit": "சேமி",
+      "dismiss": "இப்போது வேண்டாம்",
+      "saved": "நன்றி, இந்த வாரத்திற்குச் சேமிக்கப்பட்டது.",
+      "dismissed": "அடுத்த வாரம் வரை மூடப்பட்டது.",
+      "error": "சேமிக்க முடியவில்லை. மீண்டும் முயலவும்.",
+      "retry": "மீண்டும் முயலவும்",
+      "offline": "நீங்கள் இணைப்பில் இல்லை. உங்கள் பதில்கள் பின்னர் ஒத்திசைக்கப்படும்.",
+      "denied": "பார்வையாளர்களிடம் இது கேட்கப்படாது.",
+      "loading": "சேமிக்கிறது"
+    },
+    "test": {
+      "title": "சூழல் சோதனை",
+      "intro": "உங்களுக்கு நன்கு தெரியாத ஒரு வழக்கைத் தேர்ந்தெடுங்கள், கடிகாரத்தைத் தொடங்குங்கள், செயலியிலிருந்து ஐந்து கேள்விகளுக்குப் பதிலளித்து ஒவ்வொன்றையும் சரி அல்லது தவறு எனக் குறியுங்கள்.",
+      "matter": "வழக்கு",
+      "start": "சோதனையைத் தொடங்கு",
+      "running": "சோதனை நடந்துகொண்டிருக்கிறது",
+      "finished": "{seconds} விநாடிகளில் முடிந்தது, 5-இல் {correct} சரி.",
+      "finish": "முடி",
+      "correct": "சரி",
+      "wrong": "தவறு",
+      "elapsed": "{seconds} விநாடிகள்",
+      "started": "நேரம் தொடங்கியது.",
+      "stopped": "நேரம் நிறுத்தப்பட்டது.",
+      "empty": "சோதிக்க இன்னும் வழக்குகள் இல்லை.",
+      "loading": "தொடங்குகிறது",
+      "error": "சோதனையைச் சேமிக்க முடியவில்லை. மீண்டும் முயலவும்.",
+      "retry": "மீண்டும் முயலவும்",
+      "offline": "நீங்கள் இணைப்பில் இல்லை. சோதனைக்கு இணைப்பு தேவை.",
+      "denied": "உரிமையாளர் மட்டுமே சூழல் சோதனையை நடத்த முடியும்.",
+      "again": "மற்றொன்றை நடத்து",
+      "questions": {
+        "current_stage": "தற்போதைய நிலை என்ன?",
+        "last_order": "கடைசி உத்தரவு என்ன?",
+        "next_date": "அடுத்த தேதி என்ன?",
+        "open_obligations": "எந்தக் கடமைகள் நிலுவையில் உள்ளன?",
+        "key_documents": "முக்கிய ஆவணங்கள் எவை?"
+      }
+    },
+    "privacy": {
+      "title": "மதிப்புச் சான்று",
+      "intro": "செயலியில் உள்ள சிறு கேள்விகள் CauseDeck உங்களுக்கு உதவுகிறதா என்பதை அளவிடுகின்றன. அவை இந்தப் பணியிடத்திலேயே இருக்கும்.",
+      "toggle": "தயார்நிலை மற்றும் வாராந்திரக் கேள்விகளை என்னிடம் கேள்",
+      "toggleOn": "கேள்விகள் இயக்கத்தில் உள்ளன.",
+      "toggleOff": "கேள்விகள் நிறுத்தப்பட்டுள்ளன. எதுவும் உங்களிடம் கேட்காது.",
+      "yours": "உங்கள் பதில்கள்",
+      "none": "உங்களிடம் இன்னும் பதில்கள் இல்லை.",
+      "rating": "மதிப்பீடு 5-இல் {rating}",
+      "skipped": "தவிர்க்கப்பட்டது",
+      "delete": "நீக்கு",
+      "deleted": "நீக்கப்பட்டது.",
+      "pulse": "வாரம் {week}: சுமை {demand}, கவலை {worry}, முயற்சி {effort}",
+      "download": "முன்னோட்ட அறிக்கையைப் பதிவிறக்கு",
+      "downloadHint": "நீங்கள் வைத்துக்கொள்ள அடையாள எண்கள், எண்கள், வாரங்களின் CSV. இது எங்கும் அனுப்பப்படாது.",
+      "loading": "ஏற்றுகிறது",
+      "error": "ஏற்ற முடியவில்லை. மீண்டும் முயலவும்.",
+      "retry": "மீண்டும் முயலவும்",
+      "offline": "நீங்கள் இணைப்பில் இல்லை.",
+      "denied": "இதற்கான அணுகல் உங்களுக்கு இல்லை."
+    }
+  },
+  "enquiry": {
+    "metaTitle": "Enquiries",
+    "title": "Enquiries",
+    "description": "People who have asked your chamber to take work, and a conflict check before you decide.",
+    "gatedNotice": "Enquiries are kept as your own record. Nothing is sent to the enquirer from here: no reply, no template, no automatic message.",
+    "loading": "Loading enquiries",
+    "offline": "You are offline. The enquiry log is read-only until you are back online.",
+    "new": {
+      "trigger": "New enquiry"
+    },
+    "empty": {
+      "title": "No enquiries yet",
+      "body": "Log an enquiry when someone asks you to take work, then check it against your matters."
+    },
+    "list": {
+      "label": "Enquiries"
+    },
+    "row": {
+      "review": "Review",
+      "close": "Close",
+      "check": "Check for conflicts"
+    },
+    "status": {
+      "logged": "Logged",
+      "checked": "Checked",
+      "accepted_as_matter": "Accepted as matter",
+      "declined": "Declined",
+      "referred": "Referred",
+      "closed": "Closed"
+    },
+    "channels": {
+      "phone": "Phone",
+      "email": "Email",
+      "walk_in": "Walk-in",
+      "referral": "Referral",
+      "web": "Web",
+      "other": "Other"
+    },
+    "conflict": {
+      "title": "Conflict check",
+      "hits": "Possible conflicts",
+      "notRun": "The conflict check has not been run.",
+      "running": "Checking your matters",
+      "count": "{count, plural, =0 {No matches found} one {# match found} other {# matches found}}",
+      "warning": "Possible conflict. Review before you proceed.",
+      "noHits": "No matches found in your matters. This is not a clearance: the decision is yours.",
+      "role": {
+        "client": "Your client on that matter",
+        "adverse": "Against your client on that matter"
+      },
+      "note": {
+        "label": "Decision note",
+        "hint": "For your own thinking. It is not saved."
+      },
+      "decision": {
+        "proceed": "Proceed",
+        "decline": "Decline",
+        "refer": "Refer"
+      }
+    },
+    "form": {
+      "title": "New enquiry",
+      "enquirer": "Enquirer",
+      "channel": "How it came in",
+      "phone": "Phone",
+      "phoneHint": "With country code, like +919876543210",
+      "email": "Email",
+      "summary": "Summary",
+      "clients": "Client names",
+      "adverse": "Adverse party names",
+      "partiesHint": "One name per line",
+      "cancel": "Cancel",
+      "save": "Save enquiry",
+      "saving": "Saving",
+      "error": {
+        "required": "Add the enquirer's name and a summary.",
+        "forbidden": "You cannot do this in this workspace.",
+        "invalid": "Check the details and try again.",
+        "conflict": "This enquiry has changed. Refresh and try again.",
+        "failed": "Could not save. Try again."
+      }
+    },
+    "outcome": {
+      "title": "Close enquiry",
+      "reason": "Reason",
+      "hint": "Optional. Nothing is sent to the enquirer.",
+      "confirm": "Close enquiry"
+    },
+    "error": {
+      "title": "Could not load the enquiries",
+      "reference": "Reference {digest}",
+      "retry": "Retry"
+    }
+  },
+  "limitation": {
+    "metaTitle": "Limitation",
+    "title": "Limitation",
+    "description": "Last dates to file, computed from your counsel's reviewed rule table.",
+    "verifyLabel": "Computed from your counsel's rule table. Verify before relying on it.",
+    "gatedNotice": "A computed date is a proposal. Nothing is filed or scheduled until you confirm it, and confirming adds an obligation to the matter.",
+    "loading": "Loading limitation dates",
+    "offline": "You are offline. Limitation dates are read-only until you are back online.",
+    "empty": {
+      "title": "No limitation dates yet",
+      "body": "Propose a date for a matter from a reviewed rule, then confirm it once you have checked it."
+    },
+    "noRules": {
+      "title": "No reviewed rule table",
+      "body": "A date is only computed from a rule your counsel has reviewed. Ask your administrator to import and review a rule table."
+    },
+    "list": {
+      "label": "Limitation computations"
+    },
+    "status": {
+      "proposed": "Proposed",
+      "confirmed": "Confirmed",
+      "superseded": "Superseded"
+    },
+    "card": {
+      "expires": "Last day to file",
+      "matter": "Matter {id}",
+      "confirm": "Confirm",
+      "details": "Show working",
+      "hideDetails": "Hide working"
+    },
+    "steps": {
+      "title": "How this date was computed",
+      "rule": "Rule {code}, version {version}",
+      "period": "Period: {value} {unit}, from {event}",
+      "start": "Clock starts on {date}",
+      "excluded": "Excluded days: {count}",
+      "expires": "Last day to file: {date}",
+      "condonable": "Delay may be condoned on application."
+    },
+    "form": {
+      "trigger": "Propose a date",
+      "title": "Propose a limitation date",
+      "matter": "Matter ID",
+      "rule": "Rule",
+      "start": "Start date",
+      "excluded": "Excluded days",
+      "submit": "Compute",
+      "cancel": "Cancel",
+      "error": {
+        "forbidden": "You cannot compute limitation dates.",
+        "invalid": "Check the matter, rule and start date.",
+        "conflict": "No reviewed rule is available for that choice.",
+        "failed": "Could not complete that. Try again."
+      }
+    },
+    "error": {
+      "title": "Could not load limitation dates",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "shortcuts": {
+      "propose": "P: propose a date",
+      "confirm": "Enter: confirm the selected proposal",
+      "close": "Esc: close"
+    }
+  },
+  "insights": {
+    "metaTitle": "நடைமுறை நுண்ணறிவு",
+    "title": "நடைமுறை நுண்ணறிவு",
+    "description": "உங்கள் சொந்த நடைமுறை அறிக்கை, இந்த பணியிடத்தின் தரவிலிருந்து மட்டுமே கணக்கிடப்பட்டது. மற்ற வழக்கறிஞர்களுடன் ஒப்பீடு இல்லை.",
+    "loading": "நடைமுறை நுண்ணறிவு ஏற்றப்படுகிறது",
+    "offline": "நீங்கள் இணையத்தில் இல்லை. இவை {when} கணக்கிடப்பட்ட எண்கள்.",
+    "computedAt": "{when} அன்று கணக்கிடப்பட்டது",
+    "scopeOwn": "உங்கள் சொந்த ஆஜர்கள் மற்றும் அளவீடுகள் மட்டும்.",
+    "scopeWorkspace": "இந்த பணியிடத்தின் மொத்தம்.",
+    "shortcutsHint": "வரம்பை மாற்ற [ அல்லது ] அழுத்தவும்; வரைபடத்திற்கும் அட்டவணைக்கும் மாற t அழுத்தவும்.",
+    "empty": {
+      "title": "உங்கள் முதல் சில நீதிமன்ற நாட்களுக்குப் பிறகு நுண்ணறிவு தோன்றும்",
+      "body": "விசாரணைகள் முடிந்த பிறகு, எத்தனைக்கு நீங்கள் தயாரானீர்கள், பின்தொடர்ந்தீர்கள் என்பதை இந்த பக்கம் காட்டும்."
+    },
+    "error": {
+      "title": "நடைமுறை நுண்ணறிவை ஏற்ற முடியவில்லை",
+      "reference": "குறிப்பு எண்: {digest}",
+      "retry": "மீண்டும் முயற்சிக்கவும்"
+    },
+    "range": {
+      "label": "காலவரம்பு",
+      "4w": "4 வாரங்கள்",
+      "12w": "12 வாரங்கள்",
+      "custom": "தனிப்பயன்",
+      "from": "தொடக்கம்",
+      "to": "முடிவு",
+      "apply": "செயல்படுத்து",
+      "window": "{from} முதல் {to} வரை"
+    },
+    "hero": {
+      "label": "தயாரித்து, கடைப்பிடித்தவை",
+      "summary": "தயாரித்து கடைப்பிடித்தவை: {n} ஆஜர்களில் {percent} சதவீதம். முந்தைய காலம்: {previous} சதவீதம்.",
+      "summaryAlone": "தயாரித்து கடைப்பிடித்தவை: {n} ஆஜர்களில் {percent} சதவீதம்.",
+      "noRate": "இந்த காலத்தில் எந்த ஆஜரும் இன்னும் முடிவாகவில்லை.",
+      "pending": "{n} ஆஜர்கள் ஒரு கடமைக்காக இன்னும் காத்திருக்கின்றன; அவை இன்னும் கணக்கில் சேர்க்கப்படவில்லை.",
+      "small": "சிறிய மாதிரி: {n} ஆஜர்கள் மட்டுமே.",
+      "trend": "வாராந்திர தயாரிப்பு மற்றும் கடைப்பிடிப்பு விகிதம்",
+      "trendSummary": "வாராந்திர விகிதம்: {values}.",
+      "definitionTitle": "தயாரித்து கடைப்பிடித்தது என்பதில் எவை சேரும்",
+      "definition": "விசாரணைக்கு முன் தற்போதைய சுருக்கம் உறுதிசெய்யப்பட்டு, அந்த விசாரணையில் எழுந்த ஒவ்வொரு கடமையும் பதிவு செய்யப்பட்டு, பொறுப்பாளர் நியமிக்கப்பட்டு, நிறைவேற்றப்பட்டோ அல்லது வேண்டுமென்றே மாற்றியமைக்கப்பட்டோ இருந்தால் மட்டுமே பட்டியலிடப்பட்ட ஆஜர் கணக்கில் சேரும். ஒரு கடமைக்காக இன்னும் காத்திருக்கும் ஆஜர்கள் முடிவாகும் வரை சேர்க்கப்படாது."
+    },
+    "tile": {
+      "expand": "வரைபடம் மற்றும் தரவைக் காட்டு",
+      "collapse": "வரைபடம் மற்றும் தரவை மறை"
+    },
+    "delta": {
+      "up": "+{value} அடிப்படையை விட",
+      "down": "-{value} அடிப்படையை விட",
+      "flat": "அடிப்படையிலிருந்து மாற்றம் இல்லை",
+      "none": "அடிப்படை இன்னும் இல்லை"
+    },
+    "obligations": {
+      "title": "நிறைவேற்றிய கடமைகள்",
+      "summary": "காலக்கெடு வந்த {due} கடமைகளில் {kept} நிறைவேற்றப்பட்டன; {missed} தவறின; {reschedules} வேண்டுமென்றே மாற்றப்பட்டன.",
+      "none": "இந்த காலத்தில் எந்த கடமைக்கும் காலக்கெடு வரவில்லை.",
+      "due": "காலத்தில் காலக்கெடு வந்தவை",
+      "kept": "நிறைவேற்றியவை",
+      "missed": "தவறியவை",
+      "missedRate": "தவறிய விகிதம்",
+      "captureCompleteness": "பதிவு முழுமை",
+      "captureNote": "உத்தரவுகளிலிருந்து வந்த {total} கட்டளைகளில் {captured}க்கு பொறுப்பாளரும் காலக்கெடுவும் உள்ளன.",
+      "reschedules": "வேண்டுமென்றே மாற்றியவை",
+      "rescheduleNote": "காரணத்துடன் வேண்டுமென்றே மாற்றுவது ஒருபோதும் தவறாகக் கருதப்படாது."
+    },
+    "preparedness": {
+      "title": "தயார்நிலை",
+      "summary": "{n} மதிப்பீடுகளில் சராசரி 5க்கு {average}.",
+      "hidden": "குறைந்தது 5 மதிப்பீடுகளுக்குப் பிறகு தயார்நிலை தோன்றும். இதுவரை மதிப்பீடுகள்: {n}.",
+      "chartTitle": "வாராந்திர சராசரி தயார்நிலை மதிப்பீடு, 1 முதல் 5 வரை",
+      "baseline": "அடிப்படை (முதல் வாரம்): {value}"
+    },
+    "load": {
+      "title": "பணிச்சுமை",
+      "summary": "{n} வாராந்திர கணிப்புகளில் தேவை {demand}, கவலை {worry}, முயற்சி {effort} (1 முதல் 5).",
+      "hidden": "குறைந்தது 5 வாராந்திர கணிப்புகளுக்குப் பிறகு பணிச்சுமை தோன்றும். இதுவரை கணிப்புகள்: {n}.",
+      "chartTitle": "வாராந்திர பணிச்சுமை கணிப்பு சராசரிகள், 1 முதல் 5 வரை",
+      "demand": "தேவை",
+      "worry": "கவலை",
+      "effort": "முயற்சி"
+    },
+    "table": {
+      "show": "தரவு அட்டவணையைக் காட்டு",
+      "hide": "வரைபடத்தைக் காட்டு",
+      "week": "வாரம்",
+      "n": "பதில்கள்",
+      "average": "சராசரி",
+      "numerator": "தயாரித்து கடைப்பிடித்தவை",
+      "denominator": "ஆஜர்கள்",
+      "rate": "விகிதம்",
+      "none": "தரவு இல்லை"
+    },
+    "report": {
+      "title": "நடைமுறை அறிக்கை",
+      "open": "அச்சிடக்கூடிய அறிக்கை",
+      "print": "அச்சிடு",
+      "back": "நுண்ணறிவுக்குத் திரும்பு",
+      "definitions": "வரையறைகள்",
+      "baselineDefinition": "அடிப்படை: பணியிடத்தின் முதல் 7 நாட்களில் பதிவான மதிப்பீடுகள் மற்றும் கணிப்புகள். மாற்றம் என்பது தற்போதைய சராசரியிலிருந்து அடிப்படை சராசரியைக் கழித்த மதிப்பு.",
+      "missedDefinition": "தவறியது: காலக்கெடு கடந்தும் திறந்தே உள்ளதும், வேண்டுமென்றே மாற்றப்படாததுமான கடமை.",
+      "private": "இந்த பணியிடத்தின் தரவிலிருந்து மட்டுமே கணக்கிடப்பட்டது. பிற பணியிடங்களின் தரவு இதில் இல்லை; இது எங்கும் பகிரப்படாது."
+    }
+  },
+  "fees": {
+    "metaTitle": "கட்டணங்களும் விலைப்பட்டியல்களும்",
+    "title": "கட்டணங்களும் விலைப்பட்டியல்களும்",
+    "description": "கட்டண ஒப்பந்தங்கள், விலைப்பட்டியல்கள், ஒவ்வொரு கட்சிக்காரரும் செலுத்த வேண்டிய தொகை. பதிவுகள் மட்டுமே.",
+    "gatedNotice": "நீங்கள் சரிபார்த்து நீங்களே அனுப்புவதற்காகத் தயாரிக்கப்பட்டது. இங்கிருந்து எதுவும் அனுப்பப்படாது, வசூலிக்கப்படாது, மாற்றப்படாது.",
+    "ledgerNotice": "பேரேடு ஒரு பதிவு மட்டுமே. இதிலிருந்து பணம் செலுத்தவோ வங்கிக் கணக்கை இணைக்கவோ பணத்தை மாற்றவோ முடியாது.",
+    "gstBanner": "ஜிஎஸ்டி நடைமுறை இன்னும் வழக்கறிஞர் மதிப்பாய்வு செய்யப்படவில்லை. விகிதங்கள் தற்காலிகமானவை; உரிமையாளர் மட்டுமே விலைப்பட்டியலை இறுதி செய்யலாம், அதற்கு முன் இதை ஒப்புக்கொள்ள வேண்டும்.",
+    "loading": "கட்டணங்களும் விலைப்பட்டியல்களும் ஏற்றப்படுகின்றன",
+    "offline": "நீங்கள் இணைப்பில் இல்லை. இணைப்புக்குத் திரும்பும் வரை கட்டணங்களையும் விலைப்பட்டியல்களையும் பார்க்க மட்டுமே முடியும்.",
+    "dismiss": "மூடு",
+    "shortcuts": {
+      "new": "n புதிய விலைப்பட்டியல்",
+      "save": "Cmd/Ctrl+S வரைவைச் சேமி",
+      "issue": "Cmd/Ctrl+Enter இறுதி செய்"
+    },
+    "agreements": {
+      "title": "கட்டண ஒப்பந்தங்கள்",
+      "label": "கட்டண ஒப்பந்தங்கள்",
+      "empty": {
+        "title": "இன்னும் கட்டண ஒப்பந்தங்கள் இல்லை",
+        "body": "ஒரு வழக்குக்காகக் கட்சிக்காரருடன் ஒப்புக்கொண்ட கட்டண விதிகளைப் பதிவு செய்யுங்கள். செயல்படுத்தும் வரை ஒப்பந்தம் வரைவாகவே இருக்கும்."
+      }
+    },
+    "invoices": {
+      "title": "விலைப்பட்டியல்கள்",
+      "label": "விலைப்பட்டியல்கள்",
+      "new": "புதிய விலைப்பட்டியல்",
+      "open": "திற",
+      "draftNumber": "வரைவு",
+      "matter": "வழக்கு {id}",
+      "empty": {
+        "title": "இன்னும் விலைப்பட்டியல்கள் இல்லை",
+        "body": "ஒரு வழக்குக்கான விலைப்பட்டியலைத் தயாரியுங்கள். இறுதி செய்யும் வரை அது வரைவாகவே இருக்கும்."
+      }
+    },
+    "status": {
+      "draft": "வரைவு",
+      "issued": "இறுதியானது",
+      "paid": "செலுத்தப்பட்டது",
+      "void": "ஈடு செய்யப்பட்டது"
+    },
+    "agreementStatus": {
+      "draft": "முன்மொழிவு",
+      "active": "செயலில்",
+      "ended": "முடிந்தது"
+    },
+    "basis": {
+      "fixed": "நிலையான கட்டணம்",
+      "hourly": "மணிநேரக் கட்டணம்",
+      "retainer": "முன்பணக் கட்டணம்",
+      "per_appearance": "ஆஜராகும் ஒவ்வொரு முறைக்கும்"
+    },
+    "gst": {
+      "forward_charge": "முன்னோக்கிய வரி வசூல்",
+      "reverse_charge": "எதிர்மறை வரி வசூல் (ஆர்சிஎம்)",
+      "exempt": "விலக்கு",
+      "nil_rated": "பூஜ்ஜிய விகிதம்",
+      "out_of_scope": "வரம்புக்கு வெளியே",
+      "pure_agent": "முழுமையான முகவர்"
+    },
+    "agreement": {
+      "amount": "தொகை",
+      "starts": "தொடக்கம்",
+      "ends": "முடிவு",
+      "matter": "வழக்கு {id}",
+      "activate": "செயல்படுத்து",
+      "end": "ஒப்பந்தத்தை முடி",
+      "proposedNote": "இது ஒரு முன்மொழிவு: நீங்கள் செயல்படுத்தும் வரை எதுவும் ஒப்புக்கொள்ளப்படவில்லை."
+    },
+    "agreementForm": {
+      "trigger": "புதிய கட்டண ஒப்பந்தம்",
+      "title": "புதிய கட்டண ஒப்பந்தம்",
+      "matter": "வழக்கு அடையாளம்",
+      "person": "கட்சிக்காரர் அடையாளம்",
+      "basis": "அடிப்படை",
+      "amount": "தொகை (ரூபாய்)",
+      "gst": "ஜிஎஸ்டி நடைமுறை",
+      "starts": "தொடங்கும் நாள்",
+      "ends": "முடியும் நாள்",
+      "notes": "குறிப்புகள்",
+      "submit": "ஒப்பந்தத்தைச் சேமி",
+      "cancel": "ரத்து செய்"
+    },
+    "editor": {
+      "titleNew": "புதிய விலைப்பட்டியல்",
+      "titleDraft": "வரைவு விலைப்பட்டியல்",
+      "matter": "வழக்கு அடையாளம்",
+      "person": "கட்சிக்காரர் அடையாளம்",
+      "agreement": "கட்டண ஒப்பந்த அடையாளம்",
+      "placeOfSupply": "வழங்கும் இடம் (மாநிலக் குறியீடு)",
+      "recipientGstin": "கட்சிக்காரரின் ஜிஎஸ்டிஐஎன்",
+      "dueDate": "செலுத்த வேண்டிய நாள்",
+      "supplierName": "உங்கள் பெயர் அல்லது அலுவலகம்",
+      "supplierState": "உங்கள் மாநிலக் குறியீடு",
+      "supplierGstin": "உங்கள் ஜிஎஸ்டிஐஎன்",
+      "lines": "வரிசைகள்",
+      "description": "விவரம்",
+      "quantity": "அளவு",
+      "unitPrice": "ஓரலகு விலை (ரூபாய்)",
+      "treatment": "ஜிஎஸ்டி நடைமுறை",
+      "addLine": "வரிசை சேர்",
+      "removeLine": "வரிசையை நீக்கு",
+      "preview": "முன்னோட்டம்",
+      "save": "வரைவைச் சேமி",
+      "issue": "இறுதி செய்",
+      "discard": "வரைவை நீக்கு",
+      "acknowledge": "இங்குள்ள ஜிஎஸ்டி விகிதங்களும் நடைமுறைகளும் மதிப்பாய்வு செய்யப்படாத தற்காலிகமானவை என்பதை ஒப்புக்கொள்கிறேன்.",
+      "ownerOnly": "ஜிஎஸ்டி மதிப்பாய்வு செய்யப்படாத வரை உரிமையாளர் மட்டுமே விலைப்பட்டியலை இறுதி செய்யலாம்.",
+      "saved": "வரைவு சேமிக்கப்பட்டது.",
+      "final": "இந்த விலைப்பட்டியல் இறுதியானது. திருத்தம் என்பது கடன் குறிப்பு, மாற்றம் அல்ல."
+    },
+    "preview": {
+      "title": "விலைப்பட்டியல் முன்னோட்டம்",
+      "empty": "வரிசைகளுக்கு விலை காண முன்னோட்டத்தை அழுத்துங்கள்.",
+      "supplier": "அனுப்புபவர்",
+      "number": "விலைப்பட்டியல் எண்",
+      "billTo": "கட்சிக்காரர் {id}",
+      "taxable": "வரிக்குட்பட்ட மதிப்பு",
+      "cgst": "சிஜிஎஸ்டி",
+      "sgst": "எஸ்ஜிஎஸ்டி",
+      "igst": "ஐஜிஎஸ்டி",
+      "rcm": "எதிர்மறை வசூலில் நீங்கள் செலுத்த வேண்டிய வரி",
+      "total": "மொத்தம்",
+      "line": "{quantity} × {price}",
+      "tax": "வரி"
+    },
+    "ledger": {
+      "title": "கட்சிக்காரர் பேரேடு",
+      "label": "பேரேட்டுப் பதிவுகள்",
+      "empty": {
+        "title": "பேரேட்டுப் பதிவுகள் இல்லை",
+        "body": "விலைப்பட்டியலை வெளியிடுவது, வரவு அல்லது செலவைப் பதிவு செய்வது ஒரு வரியைச் சேர்க்கும்."
+      },
+      "date": "தேதி",
+      "kind": "வகை",
+      "description": "விவரம்",
+      "debit": "பற்று",
+      "credit": "வரவு",
+      "balance": "இருப்பு",
+      "owes": "கட்சிக்காரர் செலுத்த வேண்டியது {amount}",
+      "inCredit": "கட்சிக்காரருக்கு {amount} மிகை இருப்பு உள்ளது",
+      "settled": "செலுத்த வேண்டியது எதுவும் இல்லை",
+      "kinds": {
+        "fee": "கட்டணம்",
+        "disbursement": "செலவு",
+        "receipt": "பெற்ற தொகை",
+        "refund": "திருப்பிய தொகை",
+        "adjustment": "சரிசெய்தல்"
+      }
+    },
+    "error": {
+      "title": "கட்டணங்களையும் விலைப்பட்டியல்களையும் ஏற்ற முடியவில்லை",
+      "reference": "குறிப்பு {digest}",
+      "retry": "மீண்டும் முயல்",
+      "forbidden": "இதைச் செய்ய உங்களுக்கு அனுமதி இல்லை.",
+      "invalid": "விவரங்களைச் சரிபார்த்து மீண்டும் முயலுங்கள்.",
+      "conflict": "இது இனி சாத்தியமில்லை, எடுத்துக்காட்டாக விலைப்பட்டியல் ஏற்கெனவே இறுதியாகிவிட்டது.",
+      "failed": "ஏதோ தவறு நடந்தது. மீண்டும் முயலுங்கள்."
+    },
+    "notFound": {
+      "title": "விலைப்பட்டியல் கிடைக்கவில்லை",
+      "body": "அது நீக்கப்பட்டிருக்கலாம்."
+    }
+  },
   "matterTimeline": {
     "title": "காலவரிசை",
     "loading": "காலவரிசை ஏற்றப்படுகிறது",
@@ -3707,18 +4349,21 @@
         "early_listing_memo": "விரைவு பட்டியலிடல் மனு",
         "memo_of_appearance": "ஆஜராகும் மனு",
         "certified_copy_application": "சான்றிட்ட நகலுக்கான விண்ணப்பம்",
-        "client_covering_letter": "கட்சிக்காரருக்கான உடன்இணைப்புக் கடிதம்"
+        "client_covering_letter": "கட்சிக்காரருக்கான உடன்இணைப்புக் கடிதம்",
+        "counsel_covering_letter": "வழக்கறிஞருக்கான உடன்இணைப்புக் கடிதம்"
       },
       "karnataka_hc": {
         "mention_memo": "குறிப்பிடல் அல்லது ஒத்திவைப்பு மனு",
         "early_listing_memo": "விரைவு பட்டியலிடல் மனு",
         "memo_of_appearance": "ஆஜராகும் மனு",
         "certified_copy_application": "சான்றிட்ட நகலுக்கான விண்ணப்பம்",
-        "client_covering_letter": "கட்சிக்காரருக்கான உடன்இணைப்புக் கடிதம்"
+        "client_covering_letter": "கட்சிக்காரருக்கான உடன்இணைப்புக் கடிதம்",
+        "counsel_covering_letter": "வழக்கறிஞருக்கான உடன்இணைப்புக் கடிதம்"
       },
       "generic_a0": {
         "adjournment_note": "ஒத்திவைப்புக் குறிப்பு",
-        "client_covering_letter": "கட்சிக்காரருக்கான உடன்இணைப்புக் கடிதம்"
+        "client_covering_letter": "கட்சிக்காரருக்கான உடன்இணைப்புக் கடிதம்",
+        "counsel_covering_letter": "வழக்கறிஞருக்கான உடன்இணைப்புக் கடிதம்"
       }
     },
     "scaffoldBanner": "வரைவு மட்டும்: பயன்படுத்தும் முன் சரிபார்க்கவும்"
@@ -3854,6 +4499,7 @@
       "docx": "வேர்டு ஆவணம்",
       "pdf": "PDF",
       "unverifiedWarning": "{count, plural, one {# மேற்கோள் சரிபார்க்கப்படவில்லை.} other {# மேற்கோள்கள் சரிபார்க்கப்படவில்லை.}}",
+      "factWarning": "{count, plural, one {# உண்மை சரிபார்ப்பு முடிவு தீர்க்கப்படவில்லை.} other {# உண்மை சரிபார்ப்பு முடிவுகள் தீர்க்கப்படவில்லை.}}",
       "action": "ஏற்றுமதி",
       "failed": "ஏற்றுமதி தோல்வியடைந்தது. மீண்டும் முயற்சிக்கவும்."
     },
@@ -6161,6 +6807,76 @@
         "notFound": "இந்தச் சுருக்கம் அல்லது இணைப்பு இனி இல்லை.",
         "generic": "ஏதோ தவறு நடந்தது. மீண்டும் முயலவும்."
       }
+    }
+  },
+  "statusLink": {
+    "metaTitle": "Case status",
+    "page": {
+      "unavailable": "This link is no longer available",
+      "unavailableBody": "Ask your advocate for a new link.",
+      "preparedBy": "Prepared by {name}",
+      "preparedByUnknown": "Prepared by your advocate",
+      "nextDate": "Next date: {date}",
+      "expires": "This link expires on {date}",
+      "loading": "Loading your status"
+    },
+    "sheet": {
+      "open": "Share a status link",
+      "title": "Client status link",
+      "description": "Write the note your client will see. CauseDeck does not send it.",
+      "headline": "Headline",
+      "note": "Note",
+      "includeNextDate": "Include the next date",
+      "nextDate": "Next date",
+      "contact": "Client contact",
+      "contactPlaceholder": "Choose a contact",
+      "expiry": "Expires after",
+      "expiryDays": "{days, plural, one {# day} other {# days}}",
+      "language": "Language",
+      "prefill": "Start from an update draft",
+      "preview": "Preview",
+      "previewHint": "This is exactly what your client will see.",
+      "create": "Create link",
+      "creating": "Creating",
+      "cancel": "Cancel",
+      "close": "Close",
+      "shortcut": "Ctrl or Cmd + Enter creates the link; Esc closes.",
+      "loading": "Loading",
+      "empty": "No client contacts yet. Add a client contact to this matter's people first.",
+      "error": "We could not complete that.",
+      "retry": "Try again",
+      "offline": "You are offline. Creating a link needs a connection.",
+      "denied": "Only an advocate or an owner can create status links."
+    },
+    "created": {
+      "title": "Your link is ready",
+      "once": "This is the only time the full link is shown.",
+      "shareYourself": "Share it yourself. CauseDeck does not send it.",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "url": "Status link"
+    },
+    "list": {
+      "title": "Status links",
+      "empty": "No links yet.",
+      "loading": "Loading links",
+      "viewed": "{count, plural, =0 {Not viewed} one {Viewed # time} other {Viewed # times}}",
+      "expires": "Expires {date}",
+      "revoke": "Revoke",
+      "revoked": "Revoked",
+      "expired": "Expired",
+      "active": "Active",
+      "error": "We could not load the links.",
+      "retry": "Try again"
+    },
+    "gated": {
+      "title": "Status links are not on yet",
+      "body": "This feature is switched off for your workspace until counsel clears its wording."
+    },
+    "languages": {
+      "en": "English",
+      "ta": "Tamil",
+      "kn": "Kannada"
     }
   },
   "offline": {

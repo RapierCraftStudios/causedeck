@@ -1,0 +1,7 @@
+# Dummy values: enough for `terraform validate` and `terraform test`. Real values go in an untracked
+# terraform.tfvars; OVH credentials come from OVH_ENDPOINT, OVH_APPLICATION_KEY,
+# OVH_APPLICATION_SECRET and OVH_CONSUMER_KEY in the environment, never from this file.
+vps_datacenter = "YNM"
+db_plan_code   = "vps-2027-model4"
+app_plan_code  = "vps-2027-model3"
+app_node_count = 2

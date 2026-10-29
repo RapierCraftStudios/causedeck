@@ -149,7 +149,7 @@ cutover() {
     fi
     sleep 2
   done
-  if ! verify; then
+  if ! (verify); then
     q "$SOURCE_URL" "alter database \"$db\" reset default_transaction_read_only"
     die "verification failed; source reopened for writes"
   fi

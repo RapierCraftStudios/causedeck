@@ -50,6 +50,9 @@ Adapter health is exported by `@causedeck/observability/adapter-metrics` (`adapt
 [infra/monitoring/README.md](../../infra/monitoring/README.md); rotation and severities:
 [on-call runbook](../../infra/runbooks/on-call.md).
 
+The stack has two compose profiles (#886): `core` (Prometheus, Alertmanager, cAdvisor, node_exporter, blackbox; 960 MB,
+fits the VPS-1 and VPS-3 budgets, logs archived daily to an India bucket) and `full` (adds Loki, Grafana and the collector).
+
 ### Time and retention (infrastructure obligations)
 
 - **NTP:** every host and container must sync time over NTP. CERT-In directions require logs to

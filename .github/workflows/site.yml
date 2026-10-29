@@ -92,6 +92,13 @@ jobs:
       - name: Lighthouse CI
         working-directory: apps/site
         run: ../../e2e/node_modules/.bin/lhci autorun --config=lighthouserc.json
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site-lighthouse
+          path: apps/site/.lighthouseci
+          retention-days: 7
 
   e2e:
     name: site e2e

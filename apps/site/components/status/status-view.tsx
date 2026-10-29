@@ -80,10 +80,15 @@ function renderState(
   switch (state.kind) {
     case 'loading':
       return (
-        <div aria-busy="true" role="status" className="space-y-3">
+        // Reserves about the height of the loaded page so the footer does not jump (CLS).
+        <div
+          aria-busy="true"
+          role="status"
+          className={`space-y-3 ${mode === 'history' ? 'min-h-40' : 'min-h-[27rem]'}`}
+        >
           <span className="sr-only">Loading status</span>
-          <div className="bg-surface-sunken h-14 animate-pulse rounded-md" />
-          <div className="bg-surface-sunken h-24 animate-pulse rounded-md" />
+          <div className="bg-surface-sunken h-16 rounded-md" />
+          <div className="bg-surface-sunken h-36 rounded-md" />
         </div>
       );
     case 'unavailable':

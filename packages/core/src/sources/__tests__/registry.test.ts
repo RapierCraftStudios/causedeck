@@ -157,7 +157,9 @@ describe('policyFor and staff changes', () => {
       const events = await withUser(tx, { userId: actor.userId }, (s) =>
         s.select().from(schema.auditEvent).where(eq(schema.auditEvent.action, 'source.changed')),
       );
-      const last = events.at(-1);
+      // Every row in this transaction shares created_at (now() is the transaction start) and the
+      // select is unordered, so pick the update's event instead of relying on row order.
+      const last = events.find((event) => event.metadata['change'] === 'updated');
       expect(last?.actorUserId).toBe(actor.userId);
       expect(last?.metadata).toMatchObject({
         change: 'updated',

@@ -29,7 +29,7 @@ run "plans_a_primary_a_replica_and_two_app_nodes_in_ynm" {
   }
 
   assert {
-    condition     = sort(keys(output.app_ipv4s)) == ["1", "2"]
+    condition     = join(",", sort(keys(output.app_ipv4s))) == "1,2"
     error_message = "app nodes are keyed 1..N"
   }
 }

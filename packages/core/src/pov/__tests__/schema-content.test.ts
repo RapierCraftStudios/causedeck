@@ -1,6 +1,6 @@
 // R6 (#86): the proof-of-value tables hold no content: ids, numbers, booleans, timestamps, the
 // `questions` marks array and one note of at most 140 characters.
-import { getTableColumns } from 'drizzle-orm';
+import { getTableColumns, type Column } from 'drizzle-orm';
 import { schema } from '@causedeck/db';
 import { describe, expect, it } from 'vitest';
 
@@ -15,9 +15,8 @@ describe('proof-of-value schema holds no content', () => {
   it('has only id, number, boolean, timestamp columns, one jsonb marks array and one short note', () => {
     const free: string[] = [];
     for (const [name, table] of Object.entries(TABLES))
-      for (const [key, column] of Object.entries(getTableColumns(table))) {
-        const type = column.dataType;
-        if (['string', 'json'].includes(type) && column.columnType !== 'PgUUID')
+      for (const [key, column] of Object.entries<Column>(getTableColumns(table))) {
+        if (['string', 'json'].includes(column.dataType) && column.columnType !== 'PgUUID')
           free.push(`${name}.${key}:${column.columnType}`);
       }
     expect(free.sort()).toEqual([

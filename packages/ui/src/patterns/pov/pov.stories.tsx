@@ -1,3 +1,4 @@
+// check-stories: n/a Hover, FocusVisible, Active, Disabled, Invalid, WithIcon, RtlNeutral (the controls are plain radios and buttons with their own focus ring; Saving disables them; a 1-5 scale has no invalid, icon or RTL variant)
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, fn, userEvent, within } from 'storybook/test';
 
@@ -222,3 +223,39 @@ export const TestFinished: StoryObj<typeof ContextTestView> = testStory({
 export const TestError: StoryObj<typeof ContextTestView> = testStory({ phase: 'error' });
 export const TestOffline: StoryObj<typeof ContextTestView> = testStory({ phase: 'offline' });
 export const TestDenied: StoryObj<typeof ContextTestView> = testStory({ phase: 'denied' });
+
+// The shared states (#8) for the tap view, the pattern's lead control.
+export const Default: Story = TapDefault;
+export const Loading: Story = TapLoading;
+export const LongText: Story = {
+  args: {
+    labels: {
+      ...tapLabels,
+      title:
+        'How prepared did you feel for the hearing in the matter listed this morning at the High Court?',
+      hint: 'Optional. Press 1 to 5, or S to skip. Your answer stays in this workspace and is only ever shown to you and to the owner as a number.',
+    },
+  },
+};
+export const Tamil: Story = {
+  args: {
+    labels: {
+      ...tapLabels,
+      title: 'எவ்வளவு தயாராக இருந்தீர்கள்?',
+      hint: 'விருப்பத்திற்குரியது. 1 முதல் 5 வரை அழுத்தவும், தவிர்க்க S அழுத்தவும்.',
+      option: (n) => `5-இல் ${String(n)}`,
+      skip: 'தவிர்',
+    },
+  },
+};
+export const Kannada: Story = {
+  args: {
+    labels: {
+      ...tapLabels,
+      title: 'ನೀವು ಎಷ್ಟು ಸಿದ್ಧರಾಗಿದ್ದಿರಿ?',
+      hint: 'ಐಚ್ಛಿಕ. 1 ರಿಂದ 5 ಒತ್ತಿರಿ, ಬಿಟ್ಟುಬಿಡಲು S ಒತ್ತಿರಿ.',
+      option: (n) => `5ರಲ್ಲಿ ${String(n)}`,
+      skip: 'ಬಿಟ್ಟುಬಿಡಿ',
+    },
+  },
+};

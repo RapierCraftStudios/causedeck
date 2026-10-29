@@ -466,13 +466,11 @@ describe('first-day reveal', () => {
         firstDay={{ date: null, briefs: 0, openObligations: 0 }}
         boardHref="/w/meera-raman/today"
         briefsHref="/w/meera-raman/briefs"
-        demoHref="/w/demo/today"
+        demoHref="/demo"
       />,
     );
     expect(screen.getByRole('status').textContent).toBe(en.done.revealNone);
-    expect(screen.getByRole('link', { name: en.done.demo }).getAttribute('href')).toBe(
-      '/w/demo/today',
-    );
+    expect(screen.getByRole('link', { name: en.done.demo }).getAttribute('href')).toBe('/demo');
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: en.done.open }));
       await Promise.resolve();

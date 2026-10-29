@@ -74,6 +74,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed:system-templates": "tsx scripts/seed-system-templates.ts",
+    "seed:demo:content": "tsx scripts/seed-demo-content.ts",
     "test:tenancy": "vitest run src/__tests__/cross-tenant"
   },
   "dependencies": {

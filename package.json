@@ -26,6 +26,8 @@
     "db:studio": "turbo run db:studio --filter=@causedeck/db",
     "db:seed": "turbo run db:seed --filter=@causedeck/db",
     "db:seed:demo": "turbo run db:seed:demo --filter=@causedeck/db",
+    "db:seed:demo:content": "pnpm --filter @causedeck/core seed:demo:content",
+    "db:seed:demo:files": "pnpm --filter @causedeck/core seed:demo:content -- --only=files",
     "db:check-rls": "turbo run db:check-rls --filter=@causedeck/db",
     "i18n:check": "pnpm --filter @causedeck/i18n i18n:check",
     "i18n:types": "pnpm --filter @causedeck/i18n i18n:types",

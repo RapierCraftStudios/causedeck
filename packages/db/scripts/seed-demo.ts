@@ -1,6 +1,7 @@
 // `pnpm db:seed:demo` (#182, #93): seed the fictional demo workspaces (and the plan catalogue) as
 // the owner role. `--workspace=chennai-solo|bengaluru-chamber|all` picks which (default all);
-// `--reset` deletes the workspace's rows and visitors first. Refuses when NODE_ENV=production.
+// `--enable-gated-flags` turns on the legal-gated flags the demo modules
+// need (local or review database only); `--reset` deletes the workspace's rows and visitors first. Refuses when NODE_ENV=production.
 // Idempotent: a second run writes nothing.
 import { createEnv, isProd } from '@causedeck/config/env';
 
@@ -9,6 +10,7 @@ import { seed } from '../src/seed/index.ts';
 import {
   DEMO_WORKSPACE_KEYS,
   isDemoWorkspaceKey,
+  enableDemoGatedFlags,
   resetDemoWorkspace,
   seedDemo,
   type DemoWorkspaceKey,
@@ -24,6 +26,7 @@ if (isProd()) {
 
 const args = process.argv.slice(2);
 const reset = args.includes('--reset');
+const gatedFlags = args.includes('--enable-gated-flags');
 const selected =
   args.find((a) => a.startsWith('--workspace='))?.slice('--workspace='.length) ?? 'all';
 if (selected !== 'all' && !isDemoWorkspaceKey(selected)) {
@@ -53,6 +56,12 @@ try {
   } else {
     await seedDemo(db, { workspaces });
     console.log(`Seeded (demo, owner role): ${selected}`);
+  }
+  if (gatedFlags) {
+    await enableDemoGatedFlags(db, workspaces);
+    console.log(
+      'Legal-gated flags on for the demo (demo environment only, not a counsel sign-off).',
+    );
   }
 } finally {
   await db.$client.end();

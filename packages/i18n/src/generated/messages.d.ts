@@ -3954,6 +3954,7 @@ export type Messages = {
       rcm: string;
       total: string;
       line: string;
+      tax: string;
     };
     ledger: {
       title: string;

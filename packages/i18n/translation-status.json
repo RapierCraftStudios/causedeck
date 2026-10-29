@@ -5245,7 +5245,8 @@
     "fees.error.conflict": "draft",
     "fees.error.failed": "draft",
     "fees.notFound.title": "draft",
-    "fees.notFound.body": "draft"
+    "fees.notFound.body": "draft",
+    "fees.preview.tax": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -10091,6 +10092,7 @@
     "fees.error.conflict": "draft",
     "fees.error.failed": "draft",
     "fees.notFound.title": "draft",
-    "fees.notFound.body": "draft"
+    "fees.notFound.body": "draft",
+    "fees.preview.tax": "draft"
   }
 }

@@ -3952,7 +3952,8 @@
       "igst": "IGST",
       "rcm": "Tax payable by you under reverse charge",
       "total": "Total",
-      "line": "{quantity} x {price}"
+      "line": "{quantity} x {price}",
+      "tax": "Tax"
     },
     "ledger": {
       "title": "Client ledger",

@@ -2,7 +2,7 @@
 // The range picker (#85): 4 weeks, 12 weeks or a custom range as a segmented control of links, so the
 // choice is in the URL (a reload or a shared link keeps it) and works without scripting. `[` and `]`
 // step to the shorter and longer preset. The custom range is a plain GET form.
-import type { InsightsQuery } from '@causedeck/validators/insights';
+import type { InsightsQuery, InsightsWindow } from '@causedeck/validators/insights';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -13,6 +13,8 @@ const PRESETS = ['4w', '12w'] as const;
 export interface RangePickerProps {
   basePath: string;
   query: InsightsQuery;
+  /** The window on screen: Custom starts from it, since a custom range needs both days. */
+  window: InsightsWindow;
 }
 
 function typing(target: EventTarget | null): boolean {
@@ -22,7 +24,7 @@ function typing(target: EventTarget | null): boolean {
   );
 }
 
-export function RangePicker({ basePath, query }: RangePickerProps) {
+export function RangePicker({ basePath, query, window: shown }: RangePickerProps) {
   const t = useTranslations('insights');
   const router = useRouter();
 
@@ -59,7 +61,7 @@ export function RangePicker({ basePath, query }: RangePickerProps) {
           </Link>
         ))}
         <Link
-          href={`${basePath}?range=custom${query.from ? `&from=${query.from}` : ''}${query.to ? `&to=${query.to}` : ''}`}
+          href={`${basePath}?range=custom&from=${query.from ?? shown.from}&to=${query.to ?? shown.to}`}
           aria-current={query.range === 'custom' ? 'true' : undefined}
           className={item(query.range === 'custom')}
         >

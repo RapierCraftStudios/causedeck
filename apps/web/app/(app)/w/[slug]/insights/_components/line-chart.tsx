@@ -4,7 +4,7 @@
 // gridlines sit at 10 percent ink, and the whole chart is one focusable group: the arrow keys move
 // across the weeks and an `aria-live` line announces the values. It fades in once (400 ms; 100 ms
 // under reduced motion); there is no looping animation.
-import { useEffect, useId, useState } from 'react';
+import { useId, useState } from 'react';
 
 export interface ChartSeriesData {
   key: string;
@@ -66,10 +66,6 @@ export function LineChart({
 }: LineChartProps) {
   const id = useId();
   const [active, setActive] = useState(categories.length - 1);
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    setShown(true);
-  }, []);
 
   const last = Math.max(categories.length - 1, 0);
   const plotW = W - PAD.left - PAD.right;
@@ -108,7 +104,7 @@ export function LineChart({
       <svg
         viewBox={`0 0 ${String(W)} ${String(H)}`}
         aria-hidden="true"
-        className={`text-ink h-auto w-full transition-opacity duration-[400ms] ease-out motion-reduce:duration-100 ${shown ? 'opacity-100' : 'opacity-0'}`}
+        className={`text-ink motion-safe:animate-in motion-safe:fade-in h-auto w-full duration-[400ms] ease-out motion-reduce:duration-100`}
       >
         {ticks.map((tick) => (
           <g key={tick}>

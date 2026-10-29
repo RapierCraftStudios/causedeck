@@ -50,6 +50,22 @@ describe('DraftExportDialog', () => {
     expect((action as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('is blocked while fact-check findings are unresolved and offers the acknowledgement', () => {
+    const onAcknowledgeFacts = vi.fn();
+    renderWithIntl(
+      <DraftExportDialog
+        {...props}
+        unacknowledged={0}
+        factUnresolved={2}
+        onAcknowledgeFacts={onAcknowledgeFacts}
+      />,
+    );
+    expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Export' }).disabled).toBe(true);
+    expect(screen.getByText(/2 fact-check findings are unresolved/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /acknowledge/i }));
+    expect(onAcknowledgeFacts).toHaveBeenCalledTimes(1);
+  });
+
   it('offers DOCX and PDF, downloads, and has no send, share or file button', async () => {
     renderWithIntl(<DraftExportDialog {...props} unacknowledged={0} />);
     expect(screen.getByRole('button', { name: 'Word document' })).toBeTruthy();

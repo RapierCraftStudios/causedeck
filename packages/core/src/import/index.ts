@@ -26,6 +26,7 @@ export {
   type ListParser,
   type PendingImportFile,
 } from './batch.ts';
+export { getChamberMapping, saveChamberMapping } from './column-mapping.ts';
 export {
   getAdvocateProfile,
   saveAdvocateProfile,

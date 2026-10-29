@@ -4247,18 +4247,21 @@
         "early_listing_memo": "ಶೀಘ್ರ ಪಟ್ಟಿ ಮೆಮೊ",
         "memo_of_appearance": "ಹಾಜರಾತಿ ಮೆಮೊ",
         "certified_copy_application": "ಪ್ರಮಾಣೀಕೃತ ನಕಲಿಗಾಗಿ ಅರ್ಜಿ",
-        "client_covering_letter": "ಕಕ್ಷಿದಾರರಿಗೆ ಜೊತೆಯ ಪತ್ರ"
+        "client_covering_letter": "ಕಕ್ಷಿದಾರರಿಗೆ ಜೊತೆಯ ಪತ್ರ",
+        "counsel_covering_letter": "ವಕೀಲರಿಗೆ ಜೊತೆಯ ಪತ್ರ"
       },
       "karnataka_hc": {
         "mention_memo": "ಉಲ್ಲೇಖ ಅಥವಾ ಮುಂದೂಡಿಕೆ ಮೆಮೊ",
         "early_listing_memo": "ಶೀಘ್ರ ಪಟ್ಟಿ ಮೆಮೊ",
         "memo_of_appearance": "ಹಾಜರಾತಿ ಮೆಮೊ",
         "certified_copy_application": "ಪ್ರಮಾಣೀಕೃತ ನಕಲಿಗಾಗಿ ಅರ್ಜಿ",
-        "client_covering_letter": "ಕಕ್ಷಿದಾರರಿಗೆ ಜೊತೆಯ ಪತ್ರ"
+        "client_covering_letter": "ಕಕ್ಷಿದಾರರಿಗೆ ಜೊತೆಯ ಪತ್ರ",
+        "counsel_covering_letter": "ವಕೀಲರಿಗೆ ಜೊತೆಯ ಪತ್ರ"
       },
       "generic_a0": {
         "adjournment_note": "ಮುಂದೂಡಿಕೆ ಟಿಪ್ಪಣಿ",
-        "client_covering_letter": "ಕಕ್ಷಿದಾರರಿಗೆ ಜೊತೆಯ ಪತ್ರ"
+        "client_covering_letter": "ಕಕ್ಷಿದಾರರಿಗೆ ಜೊತೆಯ ಪತ್ರ",
+        "counsel_covering_letter": "ವಕೀಲರಿಗೆ ಜೊತೆಯ ಪತ್ರ"
       }
     },
     "scaffoldBanner": "ಕರಡು ಮಾತ್ರ: ಬಳಸುವ ಮೊದಲು ಪರಿಶೀಲಿಸಿ"
@@ -4394,6 +4397,7 @@
       "docx": "ವರ್ಡ್ ಡಾಕ್ಯುಮೆಂಟ್",
       "pdf": "PDF",
       "unverifiedWarning": "{count, plural, one {# ಉಲ್ಲೇಖ ಪರಿಶೀಲಿಸಲಾಗಿಲ್ಲ.} other {# ಉಲ್ಲೇಖಗಳು ಪರಿಶೀಲಿಸಲಾಗಿಲ್ಲ.}}",
+      "factWarning": "{count, plural, one {# ಸತ್ಯ ಪರಿಶೀಲನೆಯ ಫಲಿತಾಂಶ ಬಗೆಹರಿದಿಲ್ಲ.} other {# ಸತ್ಯ ಪರಿಶೀಲನೆಯ ಫಲಿತಾಂಶಗಳು ಬಗೆಹರಿದಿಲ್ಲ.}}",
       "action": "ರಫ್ತು",
       "failed": "ರಫ್ತು ವಿಫಲವಾಯಿತು. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
     },

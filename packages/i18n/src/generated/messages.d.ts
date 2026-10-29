@@ -4249,6 +4249,7 @@ export type Messages = {
         memo_of_appearance: string;
         certified_copy_application: string;
         client_covering_letter: string;
+        counsel_covering_letter: string;
       };
       karnataka_hc: {
         mention_memo: string;
@@ -4256,10 +4257,12 @@ export type Messages = {
         memo_of_appearance: string;
         certified_copy_application: string;
         client_covering_letter: string;
+        counsel_covering_letter: string;
       };
       generic_a0: {
         adjournment_note: string;
         client_covering_letter: string;
+        counsel_covering_letter: string;
       };
     };
     scaffoldBanner: string;
@@ -4395,6 +4398,7 @@ export type Messages = {
       docx: string;
       pdf: string;
       unverifiedWarning: string;
+      factWarning: string;
       action: string;
       failed: string;
     };

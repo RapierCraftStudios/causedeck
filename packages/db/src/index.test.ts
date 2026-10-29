@@ -122,6 +122,7 @@ describe('@causedeck/db root entry point', () => {
       'ics_import_event',
       'import_batch',
       'import_batch_file',
+      'import_column_mapping',
       'import_plan',
       'intake_address',
       'intake_allowlist',

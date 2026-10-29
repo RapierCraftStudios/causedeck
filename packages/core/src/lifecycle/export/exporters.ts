@@ -231,6 +231,7 @@ export const blobsExporter = tablesExporter('blobs', [
   ws('import_batch', { userColumn: 'created_by' }),
   ws('import_batch_file'),
   ws('import_plan', { keys: ['batch_id'] }),
+  ws('import_column_mapping', { userColumn: 'updated_by' }),
   // The importing member's own identifiers (#550).
   ws('advocate_profile', { userColumn: 'user_id' }),
   ws('cause_list_watch', { userColumn: 'user_id' }),

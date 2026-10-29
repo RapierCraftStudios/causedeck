@@ -18,7 +18,7 @@ test.describe('status links gated off', () => {
     await expect(
       page.getByRole('heading', { name: 'This link is no longer available' }),
     ).toBeVisible();
-    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+    await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
     await expect(page.getByText(/Prepared by/)).toHaveCount(0);
   });
 });

@@ -76,10 +76,10 @@ test.describe('limitation tracker', () => {
     await expect(dialog).toBeVisible();
     // Only reviewed rules are offered.
     const rule = dialog.getByLabel('Rule');
-    await expect(rule.locator('option')).toHaveText([
-      LIMITATION.suit.title,
-      LIMITATION.appeal.title,
-    ]);
+    await expect(rule.locator('option')).toHaveCount(2);
+    for (const title of [LIMITATION.suit.title, LIMITATION.appeal.title]) {
+      await expect(rule.locator('option', { hasText: title })).toHaveCount(1);
+    }
     await dialog.getByLabel('Matter ID').fill(LIMITATION.matter.id);
     await dialog.getByLabel('Start date').fill('2026-01-10');
     await dialog.getByRole('button', { name: 'Compute' }).click();

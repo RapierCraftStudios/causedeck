@@ -138,3 +138,27 @@ export const importPlan = tenantTable(
     check('import_plan_object_chk', sql`jsonb_typeof(plan) = 'object'`),
   ],
 );
+
+/**
+ * The chamber's saved column mapping for the spreadsheet importer (#778, from #504/#687): field ->
+ * header text, one row per workspace. It is read by header text, so it survives a re-ordered sheet.
+ */
+export const importColumnMapping = tenantTable(
+  'import_column_mapping',
+  {
+    id: id(),
+    mapping: jsonb('mapping').$type<Record<string, string>>().notNull(),
+    /** The member who last saved it; null after the account is deleted (#303). */
+    updatedBy: uuid('updated_by').references(() => user.id, { onDelete: 'set null' }),
+    ...timestamps(),
+  },
+  (t) => [
+    unique('import_column_mapping_workspace_uq').on(t.workspaceId),
+    foreignKey({
+      name: 'import_column_mapping_workspace_id_fk',
+      columns: [t.workspaceId],
+      foreignColumns: [organization.id],
+    }).onDelete('cascade'),
+    check('import_column_mapping_object_chk', sql`jsonb_typeof(mapping) = 'object'`),
+  ],
+);

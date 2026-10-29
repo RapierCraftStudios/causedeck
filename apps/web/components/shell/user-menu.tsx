@@ -1,13 +1,14 @@
 'use client';
 
 import { Avatar } from '@causedeck/ui/avatar';
-import { LogOut, Settings, UserRound } from 'lucide-react';
+import { CircleHelp, LogOut, Settings, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { useState } from 'react';
 
 import { getNavItem } from '../../lib/nav.ts';
+import { useShortcuts } from '../../lib/shortcuts/provider.tsx';
 import type { Role, ShellUser } from '../../lib/workspace-context.ts';
 import { LocaleSwitcher } from '../locale-switcher.tsx';
 import { THEMES, persistThemeCookie, type ThemeChoice } from '../theme-toggle.tsx';
@@ -28,6 +29,7 @@ export function UserMenu({ user, role, slug }: UserMenuProps) {
   const t = useTranslations();
   const { theme, setTheme } = useTheme();
   const overlays = useShellOverlays();
+  const { openHelp } = useShortcuts();
   const [open, setOpen] = useState(false);
 
   const trigger = (
@@ -84,6 +86,10 @@ export function UserMenu({ user, role, slug }: UserMenuProps) {
             <Settings aria-hidden="true" />
             {t('shell.userMenu.settings')}
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={openHelp}>
+          <CircleHelp aria-hidden="true" />
+          {t('help.title')}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuLabel>{t('shell.userMenu.theme')}</DropdownMenuLabel>

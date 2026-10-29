@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 
+import { PreparednessTap } from '../../../../_pov/preparedness-tap.tsx';
 import { useOfflineEdits } from '../../../../../../../../lib/offline/use-outbox.ts';
 import { confirmOutcomeAction, recordManualOutcomeAction } from '../actions.ts';
 
@@ -27,6 +28,10 @@ interface OutcomeFormProps {
   excerpts: readonly string[];
   /** The role may confirm outcomes; a viewer sees the proposal and no actions. */
   canWrite: boolean;
+  /** The hearing, for the preparedness tap (#86). */
+  hearingId: string;
+  /** The server says this appearance is due its one preparedness prompt. */
+  askPreparedness: boolean;
 }
 
 const queueKey = (hearingId: string) => `outcome-queue:${hearingId}`;
@@ -44,6 +49,8 @@ export function OutcomeForm({
   owners,
   excerpts,
   canWrite,
+  hearingId,
+  askPreparedness,
 }: OutcomeFormProps) {
   const t = useTranslations('outcome');
   const { slug } = useParams<{ slug: string }>();
@@ -223,6 +230,11 @@ export function OutcomeForm({
         <p role="status" aria-live="polite" className="text-sm font-medium">
           {confirmedHere ? status : t('confirmedHint')}
         </p>
+      ) : null}
+      {/* Only when the server said to ask: with no appearance row the rating could not be saved (#970).
+          After confirming here, the action revalidates the page and the server's answer arrives as the prop. */}
+      {done && canWrite && askPreparedness ? (
+        <PreparednessTap workspaceId={workspaceId} hearingId={hearingId} canWrite={canWrite} />
       ) : null}
       <div className="grid gap-2">
         <label htmlFor="outcome-summary" className="text-sm font-medium">

@@ -38,6 +38,7 @@ import {
 import { can, type WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
+import { loadContacts } from '../../../../../../lib/people/people-deps.ts';
 
 import {
   chooseNextDateSourceAction,
@@ -48,6 +49,12 @@ import {
 import { AttentionSnoozes } from '../_components/attention-snoozes.tsx';
 import { createBriefShareAction, revokeBriefShareAction } from '../../briefs/actions.ts';
 import { HandoverSheet } from './_continuity/handover-sheet.tsx';
+import {
+  createStatusLinkAction,
+  listStatusLinksAction,
+  revokeStatusLinkAction,
+} from './_status-links/actions.ts';
+import { StatusLinkSheet } from './_status-links/status-link-sheet.tsx';
 import { WhatChangedCard } from './_continuity/what-changed-card.tsx';
 import MatterLoading from './loading.tsx';
 
@@ -196,6 +203,28 @@ async function loadContinuityMembers(
   }
 }
 
+/** The status link sheet's inputs, or null while `status_links.enabled` is off (#88): the control is then absent. */
+async function loadStatusLinkSetup(context: WorkspaceContext) {
+  try {
+    const { isEnabled } = await import('@causedeck/flags/server');
+    const on = await isEnabled('status_links.enabled', {
+      workspaceId: context.workspace.id,
+      userId: context.user.id,
+    });
+    if (!on) return null;
+    const loaded = await loadContacts(context);
+    return {
+      contacts:
+        loaded.kind === 'list'
+          ? loaded.contacts.map((c) => ({ id: c.id, name: c.personName }))
+          : [],
+    };
+  } catch (error) {
+    logger.error({ err: error }, 'matter overview: could not load the status link setup');
+    return null;
+  }
+}
+
 export default async function MatterOverviewPage({ params, searchParams }: MatterPageProps) {
   const [{ slug, id }, query] = await Promise.all([params, searchParams]);
   const context = await getWorkspaceContext(slug);
@@ -223,10 +252,25 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
       ? []
       : await loadReviewCorrections(context, proceedingId, locale);
   const continuity = await loadContinuityMembers(context);
+  const statusLinks = dev === 'empty' ? null : await loadStatusLinkSetup(context);
   return (
     <>
       <div className="grid gap-3">
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
+          {statusLinks === null ? null : (
+            <StatusLinkSheet
+              workspaceId={context.workspace.id}
+              matterId={id}
+              contacts={statusLinks.contacts}
+              advocateName={context.user.name}
+              canCreate={context.role === 'advocate' || context.role === 'owner'}
+              actions={{
+                create: createStatusLinkAction,
+                revoke: revokeStatusLinkAction,
+                list: listStatusLinksAction,
+              }}
+            />
+          )}
           <HandoverSheet
             workspaceId={context.workspace.id}
             matterId={id}

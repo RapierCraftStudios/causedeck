@@ -15,6 +15,9 @@ vi.mock('../../../app/(app)/account/actions.ts', () => ({ setLocaleAction }));
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('@causedeck/ui/sonner', () => ({ toast }));
 
+const openHelp = vi.hoisted(() => vi.fn());
+vi.mock('../../../lib/shortcuts/provider.tsx', () => ({ useShortcuts: () => ({ openHelp }) }));
+
 const { UserMenu } = await import('../user-menu.tsx');
 const { loadShellOverlays } = await import('../use-shell-overlays.ts');
 
@@ -75,5 +78,13 @@ describe('user menu language group (#175)', () => {
       expect(refresh).toHaveBeenCalledOnce();
     });
     expect(setLocaleAction).toHaveBeenCalledWith({ locale: 'kn' });
+  });
+});
+
+describe('user menu help entry (#94)', () => {
+  it('opens the help sheet', () => {
+    const menu = openMenu();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: 'Help' }));
+    expect(openHelp).toHaveBeenCalledTimes(1);
   });
 });

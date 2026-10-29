@@ -8,6 +8,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import { SurfaceHelp } from '../../../../../components/help/surface-help.tsx';
 import { isDev } from '../../../../../lib/env.ts';
 import {
   groupItems,
@@ -81,18 +82,21 @@ export default async function ObligationsPage({ params, searchParams }: Obligati
       );
   const initial = parseQueueParams(query);
   return (
-    <QueueView
-      workspaceId={context.workspace.id}
-      slug={slug}
-      items={items}
-      grouped={groupItems(items)}
-      defects={empty ? [] : defects}
-      copies={empty ? [] : copies}
-      options={options}
-      initial={initial}
-      canWrite={can(context.role, 'obligation.write')}
-      canTrack={can(context.role, 'obligation.track')}
-      forceOffline={preview === 'offline'}
-    />
+    <div className="flex flex-col gap-4">
+      <SurfaceHelp slug={slug} surface="obligations" />
+      <QueueView
+        workspaceId={context.workspace.id}
+        slug={slug}
+        items={items}
+        grouped={groupItems(items)}
+        defects={empty ? [] : defects}
+        copies={empty ? [] : copies}
+        options={options}
+        initial={initial}
+        canWrite={can(context.role, 'obligation.write')}
+        canTrack={can(context.role, 'obligation.track')}
+        forceOffline={preview === 'offline'}
+      />
+    </div>
   );
 }

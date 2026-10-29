@@ -1,0 +1,14 @@
+{
+  "$comment": "Machine-readable list of the services that may process customer data or serve the public site. apps/site/lib/legal.test.ts fails when an id here is missing from apps/site/content/legal/sub-processors.ts. Add the service here when infrastructure adopts it.",
+  "version": 1,
+  "services": [
+    { "id": "hosting-vps", "name": "Hosting provider (VPS, India region)" },
+    { "id": "cloudflare", "name": "Cloudflare" },
+    { "id": "aws-ses", "name": "Amazon Web Services: SES (ap-south-1)" },
+    { "id": "aws-bedrock", "name": "Amazon Web Services: Bedrock (India inference profile)" },
+    { "id": "sarvam", "name": "Sarvam" },
+    { "id": "indian-kanoon", "name": "Indian Kanoon" },
+    { "id": "razorpay", "name": "Razorpay" },
+    { "id": "sentry", "name": "Sentry" }
+  ]
+}

@@ -156,6 +156,32 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
 
   // Brief sharing (#507).
   brief_share: DB_TABLES_TEST,
+
+  // Client status links (#88).
+  status_link: DB_TABLES_TEST,
+  status_link_access: DB_TABLES_TEST,
+
+  // Client contacts (#82).
+  client_contact: DB_TABLES_TEST,
+
+  // Inbound enquiry log (#87).
+  enquiry: DB_TABLES_TEST,
+  enquiry_party: DB_TABLES_TEST,
+  conflict_check_result: DB_TABLES_TEST,
+  // Fees (#83).
+  fee_agreement: DB_TABLES_TEST,
+  fee_invoice: DB_TABLES_TEST,
+  fee_invoice_line: DB_TABLES_TEST,
+  payment: DB_TABLES_TEST,
+  client_ledger_entry: DB_TABLES_TEST,
+  // Proof-of-value (#86).
+  preparedness_rating: DB_TABLES_TEST,
+  load_pulse: DB_TABLES_TEST,
+  context_test_result: DB_TABLES_TEST,
+  pov_prefs: DB_TABLES_TEST,
+  // Limitation tracker (#84): rules are global-or-workspace; the reviewed-only read is in limitation-schema.test.ts.
+  limitation_rule: DB_TABLES_TEST,
+  limitation_computation: DB_TABLES_TEST,
   // Court-day reminders (#64).
   reminder_dispatch: DB_TABLES_TEST,
 
@@ -173,6 +199,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   import_batch: DB_TABLES_TEST,
   import_batch_file: DB_TABLES_TEST,
   import_plan: DB_TABLES_TEST,
+  // The chamber's saved spreadsheet column mapping (#778).
+  import_column_mapping: DB_TABLES_TEST,
 
   // Advocate identifiers for the bootstrap import (#57, #550).
   advocate_profile: DB_TABLES_TEST,
@@ -192,6 +220,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   whatsapp_link: DB_TABLES_TEST,
   whatsapp_otp_challenge: DB_TABLES_TEST,
   whatsapp_inbound_message: DB_TABLES_TEST,
+  // In-app help state (#94).
+  help_state: DB_TABLES_TEST,
+  // Onboarding wizard state (#92).
+  onboarding_state: DB_TABLES_TEST,
   // Lawyer memory (#72).
   memory_item: DB_TABLES_TEST,
   memory_proposal: DB_TABLES_TEST,
@@ -260,6 +292,60 @@ const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  // Proof-of-value (#86).
+  requirePovMember: denies,
+  requirePovRecorder: denies,
+  promptsEnabled: denies,
+  getPovPrefs: denies,
+  setPovPrefs: denies,
+  listPov: denies,
+  deleteOwnRating: denies,
+  povAggregate: denies,
+  // Practice insights (#85): B acting on A is denied; B in its own workspace sees none of A.
+  computePreparedKept: denies,
+  obligationHealth: denies,
+  preparednessSeries: denies,
+  loadSeries: denies,
+  getPracticeInsights: denies,
+  buildPovReport: denies,
+  shouldPrompt: denies,
+  recordPreparedness: denies,
+  recordSkip: denies,
+  dueForPulse: denies,
+  recordLoadPulse: denies,
+  dismissLoadPulse: denies,
+  startContextTest: denies,
+  answerQuestion: denies,
+  finishContextTest: denies,
+  // Fees (#83): flag-gated, owner and advocate only; B claiming A's workspace is refused and A is unchanged.
+  createFeeAgreement: denies,
+  updateFeeAgreement: denies,
+  setFeeAgreementStatus: denies,
+  getFeeAgreement: denies,
+  listFeeAgreements: denies,
+  prepareFeeInvoice: denies,
+  createDraftInvoice: denies,
+  updateDraftInvoice: denies,
+  discardDraftInvoice: denies,
+  issueInvoice: denies,
+  recordPayment: denies,
+  issueCreditNote: denies,
+  getFeeSupplierState: denies,
+  listFeeClients: denies,
+  setFeeSupplierState: denies,
+  getInvoice: denies,
+  listInvoices: denies,
+  recordClientExpense: denies,
+  recordClientReceipt: denies,
+  listLedger: denies,
+  getClientBalance: denies,
+  // Limitation tracker (#940): a root export of the flag-gated services; the domain also has its own
+  // cross-tenant case in limitation.test.ts.
+  loadRuleTable: denies,
+  listRules: denies,
+  computeLimitation: denies,
+  confirmLimitation: denies,
+  listLimitations: denies,
   // Stale-matter attention (#70).
   detectAttention: empty,
   countAttention: denies,
@@ -662,12 +748,24 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   upsertPerson: denies,
   setRoleEdge: denies,
   setSensitive: denies,
+  // people (#82): B reading, changing, linking or archiving A's client contacts is denied, A's
+  // contacts, their activity and role edges are unchanged; B's own list holds none of A's
+  listContacts: empty,
+  getContactDetail: denies,
+  createContact: denies,
+  updateContact: denies,
+  undoContactChange: denies,
+  linkToMatter: denies,
+  archiveContact: denies,
   // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
   getDocumentPreview: documentPreviewDenies,
   // business dashboard (#519): a non-staff user is refused by app_staff_business_snapshot
   staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
+  requestMemberSupport: denies,
+  dismissCoachmark: denies,
+  listDismissedCoachmarks: denies,
   grantSession: denies,
   denySession: denies,
   revokeSession: denies,
@@ -1075,6 +1173,24 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // Proof-of-value (#86): rules and constants.
+  decidePrompt: 'pure',
+  requireUuidInput: 'pure',
+  STANDARD_QUESTIONS: 'constant',
+  MAX_PROMPTS_PER_DAY: 'constant',
+  SKIP_STREAK: 'constant',
+  SKIP_PAUSE_DAYS: 'constant',
+  POV_REPORT_HEADER: 'constant',
+  BASELINE_DAYS: 'constant',
+  isoWeekIst: 'pure',
+  povIstDay: 'pure',
+  pulseWindowOpen: 'pure',
+  isBaseline: 'pure',
+  // Fees (#83): the refusal while the legal-gated flag is off is an error class.
+  FeesDisabledError: 'error class',
+  // Limitation tracker (#940): the date engine is pure; the refusal is an error class.
+  computeExpiry: 'pure',
+  NoReviewedRuleError: 'error class',
   // M5 playbook value codec (#901): pure conversion between a playbook and its memory value lines.
   playbookToValue: 'pure',
   playbookFromValue: 'pure',
@@ -1280,6 +1396,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   slugify: 'pure',
   SLUG_REDIRECT_DAYS: 'constant',
   INVITATION_TTL_MS: 'constant',
+  UNLINKED_AFTER_MS: 'constant',
   INVITE_RATE_LIMIT: 'constant',
   ACCEPT_RATE_LIMIT: 'constant',
   generateInvitationToken: 'pure (random bytes)',
@@ -1422,6 +1539,48 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
   NOTICES_POLL_CRON: 'constant',
   NOTICES_LIST_LIMIT: 'constant',
+  // status (#769): the public status snapshot; platform tables and public text only, no tenant data
+  COMPONENT_IDS: 'constant',
+  COMPONENT_STATES: 'constant',
+  INCIDENT_STATES: 'constant',
+  componentState: 'zod schema',
+  componentStatusSchema: 'zod schema',
+  incidentSchema: 'zod schema',
+  incidentUpdateSchema: 'zod schema',
+  statusSnapshotSchema: 'zod schema',
+  unsignedSnapshotSchema: 'zod schema',
+  COURT_COMPONENT_NAME: 'constant',
+  DEGRADED_SHARE: 'constant',
+  DOWN_FAILED_SHARE: 'constant',
+  INCIDENT_WINDOW_DAYS: 'constant',
+  MIN_RUNS_FOR_STATUS: 'constant',
+  REPUBLISH_AFTER_SEC: 'constant',
+  STALE_AFTER_SEC: 'constant',
+  STATUS_OBJECT_PATH: 'constant',
+  STATUS_PUBLISH_CRON: 'constant',
+  adapterState: 'pure',
+  worstState: 'pure',
+  courtState: 'pure',
+  canonicalStatusJson: 'pure',
+  signSnapshot: 'pure (HMAC over a supplied snapshot)',
+  verifySnapshot: 'pure',
+  isStale: 'pure',
+  sanitiseIncident: 'pure (allowlist projection of a supplied row)',
+  buildSnapshot:
+    'system code: reads only the platform incident tables (GLOBAL_TABLES) and the content-free adapter_health_summary view; no workspace, no tenant data',
+  publishStatus: 'system job body: see buildSnapshot; writes only the public status object',
+  runStatusPublish: 'system job body: see publishStatus',
+  statusPublish: 'job definition (handler is runStatusPublish)',
+  // status incidents (#770): staff-only writes to the platform incident tables (GLOBAL_TABLES), public text only
+  INCIDENT_SEVERITIES: 'constant',
+  INCIDENT_TEMPLATES: 'constant',
+  IncidentAdminError: 'error class',
+  asIncidentStaff: 'pure (builds the actor; createIncident checks staff_user in the transaction)',
+  createIncident:
+    'staff-only write to the platform incident tables (GLOBAL_TABLES, no tenant data); covered by status/incidents.test.ts',
+  addIncidentUpdate:
+    'staff-only write to the platform incident tables (GLOBAL_TABLES, no tenant data); covered by status/incidents.test.ts',
+  listIncidents: 'reads only the platform incident tables (GLOBAL_TABLES, no tenant data)',
   noticesPoll: 'job definition (handler is runNoticesPoll)',
   runNoticesPoll: 'system job body: see pollNotices',
   setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',
@@ -1576,6 +1735,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   webhookDeliverSchema: 'job payload schema',
   systemWebhookSweep: 'job definition (handler is runWebhookSweep)',
   runWebhookSweep: 'system job body: lists ids through app_webhook_delivery_due and enqueues',
+  // demo mode (#93)
+  demoReset: 'job definition (handler is runDemoReset)',
+  runDemoReset:
+    'system job body: finds the demo workspaces through app_demo_workspaces (ids and slugs only) and restores each in its own scope; the demo test proves the other workspaces are untouched',
   setCauseListFetcherFactory: 'setter (worker wires the governed fetcher, #482)',
   // public API keys (#624)
   API_KEY_SCOPES: 'constant',

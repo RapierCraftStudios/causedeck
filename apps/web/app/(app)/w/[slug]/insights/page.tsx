@@ -1,8 +1,9 @@
-// `/w/[slug]/insights` (#85): the practice insights dashboard, built around the Prepared & Kept
+// `/w/[slug]/insights` (#85, #966): the practice insights dashboard, built around the Prepared & Kept
 // rate, with obligation health, preparedness and load. Every figure is computed from this workspace
 // only; there is no benchmark, ranking or comparison across lawyers or workspaces, and no bench or
 // judge analytics. Owner and advocates see workspace totals, a junior only their own appearances,
-// clerk and viewer the denied state.
+// clerk and viewer the denied state. The `insights.enabled` flag is checked first: off, the route
+// is a plain 404 and the nav entry is hidden.
 //
 // States: loading (skeleton), error (`error.tsx`), empty, offline (banner, last computation) and
 // permission-denied. In development `?__state=loading|error|denied|offline` previews them.
@@ -12,6 +13,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { PermissionDeniedPage } from '../../../../../components/shell/permission-denied-page.tsx';
 import { isDev } from '../../../../../lib/env.ts';
+import { requireWorkspaceFlag } from '../../../../../lib/flags.ts';
 import { loadInsights, parseInsightsQuery } from '../../../../../lib/insights/insights-deps.ts';
 import { can } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
@@ -33,6 +35,7 @@ export default async function InsightsPage({ params, searchParams }: InsightsPag
   const [{ slug }, search] = await Promise.all([params, searchParams]);
   const context = await getWorkspaceContext(slug);
   if (!context) notFound();
+  await requireWorkspaceFlag('insights.enabled', context);
   if (!can(context.role, 'insights.read')) return <PermissionDeniedPage />;
 
   const state = isDev() ? search.__state : undefined;

@@ -79,7 +79,7 @@ export function PracticeReport({ slug, data, query, forceOffline = false }: Prac
           labels={{ message: () => t('offline', { when }) }}
         />
       )}
-      <RangePicker basePath={base} query={query} />
+      <RangePicker basePath={base} query={query} window={data.preparedKept.window} />
       <p className="text-ink-muted text-sm">
         {t('range.window', {
           from: formatDate(`${data.preparedKept.window.from}T12:00:00+05:30`, { locale }),

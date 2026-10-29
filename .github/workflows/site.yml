@@ -85,6 +85,10 @@ jobs:
           name: site-out
           path: apps/site/out
       # Budgets and the 0.95 category floors are in apps/site/lighthouserc.json.
+      # /status/ fetches status.json in the browser: sign a fresh all-operational snapshot into this
+      # job's copy of the export (never shipped; the build does not write it).
+      - name: Sign a status.json fixture for /status/
+        run: pnpm --filter @causedeck/site exec tsx scripts/write-lhci-status.ts out
       - name: Lighthouse CI
         working-directory: apps/site
         run: ../../e2e/node_modules/.bin/lhci autorun --config=lighthouserc.json

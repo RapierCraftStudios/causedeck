@@ -182,7 +182,8 @@ export const LimitationListProposeShortcut: Story = {
 
 export const LimitationListConfirmShortcut: Story = {
   play: async ({ canvas, args }) => {
-    await userEvent.tab();
+    // The first Tab stop is Propose a date; focus the first card (the proposal) directly.
+    canvas.getAllByRole('listitem')[0]?.focus();
     await expect(canvas.getAllByRole('listitem')[0]).toHaveFocus();
     await userEvent.keyboard('{Enter}');
     await expect(args.actions.confirm).toHaveBeenCalled();

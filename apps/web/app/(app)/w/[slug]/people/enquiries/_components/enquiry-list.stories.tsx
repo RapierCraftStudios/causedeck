@@ -139,11 +139,15 @@ export const EnquiryListNewShortcut: Story = {
   },
 };
 
-/** `j` moves onto the first row, `c` runs the check on the reviewed row. */
+/** `j` moves onto the first row and opens it for review, `c` runs the check on it. */
 export const EnquiryListCheckShortcut: Story = {
   play: async ({ canvas }) => {
     await userEvent.keyboard('j');
-    await userEvent.click(canvas.getAllByRole('button', { name: 'Review' })[0] as HTMLElement);
+    // `j` already selects the row: Review reads as pressed, and pressing it again would close it.
+    await expect(canvas.getAllByRole('button', { name: 'Review' })[0]).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     await userEvent.keyboard('c');
     // The review sheet renders in a portal outside the story canvas.
     const page = within(document.body);

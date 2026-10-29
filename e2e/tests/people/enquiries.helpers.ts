@@ -78,6 +78,16 @@ export async function enableEnquiryLog(database: string): Promise<void> {
   }
 }
 
+/**
+ * Drop the web server's flag cache. The worker's server outlives the per-test database reset, which
+ * fires no `flag_changed`, so a flag an earlier spec turned on would still read as on for 15 s.
+ */
+export function dropFlagCache(database: string): Promise<void> {
+  return withSql(database, async (sql) => {
+    await sql`select pg_notify('flag_changed', 'intake.enquiry_log')`;
+  });
+}
+
 /** Remove every enquiry of the fixture workspace (parties and check results go with them). */
 export function emptyEnquiries(database: string): Promise<void> {
   return withSql(database, async (sql) => {
@@ -85,7 +95,7 @@ export function emptyEnquiries(database: string): Promise<void> {
   });
 }
 
-/** Seed the three enquiries (logged, checked, declined). Idempotent. */
+/** Seed the three enquiries (logged, checked, declined), each with its client party. Idempotent. */
 export async function seedEnquiries(database: string): Promise<void> {
   await emptyEnquiries(database);
   await withSql(database, async (sql) => {
@@ -95,6 +105,10 @@ export async function seedEnquiries(database: string): Promise<void> {
           closed_at, closed_reason)
         values (${e.id}, ${COURTS_WORKSPACE_ID}, ${e.status}, ${e.channel}, ${e.name}, ${e.summary},
                 '2026-10-19T09:00:00Z', null, null)`;
+      // A conflict check needs the parties to check; the enquirer is the client.
+      await sql`
+        insert into enquiry_party (enquiry_id, workspace_id, name, side)
+        values (${e.id}, ${COURTS_WORKSPACE_ID}, ${e.name}, 'client')`;
     }
   });
 }

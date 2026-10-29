@@ -120,7 +120,7 @@ test.describe('people contacts', () => {
     await expect(error.getByRole('button', { name: 'Retry' })).toBeVisible();
 
     await page.goto(url(peoplePath(undefined, '__state=denied')));
-    await expect(page.getByText(/permission/i).first()).toBeVisible();
+    await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText('No access');
   });
 
   test('states: offline disables New contact and shows the banner', async ({

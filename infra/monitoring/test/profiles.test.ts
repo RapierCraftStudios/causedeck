@@ -112,3 +112,13 @@ describe('core delivers every alert rule', () => {
     assert.ok(jobs.includes('cadvisor'));
   });
 });
+
+describe('alertmanager', () => {
+  it('can write its rendered config: /tmp is a tmpfs on a read-only root', () => {
+    const block = compose.slice(compose.indexOf('\n  alertmanager:\n'));
+    const end = block.indexOf('\n  loki:');
+    const alertmanager = block.slice(0, end === -1 ? undefined : end);
+    assert.match(alertmanager, /read_only: true/);
+    assert.match(alertmanager, /tmpfs:\n\s+- \/tmp/);
+  });
+});

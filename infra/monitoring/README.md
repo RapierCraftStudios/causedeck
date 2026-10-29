@@ -31,6 +31,8 @@ and `RestoreDrillFailed` (#792). Differences from `full`:
 - `prometheus.core.yml` omits the Loki and collector scrape jobs (those services do not exist in `core`).
 - cAdvisor stays in `core` (192 MB) because `DatabaseCpuHigh` reads container CPU; without it that rule would
   never fire. This is the one deviation from "cAdvisor is full-only".
+- Compose interpolates every service, so the env file must still define `LOKI_S3_ACCESS_KEY`, `LOKI_S3_SECRET_KEY` and
+  `GRAFANA_ADMIN_PASSWORD` on `core` hosts (any placeholder; nothing reads them there).
 - No Grafana: use Prometheus on `127.0.0.1:9090` (SSH tunnel) until the host moves to `full`.
 
 | Piece                | Role                                                                        | Config                         |

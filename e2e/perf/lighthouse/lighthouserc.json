@@ -1,0 +1,53 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "http://localhost:3100/sign-in",
+        "http://localhost:3100/w/chennai-solo/today",
+        "http://localhost:3100/w/chennai-solo/briefs",
+        "http://localhost:3100/w/chennai-solo/obligations",
+        "http://localhost:3200/",
+        "http://localhost:3200/pricing/",
+        "http://localhost:3200/status/"
+      ],
+      "numberOfRuns": 3,
+      "settings": {
+        "formFactor": "mobile",
+        "screenEmulation": {
+          "mobile": true,
+          "width": 412,
+          "height": 823,
+          "deviceScaleFactor": 1.75,
+          "disabled": false
+        },
+        "chromeFlags": "--no-sandbox --headless=new"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": [
+          "error",
+          {
+            "minScore": 0.95
+          }
+        ],
+        "categories:accessibility": [
+          "error",
+          {
+            "minScore": 0.95
+          }
+        ],
+        "interactive": [
+          "error",
+          {
+            "maxNumericValue": 2500
+          }
+        ]
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci/perf-mobile"
+    }
+  }
+}

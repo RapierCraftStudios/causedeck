@@ -49,3 +49,6 @@ infra/terraform/envs/*/backend.tf
 # Tool state, never committed: ForgeDock lane scratch and ESLint caches (lanes kept committing them; they conflicted in every base merge).
 .forge-lean/
 .eslintcache
+
+# k6 summaries and perf run output (#105)
+e2e/perf/results/

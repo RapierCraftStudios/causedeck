@@ -1,0 +1,6 @@
+{
+  "route": "/w/[slug]/today",
+  "manifest": "server/app/(app)/w/[slug]/today/page_client-reference-manifest.js",
+  "budgetBytes": 184320,
+  "baseline": {}
+}

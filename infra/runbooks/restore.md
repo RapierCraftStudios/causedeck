@@ -73,11 +73,26 @@ Backups are encrypted client-side with WAL-G libsodium. Without the key, `wal-pu
 
 ## Alert thresholds (wired by #102)
 
-`system.backup.health` exposes `walg_last_archive_age_seconds`, `walg_last_backup_age_seconds`,
-`restore_drill_last_success_timestamp`, `restore_drill_rto_seconds` and logs an error with
-`backup_alert=true` per breach. Page within 10 minutes on: archive age > 300 s, base backup older
-than 26 h or failed, replication failed, last drill failed, RPO > 900 s, RTO > 14 400 s, no
-successful drill in 8 days.
+`system.backup.health` runs every minute, exposes `walg_last_archive_age_seconds`,
+`walg_last_backup_age_seconds`, `walg_last_backup_ok`, `restore_drill_last_success_timestamp`,
+`restore_drill_rto_seconds` and `restore_drill_last_ok` (`-1` means unknown or report missing), and
+logs an error with `backup_alert=true` per breach. The Prometheus rules in
+`infra/monitoring/prometheus/rules/alerts.yml` (group `backups`, also in the lean `core` profile)
+page on the same metrics:
+
+| Alert                   | Condition                                            | Priority |
+| ----------------------- | ---------------------------------------------------- | -------- |
+| `BackupWalStale`        | archive age > 300 s or unknown                       | P0       |
+| `BackupBaseStale`       | base backup older than 26 h or unknown               | P1       |
+| `BackupFailed`          | last base backup run failed                          | P1       |
+| `RestoreDrillFailed`    | last drill failed                                    | P1       |
+| `RestoreDrillRtoBreach` | drill RTO > 14 400 s                                 | P1       |
+| `RestoreDrillStale`     | no successful drill in 8 days                        | P1       |
+| `BackupMetricsAbsent`   | no backup metrics for 5 minutes (worker not running) | P1       |
+
+Timing budget: job every 60 s + scrape 30 s + `for` 2 m (5 m for absent) + Alertmanager
+`group_wait` 10 s, so a failure pages within about 4 minutes, inside the 10 minute target.
+Replication failure and RPO > 900 s are logged by the job (`backup_alert=true`) only.
 
 ## Steps
 

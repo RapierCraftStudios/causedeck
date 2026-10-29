@@ -12,6 +12,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, getSessionFromCtx, isAPIError } from 'better-auth/api';
 import { magicLink, organization, phoneNumber, twoFactor } from 'better-auth/plugins';
 
+import { DEMO_SIGN_IN_LIMIT, DEMO_SIGN_IN_PATH, demoSignIn, type DemoEntry } from './demo-provider';
 import { DEV_SIGN_IN_PATH, devSignIn } from './dev-provider';
 import { consoleLogger, type AuthLogger, type Mailer } from './mailer';
 import { AUTH_EMAIL_KEYS, toAuthLocale } from './messages';
@@ -124,6 +125,8 @@ export interface CreateAuthDeps {
   sessionExpiresInSeconds?: number;
   /** When true, magic-link sign-in never creates a user (the admin console, #309). */
   disableSignUp?: boolean;
+  /** Mounts `POST /demo/sign-in` (#93): a session for an ephemeral demo-workspace visitor. */
+  demo?: DemoEntry;
 }
 
 /** Refresh age for a session lifetime: a day, or a quarter of a shorter lifetime. */
@@ -343,6 +346,7 @@ export function createAuth({
   securityEvents = noopSecurityEventRecorder,
   sessionExpiresInSeconds = SESSION_EXPIRES_IN_SECONDS,
   disableSignUp = false,
+  demo,
 }: CreateAuthDeps) {
   const appUrl = new URL(env.APP_URL);
   const isProduction = env.NODE_ENV === 'production';
@@ -493,6 +497,14 @@ export function createAuth({
       enabled: true,
       storage: 'database',
       customRules: {
+        ...(demo
+          ? {
+              [DEMO_SIGN_IN_PATH]: {
+                window: DEMO_SIGN_IN_LIMIT.windowSeconds,
+                max: DEMO_SIGN_IN_LIMIT.max,
+              },
+            }
+          : {}),
         [MAGIC_LINK_PATH]: {
           window: MAGIC_LINK_IP_LIMIT.windowSeconds,
           max: MAGIC_LINK_IP_LIMIT.max,
@@ -667,7 +679,7 @@ export function createAuth({
         },
       },
     },
-    plugins: [...plugins, ...devPlugins],
+    plugins: [...plugins, ...devPlugins, ...(demo ? [demoSignIn(demo)] : [])],
   });
 }
 

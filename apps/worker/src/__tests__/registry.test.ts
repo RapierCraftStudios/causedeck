@@ -144,6 +144,7 @@ describe('enqueue', () => {
       'system.audit.retention',
       'system.enquiry.retention',
       'system.status-link.retention',
+      'system.demo.reset',
       'export.build',
       'drafting.export',
       'drafting.citations.check',

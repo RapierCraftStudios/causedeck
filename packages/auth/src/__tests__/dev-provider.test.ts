@@ -64,10 +64,15 @@ describe('dev sign-in provider', () => {
   it('is absent from the production bundle and present in the development one', async () => {
     const production = await bundleServer('production');
     const development = await bundleServer('development');
-    for (const marker of ['dev-sign-in', '/dev/sign-in', 'createSession']) {
+    for (const marker of ['dev-sign-in', '/dev/sign-in']) {
       expect(production, marker).not.toContain(marker);
     }
     expect(development).toContain('dev-sign-in');
     expect(development).toContain('/dev/sign-in');
+    // The demo sign-in (#93) mints sessions in production by design; the dev provider is the only
+    // other credential-free minting path and must add exactly one call, in development only.
+    const mints = (bundle: string) => bundle.match(/\.createSession\(/g)?.length ?? 0;
+    expect(mints(production), 'production createSession calls').toBe(1);
+    expect(mints(development), 'development createSession calls').toBe(2);
   });
 });

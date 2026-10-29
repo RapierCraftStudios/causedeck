@@ -22,6 +22,7 @@ import { and, eq, notInArray } from 'drizzle-orm';
 
 import { record } from '../audit/index.ts';
 import { invalid, notFound } from '../shared/errors.ts';
+import { assertNotDemoWorkspace } from '../shared/demo-guard.ts';
 import { invalidateEntitlements } from './entitlements.ts';
 
 const { subscription } = schema;
@@ -77,6 +78,8 @@ export async function changeSubscription(
   change: SubscriptionChange,
 ): Promise<SubscriptionChangeResult> {
   const { tx, workspaceId } = ctx;
+  // A demo workspace has no billing (#93): nothing reaches the payment provider.
+  await assertNotDemoWorkspace(tx, workspaceId);
   const { row, snapshot } = await lockLiveSubscription(tx, workspaceId);
   const service = await ctx.service(row);
   const result = await (() => {

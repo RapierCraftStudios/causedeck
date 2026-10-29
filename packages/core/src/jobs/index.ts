@@ -178,6 +178,7 @@ export {
   type StatusFetcherFactory,
   type StatusPollDeps,
 } from './definitions/status-poll.ts';
+export { demoReset, runDemoReset, type DemoResetReport } from './definitions/demo-reset.ts';
 export {
   runWebhookDeliver,
   webhookDeliver,

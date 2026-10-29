@@ -60,6 +60,8 @@ export const workspaceSettings = pgTable(
       .default({}),
     /** Chamber onboarding (#92): the chamber's default brief layout, `short` or `full`. */
     briefFormat: text('brief_format').notNull().default('full'),
+    /** The seed version (`DEMO_VERSION`) a demo workspace was last restored to (#93); null elsewhere. */
+    demoVersion: text('demo_version'),
     ...timestamps(),
   },
   (t) => [

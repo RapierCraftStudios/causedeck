@@ -17,7 +17,7 @@ import { createDb, type Database, type Transaction } from '../client.ts';
 import { MIGRATIONS_FOLDER, runMigrations } from '../migrate.ts';
 import { createOwnerDb } from '../owner.ts';
 import { withUser, withWorkspace } from '../rls.ts';
-import { organization, user } from '../schema/auth.ts';
+import { user } from '../schema/auth.ts';
 import { createScratchDatabase, testDatabaseUrls, withTestDb } from '../testing/index.ts';
 import { newUser, sqlState } from './rls/fixtures.ts';
 
@@ -61,7 +61,11 @@ const accountChain = (tx: Queryable, from: Date) =>
 async function workspaceWith(tx: Transaction, userId: string): Promise<string> {
   const id = randomUUID();
   await withWorkspace(tx, { workspaceId: id }, (s) =>
-    s.insert(organization).values({ id, name: 'Chambers', slug: `anon-${id}` }),
+    // Raw SQL: the 0031 re-chain tests run on a database migrated only that far, before later
+    // organization columns (e.g. is_demo) exist, so the current schema's insert would fail.
+    s.execute(
+      sql`insert into organization (id, name, slug) values (${id}, 'Chambers', ${`anon-${id}`})`,
+    ),
   );
   await withWorkspace(tx, { workspaceId: id }, (s) => append(s, id, userId, 'test.ws.first'));
   return id;

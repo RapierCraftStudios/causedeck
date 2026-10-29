@@ -1732,6 +1732,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   webhookDeliverSchema: 'job payload schema',
   systemWebhookSweep: 'job definition (handler is runWebhookSweep)',
   runWebhookSweep: 'system job body: lists ids through app_webhook_delivery_due and enqueues',
+  // demo mode (#93)
+  demoReset: 'job definition (handler is runDemoReset)',
+  runDemoReset:
+    'system job body: finds the demo workspaces through app_demo_workspaces (ids and slugs only) and restores each in its own scope; the demo test proves the other workspaces are untouched',
   setCauseListFetcherFactory: 'setter (worker wires the governed fetcher, #482)',
   // public API keys (#624)
   API_KEY_SCOPES: 'constant',

@@ -278,6 +278,23 @@ export type Messages = {
     demoBanner: {
       label: string;
       hint: string;
+      leave: string;
+      start: string;
+    };
+    demoEntry: {
+      metaTitle: string;
+      title: string;
+      intro: string;
+      chennaiTitle: string;
+      chennaiDescription: string;
+      bengaluruTitle: string;
+      bengaluruDescription: string;
+      enter: string;
+      loading: string;
+      unavailable: string;
+      error: string;
+      busy: string;
+      back: string;
     };
   };
   auth: {

@@ -6,6 +6,7 @@ import {
   DEMO_WORKSPACE_SLUG,
   InviteInput,
   isDemoWorkspaceSlug,
+  isReservedSlug,
   RESERVED_SLUGS,
   RotateIntegrationTokenInput,
   Slug,
@@ -93,8 +94,17 @@ describe('Slug', () => {
     expect(Slug.safeParse('demo').success).toBe(false);
     expect(isDemoWorkspaceSlug('demo')).toBe(true);
     expect(isDemoWorkspaceSlug('DEMO')).toBe(true);
-    expect(isDemoWorkspaceSlug('Demo-x')).toBe(false);
     expect(isDemoWorkspaceSlug('chennai-solo')).toBe(false);
+    expect(isDemoWorkspaceSlug('demonstrations')).toBe(false);
+  });
+
+  it('reserves every demo- slug for the sample workspaces (#93)', () => {
+    for (const slug of ['demo-chennai-solo', 'demo-bengaluru-chamber', 'Demo-x']) {
+      expect(isDemoWorkspaceSlug(slug), slug).toBe(true);
+      expect(isReservedSlug(slug), slug).toBe(true);
+      expect(Slug.safeParse(slug.toLowerCase()).success, slug).toBe(false);
+    }
+    expect(Slug.safeParse('demonstrations').success).toBe(true);
   });
 });
 

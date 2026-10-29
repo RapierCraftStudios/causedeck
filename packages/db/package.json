@@ -17,6 +17,7 @@
     "./seed/brief-fixtures": "./src/seed/brief-fixtures.ts",
     "./seed/forum-catalogue": "./src/seed/forum-catalogue/index.ts",
     "./seed/plans": "./src/seed/plans.ts",
+    "./seed/demo": "./src/seed/demo/index.ts",
     "./seed/system-templates": "./src/seed/system-templates.ts",
     "./seed/synthetic": "./src/seed/synthetic/index.ts",
     "./testing": "./src/testing/index.ts",

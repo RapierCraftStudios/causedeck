@@ -292,6 +292,12 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'The cooling-off ended and erasure of the workspace started',
   },
+  // A demo workspace was restored to the seed (#93). Metadata holds the seed version, counts and the
+  // elapsed milliseconds only.
+  'demo.reset': {
+    security: false,
+    description: 'A demo workspace was restored to its seed version',
+  },
   // Metadata names the changed fields only, never their values (#284).
   'workspace.profile_updated': {
     security: false,

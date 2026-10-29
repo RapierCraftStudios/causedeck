@@ -5820,7 +5820,22 @@
     "onboarding.shortcuts.next": "draft",
     "onboarding.shortcuts.back": "draft",
     "onboarding.shortcuts.open": "draft",
-    "onboarding.import.continueEmpty": "draft"
+    "onboarding.import.continueEmpty": "draft",
+    "shell.demoBanner.leave": "draft",
+    "shell.demoBanner.start": "draft",
+    "shell.demoEntry.metaTitle": "draft",
+    "shell.demoEntry.title": "draft",
+    "shell.demoEntry.intro": "draft",
+    "shell.demoEntry.chennaiTitle": "draft",
+    "shell.demoEntry.chennaiDescription": "draft",
+    "shell.demoEntry.bengaluruTitle": "draft",
+    "shell.demoEntry.bengaluruDescription": "draft",
+    "shell.demoEntry.enter": "draft",
+    "shell.demoEntry.loading": "draft",
+    "shell.demoEntry.unavailable": "draft",
+    "shell.demoEntry.error": "draft",
+    "shell.demoEntry.busy": "draft",
+    "shell.demoEntry.back": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -11184,6 +11199,21 @@
     "onboarding.shortcuts.next": "draft",
     "onboarding.shortcuts.back": "draft",
     "onboarding.shortcuts.open": "draft",
-    "onboarding.import.continueEmpty": "draft"
+    "onboarding.import.continueEmpty": "draft",
+    "shell.demoBanner.leave": "draft",
+    "shell.demoBanner.start": "draft",
+    "shell.demoEntry.metaTitle": "draft",
+    "shell.demoEntry.title": "draft",
+    "shell.demoEntry.intro": "draft",
+    "shell.demoEntry.chennaiTitle": "draft",
+    "shell.demoEntry.chennaiDescription": "draft",
+    "shell.demoEntry.bengaluruTitle": "draft",
+    "shell.demoEntry.bengaluruDescription": "draft",
+    "shell.demoEntry.enter": "draft",
+    "shell.demoEntry.loading": "draft",
+    "shell.demoEntry.unavailable": "draft",
+    "shell.demoEntry.error": "draft",
+    "shell.demoEntry.busy": "draft",
+    "shell.demoEntry.back": "draft"
   }
 }

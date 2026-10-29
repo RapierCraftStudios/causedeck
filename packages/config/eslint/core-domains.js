@@ -98,6 +98,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The enquiry log (#87): the flag-gated enquiry services over the conflict check, the automation
   // engine's `new_matter` proposals, audit events and membership roles.
   intake: Object.freeze(['audit', 'automation', 'conflicts', 'workspaces']),
+  // Demo mode (#93): enter and reset the two sample workspaces; the reset audits through audit. The
+  // `is_demo` guard other domains call lives in `shared`, so they never import this domain.
+  demo: Object.freeze(['audit']),
   // Client status links (#88, ADR 0050): flag-gated authored links; prefill reads an outward draft through its index.
   'status-links': Object.freeze(['workspaces', 'audit', 'outward']),
   // Fees (#83, ADR 0048): the member's role through workspaces, events through audit, automation-origin
@@ -250,6 +253,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'webhooks',
     'status',
     'status-links',
+    'demo',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

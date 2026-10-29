@@ -86,6 +86,7 @@ export async function resolveStatusLink(
   ) {
     return { state: 'unavailable' };
   }
+  // nosemgrep: infra.security.semgrep.causedeck.raw-sql-bypasses-with-workspace -- public token-resolved view; no workspace until the SECURITY DEFINER function resolves the link
   await db.execute(
     sql`select app_status_link_record_view(${row.id}::uuid, ${classifyUserAgent(input.userAgent)})`,
   );

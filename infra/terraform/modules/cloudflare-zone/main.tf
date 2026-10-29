@@ -33,7 +33,7 @@ resource "cloudflare_dns_record" "app_hosts_a" {
 }
 
 resource "cloudflare_dns_record" "app_hosts_aaaa" {
-  for_each = var.vps_ipv6 == "" ? toset([]) : local.app_hosts
+  for_each = var.enable_ipv6 ? local.app_hosts : toset([])
 
   zone_id = cloudflare_zone.this.id
   name    = "${each.value}.${var.domain}"

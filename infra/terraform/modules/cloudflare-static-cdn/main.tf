@@ -17,7 +17,7 @@ resource "cloudflare_dns_record" "static" {
 }
 
 resource "cloudflare_dns_record" "static_aaaa" {
-  for_each = var.origin_ipv6 == "" ? toset([]) : toset(["static"])
+  for_each = var.enable_ipv6 ? toset(["static"]) : toset([])
 
   zone_id = var.zone_id
   name    = local.host

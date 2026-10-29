@@ -30,6 +30,7 @@ export default function HomePage() {
       <CourtsSection />
       <Faq />
       <CtaBand signInHref={href} />
+      {/* nosemgrep: infra.security.semgrep.causedeck.unsafe-html-injection -- JSON-LD from static first-party data, no user input */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd()) }}

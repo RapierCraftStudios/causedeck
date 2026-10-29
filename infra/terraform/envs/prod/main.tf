@@ -80,6 +80,7 @@ module "zone" {
   account_id             = var.cloudflare_account_id
   vps_ipv4               = local.vps_ipv4
   vps_ipv6               = local.vps_ipv6
+  enable_ipv6            = true # both VPS modules are dualstack
   app_proxied            = var.app_proxied
   residency_decision_ref = var.residency_decision_ref
   site_label             = var.site_label
@@ -97,6 +98,7 @@ module "static_cdn" {
   domain      = var.domain
   origin_ipv4 = local.vps_ipv4
   origin_ipv6 = local.vps_ipv6
+  enable_ipv6 = true # both VPS modules are dualstack
 }
 
 module "access" {

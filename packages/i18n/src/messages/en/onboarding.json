@@ -148,11 +148,11 @@
       "languagesHint": "Names and notes can be typed in English, Tamil or Kannada.",
       "languages": {
         "en": "English",
-        "ta": "Tamil (தமிழ்)",
-        "kn": "Kannada (ಕನ್ನಡ)",
-        "hi": "Hindi (हिन्दी)",
-        "te": "Telugu (తెలుగు)",
-        "ml": "Malayalam (മലയാളം)"
+        "ta": "Tamil",
+        "kn": "Kannada",
+        "hi": "Hindi",
+        "te": "Telugu",
+        "ml": "Malayalam"
       },
       "errors": {
         "summary": "Fix the highlighted fields to continue.",

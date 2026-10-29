@@ -28,6 +28,22 @@ import { StepActions } from './step-actions.tsx';
 import type { StepScope } from './steps.ts';
 import { useStepSubmit } from './use-step-submit.ts';
 
+// Each language also shows its own name in its own script. Kept out of the catalogs: the
+// English catalog must stay free of Indic script, and an endonym is not a translation.
+const ENDONYMS: Record<(typeof WORKING_LANGUAGE_VALUES)[number], string> = {
+  en: 'English',
+  ta: 'தமிழ்',
+  kn: 'ಕನ್ನಡ',
+  hi: 'हिन्दी',
+  te: 'తెలుగు',
+  ml: 'മലയാളം',
+};
+
+function withEndonym(label: string, value: (typeof WORKING_LANGUAGE_VALUES)[number]): string {
+  const endonym = ENDONYMS[value];
+  return label.includes(endonym) ? label : `${label} (${endonym})`;
+}
+
 type FieldKey = 'enrolment' | 'barCouncil' | 'practiceAreas' | 'languages';
 
 export interface ProfileFormProps {
@@ -138,7 +154,7 @@ export function ProfileForm({ scope, initial }: ProfileFormProps) {
         error={errors.languages ? t('errors.languages') : undefined}
         options={WORKING_LANGUAGE_VALUES.map((value) => ({
           value,
-          label: t(`languages.${value}`),
+          label: withEndonym(t(`languages.${value}`), value),
         }))}
         selected={languages}
         onToggle={(value) => {

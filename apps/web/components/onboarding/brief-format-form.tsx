@@ -53,7 +53,7 @@ export function BriefFormatForm({
               hint={t(`${value}Hint`)}
               className="min-h-11"
             >
-              <RadioGroupItem value={value} />
+              <RadioGroupItem value={value} aria-label={t(value)} />
             </Field>
           ))}
         </RadioGroup>

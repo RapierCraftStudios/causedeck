@@ -66,7 +66,7 @@ export function DelegationForm({
               label={t(`capacity.${capacity}`)}
               className="min-h-11"
             >
-              <RadioGroupItem value={capacity} />
+              <RadioGroupItem value={capacity} aria-label={t(`capacity.${capacity}`)} />
             </Field>
           ))}
         </RadioGroup>

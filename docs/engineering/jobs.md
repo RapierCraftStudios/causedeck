@@ -126,7 +126,8 @@ schedules: `system.audit.verify` daily at 02:00 IST, `system.audit.retention` da
 `system.billing.dunning-tick` daily at 04:30 IST, `system.notification.digest` every half hour and
 `system.backup.health` every minute (#101: reads the backup status reports from the ops bucket,
 exposes `walg_last_archive_age_seconds`, `walg_last_backup_age_seconds`,
-`restore_drill_last_success_timestamp` and `restore_drill_rto_seconds`, and logs `backup_alert`
+`restore_drill_last_success_timestamp`, `restore_drill_rto_seconds`, `walg_last_backup_ok` and
+`restore_drill_last_ok` (1 ok, 0 failed, -1 unknown; alerted by `infra/monitoring`), and logs `backup_alert`
 errors for stale WAL, failed backups, failed drills and RPO/RTO breaches; needs `BACKUP_OPS_*`).
 
 ## Notification jobs

@@ -2,8 +2,9 @@
 # info. `priority` is P0 or P1 and selects the on-call route. Metric names:
 #   http_server_duration_milliseconds_*   OTel HTTP server histogram (packages/observability)
 #   causedeck_queue_lag_seconds, causedeck_queue_dead_letter_total   worker queues
-#   causedeck_backup_wal_age_seconds, causedeck_backup_base_age_seconds,
-#   causedeck_backup_restore_drill_success                            backups (#101)
+#   walg_last_archive_age_seconds, walg_last_backup_age_seconds, walg_last_backup_ok,
+#   restore_drill_last_success_timestamp, restore_drill_rto_seconds,
+#   restore_drill_last_ok                                             backups (#101)
 #   causedeck_db_pool_wait_seconds, causedeck_db_idle_in_transaction_max_seconds,
 #   causedeck_db_pool_probe_errors_total                               app DB pools (#805)
 #   adapter_parse_success_ratio, adapter_last_success_timestamp        court adapters
@@ -104,23 +105,52 @@ groups:
         annotations:
           summary: 'Cannot get a database connection (pool {{ $labels.pool }}): connect timeout or database down'
   - name: backups
+    # system.backup.health runs every minute and the scrape is 30s; `for` keeps the end-to-end
+    # delay (job + scrape + for + group_wait 10s) under the 10 minutes R9 allows. A value of -1 means
+    # the report is missing or unreadable and is treated as stale or unknown, never as healthy.
     rules:
       - alert: BackupWalStale
-        expr: max(causedeck_backup_wal_age_seconds) > 300
+        expr: max(walg_last_archive_age_seconds) < 0 or max(walg_last_archive_age_seconds) > 300
         for: 2m
         labels: { severity: page, priority: P0 }
         annotations:
           summary: 'Newest archived WAL segment is older than 5 minutes'
       - alert: BackupBaseStale
-        expr: max(causedeck_backup_base_age_seconds) > 26 * 3600
+        expr: max(walg_last_backup_age_seconds) < 0 or max(walg_last_backup_age_seconds) > 26 * 3600
+        for: 2m
         labels: { severity: page, priority: P1 }
         annotations:
           summary: 'Newest base backup is older than 26 hours'
+      - alert: BackupFailed
+        expr: min(walg_last_backup_ok) == 0
+        for: 2m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'The last base backup run failed'
       - alert: RestoreDrillFailed
-        expr: min(causedeck_backup_restore_drill_success) == 0
+        expr: min(restore_drill_last_ok) == 0
+        for: 2m
         labels: { severity: page, priority: P1 }
         annotations:
           summary: 'The last automated restore drill failed'
+      - alert: RestoreDrillRtoBreach
+        expr: max(restore_drill_rto_seconds) > 14400
+        for: 2m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'The last restore drill took longer than the 4 hour RTO'
+      - alert: RestoreDrillStale
+        expr: time() - min(restore_drill_last_success_timestamp) > 8 * 86400
+        for: 2m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'No successful restore drill in the last 8 days'
+      - alert: BackupMetricsAbsent
+        expr: absent(walg_last_archive_age_seconds)
+        for: 5m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'system.backup.health is not reporting backup metrics'
   - name: time
     rules:
       # CERT-In requires accurate timestamps: the host clock must stay within 1 s of NTP.

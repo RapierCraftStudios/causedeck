@@ -41,7 +41,13 @@ export interface BackupMetrics {
   walg_last_backup_age_seconds: number;
   restore_drill_last_success_timestamp: number;
   restore_drill_rto_seconds: number;
+  /** 1 when the last base backup run succeeded, 0 when it failed, -1 when unknown. */
+  walg_last_backup_ok: number;
+  /** 1 when the last restore drill passed, 0 when it failed, -1 when unknown. */
+  restore_drill_last_ok: number;
 }
+
+const okGauge = (ok: boolean | undefined): number => (ok === undefined ? -1 : ok ? 1 : 0);
 
 export interface BackupHealth {
   metrics: BackupMetrics;
@@ -102,6 +108,8 @@ export function evaluateBackupHealth(reports: BackupReports, now: Date): BackupH
         ? 0
         : Math.floor(lastSuccess / 1000),
       restore_drill_rto_seconds: drillLastSuccess?.rtoSeconds ?? drillLatest?.rtoSeconds ?? -1,
+      walg_last_backup_ok: okGauge(basebackup?.ok),
+      restore_drill_last_ok: okGauge(drillLatest?.ok),
     },
   };
 }
@@ -212,6 +220,8 @@ function registerGauges(): void {
     'walg_last_backup_age_seconds',
     'restore_drill_last_success_timestamp',
     'restore_drill_rto_seconds',
+    'walg_last_backup_ok',
+    'restore_drill_last_ok',
   ];
   for (const name of names) {
     m.createObservableGauge(name).addCallback((result) => {

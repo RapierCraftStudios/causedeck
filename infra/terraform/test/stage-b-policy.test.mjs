@@ -330,3 +330,79 @@ describe('nothing applies automatically', () => {
     assert.doesNotMatch(all, /access_key|secret_key/);
   });
 });
+
+describe('OVH Stage B root (#887)', () => {
+  const root = (f) => read('envs', 'stage-b-ovh', f);
+  const wf = readFileSync(
+    path.join(tf, '..', '..', '.github', 'workflows', 'terraform.yml'),
+    'utf8',
+  );
+
+  it('orders a db primary, a db replica and N app nodes through the OVH module only', () => {
+    const main = root('main.tf');
+    const mods = blocks(main, 'module');
+    assert.deepEqual(mods.map((m) => m.labels[0]).sort(), ['app', 'db_primary', 'db_replica']);
+    for (const m of mods)
+      assert.match(m.body, /source\s*=\s*"\.\.\/\.\.\/modules\/vps-ovh-mumbai"/);
+    assert.match(main, /provider "ovh" \{\}/);
+  });
+
+  it('keeps for_each keys plan-time known: derived from a variable only', () => {
+    const main = root('main.tf');
+    assert.match(main, /for_each\s*=\s*local\.app_nodes/);
+    assert.match(
+      main,
+      /app_nodes\s*=\s*toset\(\[for i in range\(var\.app_node_count\) : tostring\(i \+ 1\)\]\)/,
+    );
+    assert.doesNotMatch(main, /for_each\s*=\s*[^\n]*module\./);
+  });
+
+  it('every node uses the YNM-only datacenter variable; nothing hardcodes another datacenter', () => {
+    const main = root('main.tf');
+    const dcs = [...main.matchAll(/datacenter\s*=\s*(\S+)/g)].map((m) => m[1]);
+    assert.equal(dcs.length, 3);
+    for (const d of dcs) assert.equal(d, 'var.vps_datacenter');
+    const v = variable(root('variables.tf'), 'vps_datacenter').body;
+    assert.match(v, /default\s*=\s*"YNM"/);
+    assert.match(v, /contains\(\["YNM"\], var\.vps_datacenter\)/);
+    assert.doesNotMatch(main, /"(GRA|SBG|RBX|WAW|BHS|SGP|SYD)"/);
+  });
+
+  it('needs at least two app nodes', () => {
+    const v = variable(root('variables.tf'), 'app_node_count').body;
+    assert.match(v, /default\s*=\s*2/);
+    assert.match(v, /var\.app_node_count >= 2/);
+  });
+
+  it('commits no backend and no credentials, and the example holds none', () => {
+    const all = files(path.join(tf, 'envs', 'stage-b-ovh'))
+      .map((f) => readFileSync(f, 'utf8'))
+      .join('\n');
+    assert.doesNotMatch(
+      all,
+      /backend\s+"|access_key|secret_key|application_(key|secret)\s*=|consumer_key\s*=/,
+    );
+    assert.doesNotMatch(
+      root('terraform.tfvars.example'),
+      /^\s*(OVH_\w+|\w*(key|secret|token)\w*)\s*=/im,
+    );
+  });
+
+  it('is validated and tested in CI but never planned, drifted or applied', () => {
+    assert.match(wf, /for env in staging prod stage-b stage-b-ovh/);
+    assert.match(wf, /\/repo\/infra\/terraform\/envs\/stage-b-ovh\s*\\\n\s+"\$TF_IMAGE" test/);
+    assert.match(wf, /env: \[staging, prod, stage-b\]\n/);
+    assert.doesNotMatch(wf.slice(wf.indexOf('  drift:')), /stage-b-ovh/);
+  });
+
+  it('the AWS variant stays plan-only and the ADR names both paths', () => {
+    assert.match(wf, /env: \[staging, prod, stage-b\]\n/);
+    const adr = readFileSync(
+      path.join(tf, '..', '..', 'docs', 'adr', '0053-stage-b-c-scale-path.md'),
+      'utf8',
+    );
+    assert.match(adr, /OVH Mumbai/);
+    assert.match(adr, /Optional AWS path/);
+    assert.match(adr, /^## Revisit when$/m);
+  });
+});

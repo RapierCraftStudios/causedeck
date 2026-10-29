@@ -32,6 +32,8 @@ describe('evaluateBackupHealth', () => {
       walg_last_backup_age_seconds: 3600,
       restore_drill_last_success_timestamp: Math.floor(Date.parse(ago(86400)) / 1000),
       restore_drill_rto_seconds: 1200,
+      walg_last_backup_ok: 1,
+      restore_drill_last_ok: 1,
     });
   });
 
@@ -74,6 +76,17 @@ describe('evaluateBackupHealth', () => {
     expect(problems.join()).toMatch(/no successful restore drill/);
     expect(metrics.walg_last_archive_age_seconds).toBe(-1);
     expect(metrics.restore_drill_last_success_timestamp).toBe(0);
+    expect(metrics.walg_last_backup_ok).toBe(-1);
+    expect(metrics.restore_drill_last_ok).toBe(-1);
+  });
+
+  it('exposes failed backup and failed drill as 0 gauges', () => {
+    const reports = healthy();
+    reports.basebackup = { finishedAt: ago(60), ok: false };
+    reports.drillLatest = { startedAt: ago(10), ok: false, rtoSeconds: 100, rpoSeconds: 10 };
+    const { metrics } = evaluateBackupHealth(reports, NOW);
+    expect(metrics.walg_last_backup_ok).toBe(0);
+    expect(metrics.restore_drill_last_ok).toBe(0);
   });
 });
 

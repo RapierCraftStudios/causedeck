@@ -159,7 +159,7 @@
       },
       "targets": [
         {
-          "expr": "max(causedeck_backup_wal_age_seconds)",
+          "expr": "max(walg_last_archive_age_seconds)",
           "refId": "A",
           "legendFormat": "WAL age"
         }

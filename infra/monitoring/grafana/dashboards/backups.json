@@ -28,7 +28,7 @@
       },
       "targets": [
         {
-          "expr": "max(causedeck_backup_wal_age_seconds)",
+          "expr": "max(walg_last_archive_age_seconds)",
           "refId": "A"
         }
       ],
@@ -55,7 +55,7 @@
       },
       "targets": [
         {
-          "expr": "max(causedeck_backup_base_age_seconds)",
+          "expr": "max(walg_last_backup_age_seconds)",
           "refId": "A"
         }
       ],
@@ -82,7 +82,7 @@
       },
       "targets": [
         {
-          "expr": "min(causedeck_backup_restore_drill_success)",
+          "expr": "min(restore_drill_last_ok)",
           "refId": "A"
         }
       ]

@@ -35,7 +35,8 @@ infra/terraform/
   modules/aws-ecs-fargate        Stage C skeleton (enabled = false)
   modules/aws-elasticache        Stage C skeleton (enabled = false)
   envs/{prod,staging}            roots; terraform.tfvars.example holds dummy values
-  envs/stage-b                   Stage B root composing the #106 modules (plan only in CI)
+  envs/stage-b-ovh               Stage B on rented OVH Mumbai servers: db primary, db replica, N app nodes (#887)
+  envs/stage-b                   Stage B AWS variant (RDS, S3, ALB), optional, plan only in CI (#106)
   backend.tf.example             remote state (S3 ap-south-1, locking)
   test/                          policy.test.mjs (node); envs/prod/tests/residency.tftest.hcl is the terraform test
 ```
@@ -118,9 +119,26 @@ account is confirmed when the keys are created (#108).
   (tcp and udp) to the world and 22 to `ssh_allowlist`; Postgres, MinIO and admin ports are never public.
 - Every VPS resource is tagged `project`, `env`, `owner`, `data_residency=in`.
 
-## Stage B (#106)
+## Stage B on rented servers (#887, default)
 
-These AWS modules are the optional Stage B path. The default is OVH Mumbai (see the note at the top).
+`envs/stage-b-ovh` orders a Postgres primary and a streaming replica (default plan `vps-2027-model4`,
+VPS-4) and `app_node_count` app nodes (2 to 8, default plan `vps-2027-model3`) through
+`modules/vps-ovh-mumbai`. Every node is in `YNM`: `vps_datacenter` rejects anything else, and the
+module repeats the check. The for_each keys of the app nodes (`"1"` .. `"N"`) come from
+`app_node_count` alone, so they are known at plan time. Outputs: `db_primary_ipv4`, `db_replica_ipv4`,
+`app_ipv4s`, `app_ipv6s` and `node_datacenters`; DNS (DNS-only app and api records for every app node)
+is set from them at cutover, not by this root. Postgres, PgBouncer and WAL-G run from
+`infra/docker/compose.db.yml` on the two database nodes. Credentials are the same `OVH_*` environment
+variables as for `ovh_mumbai`; the root has no backend, no credentials and no Cloudflare provider.
+
+CI validates it and runs `terraform test` with a mocked provider (`envs/stage-b-ovh/tests`). It is
+never planned there (a plan would reach the OVH order API) or applied: ordering servers spends money,
+so the first apply is a manual, reviewed step ([runbook](../runbooks/stage-b-scale-out.md)). Policy
+tests: `node --test infra/terraform/test/stage-b-policy.test.mjs`.
+
+## Stage B on AWS (#106, optional)
+
+These AWS modules are the optional Stage B path. The default is OVH Mumbai (above and the note at the top).
 
 `envs/stage-b` composes the RDS, S3, ALB and optional Cloudflare LB modules and the disabled Stage C
 skeletons. Region variables (`aws_region`, `replica_region`, each module's `region`) accept only

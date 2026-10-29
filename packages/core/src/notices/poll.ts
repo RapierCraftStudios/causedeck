@@ -3,9 +3,13 @@
 // cost caps and kill switch), parse it with the source's parser, store each notice once with
 // provenance (`notice` is global, unique per source and URL, so a repeat poll inserts nothing) and
 // match the newly stored ones to workspaces and matters. An uncleared source is never fetched. Only
-// metadata is stored (no document body). Core does not import `@causedeck/fetch`: the worker wires
+// metadata is stored (no document body), except that the dates a holiday-list document names are
+// read through an optional document fetcher and stored in `notice_holiday` (#628). Core does not import `@causedeck/fetch`: the worker wires
 // the governed fetcher as a `NoticeFetcher`.
 import {
+  parseHolidayListHtml,
+  parseHolidayListPdf,
+  parseHolidayListText,
   parseKarnatakaHcNotices,
   parseMadrasHcNotices,
   KARNATAKA_HC_NOTICES_SOURCE_ID,
@@ -21,7 +25,7 @@ import { policyFor, SourceNotCleared } from '../sources/index.ts';
 import { notifyNoticeMatches } from './alerts.ts';
 import { matchNotices, type MatchedNotice } from './match.ts';
 
-const { notice, source } = schema;
+const { notice, noticeHoliday, source } = schema;
 
 /** Structurally the `Fetcher` of `@causedeck/fetch`, which this module does not import. */
 export interface NoticeFetcher {
@@ -30,6 +34,18 @@ export interface NoticeFetcher {
     url: string,
   ): Promise<{ body: string; provenance: { url: string; fetchedAt: string; sha256: string } }>;
 }
+
+/**
+ * The document a notice links to (#628): bytes for a PDF, text for an HTML or text page. Core does
+ * not import `@causedeck/fetch` (string bodies only); the worker wires a governed fetcher here.
+ */
+export interface NoticeDocument {
+  bytes?: Uint8Array;
+  text?: string;
+  contentType: string;
+}
+
+export type NoticeDocumentFetcher = (sourceId: string, url: string) => Promise<NoticeDocument>;
 
 export type NoticeParser = (html: string, baseUrl: string) => NoticeParseResult;
 
@@ -49,6 +65,11 @@ export interface PollNoticesDeps {
   /** The source's policy; throws `SourceNotCleared` when it may not be fetched. Defaults to the registry. */
   policy?: (sourceId: string) => Promise<{ baseUrl: string }>;
   parsers?: Readonly<Record<string, NoticeParser>>;
+  /**
+   * Fetches the document of each newly stored `holiday` notice; its dates are stored in
+   * `notice_holiday` so a holiday list flags every date it names (#628). Without it nothing is fetched.
+   */
+  documentFetcher?: NoticeDocumentFetcher;
   /** Sends one `notification.deliver` job; when given, newly matched notices alert the members (#587). */
   enqueueDelivery?: (job: DeliveryJob) => Promise<unknown>;
   /**
@@ -75,6 +96,10 @@ export interface PollNoticesReport {
   matches: number;
   /** Notifications sent to members for newly matched notices. */
   alerts: number;
+  /** `notice_holiday` dates stored from holiday-list documents. */
+  holidayDates: number;
+  /** Holiday-list documents that could not be fetched or read. */
+  holidayFailed: number;
 }
 
 /** Fetch, store and match the notices of every cleared `notice` source. */
@@ -91,6 +116,8 @@ export async function pollNotices(deps: PollNoticesDeps): Promise<PollNoticesRep
     unreadable: 0,
     matches: 0,
     alerts: 0,
+    holidayDates: 0,
+    holidayFailed: 0,
   };
   const ids =
     deps.sourceId !== undefined
@@ -150,9 +177,26 @@ export async function pollNotices(deps: PollNoticesDeps): Promise<PollNoticesRep
         })),
       )
       .onConflictDoNothing({ target: [notice.sourceId, notice.url] })
-      .returning({ id: notice.id, forumCodes: notice.forumCodes });
+      .returning({
+        id: notice.id,
+        forumCodes: notice.forumCodes,
+        kind: notice.kind,
+        url: notice.url,
+      });
     report.inserted += inserted.length;
     report.duplicates += parsed.notices.length - inserted.length;
+    if (deps.documentFetcher !== undefined) {
+      for (const row of inserted) {
+        if (row.kind !== 'holiday') continue;
+        const stored = await storeHolidayDates(deps, deps.documentFetcher, sourceId, row);
+        if (stored === null) {
+          report.holidayFailed += 1;
+          log('holiday list unreadable', { sourceId });
+        } else {
+          report.holidayDates += stored;
+        }
+      }
+    }
     const matched = await matchNotices(
       { db: deps.db },
       inserted.map((row) => ({ id: row.id, forumCodes: row.forumCodes })),
@@ -173,4 +217,31 @@ export async function pollNotices(deps: PollNoticesDeps): Promise<PollNoticesRep
     }
   }
   return report;
+}
+
+/** The dates of one holiday notice's document stored; null when it could not be fetched or read. */
+async function storeHolidayDates(
+  deps: PollNoticesDeps,
+  fetchDocument: NoticeDocumentFetcher,
+  sourceId: string,
+  row: { id: string; url: string },
+): Promise<number | null> {
+  try {
+    const document = await fetchDocument(sourceId, row.url);
+    const dates =
+      document.bytes !== undefined
+        ? await parseHolidayListPdf(document.bytes)
+        : /html/i.test(document.contentType)
+          ? parseHolidayListHtml(document.text ?? '')
+          : parseHolidayListText(document.text ?? '');
+    if (dates.length === 0) return null;
+    const stored = await deps.db
+      .insert(noticeHoliday)
+      .values(dates.map((d) => ({ noticeId: row.id, holidayOn: d.date, name: d.name })))
+      .onConflictDoNothing({ target: [noticeHoliday.noticeId, noticeHoliday.holidayOn] })
+      .returning({ id: noticeHoliday.id });
+    return stored.length;
+  } catch {
+    return null;
+  }
 }

@@ -439,6 +439,7 @@ catalogs:
 overrides:
   handlebars@<4.7.10: 4.7.10
   vitest>tinypool: ^2.1.2
+  systeminformation@<5.33.16: '>=5.33.16'
 
 importers:
 
@@ -1213,6 +1214,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../db
+      '@causedeck/drafting':
+        specifier: workspace:*
+        version: link:../drafting
       '@causedeck/fetch':
         specifier: workspace:*
         version: link:../fetch
@@ -1265,6 +1269,9 @@ importers:
       pdf-lib:
         specifier: 'catalog:'
         version: 1.17.1
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.15
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -1316,6 +1323,34 @@ importers:
         version: 3.2.7(@types/node@22.20.5)(@vitest/browser@3.2.7)(jiti@2.7.0)(jsdom@27.0.1)(lightningcss@1.32.0)(tsx@4.23.15)(yaml@2.9.1)
 
   packages/drafting:
+    dependencies:
+      '@causedeck/adapters':
+        specifier: workspace:*
+        version: link:../adapters
+      '@causedeck/ai':
+        specifier: workspace:*
+        version: link:../ai
+      '@causedeck/validators':
+        specifier: workspace:*
+        version: link:../validators
+      '@fontsource/noto-sans-kannada':
+        specifier: 'catalog:'
+        version: 5.3.0
+      '@fontsource/noto-sans-tamil':
+        specifier: 'catalog:'
+        version: 5.3.0
+      '@pdf-lib/fontkit':
+        specifier: 'catalog:'
+        version: 1.1.1
+      docx:
+        specifier: 'catalog:'
+        version: 9.5.1
+      pdf-lib:
+        specifier: 'catalog:'
+        version: 1.17.1
+      regenerator-runtime:
+        specifier: 'catalog:'
+        version: 0.14.1
     devDependencies:
       '@causedeck/config':
         specifier: workspace:*
@@ -1326,6 +1361,9 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)
+      fflate:
+        specifier: 'catalog:'
+        version: 0.8.3
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -8412,8 +8450,8 @@ packages:
     resolution: {integrity: sha512-37fYHAhL12r1twaEV0PA5TwoIT491eTGGYjhhXxlYNMq3DSkiGZBQ++Jfk5maXj0vq52NRauLtMikBKtbNJs3Q==}
     hasBin: true
 
-  legacy-javascript@0.0.3:
-    resolution: {integrity: sha512-1r6MT4dVaJyXt4G07Cm2cQ0AUaLJdefiEp4SmIAylA++gnEQ82YvmzE58RkM5EP0fk5hROLCslUPGnwIYdZQVA==}
+  legacy-javascript@0.0.4:
+    resolution: {integrity: sha512-UTmeKBVxnfJcpmpOvzzNnLsQT99BXHpPlc/ZKddIRmWmrR0fw6335I3lq4+sJoP60UTbBNaYsGYVPc65YB1x3A==}
 
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
@@ -9984,8 +10022,8 @@ packages:
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
 
-  systeminformation@5.33.15:
-    resolution: {integrity: sha512-s5RloL0F7xhN0ZjfHtLGnbf7EW74EI0N8NFL+1xR7Oxz9QA33obNZsl7lyfnJOhN04E/kGFPoJPlvY7TZ5fzmw==}
+  systeminformation@5.33.16:
+    resolution: {integrity: sha512-R+Lh69IJXfJj6bfyH1In5cIR9FTr4hBS39YvlZHZjsK1p9cuELPq7hplZZIb56ZESMMb+DzdKqqE6Iomi01Mvg==}
     engines: {node: '>=10.0.0'}
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
@@ -12441,7 +12479,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.223.0(@opentelemetry/api@1.9.1)
-      systeminformation: 5.33.15
+      systeminformation: 5.33.16
     transitivePeerDependencies:
       - supports-color
 
@@ -12949,7 +12987,7 @@ snapshots:
 
   '@paulirish/trace_engine@0.0.53':
     dependencies:
-      legacy-javascript: 0.0.3
+      legacy-javascript: 0.0.4
       third-party-web: 0.30.0
 
   '@pdf-lib/fontkit@1.1.1':
@@ -17206,7 +17244,7 @@ snapshots:
       lefthook-windows-arm64: 2.2.2
       lefthook-windows-x64: 2.2.2
 
-  legacy-javascript@0.0.3: {}
+  legacy-javascript@0.0.4: {}
 
   levn@0.4.1:
     dependencies:
@@ -18861,7 +18899,7 @@ snapshots:
 
   symbol-tree@3.2.4: {}
 
-  systeminformation@5.33.15: {}
+  systeminformation@5.33.16: {}
 
   tagged-tag@1.0.0: {}
 

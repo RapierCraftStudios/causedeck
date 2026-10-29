@@ -62,6 +62,67 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A member checked new matter parties for a conflict of interest',
   },
+  // The inbound enquiry log (#87, ADR 0047). Metadata holds ids and counts only, never names or
+  // enquiry text.
+  'enquiry.logged': { security: false, description: 'A member logged an inbound enquiry' },
+  'enquiry.updated': { security: false, description: 'A member changed an inbound enquiry' },
+  'enquiry.closed': { security: false, description: 'A member closed an inbound enquiry' },
+  'enquiry.accepted': {
+    security: false,
+    description: 'A member accepted an enquiry as a matter, through a proposal',
+  },
+  'enquiry.retention_swept': {
+    security: false,
+    description: 'The retention job deleted closed enquiries past the workspace retention',
+  },
+  // Client status links (#88, ADR 0050). Metadata holds ids, language and expiry days, never the note.
+  'status_link.created': {
+    security: false,
+    description: 'An advocate created a client status link',
+  },
+  'status_link.revoked': {
+    security: false,
+    description: 'An advocate revoked a client status link',
+  },
+  'status_link.extended': {
+    security: false,
+    description: 'An advocate extended a client status link',
+  },
+  'status_link.purged': {
+    security: false,
+    description: 'The retention job cleared the payload of long-expired status links',
+  },
+  // Fees (#83, ADR 0048). Metadata holds ids, counts and enum values only, never amounts' text,
+  // notes or ledger descriptions.
+  'fee.agreement_created': { security: false, description: 'A member created a fee agreement' },
+  'fee.agreement_updated': { security: false, description: 'A member changed a fee agreement' },
+  'fee.agreement_status_changed': {
+    security: false,
+    description: 'A member activated or ended a fee agreement',
+  },
+  'fee.invoice_drafted': { security: false, description: 'A member saved a draft fee invoice' },
+  'fee.invoice_discarded': {
+    security: false,
+    description: 'A member discarded a draft fee invoice',
+  },
+  'fee.invoice_issued': { security: false, description: 'A member issued a fee invoice' },
+  'fee.gst_unreviewed_acknowledged': {
+    security: false,
+    description: 'An owner issued a fee invoice acknowledging the GST rates are unreviewed',
+  },
+  'fee.payment_recorded': {
+    security: false,
+    description: 'A member recorded a payment received against a fee invoice',
+  },
+  'fee.credit_note_issued': { security: false, description: 'A member issued a credit note' },
+  'fee.ledger_entry_recorded': {
+    security: false,
+    description: 'A member recorded an entry in a client ledger',
+  },
+  'fee.ledger_anonymised': {
+    security: false,
+    description: 'Erasure cleared the free text of a client ledger, keeping the amounts',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },
@@ -171,6 +232,43 @@ export const AUDIT_ACTIONS = {
     description: 'A download link for a workspace data export was issued to its requester',
   },
   'export.downloaded': { security: true, description: 'A workspace data export was downloaded' },
+  // Drafting export (#768): informational. Metadata holds the format and the version content hash only.
+  'draft.exported': { security: false, description: 'A draft version was exported to DOCX or PDF' },
+  // Citation checker (#77). Metadata holds counts, or the acknowledged citation ids and the reason, never draft text.
+  'draft.citations.checked': {
+    security: false,
+    description: 'The citations of a draft version were checked against an authority source',
+  },
+  'draft.citations.acknowledged': {
+    security: true,
+    description: 'A member acknowledged unverified citations of a draft version before an export',
+  },
+  // Consistency fix (#78): a lawyer confirmed one proposed replacement. Metadata holds the rule and hashes only, never draft text.
+  'draft.fix_applied': {
+    security: false,
+    description: 'A lawyer applied a consistency fix, which saved a new draft version',
+  },
+  // Fact-check (#914). Metadata holds claim kinds, counts, the version id and the typed reason, never draft text.
+  'draft.factcheck.checked': {
+    security: false,
+    description: 'A draft version was fact-checked against the matter record',
+  },
+  'draft.factcheck.ignored': {
+    security: false,
+    description: 'A lawyer chose to ignore a fact-check claim for this matter',
+  },
+  'draft.factcheck.asserted': {
+    security: false,
+    description: 'A lawyer marked a fact-check claim as their own assertion',
+  },
+  'draft.factcheck.fixed': {
+    security: false,
+    description: 'A fact-check mismatch or unverified citation was fixed in a new draft version',
+  },
+  'draft.factcheck.acknowledged': {
+    security: true,
+    description: 'A member acknowledged unresolved fact-check findings before an export',
+  },
   // Workspace deletion (#302): fail-closed. Metadata holds the deletion job id and dates only. These
   // events are purged with the workspace in the final erase step; the receipt keeps the chain head.
   'workspace.deletion_requested': {
@@ -206,6 +304,17 @@ export const AUDIT_ACTIONS = {
   'workspace.privacy_updated': {
     security: true,
     description: 'A member changed the sensitive-matter default or the raw audio retention window',
+  },
+  // Fail-closed: it decides whether grid corrections may enter eval sets (#558). Owner-only; ids only,
+  // so the target is the workspace and no metadata is kept.
+  'workspace.eval_reuse_enabled': {
+    security: true,
+    description: 'An owner allowed corrections to be reused in evaluation sets (opt-in)',
+  },
+  'workspace.eval_reuse_disabled': {
+    security: true,
+    description:
+      'An owner stopped corrections being reused in evaluation sets; item consents withdrawn',
   },
   // Fail-closed: it creates or replaces the intake address or ICS feed token, so the old one stops
   // working (#287). Metadata names the kind only, never the token or its hash.
@@ -247,6 +356,18 @@ export const AUDIT_ACTIONS = {
   'memory.erased': {
     security: true,
     description: "The workspace's memory and embeddings were erased",
+  },
+  // Lawyer memory (#72): an owner changed whether an M4 court note is visible to the chamber.
+  // Metadata holds the note id and the new state, never its text.
+  'memory.sharing_changed': {
+    security: true,
+    description: 'An owner shared an M4 court note with the chamber or made it private again',
+  },
+  // M5 embeddings (#901, ADR 0046): an embedder outside India was refused before any text was sent.
+  // Metadata holds the embedder id and its region, never the text.
+  'memory.embedding_refused': {
+    security: true,
+    description: 'Memory text was not embedded because the embedder runs outside India',
   },
   // Capture inbox (#43). Metadata holds the channel, MIME type, size and flags; never a filename or
   // file content. Channel changes and quarantines are fail-closed: they change where a lawyer's
@@ -330,6 +451,83 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: "A capture's results were moved to another matter",
   },
+  // Stale-matter attention (#70). Ids, the rule and the day only, never the reason.
+  'attention.snoozed': { security: false, description: 'A stale-matter flag was snoozed' },
+  'attention.dismissed': {
+    security: false,
+    description: 'A stale-matter flag was dismissed as intentionally dormant',
+  },
+  'attention.lifted': { security: false, description: 'A snooze or dismissal was lifted' },
+  'attention.threshold_changed': {
+    security: false,
+    description: 'The workspace stale-matter threshold was changed',
+  },
+  // Limitation tracker (#84, #940). Ids and counts only, never rule text or dates.
+  'limitation.rules_imported': {
+    security: false,
+    description: 'A member imported a limitation rule table as an unreviewed draft',
+  },
+  'limitation.computed': { security: false, description: 'A limitation date was computed' },
+  'limitation.confirmed': {
+    security: false,
+    description: 'A member confirmed a limitation date as an obligation',
+  },
+  // Obligation service (#67). Ids and flags only, never the description.
+  'obligation.created': { security: false, description: 'An obligation was created' },
+  'obligation.updated': { security: false, description: 'An obligation was edited' },
+  'obligation.rescheduled': {
+    security: false,
+    description: 'An obligation was rescheduled, with a reason',
+  },
+  'obligation.closed': {
+    security: false,
+    description: 'An obligation was closed by a person, with a reason',
+  },
+  'obligation.reopened': { security: false, description: 'A closed obligation was reopened' },
+  'obligation.direction_not_applicable': {
+    security: false,
+    description: 'An order direction was marked not applicable, in words',
+  },
+  'obligation.defect_raised': { security: false, description: 'A registry defect was raised' },
+  'obligation.defect_cured': { security: false, description: 'A registry defect was cured' },
+  'obligation.represented': { security: false, description: 'A filing was re-presented' },
+  'obligation.registry_number': {
+    security: false,
+    description: 'A registry SR or FR number was stored',
+  },
+  'obligation.copy_applied': { security: false, description: 'A certified copy was applied for' },
+  'obligation.copy_transitioned': {
+    security: false,
+    description: 'A certified copy moved to its next step',
+  },
+  'outward.prepared': { security: false, description: 'An outward update draft was prepared' },
+  'outward.edited': { security: false, description: 'A lawyer saved an edit of an outward draft' },
+  'outward.shared': {
+    security: false,
+    description: 'A lawyer shared an outward draft from their own channel',
+  },
+  // Continuity (#71): who generated, read, saved or acknowledged a handover; ids only, never note text.
+  'handover.generated': {
+    security: false,
+    description: 'A handover note was assembled for a matter',
+  },
+  'handover.saved': {
+    security: false,
+    description: 'A handover note version was saved and addressed',
+  },
+  'handover.read': { security: false, description: 'Handover notes of a matter were read' },
+  'handover.acknowledged': { security: false, description: 'A handover note was acknowledged' },
+  'continuity.changes_read': {
+    security: false,
+    description: 'What changed on a matter since the last view was read',
+  },
+  // The WhatsApp number link (#711): ids only, never the number or the code.
+  'whatsapp.otp_requested': {
+    security: true,
+    description: 'A WhatsApp link code was requested and sent',
+  },
+  'whatsapp.otp_failed': { security: true, description: 'A wrong WhatsApp link code was entered' },
+  'whatsapp.linked': { security: true, description: 'A WhatsApp number was verified and linked' },
   // The lawyer's manual "court is at item N" hall marker (#58): an internal note, ids and numbers only.
   'court_day.marker_set': {
     security: false,

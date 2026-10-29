@@ -185,6 +185,12 @@ jobs:
           CHROME_PATH=$(find ~/.cache/ms-playwright -path '*chrome-linux*/chrome' -type f | head -n 1)
           export CHROME_PATH
           pnpm --filter @causedeck/e2e lhci:matters
+      - name: Lighthouse CI (drafting studio, signed in, seeded; performance and accessibility >= 0.95)
+        if: ${{ !cancelled() }}
+        run: |
+          CHROME_PATH=$(find ~/.cache/ms-playwright -path '*chrome-linux*/chrome' -type f | head -n 1)
+          export CHROME_PATH
+          pnpm --filter @causedeck/e2e lhci:drafting
       - name: Lighthouse CI (court-day board, signed in, seeded; JS <= 180 KB, interactive < 2.5 s)
         if: ${{ !cancelled() }}
         run: |

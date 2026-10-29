@@ -10,7 +10,7 @@
     "start": "next start -p 3000",
     "analyze": "ANALYZE=true next build",
     "bundle:budget": "node scripts/check-bundle-budget.mjs",
-    "lint": "NODE_OPTIONS=--max-old-space-size=6144 eslint .",
+    "lint": "NODE_OPTIONS=--max-old-space-size=8192 eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:tenancy": "vitest run --config vitest.tenancy.config.ts",

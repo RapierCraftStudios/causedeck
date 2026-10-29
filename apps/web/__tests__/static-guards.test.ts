@@ -153,4 +153,18 @@ describe('apps/web static guards', () => {
     expect(existsSync(path.join(appDir, 'proxy.ts'))).toBe(true);
     expect(existsSync(path.join(appDir, 'middleware.ts'))).toBe(false);
   });
+
+  it('creates enquiries only from the signed-in people/enquiries route (#874)', () => {
+    const ENQUIRY_ROUTE = 'app/(app)/w/[slug]/people/enquiries/';
+    const users = code.filter(
+      (file) =>
+        /@causedeck\/core\/intake|enquiries\/actions\.ts|logEnquiryAction/.test(file.text) &&
+        !file.rel.startsWith(ENQUIRY_ROUTE) &&
+        file.rel !== 'lib/intake/intake-deps.ts',
+    );
+    expect(users.map((file) => file.rel)).toEqual([]);
+    expect(
+      code.filter((file) => file.rel.startsWith('app/api/') && /enquir/i.test(file.text)),
+    ).toEqual([]);
+  });
 });

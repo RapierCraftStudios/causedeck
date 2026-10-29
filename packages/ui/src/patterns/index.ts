@@ -34,6 +34,14 @@ export {
   type LevelLegendLabels,
   type LevelLegendProps,
 } from './automation-level/level-legend';
+export {
+  CITATION_STATUS_MAP,
+  CITATION_STATUS_ORDER,
+  CitationStatus,
+  type CitationStatusKind,
+  type CitationStatusMeta,
+  type CitationStatusProps,
+} from './citation-status/citation-status';
 export { StageBadge, type StageBadgeProps } from './stage-badge/stage-badge';
 export { STAGE_MAP, STAGE_ORDER, type StageMeta } from './stage-badge/stage-map';
 export {
@@ -84,6 +92,9 @@ export {
 } from './activity-item/activity-item';
 export {
   DEFAULT_OBLIGATION_LABELS,
+  GroupHeader,
+  LAYOUT_MS,
+  REDUCED_FADE_MS,
   OBLIGATION_EMPTY_COPY,
   ObligationEmpty,
   ObligationRow,
@@ -92,6 +103,8 @@ export {
   SWIPE_THRESHOLD_PX,
   daysUntil,
   dueState,
+  type GroupHeaderProps,
+  type ObligationKind,
   type ObligationLabels,
   type ObligationRowProps,
 } from './obligation-row/obligation-row';
@@ -114,6 +127,20 @@ export {
   type MemoryLabels,
   type MemoryScopeMeta,
 } from './memory-card/memory-card';
+export {
+  DEFAULT_SCOPE_CHIP_LABELS,
+  ScopeChip,
+  type MemoryVisibility,
+  type ScopeChipLabels,
+  type ScopeChipProps,
+} from './scope-chip/scope-chip';
+export {
+  DEFAULT_PROPOSAL_TRAY_LABELS,
+  ProposalTray,
+  type ProposalTrayLabels,
+  type ProposalTrayProps,
+  type TrayProposal,
+} from './proposal-tray/proposal-tray';
 export * from './states';
 export {
   DEFAULT_RESOLUTION_FIELD_LABELS,
@@ -135,3 +162,25 @@ export {
 } from './court-day';
 export * from './delegation';
 export * from './brief';
+export * from './continuity';
+export * from './attention';
+export {
+  DEFAULT_FACT_LABELS,
+  FACT_STATUS_META,
+  FACT_STATUS_ORDER,
+  FactLiveRegion,
+  FactSquiggle,
+  type FactLabels,
+  type FactSquiggleProps,
+  type FactStatus,
+  type FactStatusMeta,
+} from './fact-squiggle/fact-squiggle';
+export {
+  FactCardBody,
+  type FactCardActions,
+  type FactCardBodyProps,
+  type FactCardLabels,
+  type FactSource,
+} from './fact-squiggle/fact-card';
+export { nextIssueIndex, useFactNavigation } from './fact-squiggle/use-fact-navigation';
+export * from './pov';

@@ -17,3 +17,14 @@ export {
   type WhatsAppSenderOptions,
   type WhatsAppTarget,
 } from './whatsapp.ts';
+export {
+  buildOtpBody,
+  cloudWhatsAppOtpSender,
+  consoleWhatsAppOtpSender,
+  createWhatsAppOtpSender,
+  mockWhatsAppOtpSender,
+  WHATSAPP_OTP_TEMPLATE,
+  type WhatsAppOtpEnv,
+  type WhatsAppOtpMessage,
+  type WhatsAppOtpSender,
+} from './otp.ts';

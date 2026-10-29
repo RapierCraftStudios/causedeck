@@ -47,6 +47,12 @@ export const workspaceSettings = pgTable(
       .default(false),
     /** Days raw audio is kept before deletion: 7, 14 or 30 (the PRD maximum, and the default). */
     retentionAudioDays: integer('retention_audio_days').notNull().default(30),
+    /** Months a closed enquiry is kept before the retention job deletes it (#87): 1 to 120, default 12. */
+    enquiryRetentionMonths: integer('enquiry_retention_months').notNull().default(12),
+    /** Corrections may enter eval sets, with per-item consent (#558). Opt-in; only an owner sets it. */
+    allowEvalReuse: boolean('allow_eval_reuse').notNull().default(false),
+    /** Days without an event before a matter is flagged as stale (#70, `attention.stale_days`): 7 to 180. */
+    attentionStaleDays: integer('attention_stale_days').notNull().default(30),
     ...timestamps(),
   },
   (t) => [
@@ -55,6 +61,14 @@ export const workspaceSettings = pgTable(
     check('workspace_settings_locale_chk', sql`locale in ${inList(LOCALES)}`),
     check('workspace_settings_practice_city_chk', sql`char_length(practice_city) <= 80`),
     check('workspace_settings_retention_audio_days_chk', sql`retention_audio_days in (7, 14, 30)`),
+    check(
+      'workspace_settings_enquiry_retention_months_chk',
+      sql`enquiry_retention_months between 1 and 120`,
+    ),
+    check(
+      'workspace_settings_attention_stale_days_chk',
+      sql`attention_stale_days between 7 and 180`,
+    ),
   ],
 );
 

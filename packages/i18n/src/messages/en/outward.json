@@ -1,0 +1,84 @@
+{
+  "outward": {
+    "metaTitle": "Drafts to send",
+    "title": "Drafts to send",
+    "banner": "Draft for you to review and send yourself. CauseDeck does not send messages.",
+    "denied": "You do not have access to outward drafts in this workspace.",
+    "loading": "Loading drafts",
+    "generating": "Preparing the draft",
+    "readOnly": "View only",
+    "offline": "You are offline. You can keep editing; preparing a new draft needs a connection.",
+    "empty": {
+      "title": "No updates waiting",
+      "description": "After a hearing or an order, prepare an update for a client or counsel from the matter."
+    },
+    "error": {
+      "title": "Drafts could not be loaded",
+      "reference": "Reference {digest}",
+      "retry": "Try again"
+    },
+    "list": {
+      "label": "Drafts waiting to be sent",
+      "open": "Open draft for {matter}",
+      "age": "Prepared {age}",
+      "templateOnly": "Template only"
+    },
+    "audience": {
+      "client": "Client",
+      "senior_counsel": "Senior counsel",
+      "briefing_counsel": "Briefing counsel"
+    },
+    "status": {
+      "drafted": "Prepared",
+      "edited": "Edited",
+      "shared": "Shared"
+    },
+    "language": {
+      "label": "Language",
+      "enName": "English",
+      "taName": "Tamil",
+      "knName": "Kannada",
+      "changed": "Language changed to {language}"
+    },
+    "editor": {
+      "label": "Draft text for {matter}",
+      "save": "Save edit",
+      "saved": "Edit saved",
+      "saveFailed": "The edit could not be saved",
+      "close": "Close",
+      "back": "Back to drafts",
+      "warnings": "The wording below may read as advice, a commitment or a fee term: {phrases}",
+      "facts": "Facts used",
+      "factToConfirm": "To be confirmed",
+      "factConfirmed": "Confirmed",
+      "noFacts": "No facts were used in this draft."
+    },
+    "diff": {
+      "toggle": "Compare with the prepared text",
+      "label": "Changes from the prepared text",
+      "added": "Added",
+      "removed": "Removed",
+      "unchanged": "No changes from the prepared text."
+    },
+    "share": {
+      "label": "Share",
+      "copy": "Copy",
+      "copied": "Copied to the clipboard",
+      "copyFailed": "Could not copy. Select the text and copy it yourself.",
+      "whatsapp": "Open in WhatsApp",
+      "email": "Open in email",
+      "download": "Download",
+      "markShared": "Mark shared",
+      "shared": "Recorded as shared by you",
+      "failed": "That could not be recorded",
+      "emailSubject": "Update on {matter}",
+      "note": "These open your own app with the text filled in. You press send."
+    },
+    "shortcuts": {
+      "copy": "Copy the draft",
+      "language": "Next language",
+      "diff": "Show or hide the changes",
+      "close": "Close the draft"
+    }
+  }
+}

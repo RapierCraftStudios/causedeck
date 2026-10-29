@@ -63,6 +63,7 @@
     "./motion": "./src/lib/motion.ts",
     "./patterns": "./src/patterns/index.ts",
     "./patterns/court-day": "./src/patterns/court-day/index.ts",
+    "./patterns/fact-navigation": "./src/patterns/fact-squiggle/use-fact-navigation.ts",
     "./patterns/delegation": "./src/patterns/delegation/index.ts",
     "./patterns/stage-badge": "./src/patterns/stage-badge/stage-badge.tsx",
     "./patterns/states": "./src/patterns/states/index.ts",

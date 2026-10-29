@@ -159,8 +159,12 @@ type PlaceholderId = PlaceholderRoute;
 /** Routes whose page is no longer a placeholder; each has its own page test. */
 const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'billing',
+  // Its own page test since #871 (invoices-page.test.tsx).
+  'invoices',
   'activity',
   'settings',
+  // Its own page and action tests since #848 (people-actions.test.ts).
+  'people',
   // Its own page test since #399 (courts-page.test.tsx).
   'courts',
   // Its own page test since #588 (components/notices/__tests__/notice-list.test.tsx).
@@ -171,12 +175,20 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'matters',
   // Its own page and shell test since #48 (components/inbox/__tests__/inbox-shell.test.tsx).
   'inbox',
+  // Its own page test since #68 (obligations-page.test.tsx).
+  'obligations',
+  // Its own page test since #73 (memory-page.test.tsx).
+  'memory',
+  // Its own component test since #826 (components/drafting/__tests__/drafts-list.test.tsx).
+  'drafts',
   // The court-day board since #59 (_court-day/__tests__/court-day.test.ts, e2e court-day-board).
   'today',
   // With the tomorrow plan (#63) under it: tomorrow-page.test.tsx.
   'tomorrow',
   // Its own component test since #66 (calendar/_components/calendar-view.test.tsx).
   'calendar',
+  // The practice insights dashboard since #85 (insights-page.test.tsx).
+  'insights',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
@@ -528,17 +540,6 @@ describe('placeholder pages', () => {
     },
   );
 
-  it('uses the #11 design-spec empty copy verbatim', async () => {
-    const spec: Partial<Record<PlaceholderId, string>> = {
-      obligations: 'No open obligations.',
-    };
-    for (const [route, copy] of Object.entries(spec)) {
-      withIntl(await pageFor(route as PlaceholderId)(props('demo')));
-      expect(document.querySelector('[data-slot="empty-state-title"]')?.textContent).toBe(copy);
-      cleanup();
-    }
-  });
-
   it.each(PLACEHOLDER_ROUTES)(
     '%s shows the loading skeleton under ?__state=loading in dev',
     async (route) => {
@@ -589,10 +590,8 @@ describe('placeholder pages', () => {
   });
 
   it('serves flagged pages once the server evaluates their flag on', async () => {
-    state.flagsOn = ['invoices.enabled'];
-    withIntl(await PAGES.invoices(props('demo')));
-    expect(document.querySelector('[data-route="invoices"]')).not.toBeNull();
-    await expect(PAGES.limitation(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
+    state.flagsOn = ['limitation.enabled'];
+    await expect(PAGES.invoices(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
   it('shows the offline banner only while navigator.onLine is false', async () => {

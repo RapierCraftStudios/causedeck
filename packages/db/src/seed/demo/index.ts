@@ -18,6 +18,7 @@ import { member, organization, user } from '../../schema/auth.ts';
 import { bench, courtHall, forum } from '../../schema/court.ts';
 import { hearing, listing, obligation, order, task } from '../../schema/docket.ts';
 import { anchor, document } from '../../schema/documents.ts';
+import { workspaceFeatureFlag } from '../../schema/flags.ts';
 import { matter } from '../../schema/matter-graph.ts';
 import { person, roleEdge } from '../../schema/people.ts';
 import { proceeding, proceedingLink } from '../../schema/proceedings.ts';
@@ -47,6 +48,9 @@ export class DemoSeedInProductionError extends Error {
 }
 
 /** Seed the demo workspace. A second run is a no-op. */
+/** Flags the demo workspace has on (`m5_playbooks`: default off everywhere else, #901). */
+export const DEMO_FLAG_OVERRIDES = ['m5_playbooks'] as const;
+
 export async function seedDemo(db: SeedDb, { today }: SeedDemoOptions = {}): Promise<void> {
   if (isProd()) throw new DemoSeedInProductionError();
   const day = today ?? kolkataToday();
@@ -86,6 +90,17 @@ export async function seedDemo(db: SeedDb, { today }: SeedDemoOptions = {}): Pro
           joinedAt: at,
           roleGrantedAt: at,
           createdAt: at,
+        })),
+      )
+      .onConflictDoNothing();
+    await tx
+      .insert(workspaceFeatureFlag)
+      .values(
+        DEMO_FLAG_OVERRIDES.map((key) => ({
+          workspaceId: DEMO_WORKSPACE_ID,
+          key,
+          enabled: true,
+          updatedAt: at,
         })),
       )
       .onConflictDoNothing();

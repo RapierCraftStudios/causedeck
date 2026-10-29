@@ -23,6 +23,8 @@ const LEGAL = [
   'court.sanctioned-push',
   'capture.whatsapp-import',
   'conflicts.check',
+  'intake.enquiry_log',
+  'status_links.enabled',
   'bench_facts',
 ];
 
@@ -43,6 +45,7 @@ describe('flag registry', () => {
         'billing.razorpay',
         'insights.enabled',
         'workspace.export',
+        'm5_playbooks',
       ].sort(),
     );
     for (const key of FLAG_KEYS) {

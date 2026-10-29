@@ -69,6 +69,13 @@ export default async function OutcomePage({ params, searchParams }: OutcomePageP
     if (code === 'NOT_FOUND') notFound();
     throw error;
   }
+  // The preparedness tap (#86): asked once after a confirmed outcome; a failure never blocks the page.
+  const askPreparedness = proposal.confirmed
+    ? await inWorkspace(scope, async (tx) => {
+        const { shouldPrompt } = await import('@causedeck/core/pov');
+        return shouldPrompt({ db: tx }, scope, { hearingId });
+      }).catch(() => false)
+    : false;
   const members = await listMembersIn(scope).catch(() => []);
   const owners = members.map((m) => ({ id: m.memberId, name: m.name }));
 
@@ -85,6 +92,8 @@ export default async function OutcomePage({ params, searchParams }: OutcomePageP
         owners={owners}
         excerpts={excerptsOf(proposal)}
         canWrite
+        hearingId={hearingId}
+        askPreparedness={askPreparedness}
       />
     </div>
   );

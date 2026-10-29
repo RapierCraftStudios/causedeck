@@ -123,3 +123,18 @@ describe('proxy last-workspace cookie and bare /w (#179)', () => {
     expect(workspaceSlugOf('/wiki/demo')).toBeNull();
   });
 });
+
+describe('proxy status link page (#88)', () => {
+  it('leaves /s/ public and adds no-referrer and noindex headers', () => {
+    expect(isProtectedPath('/s/abc')).toBe(false);
+    const { response, url } = location('/s/abcdefghijklmnop');
+    expect(url).toBeNull();
+    expect(response.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(response.headers.get('x-robots-tag')).toBe('noindex, nofollow');
+    expect(response.headers.get('content-security-policy')).toMatch(/'nonce-[^']+'/);
+  });
+
+  it('does not add them to other routes', () => {
+    expect(location('/sign-in').response.headers.get('referrer-policy')).toBeNull();
+  });
+});

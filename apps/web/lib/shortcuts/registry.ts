@@ -8,7 +8,7 @@ import {
 } from '@causedeck/ui/hooks';
 
 import { can, type FlagKey, type Role } from '../workspace-context.ts';
-import { getNavItem, isNavItemEnabled, type WorkspaceRoute } from '../nav.ts';
+import { getNavItem, isNavItemEnabled, type NavItemId, type WorkspaceRoute } from '../nav.ts';
 
 /** Dialog sections, in display order. Headings are `shortcuts.groups.<id>`. */
 export const SHORTCUT_GROUPS = ['navigation', 'actions', 'help'] as const;
@@ -43,8 +43,8 @@ export const NAV_CHORDS: Partial<Record<WorkspaceRoute, string>> = {
 };
 
 /** `g then t` for a nav item with a chord. */
-export function chordHint(navId: WorkspaceRoute): string | undefined {
-  const key = NAV_CHORDS[navId];
+export function chordHint(navId: NavItemId): string | undefined {
+  const key = (NAV_CHORDS as Partial<Record<string, string>>)[navId];
   return key === undefined ? undefined : `g then ${key}`;
 }
 
@@ -77,6 +77,18 @@ export const SHORTCUTS: readonly ShortcutDefinition[] = [
   action('notifications', 'shift+n', 'actions', 'notifications.shortcut'),
   action('help', '?', 'help'),
 ];
+
+/**
+ * The drafting studio's keys (#827). The studio handles them itself while it is open and lists them
+ * in the `?` sheet as palette commands; `[` and `mod+k` keep their shell meaning everywhere else.
+ */
+export const DRAFT_STUDIO_SHORTCUTS = [
+  { id: 'draft.save', keys: 'mod+s', labelKey: 'drafting.shortcuts.save' },
+  { id: 'draft.actions', keys: 'mod+k', labelKey: 'drafting.shortcuts.actions' },
+  { id: 'draft.nextFinding', keys: ']', labelKey: 'drafting.shortcuts.nextFinding' },
+  { id: 'draft.prevFinding', keys: '[', labelKey: 'drafting.shortcuts.prevFinding' },
+  { id: 'draft.close', keys: 'esc', labelKey: 'drafting.shortcuts.close' },
+] as const;
 
 /** The keys of an action shortcut, e.g. `c` for capture. */
 export function actionKeys(id: ShortcutAction): string {

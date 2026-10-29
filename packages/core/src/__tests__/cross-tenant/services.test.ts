@@ -31,6 +31,14 @@ import {
   invalidateEntitlements,
 } from '../../billing/index.ts';
 import * as core from '../../index.ts';
+import {
+  composeUpdate,
+  getDraft,
+  listDrafts,
+  recordCopied,
+  recordShared,
+  saveEdit,
+} from '../../outward/index.ts';
 
 const THIS_FILE = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
 const mailer: Mailer = { send: () => Promise.resolve() };
@@ -254,8 +262,89 @@ async function expectGraphDenied(
   expect(await aGraph(f)).toEqual(before);
 }
 
+/** People (#82): the deps of the contact services, with the events they emit. */
+function peopleDeps(db: Database | Transaction) {
+  const events: core.PeopleEvent[] = [];
+  const graphEvents: core.GraphEvent[] = [];
+  return {
+    deps: {
+      db,
+      events: { emit: (e: core.PeopleEvent) => events.push(e) },
+      graphEvents: { emit: (e: core.GraphEvent) => graphEvents.push(e) },
+    },
+    events,
+    graphEvents,
+  };
+}
+
+/** Everything the contact services can change in a workspace. */
+async function aContacts(f: Fixture, workspaceId = f.a.id) {
+  return inWorkspace(f.tx, workspaceId, async (s) => ({
+    contacts: await s.select().from(schema.clientContact).orderBy(schema.clientContact.id),
+    activities: await s
+      .select()
+      .from(schema.activity)
+      .where(eq(schema.activity.kind, 'contact_detail'))
+      .orderBy(schema.activity.id),
+    roleEdges: await s.select().from(schema.roleEdge).orderBy(schema.roleEdge.id),
+  }));
+}
+
+/** A client person (the only kind a contact can belong to) of A or B, besides the seeded party. */
+async function clientPersonOf(f: Fixture, workspaceId: string): Promise<string> {
+  const [row] = await inWorkspace(f.tx, workspaceId, (s) =>
+    s
+      .insert(schema.person)
+      .values({
+        workspaceId,
+        name: 'Client (fictional)',
+        kind: 'client',
+        sourceType: 'manual',
+      })
+      .returning({ id: schema.person.id }),
+  );
+  if (!row) throw new Error('client person insert returned no row');
+  return row.id;
+}
+
+/** Runs `call` as ub claiming A (no scope and from B's scope) and as ub in B with A's ids. */
+async function expectContactsDenied(
+  f: Fixture,
+  call: (db: Database | Transaction, workspaceId: string) => Promise<unknown>,
+): Promise<void> {
+  const before = await aContacts(f);
+  await expectDenied(call(f.tx, f.a.id));
+  await expectDenied(f.asB((s) => call(s, f.a.id)));
+  await expectDenied(call(f.tx, f.b.id));
+  expect(await aContacts(f)).toEqual(before);
+}
+
+/** Workspace B's user claiming workspace A (research, #80). */
+const bActsOnA = (f: Fixture) => ({ workspaceId: f.a.id, userId: f.ub });
+const aNote = (f: Fixture) => ({
+  matterId: f.a.rows.research_note?.matterId ?? '',
+  id: f.a.rows.research_note?.id ?? '',
+});
+const aNotes = (f: Fixture) =>
+  inWorkspace(f.tx, f.a.id, (s) =>
+    s
+      .select()
+      .from(schema.researchNote)
+      .where(eq(schema.researchNote.id, aNote(f).id)),
+  );
+
 const PROBE_ID = '00000000-0000-4000-8000-0000000000aa';
 const PROBE_PROVENANCE = { sourceType: 'manual' } as const;
+
+const asBInA = (f: Fixture) => ({ userId: f.ub, workspaceId: f.a.id });
+const asBInB = (f: Fixture) => ({ userId: f.ub, workspaceId: f.b.id });
+const aContinuityMatter = (f: Fixture) => f.a.rows.handover_note?.matterId ?? '';
+async function continuityRows(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => [
+    await s.select().from(schema.handoverNote),
+    await s.select().from(schema.matterView),
+  ]);
+}
 
 /** A's seeded listing (canonical) and its proceeding. */
 async function aListing(f: Fixture): Promise<{ listingId: string; proceedingId: string }> {
@@ -475,6 +564,246 @@ async function addAWatch(f: Fixture) {
   );
 }
 
+/** Drafts (#768): `ub` names A's draft, version and export ids, as B's member and as A's. */
+function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
+  const ids = (f: Fixture) => ({
+    draftId: f.a.rows.draft_export?.draftId ?? '',
+    versionId: f.a.rows.draft_export?.draftVersionId ?? '',
+    citedVersionId: f.a.rows.authority?.draftVersionId ?? '',
+    exportId: f.a.rows.draft_export?.id ?? '',
+    reportVersionId: f.a.rows.draft_consistency_report?.draftVersionId ?? '',
+    factVersionId: f.a.rows.draft_fact_ack?.draftVersionId ?? '',
+    matterId: f.a.rows.matter?.matterId ?? '00000000-0000-4000-8000-000000000000',
+  });
+  const inA = (f: Fixture) => ({ workspaceId: f.a.id, userId: f.ub });
+  const aState = async (f: Fixture) =>
+    inWorkspace(f.tx, f.a.id, async (s) => ({
+      drafts: await s.select().from(schema.draft),
+      versions: await s.select().from(schema.draftVersion),
+      exports: await s.select().from(schema.draftExport),
+      reports: await s.select().from(schema.draftConsistencyReport),
+      factAcks: await s.select().from(schema.draftFactAck),
+    }));
+  const unchanged = (run: (f: Fixture) => Promise<void>) => async (f: Fixture) => {
+    const before = await aState(f);
+    await run(f);
+    expect(await aState(f)).toEqual(before);
+  };
+  const denied = (call: (f: Fixture, s: Transaction) => Promise<unknown>) =>
+    unchanged(async (f) => {
+      await expectDenied(f.asB((s) => call(f, s)));
+    });
+  const citationsDenied =
+    (call: (f: Fixture, s: Transaction) => Promise<unknown>) => async (f: Fixture) => {
+      const read = (g: Fixture) =>
+        inWorkspace(g.tx, g.a.id, (s) => s.select().from(schema.authority));
+      const before = await read(f);
+      expect(before).toHaveLength(1);
+      await expectDenied(f.asB((s) => call(f, s)));
+      expect(await read(f)).toEqual(before);
+    };
+  return {
+    createDraft: denied((f, s) =>
+      core.createDraft({ db: s }, inA(f), {
+        templateId: f.a.rows.draft?.templateId ?? '',
+        title: 'B on A',
+      }),
+    ),
+    renderDraft: denied((f, s) => core.renderDraft({ db: s }, inA(f), { draftId: ids(f).draftId })),
+    saveVersion: denied((f, s) =>
+      core.saveVersion({ db: s }, inA(f), { draftId: ids(f).draftId, content: [] }),
+    ),
+    listVersions: denied((f, s) =>
+      core.listVersions({ db: s }, inA(f), { draftId: ids(f).draftId }),
+    ),
+    getDraft: denied((f, s) => core.getDraft({ db: s }, inA(f), { draftId: ids(f).draftId })),
+    listDrafts: unchanged(async (f) => {
+      await expectDenied(f.asB((s) => core.listDrafts({ db: s }, inA(f))));
+      const own = await f.asB((s) =>
+        core.listDrafts({ db: s }, { workspaceId: f.b.id, userId: f.ub }),
+      );
+      expect(own.map((d) => d.id)).not.toContain(ids(f).draftId);
+    }),
+    listTemplates: unchanged(async (f) => {
+      await expectDenied(f.asB((s) => core.listTemplates({ db: s }, inA(f))));
+    }),
+    restoreVersion: denied((f, s) =>
+      core.restoreVersion({ db: s }, inA(f), { draftId: ids(f).draftId, versionNo: 1 }),
+    ),
+    exportDraft: denied((f, s) => {
+      const enqueue = vi.fn(() => Promise.resolve(undefined));
+      return core.exportDraft({ db: s, enqueue }, inA(f), {
+        draftId: ids(f).draftId,
+        format: 'pdf',
+      });
+    }),
+    // The job body names A's workspace from B's scope: it fails (tenancy or NOT_FOUND) and stores nothing.
+    runDraftingExport: unchanged(async (f) => {
+      const keys = {} as never;
+      await expect(
+        f.asB((s) =>
+          core.runDraftingExport(
+            { db: s, store: createMemoryObjectStore(), keys, log: logger },
+            { workspaceId: f.a.id, draftVersionId: ids(f).versionId, format: 'pdf', userId: f.ub },
+          ),
+        ),
+      ).rejects.toBeDefined();
+    }),
+    // Citation checker (#77): B cannot check, read or acknowledge A's citations; A's rows stay.
+    checkDraft: citationsDenied((f, s) =>
+      core.checkDraft({ db: s }, inA(f), ids(f).citedVersionId),
+    ),
+    getCitationReport: citationsDenied((f, s) =>
+      core.getCitationReport({ db: s }, inA(f), { draftVersionId: ids(f).citedVersionId }),
+    ),
+    acknowledgeUnverified: citationsDenied((f, s) =>
+      core.acknowledgeUnverified({ db: s }, inA(f), {
+        draftVersionId: ids(f).citedVersionId,
+        citationIds: [f.a.rows.authority?.id ?? ''],
+        reason: 'B on A',
+      }),
+    ),
+    // Consistency (#78): B on A's version sees nothing, stores nothing and writes no version.
+    runConsistencyCheck: denied((f, s) =>
+      core.runConsistencyCheck({ db: s }, inA(f), { draftVersionId: ids(f).reportVersionId }),
+    ),
+    getConsistencyReport: denied((f, s) =>
+      core.getConsistencyReport({ db: s }, inA(f), { draftVersionId: ids(f).reportVersionId }),
+    ),
+    listFindings: denied((f, s) =>
+      core.listFindings({ db: s }, inA(f), { draftVersionId: ids(f).reportVersionId }),
+    ),
+    loadConsistencyFacts: denied((f, s) =>
+      core.loadConsistencyFacts({ db: s }, inA(f), ids(f).matterId),
+    ),
+    // Fact-check (#914): B on A's version checks nothing, decides nothing and stores nothing.
+    runFactCheck: denied((f, s) =>
+      core.runFactCheck({ db: s }, inA(f), { draftVersionId: ids(f).factVersionId }),
+    ),
+    ignoreForMatter: denied((f, s) =>
+      core.ignoreForMatter({ db: s }, inA(f), {
+        draftVersionId: ids(f).factVersionId,
+        claimKey: 'date:2024-01-01',
+      }),
+    ),
+    markAsAssertion: denied((f, s) =>
+      core.markAsAssertion({ db: s }, inA(f), {
+        draftVersionId: ids(f).factVersionId,
+        claimKey: 'date:2024-01-01',
+      }),
+    ),
+    recordFactFix: denied((f, s) =>
+      core.recordFactFix({ db: s }, inA(f), {
+        fromVersionId: ids(f).factVersionId,
+        toVersionId: ids(f).factVersionId,
+      }),
+    ),
+    acknowledgeFactCheck: denied((f, s) =>
+      core.acknowledgeFactCheck({ db: s }, inA(f), {
+        draftVersionId: ids(f).factVersionId,
+        reason: 'B on A',
+        confirm: true,
+      }),
+    ),
+    checkFactsLive: denied((f, s) =>
+      core.checkFactsLive({ db: s }, inA(f), {
+        matterId: ids(f).matterId,
+        blocks: [{ key: 'b.0', text: 'Order dated 01/02/2024.' }],
+      }),
+    ),
+    loadFactCheckFacts: denied((f, s) =>
+      core.loadFactCheckFacts({ db: s }, inA(f), ids(f).matterId),
+    ),
+    applyFix: denied((f, s) =>
+      core.applyFix({ db: s }, inA(f), {
+        draftVersionId: ids(f).reportVersionId,
+        findingId: 'name.mismatch:b.0:0',
+        confirm: true,
+      }),
+    ),
+    createDraftExportDownload: denied((f, s) =>
+      core.createDraftExportDownload(
+        { db: s, store: createMemoryObjectStore() },
+        inA(f),
+        ids(f).exportId,
+      ),
+    ),
+  };
+}
+
+/** A's attention snoozes, to prove a B-scoped call left them unchanged. */
+const aSnoozes = (f: Fixture) =>
+  inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.attentionSnooze).orderBy(schema.attentionSnooze.id),
+  );
+
+/** A's proof-of-value rows, to prove a B-scoped call left them unchanged (#86). */
+async function aPov(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => ({
+    ratings: await s.select().from(schema.preparednessRating),
+    pulses: await s.select().from(schema.loadPulse),
+    tests: await s.select().from(schema.contextTestResult),
+    prefs: await s.select().from(schema.povPrefs),
+  }));
+}
+
+/** Proof-of-value (#86): B on A's workspace is denied; A's rows are unchanged. */
+function povCases(): Record<string, (f: Fixture) => Promise<void>> {
+  const onA = (f: Fixture) => ({ userId: f.ub, workspaceId: f.a.id });
+  const guarded = (call: (f: Fixture) => Promise<unknown>) => async (f: Fixture) => {
+    const before = await aPov(f);
+    await expectDenied(call(f));
+    expect(await aPov(f)).toEqual(before);
+  };
+  const hearingId = (f: Fixture) => String(f.a.rows.preparedness_rating?.hearingId);
+  const ratingId = (f: Fixture) => String(f.a.rows.preparedness_rating?.id);
+  const matterId = (f: Fixture) => String(f.a.rows.context_test_result?.matterId);
+  const runId = (f: Fixture) => String(f.a.rows.context_test_result?.id);
+  const d = (f: Fixture) => ({ db: f.tx });
+  return {
+    requirePovMember: guarded((f) => core.requirePovMember(f.tx, onA(f))),
+    requirePovRecorder: guarded((f) => core.requirePovRecorder(f.tx, onA(f))),
+    promptsEnabled: guarded(async (f) => {
+      // The service reads one member's row: B is not a member of A, so it must not answer.
+      await core.requirePovMember(f.tx, onA(f));
+      return core.promptsEnabled(f.tx, onA(f), String(f.a.rows.pov_prefs?.memberId));
+    }),
+    getPovPrefs: guarded((f) => core.getPovPrefs(d(f), onA(f))),
+    setPovPrefs: guarded((f) => core.setPovPrefs(d(f), onA(f), { promptsEnabled: true })),
+    listPov: guarded((f) => core.listPov(d(f), onA(f))),
+    deleteOwnRating: guarded((f) => core.deleteOwnRating(d(f), onA(f), { ratingId: ratingId(f) })),
+    povAggregate: guarded((f) => core.povAggregate(d(f), onA(f))),
+    computePreparedKept: guarded((f) => core.computePreparedKept(d(f), onA(f), {})),
+    obligationHealth: guarded((f) => core.obligationHealth(d(f), onA(f), {})),
+    preparednessSeries: guarded((f) => core.preparednessSeries(d(f), onA(f), {})),
+    loadSeries: guarded((f) => core.loadSeries(d(f), onA(f), {})),
+    getPracticeInsights: guarded((f) => core.getPracticeInsights(d(f), onA(f))),
+    buildPovReport: guarded((f) => core.buildPovReport(d(f), onA(f))),
+    shouldPrompt: guarded((f) => core.shouldPrompt(d(f), onA(f), { hearingId: hearingId(f) })),
+    recordPreparedness: guarded((f) =>
+      core.recordPreparedness(d(f), onA(f), { hearingId: hearingId(f), rating: 1 }),
+    ),
+    recordSkip: guarded((f) => core.recordSkip(d(f), onA(f), { hearingId: hearingId(f) })),
+    dueForPulse: guarded((f) => core.dueForPulse(d(f), onA(f))),
+    recordLoadPulse: guarded((f) =>
+      core.recordLoadPulse(d(f), onA(f), { demand: 1, worry: 1, effort: 1 }),
+    ),
+    dismissLoadPulse: guarded((f) => core.dismissLoadPulse(d(f), onA(f))),
+    startContextTest: guarded((f) =>
+      core.startContextTest(d(f), onA(f), { matterId: matterId(f) }),
+    ),
+    answerQuestion: guarded((f) =>
+      core.answerQuestion(d(f), onA(f), {
+        runId: runId(f),
+        question: 'next_date',
+        correct: true,
+        atMs: 1,
+      }),
+    ),
+    finishContextTest: guarded((f) => core.finishContextTest(d(f), onA(f), { runId: runId(f) })),
+  };
+}
+
 const CASES: Record<string, Case> = {
   addCauseListWatch: async (f) => {
     // ub's watch lands in B; A has no watch from it.
@@ -590,13 +919,17 @@ const CASES: Record<string, Case> = {
         kind: 'holiday',
         title: 'XT holiday notice',
         issuedOn: '2026-11-02',
-        effectiveOn: '2026-12-25',
+        effectiveOn: '2026-12-24',
         url: `https://notices.example.test/xt/holiday/${randomUUID()}`,
         sourceType: 'adapter',
         sourceRef: 'xt',
       })
       .returning({ id: schema.notice.id });
     const noticeId = noticeRow?.id ?? '';
+    // The listing's date is named only by the holiday-list document (#628), not by effective_on.
+    await f.tx
+      .insert(schema.noticeHoliday)
+      .values({ noticeId, holidayOn: '2026-12-25', name: 'XT listed holiday' });
     const listingId = await inWorkspace(f.tx, f.b.id, async (s) => {
       const [m] = await s
         .insert(schema.matter)
@@ -664,9 +997,18 @@ const CASES: Record<string, Case> = {
         reason: 'forum',
       }),
     );
+    // A second date read out of the same notice's holiday-list document (#628).
+    await f.tx.insert(schema.noticeHoliday).values({
+      noticeId: noticeRow?.id ?? '',
+      holidayOn: '2026-12-26',
+      name: 'XT listed holiday',
+    });
     const range = { forumCode, from: '2026-12-01', to: '2026-12-31' };
     const own = await core.loadCourtCalendar(f.tx, f.b.id, range);
-    expect([...own.holidays]).toEqual([['2026-12-25', 'XT calendar holiday']]);
+    expect([...own.holidays]).toEqual([
+      ['2026-12-25', 'XT calendar holiday'],
+      ['2026-12-26', 'XT listed holiday'],
+    ]);
     const other = await core.loadCourtCalendar(f.tx, f.a.id, range);
     expect([...other.holidays]).toEqual([]);
   },
@@ -1450,6 +1792,23 @@ const CASES: Record<string, Case> = {
       core.DEFAULT_PRIVACY_SETTINGS,
     );
   },
+  getAllowEvalReuse: async (f) => {
+    await f.tx
+      .update(schema.workspaceSettings)
+      .set({ allowEvalReuse: true })
+      .where(eq(schema.workspaceSettings.workspaceId, f.a.id));
+    // Under B's scope A's settings row is invisible: B reads the opt-out default, not A's opt-in.
+    expect(await f.asB((s) => core.getAllowEvalReuse(s, f.a.id))).toBe(false);
+  },
+  setAllowEvalReuse: async (f) => {
+    const before = await core.getAllowEvalReuse(f.tx, f.a.id);
+    await expectDenied(
+      f.asB((s) =>
+        core.setAllowEvalReuse(s, { workspaceId: f.a.id, actorUserId: f.ub, allow: !before }),
+      ),
+    );
+    expect(await core.getAllowEvalReuse(f.tx, f.a.id)).toBe(before);
+  },
   updateWorkspacePrivacy: async (f) => {
     const before = await core.getPrivacySettings(f.tx, f.a.id);
     await expectDenied(
@@ -2190,6 +2549,55 @@ const CASES: Record<string, Case> = {
     ).rejects.toBeDefined();
     expect(await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.hearing))).toEqual(before);
   },
+  // continuity (#71): B acting on A's matter or handover is denied; A's handovers and views are unchanged.
+  generateHandover: async (f) => {
+    await expectDenied(core.generateHandover({ db: f.tx }, asBInA(f), aContinuityMatter(f)));
+    await expectDenied(core.generateHandover({ db: f.tx }, asBInB(f), aContinuityMatter(f)));
+  },
+  saveHandover: async (f) => {
+    const before = await continuityRows(f);
+    const input = { matterId: aContinuityMatter(f), recipientMemberId: PROBE_ID };
+    await expectDenied(core.saveHandover({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.saveHandover({ db: f.tx }, asBInB(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  listHandovers: async (f) => {
+    const input = { matterId: aContinuityMatter(f) };
+    await expectDenied(core.listHandovers({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.listHandovers({ db: f.tx }, asBInB(f), input));
+  },
+  acknowledgeHandover: async (f) => {
+    const before = await continuityRows(f);
+    const input = { handoverId: f.a.rows.handover_note?.id ?? '' };
+    await expectDenied(core.acknowledgeHandover({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.acknowledgeHandover({ db: f.tx }, asBInB(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  generateHandoversForMember: async (f) => {
+    const before = await continuityRows(f);
+    const input = { fromMemberId: PROBE_ID, toMemberId: PROBE_ID };
+    await expectDenied(core.generateHandoversForMember({ db: f.tx }, asBInA(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  recordView: async (f) => {
+    const before = await continuityRows(f);
+    const input = { matterId: aContinuityMatter(f) };
+    await expectDenied(core.recordView({ db: f.tx }, asBInA(f), input));
+    await expectDenied(core.recordView({ db: f.tx }, asBInB(f), input));
+    expect(await continuityRows(f)).toEqual(before);
+  },
+  whatChangedSince: async (f) => {
+    await expectDenied(
+      core.whatChangedSince({ db: f.tx }, asBInA(f), aContinuityMatter(f), new Date(0)),
+    );
+  },
+  changesForViewer: async (f) => {
+    const before = await continuityRows(f);
+    await expectDenied(
+      core.changesForViewer({ db: f.tx }, asBInA(f), { matterId: aContinuityMatter(f) }),
+    );
+    expect(await continuityRows(f)).toEqual(before);
+  },
   // briefs (#60): B acting on A's listing is denied and A's brief state is unchanged.
   assembleBrief: async (f) => {
     const { listingId } = await aListing(f);
@@ -2871,6 +3279,159 @@ const CASES: Record<string, Case> = {
     }
     expect(await aGraph(f, f.b.id)).toEqual(bBefore);
     expect(events).toEqual([]);
+  },
+  // people (#82): B reading, changing, linking or archiving A's contacts is denied (NOT_FOUND) and
+  // A's contacts, their activity and role edges are unchanged; B's own list never holds A's rows
+  listContacts: async (f) => {
+    const { deps } = peopleDeps(f.tx);
+    const aId = f.a.rows.client_contact?.id ?? '';
+    const bId = f.b.rows.client_contact?.id ?? '';
+    const before = await aContacts(f);
+    const call = (db: Database | Transaction, workspaceId: string) =>
+      core.listContacts({ ...deps, db }, { userId: f.ub, workspaceId });
+    // ub claiming A, with no scope and from B's scope. (ub in B itself is a member there: below.)
+    await expectDenied(call(f.tx, f.a.id));
+    await expectDenied(f.asB((s) => call(s, f.a.id)));
+    expect(await aContacts(f)).toEqual(before);
+    // A's owner does read it: the probe itself is sound.
+    const own = await core.listContacts(deps, { userId: f.ua, workspaceId: f.a.id });
+    expect(own.map((c) => c.id)).toContain(aId);
+    for (const input of [
+      {},
+      { includeArchived: true },
+      { personId: f.a.rows.client_contact?.personId },
+    ]) {
+      const asB = await core.listContacts(deps, { userId: f.ub, workspaceId: f.b.id }, input);
+      expect(asB.map((c) => c.id)).not.toContain(aId);
+    }
+    const all = await core.listContacts(deps, { userId: f.ub, workspaceId: f.b.id });
+    expect(all.map((c) => c.id)).toContain(bId);
+  },
+  getContactDetail: async (f) => {
+    const { deps } = peopleDeps(f.tx);
+    const contactId = f.a.rows.client_contact?.id ?? '';
+    await expectContactsDenied(f, (db, workspaceId) =>
+      core.getContactDetail({ ...deps, db }, { userId: f.ub, workspaceId }, { contactId }),
+    );
+    // B's own owner finds nothing of A's contact; A's owner reads it: the probe itself is sound.
+    await expectDenied(
+      core.getContactDetail(deps, { userId: f.ub, workspaceId: f.b.id }, { contactId }),
+    );
+    const own = await core.getContactDetail(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { contactId },
+    );
+    expect(own.contact.id).toBe(contactId);
+  },
+  createContact: async (f) => {
+    const { deps, events, graphEvents } = peopleDeps(f.tx);
+    const aPerson = await clientPersonOf(f, f.a.id);
+    const bPerson = await clientPersonOf(f, f.b.id);
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    const input = { personId: aPerson, kind: 'accounts' as const, phone: '+919876543299' };
+    await expectContactsDenied(f, (db, workspaceId) =>
+      core.createContact({ ...deps, db }, { userId: f.ub, workspaceId }, input),
+    );
+    await expectContactsDenied(f, (db, workspaceId) =>
+      core.createContact(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { ...input, matterId: aMatter },
+      ),
+    );
+    // B's own owner cannot attach a contact to A's client or A's matter either.
+    const bBefore = await aContacts(f, f.b.id);
+    await expectDenied(core.createContact(deps, { userId: f.ub, workspaceId: f.b.id }, input));
+    await expectDenied(
+      core.createContact(
+        deps,
+        { userId: f.ub, workspaceId: f.b.id },
+        { ...input, personId: bPerson, matterId: aMatter },
+      ),
+    );
+    expect(await aContacts(f, f.b.id)).toEqual(bBefore);
+    expect(events).toEqual([]);
+    expect(graphEvents).toEqual([]);
+    // A's owner can: the probe itself is sound.
+    await core.createContact(deps, { userId: f.ua, workspaceId: f.a.id }, input);
+  },
+  updateContact: async (f) => {
+    const { deps, events } = peopleDeps(f.tx);
+    const contactId = f.a.rows.client_contact?.id ?? '';
+    for (const input of [
+      { phone: '+919876543298' },
+      { email: 'probe@example.test' },
+      { languagePref: 'ta' as const },
+    ]) {
+      await expectContactsDenied(f, (db, workspaceId) =>
+        core.updateContact({ ...deps, db }, { userId: f.ub, workspaceId }, { contactId, ...input }),
+      );
+    }
+    expect(events).toEqual([]);
+    // A's owner can: the probe itself is sound.
+    await core.updateContact(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { contactId, languagePref: 'ta' },
+    );
+  },
+  undoContactChange: async (f) => {
+    const { deps } = peopleDeps(f.tx);
+    const contactId = f.a.rows.client_contact?.id ?? '';
+    const ownerA = { userId: f.ua, workspaceId: f.a.id };
+    await core.updateContact(deps, ownerA, { contactId, phone: '+919876543297' });
+    const [act] = (await aContacts(f)).activities;
+    if (!act) throw new Error('the phone change recorded no activity');
+    await expectContactsDenied(f, (db, workspaceId) =>
+      core.undoContactChange(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { activityId: act.id },
+      ),
+    );
+    // A's owner can: the probe itself is sound.
+    const undone = await core.undoContactChange(deps, ownerA, { activityId: act.id });
+    expect(undone.phone).toBe('+919876543210');
+  },
+  linkToMatter: async (f) => {
+    const { deps, graphEvents } = peopleDeps(f.tx);
+    const aContact = f.a.rows.client_contact?.id ?? '';
+    const bContact = f.b.rows.client_contact?.id ?? '';
+    const aMatter = f.a.rows.matter?.matterId ?? '';
+    await expectContactsDenied(f, (db, workspaceId) =>
+      core.linkToMatter(
+        { ...deps, db },
+        { userId: f.ub, workspaceId },
+        { contactId: aContact, matterId: aMatter },
+      ),
+    );
+    // One id of each workspace, as ub in B: NOT_FOUND, and neither side gains a role edge.
+    const before = [await aContacts(f), await aContacts(f, f.b.id)];
+    for (const input of [
+      { contactId: aContact, matterId: f.b.rows.matter?.matterId ?? '' },
+      { contactId: bContact, matterId: aMatter },
+    ]) {
+      await expectDenied(core.linkToMatter(deps, { userId: f.ub, workspaceId: f.b.id }, input));
+    }
+    expect([await aContacts(f), await aContacts(f, f.b.id)]).toEqual(before);
+    expect(graphEvents).toEqual([]);
+  },
+  archiveContact: async (f) => {
+    const { deps } = peopleDeps(f.tx);
+    const contactId = f.a.rows.client_contact?.id ?? '';
+    for (const purge of [false, true]) {
+      await expectContactsDenied(f, (db, workspaceId) =>
+        core.archiveContact({ ...deps, db }, { userId: f.ub, workspaceId }, { contactId, purge }),
+      );
+    }
+    // A's owner can: the probe itself is sound.
+    const row = await core.archiveContact(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      { contactId },
+    );
+    expect(row.archivedAt).not.toBeNull();
   },
   setSensitive: async (f) => {
     const { deps, events } = graphDeps(f.tx);
@@ -3655,6 +4216,83 @@ const CASES: Record<string, Case> = {
       f.asB((s) => core.listRelevantJudgments(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
     );
   },
+  // research notes and provider templates (#80): B on A's matter or workspace is denied; A's rows are unchanged.
+  listNotes: async (f) => {
+    await expectDenied(f.asB((s) => core.listNotes(s, bActsOnA(f), aNote(f).matterId)));
+    await expectDenied(
+      f.asB((s) => core.listNotes(s, { workspaceId: f.b.id, userId: f.ub }, aNote(f).matterId)),
+    );
+  },
+  createNote: async (f) => {
+    await expectDenied(
+      f.asB((s) =>
+        core.createNote(s, bActsOnA(f), { matterId: aNote(f).matterId, title: 'B was here' }),
+      ),
+    );
+    expect(await aNotes(f)).toHaveLength(1);
+  },
+  updateNote: async (f) => {
+    const { matterId, id: noteId } = aNote(f);
+    await expectDenied(
+      f.asB((s) => core.updateNote(s, bActsOnA(f), { matterId, noteId, title: 'x', body: 'x' })),
+    );
+    expect((await aNotes(f))[0]?.title).toBe('xt note');
+  },
+  deleteNote: async (f) => {
+    const { matterId, id: noteId } = aNote(f);
+    await expectDenied(f.asB((s) => core.deleteNote(s, bActsOnA(f), { matterId, noteId })));
+    expect(await aNotes(f)).toHaveLength(1);
+  },
+  addAuthority: async (f) => {
+    const { matterId, id: noteId } = aNote(f);
+    await expectDenied(
+      f.asB((s) =>
+        core.addAuthority(s, bActsOnA(f), { matterId, noteId, authority: { label: 'x' } }),
+      ),
+    );
+    expect((await aNotes(f))[0]?.authorities).toEqual([]);
+  },
+  removeAuthority: async (f) => {
+    const { matterId, id: noteId } = aNote(f);
+    await expectDenied(
+      f.asB((s) => core.removeAuthority(s, bActsOnA(f), { matterId, noteId, index: 0 })),
+    );
+  },
+  setAuthorityPinned: async (f) => {
+    const { matterId, id: noteId } = aNote(f);
+    await expectDenied(
+      f.asB((s) =>
+        core.setAuthorityPinned(s, bActsOnA(f), { matterId, noteId, index: 0, pinned: true }),
+      ),
+    );
+  },
+  getResearchFacts: async (f) => {
+    await expectDenied(f.asB((s) => core.getResearchFacts(s, bActsOnA(f), aNote(f).matterId)));
+  },
+  listProviderTemplates: async (f) => {
+    await expectDenied(f.asB((s) => core.listProviderTemplates(s, bActsOnA(f))));
+  },
+  saveProviderTemplate: async (f) => {
+    await expectDenied(
+      f.asB((s) =>
+        core.saveProviderTemplate(s, bActsOnA(f), {
+          key: 'xt-provider',
+          label: 'B',
+          urlTemplate: 'https://b.example.test/?q={q}',
+        }),
+      ),
+    );
+    const [row] = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.researchProvider));
+    expect(row?.label).toBe('XT provider');
+  },
+  removeProviderTemplate: async (f) => {
+    await expectDenied(f.asB((s) => core.removeProviderTemplate(s, bActsOnA(f), 'xt-provider')));
+    const rows = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.researchProvider));
+    expect(rows).toHaveLength(1);
+  },
+  listLinkProviders: async (f) => {
+    await expectDenied(f.asB((s) => core.listLinkProviders(s, bActsOnA(f))));
+  },
   listWorkspaceNotices: async (f) => {
     const noticeId = f.a.rows.notice_match?.noticeId ?? '';
     // B asking for A's workspace gets nothing (or is refused); B's own list never holds A's match.
@@ -3809,7 +4447,347 @@ const CASES: Record<string, Case> = {
     const alerts = await inWorkspace(f.tx, f.a.id, (s) => s.select().from(schema.judgmentAlert));
     expect(alerts.every((a) => a.notifiedAt === null)).toBe(true);
   },
+  // drafts (#768): B on A's draft, version or export is denied; A's drafts and exports are unchanged.
+  ...draftingCases(),
+  ...povCases(),
+  // Stale-matter attention (#70): B on A's matter and snooze is denied or sees nothing; A is unchanged.
+  detectAttention: async (f) => {
+    const aMatter = String(f.a.rows.attention_snooze?.matterId);
+    const before = await aSnoozes(f);
+    const asB = { userId: f.ub, workspaceId: f.b.id };
+    const flags = await core.detectAttention({ db: f.tx }, asB, { matterId: aMatter });
+    expect(flags).toEqual([]);
+    expect((await core.detectAttention({ db: f.tx }, asB)).map((x) => x.matterId)).not.toContain(
+      aMatter,
+    );
+    await expectDenied(core.detectAttention({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }));
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  countAttention: async (f) => {
+    await expectDenied(core.countAttention({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }));
+  },
+  scanWorkspaceAttention: async (f) => {
+    // The scan opens the workspace it is given: from inside B's scope, A's is refused outright.
+    const before = await aSnoozes(f);
+    await expect(f.asB((s) => core.scanWorkspaceAttention({ db: s }, f.a.id))).rejects.toThrow(
+      /different workspace/,
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  snoozeFlag: async (f) => {
+    const before = await aSnoozes(f);
+    await expectDenied(
+      core.snoozeFlag(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        {
+          kind: 'snooze',
+          matterId: String(f.a.rows.attention_snooze?.matterId),
+          rule: null,
+          until: '2099-01-01',
+          reason: 'x',
+        },
+      ),
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  dismissFlag: async (f) => {
+    const before = await aSnoozes(f);
+    await expectDenied(
+      core.dismissFlag(
+        { db: f.tx },
+        { userId: f.ub, workspaceId: f.a.id },
+        { kind: 'dismiss', matterId: String(f.a.rows.attention_snooze?.matterId), rule: null },
+      ),
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  liftSnooze: async (f) => {
+    const before = await aSnoozes(f);
+    const snoozeId = String(f.a.rows.attention_snooze?.snoozeId);
+    await expectDenied(
+      core.liftSnooze({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { snoozeId }),
+    );
+    // From B's own scope A's snooze does not exist.
+    await expectDenied(
+      core.liftSnooze({ db: f.tx }, { userId: f.ub, workspaceId: f.b.id }, { snoozeId }),
+    );
+    expect(await aSnoozes(f)).toEqual(before);
+  },
+  listSnoozes: async (f) => {
+    const matterId = String(f.a.rows.attention_snooze?.matterId);
+    await expectDenied(
+      core.listSnoozes({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, matterId),
+    );
+    await expectDenied(
+      core.listSnoozes({ db: f.tx }, { userId: f.ub, workspaceId: f.b.id }, matterId),
+    );
+  },
+  setStaleDays: async (f) => {
+    const read = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s
+          .select({ days: schema.workspaceSettings.attentionStaleDays })
+          .from(schema.workspaceSettings),
+      );
+    const before = await read();
+    await expectDenied(
+      core.setStaleDays({ db: f.tx }, { userId: f.ub, workspaceId: f.a.id }, { days: 90 }),
+    );
+    expect(await read()).toEqual(before);
+  },
+  // Limitation tracker (#940): the flag is on; B claiming A's workspace is refused and A is unchanged.
+  loadRuleTable: async (f) => {
+    const before = await aLimitation(f);
+    await expectDenied(
+      core.loadRuleTable(limitationDeps(f), bActsOnA(f), {
+        version: 'x-1',
+        rules: [
+          {
+            code: 'x.rule',
+            title: 'x',
+            statute: 'x',
+            periodValue: 1,
+            periodUnit: 'days',
+            startEvent: 'order_date',
+            condonable: false,
+          },
+        ],
+      }),
+    );
+    expect(await aLimitation(f)).toEqual(before);
+  },
+  listRules: async (f) => {
+    await expectDenied(core.listRules(limitationDeps(f), bActsOnA(f)));
+  },
+  computeLimitation: async (f) => {
+    const before = await aLimitation(f);
+    await expectDenied(
+      core.computeLimitation(limitationDeps(f), bActsOnA(f), {
+        matterId: randomUUID(),
+        ruleCode: 'x.rule',
+        startDate: '2026-01-01',
+      }),
+    );
+    expect(await aLimitation(f)).toEqual(before);
+  },
+  confirmLimitation: async (f) => {
+    const before = await aLimitation(f);
+    await expectDenied(
+      core.confirmLimitation(limitationDeps(f), bActsOnA(f), { computationId: randomUUID() }),
+    );
+    await expectDenied(
+      core.confirmLimitation(
+        limitationDeps(f),
+        { userId: f.ub, workspaceId: f.b.id },
+        { computationId: randomUUID() },
+      ),
+    );
+    expect(await aLimitation(f)).toEqual(before);
+  },
+  listLimitations: async (f) => {
+    await expectDenied(core.listLimitations(limitationDeps(f), bActsOnA(f)));
+  },
+  // Fees (#83): the flag is on; B claiming A's workspace is refused, and B in its own workspace
+  // with A's ids finds nothing; A's fee tables are unchanged.
+  createFeeAgreement: async (f) =>
+    feesDenied(f, (d, who) => core.createFeeAgreement(d, who, feeAgreementInput(f))),
+  updateFeeAgreement: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.updateFeeAgreement(d, who, { agreementId: aFeeIds(f).agreementId, notes: 'x' }),
+      true,
+    ),
+  setFeeAgreementStatus: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.setFeeAgreementStatus(d, who, {
+          agreementId: aFeeIds(f).agreementId,
+          status: 'active',
+        }),
+      true,
+    ),
+  getFeeAgreement: async (f) =>
+    feesDenied(
+      f,
+      (d, who) => core.getFeeAgreement(d, who, { agreementId: aFeeIds(f).agreementId }),
+      true,
+    ),
+  listFeeAgreements: async (f) => {
+    await feesDenied(f, (d, who) => core.listFeeAgreements(d, who));
+    const own = await core.listFeeAgreements(feesDeps(f), asBInB(f));
+    expect(own.filter((r) => r.workspaceId === f.a.id)).toEqual([]);
+  },
+  prepareFeeInvoice: async (f) =>
+    feesDenied(f, (d, who) =>
+      core.prepareFeeInvoice(d, who, { invoice: feeInvoiceInput(f), supplier: FEE_SUPPLIER }),
+    ),
+  createDraftInvoice: async (f) =>
+    feesDenied(f, (d, who) =>
+      core.createDraftInvoice(d, who, { invoice: feeInvoiceInput(f), supplier: FEE_SUPPLIER }),
+    ),
+  updateDraftInvoice: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.updateDraftInvoice(d, who, {
+          invoiceId: aFeeIds(f).invoiceId,
+          invoice: feeInvoiceInput(f),
+          supplier: FEE_SUPPLIER,
+        }),
+      true,
+    ),
+  discardDraftInvoice: async (f) =>
+    feesDenied(
+      f,
+      (d, who) => core.discardDraftInvoice(d, who, { invoiceId: aFeeIds(f).invoiceId }),
+      true,
+    ),
+  issueInvoice: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.issueInvoice(d, who, { invoiceId: aFeeIds(f).invoiceId, supplier: FEE_SUPPLIER }),
+      true,
+    ),
+  recordPayment: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.recordPayment(d, who, {
+          invoiceId: aFeeIds(f).invoiceId,
+          amountPaise: 100,
+          method: 'upi',
+          receivedOn: '2026-11-03',
+        }),
+      true,
+    ),
+  issueCreditNote: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.issueCreditNote(d, who, {
+          invoiceId: aFeeIds(f).invoiceId,
+          amountPaise: 1,
+          reason: 'x',
+          occurredOn: '2026-11-03',
+        }),
+      true,
+    ),
+  getInvoice: async (f) =>
+    feesDenied(f, (d, who) => core.getInvoice(d, who, { invoiceId: aFeeIds(f).invoiceId }), true),
+  listInvoices: async (f) => {
+    await feesDenied(f, (d, who) => core.listInvoices(d, who));
+    const own = await core.listInvoices(feesDeps(f), asBInB(f));
+    expect(own.filter((r) => r.workspaceId === f.a.id)).toEqual([]);
+  },
+  recordClientExpense: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.recordClientExpense(d, who, {
+          personId: aFeeIds(f).personId,
+          amountPaise: 100,
+          description: 'x',
+          occurredOn: '2026-11-03',
+        }),
+      true,
+    ),
+  recordClientReceipt: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.recordClientReceipt(d, who, {
+          personId: aFeeIds(f).personId,
+          amountPaise: 100,
+
+          receivedOn: '2026-11-03',
+        }),
+      true,
+    ),
+  listLedger: async (f) => {
+    await feesDenied(f, (d, who) => core.listLedger(d, who, { personId: aFeeIds(f).personId }));
+    expect(
+      await core.listLedger(feesDeps(f), asBInB(f), { personId: aFeeIds(f).personId }),
+    ).toEqual([]);
+  },
+  getClientBalance: async (f) => {
+    await feesDenied(f, (d, who) =>
+      core.getClientBalance(d, who, { personId: aFeeIds(f).personId }),
+    );
+    expect(
+      await core.getClientBalance(feesDeps(f), asBInB(f), { personId: aFeeIds(f).personId }),
+    ).toBe(0);
+  },
 };
+
+const limitationDeps = (f: Fixture) => ({
+  db: f.tx,
+  flagEnabled: () => Promise.resolve(true),
+});
+const aLimitation = (f: Fixture) =>
+  inWorkspace(f.tx, f.a.id, async (s) => [
+    await s.select().from(schema.limitationRule),
+    await s.select().from(schema.limitationComputation),
+  ]);
+
+const feesDeps = (f: Fixture) => ({ db: f.tx, flagEnabled: () => Promise.resolve(true) });
+const FEE_SUPPLIER = { name: 'Chambers', stateCode: '27', gstin: '27ABCDE1234F1Z5' };
+const aFeeIds = (f: Fixture) => ({
+  agreementId: String(f.a.rows.fee_agreement?.id),
+  invoiceId: String(f.a.rows.fee_invoice?.id),
+  matterId: String(f.a.rows.fee_agreement?.['matterId']),
+  personId: String(f.a.rows.fee_agreement?.['personId']),
+});
+const feeAgreementInput = (f: Fixture) => ({
+  matterId: aFeeIds(f).matterId,
+  personId: aFeeIds(f).personId,
+  basis: 'fixed',
+  amountPaise: 500_000,
+  gstTreatment: 'forward_charge',
+  startsOn: '2026-11-01',
+});
+const feeInvoiceInput = (f: Fixture) => ({
+  matterId: aFeeIds(f).matterId,
+  personId: aFeeIds(f).personId,
+  placeOfSupplyStateCode: '27',
+  lines: [
+    {
+      description: 'Drafting',
+      quantity: 1,
+      unitPricePaise: 100_000,
+      amountPaise: 100_000,
+      gstTreatment: 'forward_charge',
+    },
+  ],
+});
+const aFees = (f: Fixture) =>
+  inWorkspace(f.tx, f.a.id, async (s) => [
+    await s.select().from(schema.feeAgreement),
+    await s.select().from(schema.feeInvoice),
+    await s.select().from(schema.feeInvoiceLine),
+    await s.select().from(schema.payment),
+    await s.select().from(schema.clientLedgerEntry),
+  ]);
+/**
+ * B claiming A's workspace is refused (NOT_FOUND or FORBIDDEN); with `ownScope`, B in its own
+ * workspace using A's ids is refused too. A's fee tables are unchanged either way.
+ */
+async function feesDenied(
+  f: Fixture,
+  call: (
+    deps: ReturnType<typeof feesDeps>,
+    who: { userId: string; workspaceId: string },
+  ) => Promise<unknown>,
+  ownScope = false,
+): Promise<void> {
+  const before = await aFees(f);
+  await expectDenied(call(feesDeps(f), bActsOnA(f)));
+  if (ownScope) await expectDenied(call(feesDeps(f), asBInB(f)));
+  expect(await aFees(f)).toEqual(before);
+}
 
 const registered = Object.entries(SERVICE_TESTS)
   .filter(([, entry]) => entry.test === THIS_FILE)
@@ -3921,6 +4899,52 @@ describe('cross-tenant tracked-case metering: ub on workspace B against A', () =
       expect(naming.chargePaise).toBe(0);
       // A is untouched and still counts its own.
       expect(await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId))).toBe(aSeeded + 5);
+    });
+  });
+});
+
+// Outward update drafts (#735) live in the `@causedeck/core/outward` subpath, not the root index,
+// so the registry does not list them; they hold the same B-on-A contract.
+describe('cross-tenant outward drafts: ub on workspace B against A', () => {
+  it("denies B on A's draft and matter, and leaves A unchanged", async () => {
+    await withTestDb(async (tx) => {
+      const seeded = await seedTwoTenants(tx);
+      const draftId = seeded.a.rows.outward_draft?.draftId;
+      const matterId = seeded.a.rows.matter?.matterId;
+      if (typeof draftId !== 'string' || typeof matterId !== 'string') {
+        throw new TypeError('two-tenant outward seed rows missing');
+      }
+      const asBActor = { userId: seeded.ub, workspaceId: seeded.b.id };
+      const read = () =>
+        inWorkspace(tx, seeded.a.id, async (s) => ({
+          drafts: await s.select().from(schema.outwardDraft),
+          versions: await s.select().from(schema.outwardDraftVersion),
+          logs: await s.select().from(schema.outwardShareLog),
+        }));
+      const before = await read();
+      const deps = { db: tx };
+      await expect(
+        composeUpdate(deps, asBActor, {
+          matterId,
+          audience: 'senior_counsel',
+        }),
+      ).rejects.toBeDefined();
+      await expect(saveEdit(deps, asBActor, { draftId, body: 'x' })).rejects.toBeDefined();
+      await expect(
+        recordShared(deps, asBActor, { draftId, channel: 'download' }),
+      ).rejects.toBeDefined();
+      await expect(recordCopied(deps, asBActor, { draftId })).rejects.toBeDefined();
+      // The read model (#736): B's list holds nothing of A's and cannot open A's draft.
+      expect((await listDrafts(deps, asBActor)).map((d) => d.id)).not.toContain(draftId);
+      await expect(getDraft(deps, asBActor, draftId)).rejects.toBeDefined();
+      expect(await read()).toEqual(before);
+      const seenByB = await inWorkspace(
+        tx,
+        seeded.b.id,
+        (s) => s.select().from(schema.outwardDraft).where(eq(schema.outwardDraft.id, draftId)),
+        seeded.ub,
+      );
+      expect(seenByB).toEqual([]);
     });
   });
 });

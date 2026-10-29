@@ -10,6 +10,7 @@
 // empty cards, offline (banner, mutations off), permission-denied, and not-found (another
 // workspace, a restricted matter or an unknown id). In development
 // `?__state=loading|error|denied|offline|empty` previews them.
+import type { SnoozeRecord } from '@causedeck/validators/attention';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -37,6 +38,7 @@ import {
 import { can, type WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
+import { loadContacts } from '../../../../../../lib/people/people-deps.ts';
 
 import {
   chooseNextDateSourceAction,
@@ -44,7 +46,16 @@ import {
   reportRecordErrorAction,
   updateMatterAction,
 } from './actions.ts';
+import { AttentionSnoozes } from '../_components/attention-snoozes.tsx';
 import { createBriefShareAction, revokeBriefShareAction } from '../../briefs/actions.ts';
+import { HandoverSheet } from './_continuity/handover-sheet.tsx';
+import {
+  createStatusLinkAction,
+  listStatusLinksAction,
+  revokeStatusLinkAction,
+} from './_status-links/actions.ts';
+import { StatusLinkSheet } from './_status-links/status-link-sheet.tsx';
+import { WhatChangedCard } from './_continuity/what-changed-card.tsx';
 import MatterLoading from './loading.tsx';
 
 interface MatterPageProps {
@@ -126,6 +137,22 @@ async function loadBenchNotices(
   }
 }
 
+/** The snoozes and dismissals on the matter (#70). A failed read hides the card, never breaks the page. */
+async function loadMatterSnoozes(
+  context: WorkspaceContext,
+  matterId: string,
+): Promise<SnoozeRecord[] | null> {
+  try {
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { listSnoozes } = await import('@causedeck/core/attention');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    return await inWorkspace(actor, (tx) => listSnoozes({ db: tx }, actor, matterId));
+  } catch (error) {
+    logger.error({ err: error }, 'matter overview: could not load the attention snoozes');
+    return null;
+  }
+}
+
 /** The owner's brief-sharing panel data (#507). A failed read hides the panel, never breaks the page. */
 async function loadBriefSharing(
   context: WorkspaceContext,
@@ -156,6 +183,48 @@ async function loadBriefSharing(
   }
 }
 
+/** Member names by member id and the viewer's own member id, for the handover sheet and card (#71). */
+async function loadContinuityMembers(
+  context: WorkspaceContext,
+): Promise<{ members: Record<string, string>; myMemberId: string | null }> {
+  try {
+    const { listMembersIn } = await import('@causedeck/core/runtime');
+    const rows = await listMembersIn({
+      workspaceId: context.workspace.id,
+      userId: context.user.id,
+    });
+    return {
+      members: Object.fromEntries(rows.map((m) => [m.memberId, m.name])),
+      myMemberId: rows.find((m) => m.userId === context.user.id)?.memberId ?? null,
+    };
+  } catch (error) {
+    logger.error({ err: error }, 'matter overview: could not load members for the handover');
+    return { members: {}, myMemberId: null };
+  }
+}
+
+/** The status link sheet's inputs, or null while `status_links.enabled` is off (#88): the control is then absent. */
+async function loadStatusLinkSetup(context: WorkspaceContext) {
+  try {
+    const { isEnabled } = await import('@causedeck/flags/server');
+    const on = await isEnabled('status_links.enabled', {
+      workspaceId: context.workspace.id,
+      userId: context.user.id,
+    });
+    if (!on) return null;
+    const loaded = await loadContacts(context);
+    return {
+      contacts:
+        loaded.kind === 'list'
+          ? loaded.contacts.map((c) => ({ id: c.id, name: c.personName }))
+          : [],
+    };
+  } catch (error) {
+    logger.error({ err: error }, 'matter overview: could not load the status link setup');
+    return null;
+  }
+}
+
 export default async function MatterOverviewPage({ params, searchParams }: MatterPageProps) {
   const [{ slug, id }, query] = await Promise.all([params, searchParams]);
   const context = await getWorkspaceContext(slug);
@@ -175,14 +244,49 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   const locale = await pageLocale();
   const benchNotices = dev === 'empty' ? [] : await loadBenchNotices(context, id);
   const sharing = dev === 'empty' ? null : await loadBriefSharing(context, id);
+  const snoozes = dev === 'empty' ? null : await loadMatterSnoozes(context, id);
   const view = toOverviewView(loaded.overview, { locale, now: new Date() });
   const proceedingId = view.nextDate?.proceedingId;
   const corrections =
     proceedingId === undefined || dev === 'empty'
       ? []
       : await loadReviewCorrections(context, proceedingId, locale);
+  const continuity = await loadContinuityMembers(context);
+  const statusLinks = dev === 'empty' ? null : await loadStatusLinkSetup(context);
   return (
     <>
+      <div className="grid gap-3">
+        <div className="flex flex-wrap justify-end gap-2">
+          {statusLinks === null ? null : (
+            <StatusLinkSheet
+              workspaceId={context.workspace.id}
+              matterId={id}
+              contacts={statusLinks.contacts}
+              advocateName={context.user.name}
+              canCreate={context.role === 'advocate' || context.role === 'owner'}
+              actions={{
+                create: createStatusLinkAction,
+                revoke: revokeStatusLinkAction,
+                list: listStatusLinksAction,
+              }}
+            />
+          )}
+          <HandoverSheet
+            workspaceId={context.workspace.id}
+            matterId={id}
+            members={continuity.members}
+            myMemberId={continuity.myMemberId}
+            canWrite={can(context.role, 'task.write')}
+          />
+        </div>
+        {dev === 'empty' ? null : (
+          <WhatChangedCard
+            workspaceId={context.workspace.id}
+            matterId={id}
+            members={continuity.members}
+          />
+        )}
+      </div>
       <MatterOverview
         matter={dev === 'empty' ? emptied(view) : view}
         workspaceId={context.workspace.id}
@@ -197,6 +301,13 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
           updateMatter: updateMatterAction,
         }}
       />
+      {snoozes === null ? null : (
+        <AttentionSnoozes
+          workspaceId={context.workspace.id}
+          snoozes={snoozes}
+          canWrite={can(context.role, 'matter.write')}
+        />
+      )}
       {sharing === null ? null : (
         <BriefSharePanel
           workspaceId={context.workspace.id}

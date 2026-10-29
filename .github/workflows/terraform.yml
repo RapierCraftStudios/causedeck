@@ -5,9 +5,10 @@ name: Terraform
 # (dummy credentials, -backend=false) and post the plan on the PR. Apply is manual
 # (workflow_dispatch) and gated by the GitHub environment terraform-<env> (required reviewers are
 # configured in #116). The Stage B modules (#106) are only validated and planned here (stage-b
-# is not an apply or drift target). A weekly run plans against the real state with
-# -detailed-exitcode: exit 2
-# (drift) fails the job. Tools run as pinned container images, like lint-workflows.yml.
+# is not an apply or drift target); the OVH Stage B root (stage-b-ovh, #887) is validated and
+# tested with mocked providers, never planned or applied (a plan would call the OVH order API).
+# A weekly run plans against the real state with -detailed-exitcode: exit 2 (drift) fails the job.
+# Tools run as pinned container images, like lint-workflows.yml.
 
 on:
   pull_request:
@@ -52,9 +53,9 @@ jobs:
         run: >-
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform
           "$TF_IMAGE" fmt -check -recursive -diff
-      - name: terraform validate (staging, prod, stage-b)
+      - name: terraform validate (staging, prod, stage-b, stage-b-ovh)
         run: |
-          for env in staging prod stage-b; do
+          for env in staging prod stage-b stage-b-ovh; do
             docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/$env" \
               "$TF_IMAGE" init -backend=false -input=false
             docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/$env" \
@@ -69,6 +70,12 @@ jobs:
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/staging \
             "$TF_IMAGE" init -backend=false -input=false
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/staging \
+            "$TF_IMAGE" test
+      - name: terraform test (stage-b-ovh, mocked providers)
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/stage-b-ovh \
+            "$TF_IMAGE" init -backend=false -input=false
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/stage-b-ovh \
             "$TF_IMAGE" test
       - name: terraform test (cloudflare-zone module, mocked providers)
         run: |

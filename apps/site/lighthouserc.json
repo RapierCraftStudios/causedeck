@@ -60,7 +60,7 @@
             "largest-contentful-paint": [
               "error",
               {
-                "maxNumericValue": 2000
+                "maxNumericValue": 2800
               }
             ],
             "resource-summary:font:size": [

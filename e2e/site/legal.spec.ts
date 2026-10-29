@@ -85,10 +85,11 @@ test('the DPA names the roles and links to sub-processors and security', async (
 });
 
 test('Terms and About state the positioning', async ({ page }) => {
-  for (const path of ['/legal/terms/', '/about/']) {
-    await page.goto(path);
-    await expect(page.locator('main')).toContainText('software for advocates, not legal services');
-  }
+  await page.goto('/legal/terms/');
+  await expect(page.locator('main')).toContainText('software for advocates, not legal services');
+  await page.goto('/about/');
+  await expect(page.locator('main')).toContainText('software for advocates');
+  await expect(page.locator('main')).toContainText('Not a legal service');
 });
 
 test('the sub-processor table shows purpose, data categories, region and date', async ({

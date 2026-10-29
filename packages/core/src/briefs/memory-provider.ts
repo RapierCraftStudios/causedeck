@@ -4,7 +4,10 @@
 // item per brief render. Without memory every method returns what `emptyMemoryProvider` returns, so
 // a brief falls back to the default format. No method reads anything about a judge or a bench: the
 // memory keys read here are the lawyer's own (M2, M3, M4).
+import { schema, withWorkspace } from '@causedeck/db';
+import { eq } from 'drizzle-orm';
 import {
+  DEFAULT_BRIEF_FORMAT,
   readAlwaysCarry,
   readBriefFormat,
   type Brief,
@@ -53,6 +56,17 @@ function lineOf(item: MemoryItem, text: string): MemoryLine {
 
 const textOf = (item: MemoryItem): string | null =>
   typeof item.value === 'string' ? item.value : null;
+
+/** The chamber's default brief verbosity (`workspace_settings.brief_format`), `full` when unset. */
+async function workspaceBriefDefault(deps: MemoryDeps, workspaceId: string): Promise<string> {
+  const [row] = await withWorkspace(deps.db, { workspaceId }, (tx) =>
+    tx
+      .select({ briefFormat: schema.workspaceSettings.briefFormat })
+      .from(schema.workspaceSettings)
+      .where(eq(schema.workspaceSettings.workspaceId, workspaceId)),
+  );
+  return row?.briefFormat ?? 'full';
+}
 
 export function createBriefMemoryProvider(deps: MemoryDeps): BriefMemoryProvider {
   const read = (actor: MemoryActor, layer: 'M2' | 'M3' | 'M4', matterId?: string) =>
@@ -154,7 +168,11 @@ export function createBriefMemoryProvider(deps: MemoryDeps): BriefMemoryProvider
         await cite(actor, item, q);
         return format;
       }
-      return null;
+      // No format of the member's own: the chamber default chosen in onboarding (#92). `full` is
+      // the unchanged brief, so only a `short` default changes anything.
+      return (await workspaceBriefDefault(deps, q.workspaceId)) === 'short'
+        ? { ...DEFAULT_BRIEF_FORMAT, verbosity: 'short' }
+        : null;
     },
 
     async observeCarryRemoval(q: MemoryQuery, rule: CarryRule): Promise<void> {

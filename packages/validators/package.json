@@ -23,6 +23,7 @@
     "./matter-graph-inputs": "./src/matter-graph-inputs.ts",
     "./attention": "./src/attention.ts",
     "./obligation": "./src/obligation.ts",
+    "./onboarding": "./src/onboarding.ts",
     "./outward-draft": "./src/outward-draft.ts",
     "./plans": "./src/plans.ts",
     "./proposal-draft": "./src/proposal-draft.ts",

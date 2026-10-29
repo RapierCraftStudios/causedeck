@@ -193,6 +193,8 @@ describe('row-level security catalog', () => {
 
         // In-app help state (#94).
         'help_state',
+        // Onboarding wizard state (#92).
+        'onboarding_state',
         // Lawyer memory (#72).
         'memory_item',
         'memory_proposal',

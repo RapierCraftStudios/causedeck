@@ -180,6 +180,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   createBriefShareAction: briefShareActions,
   revokeBriefShareAction: briefShareActions,
   createWorkspaceAction: onboarding,
+  completeOnboardingStepAction: onboarding,
   setLocaleAction: account,
   updateAccountProfileAction: account,
   enableTwoFactorAction: account,
@@ -462,6 +463,10 @@ function snapshotA() {
       })
       .from(schema.organization),
     workspaceSettings: await tx.select().from(schema.workspaceSettings),
+    onboardingState: await tx
+      .select()
+      .from(schema.onboardingState)
+      .orderBy(schema.onboardingState.id),
     notifications: await tx
       .select({ id: schema.notification.id, readAt: schema.notification.readAt })
       .from(schema.notification)
@@ -893,6 +898,17 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     discoveryProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
     recordOnboardingStepAction: { workspaceId, step: 'confirm_grid_done' },
+    // The wizard (#92): ub may not complete a step, save a profile or advance onboarding in A's workspace.
+    completeOnboardingStepAction: {
+      workspaceId,
+      step: 'profile',
+      payload: {
+        enrolmentNumber: 'MS/1/2020',
+        barCouncil: 'karnataka',
+        practiceAreas: ['civil'],
+        languages: ['en'],
+      },
+    },
     getImportPlanAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
     saveImportPlanEditsAction: {
       workspaceId,

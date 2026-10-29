@@ -148,8 +148,8 @@ export function InvoiceList({
               <FeeProposalCard
                 key={agreement.id}
                 agreement={agreement}
-                canWrite={canEdit}
-                busy={busy}
+                canWrite={canWrite}
+                busy={busy || !online}
                 onStatus={(id, status) => {
                   void setStatus(id, status);
                 }}

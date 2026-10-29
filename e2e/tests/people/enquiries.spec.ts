@@ -27,8 +27,12 @@ test.describe('enquiry log', () => {
   }) => {
     await dropFlagCache(db.name);
     await asUser('owner', { workspace: MATTERS_WORKSPACE, path: 'people' });
-    const response = await page.goto(url(enquiriesPath()));
-    expect(response?.status()).toBe(404);
+    // The route streams behind the root loading boundary before notFound(), so the HTTP status is
+    // already 200; the rendered not-found page is what proves the 404 (as limitation-gated-off does).
+    await page.goto(url(enquiriesPath()));
+    await expect(
+      page.locator('main').getByRole('heading', { level: 1 }).filter({ visible: true }),
+    ).toHaveText('Page not found');
     await expect(page.locator('[data-route="enquiries"]')).toHaveCount(0);
     await page.goto(url('people'));
     await expect(page.locator('nav a[href$="/people/enquiries"]')).toHaveCount(0);

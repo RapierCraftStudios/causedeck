@@ -1,8 +1,9 @@
 'use client';
 // The matter's status links (#88): state, expiry, "Viewed N times" and Revoke. States: loading,
 // empty, error with retry.
+import { formatDate, isLocale } from '@causedeck/i18n';
 import { Button } from '@causedeck/ui/button';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import type { StatusLinkListItem } from './actions.ts';
 
@@ -18,10 +19,8 @@ export interface StatusLinkListProps {
 
 export function StatusLinkList({ list, canRevoke, onRevoke, onRetry }: StatusLinkListProps) {
   const t = useTranslations('statusLink.list');
-  const date = (iso: string) =>
-    new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'Asia/Kolkata' }).format(
-      new Date(iso),
-    );
+  const locale = useLocale();
+  const date = (iso: string) => formatDate(iso, isLocale(locale) ? { locale } : {});
   return (
     <section aria-label={t('title')} className="space-y-2">
       <h3 className="font-medium">{t('title')}</h3>

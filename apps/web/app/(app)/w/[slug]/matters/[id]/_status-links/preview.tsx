@@ -1,5 +1,6 @@
 // The exact preview (#88): the same fields and order as the public page `/s/[token]`, so what the
 // advocate sees here is what the client sees. Pure: no fetch, no state.
+import { formatDate } from '@causedeck/i18n';
 import { useTranslations } from 'next-intl';
 
 const FONTS: Record<string, string> = {
@@ -20,10 +21,7 @@ export interface StatusLinkPreviewProps {
 
 export function StatusLinkPreview(props: StatusLinkPreviewProps) {
   const t = useTranslations('statusLink');
-  const date = (iso: string) =>
-    new Intl.DateTimeFormat(props.language, { dateStyle: 'long', timeZone: 'Asia/Kolkata' }).format(
-      new Date(iso),
-    );
+  const date = (iso: string) => formatDate(iso, { locale: props.language });
   return (
     <section
       lang={props.language}

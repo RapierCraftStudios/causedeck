@@ -1,3 +1,4 @@
+import { formatDate } from '@causedeck/i18n';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
@@ -58,10 +59,7 @@ export default async function StatusLinkPage({ params }: StatusPageProps) {
   }
 
   const { view } = result;
-  const date = (iso: string) =>
-    new Intl.DateTimeFormat(view.language, { dateStyle: 'long', timeZone: 'Asia/Kolkata' }).format(
-      new Date(iso),
-    );
+  const date = (iso: string) => formatDate(iso, { locale: view.language });
   return (
     <main
       lang={view.language}

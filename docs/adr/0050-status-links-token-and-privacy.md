@@ -41,3 +41,8 @@ PRD #88 lets an advocate give a client a short, expiring, read-only status page.
 
 - A lost URL cannot be recovered; the advocate creates a new link.
 - Counsel clearance (#117) is the only gate to turning the flag on.
+
+## Revisit when
+
+- Counsel (#117) asks for a different expiry ceiling or for client-side acknowledgement of a view.
+- A client needs more than the authored note (for example, documents), which would need its own review.

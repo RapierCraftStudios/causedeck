@@ -34,21 +34,12 @@ resource "ovh_vps" "this" {
     configuration = local.configuration
   }]
 
-  plan_option = var.automated_backup_plan_code == "" ? null : [{
+  plan_option = length(local.plan_options) == 0 ? null : [for code in local.plan_options : {
     duration      = var.plan_duration
-    plan_code     = var.automated_backup_plan_code
+    plan_code     = code
     pricing_mode  = var.plan_pricing_mode
-    # vps-2027-modelN carries two mandatory addon families: local storage and the automated backup.
-  model = try(regex("^vps-2027-(model[0-9]+)$", var.plan_code), null)
-
-  derived_options = local.model == null ? [] : [
-    "option-storage-local-2027-${local.model}",
-    "option-auto-backup-2027-${var.automated_backup_days}-${local.model}",
-  ]
-
-  plan_options = var.plan_options == null ? local.derived_options : var.plan_options
-
-  configuration = []
+    quantity      = 1
+    configuration = []
   }]
 
   public_ssh_key = var.public_ssh_key == "" ? null : var.public_ssh_key

@@ -62,7 +62,11 @@ test.describe('limitation tracker', () => {
     db,
   }) => {
     await openLimitation(page, asUser, db.name, { computation: false });
-    await expect(page.getByRole('heading', { name: 'No limitation dates yet' })).toBeVisible();
+    await expect(
+      route(page)
+        .locator('[data-slot="empty-state-title"]')
+        .filter({ hasText: 'No limitation dates yet' }),
+    ).toBeVisible();
     await page
       .getByRole('button', { name: 'Propose a date' })
       .filter({ visible: true })
@@ -99,7 +103,7 @@ test.describe('limitation tracker', () => {
   });
 
   test('a viewer sees due dates but cannot propose or confirm', async ({ page, asUser, db }) => {
-    await openLimitation(page, asUser, db.name, { role: 'viewer' });
+    await openLimitation(page, asUser, db.name, { role: 'viewer', status: 'confirmed' });
     await expect(cards(page)).toHaveCount(1);
     await expect(page.getByRole('button', { name: 'Propose a date' })).toHaveCount(0);
     await expect(
@@ -157,6 +161,8 @@ test.describe('limitation tracker', () => {
 
       // Select it again and confirm with Enter (the listener may attach after the first press).
       await expect(async () => {
+        // Esc leaves focus on the card, and focusing a focused element fires no focus event.
+        await card.blur();
         await card.focus();
         await page.keyboard.press('Enter');
         await expect(card).toContainText('Confirmed', { timeout: 2_000 });

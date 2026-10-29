@@ -21,9 +21,12 @@ const PULSE_ITEMS = [
   'How much effort did preparing take?',
 ];
 
-/** Confirms a manual outcome (no proposals), which is what makes the preparedness tap appear. */
+/**
+ * Confirms a manual outcome (no proposals), which is what makes the preparedness tap appear. The
+ * owner argued the hearing, so the tap has an appearance to save its rating against.
+ */
 async function confirmOutcome(page: Page, asUser: AsUser, database: string) {
-  const { hearingId } = await seedHearing(database, { proposals: false });
+  const { hearingId } = await seedHearing(database, { proposals: false, appearedAs: 'owner' });
   await openOutcome(page, asUser, hearingId);
   await page.getByLabel('What happened').fill('Adjourned, reply to be filed');
   await page.getByRole('button', { name: 'No next date / disposed' }).click();

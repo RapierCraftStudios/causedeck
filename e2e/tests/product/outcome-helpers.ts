@@ -30,7 +30,13 @@ export interface SeededHearing {
 /** A hearing on the main proceeding; `proposals` stages the voice job's drafts for it. */
 export async function seedHearing(
   database: string,
-  opts: { proposals: boolean; conflict?: boolean; delegateTo?: E2eRole },
+  opts: {
+    proposals: boolean;
+    conflict?: boolean;
+    delegateTo?: E2eRole;
+    /** This role's member argued the hearing: the preparedness tap (#86) saves against it. */
+    appearedAs?: E2eRole;
+  },
 ): Promise<SeededHearing> {
   const ws = COURTS_WORKSPACE_ID;
   return withSql(database, async (sql) => {
@@ -63,6 +69,15 @@ export async function seedHearing(
       await sql`
         insert into appearance (workspace_id, hearing_id, member_id, capacity)
         values (${ws}, ${hearingId}, ${found.id}, 'for_other')`;
+    }
+    if (opts.appearedAs !== undefined) {
+      const [found] = await sql<{ id: string }[]>`
+        select id from member where workspace_id = ${ws} and user_id = ${e2eUser(opts.appearedAs).id}`;
+      if (found === undefined)
+        throw new Error(`e2e: no ${opts.appearedAs} member in the workspace`);
+      await sql`
+        insert into appearance (workspace_id, hearing_id, member_id, capacity)
+        values (${ws}, ${hearingId}, ${found.id}, 'arguing')`;
     }
     if (opts.proposals) {
       const documentId = randomUUID();

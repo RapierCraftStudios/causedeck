@@ -3669,6 +3669,91 @@ export type Messages = {
       close: string;
     };
   };
+  pov: {
+    tap: {
+      title: string;
+      hint: string;
+      scale: string;
+      option: string;
+      skip: string;
+      saved: string;
+      skipped: string;
+      error: string;
+      retry: string;
+      offline: string;
+      synced: string;
+      denied: string;
+      loading: string;
+    };
+    pulse: {
+      title: string;
+      intro: string;
+      demand: string;
+      worry: string;
+      effort: string;
+      low: string;
+      high: string;
+      option: string;
+      submit: string;
+      dismiss: string;
+      saved: string;
+      dismissed: string;
+      error: string;
+      retry: string;
+      offline: string;
+      denied: string;
+      loading: string;
+    };
+    test: {
+      title: string;
+      intro: string;
+      matter: string;
+      start: string;
+      running: string;
+      finished: string;
+      finish: string;
+      correct: string;
+      wrong: string;
+      elapsed: string;
+      started: string;
+      stopped: string;
+      empty: string;
+      loading: string;
+      error: string;
+      retry: string;
+      offline: string;
+      denied: string;
+      again: string;
+      questions: {
+        current_stage: string;
+        last_order: string;
+        next_date: string;
+        open_obligations: string;
+        key_documents: string;
+      };
+    };
+    privacy: {
+      title: string;
+      intro: string;
+      toggle: string;
+      toggleOn: string;
+      toggleOff: string;
+      yours: string;
+      none: string;
+      rating: string;
+      skipped: string;
+      delete: string;
+      deleted: string;
+      pulse: string;
+      download: string;
+      downloadHint: string;
+      loading: string;
+      error: string;
+      retry: string;
+      offline: string;
+      denied: string;
+    };
+  };
   enquiry: {
     metaTitle: string;
     title: string;
@@ -3828,6 +3913,170 @@ export type Messages = {
       propose: string;
       confirm: string;
       close: string;
+    };
+  };
+  fees: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    gatedNotice: string;
+    ledgerNotice: string;
+    gstBanner: string;
+    loading: string;
+    offline: string;
+    dismiss: string;
+    shortcuts: {
+      new: string;
+      save: string;
+      issue: string;
+    };
+    agreements: {
+      title: string;
+      label: string;
+      empty: {
+        title: string;
+        body: string;
+      };
+    };
+    invoices: {
+      title: string;
+      label: string;
+      new: string;
+      open: string;
+      draftNumber: string;
+      matter: string;
+      empty: {
+        title: string;
+        body: string;
+      };
+    };
+    status: {
+      draft: string;
+      issued: string;
+      paid: string;
+      void: string;
+    };
+    agreementStatus: {
+      draft: string;
+      active: string;
+      ended: string;
+    };
+    basis: {
+      fixed: string;
+      hourly: string;
+      retainer: string;
+      per_appearance: string;
+    };
+    gst: {
+      forward_charge: string;
+      reverse_charge: string;
+      exempt: string;
+      nil_rated: string;
+      out_of_scope: string;
+      pure_agent: string;
+    };
+    agreement: {
+      amount: string;
+      starts: string;
+      ends: string;
+      matter: string;
+      activate: string;
+      end: string;
+      proposedNote: string;
+    };
+    agreementForm: {
+      trigger: string;
+      title: string;
+      matter: string;
+      person: string;
+      basis: string;
+      amount: string;
+      gst: string;
+      starts: string;
+      ends: string;
+      notes: string;
+      submit: string;
+      cancel: string;
+    };
+    editor: {
+      titleNew: string;
+      titleDraft: string;
+      matter: string;
+      person: string;
+      agreement: string;
+      placeOfSupply: string;
+      recipientGstin: string;
+      dueDate: string;
+      supplierName: string;
+      supplierState: string;
+      supplierGstin: string;
+      lines: string;
+      description: string;
+      quantity: string;
+      unitPrice: string;
+      treatment: string;
+      addLine: string;
+      removeLine: string;
+      preview: string;
+      save: string;
+      issue: string;
+      discard: string;
+      acknowledge: string;
+      ownerOnly: string;
+      saved: string;
+      final: string;
+    };
+    preview: {
+      title: string;
+      empty: string;
+      supplier: string;
+      number: string;
+      billTo: string;
+      taxable: string;
+      cgst: string;
+      sgst: string;
+      igst: string;
+      rcm: string;
+      total: string;
+      line: string;
+      tax: string;
+    };
+    ledger: {
+      title: string;
+      label: string;
+      empty: {
+        title: string;
+        body: string;
+      };
+      date: string;
+      kind: string;
+      description: string;
+      debit: string;
+      credit: string;
+      balance: string;
+      owes: string;
+      inCredit: string;
+      settled: string;
+      kinds: {
+        fee: string;
+        disbursement: string;
+        receipt: string;
+        refund: string;
+        adjustment: string;
+      };
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+      forbidden: string;
+      invalid: string;
+      conflict: string;
+      failed: string;
+    };
+    notFound: {
+      title: string;
+      body: string;
     };
   };
   matterTimeline: {

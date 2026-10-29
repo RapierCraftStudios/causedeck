@@ -18,3 +18,4 @@ export * from './brief';
 export * from './reminders';
 export * from './continuity';
 export * from './attention';
+export * from './proof-of-value';

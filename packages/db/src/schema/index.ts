@@ -403,3 +403,4 @@ export {
 } from './status-link.ts';
 export { reminderDispatch, REMINDER_KINDS, type ReminderKind } from './reminder.ts';
 export { attentionSnooze, ATTENTION_SNOOZE_RULES, type AttentionSnoozeRule } from './attention.ts';
+export { contextTestResult, loadPulse, povPrefs, preparednessRating } from './proof-of-value.ts';

@@ -105,6 +105,7 @@ const drafts = await import('../app/(app)/w/[slug]/drafts/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const sso = await import('../app/(app)/w/[slug]/settings/sso/actions.ts');
+const pov = await import('../app/(app)/w/[slug]/_pov/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
 const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
@@ -124,6 +125,7 @@ const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/act
 const peopleContacts = await import('../app/(app)/w/[slug]/people/actions.ts');
 const enquiries = await import('../app/(app)/w/[slug]/people/enquiries/actions.ts');
 const limitation = await import('../app/(app)/w/[slug]/limitation/actions.ts');
+const feeActions = await import('../app/(app)/w/[slug]/invoices/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
@@ -208,6 +210,19 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
   setAllowEvalReuseAction: privacy,
+  ratePreparednessAction: pov,
+  skipPreparednessAction: pov,
+  submitLoadPulseAction: pov,
+  dismissLoadPulseAction: pov,
+  startContextTestAction: pov,
+  answerContextTestAction: pov,
+  finishContextTestAction: pov,
+  setPovPrefsAction: pov,
+  getPovPrefsAction: pov,
+  listOwnPovAction: pov,
+  deleteOwnRatingAction: pov,
+  povAggregateAction: pov,
+  downloadPovReportAction: pov,
   rotateIntegrationTokenAction: integrations,
   createIntakeAddressAction: emailIntake,
   rotateIntakeAddressAction: emailIntake,
@@ -321,6 +336,12 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   closeEnquiryAction: enquiries,
   computeLimitationAction: limitation,
   confirmLimitationAction: limitation,
+  createFeeAgreementAction: feeActions,
+  setFeeAgreementStatusAction: feeActions,
+  previewInvoiceAction: feeActions,
+  saveInvoiceDraftAction: feeActions,
+  discardInvoiceDraftAction: feeActions,
+  issueInvoiceAction: feeActions,
   enableChannelAction: inbox,
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
@@ -714,6 +735,30 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     // Eval reuse consent (#558): ub, owner of B, may not opt A in.
     setAllowEvalReuseAction: { workspaceId, allowEvalReuse: true },
+    // Proof-of-value (#86): ub, owner of B, may not rate, pulse, test or read A's measures.
+    ratePreparednessAction: {
+      workspaceId,
+      hearingId: t.a.rows.preparedness_rating?.hearingId,
+      rating: 3,
+    },
+    skipPreparednessAction: { workspaceId, hearingId: t.a.rows.preparedness_rating?.hearingId },
+    submitLoadPulseAction: { workspaceId, demand: 1, worry: 1, effort: 1 },
+    dismissLoadPulseAction: { workspaceId },
+    startContextTestAction: { workspaceId, matterId: t.a.rows.context_test_result?.matterId },
+    answerContextTestAction: {
+      workspaceId,
+      runId: t.a.rows.context_test_result?.id,
+      question: 'next_date',
+      correct: true,
+      atMs: 1,
+    },
+    finishContextTestAction: { workspaceId, runId: t.a.rows.context_test_result?.id },
+    setPovPrefsAction: { workspaceId, promptsEnabled: false },
+    getPovPrefsAction: { workspaceId },
+    listOwnPovAction: { workspaceId },
+    deleteOwnRatingAction: { workspaceId, ratingId: t.a.rows.preparedness_rating?.id },
+    povAggregateAction: { workspaceId },
+    downloadPovReportAction: { workspaceId },
     rotateIntegrationTokenAction: { workspaceId, kind: 'ics_feed' },
     // Email intake (#54): ub, owner of B, may not create, rotate or revoke an address, edit the
     // allow-list or enable the email channel on A.
@@ -1278,9 +1323,57 @@ function inputs(workspaceId: string): Record<string, unknown> {
       startDate: '2026-04-01',
     },
     confirmLimitationAction: { workspaceId, computationId: t.a.rows.limitation_computation?.id },
+    // Fees and invoices (#871): ub may not agree fees on, or invoice, A's matter and client, nor
+    // activate, change, discard or issue A's agreement and invoice.
+    createFeeAgreementAction: {
+      workspaceId,
+      agreement: {
+        matterId: t.a.rows.fee_agreement?.matterId,
+        personId: t.a.rows.fee_agreement?.personId,
+        basis: 'fixed',
+        amountPaise: 100,
+        gstTreatment: 'forward_charge',
+        startsOn: '2026-04-01',
+      },
+    },
+    setFeeAgreementStatusAction: {
+      workspaceId,
+      agreementId: t.a.rows.fee_agreement?.id,
+      status: 'active',
+    },
+    previewInvoiceAction: feeInvoiceProbe(workspaceId),
+    saveInvoiceDraftAction: feeInvoiceProbe(workspaceId),
+    discardInvoiceDraftAction: { workspaceId, invoiceId: t.a.rows.fee_invoice?.invoiceId },
+    issueInvoiceAction: {
+      workspaceId,
+      invoiceId: t.a.rows.fee_invoice?.invoiceId,
+      supplier: { name: 'Probe', stateCode: '29' },
+    },
     // Proceedings tab (#392): ub may not add to, change, link, move, merge or split A's matters and
     // proceedings, nor undo a merge or split naming them.
     ...proceedingsInputs(workspaceId),
+  };
+}
+
+/** A draft invoice for A's matter and client, as `previewInvoiceAction` and `saveInvoiceDraftAction` take it. */
+function feeInvoiceProbe(workspaceId: string) {
+  return {
+    workspaceId,
+    invoice: {
+      matterId: t.a.rows.fee_invoice?.matterId,
+      personId: t.a.rows.fee_invoice?.personId,
+      placeOfSupplyStateCode: '29',
+      lines: [
+        {
+          description: 'Probe',
+          quantity: 1,
+          unitPricePaise: 100,
+          amountPaise: 100,
+          gstTreatment: 'forward_charge',
+        },
+      ],
+    },
+    supplier: { name: 'Probe', stateCode: '29' },
   };
 }
 
@@ -1837,6 +1930,12 @@ describe('cross-tenant server actions', () => {
       // Limitation tracker (#941): A's matter and computation
       'computeLimitationAction',
       'confirmLimitationAction',
+      // Fees and invoices (#871): A's agreement, invoice, matter and client
+      'createFeeAgreementAction',
+      'setFeeAgreementStatusAction',
+      'saveInvoiceDraftAction',
+      'discardInvoiceDraftAction',
+      'issueInvoiceAction',
     ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));

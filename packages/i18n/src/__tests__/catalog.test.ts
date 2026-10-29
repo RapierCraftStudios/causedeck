@@ -117,6 +117,7 @@ describe('namespaced catalogs (#174)', () => {
         'emailIntake',
         'enquiry',
         'limitation',
+        'fees',
         'error',
         'home',
         'importReview',
@@ -142,6 +143,7 @@ describe('namespaced catalogs (#174)', () => {
         'palette',
         'people',
         'portfolio',
+        'pov',
         'provisioning',
         'pwa',
         'reminders',
@@ -291,6 +293,20 @@ describe('limitation namespace (#941)', () => {
     expect(leaves).toContain('limitation.verifyLabel');
     expect(getPath(en, 'limitation.verifyLabel')).toBe(
       "Computed from your counsel's rule table. Verify before relying on it.",
+    );
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+    }
+  });
+});
+
+describe('fees namespace (#871)', () => {
+  it('is registered with en complete, the review wording and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('fees');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('fees.'));
+    expect(leaves).toContain('fees.gatedNotice');
+    expect(getPath(en, 'fees.gatedNotice')).toBe(
+      'Prepared for you to review and send yourself. Nothing is sent, charged or transferred from here.',
     );
     for (const catalog of [ta, kn]) {
       for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();

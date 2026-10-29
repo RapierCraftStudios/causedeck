@@ -183,3 +183,4 @@ export {
   type FactSource,
 } from './fact-squiggle/fact-card';
 export { nextIssueIndex, useFactNavigation } from './fact-squiggle/use-fact-navigation';
+export * from './pov';

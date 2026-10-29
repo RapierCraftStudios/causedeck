@@ -174,6 +174,11 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   fee_invoice_line: DB_TABLES_TEST,
   payment: DB_TABLES_TEST,
   client_ledger_entry: DB_TABLES_TEST,
+  // Proof-of-value (#86).
+  preparedness_rating: DB_TABLES_TEST,
+  load_pulse: DB_TABLES_TEST,
+  context_test_result: DB_TABLES_TEST,
+  pov_prefs: DB_TABLES_TEST,
   // Limitation tracker (#84): rules are global-or-workspace; the reviewed-only read is in limitation-schema.test.ts.
   limitation_rule: DB_TABLES_TEST,
   limitation_computation: DB_TABLES_TEST,
@@ -281,6 +286,25 @@ const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  // Proof-of-value (#86).
+  requirePovMember: denies,
+  requirePovRecorder: denies,
+  promptsEnabled: denies,
+  getPovPrefs: denies,
+  setPovPrefs: denies,
+  listPov: denies,
+  deleteOwnRating: denies,
+  povAggregate: denies,
+  buildPovReport: denies,
+  shouldPrompt: denies,
+  recordPreparedness: denies,
+  recordSkip: denies,
+  dueForPulse: denies,
+  recordLoadPulse: denies,
+  dismissLoadPulse: denies,
+  startContextTest: denies,
+  answerQuestion: denies,
+  finishContextTest: denies,
   // Fees (#83): flag-gated, owner and advocate only; B claiming A's workspace is refused and A is unchanged.
   createFeeAgreement: denies,
   updateFeeAgreement: denies,
@@ -1131,6 +1155,19 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // Proof-of-value (#86): rules and constants.
+  decidePrompt: 'pure',
+  requireUuidInput: 'pure',
+  STANDARD_QUESTIONS: 'constant',
+  MAX_PROMPTS_PER_DAY: 'constant',
+  SKIP_STREAK: 'constant',
+  SKIP_PAUSE_DAYS: 'constant',
+  POV_REPORT_HEADER: 'constant',
+  BASELINE_DAYS: 'constant',
+  isoWeekIst: 'pure',
+  povIstDay: 'pure',
+  pulseWindowOpen: 'pure',
+  isBaseline: 'pure',
   // Fees (#83): the refusal while the legal-gated flag is off is an error class.
   FeesDisabledError: 'error class',
   // Limitation tracker (#940): the date engine is pure; the refusal is an error class.

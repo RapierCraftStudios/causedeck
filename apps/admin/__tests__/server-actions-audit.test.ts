@@ -155,6 +155,11 @@ vi.mock('@causedeck/core/migration', () => {
       Promise.resolve({ ...progress, issueCounts: {}, issues: [], missingColumns: [] }),
   };
 });
+vi.mock('@causedeck/core/limitation', () => ({
+  listRules: () => Promise.resolve([]),
+  loadRuleTable: () =>
+    Promise.resolve({ version: 'SYNTHETIC-1', imported: 1, skipped: 0, draft: true }),
+}));
 vi.mock('@causedeck/core/activation', () => ({
   ACTIVATION_CHANNELS: [],
   ACTIVATION_STEPS: [],
@@ -362,6 +367,15 @@ const ACTIONS: Record<string, () => Promise<unknown>> = {
     const { setSourceKillSwitchAction } = await import('../app/(console)/sources/actions.ts');
     return setSourceKillSwitchAction(form({ id: 'in.nclt.bengaluru', killSwitch: 'true' }));
   },
+  'app/(console)/limitation-rules/actions.ts#importRuleTableAction': async () => {
+    const { importRuleTableAction } = await import('../app/(console)/limitation-rules/actions.ts');
+    return importRuleTableAction(
+      form({
+        workspaceId: WORKSPACE_ID,
+        table: JSON.stringify({ version: 'SYNTHETIC-1', rules: [] }),
+      }),
+    );
+  },
   'app/verify-2fa/actions.ts#verifyTwoFactor': async () => {
     const { verifyTwoFactor } = await import('../app/verify-2fa/actions.ts');
     const form = new FormData();
@@ -485,6 +499,7 @@ describe('admin data layer reads', () => {
     workspaceMigrationRuns: (d) => d.workspaceMigrationRuns(staff, WORKSPACE_ID),
     migrationRunProgress: (d) => d.migrationRunProgress(staff, WORKSPACE_ID, MIGRATION_RUN_ID),
     migrationRunReport: (d) => d.migrationRunReport(staff, WORKSPACE_ID, MIGRATION_RUN_ID),
+    workspaceLimitationRules: (d) => d.workspaceLimitationRules(staff, WORKSPACE_ID),
   };
   // Reads made of more than one audited step: parse yield (definer function), then the tables.
   const READ_EVENTS: Record<string, number> = { dataOpsOverview: 2 };
@@ -493,6 +508,7 @@ describe('admin data layer reads', () => {
     'staffCall',
     'staffQuery',
     'asMigrationOwner',
+    'asLimitationOwner',
     'StaffQueryDeniedError',
     'businessConfigFromEnv',
     'ACTIVATION_CHANNELS',

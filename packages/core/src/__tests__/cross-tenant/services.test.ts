@@ -737,6 +737,68 @@ const aSnoozes = (f: Fixture) =>
     s.select().from(schema.attentionSnooze).orderBy(schema.attentionSnooze.id),
   );
 
+/** A's proof-of-value rows, to prove a B-scoped call left them unchanged (#86). */
+async function aPov(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, async (s) => ({
+    ratings: await s.select().from(schema.preparednessRating),
+    pulses: await s.select().from(schema.loadPulse),
+    tests: await s.select().from(schema.contextTestResult),
+    prefs: await s.select().from(schema.povPrefs),
+  }));
+}
+
+/** Proof-of-value (#86): B on A's workspace is denied; A's rows are unchanged. */
+function povCases(): Record<string, (f: Fixture) => Promise<void>> {
+  const onA = (f: Fixture) => ({ userId: f.ub, workspaceId: f.a.id });
+  const guarded = (call: (f: Fixture) => Promise<unknown>) => async (f: Fixture) => {
+    const before = await aPov(f);
+    await expectDenied(call(f));
+    expect(await aPov(f)).toEqual(before);
+  };
+  const hearingId = (f: Fixture) => String(f.a.rows.preparedness_rating?.hearingId);
+  const ratingId = (f: Fixture) => String(f.a.rows.preparedness_rating?.id);
+  const matterId = (f: Fixture) => String(f.a.rows.context_test_result?.matterId);
+  const runId = (f: Fixture) => String(f.a.rows.context_test_result?.id);
+  const d = (f: Fixture) => ({ db: f.tx });
+  return {
+    requirePovMember: guarded((f) => core.requirePovMember(f.tx, onA(f))),
+    requirePovRecorder: guarded((f) => core.requirePovRecorder(f.tx, onA(f))),
+    promptsEnabled: guarded(async (f) => {
+      // The service reads one member's row: B is not a member of A, so it must not answer.
+      await core.requirePovMember(f.tx, onA(f));
+      return core.promptsEnabled(f.tx, onA(f), String(f.a.rows.pov_prefs?.memberId));
+    }),
+    getPovPrefs: guarded((f) => core.getPovPrefs(d(f), onA(f))),
+    setPovPrefs: guarded((f) => core.setPovPrefs(d(f), onA(f), { promptsEnabled: true })),
+    listPov: guarded((f) => core.listPov(d(f), onA(f))),
+    deleteOwnRating: guarded((f) => core.deleteOwnRating(d(f), onA(f), { ratingId: ratingId(f) })),
+    povAggregate: guarded((f) => core.povAggregate(d(f), onA(f))),
+    buildPovReport: guarded((f) => core.buildPovReport(d(f), onA(f))),
+    shouldPrompt: guarded((f) => core.shouldPrompt(d(f), onA(f), { hearingId: hearingId(f) })),
+    recordPreparedness: guarded((f) =>
+      core.recordPreparedness(d(f), onA(f), { hearingId: hearingId(f), rating: 1 }),
+    ),
+    recordSkip: guarded((f) => core.recordSkip(d(f), onA(f), { hearingId: hearingId(f) })),
+    dueForPulse: guarded((f) => core.dueForPulse(d(f), onA(f))),
+    recordLoadPulse: guarded((f) =>
+      core.recordLoadPulse(d(f), onA(f), { demand: 1, worry: 1, effort: 1 }),
+    ),
+    dismissLoadPulse: guarded((f) => core.dismissLoadPulse(d(f), onA(f))),
+    startContextTest: guarded((f) =>
+      core.startContextTest(d(f), onA(f), { matterId: matterId(f) }),
+    ),
+    answerQuestion: guarded((f) =>
+      core.answerQuestion(d(f), onA(f), {
+        runId: runId(f),
+        question: 'next_date',
+        correct: true,
+        atMs: 1,
+      }),
+    ),
+    finishContextTest: guarded((f) => core.finishContextTest(d(f), onA(f), { runId: runId(f) })),
+  };
+}
+
 const CASES: Record<string, Case> = {
   addCauseListWatch: async (f) => {
     // ub's watch lands in B; A has no watch from it.
@@ -4382,6 +4444,7 @@ const CASES: Record<string, Case> = {
   },
   // drafts (#768): B on A's draft, version or export is denied; A's drafts and exports are unchanged.
   ...draftingCases(),
+  ...povCases(),
   // Stale-matter attention (#70): B on A's matter and snooze is denied or sees nothing; A is unchanged.
   detectAttention: async (f) => {
     const aMatter = String(f.a.rows.attention_snooze?.matterId);

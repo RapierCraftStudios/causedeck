@@ -183,6 +183,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Stale-matter attention (#70): roles and the threshold through workspaces, audit events through
   // audit, date arithmetic through the obligations index.
   attention: Object.freeze(['workspaces', 'audit', 'obligations']),
+  // Proof-of-value (#86): roles through workspaces; reads its own tables.
+  pov: Object.freeze(['workspaces']),
   // A0 grid corrections (#558): roles and the owner's eval-reuse switch through workspaces.
   corrections: Object.freeze(['workspaces']),
   // Outward update drafts (#735, ADR 0045): roles through workspaces, audit events through audit,

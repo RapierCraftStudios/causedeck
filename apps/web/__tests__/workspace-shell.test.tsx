@@ -159,6 +159,8 @@ type PlaceholderId = PlaceholderRoute;
 /** Routes whose page is no longer a placeholder; each has its own page test. */
 const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'billing',
+  // Its own page test since #871 (invoices-page.test.tsx).
+  'invoices',
   'activity',
   'settings',
   // Its own page and action tests since #848 (people-actions.test.ts).
@@ -586,10 +588,8 @@ describe('placeholder pages', () => {
   });
 
   it('serves flagged pages once the server evaluates their flag on', async () => {
-    state.flagsOn = ['invoices.enabled'];
-    withIntl(await PAGES.invoices(props('demo')));
-    expect(document.querySelector('[data-route="invoices"]')).not.toBeNull();
-    await expect(PAGES.limitation(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
+    state.flagsOn = ['limitation.enabled'];
+    await expect(PAGES.invoices(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
   it('shows the offline banner only while navigator.onLine is false', async () => {

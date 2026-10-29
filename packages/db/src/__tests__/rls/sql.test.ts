@@ -271,6 +271,11 @@ describe('row-level security catalog', () => {
         'fee_invoice_line',
         'payment',
         'client_ledger_entry',
+        // Proof-of-value (#86).
+        'preparedness_rating',
+        'load_pulse',
+        'context_test_result',
+        'pov_prefs',
         // Limitation tracker (#84).
         'limitation_rule',
         'limitation_computation',

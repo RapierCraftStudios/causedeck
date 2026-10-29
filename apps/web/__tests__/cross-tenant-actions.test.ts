@@ -346,6 +346,10 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   saveInvoiceDraftAction: feeActions,
   discardInvoiceDraftAction: feeActions,
   issueInvoiceAction: feeActions,
+  recordPaymentAction: feeActions,
+  issueCreditNoteAction: feeActions,
+  recordClientExpenseAction: feeActions,
+  recordClientReceiptAction: feeActions,
   enableChannelAction: inbox,
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
@@ -1371,6 +1375,44 @@ function inputs(workspaceId: string): Record<string, unknown> {
       invoiceId: t.a.rows.fee_invoice?.invoiceId,
       supplier: { name: 'Probe', stateCode: '29' },
     },
+    // Payments, credit notes and ledger entries (#963): A's invoice, client and matter.
+    recordPaymentAction: {
+      workspaceId,
+      payment: {
+        invoiceId: t.a.rows.fee_invoice?.invoiceId,
+        amountPaise: 100,
+        method: 'upi',
+        receivedOn: '2026-11-03',
+      },
+    },
+    issueCreditNoteAction: {
+      workspaceId,
+      creditNote: {
+        invoiceId: t.a.rows.fee_invoice?.invoiceId,
+        amountPaise: 100,
+        reason: 'Probe',
+        occurredOn: '2026-11-03',
+      },
+    },
+    recordClientExpenseAction: {
+      workspaceId,
+      expense: {
+        personId: t.a.rows.fee_invoice?.personId,
+        matterId: t.a.rows.fee_invoice?.matterId,
+        amountPaise: 100,
+        description: 'Probe',
+        occurredOn: '2026-11-03',
+      },
+    },
+    recordClientReceiptAction: {
+      workspaceId,
+      receipt: {
+        personId: t.a.rows.fee_invoice?.personId,
+        matterId: t.a.rows.fee_invoice?.matterId,
+        amountPaise: 100,
+        receivedOn: '2026-11-03',
+      },
+    },
     // Proceedings tab (#392): ub may not add to, change, link, move, merge or split A's matters and
     // proceedings, nor undo a merge or split naming them.
     ...proceedingsInputs(workspaceId),
@@ -1958,6 +2000,10 @@ describe('cross-tenant server actions', () => {
       'saveInvoiceDraftAction',
       'discardInvoiceDraftAction',
       'issueInvoiceAction',
+      'recordPaymentAction',
+      'issueCreditNoteAction',
+      'recordClientExpenseAction',
+      'recordClientReceiptAction',
     ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));

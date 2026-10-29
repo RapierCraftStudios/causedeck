@@ -12,10 +12,13 @@ import type { WorkspaceContext } from '../lib/workspace-context.ts';
 import { catalogs, fakeGetTranslations } from './helpers/intl.ts';
 import { testWorkspaceContext } from './helpers/workspace.ts';
 
-const state = vi.hoisted((): { context: WorkspaceContext | null; data: unknown } => ({
-  context: null,
-  data: null,
-}));
+const state = vi.hoisted(
+  (): { context: WorkspaceContext | null; data: unknown; flagOn: boolean } => ({
+    context: null,
+    data: null,
+    flagOn: true,
+  }),
+);
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }));
 const runtime = vi.hoisted(() => ({
   inWorkspace: vi.fn((_scope: unknown, fn: (tx: unknown) => Promise<unknown>) => fn({ tx: true })),
@@ -34,6 +37,13 @@ vi.mock('next-intl/server', () => ({
 }));
 vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(state.context),
+}));
+// `insights.enabled` is evaluated against the database (#22, #966); here from `state.flagOn`.
+vi.mock('../lib/flags.ts', () => ({
+  requireWorkspaceFlag: (key: string) => {
+    if (key !== 'insights.enabled' || !state.flagOn) throw new Error('NEXT_NOT_FOUND');
+    return Promise.resolve();
+  },
 }));
 vi.mock('../lib/env.ts', () => ({ isDev: () => false }));
 vi.mock('../src/health.ts', () => ({
@@ -118,6 +128,7 @@ const renderPage = async (search: Record<string, string> = {}, slug = 'demo') =>
 
 beforeEach(() => {
   state.context = testWorkspaceContext('demo', 'advocate');
+  state.flagOn = true;
   insights.getPracticeInsights.mockResolvedValue(DATA);
 });
 afterEach(() => {
@@ -230,6 +241,34 @@ describe('insights page', () => {
     expect(document.querySelector('[data-route="insights"]')).toBeNull();
     insights.getPracticeInsights.mockRejectedValueOnce(new Error('db down'));
     await expect(renderPage()).rejects.toThrow('Could not compute the practice insights');
+  });
+});
+
+describe('insights flag gating (#966)', () => {
+  it('is a plain 404 while insights.enabled is off, for every role, and core never runs', async () => {
+    state.flagOn = false;
+    for (const role of ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const) {
+      state.context = testWorkspaceContext('demo', role);
+      await expect(renderPage()).rejects.toThrow('NEXT_NOT_FOUND');
+    }
+    expect(insights.getPracticeInsights).not.toHaveBeenCalled();
+  });
+
+  it('checks the flag before the permission: a clerk reads a 404, not "no access", while off', async () => {
+    state.flagOn = false;
+    state.context = testWorkspaceContext('demo', 'clerk');
+    await expect(renderPage()).rejects.toThrow('NEXT_NOT_FOUND');
+    state.flagOn = true;
+    await renderPage();
+    expect(document.querySelector('[data-pattern-state="permission-denied"]')).not.toBeNull();
+  });
+
+  it('gates the printable report the same way', async () => {
+    state.flagOn = false;
+    await expect(
+      ReportPage({ params: Promise.resolve({ slug: 'demo' }), searchParams: Promise.resolve({}) }),
+    ).rejects.toThrow('NEXT_NOT_FOUND');
+    expect(insights.getPracticeInsights).not.toHaveBeenCalled();
   });
 });
 

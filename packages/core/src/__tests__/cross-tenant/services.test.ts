@@ -4743,6 +4743,24 @@ const CASES: Record<string, Case> = {
       await core.listLedger(feesDeps(f), asBInB(f), { personId: aFeeIds(f).personId }),
     ).toEqual([]);
   },
+  // Supplier state (#963): B claiming A's workspace is refused; B in its own workspace reads and
+  // writes only its own code, and A's settings are unchanged.
+  getFeeSupplierState: async (f) => {
+    await feesDenied(f, (d, who) => core.getFeeSupplierState(d, who));
+    expect(await core.getFeeSupplierState(feesDeps(f), asBInB(f))).toBeNull();
+  },
+  listFeeClients: async (f) => {
+    await feesDenied(f, (d, who) => core.listFeeClients(d, who));
+    const own = await core.listFeeClients(feesDeps(f), asBInB(f));
+    expect(own.map((c) => c.id)).not.toContain(aFeeIds(f).personId);
+  },
+  setFeeSupplierState: async (f) => {
+    await feesDenied(f, (d, who) => core.setFeeSupplierState(d, who, { stateCode: '29' }));
+    const before = await aFees(f);
+    expect(await core.setFeeSupplierState(feesDeps(f), asBInB(f), { stateCode: '29' })).toBe('29');
+    expect(await core.getFeeSupplierState(feesDeps(f), asBInB(f))).toBe('29');
+    expect(await aFees(f)).toEqual(before);
+  },
   getClientBalance: async (f) => {
     await feesDenied(f, (d, who) =>
       core.getClientBalance(d, who, { personId: aFeeIds(f).personId }),
@@ -4800,6 +4818,7 @@ const aFees = (f: Fixture) =>
     await s.select().from(schema.feeInvoiceLine),
     await s.select().from(schema.payment),
     await s.select().from(schema.clientLedgerEntry),
+    await s.select().from(schema.workspaceSettings),
   ]);
 /**
  * B claiming A's workspace is refused (NOT_FOUND or FORBIDDEN); with `ownScope`, B in its own

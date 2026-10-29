@@ -12,6 +12,10 @@ export interface FeesActions {
   saveDraft: (input: unknown) => Promise<Saved>;
   discardDraft: (input: unknown) => Promise<Result<{ id: string }>>;
   issue: (input: unknown) => Promise<Saved>;
+  recordPayment: (input: unknown) => Promise<Saved>;
+  issueCreditNote: (input: unknown) => Promise<Saved>;
+  recordExpense: (input: unknown) => Promise<Saved>;
+  recordReceipt: (input: unknown) => Promise<Saved>;
 }
 
 export type FeesErrorKey = 'forbidden' | 'invalid' | 'conflict' | 'failed';

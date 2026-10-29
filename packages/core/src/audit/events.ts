@@ -128,6 +128,10 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'Erasure cleared the free text of a client ledger, keeping the amounts',
   },
+  'fee.supplier_state_set': {
+    security: false,
+    description: 'A member set the state code invoices are issued from',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },

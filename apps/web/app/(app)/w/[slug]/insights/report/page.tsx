@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 
 import { PermissionDeniedPage } from '../../../../../../components/shell/permission-denied-page.tsx';
+import { requireWorkspaceFlag } from '../../../../../../lib/flags.ts';
 import { loadInsights, parseInsightsQuery } from '../../../../../../lib/insights/insights-deps.ts';
 import { can } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
@@ -32,6 +33,7 @@ export default async function InsightsReportPage({ params, searchParams }: Repor
   const [{ slug }, search] = await Promise.all([params, searchParams]);
   const context = await getWorkspaceContext(slug);
   if (!context) notFound();
+  await requireWorkspaceFlag('insights.enabled', context);
   if (!can(context.role, 'insights.read')) return <PermissionDeniedPage />;
   const load = await loadInsights(context, parseInsightsQuery(search));
   if (load.kind === 'denied') return <PermissionDeniedPage />;

@@ -35,6 +35,7 @@ export {
   recordClientReceipt,
   type LedgerEntryView,
 } from './ledger.ts';
+export { getFeeSupplierState, listFeeClients, setFeeSupplierState } from './settings.ts';
 export { anonymiseClientLedger } from './anonymise.ts';
 export { FeesDisabledError } from './errors.ts';
 export { FEES_FLAG, type FeesActor, type FeesDeps } from './scope.ts';

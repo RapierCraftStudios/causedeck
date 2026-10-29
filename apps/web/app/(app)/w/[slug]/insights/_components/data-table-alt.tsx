@@ -1,5 +1,6 @@
 // The data table alternative of a chart (#85): every chart has one, so no number lives only in a
-// picture. A caption names it; headers are real column headers.
+// picture. A caption names it; headers are real column headers. The scroll container is a focusable
+// labelled region, so a keyboard can scroll a table wider than its tile.
 import {
   Table,
   TableBody,
@@ -20,7 +21,10 @@ export interface DataTableAltProps {
 
 export function DataTableAlt({ caption, columns, rows, none }: DataTableAltProps) {
   return (
-    <Table data-slot="insights-data-table">
+    <Table
+      data-slot="insights-data-table"
+      containerProps={{ role: 'region', tabIndex: 0, 'aria-label': caption }}
+    >
       <TableCaption className="sr-only">{caption}</TableCaption>
       <TableHeader>
         <TableRow>

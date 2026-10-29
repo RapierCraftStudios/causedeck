@@ -20,8 +20,10 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
 
+import type { PickerOption } from '../../../../../../lib/fees/fees-deps.ts';
 import { rupeesToPaise } from '../../../../../../lib/fees/money.ts';
 
+import { FeePicker } from './fee-picker.tsx';
 import { feesErrorKey, type FeesActions } from './fees-actions.ts';
 
 export interface FeeAgreementFormProps {
@@ -30,6 +32,9 @@ export interface FeeAgreementFormProps {
   onOpenChange: (open: boolean) => void;
   offline?: boolean;
   create: FeesActions['createAgreement'];
+  /** The matters and clients to choose from (#963). */
+  matters?: readonly PickerOption[];
+  clients?: readonly PickerOption[];
 }
 
 const SELECT_CLASS = 'border-line-control bg-surface h-9 w-full rounded-md border px-2 text-sm';
@@ -40,6 +45,8 @@ export function FeeAgreementForm({
   onOpenChange,
   offline = false,
   create,
+  matters = [],
+  clients = [],
 }: FeeAgreementFormProps) {
   const t = useTranslations('fees');
   const router = useRouter();
@@ -60,7 +67,7 @@ export function FeeAgreementForm({
   const submit = async () => {
     if (offline || saving) return;
     const amountPaise = rupeesToPaise(amount);
-    if (amountPaise === null) {
+    if (amountPaise === null || matterId === '' || personId === '') {
       setError(t('error.invalid'));
       return;
     }
@@ -69,8 +76,8 @@ export function FeeAgreementForm({
     const result = await create({
       workspaceId,
       agreement: {
-        matterId: matterId.trim(),
-        personId: personId.trim(),
+        matterId,
+        personId,
         basis,
         amountPaise,
         gstTreatment,
@@ -116,26 +123,22 @@ export function FeeAgreementForm({
             void submit();
           }}
         >
-          <Field label={t('agreementForm.matter')} required>
-            <Input
-              autoComplete="off"
-              data-fees-field="matter"
-              value={matterId}
-              onChange={(event) => {
-                setMatterId(event.target.value);
-              }}
-            />
-          </Field>
-          <Field label={t('agreementForm.person')} required>
-            <Input
-              autoComplete="off"
-              data-fees-field="person"
-              value={personId}
-              onChange={(event) => {
-                setPersonId(event.target.value);
-              }}
-            />
-          </Field>
+          <FeePicker
+            label={t('agreementForm.matter')}
+            field="matter"
+            options={matters}
+            value={matterId}
+            onChange={setMatterId}
+            required
+          />
+          <FeePicker
+            label={t('agreementForm.person')}
+            field="person"
+            options={clients}
+            value={personId}
+            onChange={setPersonId}
+            required
+          />
           <Field label={t('agreementForm.basis')} controlId={basisId}>
             <select
               id={basisId}

@@ -50,6 +50,7 @@ import { DRAFT_STUDIO_SHORTCUTS } from '../../../../../../lib/shortcuts/registry
 
 import type { restoreDraftVersionAction, saveDraftAction } from './actions.ts';
 import type {
+  acknowledgeFactCheckAction,
   checkFactsLiveAction,
   ignoreFactAction,
   markAssertionAction,
@@ -184,7 +185,10 @@ export interface StudioChecks {
     fix: typeof applyFixAction;
     exportDraft: typeof exportDraftAction;
     download: typeof downloadDraftExportAction;
+    acknowledgeFacts?: typeof acknowledgeFactCheckAction;
   };
+  /** Fact-check findings nobody decided or acknowledged; any blocks the export. */
+  factUnresolved?: number;
   /** The id of the version `versionNo` names (what the checks and the export read). */
   versionId: string;
   citations: CitationView[];
@@ -216,7 +220,8 @@ export function DraftStudio(props: StudioProps) {
   const [menu, setMenu] = useState(false);
   const [checking, setChecking] = useState(false);
   const [checkFailed, setCheckFailed] = useState(false);
-  const [dialog, setDialog] = useState<'ack' | 'export' | null>(null);
+  const [dialog, setDialog] = useState<'ack' | 'factack' | 'export' | null>(null);
+  const [factsLeft, setFactsLeft] = useState<number | null>(null);
   const [undoNo, setUndoNo] = useState<number | null>(null);
   const [live, setLive] = useState<{ citations: CitationView[]; findings: Finding[] } | null>(null);
   const [finding, setFinding] = useState(-1);
@@ -526,6 +531,22 @@ export function DraftStudio(props: StudioProps) {
       citations: citations.map((c) => (done.has(c.id) ? { ...c, acknowledged: true } : c)),
       findings: checkFindings,
     });
+    return true;
+  }
+
+  const factUnresolved = factsLeft ?? props.checks?.factUnresolved ?? 0;
+
+  async function acknowledgeFacts(statement: string) {
+    const ack = checks?.actions.acknowledgeFacts;
+    if (ack === undefined) return false;
+    const result = await ack({
+      workspaceId: props.workspaceId,
+      draftVersionId: scope.draftVersionId,
+      reason: statement,
+      confirm: true,
+    });
+    if (!result.ok) return false;
+    setFactsLeft(result.data.unresolved);
     return true;
   }
 
@@ -884,18 +905,32 @@ export function DraftStudio(props: StudioProps) {
             onConfirm={acknowledge}
           />
         ) : null}
+        {checks !== undefined && dialog === 'factack' ? (
+          <AckDialog
+            open
+            count={factUnresolved}
+            onOpenChange={(open) => {
+              if (!open) setDialog('export');
+            }}
+            onConfirm={acknowledgeFacts}
+          />
+        ) : null}
         {checks !== undefined && dialog === 'export' ? (
           <DraftExportDialog
             open
             courtPreset={checks.courtPreset}
             aiAssisted={checks.aiAssisted}
             unacknowledged={unacknowledged}
+            factUnresolved={checks.actions.acknowledgeFacts === undefined ? 0 : factUnresolved}
             disabled={readOnly}
             onOpenChange={(open) => {
               if (!open) setDialog(null);
             }}
             onAcknowledge={() => {
               setDialog('ack');
+            }}
+            onAcknowledgeFacts={() => {
+              setDialog('factack');
             }}
             onExport={exportFile}
           />

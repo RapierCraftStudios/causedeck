@@ -71,7 +71,12 @@ import {
 } from '../schema/whatsapp-link.ts';
 import { webhookDelivery, webhookEndpoint } from '../schema/webhooks.ts';
 import { causeListWatch } from '../schema/cause-list-watch.ts';
-import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
+import {
+  importBatch,
+  importBatchFile,
+  importColumnMapping,
+  importPlan,
+} from '../schema/import-batch.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
 import { jobEffect } from '../schema/job-effect.ts';
@@ -1681,6 +1686,13 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     const batchId = await seedImportBatch(tx, workspaceId, ownerId);
     await tx.insert(importPlan).values({ workspaceId, batchId, plan: { rows: [] } });
     return { batchId };
+  },
+  import_column_mapping: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(importColumnMapping)
+      .values({ workspaceId, mapping: { caseNumber: `Case ${tag}` }, updatedBy: ownerId })
+      .returning({ id: importColumnMapping.id });
+    return { id: first(rows, 'import_column_mapping').id };
   },
   matter: async (tx, { workspaceId, tag }) => ({
     matterId: await seedMatter(tx, workspaceId, tag),

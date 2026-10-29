@@ -4349,18 +4349,21 @@
         "early_listing_memo": "Early-listing memo",
         "memo_of_appearance": "Memo of appearance",
         "certified_copy_application": "Application for certified copy",
-        "client_covering_letter": "Covering letter to the client"
+        "client_covering_letter": "Covering letter to the client",
+        "counsel_covering_letter": "Covering letter to counsel"
       },
       "karnataka_hc": {
         "mention_memo": "Mention or adjournment memo",
         "early_listing_memo": "Early-listing memo",
         "memo_of_appearance": "Memo of appearance",
         "certified_copy_application": "Application for certified copy",
-        "client_covering_letter": "Covering letter to the client"
+        "client_covering_letter": "Covering letter to the client",
+        "counsel_covering_letter": "Covering letter to counsel"
       },
       "generic_a0": {
         "adjournment_note": "Adjournment note",
-        "client_covering_letter": "Covering letter to the client"
+        "client_covering_letter": "Covering letter to the client",
+        "counsel_covering_letter": "Covering letter to counsel"
       }
     },
     "scaffoldBanner": "Scaffold: review before use"
@@ -4496,6 +4499,7 @@
       "docx": "Word document",
       "pdf": "PDF",
       "unverifiedWarning": "{count, plural, one {# citation is not verified.} other {# citations are not verified.}}",
+      "factWarning": "{count, plural, one {# fact-check finding is unresolved.} other {# fact-check findings are unresolved.}}",
       "action": "Export",
       "failed": "The export failed. Try again."
     },

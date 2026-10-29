@@ -183,6 +183,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   attention: Object.freeze(['workspaces', 'audit', 'obligations']),
   // Proof-of-value (#86): roles through workspaces; reads its own tables.
   pov: Object.freeze(['workspaces']),
+  // Practice insights (#85): roles and the instrument time rules through pov's index; reads the
+  // hearing, brief, obligation and proof-of-value tables directly.
+  insights: Object.freeze(['pov']),
   // A0 grid corrections (#558): roles and the owner's eval-reuse switch through workspaces.
   corrections: Object.freeze(['workspaces']),
   // Outward update drafts (#735, ADR 0045): roles through workspaces, audit events through audit,

@@ -30,6 +30,7 @@ export const SLOT_RESOLVERS = [
   'advocate.enrolment_no',
   'workspace.name',
   'client.name',
+  'counsel.name',
   'date.today',
 ] as const;
 export type SlotResolver = (typeof SLOT_RESOLVERS)[number];

@@ -1,0 +1,104 @@
+{
+  "insights": {
+    "metaTitle": "Practice insights",
+    "title": "Practice insights",
+    "description": "Your own practice report, computed from this workspace only. No comparison with other lawyers.",
+    "loading": "Loading practice insights",
+    "offline": "You are offline. These are the figures computed {when}.",
+    "computedAt": "Computed {when}",
+    "scopeOwn": "Your own appearances and measures only.",
+    "scopeWorkspace": "Totals for this workspace.",
+    "shortcutsHint": "Press [ or ] to change the range, t to switch between chart and table.",
+    "empty": {
+      "title": "Insights appear after your first few court days",
+      "body": "Once hearings have passed, this page shows how many you prepared for and kept up with."
+    },
+    "error": {
+      "title": "Could not load practice insights",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "range": {
+      "label": "Range",
+      "4w": "4 weeks",
+      "12w": "12 weeks",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply",
+      "window": "{from} to {to}"
+    },
+    "hero": {
+      "label": "Prepared & Kept",
+      "summary": "Prepared and kept: {percent} percent of {n} appearances. Previous period: {previous} percent.",
+      "summaryAlone": "Prepared and kept: {percent} percent of {n} appearances.",
+      "noRate": "No appearances in this range are decided yet.",
+      "pending": "{n} appearances still wait on an obligation and are not counted yet.",
+      "small": "Small sample: only {n} appearances.",
+      "trend": "Weekly Prepared & Kept rate",
+      "trendSummary": "Weekly rate: {values}.",
+      "definitionTitle": "What counts as prepared and kept",
+      "definition": "A listed appearance counts when a current brief was confirmed before the hearing, and every obligation arising from that hearing is captured, owned, and either kept or deliberately rescheduled. Appearances still waiting on an obligation are left out until decided."
+    },
+    "tile": {
+      "expand": "Show chart and data",
+      "collapse": "Hide chart and data"
+    },
+    "delta": {
+      "up": "+{value} vs baseline",
+      "down": "-{value} vs baseline",
+      "flat": "No change vs baseline",
+      "none": "No baseline yet"
+    },
+    "obligations": {
+      "title": "Obligations kept",
+      "summary": "{kept} of {due} due obligations kept; {missed} missed; {reschedules} deliberately rescheduled.",
+      "none": "No obligations fell due in this range.",
+      "due": "Due in range",
+      "kept": "Kept",
+      "missed": "Missed",
+      "missedRate": "Missed rate",
+      "captureCompleteness": "Capture completeness",
+      "captureNote": "{captured} of {total} directions from orders have an owner and a due date.",
+      "reschedules": "Deliberate reschedules",
+      "rescheduleNote": "A deliberate reschedule, with its reason, is never a miss."
+    },
+    "preparedness": {
+      "title": "Preparedness",
+      "summary": "Average {average} out of 5 across {n} ratings.",
+      "hidden": "Preparedness appears after at least 5 ratings. Ratings so far: {n}.",
+      "chartTitle": "Weekly average preparedness rating, 1 to 5",
+      "baseline": "Baseline (first week): {value}"
+    },
+    "load": {
+      "title": "Load",
+      "summary": "Demand {demand}, worry {worry}, effort {effort} (1 to 5) across {n} weekly pulses.",
+      "hidden": "Load appears after at least 5 weekly pulses. Pulses so far: {n}.",
+      "chartTitle": "Weekly load pulse averages, 1 to 5",
+      "demand": "Demand",
+      "worry": "Worry",
+      "effort": "Effort"
+    },
+    "table": {
+      "show": "Show data table",
+      "hide": "Show chart",
+      "week": "Week",
+      "n": "Answers",
+      "average": "Average",
+      "numerator": "Prepared and kept",
+      "denominator": "Appearances",
+      "rate": "Rate",
+      "none": "No data"
+    },
+    "report": {
+      "title": "Practice report",
+      "open": "Printable report",
+      "print": "Print",
+      "back": "Back to insights",
+      "definitions": "Definitions",
+      "baselineDefinition": "Baseline: ratings and pulses recorded in the workspace's first 7 days. The change is the average now minus the baseline average.",
+      "missedDefinition": "Missed: an obligation past its due date that is still open and was never deliberately rescheduled.",
+      "private": "Computed from this workspace only. It contains no data from other workspaces and is not shared anywhere."
+    }
+  }
+}

@@ -111,6 +111,7 @@ export const GLOBAL_OR_WORKSPACE_TABLES: readonly string[] = [
   'court_hall',
   'bench',
   'template',
+  'limitation_rule',
 ];
 
 export const WORKSPACE_COLUMN = 'workspace_id';

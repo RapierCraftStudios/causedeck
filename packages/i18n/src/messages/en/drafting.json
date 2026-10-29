@@ -130,6 +130,7 @@
       "docx": "Word document",
       "pdf": "PDF",
       "unverifiedWarning": "{count, plural, one {# citation is not verified.} other {# citations are not verified.}}",
+      "factWarning": "{count, plural, one {# fact-check finding is unresolved.} other {# fact-check findings are unresolved.}}",
       "action": "Export",
       "failed": "The export failed. Try again."
     },

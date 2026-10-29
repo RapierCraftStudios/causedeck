@@ -46,6 +46,7 @@ export type Messages = {
       practice: string;
       settings: string;
     };
+    enquiries: string;
   };
   palette: {
     title: string;
@@ -1329,6 +1330,10 @@ export type Messages = {
         support: string;
         shell: string;
         appearance: string;
+        contact: string;
+        enquiry: string;
+        limitation: string;
+        fee: string;
       };
       actions: {
         workspace: {
@@ -1392,6 +1397,7 @@ export type Messages = {
         };
         limitation: {
           read: string;
+          write: string;
         };
         insights: {
           read: string;
@@ -1404,6 +1410,18 @@ export type Messages = {
         };
         appearance: {
           assign: string;
+        };
+        contact: {
+          read: string;
+          write: string;
+        };
+        enquiry: {
+          read: string;
+          write: string;
+        };
+        fee: {
+          read: string;
+          write: string;
         };
       };
       settings: {
@@ -3539,6 +3557,630 @@ export type Messages = {
       };
     };
   };
+  people: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    new: {
+      trigger: string;
+    };
+    search: {
+      label: string;
+      placeholder: string;
+    };
+    filters: {
+      kind: string;
+      language: string;
+      all: string;
+      clear: string;
+    };
+    kinds: {
+      primary: string;
+      instructing: string;
+      accounts: string;
+      family: string;
+    };
+    languages: {
+      en: string;
+      hi: string;
+      ta: string;
+      kn: string;
+      te: string;
+      ml: string;
+      mr: string;
+    };
+    list: {
+      label: string;
+      linked: string;
+      unlinked: string;
+      unlinkedHint: string;
+      archived: string;
+      redacted: string;
+      noDetails: string;
+      open: string;
+    };
+    empty: {
+      title: string;
+      body: string;
+    };
+    filteredEmpty: {
+      title: string;
+      clear: string;
+    };
+    loading: string;
+    error: {
+      title: string;
+      retry: string;
+      reference: string;
+    };
+    offline: string;
+    denied: string;
+    notFound: string;
+    form: {
+      titleNew: string;
+      titleEdit: string;
+      client: string;
+      clientHint: string;
+      kind: string;
+      phone: string;
+      phoneHint: string;
+      email: string;
+      save: string;
+      saving: string;
+      cancel: string;
+      needOne: string;
+      failed: string;
+      forbidden: string;
+      invalid: string;
+    };
+    language: {
+      label: string;
+      hint: string;
+    };
+    detail: {
+      back: string;
+      details: string;
+      phone: string;
+      email: string;
+      language: string;
+      kind: string;
+      edit: string;
+      archive: string;
+      archiveConfirm: string;
+      purge: string;
+      archivedOn: string;
+      linkedMatters: string;
+      noMatters: string;
+      relation: {
+        represents: string;
+        instructed_by: string;
+      };
+      log: {
+        title: string;
+        readOnly: string;
+        empty: string;
+        undone: string;
+      };
+    };
+    shortcuts: {
+      new: string;
+      search: string;
+      open: string;
+      close: string;
+    };
+  };
+  pov: {
+    tap: {
+      title: string;
+      hint: string;
+      scale: string;
+      option: string;
+      skip: string;
+      saved: string;
+      skipped: string;
+      error: string;
+      retry: string;
+      offline: string;
+      synced: string;
+      denied: string;
+      loading: string;
+    };
+    pulse: {
+      title: string;
+      intro: string;
+      demand: string;
+      worry: string;
+      effort: string;
+      low: string;
+      high: string;
+      option: string;
+      submit: string;
+      dismiss: string;
+      saved: string;
+      dismissed: string;
+      error: string;
+      retry: string;
+      offline: string;
+      denied: string;
+      loading: string;
+    };
+    test: {
+      title: string;
+      intro: string;
+      matter: string;
+      start: string;
+      running: string;
+      finished: string;
+      finish: string;
+      correct: string;
+      wrong: string;
+      elapsed: string;
+      started: string;
+      stopped: string;
+      empty: string;
+      loading: string;
+      error: string;
+      retry: string;
+      offline: string;
+      denied: string;
+      again: string;
+      questions: {
+        current_stage: string;
+        last_order: string;
+        next_date: string;
+        open_obligations: string;
+        key_documents: string;
+      };
+    };
+    privacy: {
+      title: string;
+      intro: string;
+      toggle: string;
+      toggleOn: string;
+      toggleOff: string;
+      yours: string;
+      none: string;
+      rating: string;
+      skipped: string;
+      delete: string;
+      deleted: string;
+      pulse: string;
+      download: string;
+      downloadHint: string;
+      loading: string;
+      error: string;
+      retry: string;
+      offline: string;
+      denied: string;
+    };
+  };
+  enquiry: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    gatedNotice: string;
+    loading: string;
+    offline: string;
+    new: {
+      trigger: string;
+    };
+    empty: {
+      title: string;
+      body: string;
+    };
+    list: {
+      label: string;
+    };
+    row: {
+      review: string;
+      close: string;
+      check: string;
+    };
+    status: {
+      logged: string;
+      checked: string;
+      accepted_as_matter: string;
+      declined: string;
+      referred: string;
+      closed: string;
+    };
+    channels: {
+      phone: string;
+      email: string;
+      walk_in: string;
+      referral: string;
+      web: string;
+      other: string;
+    };
+    conflict: {
+      title: string;
+      hits: string;
+      notRun: string;
+      running: string;
+      count: string;
+      warning: string;
+      noHits: string;
+      role: {
+        client: string;
+        adverse: string;
+      };
+      note: {
+        label: string;
+        hint: string;
+      };
+      decision: {
+        proceed: string;
+        decline: string;
+        refer: string;
+      };
+    };
+    form: {
+      title: string;
+      enquirer: string;
+      channel: string;
+      phone: string;
+      phoneHint: string;
+      email: string;
+      summary: string;
+      clients: string;
+      adverse: string;
+      partiesHint: string;
+      cancel: string;
+      save: string;
+      saving: string;
+      error: {
+        required: string;
+        forbidden: string;
+        invalid: string;
+        conflict: string;
+        failed: string;
+      };
+    };
+    outcome: {
+      title: string;
+      reason: string;
+      hint: string;
+      confirm: string;
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+  };
+  limitation: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    verifyLabel: string;
+    gatedNotice: string;
+    loading: string;
+    offline: string;
+    empty: {
+      title: string;
+      body: string;
+    };
+    noRules: {
+      title: string;
+      body: string;
+    };
+    list: {
+      label: string;
+    };
+    status: {
+      proposed: string;
+      confirmed: string;
+      superseded: string;
+    };
+    card: {
+      expires: string;
+      matter: string;
+      confirm: string;
+      details: string;
+      hideDetails: string;
+    };
+    steps: {
+      title: string;
+      rule: string;
+      period: string;
+      start: string;
+      excluded: string;
+      expires: string;
+      condonable: string;
+    };
+    form: {
+      trigger: string;
+      title: string;
+      matter: string;
+      rule: string;
+      start: string;
+      excluded: string;
+      submit: string;
+      cancel: string;
+      error: {
+        forbidden: string;
+        invalid: string;
+        conflict: string;
+        failed: string;
+      };
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    shortcuts: {
+      propose: string;
+      confirm: string;
+      close: string;
+    };
+  };
+  insights: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    offline: string;
+    computedAt: string;
+    scopeOwn: string;
+    scopeWorkspace: string;
+    shortcutsHint: string;
+    empty: {
+      title: string;
+      body: string;
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    range: {
+      label: string;
+      '4w': string;
+      '12w': string;
+      custom: string;
+      from: string;
+      to: string;
+      apply: string;
+      window: string;
+    };
+    hero: {
+      label: string;
+      summary: string;
+      summaryAlone: string;
+      noRate: string;
+      pending: string;
+      small: string;
+      trend: string;
+      trendSummary: string;
+      definitionTitle: string;
+      definition: string;
+    };
+    tile: {
+      expand: string;
+      collapse: string;
+    };
+    delta: {
+      up: string;
+      down: string;
+      flat: string;
+      none: string;
+    };
+    obligations: {
+      title: string;
+      summary: string;
+      none: string;
+      due: string;
+      kept: string;
+      missed: string;
+      missedRate: string;
+      captureCompleteness: string;
+      captureNote: string;
+      reschedules: string;
+      rescheduleNote: string;
+    };
+    preparedness: {
+      title: string;
+      summary: string;
+      hidden: string;
+      chartTitle: string;
+      baseline: string;
+    };
+    load: {
+      title: string;
+      summary: string;
+      hidden: string;
+      chartTitle: string;
+      demand: string;
+      worry: string;
+      effort: string;
+    };
+    table: {
+      show: string;
+      hide: string;
+      week: string;
+      n: string;
+      average: string;
+      numerator: string;
+      denominator: string;
+      rate: string;
+      none: string;
+    };
+    report: {
+      title: string;
+      open: string;
+      print: string;
+      back: string;
+      definitions: string;
+      baselineDefinition: string;
+      missedDefinition: string;
+      private: string;
+    };
+  };
+  fees: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    gatedNotice: string;
+    ledgerNotice: string;
+    gstBanner: string;
+    loading: string;
+    offline: string;
+    dismiss: string;
+    shortcuts: {
+      new: string;
+      save: string;
+      issue: string;
+    };
+    agreements: {
+      title: string;
+      label: string;
+      empty: {
+        title: string;
+        body: string;
+      };
+    };
+    invoices: {
+      title: string;
+      label: string;
+      new: string;
+      open: string;
+      draftNumber: string;
+      matter: string;
+      empty: {
+        title: string;
+        body: string;
+      };
+    };
+    status: {
+      draft: string;
+      issued: string;
+      paid: string;
+      void: string;
+    };
+    agreementStatus: {
+      draft: string;
+      active: string;
+      ended: string;
+    };
+    basis: {
+      fixed: string;
+      hourly: string;
+      retainer: string;
+      per_appearance: string;
+    };
+    gst: {
+      forward_charge: string;
+      reverse_charge: string;
+      exempt: string;
+      nil_rated: string;
+      out_of_scope: string;
+      pure_agent: string;
+    };
+    agreement: {
+      amount: string;
+      starts: string;
+      ends: string;
+      matter: string;
+      activate: string;
+      end: string;
+      proposedNote: string;
+    };
+    agreementForm: {
+      trigger: string;
+      title: string;
+      matter: string;
+      person: string;
+      basis: string;
+      amount: string;
+      gst: string;
+      starts: string;
+      ends: string;
+      notes: string;
+      submit: string;
+      cancel: string;
+    };
+    editor: {
+      titleNew: string;
+      titleDraft: string;
+      matter: string;
+      person: string;
+      agreement: string;
+      placeOfSupply: string;
+      recipientGstin: string;
+      dueDate: string;
+      supplierName: string;
+      supplierState: string;
+      supplierGstin: string;
+      lines: string;
+      description: string;
+      quantity: string;
+      unitPrice: string;
+      treatment: string;
+      addLine: string;
+      removeLine: string;
+      preview: string;
+      save: string;
+      issue: string;
+      discard: string;
+      acknowledge: string;
+      ownerOnly: string;
+      saved: string;
+      final: string;
+    };
+    preview: {
+      title: string;
+      empty: string;
+      supplier: string;
+      number: string;
+      billTo: string;
+      taxable: string;
+      cgst: string;
+      sgst: string;
+      igst: string;
+      rcm: string;
+      total: string;
+      line: string;
+      tax: string;
+    };
+    ledger: {
+      title: string;
+      label: string;
+      empty: {
+        title: string;
+        body: string;
+      };
+      date: string;
+      kind: string;
+      description: string;
+      debit: string;
+      credit: string;
+      balance: string;
+      owes: string;
+      inCredit: string;
+      settled: string;
+      kinds: {
+        fee: string;
+        disbursement: string;
+        receipt: string;
+        refund: string;
+        adjustment: string;
+      };
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+      forbidden: string;
+      invalid: string;
+      conflict: string;
+      failed: string;
+    };
+    notFound: {
+      title: string;
+      body: string;
+    };
+  };
   matterTimeline: {
     title: string;
     loading: string;
@@ -3709,6 +4351,7 @@ export type Messages = {
         memo_of_appearance: string;
         certified_copy_application: string;
         client_covering_letter: string;
+        counsel_covering_letter: string;
       };
       karnataka_hc: {
         mention_memo: string;
@@ -3716,10 +4359,12 @@ export type Messages = {
         memo_of_appearance: string;
         certified_copy_application: string;
         client_covering_letter: string;
+        counsel_covering_letter: string;
       };
       generic_a0: {
         adjournment_note: string;
         client_covering_letter: string;
+        counsel_covering_letter: string;
       };
     };
     scaffoldBanner: string;
@@ -3855,6 +4500,7 @@ export type Messages = {
       docx: string;
       pdf: string;
       unverifiedWarning: string;
+      factWarning: string;
       action: string;
       failed: string;
     };
@@ -6162,6 +6808,76 @@ export type Messages = {
         notFound: string;
         generic: string;
       };
+    };
+  };
+  statusLink: {
+    metaTitle: string;
+    page: {
+      unavailable: string;
+      unavailableBody: string;
+      preparedBy: string;
+      preparedByUnknown: string;
+      nextDate: string;
+      expires: string;
+      loading: string;
+    };
+    sheet: {
+      open: string;
+      title: string;
+      description: string;
+      headline: string;
+      note: string;
+      includeNextDate: string;
+      nextDate: string;
+      contact: string;
+      contactPlaceholder: string;
+      expiry: string;
+      expiryDays: string;
+      language: string;
+      prefill: string;
+      preview: string;
+      previewHint: string;
+      create: string;
+      creating: string;
+      cancel: string;
+      close: string;
+      shortcut: string;
+      loading: string;
+      empty: string;
+      error: string;
+      retry: string;
+      offline: string;
+      denied: string;
+    };
+    created: {
+      title: string;
+      once: string;
+      shareYourself: string;
+      copy: string;
+      copied: string;
+      url: string;
+    };
+    list: {
+      title: string;
+      empty: string;
+      loading: string;
+      viewed: string;
+      expires: string;
+      revoke: string;
+      revoked: string;
+      expired: string;
+      active: string;
+      error: string;
+      retry: string;
+    };
+    gated: {
+      title: string;
+      body: string;
+    };
+    languages: {
+      en: string;
+      ta: string;
+      kn: string;
     };
   };
   offline: {

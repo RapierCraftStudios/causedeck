@@ -64,6 +64,17 @@ variable "ovh_subsidiary" {
   default     = "IN"
 }
 
+variable "ovh_pricing_mode" {
+  description = "OVH pricing mode: upfront12 (12-month term, D-037) or default (monthly, no commitment)."
+  type        = string
+  default     = "upfront12"
+
+  validation {
+    condition     = contains(["upfront12", "default"], var.ovh_pricing_mode)
+    error_message = "ovh_pricing_mode must be upfront12 or default."
+  }
+}
+
 variable "vps_os" {
   description = "Operating system ordered with the OVH VPS: Ubuntu 24.04 or Debian 13."
   type        = string

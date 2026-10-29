@@ -70,13 +70,14 @@ module "vps_ovh" {
   count  = local.use_ovh ? 1 : 0
   source = "../../modules/vps-ovh-mumbai"
 
-  env            = local.env
-  datacenter     = var.vps_datacenter
-  plan_code      = var.vps_size == "" ? "vps-2027-model3" : var.vps_size
-  ovh_subsidiary = var.ovh_subsidiary
-  vps_os         = var.vps_os
-  public_ssh_key = var.ovh_public_ssh_key
-  image_id       = var.ovh_image_id
+  env               = local.env
+  datacenter        = var.vps_datacenter
+  plan_pricing_mode = var.ovh_pricing_mode
+  plan_code         = var.vps_size == "" ? "vps-2027-model3" : var.vps_size
+  ovh_subsidiary    = var.ovh_subsidiary
+  vps_os            = var.vps_os
+  public_ssh_key    = var.ovh_public_ssh_key
+  image_id          = var.ovh_image_id
 }
 
 # With vps_provider = "manual" no VPS resource is planned: the operator ordered the box by hand and

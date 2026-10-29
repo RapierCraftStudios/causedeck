@@ -7,6 +7,16 @@
 locals {
   display_name = join("-", compact([var.project, var.env, var.name_suffix]))
 
+  # vps-2027-modelN carries two mandatory addon families: local storage and the automated backup.
+  model = try(regex("^vps-2027-(model[0-9]+)$", var.plan_code), null)
+
+  derived_options = local.model == null ? [] : [
+    "option-storage-local-2027-${local.model}",
+    "option-auto-backup-2027-${var.automated_backup_days}-${local.model}",
+  ]
+
+  plan_options = var.plan_options == null ? local.derived_options : var.plan_options
+
   configuration = [
     { label = "vps_datacenter", value = var.datacenter },
     { label = "vps_os", value = var.vps_os },
@@ -28,7 +38,17 @@ resource "ovh_vps" "this" {
     duration      = var.plan_duration
     plan_code     = var.automated_backup_plan_code
     pricing_mode  = var.plan_pricing_mode
-    configuration = []
+    # vps-2027-modelN carries two mandatory addon families: local storage and the automated backup.
+  model = try(regex("^vps-2027-(model[0-9]+)$", var.plan_code), null)
+
+  derived_options = local.model == null ? [] : [
+    "option-storage-local-2027-${local.model}",
+    "option-auto-backup-2027-${var.automated_backup_days}-${local.model}",
+  ]
+
+  plan_options = var.plan_options == null ? local.derived_options : var.plan_options
+
+  configuration = []
   }]
 
   public_ssh_key = var.public_ssh_key == "" ? null : var.public_ssh_key

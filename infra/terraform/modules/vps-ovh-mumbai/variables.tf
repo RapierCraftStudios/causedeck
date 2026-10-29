@@ -38,15 +38,20 @@ variable "plan_code" {
 }
 
 variable "plan_duration" {
-  description = "Subscription duration, ISO 8601 (P1M, P12M). It must match plan_pricing_mode in the OVH catalogue."
+  description = "Billing interval, ISO 8601. The catalogue prices a 12-month commitment as interval P1M with pricing mode upfront12."
   type        = string
   default     = "P1M"
 }
 
 variable "plan_pricing_mode" {
-  description = "OVH pricing mode for the chosen duration (default, or the catalogue's committed mode)."
+  description = "OVH pricing mode: default (monthly, no commitment) or upfront12 (12-month term, D-037)."
   type        = string
-  default     = "default"
+  default     = "upfront12"
+
+  validation {
+    condition     = contains(["default", "upfront12"], var.plan_pricing_mode)
+    error_message = "plan_pricing_mode must be default or upfront12."
+  }
 }
 
 variable "ovh_subsidiary" {
@@ -88,8 +93,19 @@ variable "image_id" {
   }
 }
 
-variable "automated_backup_plan_code" {
-  description = "Catalogue plan code of the automated-backup option for this VPS model. Empty orders no option."
-  type        = string
-  default     = ""
+variable "automated_backup_days" {
+  description = "Retention of the OVH automated backup option (it is a mandatory addon of the 2027 range): 1 or 7 days."
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = contains([1, 7], var.automated_backup_days)
+    error_message = "automated_backup_days must be 1 or 7 (the catalogue's option-auto-backup-2027-1 and -7)."
+  }
+}
+
+variable "plan_options" {
+  description = "Catalogue plan codes of the options ordered with the VPS. Null derives the mandatory 2027-range ones (local storage and automated backup) from plan_code."
+  type        = list(string)
+  default     = null
 }

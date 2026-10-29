@@ -51,7 +51,7 @@ infra/terraform/
 | `vps_datacenter`                        | `YNM`     | OVH datacenter; `YNM` (Mumbai) is the only accepted value (D-009) |
 | `vps_ipv4`, `vps_ipv6`                  | `""`      | Host addresses for `manual` (`vps_ipv4` required, empty `vps_ipv6` skips AAAA records) |
 | `vps_size`                              | `""`      | Droplet size, Lightsail bundle or OVH plan code; empty uses the env default (`vps-2027-model3` prod, `vps-2027-model1` staging) |
-| `ovh_subsidiary`, `vps_os`              | `IN`, `Ubuntu 24.04` | OVH billing subsidiary and OS (`Ubuntu 24.04` or `Debian 13`) |
+| `ovh_subsidiary`, `vps_os`, `ovh_pricing_mode` | `IN`, `Ubuntu 24.04`, `upfront12` | OVH billing subsidiary, OS (`Ubuntu 24.04` or `Debian 13`), 12-month term or monthly |
 | `ovh_public_ssh_key`, `ovh_image_id`    | `""`      | Optional key OVH pre-installs; OVH requires the image id with it |
 | `app_proxied`                           | `false`   | Proxy app/api/admin; requires `residency_decision_ref`         |
 | `enable_app_waf`                        | `false`   | WAF and rate limits; requires `residency_decision_ref`         |
@@ -72,8 +72,11 @@ VPS credentials. Real values come from #107 (domain and Cloudflare token), #108 
 
 `ovh_mumbai` orders the VPS through OVH's order workflow (`ovh_vps`), so the account needs a default
 payment method. Plan codes: `vps-2027-model3` (VPS-3, prod) and `vps-2027-model1` (VPS-1, staging);
-the OVH catalogue (`GET /order/catalog/public/vps`) lists the duration and pricing mode that match a
-12-month term (`plan_duration`, `plan_pricing_mode` in the module, default `P1M` / `default`).
+the catalogue (`GET /order/catalog/public/vps`) prices a 12-month term as interval `P1M` with pricing
+mode `upfront12` (`ovh_pricing_mode`, default `upfront12`; `default` is monthly with no commitment).
+The 2027 range has two mandatory add-on families, which the module orders for you: local storage
+(`option-storage-local-2027-modelN`, free) and the automated backup (`option-auto-backup-2027-1-modelN`,
+or `-7-` with `automated_backup_days = 7`).
 The module reads the addresses back with the `ovh_vps` data source. OVH VPS have no firewall or
 volume API: after delivery run `infra/scripts/bootstrap-vps.sh` (ufw, deploy key, key-only SSH) by
 hand or via the OVH-installed key. Reinstalling is never done by Terraform (`image_id` is ignored

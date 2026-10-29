@@ -124,6 +124,7 @@ const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/act
 const peopleContacts = await import('../app/(app)/w/[slug]/people/actions.ts');
 const enquiries = await import('../app/(app)/w/[slug]/people/enquiries/actions.ts');
 const limitation = await import('../app/(app)/w/[slug]/limitation/actions.ts');
+const feeActions = await import('../app/(app)/w/[slug]/invoices/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
@@ -314,6 +315,12 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   closeEnquiryAction: enquiries,
   computeLimitationAction: limitation,
   confirmLimitationAction: limitation,
+  createFeeAgreementAction: feeActions,
+  setFeeAgreementStatusAction: feeActions,
+  previewInvoiceAction: feeActions,
+  saveInvoiceDraftAction: feeActions,
+  discardInvoiceDraftAction: feeActions,
+  issueInvoiceAction: feeActions,
   enableChannelAction: inbox,
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
@@ -1253,9 +1260,57 @@ function inputs(workspaceId: string): Record<string, unknown> {
       startDate: '2026-04-01',
     },
     confirmLimitationAction: { workspaceId, computationId: t.a.rows.limitation_computation?.id },
+    // Fees and invoices (#871): ub may not agree fees on, or invoice, A's matter and client, nor
+    // activate, change, discard or issue A's agreement and invoice.
+    createFeeAgreementAction: {
+      workspaceId,
+      agreement: {
+        matterId: t.a.rows.fee_agreement?.matterId,
+        personId: t.a.rows.fee_agreement?.personId,
+        basis: 'fixed',
+        amountPaise: 100,
+        gstTreatment: 'forward_charge',
+        startsOn: '2026-04-01',
+      },
+    },
+    setFeeAgreementStatusAction: {
+      workspaceId,
+      agreementId: t.a.rows.fee_agreement?.id,
+      status: 'active',
+    },
+    previewInvoiceAction: feeInvoiceProbe(workspaceId),
+    saveInvoiceDraftAction: feeInvoiceProbe(workspaceId),
+    discardInvoiceDraftAction: { workspaceId, invoiceId: t.a.rows.fee_invoice?.invoiceId },
+    issueInvoiceAction: {
+      workspaceId,
+      invoiceId: t.a.rows.fee_invoice?.invoiceId,
+      supplier: { name: 'Probe', stateCode: '29' },
+    },
     // Proceedings tab (#392): ub may not add to, change, link, move, merge or split A's matters and
     // proceedings, nor undo a merge or split naming them.
     ...proceedingsInputs(workspaceId),
+  };
+}
+
+/** A draft invoice for A's matter and client, as `previewInvoiceAction` and `saveInvoiceDraftAction` take it. */
+function feeInvoiceProbe(workspaceId: string) {
+  return {
+    workspaceId,
+    invoice: {
+      matterId: t.a.rows.fee_invoice?.matterId,
+      personId: t.a.rows.fee_invoice?.personId,
+      placeOfSupplyStateCode: '29',
+      lines: [
+        {
+          description: 'Probe',
+          quantity: 1,
+          unitPricePaise: 100,
+          amountPaise: 100,
+          gstTreatment: 'forward_charge',
+        },
+      ],
+    },
+    supplier: { name: 'Probe', stateCode: '29' },
   };
 }
 
@@ -1812,6 +1867,12 @@ describe('cross-tenant server actions', () => {
       // Limitation tracker (#941): A's matter and computation
       'computeLimitationAction',
       'confirmLimitationAction',
+      // Fees and invoices (#871): A's agreement, invoice, matter and client
+      'createFeeAgreementAction',
+      'setFeeAgreementStatusAction',
+      'saveInvoiceDraftAction',
+      'discardInvoiceDraftAction',
+      'issueInvoiceAction',
     ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));

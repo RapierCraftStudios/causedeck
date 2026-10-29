@@ -115,7 +115,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   item('portfolio', Briefcase, 'practice'),
   item('billing', Wallet, 'practice', { requires: 'billing.read' }),
   item('invoices', ReceiptIndianRupee, 'practice', {
-    requires: 'invoices.read',
+    requires: 'fee.read',
     flag: 'invoices.enabled',
   }),
   item('limitation', Hourglass, 'practice', {

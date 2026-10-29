@@ -4,6 +4,10 @@
       "staticDistDir": "./out",
       "url": [
         "/index.html",
+        "/pricing/index.html",
+        "/security/index.html",
+        "/about/index.html",
+        "/changelog/index.html",
         "/legal/index.html",
         "/legal/terms/index.html",
         "/legal/privacy/index.html",

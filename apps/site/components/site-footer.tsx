@@ -4,10 +4,18 @@ import Link from 'next/link';
 import { POSITIONING_LINE } from '../content/landing.ts';
 
 const COLUMNS = [
-  { heading: 'Product', links: [{ href: '/', label: 'Overview' }] },
+  {
+    heading: 'Product',
+    links: [
+      { href: '/', label: 'Overview' },
+      { href: '/pricing/', label: 'Pricing' },
+      { href: '/changelog/', label: 'Changelog' },
+    ],
+  },
   {
     heading: 'Trust',
     links: [
+      { href: '/security/', label: 'Security and privacy' },
       { href: '/about/', label: 'About' },
       { href: '/status/', label: 'Status' },
     ],

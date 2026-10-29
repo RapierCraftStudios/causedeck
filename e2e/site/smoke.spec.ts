@@ -7,6 +7,9 @@ import { expectNoViolations } from '../fixtures/a11y.ts';
 const ROUTES = [
   { path: '/', noindex: false },
   { path: '/about/', noindex: false },
+  { path: '/pricing/', noindex: false },
+  { path: '/security/', noindex: false },
+  { path: '/changelog/', noindex: false },
   { path: '/contact/', noindex: false },
   { path: '/legal/draft-notice/', noindex: true },
   { path: '/legal/', noindex: true },

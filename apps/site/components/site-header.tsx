@@ -14,6 +14,9 @@ import { ThemeToggle } from './theme-toggle.tsx';
 
 const NAV = [
   { href: '/', label: 'Product' },
+  { href: '/pricing/', label: 'Pricing' },
+  { href: '/security/', label: 'Security' },
+  { href: '/changelog/', label: 'Changelog' },
   { href: '/about/', label: 'About' },
 ];
 

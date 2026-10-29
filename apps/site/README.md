@@ -17,6 +17,16 @@ validated by `lib/frontmatter.ts`: `title`, `description`, `date` (YYYY-MM-DD) a
 `noindex`. Invalid frontmatter or a duplicate title or description fails the build. Plain markdown
 under `content/learn` and `content/developers` has its own loaders in `src/`.
 
+### Marketing pages (#91)
+
+`/pricing`, `/security`, `/about` and `/changelog` have their own routes in `app/`; the catch-all skips
+them (`lib/pages.ts`). Pricing amounts live only in `content/pricing.ts` (integer paise, ex-GST) and
+are the billing catalogue's test prices until `PRICES_CONFIRMED` is set (#117); a test fails if they
+drift from `packages/validators/src/plans.ts`. The monthly or annual toggle is CSS only. Security copy
+is `content/security.mdx` plus the controls in `content/security.ts`. Changelog entries are
+`content/changelog/*.mdx` (frontmatter needs `version`); `lib/changelog.ts` fails the build on customer
+or case details. `ta` and `kn` copy are stubs that fall back to English.
+
 ### Legal pages
 
 `content/legal/*.mdx` (terms, privacy, dpa, ai-disclosure, sub-processors) are rendered by

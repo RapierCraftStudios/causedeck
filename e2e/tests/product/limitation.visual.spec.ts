@@ -28,7 +28,11 @@ test.describe('limitation visual', { tag: '@visual' }, () => {
 
   test('empty', async ({ page, asUser, db }) => {
     await openLimitation(page, asUser, db.name, { computation: false });
-    await expect(page.getByRole('heading', { name: 'No limitation dates yet' })).toBeVisible();
+    await expect(
+      page
+        .locator('[data-slot="empty-state-title"]')
+        .filter({ visible: true, hasText: 'No limitation dates yet' }),
+    ).toBeVisible();
     await expect(page).toHaveScreenshot('limitation-empty.png', {
       fullPage: true,
       animations: 'disabled',

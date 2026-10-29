@@ -213,8 +213,11 @@ export async function listLimitations(
       .map((r): ComputationView => {
         const base = { id: r.id, matterId: r.matterId, expiresOn: r.expiresOn, status: r.status };
         if (!scope.canSeeRules) return base;
-        const stored = ComputationInput.partial().safeParse(r.input);
-        const meta = r.input as { ruleId?: string; ruleVersion?: string };
+        // The stored input also carries the rule id and table version the engine added, which the
+        // strict `ComputationInput` rejects: read those two apart from the rest.
+        const { ruleId, ruleVersion, ...rest } = r.input as Record<string, unknown>;
+        const meta = { ruleId, ruleVersion } as { ruleId?: string; ruleVersion?: string };
+        const stored = ComputationInput.partial().safeParse(rest);
         return {
           ...base,
           ...(meta.ruleId === undefined ? {} : { ruleId: meta.ruleId }),

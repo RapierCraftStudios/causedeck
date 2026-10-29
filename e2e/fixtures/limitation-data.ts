@@ -9,7 +9,7 @@ import postgres from 'postgres';
 import { databaseUrl } from '../support/db-reset.ts';
 
 import { COURTS_WORKSPACE_ID } from './courts-data.ts';
-import { MATTERS } from './matters-data.ts';
+import { MATTER_PEOPLE, MATTERS } from './matters-data.ts';
 
 const uuid = (n: number): string => `00000000-0000-4000-8000-${n.toString(16).padStart(12, '0')}`;
 
@@ -52,15 +52,15 @@ async function withSql<T>(database: string, fn: (sql: postgres.Sql) => Promise<T
 }
 
 /**
- * Turn `limitation.enabled` on for the matters workspace. It is legal-gated: on only when the global
- * row and the workspace row are both on and carry `legal_ack_by` and a note. The insert fires
- * `flag_changed`, which empties the server's flag cache.
+ * Turn a legal-gated flag on for the matters workspace. It is on only when the global row and the
+ * workspace row are both on and carry `legal_ack_by` and a note. The insert fires `flag_changed`,
+ * which empties the server's flag cache.
  */
-export function enableLimitation(database: string): Promise<void> {
+export function enableLegalGatedFlag(database: string, key: string): Promise<void> {
   return withSql(database, async (sql) => {
     await sql`
       insert into feature_flag (key, enabled, updated_by, legal_ack_by, legal_ack_note)
-      select 'limitation.enabled', true, m.user_id, m.user_id,
+      select ${key}, true, m.user_id, m.user_id,
              'e2e fixture: counsel sign-off recorded (fictional)'
         from member m
        where m.workspace_id = ${COURTS_WORKSPACE_ID} and m.role = 'owner'
@@ -70,11 +70,32 @@ export function enableLimitation(database: string): Promise<void> {
     await sql`
       insert into workspace_feature_flag
         (workspace_id, key, enabled, updated_by, legal_ack_by, legal_ack_note)
-      select ${COURTS_WORKSPACE_ID}, 'limitation.enabled', true, m.user_id, m.user_id,
+      select ${COURTS_WORKSPACE_ID}, ${key}, true, m.user_id, m.user_id,
              'e2e fixture: counsel sign-off recorded (fictional)'
         from member m
        where m.workspace_id = ${COURTS_WORKSPACE_ID} and m.role = 'owner'
        limit 1
+      on conflict do nothing`;
+  });
+}
+
+/** Turn `limitation.enabled` on for the matters workspace. */
+export function enableLimitation(database: string): Promise<void> {
+  return enableLegalGatedFlag(database, 'limitation.enabled');
+}
+
+/** Turn `status_links.enabled` on for the matters workspace. */
+export function enableStatusLinks(database: string): Promise<void> {
+  return enableLegalGatedFlag(database, 'status_links.enabled');
+}
+
+/** A reachable contact for the seeded client of the main matter, so a status link can be made. */
+export function seedClientContact(database: string): Promise<void> {
+  return withSql(database, async (sql) => {
+    await sql`
+      insert into client_contact (workspace_id, person_id, kind, email, language_pref)
+      values (${COURTS_WORKSPACE_ID}, ${MATTER_PEOPLE[0]?.id ?? ''}, 'primary',
+              'ramaswamy@example.e2e.test', 'en')
       on conflict do nothing`;
   });
 }
@@ -84,12 +105,14 @@ export interface SeedLimitationOptions {
   reviewed?: boolean;
   /** Insert a proposed computation on the appeal matter (default true). */
   computation?: boolean;
+  /** The seeded computation's status (default proposed); a viewer sees confirmed ones only. */
+  status?: 'proposed' | 'confirmed';
 }
 
 /** Seed the synthetic rule table (reviewed rules and one draft) and, optionally, a proposal. */
 export function seedLimitation(
   database: string,
-  { reviewed = true, computation = true }: SeedLimitationOptions = {},
+  { reviewed = true, computation = true, status = 'proposed' }: SeedLimitationOptions = {},
 ): Promise<void> {
   const L = LIMITATION;
   return withSql(database, async (sql) => {
@@ -125,7 +148,7 @@ export function seedLimitation(
         ruleCode: L.suit.code,
         startDate: L.computation.startDate,
         expiresOn: L.computation.expiresOn,
-        status: 'proposed',
+        status,
         notes: ['Delay may be condoned on application.'],
       };
       await sql`
@@ -133,7 +156,7 @@ export function seedLimitation(
           (id, workspace_id, matter_id, rule_id, input, result, start_date, expires_on, status)
         values
           (${L.computation.id}, ${ws}, ${L.matter.id}, ${L.suit.id}, ${sql.json(input)},
-           ${sql.json(result)}, ${L.computation.startDate}, ${L.computation.expiresOn}, 'proposed')`;
+           ${sql.json(result)}, ${L.computation.startDate}, ${L.computation.expiresOn}, ${status})`;
     }
   });
 }

@@ -12,7 +12,13 @@ test.describe('status links gated off', () => {
   });
 
   test('/s/<token> is a 404', async ({ page }) => {
-    const response = await page.goto('/s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
-    expect(response?.status()).toBe(404);
+    await page.goto('/s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+    // The page streams behind the root loading boundary before notFound(), so the HTTP status is
+    // already 200; what proves the 404 is the not-found page and its noindex robots meta.
+    await expect(
+      page.getByRole('heading', { name: 'This link is no longer available' }),
+    ).toBeVisible();
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+    await expect(page.getByText(/Prepared by/)).toHaveCount(0);
   });
 });

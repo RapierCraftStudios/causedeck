@@ -48,6 +48,7 @@ import {
   getCourtDay,
   type HearingForOutcome,
 } from '../../court-day/index.ts';
+import { isDemoWorkspace } from '../../shared/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 import { RetryableError } from '../errors.ts';
@@ -442,7 +443,10 @@ export async function runReminder(
       ),
     );
 
+  // A demo workspace sends nothing outside it (#93): only the in-app row is written.
+  const demo = await isDemoWorkspace(ctx.db, workspaceId);
   const sendOn = async (channel: Channel): Promise<void> => {
+    if (demo && channel !== 'in_app') return;
     const t = await getTranslator(locale);
     if (channel === 'in_app') {
       const body =

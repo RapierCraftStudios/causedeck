@@ -12,6 +12,8 @@ import { InviteInput } from '@causedeck/validators/workspace';
 import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 
 import { recordActivation } from '../activation/index.ts';
+import { demoBlocked } from '../shared/index.ts';
+
 import {
   conflict,
   forbidden,
@@ -60,11 +62,13 @@ async function requireInviter(
   role: WorkspaceRole,
 ): Promise<void> {
   const [workspace] = await tx
-    .select({ id: organization.id })
+    .select({ id: organization.id, isDemo: organization.isDemo })
     .from(organization)
     .where(and(eq(organization.id, workspaceId), isNull(organization.deletedAt)))
     .for('update');
   if (!workspace) throw notFound();
+  // A demo workspace invites no one: the email would leave it (#93).
+  if (workspace.isDemo) throw demoBlocked();
   const [actor] = await tx
     .select({ role: member.role })
     .from(member)

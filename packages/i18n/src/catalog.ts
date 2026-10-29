@@ -43,9 +43,11 @@ export const NAMESPACES = [
   'whatsapp-import',
   'memory-citations',
   'whatsapp-link',
+  'help',
   'research',
   'bootstrap-import',
   'onboarding-discovery',
+  'onboarding',
   'email-intake',
   'import',
   'camera',
@@ -62,6 +64,7 @@ export const NAMESPACES = [
   'status-link',
   'offline',
   'errors',
+  'status',
 ] as const;
 
 export type Namespace = (typeof NAMESPACES)[number];

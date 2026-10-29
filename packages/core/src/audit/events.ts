@@ -38,6 +38,11 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'Staff created or changed an external data source or flipped its kill switch',
   },
+  // The public status page's incident log (#770). Metadata holds the change and the old and new state.
+  'incident.changed': {
+    security: true,
+    description: 'Staff opened, updated or resolved a public status incident',
+  },
   // The court document network (#485, D-048). Metadata holds ids and counts only, never content.
   'network.contributed': {
     security: false,
@@ -141,6 +146,10 @@ export const AUDIT_ACTIONS = {
     description: 'Two-factor authentication was disabled',
   },
   'auth.session_revoked': { security: true, description: 'A session was revoked' },
+  'support.session_requested': {
+    security: true,
+    description: 'A member asked for a support session',
+  },
   'support.session_started': { security: true, description: 'A support session started' },
   'support.session_ended': { security: true, description: 'A support session ended' },
   // Fail-closed: a support read whose audit event cannot be written is not served (#308).
@@ -286,6 +295,12 @@ export const AUDIT_ACTIONS = {
   'workspace.deletion_started': {
     security: true,
     description: 'The cooling-off ended and erasure of the workspace started',
+  },
+  // A demo workspace was restored to the seed (#93). Metadata holds the seed version, counts and the
+  // elapsed milliseconds only.
+  'demo.reset': {
+    security: false,
+    description: 'A demo workspace was restored to its seed version',
   },
   // Metadata names the changed fields only, never their values (#284).
   'workspace.profile_updated': {

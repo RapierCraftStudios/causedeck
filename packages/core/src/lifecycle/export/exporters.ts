@@ -370,6 +370,16 @@ const whatsappLinkExporter = tablesExporter('whatsapp-link', [
   ws('whatsapp_link', { userColumn: 'user_id' }),
 ]);
 
+// In-app help state (#94): the member's own dismissed tips and coachmarks (key and time).
+const helpStateExporter = tablesExporter('help-state', [
+  ws('help_state', { userColumn: 'user_id' }),
+]);
+
+// Onboarding wizard state (#92): the member's own step names.
+const onboardingStateExporter = tablesExporter('onboarding-state', [
+  ws('onboarding_state', { userColumn: 'user_id' }),
+]);
+
 // Drafting (#766): the workspace's own templates (system templates are not tenant data), its drafts
 // and their immutable versions with the content digest. Block trees hold the text the member drafted.
 const draftingExporter = tablesExporter('drafting', [
@@ -408,6 +418,8 @@ export const PLATFORM_EXPORTERS: readonly Exporter[] = [
   webhooksExporter,
   portfoliosExporter,
   whatsappLinkExporter,
+  helpStateExporter,
+  onboardingStateExporter,
   draftingExporter,
   enterpriseExporter,
 ];

@@ -221,6 +221,7 @@ export async function runActivityDigestMember(
       email: user.email,
       locale: user.locale,
       slug: organization.slug,
+      isDemo: organization.isDemo,
     })
     .from(member)
     .innerJoin(user, eq(user.id, member.userId))
@@ -234,6 +235,8 @@ export async function runActivityDigestMember(
       ),
     );
   if (row === undefined) return 'skippedNotMember';
+  // A demo workspace sends nothing outside it (#93).
+  if (row.isDemo) return 'skippedDisabled';
 
   const notificationCtx = { db: ctx.db, workspaceId };
   const pref = await getEndOfDayPreference(notificationCtx, { userId });

@@ -1,0 +1,3 @@
+# Cloudflare Pages redirects (static; no server runtime). The product app lives on its own origin.
+/sign-in https://app.causedeck.example/sign-in 302
+/login   https://app.causedeck.example/sign-in 302

@@ -100,6 +100,7 @@ test.describe('admin staff gate', () => {
       'Review queue',
       'Coverage',
       'Flags',
+      'Status',
       'Workspaces',
       'Support sessions',
       'Audit',

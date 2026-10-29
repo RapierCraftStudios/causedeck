@@ -86,6 +86,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
   if (await getSession()) redirect(next);
 
   const t = await getTranslations('auth.signIn');
+  const demo = await getTranslations('shell.demoEntry');
   const googleEnabled = serverEnv().AUTH_GOOGLE_ENABLED;
 
   return (
@@ -126,6 +127,14 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
             initialError={toSignInError(params.error)}
             expiresInMinutes={MAGIC_LINK_EXPIRES_IN_SECONDS / 60}
           />
+          <p className="text-sm">
+            <Link
+              href="/demo"
+              className="text-ink focus-visible:outline-ring rounded-sm underline underline-offset-4 outline-offset-2 focus-visible:outline-2"
+            >
+              {demo('title')}
+            </Link>
+          </p>
         </main>
         <footer className="text-ink-muted flex w-full flex-col gap-2 text-xs md:max-w-[420px]">
           <p>

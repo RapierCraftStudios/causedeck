@@ -190,6 +190,11 @@ describe('row-level security catalog', () => {
         'whatsapp_link',
         'whatsapp_otp_challenge',
         'whatsapp_inbound_message',
+
+        // In-app help state (#94).
+        'help_state',
+        // Onboarding wizard state (#92).
+        'onboarding_state',
         // Lawyer memory (#72).
         'memory_item',
         'memory_proposal',

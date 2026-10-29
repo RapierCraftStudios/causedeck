@@ -34,6 +34,8 @@ export {
   scimToken,
   ssoProvider,
 } from './enterprise.ts';
+export { HELP_STATE_KEY_PATTERN, helpState } from './help-state.ts';
+export { ONBOARDING_PATHS, ONBOARDING_STEP_PATTERN, onboardingState } from './onboarding-state.ts';
 export {
   WHATSAPP_E164_PATTERN,
   WHATSAPP_OTP_MAX_ATTEMPTS,
@@ -346,6 +348,14 @@ export {
   type NoticeKind,
   type NoticeMatchReason,
 } from './notices.ts';
+export {
+  INCIDENT_SEVERITIES,
+  INCIDENT_STATES,
+  incident,
+  incidentUpdate,
+  type IncidentSeverity,
+  type IncidentState,
+} from './status.ts';
 export {
   CASE_STATUS_VIA,
   caseStatusSnapshot,

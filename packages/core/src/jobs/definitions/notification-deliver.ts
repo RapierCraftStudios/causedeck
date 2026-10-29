@@ -10,7 +10,7 @@
 //   never retried or re-sent; any other failure throws `RetryableError`, which rolls back the
 //   `once()` claim, and pg-boss retries with backoff.
 // The outcome is written to `notification.data.delivery.<channel>` on the existing row; the job
-// never inserts a notification. Push (#197) goes through `PushSender` from
+// never inserts a notification. A demo workspace (#93) is skipped on every channel. Push (#197) goes through `PushSender` from
 // `@causedeck/notifications/push`: absent VAPID keys disable it (recorded as skipped), the payload
 // is content-free unless the member turned on `Show details on lock screen`, a member with no
 // active subscription is skipped, 404/410 subscriptions are revoked by the sender, and a member
@@ -53,6 +53,7 @@ import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
 import { once } from '../idempotency.ts';
+import { DEMO_SKIP_REASON, isDemoWorkspace } from '../../shared/index.ts';
 import { getWhatsAppSendTarget } from '../../whatsapp-link/index.ts';
 
 const { notification, notificationSetting, user, workspaceSettings } = schema;
@@ -223,6 +224,9 @@ export async function runNotificationDeliver(
     ctx.log.info({ ...fields, status: 'skipped', reason }, 'notification delivery skipped');
     return 'skipped';
   };
+
+  // A demo workspace sends nothing outside it (#93): the in-app row stays, every channel is skipped.
+  if (await isDemoWorkspace(ctx.db, workspaceId)) return skip(DEMO_SKIP_REASON);
 
   // The end-of-day digest (#49) sends its own email (`activity.digest.member`); a generic notice
   // of the same notification would be a second, content-less email.

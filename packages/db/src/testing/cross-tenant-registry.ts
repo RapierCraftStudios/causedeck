@@ -220,6 +220,10 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   whatsapp_link: DB_TABLES_TEST,
   whatsapp_otp_challenge: DB_TABLES_TEST,
   whatsapp_inbound_message: DB_TABLES_TEST,
+  // In-app help state (#94).
+  help_state: DB_TABLES_TEST,
+  // Onboarding wizard state (#92).
+  onboarding_state: DB_TABLES_TEST,
   // Lawyer memory (#72).
   memory_item: DB_TABLES_TEST,
   memory_proposal: DB_TABLES_TEST,
@@ -759,6 +763,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
+  requestMemberSupport: denies,
+  dismissCoachmark: denies,
+  listDismissedCoachmarks: denies,
   grantSession: denies,
   denySession: denies,
   revokeSession: denies,
@@ -1532,6 +1539,48 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
   NOTICES_POLL_CRON: 'constant',
   NOTICES_LIST_LIMIT: 'constant',
+  // status (#769): the public status snapshot; platform tables and public text only, no tenant data
+  COMPONENT_IDS: 'constant',
+  COMPONENT_STATES: 'constant',
+  INCIDENT_STATES: 'constant',
+  componentState: 'zod schema',
+  componentStatusSchema: 'zod schema',
+  incidentSchema: 'zod schema',
+  incidentUpdateSchema: 'zod schema',
+  statusSnapshotSchema: 'zod schema',
+  unsignedSnapshotSchema: 'zod schema',
+  COURT_COMPONENT_NAME: 'constant',
+  DEGRADED_SHARE: 'constant',
+  DOWN_FAILED_SHARE: 'constant',
+  INCIDENT_WINDOW_DAYS: 'constant',
+  MIN_RUNS_FOR_STATUS: 'constant',
+  REPUBLISH_AFTER_SEC: 'constant',
+  STALE_AFTER_SEC: 'constant',
+  STATUS_OBJECT_PATH: 'constant',
+  STATUS_PUBLISH_CRON: 'constant',
+  adapterState: 'pure',
+  worstState: 'pure',
+  courtState: 'pure',
+  canonicalStatusJson: 'pure',
+  signSnapshot: 'pure (HMAC over a supplied snapshot)',
+  verifySnapshot: 'pure',
+  isStale: 'pure',
+  sanitiseIncident: 'pure (allowlist projection of a supplied row)',
+  buildSnapshot:
+    'system code: reads only the platform incident tables (GLOBAL_TABLES) and the content-free adapter_health_summary view; no workspace, no tenant data',
+  publishStatus: 'system job body: see buildSnapshot; writes only the public status object',
+  runStatusPublish: 'system job body: see publishStatus',
+  statusPublish: 'job definition (handler is runStatusPublish)',
+  // status incidents (#770): staff-only writes to the platform incident tables (GLOBAL_TABLES), public text only
+  INCIDENT_SEVERITIES: 'constant',
+  INCIDENT_TEMPLATES: 'constant',
+  IncidentAdminError: 'error class',
+  asIncidentStaff: 'pure (builds the actor; createIncident checks staff_user in the transaction)',
+  createIncident:
+    'staff-only write to the platform incident tables (GLOBAL_TABLES, no tenant data); covered by status/incidents.test.ts',
+  addIncidentUpdate:
+    'staff-only write to the platform incident tables (GLOBAL_TABLES, no tenant data); covered by status/incidents.test.ts',
+  listIncidents: 'reads only the platform incident tables (GLOBAL_TABLES, no tenant data)',
   noticesPoll: 'job definition (handler is runNoticesPoll)',
   runNoticesPoll: 'system job body: see pollNotices',
   setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',
@@ -1686,6 +1735,10 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   webhookDeliverSchema: 'job payload schema',
   systemWebhookSweep: 'job definition (handler is runWebhookSweep)',
   runWebhookSweep: 'system job body: lists ids through app_webhook_delivery_due and enqueues',
+  // demo mode (#93)
+  demoReset: 'job definition (handler is runDemoReset)',
+  runDemoReset:
+    'system job body: finds the demo workspaces through app_demo_workspaces (ids and slugs only) and restores each in its own scope; the demo test proves the other workspaces are untouched',
   setCauseListFetcherFactory: 'setter (worker wires the governed fetcher, #482)',
   // public API keys (#624)
   API_KEY_SCOPES: 'constant',

@@ -1,7 +1,7 @@
 // The staff role matrix (#309, part of #27). Kept free of server-only imports so the console nav (a
 // client component) can filter its items with the same table the server enforces.
-//   support: metadata and consented support sessions;  ops: adapters, sources, flags and the growth
-//   funnel (#509);  admin: everything.
+//   support: metadata and consented support sessions;  ops: adapters, sources, flags, the status
+//   incident log (#770) and the growth funnel (#509);  admin: everything.
 
 /** Staff session lifetime: 8 hours, then sign in (and pass the 2FA step) again. */
 export const STAFF_SESSION_SECONDS = 8 * 60 * 60;
@@ -24,6 +24,7 @@ export const STAFF_CAPABILITIES = [
   'business',
   'growth',
   'migrations',
+  'status',
   'limitation-rules',
 ] as const;
 export type StaffCapability = (typeof STAFF_CAPABILITIES)[number];
@@ -40,6 +41,7 @@ export const STAFF_ROLE_MATRIX: Readonly<Record<StaffRole, readonly StaffCapabil
     'audit',
     'growth',
     'migrations',
+    'status',
     'limitation-rules',
   ],
   admin: STAFF_CAPABILITIES,

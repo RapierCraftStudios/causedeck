@@ -61,6 +61,7 @@ import {
   type StaffWorkspaceMetadata,
   type StaffWorkspaceUsage,
 } from '@causedeck/core/support';
+import { listIncidents, type IncidentRecord } from '@causedeck/core/status';
 import type { Database } from '@causedeck/db';
 import { listAccessModeRegistry, type AccessModeRegistryEntry } from '@causedeck/flags';
 
@@ -240,6 +241,20 @@ export function sourceRegistry(staff: StaffActor, db?: Database): Promise<Source
     staff,
     { purpose: 'sources.registry', capability: 'sources', tables: ['source'] },
     (tx) => listSources(tx),
+    db,
+  );
+}
+
+/** Every incident with its updates, for the Status page (#770). */
+export function incidentConsole(staff: StaffActor, db?: Database): Promise<IncidentRecord[]> {
+  return staffQuery(
+    staff,
+    {
+      purpose: 'status.incidents',
+      capability: 'status',
+      tables: ['incident', 'incident_update'],
+    },
+    (tx) => listIncidents(tx),
     db,
   );
 }

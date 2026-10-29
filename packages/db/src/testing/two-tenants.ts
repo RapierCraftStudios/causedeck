@@ -69,6 +69,8 @@ import {
   whatsappLink,
   whatsappOtpChallenge,
 } from '../schema/whatsapp-link.ts';
+import { helpState } from '../schema/help-state.ts';
+import { onboardingState } from '../schema/onboarding-state.ts';
 import { webhookDelivery, webhookEndpoint } from '../schema/webhooks.ts';
 import { causeListWatch } from '../schema/cause-list-watch.ts';
 import {
@@ -1511,6 +1513,26 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .values({ workspaceId, portfolioId, advocateUserId: ownerId })
       .returning({ id: portfolioPanelAdvocate.id });
     return { portfolioId, id: first(rows, 'portfolio_panel_advocate').id };
+  },
+  help_state: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(helpState)
+      .values({ workspaceId, userId: ownerId, key: 'coachmark.today' })
+      .returning({ id: helpState.id });
+    return { id: first(rows, 'help_state').id };
+  },
+  onboarding_state: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(onboardingState)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        path: 'solo',
+        step: 'profile',
+        completed: ['workspace'],
+      })
+      .returning({ id: onboardingState.id });
+    return { id: first(rows, 'onboarding_state').id };
   },
   whatsapp_link: async (tx, { workspaceId, ownerId, tag }) => {
     const now = new Date();

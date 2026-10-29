@@ -55,6 +55,15 @@ export const workspaceSettings = pgTable(
     attentionStaleDays: integer('attention_stale_days').notNull().default(30),
     /** The GST state code (two digits) the invoice editor starts from, so it stops asking (#963). */
     feeSupplierStateCode: text('fee_supplier_state_code'),
+    /** Chamber onboarding (#92): how new appearances are delegated by default (validated in core). */
+    delegationDefaults: jsonb('delegation_defaults')
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    /** Chamber onboarding (#92): the chamber's default brief layout, `short` or `full`. */
+    briefFormat: text('brief_format').notNull().default('full'),
+    /** The seed version (`DEMO_VERSION`) a demo workspace was last restored to (#93); null elsewhere. */
+    demoVersion: text('demo_version'),
     ...timestamps(),
   },
   (t) => [
@@ -75,6 +84,7 @@ export const workspaceSettings = pgTable(
       'workspace_settings_attention_stale_days_chk',
       sql`attention_stale_days between 7 and 180`,
     ),
+    check('workspace_settings_brief_format_chk', sql`brief_format in ('short', 'full')`),
   ],
 );
 

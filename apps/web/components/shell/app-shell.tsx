@@ -63,7 +63,11 @@ export function AppShell({
       <FlagsProvider flags={flags}>
         <CaptureProvider>
           <SidebarProvider initialState={sidebarState}>
-            <ShortcutsProvider slug={context.workspace.slug} role={context.role}>
+            <ShortcutsProvider
+              slug={context.workspace.slug}
+              workspaceId={context.workspace.id}
+              role={context.role}
+            >
               <Sidebar context={context} />
               <div className="bg-surface flex min-w-0 flex-col">
                 <Topbar context={context} />

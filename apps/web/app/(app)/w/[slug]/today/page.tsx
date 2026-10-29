@@ -8,6 +8,7 @@ import {
   BenchNoticeAlerts,
   type BenchNoticeAlertView,
 } from '../../../../../components/courts/bench-notice-alerts.tsx';
+import { SurfaceHelp } from '../../../../../components/help/surface-help.tsx';
 import { LiveHalls } from '../../../../../components/court-day/live-halls.tsx';
 import {
   placeholderPage,
@@ -79,9 +80,9 @@ export default async function TodayPage(props: WorkspacePageProps) {
   const live = await LiveHalls({ halls: await loadHalls(slug) });
   const bench = await loadBenchNotices(slug);
   const pulse = await loadPulseDue(slug);
-  if (live === null && bench.length === 0 && pulse === null) return board ?? base;
   return (
     <div className="flex flex-col gap-6">
+      <SurfaceHelp slug={slug} surface="today" />
       {board ?? base}
       <BenchNoticeAlerts alerts={bench} slug={slug} />
       {live}

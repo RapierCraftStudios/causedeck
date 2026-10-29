@@ -111,6 +111,7 @@ const integrations = await import('../app/(app)/w/[slug]/settings/integrations/a
 const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
+const help = await import('../app/(app)/w/[slug]/help/actions.ts');
 const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
 const courtWatch = await import('../app/(app)/w/[slug]/settings/court-watch/actions.ts');
 const caseWatch = await import('../app/(app)/w/[slug]/settings/case-watch/actions.ts');
@@ -179,6 +180,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   createBriefShareAction: briefShareActions,
   revokeBriefShareAction: briefShareActions,
   createWorkspaceAction: onboarding,
+  completeOnboardingStepAction: onboarding,
   setLocaleAction: account,
   updateAccountProfileAction: account,
   enableTwoFactorAction: account,
@@ -240,6 +242,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   grantSupportSessionAction: support,
   denySupportSessionAction: support,
   revokeSupportSessionAction: support,
+  dismissCoachmarkAction: help,
+  requestSupportSessionAction: help,
   requestExportAction: exports,
   listExportsAction: exports,
   listCourtWatchesAction: courtWatch,
@@ -463,6 +467,10 @@ function snapshotA() {
       })
       .from(schema.organization),
     workspaceSettings: await tx.select().from(schema.workspaceSettings),
+    onboardingState: await tx
+      .select()
+      .from(schema.onboardingState)
+      .orderBy(schema.onboardingState.id),
     notifications: await tx
       .select({ id: schema.notification.id, readAt: schema.notification.readAt })
       .from(schema.notification)
@@ -799,6 +807,9 @@ function inputs(workspaceId: string): Record<string, unknown> {
     grantSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
     denySupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
     revokeSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
+    // Help (#94): ub, owner of B, may not dismiss a coachmark or ask for support in A.
+    dismissCoachmarkAction: { workspaceId, key: 'coachmark.probe' },
+    requestSupportSessionAction: { workspaceId, reason: 'Probe', minutes: 60 },
     // Lifecycle (#305): ub, owner of B, may not export, delete or cancel A's deletion.
     requestExportAction: { workspaceId },
     listExportsAction: { workspaceId },
@@ -891,6 +902,17 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     discoveryProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
     recordOnboardingStepAction: { workspaceId, step: 'confirm_grid_done' },
+    // The wizard (#92): ub may not complete a step, save a profile or advance onboarding in A's workspace.
+    completeOnboardingStepAction: {
+      workspaceId,
+      step: 'profile',
+      payload: {
+        enrolmentNumber: 'MS/1/2020',
+        barCouncil: 'karnataka',
+        practiceAreas: ['civil'],
+        languages: ['en'],
+      },
+    },
     getImportPlanAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
     saveImportPlanEditsAction: {
       workspaceId,

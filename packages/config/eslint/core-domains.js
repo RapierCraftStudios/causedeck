@@ -52,6 +52,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Institution portfolios (#663, #498 part 3): the owner check through workspaces, watches through case-watch
   // (status sources) and the matter read probe through matter-graph; clearance through sources.
   portfolio: Object.freeze(['workspaces', 'matter-graph', 'case-watch', 'sources']),
+  // In-app help state (#94): the membership check through workspaces.
+  help: Object.freeze(['workspaces']),
   // The derived listing brief (#60, ADR 0038): the scope and member role through workspaces, the
   // sensitive-matter-safe `summarise` call through ai, graph reads through matter-graph and court-day
   // (imports `index.ts` only).
@@ -76,6 +78,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The deadline engine (#494, D-048): court calendars read the notice tables directly (the same
   // read as `listHolidayListings`) and the day arithmetic is the extraction's own, from intelligence.
   deadlines: Object.freeze([]),
+  // The public status snapshot (#769): the court component reads the adapter health summary through court;
+  // incident writes (#770) record audit events through audit.
+  status: Object.freeze(['court', 'audit']),
   // Official notices (#586, D-048): polling needs a cleared source through sources; matching reads
   // tables and the owner-defined match function only.
   notices: Object.freeze(['workspaces', 'sources']),
@@ -94,6 +99,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The enquiry log (#87): the flag-gated enquiry services over the conflict check, the automation
   // engine's `new_matter` proposals, audit events and membership roles.
   intake: Object.freeze(['audit', 'automation', 'conflicts', 'workspaces']),
+  // Demo mode (#93): enter and reset the two sample workspaces; the reset audits through audit. The
+  // `is_demo` guard other domains call lives in `shared`, so they never import this domain.
+  demo: Object.freeze(['audit']),
   // Client status links (#88, ADR 0050): flag-gated authored links; prefill reads an outward draft through its index.
   'status-links': Object.freeze(['workspaces', 'audit', 'outward']),
   // Fees (#83, ADR 0048): the member's role through workspaces, events through audit, automation-origin
@@ -169,8 +177,18 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   import: Object.freeze(['matter-graph', 'usage', 'automation']),
   // Zero-entry onboarding (#501, D-048): discovery stages the advocate's matched listings as
   // proposals on an import batch through the import and automation indexes, reads the fetch policy
-  // through sources, and types its actor through matter-graph. Nothing is applied here.
-  onboarding: Object.freeze(['import', 'automation', 'sources', 'matter-graph']),
+  // through sources, and types its actor through matter-graph. Nothing is applied here. The wizard
+  // (#92) saves the M1 profile through memory, checks forum codes through court and the member
+  // through workspaces.
+  onboarding: Object.freeze([
+    'import',
+    'automation',
+    'sources',
+    'matter-graph',
+    'memory',
+    'court',
+    'workspaces',
+  ]),
   // The migration concierge (#685): runs matter imports through the import domain's apply and undo
   // (imports `index.ts` only) and checks the actor's role through workspaces.
   migration: Object.freeze(['import', 'workspaces']),
@@ -234,7 +252,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'business',
     'case-watch',
     'webhooks',
+    'status',
     'status-links',
+    'demo',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

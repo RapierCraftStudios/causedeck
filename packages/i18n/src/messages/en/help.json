@@ -1,0 +1,106 @@
+{
+  "help": {
+    "title": "Help",
+    "menu": "Help",
+    "open": "Open help",
+    "close": "Close help",
+    "description": "Articles, shortcuts and ways to reach us.",
+    "tabs": {
+      "label": "Help sections",
+      "articles": "Articles",
+      "shortcuts": "Shortcuts",
+      "contact": "Contact"
+    },
+    "search": {
+      "label": "Search help",
+      "placeholder": "Search help articles",
+      "tags": "Filter by topic",
+      "allTags": "All topics",
+      "empty": "No articles match \"{query}\". Try fewer words or another topic.",
+      "loading": "Loading help articles",
+      "error": "Help could not load. Try again.",
+      "retry": "Try again",
+      "results": "{count, plural, one {# article} other {# articles}}"
+    },
+    "offline": "You are offline. Help articles are saved on this device and still work; contact options need a connection.",
+    "article": {
+      "back": "All articles",
+      "updated": "Updated {date}",
+      "notFound": "This article does not exist."
+    },
+    "tip": {
+      "label": "Help about {surface}",
+      "opened": "Help article"
+    },
+    "surfaces": {
+      "today": "Court-Day Board",
+      "inbox": "Inbox",
+      "obligations": "Obligation Queue",
+      "briefs": "Brief Sheet",
+      "memory": "Memory",
+      "general": "General"
+    },
+    "coachmark": {
+      "dismiss": "Got it",
+      "hint": "Press Escape to dismiss",
+      "today": {
+        "title": "Your court day, in one view",
+        "body": "Hearings are grouped by court and hall. Open the help icon any time for a short guide."
+      },
+      "inbox": {
+        "title": "Anything that needs you lands here",
+        "body": "Forwarded emails, voice notes and files wait here for a decision."
+      },
+      "obligations": {
+        "title": "Obligations you owe",
+        "body": "Directions and undertakings from orders collect here with their due dates."
+      },
+      "briefs": {
+        "title": "Brief sheets",
+        "body": "A one-page summary for each listing, ready before you stand up."
+      },
+      "memory": {
+        "title": "Memory you can review",
+        "body": "What the workspace remembers is listed here. Confirm or remove anything."
+      }
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "table": "Keyboard shortcuts by area",
+      "keys": "Keys",
+      "action": "Action",
+      "area": "Area",
+      "gestures": {
+        "title": "Gestures",
+        "description": "On a touch screen, use these instead of keyboard shortcuts.",
+        "tap": "Tap a row to open it.",
+        "swipe": "Swipe a notification sideways to dismiss it.",
+        "hold": "Press and hold the plus button to capture.",
+        "pull": "Pull a list down to refresh it."
+      },
+      "open": "Show keyboard shortcuts"
+    },
+    "contact": {
+      "title": "Contact support",
+      "whatsapp": "Chat on WhatsApp ({number})",
+      "email": "Email {email}",
+      "hours": "Court-day hours: 9:00 am to 6:00 pm IST, Monday to Saturday.",
+      "emailOnly": "WhatsApp is not set up for this workspace. Email us instead.",
+      "request": {
+        "title": "Request a support session",
+        "description": "Let our staff look at your workspace metadata for a limited time. They see no case content unless you grant it. You can end it any time from Settings, Support.",
+        "reason": "What do you need help with?",
+        "minutes": "Access length",
+        "minutes60": "1 hour",
+        "minutes120": "2 hours",
+        "minutes240": "4 hours",
+        "submit": "Send request",
+        "sending": "Sending",
+        "sent": "Request sent. Staff can pick it up once you grant access in Settings, Support.",
+        "error": "The request could not be sent.",
+        "ownerOnly": "Only the workspace owner can request a support session."
+      }
+    },
+    "footer": "This is software documentation, not legal advice."
+  }
+}

@@ -120,6 +120,7 @@ describe('namespaced catalogs (#174)', () => {
         'insights',
         'fees',
         'error',
+        'help',
         'home',
         'importReview',
         'inbox',
@@ -138,6 +139,7 @@ describe('namespaced catalogs (#174)', () => {
         'notifications',
         'obligations',
         'offline',
+        'onboarding',
         'onboardingDiscovery',
         'outward',
         'outcome',
@@ -152,6 +154,7 @@ describe('namespaced catalogs (#174)', () => {
         'share',
         'shell',
         'shortcuts',
+        'status',
         'statusLink',
         'theme',
         'usage',
@@ -263,6 +266,17 @@ describe('whatsapp link copy (#681)', () => {
       expect(catalog.whatsappLink.unlink).not.toBe('');
       expect(catalog.whatsappLink.linked).toContain('{number}');
     }
+  });
+});
+
+describe('help copy (#94)', () => {
+  it('has the help namespace in every locale with the footer and contact strings', () => {
+    for (const catalog of [en, ta, kn]) {
+      expect(catalog.help.footer).not.toBe('');
+      expect(catalog.help.contact.whatsapp).toContain('{number}');
+      expect(catalog.help.contact.email).toContain('{email}');
+    }
+    expect(en.help.footer).toBe('This is software documentation, not legal advice.');
   });
 });
 

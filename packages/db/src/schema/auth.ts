@@ -85,6 +85,8 @@ export const organization = pgTable(
     createdBy: uuid('created_by').references(() => user.id, { onDelete: 'set null' }),
     /** Soft delete: hidden from membership queries and slug resolution. Hard delete is #31. */
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    /** A fictional sample workspace (#93): no outward email, push or webhook, no AI spend, resettable. */
+    isDemo: boolean('is_demo').notNull().default(false),
     createdAt: createdAt(),
   },
   () => [check('organization_kind_chk', sql`kind in ${inList(WORKSPACE_KINDS)}`)],

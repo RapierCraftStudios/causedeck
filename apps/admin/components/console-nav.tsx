@@ -1,4 +1,4 @@
-// Console navigation (#309): Overview, Adapters, Sources, Data Ops, Coverage, Flags, Workspaces, Support sessions, Audit, Business (admin only), Growth, Migrations, Limitation rules,
+// Console navigation (#309): Overview, Adapters, Sources, Data Ops, Coverage, Flags, Status, Workspaces, Support sessions, Audit, Business (admin only), Growth, Migrations, Limitation rules,
 // filtered by the staff role matrix. 240 px left nav at desktop widths, an icon rail at 768, a
 // wrapping row on phones (360).
 import {
@@ -11,6 +11,7 @@ import {
   Globe,
   LayoutDashboard,
   LifeBuoy,
+  RadioTower,
   ScrollText,
   ToggleLeft,
   Scale,
@@ -32,6 +33,7 @@ export interface ConsoleNavItem {
     | '/review'
     | '/coverage'
     | '/flags'
+    | '/status'
     | '/workspaces'
     | '/support'
     | '/audit'
@@ -51,6 +53,7 @@ export const CONSOLE_NAV: readonly ConsoleNavItem[] = [
   { capability: 'data-ops', href: '/review', label: 'Review queue', icon: ClipboardCheck },
   { capability: 'coverage', href: '/coverage', label: 'Coverage', icon: Grid3x3 },
   { capability: 'flags', href: '/flags', label: 'Flags', icon: ToggleLeft },
+  { capability: 'status', href: '/status', label: 'Status', icon: RadioTower },
   { capability: 'workspaces', href: '/workspaces', label: 'Workspaces', icon: Building2 },
   { capability: 'support', href: '/support', label: 'Support sessions', icon: LifeBuoy },
   { capability: 'audit', href: '/audit', label: 'Audit', icon: ScrollText },

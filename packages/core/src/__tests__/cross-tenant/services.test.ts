@@ -147,6 +147,12 @@ async function aSupportSessions(f: Fixture) {
   );
 }
 
+async function aHelpState(f: Fixture) {
+  return inWorkspace(f.tx, f.a.id, (s) =>
+    s.select().from(schema.helpState).orderBy(schema.helpState.id),
+  );
+}
+
 async function aForums(f: Fixture) {
   return inWorkspace(f.tx, f.a.id, (s) =>
     s
@@ -3614,6 +3620,30 @@ const CASES: Record<string, Case> = {
       f.asB((s) => core.requestSession({ db: s, staffUserId: f.ub, enqueueDelivery }, input)),
     );
     expect(await aSupportSessions(f)).toEqual(before);
+  },
+  // Member help (#94): B's owner names A's workspace; A's support sessions and help state stay.
+  requestMemberSupport: async (f) => {
+    const before = await aSupportSessions(f);
+    await expectDenied(
+      core.requestMemberSupport(
+        { db: f.tx, userId: f.ub, workspaceId: f.a.id },
+        { reason: 'Probe', minutes: 30 },
+      ),
+    );
+    expect(await aSupportSessions(f)).toEqual(before);
+  },
+  dismissCoachmark: async (f) => {
+    const before = await aHelpState(f);
+    const input = { key: 'coachmark.probe' };
+    await expectDenied(core.dismissCoachmark(f.tx, { userId: f.ub, workspaceId: f.a.id }, input));
+    expect(await aHelpState(f)).toEqual(before);
+  },
+  listDismissedCoachmarks: async (f) => {
+    await expectDenied(core.listDismissedCoachmarks(f.tx, { userId: f.ub, workspaceId: f.a.id }));
+    // B's own list holds B's keys only, never A's seeded one.
+    expect(await core.listDismissedCoachmarks(f.tx, { userId: f.ub, workspaceId: f.b.id })).toEqual(
+      ['coachmark.today'],
+    );
   },
   grantSession: async (f) => {
     const before = await aSupportSessions(f);

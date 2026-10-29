@@ -1,0 +1,107 @@
+---
+title: Security and privacy
+description: "How CauseDeck protects advocates' data: India-region hosting, India-only AI by default, no training on customer data, audit, export and delete."
+date: 2026-10-29
+---
+
+<Section id="data-in-india" title="Data in India">
+
+Your workspace data is stored and processed on infrastructure in India: the app, the database, uploaded
+files and the email that the software sends. The [sub-processor list](/legal/sub-processors/) names every
+service that handles data, with its region.
+
+This website is separate from the product. It is a static site on Cloudflare Pages and holds no
+customer data. The product app is not served through Cloudflare's proxy by default, so matter data does
+not pass through edge servers outside India.
+
+<DataFlowDiagram />
+
+</Section>
+
+<Section id="ai-processing" title="AI processing">
+
+India-only AI mode is on by default for every workspace. AI requests go to India-region endpoints
+only, through one gateway that applies the same rules everywhere. The AI has no tools: it cannot send,
+file or change anything. It returns proposals that you confirm, and the output is checked against a
+schema before you see it. Documents are treated as data, never as instructions. Read the full
+[AI disclosure](/legal/ai-disclosure/).
+
+</Section>
+
+<Section id="no-training" title="No training on your data">
+
+CauseDeck does not train models on your content. We use AI providers only under terms that exclude
+training on it, with no or short retention. Style learning works from your own edits inside your
+workspace and does not train a model.
+
+</Section>
+
+<Section id="encryption-and-isolation" title="Encryption and isolation">
+
+Connections use TLS. Documents and memory values are encrypted with a key held for each workspace
+alone, so one workspace's key never opens another's data. The database also enforces row-level
+isolation between workspaces, and an automated cross-tenant test suite must pass before any change
+can ship. Workspace owners sign in with two-factor authentication. Support access is granted by you,
+limited in time and recorded; staff do not see your content by default.
+
+</Section>
+
+<Section id="you-stay-in-control" title="You stay in control">
+
+CauseDeck prepares and proposes. It does not send, file or advise. Updates to clients, seniors and
+counsel are drafts that you edit and send yourself. Changes the software makes on your behalf appear in
+an activity feed and can be undone for seven days.
+
+</Section>
+
+<Section id="audit-and-retention" title="Audit and retention">
+
+Sensitive actions and every AI call are written to an audit trail that cannot be edited afterwards,
+and the log is kept out of matter content. Audit and AI-call records are kept for at least 180 days.
+Our logs are kept in India.
+
+</Section>
+
+<Section id="export-and-delete" title="Export and delete">
+
+A workspace owner can export everything in the workspace as files you can open without us: tables as
+CSV and your documents. An owner can also delete the workspace. Deletion starts
+with a 14-day cool-off that any owner can cancel. After it, the workspace key is destroyed and the
+data can no longer be read. Statutory records such as issued invoices are kept as the law requires.
+
+</Section>
+
+<Section id="compliance" title="Compliance posture">
+
+- **CERT-In.** We keep a runbook to report cyber incidents to CERT-In within six hours, and we keep
+  logs for 180 days within India, as the CERT-In directions require.
+- **DPDP Act.** The software is built to support a Data Fiduciary's duties under the Digital Personal
+  Data Protection Act: export, deletion, a sub-processor list and a breach process. Your chamber
+  remains the Data Fiduciary; see the [Data Processing Agreement](/legal/dpa/).
+- **Certifications.** We do not claim any security certification today.
+
+</Section>
+
+<Section id="sub-processors" title="Sub-processors">
+
+The services that process data for CauseDeck are listed, with purpose, data categories and region, on
+the [sub-processor list](/legal/sub-processors/). A change to it is announced in the change feed.
+
+</Section>
+
+<Section id="sources" title="Every fact shows its source">
+
+When the software shows a date, a direction or a party it has read from an order or cause list, it
+shows where in the document it came from, so you can check it against the original. Nothing is
+presented as established unless it has a source.
+
+</Section>
+
+<Section id="controls" title="Controls and how we prove them">
+
+Each control below has a reference you can check. Public pages are linked. Engineering references
+name the design document that describes the control.
+
+<ControlsTable />
+
+</Section>

@@ -17,6 +17,7 @@ import {
   index,
   pgEnum,
   pgTable,
+  smallint,
   text,
   timestamp,
   uuid,
@@ -66,9 +67,11 @@ export const supportSession = tenantTable(
     id: id(),
     // References `user`, not `staff_user`: core checks the requester is enabled staff, and the
     // `staff_self` policy re-checks it on every read.
-    requestedByStaff: uuid('requested_by_staff')
-      .notNull()
-      .references(() => user.id),
+    // Null for a member-initiated request (#94) that no staff member has picked up yet.
+    requestedByStaff: uuid('requested_by_staff').references(() => user.id),
+    // The member who asked for help (#94), and the grant length they chose (1 to 240 minutes).
+    requestedByUser: uuid('requested_by_user').references(() => user.id, { onDelete: 'set null' }),
+    requestedMinutes: smallint('requested_minutes'),
     grantedByUser: uuid('granted_by_user').references(() => user.id, { onDelete: 'set null' }),
     scope: supportSessionScope('scope').notNull().default('metadata'),
     reason: text('reason').notNull(),
@@ -86,6 +89,14 @@ export const supportSession = tenantTable(
       columns: [t.workspaceId],
       foreignColumns: [organization.id],
     }).onDelete('cascade'),
+    check(
+      'support_session_requester_chk',
+      sql`requested_by_staff is not null or requested_by_user is not null`,
+    ),
+    check(
+      'support_session_requested_minutes_chk',
+      sql`requested_minutes is null or requested_minutes between 1 and 240`,
+    ),
     check('support_session_reason_chk', sql`length(btrim(reason)) between 1 and 500`),
     check(
       'support_session_granted_chk',

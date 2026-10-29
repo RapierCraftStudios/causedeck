@@ -85,9 +85,21 @@ jobs:
           name: site-out
           path: apps/site/out
       # Budgets and the 0.95 category floors are in apps/site/lighthouserc.json.
+      # /status/ fetches status.json in the browser: sign a fresh all-operational snapshot into this
+      # job's copy of the export (never shipped; the build does not write it).
+      - name: Sign a status.json fixture for /status/
+        run: pnpm --filter @causedeck/site exec tsx scripts/write-lhci-status.ts out
       - name: Lighthouse CI
         working-directory: apps/site
         run: ../../e2e/node_modules/.bin/lhci autorun --config=lighthouserc.json
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site-lighthouse
+          path: apps/site/.lighthouseci
+          include-hidden-files: true
+          retention-days: 7
 
   e2e:
     name: site e2e

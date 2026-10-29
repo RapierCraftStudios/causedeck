@@ -323,6 +323,21 @@ Format: each entry records the decision, its date, its status (Proposed / Accept
   - **Stage C:** ECS or k3s with autoscaled workers.
   - The day-one rules in spike §3.2 keep the path open.
 
+**Amendment 2026-10-27 (founder: "go with OVH Mumbai").** The original entry above is unchanged. This amendment replaces its provider choice and its AWS-by-default scale path. It is recorded for #882 and cross-referenced from [ADR 0053](docs/adr/0053-stage-b-c-scale-path.md).
+- **Why:** measured against the goal of very low cost before and after scaling, DigitalOcean/Lightsail for Stage A and AWS RDS/S3/ALB/ECS for Stages B and C are too expensive. Managed AWS services cost 5-10x rented servers at steady load. OVH VPS in Mumbai (`YNM`) keeps India residency (D-009).
+- **Stage A:** OVH Mumbai VPS, running the same Docker Compose, Caddy, Postgres + pgvector and MinIO stack. Prod runs on a **VPS-3** (6 vCPU / 12 GB / 100 GB). Staging runs on its **own VPS-1** (2 vCPU / 4 GB / 40 GB). They are on **separate hosts** so staging failures and access cannot reach prod data.
+- **Stage B:** Postgres on its own OVH Mumbai box (VPS-4 or a dedicated server) with a **streaming replica** and **PgBouncer**, plus **2+ stateless app VPS** behind a Cloudflare Load Balancer or DNS. The Stage B triggers are unchanged (p95 > 400 ms, DB CPU > 60%, or > 1k seats).
+- **Stage C:** more nodes under **k3s or Docker Swarm**.
+- **AWS:** RDS, S3 and ECS Fargate are optional and no longer the default path. The Terraform modules for them stay as an escape hatch (ADR 0053).
+- **D-009 restated, unchanged:** primary DB, documents and logs stay in India. MinIO runs on the Mumbai host. Off-host backups go to **AWS S3 ap-south-2 (Hyderabad)**, because OVH Public Cloud has no Mumbai object storage.
+- **Cloudflare:** app and API stay **DNS-only by default** (D-037, #788). Nothing in this amendment changes that. A Cloudflare Load Balancer, if used for Stage B, is optional and needs the recorded residency approval (ADR 0053); DNS-based balancing is the default.
+- **Cost target:** OVH India public catalogue, 2026-10-27, ex-GST, 12-month term: VPS-1 ₹420/mo, VPS-3 ₹1,160/mo. Stage A prod + staging is about ₹1,580/mo ex-GST (about ₹1,865 with 18% GST), plus S3 backups and AI usage.
+- **Trade-offs accepted:**
+  - **Shared vCores:** VPS vCPUs are shared, so sustained CPU and noisy neighbours can vary. The Stage B triggers are the guard.
+  - **Traffic quota:** the Asia-Pacific VPS quota is 500 GB/month on VPS-1 and about 1 TB/month on VPS-3, then throttled to 10 Mbps.
+  - **12-month term:** the listed price needs a 12-month commitment.
+- **Related:** #108 (order the VPS, human), #106 (scale-out runbook), #808 (migration rehearsal), D-009, ADR 0006, ADR 0053.
+
 ### D-038 — Auth: Better Auth with Google OAuth, magic link, passkeys, and organisations as workspaces
 - **Date:** 2026-10-18 · **Status:** Accepted
 - **Decision:** Better Auth (Drizzle adapter). Its organization plugin maps to workspaces and roles. Owners get 2FA. Google client credentials are `needs-human`.

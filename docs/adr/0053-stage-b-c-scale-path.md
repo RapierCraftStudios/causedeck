@@ -38,6 +38,8 @@ Stage A is one India VPS running the compose stack (#99, #100). Stage B moves th
 - Stage C criteria (ECS Fargate versus k3s, Redis, OpenSearch, PowerSync) each have a measured trigger in `infra/runbooks/stage-c-orchestration.md`. This ADR is the review of those criteria.
 - The envelope KEK moves from env and secret manager to KMS with a DEK re-wrap (`rewrapAll`), as described in the Stage B runbook and `docs/engineering/storage.md`.
 
+- Amendment 2026-10-27 (D-037 amendment, #882): the default Stage B and C path is rented OVH Mumbai servers (Postgres box with streaming replica and PgBouncer, 2+ app VPS behind DNS or a Cloudflare LB, then k3s or Docker Swarm). The AWS modules above are an optional alternative, not the default. App and API stay DNS-only.
+
 ## Consequences
 
 - The Stage B root is validated and planned in CI with dummy credentials and is not an apply or drift target.

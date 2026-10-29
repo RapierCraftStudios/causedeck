@@ -2,7 +2,12 @@
 # Automated restore drill (#101): restore the latest WAL-G base backup plus WAL into an isolated,
 # throwaway container on a fresh volume, verify it, write a JSON report, tear everything down.
 #
-#   restore-drill.sh [--target-time <ISO8601 UTC>|latest] [--report <file>] [--manifest <csv>]
+#   restore-drill.sh [--target-time <ISO8601 UTC>|latest] [--report <file>] [--manifest <csv>] [--dry-run]
+#
+# --dry-run (or DRILL_DRY_RUN=1) checks the target and key without touching docker or storage, so CI
+# can rehearse a drill against the Hyderabad replica with stubs (#884). To drill the S3 replica
+# (minio-replicate.sh S3 mode) point the env at it: AWS_ENDPOINT=https://s3.ap-south-2.amazonaws.com,
+# AWS_REGION=ap-south-2, WALG_S3_PREFIX=s3://<REPLICA_BUCKET>/causedeck-wal, read-only credentials.
 #
 # Env: WALG_S3_PREFIX, AWS_ENDPOINT/AWS_REGION, AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY (READ-ONLY
 # restore credentials), WALG_LIBSODIUM_KEY_PATH (host path of the key file), DRILL_IMAGE (the
@@ -22,11 +27,13 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET="latest"
 REPORT="${TMPDIR:-/tmp}/restore-drill-report.json"
 MANIFEST=""
+DRY_RUN="${DRILL_DRY_RUN:-0}"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --target-time) TARGET="${2:?--target-time needs a value}"; shift 2 ;;
     --report) REPORT="${2:?--report needs a file}"; shift 2 ;;
     --manifest) MANIFEST="${2:?--manifest needs a file}"; shift 2 ;;
+    --dry-run) DRY_RUN=1; shift ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -83,6 +90,15 @@ fi
 [[ "$TARGET" == latest || "$TARGET" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}[T\ ][0-9:]{8}(Z|\+00)?$ ]] ||
   { echo "--target-time must be 'latest' or a UTC timestamp" >&2; exit 2; }
 [[ -r "${WALG_LIBSODIUM_KEY_PATH:-}" ]] || { add_check restore false "encryption key file is not readable"; finish; }
+
+if [[ "$DRY_RUN" == 1 ]]; then
+  if [[ "${WALG_S3_PREFIX:-}" == s3://?* ]]; then
+    add_check dry_run true "target and key checked; no restore performed"
+  else
+    add_check dry_run false "WALG_S3_PREFIX must be an s3:// prefix"
+  fi
+  finish
+fi
 
 NET="${DRILL_DOCKER_NETWORK:-}"
 if [[ -z "$NET" ]]; then

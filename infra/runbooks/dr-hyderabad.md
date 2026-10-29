@@ -6,11 +6,20 @@ Last drilled: not yet drilled (record: [drills](drills/README.md))
 ## Purpose
 
 Scenario: the production VPS (India, Hyderabad region) is gone. Data lives in WAL-G backups on the
-second India location (nightly MinIO replica) and, if still reachable, the primary MinIO.
+S3 replica bucket in ap-south-2 (nightly MinIO replication plus a continuous WAL watch) and, if still reachable, the primary MinIO.
 
 Expected duration: about 3 hours (target RTO 4 h, RPO 15 min). Measured values come from the drill records in
 [drills](drills/README.md) and the weekly restore drill report; none is signed yet, so the targets apply. Rehearse
 before launch.
+
+## The replica
+
+- Endpoint `https://s3.ap-south-2.amazonaws.com`, region `ap-south-2`, bucket `REPLICA_BUCKET` (created with a scoped
+  IAM user in #108). Layout: `<bucket>/causedeck-wal/`, `<bucket>/causedeck-ops/` and the app bucket, each under its
+  own prefix. Only ap-south-1 and ap-south-2 are accepted by `india-guard.sh`.
+- Encryption: SSE-S3 (or SSE-KMS via `REPLICA_SSE_KMS_KEY`) on every object, and WAL-G libsodium before upload.
+- Lifecycle: 30 days for WAL and base backups; 180 days for logs (#886).
+- Rehearse with `restore-drill.yml` (`source: replica`) or `restore-drill.sh --dry-run`.
 
 ## Triggers
 

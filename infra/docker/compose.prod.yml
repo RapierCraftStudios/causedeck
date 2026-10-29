@@ -436,6 +436,10 @@ services:
       REPLICA_ENDPOINT: ${REPLICA_ENDPOINT:-http://minio-replica:9000}
       REPLICA_ACCESS_KEY: ${REPLICA_ACCESS_KEY-}
       REPLICA_SECRET_KEY: ${REPLICA_SECRET_KEY-}
+      # S3 mode (#884): set REPLICA_BUCKET; region stays in India (ap-south-1 or ap-south-2).
+      REPLICA_REGION: ${REPLICA_REGION:-ap-south-2}
+      REPLICA_BUCKET: ${REPLICA_BUCKET-}
+      REPLICA_SSE_KMS_KEY: ${REPLICA_SSE_KMS_KEY-}
       S3_BUCKET: ${S3_BUCKET:-}
       ALLOW_LOCAL_ENDPOINTS: ${ALLOW_LOCAL_ENDPOINTS:-1}
       REPLICATION_CONFIG: /opt/minio/replication.json

@@ -12,6 +12,14 @@
 # Env: PRIMARY_ENDPOINT, PRIMARY_ACCESS_KEY, PRIMARY_SECRET_KEY, REPLICA_ENDPOINT,
 # REPLICA_ACCESS_KEY, REPLICA_SECRET_KEY, optional REPLICATION_CONFIG, S3_BUCKET, REPLICATE_WATCH=1
 # (after the nightly pass, keep mirroring the WAL bucket continuously), WAL_BUCKET.
+#
+# S3 mode (#884): set REPLICA_BUCKET to replicate into one pre-created AWS S3 bucket (#108), e.g.
+# REPLICA_ENDPOINT=https://s3.ap-south-2.amazonaws.com REPLICA_REGION=ap-south-2. Each source
+# bucket lands under replica/$REPLICA_BUCKET/<bucket>/. REPLICA_REGION must be ap-south-1 or
+# ap-south-2. The script does not create the bucket or its object lock/lifecycle (30 days, see
+# runbooks/dr-hyderabad.md). Every upload asks for server-side encryption: SSE-S3, or SSE-KMS when
+# REPLICA_SSE_KMS_KEY is set. WAL-G objects are already libsodium-encrypted before they reach the
+# primary; the replica only ever copies that ciphertext.
 set -eu
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -31,6 +39,23 @@ die() {
 
 assert_india_endpoint "${PRIMARY_ENDPOINT:-}" || exit 1
 assert_india_endpoint "${REPLICA_ENDPOINT:-}" || exit 1
+RB="${REPLICA_BUCKET:-}"
+if [ -n "$RB" ]; then
+  assert_india_region "${REPLICA_REGION:-}" || exit 1
+  # replica_dest <bucket>: where a source bucket lands on the replica
+  replica_dest() { echo "replica/$RB/$1"; }
+  # replica_enc <bucket>: the server-side encryption flag and its target for mc
+  replica_enc() {
+    if [ -n "${REPLICA_SSE_KMS_KEY:-}" ]; then
+      echo "--enc-kms=replica/$RB/$1=$REPLICA_SSE_KMS_KEY"
+    else
+      echo "--enc-s3=replica/$RB/$1"
+    fi
+  }
+else
+  replica_dest() { echo "replica/$1"; }
+  replica_enc() { :; }
+fi
 [ "${PRIMARY_ENDPOINT%/}" != "${REPLICA_ENDPOINT%/}" ] || die "primary and replica endpoints must differ"
 
 flat=$(tr -d '\n ' <"$CONFIG")
@@ -47,6 +72,7 @@ mc alias set replica "$REPLICA_ENDPOINT" "${REPLICA_ACCESS_KEY:?}" "${REPLICA_SE
 
 for b in $buckets; do
   mc version enable "primary/$b" >/dev/null 2>&1 || true
+  [ -z "$RB" ] || continue
   mc mb --ignore-existing --with-lock "replica/$b" >/dev/null || die "cannot create replica bucket $b"
   mc version enable "replica/$b" >/dev/null || die "cannot enable versioning on replica/$b"
   mc retention set --default "$mode" "${days}d" "replica/$b" >/dev/null || die "cannot set object lock on replica/$b"
@@ -58,10 +84,11 @@ canary="${canary_prefix}$(date -u +%Y%m%dT%H%M%SZ)"
 printf 'canary %s\n' "$canary" | mc pipe "primary/$ops/$canary" >/dev/null || die "cannot write canary object"
 
 for b in $buckets; do
-  mc mirror --preserve --overwrite "primary/$b" "replica/$b" >/dev/null || die "mirror of $b failed"
+  mc mirror --preserve --overwrite $(replica_enc "$b") "primary/$b" "$(replica_dest "$b")" >/dev/null ||
+    die "mirror of $b failed"
 done
 
-mc stat "replica/$ops/$canary" >/dev/null 2>&1 || die "canary $canary did not reach the replica"
+mc stat "$(replica_dest "$ops")/$canary" >/dev/null 2>&1 || die "canary $canary did not reach the replica"
 write_status true "replicated $(echo "$buckets" | wc -w | tr -d ' ') buckets, canary $canary"
 echo "minio-replicate: ok canary $canary"
 
@@ -69,5 +96,5 @@ echo "minio-replicate: ok canary $canary"
 # copy trails the primary by seconds instead of a day. Blocks until the container stops.
 if [ "${REPLICATE_WATCH:-0}" = 1 ]; then
   wal="${WAL_BUCKET:-causedeck-wal}"
-  exec mc mirror --watch --preserve "primary/$wal" "replica/$wal"
+  exec mc mirror --watch --preserve $(replica_enc "$wal") "primary/$wal" "$(replica_dest "$wal")"
 fi

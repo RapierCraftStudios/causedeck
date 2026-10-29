@@ -97,6 +97,9 @@ export interface FeePickers {
   supplierStateCode: string | null;
 }
 
+/** A practice past this many matters needs a search picker; the select stays usable to here. */
+const PICKER_MATTER_CAP = 2000;
+
 const NO_PICKERS: FeePickers = { matters: [], clients: [], supplierStateCode: null };
 
 /**
@@ -111,12 +114,20 @@ export async function loadFeePickers(context: WorkspaceContext): Promise<FeePick
     const graph = await import('@causedeck/core/matter-graph');
     const scope = { workspaceId: context.workspace.id, userId: context.user.id };
     return await runtime.inWorkspace(scope, async (tx) => {
-      const page = await graph.listMatters({ db: tx, events: { emit: () => undefined } }, scope, {
-        limit: 100,
-      });
+      // Every matter, a page of 100 at a time (the list's maximum), up to PICKER_MATTER_CAP.
+      const matters: PickerOption[] = [];
+      let cursor: string | undefined;
+      do {
+        const page = await graph.listMatters({ db: tx, events: { emit: () => undefined } }, scope, {
+          limit: 100,
+          ...(cursor === undefined ? {} : { cursor }),
+        });
+        matters.push(...page.items.map((m) => ({ id: m.id, label: m.title })));
+        cursor = page.nextCursor ?? undefined;
+      } while (cursor !== undefined && matters.length < PICKER_MATTER_CAP);
       const clients = await fees.listFeeClients(feesDeps(tx), scope);
       return {
-        matters: page.items.map((m) => ({ id: m.id, label: m.title })),
+        matters,
         clients: clients.map((client) => ({ id: client.id, label: client.name })),
         supplierStateCode: await fees.getFeeSupplierState(feesDeps(tx), scope),
       };

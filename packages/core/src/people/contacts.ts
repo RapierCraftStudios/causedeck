@@ -31,6 +31,7 @@ import {
 import { and, asc, eq, inArray, isNotNull, isNull, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
 
+import { anonymiseClientLedger } from '../fees/index.ts';
 import {
   crossWorkspace,
   setRoleEdge,
@@ -505,6 +506,14 @@ export async function archiveContact(
       )
       .returning();
     if (!updated) throw notFound('Contact not found');
+    // RTBF (#959): the person's fee-ledger free text goes in the same transaction; amounts stay.
+    if (data.purge) {
+      await anonymiseClientLedger(
+        { db: scope.tx, now: () => scope.now },
+        { workspaceId: scope.actor.workspaceId, userId: scope.actor.userId },
+        row.personId,
+      );
+    }
     return updated;
   });
 }

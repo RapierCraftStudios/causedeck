@@ -53,6 +53,8 @@ export const workspaceSettings = pgTable(
     allowEvalReuse: boolean('allow_eval_reuse').notNull().default(false),
     /** Days without an event before a matter is flagged as stale (#70, `attention.stale_days`): 7 to 180. */
     attentionStaleDays: integer('attention_stale_days').notNull().default(30),
+    /** The GST state code (two digits) the invoice editor starts from, so it stops asking (#963). */
+    feeSupplierStateCode: text('fee_supplier_state_code'),
     ...timestamps(),
   },
   (t) => [
@@ -64,6 +66,10 @@ export const workspaceSettings = pgTable(
     check(
       'workspace_settings_enquiry_retention_months_chk',
       sql`enquiry_retention_months between 1 and 120`,
+    ),
+    check(
+      'workspace_settings_fee_supplier_state_code_chk',
+      sql`fee_supplier_state_code ~ '^[0-9]{2}$'`,
     ),
     check(
       'workspace_settings_attention_stale_days_chk',

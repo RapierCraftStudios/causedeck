@@ -4178,6 +4178,53 @@
     "notFound": {
       "title": "Invoice not found",
       "body": "It may have been discarded."
+    },
+    "picker": {
+      "choose": "Choose",
+      "none": "Nothing to choose from yet. Add a matter or a client first.",
+      "filter": "Filter: {label}"
+    },
+    "record": {
+      "saving": "Saving",
+      "cancel": "Cancel",
+      "amount": "Amount (rupees)",
+      "reference": "Reference (optional)",
+      "date": "Date",
+      "matter": "Matter",
+      "noMatter": "No matter"
+    },
+    "paymentForm": {
+      "trigger": "Record payment",
+      "title": "Record a payment received",
+      "method": "Method",
+      "methods": {
+        "cash": "Cash",
+        "upi": "UPI",
+        "bank_transfer": "Bank transfer",
+        "cheque": "Cheque",
+        "card": "Card",
+        "other": "Other"
+      },
+      "receivedOn": "Received on",
+      "submit": "Save payment"
+    },
+    "creditNoteForm": {
+      "trigger": "Issue credit note",
+      "title": "Issue a credit note",
+      "hint": "A credit note corrects a final invoice. The invoice itself is never edited.",
+      "reason": "Reason",
+      "submit": "Issue credit note"
+    },
+    "expenseForm": {
+      "trigger": "Record expense",
+      "title": "Record a client expense",
+      "description": "What it was for",
+      "submit": "Save expense"
+    },
+    "receiptForm": {
+      "trigger": "Record receipt",
+      "title": "Record a receipt from the client",
+      "submit": "Save receipt"
     }
   },
   "matterTimeline": {

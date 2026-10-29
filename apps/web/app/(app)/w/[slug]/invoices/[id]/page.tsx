@@ -6,18 +6,23 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { PermissionDeniedPage } from '../../../../../../components/shell/permission-denied-page.tsx';
-import { loadInvoice } from '../../../../../../lib/fees/fees-deps.ts';
+import { loadFeePickers, loadInvoice } from '../../../../../../lib/fees/fees-deps.ts';
 import { requireWorkspaceFlag } from '../../../../../../lib/flags.ts';
 import { can } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
+import { InvoiceRecordActions, LedgerRecordActions } from '../_components/fee-record-actions.tsx';
 import { FeesGatedNotice } from '../_components/gated-notice.tsx';
 import { InvoiceEditor } from '../_components/invoice-editor.tsx';
 import { InvoicePreview } from '../_components/invoice-preview.tsx';
 import { LedgerTable } from '../_components/ledger-table.tsx';
 import {
   discardInvoiceDraftAction,
+  issueCreditNoteAction,
   issueInvoiceAction,
   previewInvoiceAction,
+  recordClientExpenseAction,
+  recordClientReceiptAction,
+  recordPaymentAction,
   saveInvoiceDraftAction,
 } from '../actions.ts';
 
@@ -42,7 +47,9 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   if (load.kind === 'notFound') notFound();
   if (load.kind === 'error') throw new Error('Could not load the invoice');
 
+  const pickers = await loadFeePickers(context);
   const t = await getTranslations('fees');
+  const canWrite = can(context.role, 'fee.write');
   const { invoice, ledger, balancePaise } = load;
   const isDraft = invoice.status === 'draft';
   return (
@@ -65,8 +72,11 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
             dueDate: invoice.dueDate,
             lines: invoice.lines,
             supplierName: context.workspace.name,
+            supplierStateCode: pickers.supplierStateCode,
           }}
-          canWrite={can(context.role, 'fee.write')}
+          matters={pickers.matters}
+          clients={pickers.clients}
+          canWrite={canWrite}
           isOwner={context.role === 'owner'}
           actions={{
             preview: previewInvoiceAction,
@@ -91,8 +101,31 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
             }}
             gstUnreviewed={false}
           />
+          {invoice.status === 'issued' || invoice.status === 'paid' ? (
+            <InvoiceRecordActions
+              workspaceId={context.workspace.id}
+              invoiceId={invoice.id}
+              status={invoice.status}
+              canWrite={canWrite}
+              actions={{
+                recordPayment: recordPaymentAction,
+                issueCreditNote: issueCreditNoteAction,
+              }}
+            />
+          ) : null}
         </>
       )}
+      <LedgerRecordActions
+        workspaceId={context.workspace.id}
+        personId={invoice.personId}
+        matterId={invoice.matterId}
+        matters={pickers.matters}
+        canWrite={canWrite}
+        actions={{
+          recordExpense: recordClientExpenseAction,
+          recordReceipt: recordClientReceiptAction,
+        }}
+      />
       <LedgerTable entries={ledger} balancePaise={balancePaise} />
     </div>
   );

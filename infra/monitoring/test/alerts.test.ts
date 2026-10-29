@@ -30,6 +30,10 @@ const REQUIRED = [
   'BackupWalStale',
   'BackupBaseStale',
   'RestoreDrillFailed',
+  'BackupFailed',
+  'RestoreDrillRtoBreach',
+  'RestoreDrillStale',
+  'BackupMetricsAbsent',
   'CertificateExpiringSoon',
   'ErrorRateSpike',
   'ClockDriftHigh',
@@ -65,6 +69,21 @@ describe('alert rules', () => {
         `no promtool case for ${name}`,
       );
     }
+  });
+});
+
+describe('backup alerts', () => {
+  it('query the metrics system.backup.health emits, not stale names', () => {
+    const job = read('../../packages/core/src/jobs/definitions/backup-health.ts');
+    const emitted = [...job.matchAll(/^ {2}((?:walg|restore_drill)_\w+): number;/gm)].map(
+      (m) => m[1] as string,
+    );
+    assert.equal(emitted.length, 6);
+    assert.doesNotMatch(alerts + promtool, /causedeck_backup_/);
+    const group = alerts.slice(alerts.indexOf('name: backups'), alerts.indexOf('name: time'));
+    const used = new Set(group.match(/\b(?:walg|restore_drill)_\w+/g));
+    for (const metric of used) assert.ok(emitted.includes(metric), `${metric} is not emitted`);
+    for (const metric of emitted) assert.ok(used.has(metric), `${metric} has no alert`);
   });
 });
 

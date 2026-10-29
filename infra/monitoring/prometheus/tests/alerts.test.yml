@@ -189,7 +189,7 @@ tests:
     # WAL archive older than 5 minutes
   - interval: 1m
     input_series:
-      - series: 'causedeck_backup_wal_age_seconds'
+      - series: 'walg_last_archive_age_seconds'
         values: '600x10'
     alert_rule_test:
       - eval_time: 4m
@@ -200,13 +200,36 @@ tests:
               priority: 'P0'
             exp_annotations:
               summary: 'Newest archived WAL segment is older than 5 minutes'
+    # WAL report missing (-1) counts as stale
+  - interval: 1m
+    input_series:
+      - series: 'walg_last_archive_age_seconds'
+        values: '-1x10'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: BackupWalStale
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P0'
+            exp_annotations:
+              summary: 'Newest archived WAL segment is older than 5 minutes'
+    # fresh WAL stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'walg_last_archive_age_seconds'
+        values: '45x10'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: BackupWalStale
+        exp_alerts: []
     # base backup older than 26 hours
   - interval: 1m
     input_series:
-      - series: 'causedeck_backup_base_age_seconds'
+      - series: 'walg_last_backup_age_seconds'
         values: '100000x5'
     alert_rule_test:
-      - eval_time: 2m
+      - eval_time: 3m
         alertname: BackupBaseStale
         exp_alerts:
           - exp_labels:
@@ -217,19 +240,42 @@ tests:
     # fresh base backup stays quiet
   - interval: 1m
     input_series:
-      - series: 'causedeck_backup_base_age_seconds'
+      - series: 'walg_last_backup_age_seconds'
         values: '80000x5'
     alert_rule_test:
-      - eval_time: 2m
+      - eval_time: 3m
         alertname: BackupBaseStale
+        exp_alerts: []
+    # failed base backup
+  - interval: 1m
+    input_series:
+      - series: 'walg_last_backup_ok'
+        values: '0x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: BackupFailed
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'The last base backup run failed'
+    # successful base backup stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'walg_last_backup_ok'
+        values: '1x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: BackupFailed
         exp_alerts: []
     # restore drill failed
   - interval: 1m
     input_series:
-      - series: 'causedeck_backup_restore_drill_success'
+      - series: 'restore_drill_last_ok'
         values: '0x5'
     alert_rule_test:
-      - eval_time: 2m
+      - eval_time: 3m
         alertname: RestoreDrillFailed
         exp_alerts:
           - exp_labels:
@@ -237,6 +283,66 @@ tests:
               priority: 'P1'
             exp_annotations:
               summary: 'The last automated restore drill failed'
+    # unknown drill state (-1) does not claim a failure
+  - interval: 1m
+    input_series:
+      - series: 'restore_drill_last_ok'
+        values: '-1x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: RestoreDrillFailed
+        exp_alerts: []
+    # drill RTO above 4 hours
+  - interval: 1m
+    input_series:
+      - series: 'restore_drill_rto_seconds'
+        values: '14401x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: RestoreDrillRtoBreach
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'The last restore drill took longer than the 4 hour RTO'
+    # no successful drill (timestamp 0)
+  - interval: 1m
+    input_series:
+      - series: 'restore_drill_last_success_timestamp'
+        values: '0x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: RestoreDrillStale
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'No successful restore drill in the last 8 days'
+    # recent successful drill stays quiet (timestamp far in the future of the test clock)
+  - interval: 1m
+    input_series:
+      - series: 'restore_drill_last_success_timestamp'
+        values: '4102444800x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: RestoreDrillStale
+        exp_alerts: []
+    # backup metrics missing for 5 minutes
+  - interval: 1m
+    input_series:
+      - series: 'unrelated_metric'
+        values: '1x10'
+    alert_rule_test:
+      - eval_time: 7m
+        alertname: BackupMetricsAbsent
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'system.backup.health is not reporting backup metrics'
     # clock drift above 1 s
   - interval: 1m
     input_series:

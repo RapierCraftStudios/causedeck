@@ -64,6 +64,12 @@ jobs:
         run: >-
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/prod
           "$TF_IMAGE" test
+      - name: terraform test (cloudflare-zone module, mocked providers)
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/modules/cloudflare-zone \
+            "$TF_IMAGE" init -backend=false -input=false
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/modules/cloudflare-zone \
+            "$TF_IMAGE" test
       - name: tflint
         run: >-
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform

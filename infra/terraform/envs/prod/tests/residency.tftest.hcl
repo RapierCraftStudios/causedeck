@@ -68,3 +68,14 @@ run "unknown_provider_is_rejected" {
 
   expect_failures = [var.vps_provider]
 }
+
+run "proxying_rejects_malformed_decision_reference" {
+  command = plan
+
+  variables {
+    app_proxied            = true
+    residency_decision_ref = "not-a-decision"
+  }
+
+  expect_failures = [var.residency_decision_ref]
+}

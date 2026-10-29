@@ -9,7 +9,7 @@
 import { expect as baseExpect, test } from '../../fixtures/index.ts';
 import { FEES } from '../../fixtures/fees-data.ts';
 
-import { agreementCards, invoiceRows, openFees, route } from './fees-helpers.ts';
+import { agreementCards, emptyTitle, invoiceRows, openFees, route } from './fees-helpers.ts';
 
 // A client navigation renders a dynamic route and a server action writes to Postgres.
 const expect = baseExpect.configure({ timeout: 15_000 });
@@ -52,8 +52,8 @@ test.describe('fees and invoices', () => {
 
   test('shows the empty states when nothing is seeded', async ({ page, asUser, db }) => {
     await openFees(page, asUser, db.name, { agreement: false, draft: false, issued: false });
-    await expect(page.getByRole('heading', { name: 'No fee agreements yet' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'No invoices yet' })).toBeVisible();
+    await expect(emptyTitle(page, 'No fee agreements yet')).toBeVisible();
+    await expect(emptyTitle(page, 'No invoices yet')).toBeVisible();
   });
 
   test('activates a proposed agreement', async ({ page, asUser, db }) => {

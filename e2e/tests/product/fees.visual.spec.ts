@@ -5,7 +5,7 @@
 import { expect, test } from '../../fixtures/index.ts';
 import { FEES } from '../../fixtures/fees-data.ts';
 
-import { invoiceRows, openFees } from './fees-helpers.ts';
+import { emptyTitle, invoiceRows, openFees } from './fees-helpers.ts';
 
 const shot = { fullPage: true, animations: 'disabled' } as const;
 
@@ -18,7 +18,7 @@ test.describe('fees visual', { tag: '@visual' }, () => {
 
   test('empty', async ({ page, asUser, db }) => {
     await openFees(page, asUser, db.name, { agreement: false, draft: false, issued: false });
-    await expect(page.getByRole('heading', { name: 'No invoices yet' })).toBeVisible();
+    await expect(emptyTitle(page, 'No invoices yet')).toBeVisible();
     await expect(page).toHaveScreenshot('fees-empty.png', shot);
   });
 

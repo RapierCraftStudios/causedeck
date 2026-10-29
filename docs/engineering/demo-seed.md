@@ -13,10 +13,44 @@ Each has 40 matters, 60 or more orders and 120 or more obligations (order direct
 
 Sources, under `packages/db/src/seed/demo/`:
 
+- `modules.ts` (every product module beyond the matter graph, below) and `memory.ts` (the plain memory items M1 to M7, their proposals and usage);
 - `workspaces.ts` (the two specs and their id blocks), `people.ts` (members, opposing counsel), `courts.ts` (forums, halls, benches);
 - `matters.ts` (hand-written anchors plus matters generated from the workspace's seeded PRNG: `createPrng` in `shared.ts`);
 - `pdf.ts` (the sample order PDFs, deterministic, watermarked `SYNTHETIC`);
 - `meta.ts` (`DEMO_VERSION`, `demoContentHash`), `seed.ts` (writes one workspace), `reset.ts` (restores one), `index.ts` (registers the `demo` seeder).
+
+## Every module has data (#985)
+
+A reviewer can use the whole app hands-on. Each module below is seeded in both workspaces unless noted; a new module must add rows here and a minimum to `MODULE_MINIMUMS` in `packages/db/src/seed/__tests__/demo-seed.test.ts`.
+
+| Module (nav / route)                         | What the seed gives it                                                                                                  |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Today, Tomorrow, court-day board             | listings today and tomorrow, a court-day marker ("court at item 9"), brief state for six items                           |
+| List diff (court-day board)                  | per forum a daily and a later supplementary list of today: one row added, one removed, one moved, one re-staged         |
+| Matters, matter graph, timeline, proceedings | 40 matters, writ graph (W.P., two W.M.P.s, W.A.), orders with SYNTHETIC PDFs, issue tags, research notes                |
+| Hearings and outcomes                        | past hearings with procedural outcomes; delegated appearances                                                           |
+| Briefs and brief sheet                       | prepared-by, note and carry list on today's listings; carry rules from memory M2                                         |
+| Obligations, directions                      | 120+ obligations; one order with three directions: obligation, not applicable (with reason) and **unreconciled**         |
+| Registry defects, certified copies           | `defect`, `certified_copy` and `obligation_event` rows behind the defect and copy obligations                             |
+| Calendar                                     | derived from listings and hearings (nothing extra)                                                                      |
+| People, contacts                             | clients, opponents and counsel, 12 client contacts with phone, email and language                                        |
+| Enquiries and conflicts                      | 5 enquiries (logged, checked, declined, referred), a **conflict card with two hits**, one with none; `represents`/`opposes` edges on every matter so a live check finds hits |
+| Drafting studio                              | a demo template and three drafts (one final); no export, no AI                                                          |
+| Outward drafts                               | three hearing updates (client, senior counsel), drafted or edited, never shared                                          |
+| Capture inbox, proposals                     | six captures in every state, three proposals (two "needs you"), all AI-blocked                                           |
+| Memory M1 to M7                              | 19 items per workspace with provenance, proposals (proposed, dismissed, observing) and usage; sealed by the content step  |
+| Delegation and handover                      | Bengaluru: three handovers (one acknowledged) from the advocate to the junior with matter views; both: delegated appearances |
+| Limitation                                   | three demo rules and three computations (confirmed, proposed)                                                           |
+| Fees, invoices, ledger                       | agreements on twelve matters, nine invoices (draft, issued, paid, void), payments, receipts and disbursements            |
+| Status links                                 | one expiring client link (token below)                                                                                  |
+| Insights, proof-of-value                     | derived from hearings and obligations; preparedness ratings and weekly pulse rows                                       |
+| Portfolio                                    | a recovery panel over six proceedings                                                                                   |
+| Notifications (bell)                         | three in-app rows; the demo sends no email, push or WhatsApp                                                            |
+| Help, settings, activity, news, notices      | no seeded data needed (static articles, the member's own settings, the audit log written by use). Notices and bench facts are global tables: seed them with the catalogue |
+
+Flags: `m5_playbooks` and `insights.enabled` are on in both workspaces. Fees, limitation, the conflict check, the enquiry log, status links and bench facts are legal-gated (counsel sign-off); a workspace row never turns those on alone. On a local or review database, `pnpm db:seed:demo -- --enable-gated-flags` writes the global and workspace rows with the note "Demo environment only: not a counsel sign-off". It refuses production. Without it those nav items stay hidden.
+
+The demo status link token is `demo-status-link-synthetic-0001:<workspace key>` hashed; the page cannot be opened from the seed (the token is not stored), which is intended.
 
 ## Rules the seed keeps
 
@@ -62,6 +96,22 @@ Every new outward channel must call the guard and add a case to `packages/core/s
 - `resetDemo` deletes every row of the workspace (the seed's and anything a visitor added; found in the catalogue and deleted children first, except append-only tables and tables the role may not delete from) and its visitors, writes the seed again and records `demo.reset` in the audit log. The `system.demo.reset` job runs it nightly at 03:10 IST and removes visitors older than 4 hours. A reset takes well under the 30 s budget (the test asserts it).
 - `app_demo_workspaces()` (owner-defined, ids and slugs only) is the one cross-workspace read: a visitor and the nightly job have no workspace yet.
 
-## Not done yet
+## Memory and the sample PDFs (`db:seed:demo:content`)
 
-Memory items M1 to M5 with provenance, a conflict card, a list diff, an unreconciled direction and a junior handover (the demo-script scenarios in `docs/mvp/04-mvp-definition.md` §9) need seed services for tables whose services do not exist yet. The order PDFs are not stored in the bucket (`@causedeck/db` cannot depend on `@causedeck/storage`). Real fixtures from lawyers are #119, the onboarding link is #92, the load-test harness is #105.
+`@causedeck/db` cannot import `@causedeck/storage`, so the parts that need it live in `@causedeck/core` (`src/demo/content.ts`, script `packages/core/scripts/seed-demo-content.ts`):
+
+```sh
+pnpm db:seed:demo:content                                   # memory (sealed) and the PDFs, both workspaces
+pnpm db:seed:demo:files                                     # only the PDFs
+pnpm db:seed:demo:content -- --only=memory --workspace=bengaluru-chamber
+```
+
+Run it after `pnpm db:seed:demo`, with `DATABASE_URL_OWNER`, `KEK_BASE64` and the `S3_*` env of the local stack (MinIO). `seedDemoMemory` seals each value of `demoMemory` (db seed, plain) with the workspace key (`encryptField`, AAD = workspace id) and writes `memory_item`, `memory_proposal` and `memory_usage` with fixed ids. `seedDemoFiles` regenerates the SYNTHETIC PDFs (`demoDocumentPdfs`), puts each at the key its `document` row names and inserts a finalized `blob` row (id = document id, scan `skipped`). Both are idempotent and refuse `NODE_ENV=production`. The nightly `system.demo.reset` job runs both again after the reset (the reset deletes memory and blob rows with the rest of the workspace); a deployment without a key or bucket keeps the rest of the reset and logs a warning.
+
+## Demo seed and onboarding
+
+The first-day screen of the onboarding wizard (#92) links "Try the demo workspace" to `/demo` whenever a demo workspace is seeded (or the member already belongs to one). `/demo` creates the ephemeral visitor.
+
+## Not done
+
+e2e, visual baselines and axe for the demo banner and `/demo` (#985 last item), and real fixtures from lawyers (#119). The load-test harness is #105. Notices and bench facts are global catalogue tables, not per workspace.

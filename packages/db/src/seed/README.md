@@ -13,7 +13,7 @@ Registered seeders:
 
 ## The demo workspaces (`pnpm db:seed:demo`)
 
-`pnpm db:seed:demo` runs the `demo` profile as the owner role (`DATABASE_URL_OWNER`); `pnpm db:seed` runs the same seeders as the app role. `--workspace=chennai-solo|bengaluru-chamber|all` picks which (default all); `--reset` deletes the workspace's rows and visitors first. After `pnpm stack:up` and `pnpm db:migrate` it creates two workspaces (#93; the full description is `docs/engineering/demo-seed.md`):
+`pnpm db:seed:demo` runs the `demo` profile as the owner role (`DATABASE_URL_OWNER`); `pnpm db:seed` runs the same seeders as the app role. `--workspace=chennai-solo|bengaluru-chamber|all` picks which (default all); `--reset` deletes the workspace's rows and visitors first. After `pnpm stack:up` and `pnpm db:migrate` it creates two workspaces (#93; the full description is `docs/engineering/demo-seed.md`). Since #985 every product module has seed data too; memory and the sample PDFs are written by `pnpm db:seed:demo:content` (needs the storage package):
 
 - `demo-chennai-solo` ("Nila Arivazhagan, Advocate (fictional)", Madras High Court) with an advocate (`owner`) and a clerk;
 - `demo-bengaluru-chamber` ("Kaveri Demo Chambers (fictional)", High Court of Karnataka, City Civil Court and Mayo Hall) with an advocate (`owner`), a junior and a clerk;

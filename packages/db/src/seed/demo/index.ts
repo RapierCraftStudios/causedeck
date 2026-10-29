@@ -15,13 +15,15 @@
 //   and AI in it.
 // - Never in production: `seedDemo` refuses when `NODE_ENV=production`. The nightly reset restores
 //   demo workspaces that already exist, in any environment (`seedDemoWorkspace`).
-// - Not here yet: storing the order PDFs in the bucket (`@causedeck/db` cannot depend on
-//   `@causedeck/storage`), memory items M1 to M5, a conflict card, a list diff and the junior
-//   handover (no seed service for those tables yet).
+// - Every product module has rows (modules.ts, #985): conflict card, list diff, unreconciled
+//   direction, junior handover, fees, limitation, drafts, inbox and more. Memory and the sample PDFs
+//   need `@causedeck/storage`, which `@causedeck/db` cannot import: `pnpm db:seed:demo:content`
+//   (`@causedeck/core`) seals the memory (`demoMemory`) and uploads the PDFs (`demoDocumentPdfs`).
 import { registerSeed } from '../index.ts';
 
 import { seedDemo } from './seed.ts';
 
+export { demoCourtRows } from './courts.ts';
 export { DEMO_FORUM_KEYS, forumId as demoForumId, type DemoForumKey } from './courts.ts';
 export {
   DEMO_MATTERS_PER_WORKSPACE,
@@ -29,6 +31,12 @@ export {
   demoMatterRows,
   matterSpecs,
 } from './matters.ts';
+export {
+  demoDocumentPdfs,
+  demoModuleRows,
+  DEMO_STATUS_LINK_TOKEN,
+  type DemoModuleRows,
+} from './modules.ts';
 export { DEMO_HASH_DAY, DEMO_VERSION, demoContentHash } from './meta.ts';
 export { DEMO_PDF_HEADING, DEMO_PDF_WATERMARK, demoOrderPdf } from './pdf.ts';
 export {
@@ -40,7 +48,16 @@ export {
   type DemoUser,
 } from './people.ts';
 export {
+  demoMemory,
+  type DemoMemory,
+  type DemoMemoryItem,
+  type DemoMemoryProposal,
+} from './memory.ts';
+export {
   addDays,
+  demoId,
+  ID_KIND,
+  seedInstant,
   DEMO_EMAIL_DOMAIN,
   FICTIONAL_SUFFIX,
   kolkataToday,
@@ -60,6 +77,8 @@ export {
 export { resetDemoWorkspace, type DemoResetResult } from './reset.ts';
 export {
   DEMO_FLAG_OVERRIDES,
+  DEMO_GATED_FLAGS,
+  enableDemoGatedFlags,
   DemoSeedInProductionError,
   seedDemo,
   seedDemoWorkspace,

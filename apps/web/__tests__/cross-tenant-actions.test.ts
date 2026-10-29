@@ -105,6 +105,7 @@ const drafts = await import('../app/(app)/w/[slug]/drafts/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const sso = await import('../app/(app)/w/[slug]/settings/sso/actions.ts');
+const pov = await import('../app/(app)/w/[slug]/_pov/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
 const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
@@ -207,6 +208,19 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
   setAllowEvalReuseAction: privacy,
+  ratePreparednessAction: pov,
+  skipPreparednessAction: pov,
+  submitLoadPulseAction: pov,
+  dismissLoadPulseAction: pov,
+  startContextTestAction: pov,
+  answerContextTestAction: pov,
+  finishContextTestAction: pov,
+  setPovPrefsAction: pov,
+  getPovPrefsAction: pov,
+  listOwnPovAction: pov,
+  deleteOwnRatingAction: pov,
+  povAggregateAction: pov,
+  downloadPovReportAction: pov,
   rotateIntegrationTokenAction: integrations,
   createIntakeAddressAction: emailIntake,
   rotateIntakeAddressAction: emailIntake,
@@ -708,6 +722,30 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     // Eval reuse consent (#558): ub, owner of B, may not opt A in.
     setAllowEvalReuseAction: { workspaceId, allowEvalReuse: true },
+    // Proof-of-value (#86): ub, owner of B, may not rate, pulse, test or read A's measures.
+    ratePreparednessAction: {
+      workspaceId,
+      hearingId: t.a.rows.preparedness_rating?.hearingId,
+      rating: 3,
+    },
+    skipPreparednessAction: { workspaceId, hearingId: t.a.rows.preparedness_rating?.hearingId },
+    submitLoadPulseAction: { workspaceId, demand: 1, worry: 1, effort: 1 },
+    dismissLoadPulseAction: { workspaceId },
+    startContextTestAction: { workspaceId, matterId: t.a.rows.context_test_result?.matterId },
+    answerContextTestAction: {
+      workspaceId,
+      runId: t.a.rows.context_test_result?.id,
+      question: 'next_date',
+      correct: true,
+      atMs: 1,
+    },
+    finishContextTestAction: { workspaceId, runId: t.a.rows.context_test_result?.id },
+    setPovPrefsAction: { workspaceId, promptsEnabled: false },
+    getPovPrefsAction: { workspaceId },
+    listOwnPovAction: { workspaceId },
+    deleteOwnRatingAction: { workspaceId, ratingId: t.a.rows.preparedness_rating?.id },
+    povAggregateAction: { workspaceId },
+    downloadPovReportAction: { workspaceId },
     rotateIntegrationTokenAction: { workspaceId, kind: 'ics_feed' },
     // Email intake (#54): ub, owner of B, may not create, rotate or revoke an address, edit the
     // allow-list or enable the email channel on A.

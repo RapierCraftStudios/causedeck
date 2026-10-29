@@ -177,12 +177,14 @@ export const InsightsTableAlternative: Story = {
 
 /** Arrow keys move across the chart points and announce the values. */
 export const InsightsChartKeyboard: Story = {
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await userEvent.click(
       canvas.getAllByRole('button', { name: 'Show chart and data' })[1] as HTMLElement,
     );
-    const chart = canvas.getAllByRole('group')[0] as HTMLElement;
-    chart.focus();
+    // The range picker is also a role=group and comes first: pick the chart by its slot.
+    const chart = canvasElement.querySelector<HTMLElement>('[data-slot="insights-chart"]');
+    await expect(chart).not.toBeNull();
+    chart?.focus();
     await userEvent.keyboard('{ArrowLeft}');
     await expect(canvas.getByText(/2026-W44/)).toBeVisible();
   },

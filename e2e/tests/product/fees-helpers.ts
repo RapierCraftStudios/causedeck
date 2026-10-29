@@ -39,3 +39,7 @@ export const invoiceRows = (page: Page): Locator =>
 /** The fee agreement cards of the list (visible copies only). */
 export const agreementCards = (page: Page): Locator =>
   page.locator('[data-slot="fee-agreement-card"]').filter({ visible: true });
+
+/** An empty state's title: the ui EmptyState renders it as a paragraph, not a heading. */
+export const emptyTitle = (page: Page, text: string): Locator =>
+  route(page).locator('[data-slot="empty-state-title"]', { hasText: text });

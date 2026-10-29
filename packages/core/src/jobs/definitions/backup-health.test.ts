@@ -32,6 +32,12 @@ describe('evaluateBackupHealth', () => {
       walg_last_backup_age_seconds: 3600,
       restore_drill_last_success_timestamp: Math.floor(Date.parse(ago(86400)) / 1000),
       restore_drill_rto_seconds: 1200,
+      walg_backup_last_ok: 1,
+      minio_replication_last_ok: 1,
+      restore_drill_last_ok: 1,
+      restore_drill_rpo_seconds: 60,
+      backup_health_problems: 0,
+      backup_health_last_run_timestamp: Math.floor(NOW.getTime() / 1000),
     });
   });
 
@@ -45,6 +51,10 @@ describe('evaluateBackupHealth', () => {
     const failed = healthy();
     failed.basebackup = { finishedAt: ago(60), ok: false };
     expect(evaluateBackupHealth(failed, NOW).problems.join()).toMatch(/failed backup/);
+    expect(evaluateBackupHealth(failed, NOW).metrics.walg_backup_last_ok).toBe(0);
+    const noReplica = healthy();
+    noReplica.replication = { finishedAt: ago(60), ok: false };
+    expect(evaluateBackupHealth(noReplica, NOW).metrics.minio_replication_last_ok).toBe(0);
     const missed = healthy();
     missed.basebackup = { finishedAt: ago(27 * 3600), ok: true };
     expect(evaluateBackupHealth(missed, NOW).problems.join()).toMatch(/missed backup/);
@@ -57,6 +67,10 @@ describe('evaluateBackupHealth', () => {
     expect(text).toMatch(/failed drill/);
     expect(text).toMatch(/RPO breach/);
     expect(text).toMatch(/RTO breach/);
+    const { metrics } = evaluateBackupHealth(reports, NOW);
+    expect(metrics.restore_drill_last_ok).toBe(0);
+    expect(metrics.restore_drill_rpo_seconds).toBe(901);
+    expect(metrics.backup_health_problems).toBeGreaterThanOrEqual(3);
   });
 
   it('treats missing reports as stale with sentinel metrics', () => {

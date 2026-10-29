@@ -58,13 +58,27 @@ Backups are encrypted client-side with WAL-G libsodium. Without the key, `wal-pu
   restore uses separate read-only credentials. Buckets are never public; access logging is the
   audit stack (#102).
 
-## Alert thresholds (wired by #102)
+## Alert thresholds (wired in #102, R9 in #792)
 
-`system.backup.health` exposes `walg_last_archive_age_seconds`, `walg_last_backup_age_seconds`,
-`restore_drill_last_success_timestamp`, `restore_drill_rto_seconds` and logs an error with
-`backup_alert=true` per breach. Page within 10 minutes on: archive age > 300 s, base backup older
-than 26 h or failed, replication failed, last drill failed, RPO > 900 s, RTO > 14 400 s, no
-successful drill in 8 days.
+`system.backup.health` runs every minute and exports gauges through the OTel collector, and logs an error with
+`backup_alert=true` per breach. The rules live in `infra/monitoring/prometheus/rules/alerts.yml` (group `backups`),
+each with a promtool case in `infra/monitoring/prometheus/tests/alerts.test.yml`. Every rule pages (P0 or P1, so
+on-call and the fallback receiver) with `for` of 1 to 2 minutes; the detection budget is about 4.5 minutes after the
+signal exists (job 60 s, OTLP export 60 s, scrape 30 s, evaluation 30 s, `for` 1 m, group_wait 10 s), inside the 10
+minute target.
+
+| Alert                      | Fires when                                                                             | Priority |
+| -------------------------- | -------------------------------------------------------------------------------------- | -------- |
+| `BackupWalStale`           | `walg_last_archive_age_seconds` > 300 (or report missing, -1)                          | P0       |
+| `BackupFailed`             | `walg_backup_last_ok` is 0 (last base backup run failed)                               | P0       |
+| `BackupBaseStale`          | `walg_last_backup_age_seconds` > 26 h (or missing)                                     | P1       |
+| `BackupReplicationFailed`  | `minio_replication_last_ok` is 0                                                       | P1       |
+| `RestoreDrillFailed`       | `restore_drill_last_ok` is 0                                                           | P1       |
+| `RestoreDrillTargetBreach` | `restore_drill_rpo_seconds` > 900 or `restore_drill_rto_seconds` > 14 400              | P1       |
+| `RestoreDrillStale`        | no successful drill for 8 days (`restore_drill_last_success_timestamp`)                | P1       |
+| `BackupHealthJobSilent`    | `backup_health_last_run_timestamp` older than 5 min or absent: backups are unmonitored | P1       |
+
+`BackupHealthJobSilent` also fires when `BACKUP_OPS_*` is not set on the worker (the job then exports nothing).
 
 ## Steps
 

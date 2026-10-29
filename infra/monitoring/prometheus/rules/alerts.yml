@@ -2,8 +2,8 @@
 # info. `priority` is P0 or P1 and selects the on-call route. Metric names:
 #   http_server_duration_milliseconds_*   OTel HTTP server histogram (packages/observability)
 #   causedeck_queue_lag_seconds, causedeck_queue_dead_letter_total   worker queues
-#   causedeck_backup_wal_age_seconds, causedeck_backup_base_age_seconds,
-#   causedeck_backup_restore_drill_success                            backups (#101)
+#   walg_last_archive_age_seconds, walg_last_backup_age_seconds, walg_backup_last_ok,
+#   minio_replication_last_ok, restore_drill_* , backup_health_*      backups (#101, #792)
 #   adapter_parse_success_ratio, adapter_last_success_timestamp        court adapters
 groups:
   - name: availability
@@ -80,24 +80,67 @@ groups:
         labels: { severity: ticket, priority: P1 }
         annotations:
           summary: 'Dead-letter queue {{ $labels.queue }} grew by more than 5 in 15 minutes'
+  # R9 (#792): a failed backup, stale WAL or failed drill alerts within 10 minutes. Signals come
+  # from the `system.backup.health` job (packages/core/src/jobs/definitions/backup-health.ts), which
+  # runs every minute and exports the gauges below through the OTel collector (names are as emitted,
+  # no prefix). Worst-case detection budget for a failure that already exists: job pass 60 s +
+  # OTLP export 60 s + scrape 30 s + rule evaluation 30 s + `for: 1m` + Alertmanager group_wait
+  # 10 s is about 4.5 min, so even the 5-minute WAL threshold pages by minute 10. `for` must stay
+  # at 2m or less in this group (test/alerts.test.ts enforces it). Sentinel -1 means a report is
+  # missing; it counts as breach. Aggregates use max/min because two worker replicas exist.
   - name: backups
     rules:
       - alert: BackupWalStale
-        expr: max(causedeck_backup_wal_age_seconds) > 300
-        for: 2m
+        expr: max(walg_last_archive_age_seconds) > 300 or max(walg_last_archive_age_seconds) < 0
+        for: 1m
         labels: { severity: page, priority: P0 }
         annotations:
           summary: 'Newest archived WAL segment is older than 5 minutes'
+      - alert: BackupFailed
+        expr: min(walg_backup_last_ok) == 0
+        for: 1m
+        labels: { severity: page, priority: P0 }
+        annotations:
+          summary: 'The last base backup run failed'
       - alert: BackupBaseStale
-        expr: max(causedeck_backup_base_age_seconds) > 26 * 3600
+        expr: >-
+          max(walg_last_backup_age_seconds) > 26 * 3600 or max(walg_last_backup_age_seconds) < 0
+        for: 1m
         labels: { severity: page, priority: P1 }
         annotations:
           summary: 'Newest base backup is older than 26 hours'
+      - alert: BackupReplicationFailed
+        expr: min(minio_replication_last_ok) == 0
+        for: 1m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'The last off-host replication run failed'
       - alert: RestoreDrillFailed
-        expr: min(causedeck_backup_restore_drill_success) == 0
+        expr: min(restore_drill_last_ok) == 0
+        for: 1m
         labels: { severity: page, priority: P1 }
         annotations:
           summary: 'The last automated restore drill failed'
+      - alert: RestoreDrillTargetBreach
+        expr: max(restore_drill_rto_seconds) > 14400 or max(restore_drill_rpo_seconds) > 900
+        for: 1m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'The last restore drill breached the RTO (4 h) or RPO (15 min) target'
+      - alert: RestoreDrillStale
+        expr: time() - max(restore_drill_last_success_timestamp) > 8 * 86400
+        for: 1m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'No successful restore drill in the last 8 days'
+      - alert: BackupHealthJobSilent
+        expr: >-
+          time() - max(backup_health_last_run_timestamp) > 300
+          or absent(backup_health_last_run_timestamp)
+        for: 2m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'system.backup.health has not reported for 5 minutes: backups are unmonitored'
   - name: time
     rules:
       # CERT-In requires accurate timestamps: the host clock must stay within 1 s of NTP.

@@ -30,6 +30,11 @@ const REQUIRED = [
   'BackupWalStale',
   'BackupBaseStale',
   'RestoreDrillFailed',
+  'BackupFailed',
+  'BackupReplicationFailed',
+  'RestoreDrillTargetBreach',
+  'RestoreDrillStale',
+  'BackupHealthJobSilent',
   'CertificateExpiringSoon',
   'ErrorRateSpike',
   'ClockDriftHigh',
@@ -46,6 +51,7 @@ describe('alert rules', () => {
     assert.match(rule('DatabaseCpuHigh'), /> 0\.6\s+for: 15m/);
     assert.match(rule('DiskUsageHigh'), /> 0\.8/);
     assert.match(rule('BackupWalStale'), /> 300/);
+    assert.match(rule('RestoreDrillStale'), /8 \* 86400/);
     assert.match(rule('BackupBaseStale'), /26 \* 3600/);
     assert.match(rule('CertificateExpiringSoon'), /14 \* 86400/);
     assert.match(rule('ClockDriftHigh'), /> 1\s+for: 2m/);
@@ -64,6 +70,44 @@ describe('alert rules', () => {
         new RegExp(`alertname: ${name}$`, 'm'),
         `no promtool case for ${name}`,
       );
+    }
+  });
+});
+
+describe('backup alerts (R9, #792)', () => {
+  const group = alerts.slice(alerts.indexOf('  - name: backups'), alerts.indexOf('  - name: time'));
+  const exprs = (): string => [...group.matchAll(/expr: [^\n]*(?:\n {10}[^\n]*)*/g)].join('\n');
+  const gauges = read('../../packages/core/src/jobs/definitions/backup-health.ts');
+
+  it('page within 10 minutes: every rule waits at most 2 minutes', () => {
+    const waits = [...group.matchAll(/for: (\d+)m/g)].map((m) => Number(m[1]));
+    assert.equal(waits.length, ruleNames(group).length);
+    for (const wait of waits) assert.ok(wait <= 2, `for: ${wait}m is too long`);
+    assert.doesNotMatch(group, /for: \d+h|for: \d+s/);
+  });
+
+  it('route to on-call: every backup alert is page severity with a P0 or P1 priority', () => {
+    assert.equal(
+      (group.match(/severity: page, priority: P[01]/g) ?? []).length,
+      ruleNames(group).length,
+    );
+  });
+
+  it('use only metrics the system.backup.health job exports', () => {
+    const used = new Set(
+      [...exprs().matchAll(/\b((?:walg|minio|restore_drill|backup_health)_[a-z_]+)\b/g)].map(
+        (m) => m[1] as string,
+      ),
+    );
+    assert.ok(used.size >= 8, 'expected the backup gauges to be used');
+    for (const metric of used) {
+      assert.ok(gauges.includes(`'${metric}'`), `${metric} is not exported by backup-health.ts`);
+    }
+  });
+
+  it('keep the dashboards on the same metric names', () => {
+    for (const board of ['backups.json', 'court-day-windows.json']) {
+      assert.doesNotMatch(read(`grafana/dashboards/${board}`), /causedeck_backup_/);
     }
   });
 });

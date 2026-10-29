@@ -20,12 +20,12 @@ Primary and secondary on-call, incident commander (the primary unless handed off
 
 ## Severity
 
-| Priority | Alertmanager route | Meaning                                                                                                         | Response                                                        |
-| -------- | ------------------ | --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| P0       | on-call + fallback | Data loss risk or the product is down (service down, `/readyz` failing, WAL not archived, public endpoint down) | Acknowledge in 15 minutes, any hour                             |
-| P1       | on-call + fallback | Degraded for advocates (latency, error spike, queue lag, stale base backup, failed restore drill, clock drift)  | Acknowledge in 30 minutes; inside court-day windows treat as P0 |
-| P2       | ticket webhook     | Needs a person within a working day (cert expiry, dead letters, adapter stale, disk 80 %)                       | Next business day                                               |
-| P3       | ticket webhook     | Improvement, trend or documentation gap                                                                         | Weekly review                                                   |
+| Priority | Alertmanager route | Meaning                                                                                                                                            | Response                                                        |
+| -------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| P0       | on-call + fallback | Data loss risk or the product is down (service down, `/readyz` failing, WAL not archived, public endpoint down)                                    | Acknowledge in 15 minutes, any hour                             |
+| P1       | on-call + fallback | Degraded for advocates (latency, error spike, queue lag, failed or stale backup, stale WAL, failed replication, failed restore drill, clock drift) | Acknowledge in 30 minutes; inside court-day windows treat as P0 |
+| P2       | ticket webhook     | Needs a person within a working day (cert expiry, dead letters, adapter stale, disk 80 %)                                                          | Next business day                                               |
+| P3       | ticket webhook     | Improvement, trend or documentation gap                                                                                                            | Weekly review                                                   |
 
 Court-day windows are 07:00-10:30 and 18:00-23:00 IST: thresholds are stricter and every `window=court-day` alert is
 handled as P0. Alertmanager mutes `ticket` and `info` notifications between 23:00 and 07:00 IST. It never mutes P0 or P1.

@@ -186,13 +186,13 @@ tests:
               priority: 'P1'
             exp_annotations:
               summary: 'Dead-letter queue ocr grew by more than 5 in 15 minutes'
-    # WAL archive older than 5 minutes
+    # WAL archive older than 5 minutes (fires 1 minute after the threshold, well inside 10)
   - interval: 1m
     input_series:
-      - series: 'causedeck_backup_wal_age_seconds'
+      - series: 'walg_last_archive_age_seconds'
         values: '600x10'
     alert_rule_test:
-      - eval_time: 4m
+      - eval_time: 2m
         alertname: BackupWalStale
         exp_alerts:
           - exp_labels:
@@ -200,10 +200,56 @@ tests:
               priority: 'P0'
             exp_annotations:
               summary: 'Newest archived WAL segment is older than 5 minutes'
+    # WAL report missing (sentinel -1)
+  - interval: 1m
+    input_series:
+      - series: 'walg_last_archive_age_seconds'
+        values: '-1x10'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: BackupWalStale
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P0'
+            exp_annotations:
+              summary: 'Newest archived WAL segment is older than 5 minutes'
+    # fresh WAL stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'walg_last_archive_age_seconds'
+        values: '45x10'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: BackupWalStale
+        exp_alerts: []
+    # last base backup run failed
+  - interval: 1m
+    input_series:
+      - series: 'walg_backup_last_ok'
+        values: '0x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: BackupFailed
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P0'
+            exp_annotations:
+              summary: 'The last base backup run failed'
+    # healthy backup stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'walg_backup_last_ok'
+        values: '1x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: BackupFailed
+        exp_alerts: []
     # base backup older than 26 hours
   - interval: 1m
     input_series:
-      - series: 'causedeck_backup_base_age_seconds'
+      - series: 'walg_last_backup_age_seconds'
         values: '100000x5'
     alert_rule_test:
       - eval_time: 2m
@@ -217,16 +263,30 @@ tests:
     # fresh base backup stays quiet
   - interval: 1m
     input_series:
-      - series: 'causedeck_backup_base_age_seconds'
+      - series: 'walg_last_backup_age_seconds'
         values: '80000x5'
     alert_rule_test:
       - eval_time: 2m
         alertname: BackupBaseStale
         exp_alerts: []
+    # replication failed
+  - interval: 1m
+    input_series:
+      - series: 'minio_replication_last_ok'
+        values: '0x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: BackupReplicationFailed
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'The last off-host replication run failed'
     # restore drill failed
   - interval: 1m
     input_series:
-      - series: 'causedeck_backup_restore_drill_success'
+      - series: 'restore_drill_last_ok'
         values: '0x5'
     alert_rule_test:
       - eval_time: 2m
@@ -237,6 +297,100 @@ tests:
               priority: 'P1'
             exp_annotations:
               summary: 'The last automated restore drill failed'
+    # restore drill passed stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'restore_drill_last_ok'
+        values: '1x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: RestoreDrillFailed
+        exp_alerts: []
+    # drill RTO above 4 hours
+  - interval: 1m
+    input_series:
+      - series: 'restore_drill_rto_seconds'
+        values: '15000x5'
+      - series: 'restore_drill_rpo_seconds'
+        values: '60x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: RestoreDrillTargetBreach
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'The last restore drill breached the RTO (4 h) or RPO (15 min) target'
+    # drill RPO above 15 minutes
+  - interval: 1m
+    input_series:
+      - series: 'restore_drill_rto_seconds'
+        values: '1200x5'
+      - series: 'restore_drill_rpo_seconds'
+        values: '901x5'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: RestoreDrillTargetBreach
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'The last restore drill breached the RTO (4 h) or RPO (15 min) target'
+    # drill within targets stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'restore_drill_rto_seconds'
+        values: '1200x5'
+      - series: 'restore_drill_rpo_seconds'
+        values: '60x5'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: RestoreDrillTargetBreach
+        exp_alerts: []
+    # no successful drill for more than 8 days (timestamp 0 = never)
+  - interval: 1m
+    input_series:
+      - series: 'restore_drill_last_success_timestamp'
+        values: '0x12960'
+    alert_rule_test:
+      - eval_time: 9d
+        alertname: RestoreDrillStale
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'No successful restore drill in the last 8 days'
+    # health job stopped reporting: the last run timestamp stops advancing
+  - interval: 1m
+    input_series:
+      - series: 'backup_health_last_run_timestamp'
+        values: '0+0x10'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: BackupHealthJobSilent
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'system.backup.health has not reported for 5 minutes: backups are unmonitored'
+    # health job series gone entirely
+  - interval: 1m
+    input_series:
+      - series: 'up{job="unrelated"}'
+        values: '1x10'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: BackupHealthJobSilent
+        exp_alerts:
+          - exp_labels:
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'system.backup.health has not reported for 5 minutes: backups are unmonitored'
     # clock drift above 1 s
   - interval: 1m
     input_series:

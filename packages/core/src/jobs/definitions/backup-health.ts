@@ -1,7 +1,8 @@
 // `system.backup.health` (#101): every minute, read the status reports the backup scripts publish
 // to the ops bucket (infra/scripts/backup, infra/scripts/restore), expose them as metrics and log
 // an alert-level error for each breach. Alert routing is the monitoring stack (#102): it pages on
-// these metrics and on the `backup_alert` log field. The job reads small JSON objects and touches
+// these metrics (rules in infra/monitoring/prometheus/rules/alerts.yml, group `backups`) and on the
+// `backup_alert` log field. The job reads small JSON objects and touches
 // no tenant data. Reports: status/archive.json, status/basebackup.json, status/replication.json,
 // drills/latest.json, drills/last-success.json. A missing or unreadable report counts as stale.
 import { createHash, createHmac } from 'node:crypto';
@@ -41,6 +42,18 @@ export interface BackupMetrics {
   walg_last_backup_age_seconds: number;
   restore_drill_last_success_timestamp: number;
   restore_drill_rto_seconds: number;
+  /** 1 unless the last base backup run reported failure (R9 alert input, #792). */
+  walg_backup_last_ok: number;
+  /** 1 unless the last replication run reported failure. */
+  minio_replication_last_ok: number;
+  /** 1 unless the last restore drill failed. */
+  restore_drill_last_ok: number;
+  /** RPO measured by the last drill, -1 when unknown. */
+  restore_drill_rpo_seconds: number;
+  /** Number of breaches in the latest pass: 0 when healthy. */
+  backup_health_problems: number;
+  /** Unix seconds of the latest pass; a stale value means the health job itself stopped. */
+  backup_health_last_run_timestamp: number;
 }
 
 export interface BackupHealth {
@@ -102,6 +115,12 @@ export function evaluateBackupHealth(reports: BackupReports, now: Date): BackupH
         ? 0
         : Math.floor(lastSuccess / 1000),
       restore_drill_rto_seconds: drillLastSuccess?.rtoSeconds ?? drillLatest?.rtoSeconds ?? -1,
+      walg_backup_last_ok: basebackup?.ok === false ? 0 : 1,
+      minio_replication_last_ok: replication?.ok === false ? 0 : 1,
+      restore_drill_last_ok: drillLatest?.ok === false ? 0 : 1,
+      restore_drill_rpo_seconds: drillLatest?.rpoSeconds ?? -1,
+      backup_health_problems: problems.length,
+      backup_health_last_run_timestamp: Math.floor(now.getTime() / 1000),
     },
   };
 }
@@ -212,6 +231,12 @@ function registerGauges(): void {
     'walg_last_backup_age_seconds',
     'restore_drill_last_success_timestamp',
     'restore_drill_rto_seconds',
+    'walg_backup_last_ok',
+    'minio_replication_last_ok',
+    'restore_drill_last_ok',
+    'restore_drill_rpo_seconds',
+    'backup_health_problems',
+    'backup_health_last_run_timestamp',
   ];
   for (const name of names) {
     m.createObservableGauge(name).addCallback((result) => {

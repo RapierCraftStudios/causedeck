@@ -63,6 +63,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Chamber delegation (#63): the member role and the offboarding provider through workspaces,
   // assignment audit through audit, the day and its clashes through court-day (imports `index.ts` only).
   delegation: Object.freeze(['workspaces', 'audit', 'matter-graph', 'court-day']),
+  // Client contacts (#82): the member role and settings through workspaces, links as role edges
+  // through matter-graph's `setRoleEdge` (imports `index.ts` only).
+  people: Object.freeze(['workspaces', 'matter-graph']),
   // WhatsApp number link and OTP (#678, #502 part 1): the membership check through workspaces
   'whatsapp-link': Object.freeze(['workspaces', 'audit', 'capture']),
   // Lawyer memory (#72, ADR 0044): the member's role through workspaces, the sharing change through
@@ -87,6 +90,14 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   'public-api': Object.freeze(['sources']),
   // Conflict-of-interest checks (#500, D-048): each check is audited; party rows are read directly.
   conflicts: Object.freeze(['audit']),
+  // The enquiry log (#87): the flag-gated enquiry services over the conflict check, the automation
+  // engine's `new_matter` proposals, audit events and membership roles.
+  intake: Object.freeze(['audit', 'automation', 'conflicts', 'workspaces']),
+  // Client status links (#88, ADR 0050): flag-gated authored links; prefill reads an outward draft through its index.
+  'status-links': Object.freeze(['workspaces', 'audit', 'outward']),
+  // Fees (#83, ADR 0048): the member's role through workspaces, events through audit, automation-origin
+  // agreements as `fee_entry` proposals through automation (whose handler writes the draft itself).
+  fees: Object.freeze(['audit', 'automation', 'workspaces']),
   // Cross-checked facts (#499): source agreement and confidence over listing provenance; tables only.
   facts: Object.freeze([]),
   // The review and correction queue (#518, D-049): every staff read of an item's record is audited.
@@ -165,9 +176,18 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The obligation service (#67): roles through workspaces, audit events through audit, defect
   // transitions through the matter-graph state machine (imports `index.ts` only).
   obligations: Object.freeze(['workspaces', 'audit', 'matter-graph']),
+  // Limitation tracker (#84, #940): the flag-gated engine over counsel's rule tables; roles through
+  // workspaces, audit events through audit, the confirmed rule obligation through the obligations
+  // index (`createRuleObligation`).
+  limitation: Object.freeze(['workspaces', 'audit', 'obligations']),
   // Stale-matter attention (#70): roles and the threshold through workspaces, audit events through
   // audit, date arithmetic through the obligations index.
   attention: Object.freeze(['workspaces', 'audit', 'obligations']),
+  // Proof-of-value (#86): roles through workspaces; reads its own tables.
+  pov: Object.freeze(['workspaces']),
+  // Practice insights (#85): roles and the instrument time rules through pov's index; reads the
+  // hearing, brief, obligation and proof-of-value tables directly.
+  insights: Object.freeze(['pov']),
   // A0 grid corrections (#558): roles and the owner's eval-reuse switch through workspaces.
   corrections: Object.freeze(['workspaces']),
   // Outward update drafts (#735, ADR 0045): roles through workspaces, audit events through audit,
@@ -182,6 +202,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'obligations',
     'attention',
     'ai',
+    'intake',
     'audit',
     'billing',
     'usage',
@@ -212,6 +233,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'business',
     'case-watch',
     'webhooks',
+    'status-links',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

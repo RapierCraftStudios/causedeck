@@ -12,6 +12,7 @@ import {
   FilePen,
   Hourglass,
   Inbox,
+  MessageSquarePlus,
   Landmark,
   ReceiptIndianRupee,
   Scale,
@@ -49,15 +50,21 @@ export const WORKSPACE_ROUTES = [
 
 export type WorkspaceRoute = (typeof WORKSPACE_ROUTES)[number];
 
+/** A nav destination below a workspace route: its own item, flag-gated, under `path`. */
+export type NavSubRoute = 'enquiries';
+export type NavItemId = WorkspaceRoute | NavSubRoute;
+
 export type NavGroup = 'work' | 'followup' | 'practice' | 'settings';
 
 export const NAV_GROUPS: readonly NavGroup[] = ['work', 'followup', 'practice', 'settings'];
 
 export interface NavItem {
-  id: WorkspaceRoute;
-  labelKey: `nav.${WorkspaceRoute}`;
+  id: NavItemId;
+  labelKey: `nav.${NavItemId}`;
   icon: LucideIcon;
   href: (slug: string) => string;
+  /** The route below `/w/<slug>/`; the id when omitted (`people/enquiries` for `enquiries`). */
+  path: string;
   requires?: Permission;
   flag?: FlagKey;
   group: NavGroup;
@@ -66,16 +73,18 @@ export interface NavItem {
 }
 
 function item(
-  id: WorkspaceRoute,
+  id: NavItemId,
   icon: LucideIcon,
   group: NavGroup,
-  extra: Partial<Pick<NavItem, 'requires' | 'flag' | 'badge'>> = {},
+  extra: Partial<Pick<NavItem, 'requires' | 'flag' | 'badge' | 'path'>> = {},
 ): NavItem {
+  const path = extra.path ?? id;
   return {
     id,
     labelKey: `nav.${id}`,
     icon,
-    href: (slug) => `/w/${encodeURIComponent(slug)}/${id}`,
+    href: (slug) => `/w/${encodeURIComponent(slug)}/${path}`,
+    path,
     group,
     ...extra,
   };
@@ -96,12 +105,17 @@ export const NAV_ITEMS: readonly NavItem[] = [
   item('memory', Brain, 'followup'),
   item('activity', Activity, 'followup'),
   item('people', Users, 'practice'),
+  item('enquiries', MessageSquarePlus, 'practice', {
+    path: 'people/enquiries',
+    requires: 'enquiry.read',
+    flag: 'intake.enquiry_log',
+  }),
   item('courts', Landmark, 'practice'),
   item('notices', BookOpen, 'practice'),
   item('portfolio', Briefcase, 'practice'),
   item('billing', Wallet, 'practice', { requires: 'billing.read' }),
   item('invoices', ReceiptIndianRupee, 'practice', {
-    requires: 'invoices.read',
+    requires: 'fee.read',
     flag: 'invoices.enabled',
   }),
   item('limitation', Hourglass, 'practice', {
@@ -112,7 +126,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   item('settings', Settings, 'settings', { requires: 'settings.read' }),
 ];
 
-export function getNavItem(id: WorkspaceRoute): NavItem {
+export function getNavItem(id: NavItemId): NavItem {
   const found = NAV_ITEMS.find((entry) => entry.id === id);
   if (!found) throw new Error(`Unknown nav item: ${id}`);
   return found;

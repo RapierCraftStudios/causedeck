@@ -62,6 +62,67 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A member checked new matter parties for a conflict of interest',
   },
+  // The inbound enquiry log (#87, ADR 0047). Metadata holds ids and counts only, never names or
+  // enquiry text.
+  'enquiry.logged': { security: false, description: 'A member logged an inbound enquiry' },
+  'enquiry.updated': { security: false, description: 'A member changed an inbound enquiry' },
+  'enquiry.closed': { security: false, description: 'A member closed an inbound enquiry' },
+  'enquiry.accepted': {
+    security: false,
+    description: 'A member accepted an enquiry as a matter, through a proposal',
+  },
+  'enquiry.retention_swept': {
+    security: false,
+    description: 'The retention job deleted closed enquiries past the workspace retention',
+  },
+  // Client status links (#88, ADR 0050). Metadata holds ids, language and expiry days, never the note.
+  'status_link.created': {
+    security: false,
+    description: 'An advocate created a client status link',
+  },
+  'status_link.revoked': {
+    security: false,
+    description: 'An advocate revoked a client status link',
+  },
+  'status_link.extended': {
+    security: false,
+    description: 'An advocate extended a client status link',
+  },
+  'status_link.purged': {
+    security: false,
+    description: 'The retention job cleared the payload of long-expired status links',
+  },
+  // Fees (#83, ADR 0048). Metadata holds ids, counts and enum values only, never amounts' text,
+  // notes or ledger descriptions.
+  'fee.agreement_created': { security: false, description: 'A member created a fee agreement' },
+  'fee.agreement_updated': { security: false, description: 'A member changed a fee agreement' },
+  'fee.agreement_status_changed': {
+    security: false,
+    description: 'A member activated or ended a fee agreement',
+  },
+  'fee.invoice_drafted': { security: false, description: 'A member saved a draft fee invoice' },
+  'fee.invoice_discarded': {
+    security: false,
+    description: 'A member discarded a draft fee invoice',
+  },
+  'fee.invoice_issued': { security: false, description: 'A member issued a fee invoice' },
+  'fee.gst_unreviewed_acknowledged': {
+    security: false,
+    description: 'An owner issued a fee invoice acknowledging the GST rates are unreviewed',
+  },
+  'fee.payment_recorded': {
+    security: false,
+    description: 'A member recorded a payment received against a fee invoice',
+  },
+  'fee.credit_note_issued': { security: false, description: 'A member issued a credit note' },
+  'fee.ledger_entry_recorded': {
+    security: false,
+    description: 'A member recorded an entry in a client ledger',
+  },
+  'fee.ledger_anonymised': {
+    security: false,
+    description: 'Erasure cleared the free text of a client ledger, keeping the amounts',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },
@@ -400,6 +461,16 @@ export const AUDIT_ACTIONS = {
   'attention.threshold_changed': {
     security: false,
     description: 'The workspace stale-matter threshold was changed',
+  },
+  // Limitation tracker (#84, #940). Ids and counts only, never rule text or dates.
+  'limitation.rules_imported': {
+    security: false,
+    description: 'A member imported a limitation rule table as an unreviewed draft',
+  },
+  'limitation.computed': { security: false, description: 'A limitation date was computed' },
+  'limitation.confirmed': {
+    security: false,
+    description: 'A member confirmed a limitation date as an obligation',
   },
   // Obligation service (#67). Ids and flags only, never the description.
   'obligation.created': { security: false, description: 'An obligation was created' },

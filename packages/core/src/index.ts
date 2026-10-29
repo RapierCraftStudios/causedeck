@@ -3,6 +3,8 @@ export const packageName: string = '@causedeck/core';
 
 export * from './api-keys/index.ts';
 export * from './attention/index.ts';
+export * from './pov/index.ts';
+export * from './insights/index.ts';
 export * from './audit/index.ts';
 export * from './automation/index.ts';
 export * from './business/index.ts';
@@ -24,6 +26,7 @@ export * from './matters/index.ts';
 export * from './matching/index.ts';
 export * from './memory/index.ts';
 export * from './news/index.ts';
+export * from './people/index.ts';
 export * from './network/index.ts';
 export * from './portfolio/index.ts';
 export * from './whatsapp-link/index.ts';
@@ -36,3 +39,42 @@ export * from './usage/index.ts';
 export * from './webhooks/index.ts';
 export * from './workspaces/index.ts';
 export * from './continuity/index.ts';
+// Fees (#83, ADR 0048): flag-gated services, owners and advocates only; registered in the
+// cross-tenant registry. `anonymiseClientLedger` (the erasure step, no membership check by design), `isGstUnreviewed` and `FEES_FLAG` stay on `@causedeck/core/fees`.
+export {
+  createDraftInvoice,
+  createFeeAgreement,
+  discardDraftInvoice,
+  FeesDisabledError,
+  getClientBalance,
+  getFeeAgreement,
+  getInvoice,
+  issueCreditNote,
+  issueInvoice,
+  listFeeAgreements,
+  listInvoices,
+  listLedger,
+  prepareFeeInvoice,
+  recordClientExpense,
+  recordClientReceipt,
+  recordPayment,
+  setFeeAgreementStatus,
+  updateDraftInvoice,
+  updateFeeAgreement,
+} from './fees/index.ts';
+export type { FeesActor, FeesDeps } from './fees/index.ts';
+export {
+  computeExpiry,
+  computeLimitation,
+  confirmLimitation,
+  listLimitations,
+  listRules,
+  loadRuleTable,
+  NoReviewedRuleError,
+} from './limitation/index.ts';
+export type {
+  ComputationView,
+  LimitationActor,
+  LimitationDeps,
+  RuleView,
+} from './limitation/index.ts';

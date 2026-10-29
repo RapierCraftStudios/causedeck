@@ -8,7 +8,7 @@ import {
 } from '@causedeck/ui/hooks';
 
 import { can, type FlagKey, type Role } from '../workspace-context.ts';
-import { getNavItem, isNavItemEnabled, type WorkspaceRoute } from '../nav.ts';
+import { getNavItem, isNavItemEnabled, type NavItemId, type WorkspaceRoute } from '../nav.ts';
 
 /** Dialog sections, in display order. Headings are `shortcuts.groups.<id>`. */
 export const SHORTCUT_GROUPS = ['navigation', 'actions', 'help'] as const;
@@ -43,8 +43,8 @@ export const NAV_CHORDS: Partial<Record<WorkspaceRoute, string>> = {
 };
 
 /** `g then t` for a nav item with a chord. */
-export function chordHint(navId: WorkspaceRoute): string | undefined {
-  const key = NAV_CHORDS[navId];
+export function chordHint(navId: NavItemId): string | undefined {
+  const key = (NAV_CHORDS as Partial<Record<string, string>>)[navId];
   return key === undefined ? undefined : `g then ${key}`;
 }
 

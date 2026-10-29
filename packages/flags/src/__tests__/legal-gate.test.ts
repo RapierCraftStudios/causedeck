@@ -17,7 +17,7 @@ const LEGAL_KEYS = FLAG_KEYS.filter((key) => FLAGS[key].legalGated);
 
 describe('legal-gated flags', () => {
   it('are all off on a fresh database', async () => {
-    expect(LEGAL_KEYS.length).toBe(10);
+    expect(LEGAL_KEYS.length).toBe(12);
     await withTestDb(async (tx) => {
       const { a, b } = await seed(tx);
       expect(await tx.select().from(featureFlag)).toEqual([]);

@@ -56,6 +56,11 @@ vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('@causedeck/ui/sonner', () => ({ toast }));
 vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/workspaces', () => workspaces);
+// The proof-of-value section (#86) is an async server component with its own reads; this test renders
+// the page into jsdom, which cannot render an async component.
+vi.mock('../app/(app)/w/[slug]/settings/privacy/_pov-section.tsx', () => ({
+  PovSection: () => null,
+}));
 vi.mock('../app/(app)/w/[slug]/settings/privacy/actions.ts', () => ({
   updateWorkspacePrivacyAction: vi.fn(),
   setAllowEvalReuseAction: vi.fn(),

@@ -115,6 +115,10 @@ describe('namespaced catalogs (#174)', () => {
         'courts',
         'courtsRosters',
         'emailIntake',
+        'enquiry',
+        'limitation',
+        'insights',
+        'fees',
         'error',
         'home',
         'importReview',
@@ -138,7 +142,9 @@ describe('namespaced catalogs (#174)', () => {
         'outward',
         'outcome',
         'palette',
+        'people',
         'portfolio',
+        'pov',
         'provisioning',
         'pwa',
         'reminders',
@@ -146,6 +152,7 @@ describe('namespaced catalogs (#174)', () => {
         'share',
         'shell',
         'shortcuts',
+        'statusLink',
         'theme',
         'usage',
         'voice',
@@ -255,6 +262,86 @@ describe('whatsapp link copy (#681)', () => {
       expect(catalog.whatsappLink.consent).not.toBe('');
       expect(catalog.whatsappLink.unlink).not.toBe('');
       expect(catalog.whatsappLink.linked).toContain('{number}');
+    }
+  });
+});
+
+describe('people namespace (#848)', () => {
+  it('is registered with en complete and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('people');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('people.'));
+    expect(leaves).toContain('people.list.linked');
+    expect(leaves).toContain('people.detail.log.title');
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+    }
+  });
+
+  it('has a label for every contact kind and language preference', () => {
+    expect(Object.keys(en.people.kinds).sort()).toEqual(
+      ['accounts', 'family', 'instructing', 'primary'].sort(),
+    );
+    expect(Object.keys(en.people.languages).sort()).toEqual(
+      ['en', 'hi', 'kn', 'ml', 'mr', 'ta', 'te'].sort(),
+    );
+  });
+});
+
+describe('limitation namespace (#941)', () => {
+  it('is registered with en complete, the verify label and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('limitation');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('limitation.'));
+    expect(leaves).toContain('limitation.verifyLabel');
+    expect(getPath(en, 'limitation.verifyLabel')).toBe(
+      "Computed from your counsel's rule table. Verify before relying on it.",
+    );
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+    }
+  });
+});
+
+describe('insights namespace (#85)', () => {
+  it('is registered with en complete, the empty-state copy and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('insights');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('insights.'));
+    expect(leaves).toContain('insights.empty.title');
+    expect(getPath(en, 'insights.empty.title')).toBe(
+      'Insights appear after your first few court days',
+    );
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) {
+        expect(getPath(catalog, id), id).toBeTruthy();
+        expect(getPath(catalog, id), id).not.toBe(getPath(en, id));
+      }
+    }
+  });
+});
+
+describe('fees namespace (#871)', () => {
+  it('is registered with en complete, the review wording and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('fees');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('fees.'));
+    expect(leaves).toContain('fees.gatedNotice');
+    expect(getPath(en, 'fees.gatedNotice')).toBe(
+      'Prepared for you to review and send yourself. Nothing is sent, charged or transferred from here.',
+    );
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+    }
+  });
+});
+
+describe('enquiry namespace (#874)', () => {
+  it('is registered with en complete and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('enquiry');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('enquiry.'));
+    expect(leaves).toContain('enquiry.conflict.warning');
+    expect(leaves).toContain('enquiry.form.title');
+    expect(getPath(en, 'nav.enquiries')).toBeTruthy();
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+      expect(getPath(catalog, 'nav.enquiries')).toBeTruthy();
     }
   });
 });

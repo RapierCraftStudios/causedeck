@@ -44,7 +44,8 @@
       "followup": "Follow-up",
       "practice": "Practice",
       "settings": "Settings"
-    }
+    },
+    "enquiries": "Enquiries"
   },
   "palette": {
     "title": "Command palette",
@@ -1327,7 +1328,11 @@
         "export": "Export",
         "support": "Support",
         "shell": "Workspace areas",
-        "appearance": "Appearances"
+        "appearance": "Appearances",
+        "contact": "Client contacts",
+        "enquiry": "Enquiry log",
+        "limitation": "Limitation tracker",
+        "fee": "Fees and invoices"
       },
       "actions": {
         "workspace": {
@@ -1390,7 +1395,8 @@
           "manage": "Allow and end support access"
         },
         "limitation": {
-          "read": "See limitation dates"
+          "read": "See limitation dates",
+          "write": "Compute and confirm limitation dates"
         },
         "insights": {
           "read": "See practice insights"
@@ -1403,6 +1409,18 @@
         },
         "appearance": {
           "assign": "Assign appearances to members"
+        },
+        "contact": {
+          "read": "Read client contacts",
+          "write": "Manage client contacts"
+        },
+        "enquiry": {
+          "read": "Read the enquiry log",
+          "write": "Manage the enquiry log"
+        },
+        "fee": {
+          "read": "See fee agreements, invoices and the ledger",
+          "write": "Manage fee agreements, invoices and the ledger"
         }
       },
       "settings": {
@@ -3536,6 +3554,630 @@
           "bench": "Bench"
         }
       }
+    }
+  },
+  "people": {
+    "metaTitle": "People",
+    "title": "People",
+    "description": "Phone, email and language for your clients, and the matters they are linked to.",
+    "new": {
+      "trigger": "New contact"
+    },
+    "search": {
+      "label": "Search contacts",
+      "placeholder": "Search by name, phone or email"
+    },
+    "filters": {
+      "kind": "Kind",
+      "language": "Language",
+      "all": "All",
+      "clear": "Clear filters"
+    },
+    "kinds": {
+      "primary": "Primary",
+      "instructing": "Instructing",
+      "accounts": "Accounts",
+      "family": "Family"
+    },
+    "languages": {
+      "en": "English",
+      "hi": "Hindi",
+      "ta": "Tamil",
+      "kn": "Kannada",
+      "te": "Telugu",
+      "ml": "Malayalam",
+      "mr": "Marathi"
+    },
+    "list": {
+      "label": "Client contacts",
+      "linked": "{count, plural, =0 {No linked matters} one {# linked matter} other {# linked matters}}",
+      "unlinked": "Not linked to a matter",
+      "unlinkedHint": "No matter was linked within 24 hours of adding this contact.",
+      "archived": "Archived",
+      "redacted": "Phone and email are hidden for your role",
+      "noDetails": "No phone or email",
+      "open": "Open {name}"
+    },
+    "empty": {
+      "title": "No contacts yet",
+      "body": "Add the phone, email and language of a client you already act for."
+    },
+    "filteredEmpty": {
+      "title": "No contacts match these filters",
+      "clear": "Clear filters"
+    },
+    "loading": "Loading contacts",
+    "error": {
+      "title": "Couldn't load contacts.",
+      "retry": "Retry",
+      "reference": "Reference: {digest}"
+    },
+    "offline": "You are offline. This is the last saved list; changes will not save until you reconnect.",
+    "denied": "You don't have permission to see client contacts.",
+    "notFound": "This contact does not exist or you cannot see it.",
+    "form": {
+      "titleNew": "New contact",
+      "titleEdit": "Edit contact",
+      "client": "Client name",
+      "clientHint": "The client this contact belongs to.",
+      "kind": "Kind",
+      "phone": "Phone",
+      "phoneHint": "With country code, e.g. +919876543210",
+      "email": "Email",
+      "save": "Save contact",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "needOne": "Give a phone or an email.",
+      "failed": "The contact could not be saved. Try again.",
+      "forbidden": "You cannot change client contacts.",
+      "invalid": "Check the phone (with country code) and email."
+    },
+    "language": {
+      "label": "Language for messages",
+      "hint": "Messages to this client are written in this language."
+    },
+    "detail": {
+      "back": "All contacts",
+      "details": "Details",
+      "phone": "Phone",
+      "email": "Email",
+      "language": "Language",
+      "kind": "Kind",
+      "edit": "Edit",
+      "archive": "Archive",
+      "archiveConfirm": "Archive this contact?",
+      "purge": "Archive and erase details",
+      "archivedOn": "Archived",
+      "linkedMatters": "Linked matters",
+      "noMatters": "Not linked to a matter you can see.",
+      "relation": {
+        "represents": "We represent",
+        "instructed_by": "Instructs us"
+      },
+      "log": {
+        "title": "Outward-action log",
+        "readOnly": "A read-only record of changes to this contact's details.",
+        "empty": "No changes recorded.",
+        "undone": "Undone"
+      }
+    },
+    "shortcuts": {
+      "new": "New contact",
+      "search": "Search",
+      "open": "Open contact",
+      "close": "Close"
+    }
+  },
+  "pov": {
+    "tap": {
+      "title": "How prepared did you feel?",
+      "hint": "Optional. Press 1 to 5, or S to skip.",
+      "scale": "Preparedness from 1 (not prepared) to 5 (fully prepared)",
+      "option": "{value} of 5",
+      "skip": "Skip",
+      "saved": "Thanks, saved. Tap another number to change it.",
+      "skipped": "Skipped. You can still tap a number to rate.",
+      "error": "Could not save your rating.",
+      "retry": "Try again",
+      "offline": "You are offline. Your rating is kept here and will sync.",
+      "synced": "Synced.",
+      "denied": "Viewers are not asked this.",
+      "loading": "Saving"
+    },
+    "pulse": {
+      "title": "This week",
+      "intro": "Three quick questions. Skip any week.",
+      "demand": "How mentally demanding was your work?",
+      "worry": "How much did you worry about forgetting something?",
+      "effort": "How much effort did preparing take?",
+      "low": "Low",
+      "high": "High",
+      "option": "{value} of 5",
+      "submit": "Save",
+      "dismiss": "Not now",
+      "saved": "Thanks, saved for this week.",
+      "dismissed": "Dismissed until next week.",
+      "error": "Could not save. Try again.",
+      "retry": "Try again",
+      "offline": "You are offline. Your answers will sync.",
+      "denied": "Viewers are not asked this.",
+      "loading": "Saving"
+    },
+    "test": {
+      "title": "Context test",
+      "intro": "Pick a matter you do not know well, start the clock, answer the five questions from the app and mark each right or wrong.",
+      "matter": "Matter",
+      "start": "Start the test",
+      "running": "The test is running",
+      "finished": "Finished in {seconds} seconds, {correct} of 5 right.",
+      "finish": "Finish",
+      "correct": "Right",
+      "wrong": "Wrong",
+      "elapsed": "{seconds} seconds",
+      "started": "Timer started.",
+      "stopped": "Timer stopped.",
+      "empty": "No matters to test on yet.",
+      "loading": "Starting",
+      "error": "Could not save the test. Try again.",
+      "retry": "Try again",
+      "offline": "You are offline. The test needs a connection.",
+      "denied": "Only an owner can run the context test.",
+      "again": "Run another",
+      "questions": {
+        "current_stage": "What is the current stage?",
+        "last_order": "What was the last order?",
+        "next_date": "What is the next date?",
+        "open_obligations": "What obligations are open?",
+        "key_documents": "Which are the key documents?"
+      }
+    },
+    "privacy": {
+      "title": "Proof of value",
+      "intro": "Short in-app questions measure whether CauseDeck helps you. They stay in this workspace.",
+      "toggle": "Ask me preparedness and weekly questions",
+      "toggleOn": "Prompts are on.",
+      "toggleOff": "Prompts are off. Nothing will ask you.",
+      "yours": "Your answers",
+      "none": "You have no answers yet.",
+      "rating": "Rating {rating} of 5",
+      "skipped": "Skipped",
+      "delete": "Delete",
+      "deleted": "Deleted.",
+      "pulse": "Week {week}: demand {demand}, worry {worry}, effort {effort}",
+      "download": "Download the pilot report",
+      "downloadHint": "A CSV of ids, numbers and weeks for you to keep. It is not sent anywhere.",
+      "loading": "Loading",
+      "error": "Could not load. Try again.",
+      "retry": "Try again",
+      "offline": "You are offline.",
+      "denied": "You do not have access to this."
+    }
+  },
+  "enquiry": {
+    "metaTitle": "Enquiries",
+    "title": "Enquiries",
+    "description": "People who have asked your chamber to take work, and a conflict check before you decide.",
+    "gatedNotice": "Enquiries are kept as your own record. Nothing is sent to the enquirer from here: no reply, no template, no automatic message.",
+    "loading": "Loading enquiries",
+    "offline": "You are offline. The enquiry log is read-only until you are back online.",
+    "new": {
+      "trigger": "New enquiry"
+    },
+    "empty": {
+      "title": "No enquiries yet",
+      "body": "Log an enquiry when someone asks you to take work, then check it against your matters."
+    },
+    "list": {
+      "label": "Enquiries"
+    },
+    "row": {
+      "review": "Review",
+      "close": "Close",
+      "check": "Check for conflicts"
+    },
+    "status": {
+      "logged": "Logged",
+      "checked": "Checked",
+      "accepted_as_matter": "Accepted as matter",
+      "declined": "Declined",
+      "referred": "Referred",
+      "closed": "Closed"
+    },
+    "channels": {
+      "phone": "Phone",
+      "email": "Email",
+      "walk_in": "Walk-in",
+      "referral": "Referral",
+      "web": "Web",
+      "other": "Other"
+    },
+    "conflict": {
+      "title": "Conflict check",
+      "hits": "Possible conflicts",
+      "notRun": "The conflict check has not been run.",
+      "running": "Checking your matters",
+      "count": "{count, plural, =0 {No matches found} one {# match found} other {# matches found}}",
+      "warning": "Possible conflict. Review before you proceed.",
+      "noHits": "No matches found in your matters. This is not a clearance: the decision is yours.",
+      "role": {
+        "client": "Your client on that matter",
+        "adverse": "Against your client on that matter"
+      },
+      "note": {
+        "label": "Decision note",
+        "hint": "For your own thinking. It is not saved."
+      },
+      "decision": {
+        "proceed": "Proceed",
+        "decline": "Decline",
+        "refer": "Refer"
+      }
+    },
+    "form": {
+      "title": "New enquiry",
+      "enquirer": "Enquirer",
+      "channel": "How it came in",
+      "phone": "Phone",
+      "phoneHint": "With country code, like +919876543210",
+      "email": "Email",
+      "summary": "Summary",
+      "clients": "Client names",
+      "adverse": "Adverse party names",
+      "partiesHint": "One name per line",
+      "cancel": "Cancel",
+      "save": "Save enquiry",
+      "saving": "Saving",
+      "error": {
+        "required": "Add the enquirer's name and a summary.",
+        "forbidden": "You cannot do this in this workspace.",
+        "invalid": "Check the details and try again.",
+        "conflict": "This enquiry has changed. Refresh and try again.",
+        "failed": "Could not save. Try again."
+      }
+    },
+    "outcome": {
+      "title": "Close enquiry",
+      "reason": "Reason",
+      "hint": "Optional. Nothing is sent to the enquirer.",
+      "confirm": "Close enquiry"
+    },
+    "error": {
+      "title": "Could not load the enquiries",
+      "reference": "Reference {digest}",
+      "retry": "Retry"
+    }
+  },
+  "limitation": {
+    "metaTitle": "Limitation",
+    "title": "Limitation",
+    "description": "Last dates to file, computed from your counsel's reviewed rule table.",
+    "verifyLabel": "Computed from your counsel's rule table. Verify before relying on it.",
+    "gatedNotice": "A computed date is a proposal. Nothing is filed or scheduled until you confirm it, and confirming adds an obligation to the matter.",
+    "loading": "Loading limitation dates",
+    "offline": "You are offline. Limitation dates are read-only until you are back online.",
+    "empty": {
+      "title": "No limitation dates yet",
+      "body": "Propose a date for a matter from a reviewed rule, then confirm it once you have checked it."
+    },
+    "noRules": {
+      "title": "No reviewed rule table",
+      "body": "A date is only computed from a rule your counsel has reviewed. Ask your administrator to import and review a rule table."
+    },
+    "list": {
+      "label": "Limitation computations"
+    },
+    "status": {
+      "proposed": "Proposed",
+      "confirmed": "Confirmed",
+      "superseded": "Superseded"
+    },
+    "card": {
+      "expires": "Last day to file",
+      "matter": "Matter {id}",
+      "confirm": "Confirm",
+      "details": "Show working",
+      "hideDetails": "Hide working"
+    },
+    "steps": {
+      "title": "How this date was computed",
+      "rule": "Rule {code}, version {version}",
+      "period": "Period: {value} {unit}, from {event}",
+      "start": "Clock starts on {date}",
+      "excluded": "Excluded days: {count}",
+      "expires": "Last day to file: {date}",
+      "condonable": "Delay may be condoned on application."
+    },
+    "form": {
+      "trigger": "Propose a date",
+      "title": "Propose a limitation date",
+      "matter": "Matter ID",
+      "rule": "Rule",
+      "start": "Start date",
+      "excluded": "Excluded days",
+      "submit": "Compute",
+      "cancel": "Cancel",
+      "error": {
+        "forbidden": "You cannot compute limitation dates.",
+        "invalid": "Check the matter, rule and start date.",
+        "conflict": "No reviewed rule is available for that choice.",
+        "failed": "Could not complete that. Try again."
+      }
+    },
+    "error": {
+      "title": "Could not load limitation dates",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "shortcuts": {
+      "propose": "P: propose a date",
+      "confirm": "Enter: confirm the selected proposal",
+      "close": "Esc: close"
+    }
+  },
+  "insights": {
+    "metaTitle": "Practice insights",
+    "title": "Practice insights",
+    "description": "Your own practice report, computed from this workspace only. No comparison with other lawyers.",
+    "loading": "Loading practice insights",
+    "offline": "You are offline. These are the figures computed {when}.",
+    "computedAt": "Computed {when}",
+    "scopeOwn": "Your own appearances and measures only.",
+    "scopeWorkspace": "Totals for this workspace.",
+    "shortcutsHint": "Press [ or ] to change the range, t to switch between chart and table.",
+    "empty": {
+      "title": "Insights appear after your first few court days",
+      "body": "Once hearings have passed, this page shows how many you prepared for and kept up with."
+    },
+    "error": {
+      "title": "Could not load practice insights",
+      "reference": "Reference: {digest}",
+      "retry": "Retry"
+    },
+    "range": {
+      "label": "Range",
+      "4w": "4 weeks",
+      "12w": "12 weeks",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply",
+      "window": "{from} to {to}"
+    },
+    "hero": {
+      "label": "Prepared & Kept",
+      "summary": "Prepared and kept: {percent} percent of {n} appearances. Previous period: {previous} percent.",
+      "summaryAlone": "Prepared and kept: {percent} percent of {n} appearances.",
+      "noRate": "No appearances in this range are decided yet.",
+      "pending": "{n} appearances still wait on an obligation and are not counted yet.",
+      "small": "Small sample: only {n} appearances.",
+      "trend": "Weekly Prepared & Kept rate",
+      "trendSummary": "Weekly rate: {values}.",
+      "definitionTitle": "What counts as prepared and kept",
+      "definition": "A listed appearance counts when a current brief was confirmed before the hearing, and every obligation arising from that hearing is captured, owned, and either kept or deliberately rescheduled. Appearances still waiting on an obligation are left out until decided."
+    },
+    "tile": {
+      "expand": "Show chart and data",
+      "collapse": "Hide chart and data"
+    },
+    "delta": {
+      "up": "+{value} vs baseline",
+      "down": "-{value} vs baseline",
+      "flat": "No change vs baseline",
+      "none": "No baseline yet"
+    },
+    "obligations": {
+      "title": "Obligations kept",
+      "summary": "{kept} of {due} due obligations kept; {missed} missed; {reschedules} deliberately rescheduled.",
+      "none": "No obligations fell due in this range.",
+      "due": "Due in range",
+      "kept": "Kept",
+      "missed": "Missed",
+      "missedRate": "Missed rate",
+      "captureCompleteness": "Capture completeness",
+      "captureNote": "{captured} of {total} directions from orders have an owner and a due date.",
+      "reschedules": "Deliberate reschedules",
+      "rescheduleNote": "A deliberate reschedule, with its reason, is never a miss."
+    },
+    "preparedness": {
+      "title": "Preparedness",
+      "summary": "Average {average} out of 5 across {n} ratings.",
+      "hidden": "Preparedness appears after at least 5 ratings. Ratings so far: {n}.",
+      "chartTitle": "Weekly average preparedness rating, 1 to 5",
+      "baseline": "Baseline (first week): {value}"
+    },
+    "load": {
+      "title": "Load",
+      "summary": "Demand {demand}, worry {worry}, effort {effort} (1 to 5) across {n} weekly pulses.",
+      "hidden": "Load appears after at least 5 weekly pulses. Pulses so far: {n}.",
+      "chartTitle": "Weekly load pulse averages, 1 to 5",
+      "demand": "Demand",
+      "worry": "Worry",
+      "effort": "Effort"
+    },
+    "table": {
+      "show": "Show data table",
+      "hide": "Show chart",
+      "week": "Week",
+      "n": "Answers",
+      "average": "Average",
+      "numerator": "Prepared and kept",
+      "denominator": "Appearances",
+      "rate": "Rate",
+      "none": "No data"
+    },
+    "report": {
+      "title": "Practice report",
+      "open": "Printable report",
+      "print": "Print",
+      "back": "Back to insights",
+      "definitions": "Definitions",
+      "baselineDefinition": "Baseline: ratings and pulses recorded in the workspace's first 7 days. The change is the average now minus the baseline average.",
+      "missedDefinition": "Missed: an obligation past its due date that is still open and was never deliberately rescheduled.",
+      "private": "Computed from this workspace only. It contains no data from other workspaces and is not shared anywhere."
+    }
+  },
+  "fees": {
+    "metaTitle": "Fees and invoices",
+    "title": "Fees and invoices",
+    "description": "Fee agreements, invoices and what each client owes. Records only.",
+    "gatedNotice": "Prepared for you to review and send yourself. Nothing is sent, charged or transferred from here.",
+    "ledgerNotice": "The ledger is a record. It cannot start a payment, link a bank account or move money.",
+    "gstBanner": "GST treatment not yet counsel-reviewed. Rates and treatments are placeholders; only an owner can mark an invoice final, and must acknowledge this first.",
+    "loading": "Loading fees and invoices",
+    "offline": "You are offline. Fees and invoices are read-only until you are back online.",
+    "dismiss": "Close",
+    "shortcuts": {
+      "new": "n new invoice",
+      "save": "Cmd/Ctrl+S save draft",
+      "issue": "Cmd/Ctrl+Enter mark final"
+    },
+    "agreements": {
+      "title": "Fee agreements",
+      "label": "Fee agreements",
+      "empty": {
+        "title": "No fee agreements yet",
+        "body": "Record the fee terms agreed with a client for a matter. An agreement is a draft until you activate it."
+      }
+    },
+    "invoices": {
+      "title": "Invoices",
+      "label": "Invoices",
+      "new": "New invoice",
+      "open": "Open",
+      "draftNumber": "Draft",
+      "matter": "Matter {id}",
+      "empty": {
+        "title": "No invoices yet",
+        "body": "Prepare an invoice for a matter. It stays a draft until you mark it final."
+      }
+    },
+    "status": {
+      "draft": "Draft",
+      "issued": "Final",
+      "paid": "Paid",
+      "void": "Credited"
+    },
+    "agreementStatus": {
+      "draft": "Proposed",
+      "active": "Active",
+      "ended": "Ended"
+    },
+    "basis": {
+      "fixed": "Fixed fee",
+      "hourly": "Hourly",
+      "retainer": "Retainer",
+      "per_appearance": "Per appearance"
+    },
+    "gst": {
+      "forward_charge": "Forward charge",
+      "reverse_charge": "Reverse charge (RCM)",
+      "exempt": "Exempt",
+      "nil_rated": "Nil rated",
+      "out_of_scope": "Out of scope",
+      "pure_agent": "Pure agent"
+    },
+    "agreement": {
+      "amount": "Amount",
+      "starts": "Starts",
+      "ends": "Ends",
+      "matter": "Matter {id}",
+      "activate": "Activate",
+      "end": "End agreement",
+      "proposedNote": "A proposal: nothing is agreed until you activate it."
+    },
+    "agreementForm": {
+      "trigger": "New fee agreement",
+      "title": "New fee agreement",
+      "matter": "Matter ID",
+      "person": "Client ID",
+      "basis": "Basis",
+      "amount": "Amount (rupees)",
+      "gst": "GST treatment",
+      "starts": "Starts on",
+      "ends": "Ends on",
+      "notes": "Notes",
+      "submit": "Save agreement",
+      "cancel": "Cancel"
+    },
+    "editor": {
+      "titleNew": "New invoice",
+      "titleDraft": "Draft invoice",
+      "matter": "Matter ID",
+      "person": "Client ID",
+      "agreement": "Fee agreement ID",
+      "placeOfSupply": "Place of supply (state code)",
+      "recipientGstin": "Client GSTIN",
+      "dueDate": "Due date",
+      "supplierName": "Your name or chambers",
+      "supplierState": "Your state code",
+      "supplierGstin": "Your GSTIN",
+      "lines": "Lines",
+      "description": "Description",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price (rupees)",
+      "treatment": "GST treatment",
+      "addLine": "Add line",
+      "removeLine": "Remove line",
+      "preview": "Preview",
+      "save": "Save draft",
+      "issue": "Mark final",
+      "discard": "Discard draft",
+      "acknowledge": "I acknowledge the GST rates and treatments here are unreviewed placeholders.",
+      "ownerOnly": "Only an owner can mark an invoice final while GST is unreviewed.",
+      "saved": "Draft saved.",
+      "final": "This invoice is final. A correction is a credit note, not an edit."
+    },
+    "preview": {
+      "title": "Invoice preview",
+      "empty": "Press Preview to price the lines.",
+      "supplier": "From",
+      "number": "Invoice number",
+      "billTo": "Client {id}",
+      "taxable": "Taxable value",
+      "cgst": "CGST",
+      "sgst": "SGST",
+      "igst": "IGST",
+      "rcm": "Tax payable by you under reverse charge",
+      "total": "Total",
+      "line": "{quantity} x {price}",
+      "tax": "Tax"
+    },
+    "ledger": {
+      "title": "Client ledger",
+      "label": "Ledger entries",
+      "empty": {
+        "title": "No ledger entries",
+        "body": "Issuing an invoice, recording a receipt or an expense adds a line."
+      },
+      "date": "Date",
+      "kind": "Type",
+      "description": "Description",
+      "debit": "Debit",
+      "credit": "Credit",
+      "balance": "Balance",
+      "owes": "The client owes {amount}",
+      "inCredit": "The client is in credit by {amount}",
+      "settled": "Nothing is owed",
+      "kinds": {
+        "fee": "Fee",
+        "disbursement": "Expense",
+        "receipt": "Receipt",
+        "refund": "Refund",
+        "adjustment": "Adjustment"
+      }
+    },
+    "error": {
+      "title": "Could not load fees and invoices",
+      "reference": "Reference {digest}",
+      "retry": "Retry",
+      "forbidden": "You cannot do that.",
+      "invalid": "Check the details and try again.",
+      "conflict": "That is no longer possible, for example the invoice is already final.",
+      "failed": "Something went wrong. Try again."
+    },
+    "notFound": {
+      "title": "Invoice not found",
+      "body": "It may have been discarded."
     }
   },
   "matterTimeline": {
@@ -6061,6 +6703,76 @@
         "notFound": "This brief or link no longer exists.",
         "generic": "Something went wrong. Try again."
       }
+    }
+  },
+  "statusLink": {
+    "metaTitle": "Case status",
+    "page": {
+      "unavailable": "This link is no longer available",
+      "unavailableBody": "Ask your advocate for a new link.",
+      "preparedBy": "Prepared by {name}",
+      "preparedByUnknown": "Prepared by your advocate",
+      "nextDate": "Next date: {date}",
+      "expires": "This link expires on {date}",
+      "loading": "Loading your status"
+    },
+    "sheet": {
+      "open": "Share a status link",
+      "title": "Client status link",
+      "description": "Write the note your client will see. CauseDeck does not send it.",
+      "headline": "Headline",
+      "note": "Note",
+      "includeNextDate": "Include the next date",
+      "nextDate": "Next date",
+      "contact": "Client contact",
+      "contactPlaceholder": "Choose a contact",
+      "expiry": "Expires after",
+      "expiryDays": "{days, plural, one {# day} other {# days}}",
+      "language": "Language",
+      "prefill": "Start from an update draft",
+      "preview": "Preview",
+      "previewHint": "This is exactly what your client will see.",
+      "create": "Create link",
+      "creating": "Creating",
+      "cancel": "Cancel",
+      "close": "Close",
+      "shortcut": "Ctrl or Cmd + Enter creates the link; Esc closes.",
+      "loading": "Loading",
+      "empty": "No client contacts yet. Add a client contact to this matter's people first.",
+      "error": "We could not complete that.",
+      "retry": "Try again",
+      "offline": "You are offline. Creating a link needs a connection.",
+      "denied": "Only an advocate or an owner can create status links."
+    },
+    "created": {
+      "title": "Your link is ready",
+      "once": "This is the only time the full link is shown.",
+      "shareYourself": "Share it yourself. CauseDeck does not send it.",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "url": "Status link"
+    },
+    "list": {
+      "title": "Status links",
+      "empty": "No links yet.",
+      "loading": "Loading links",
+      "viewed": "{count, plural, =0 {Not viewed} one {Viewed # time} other {Viewed # times}}",
+      "expires": "Expires {date}",
+      "revoke": "Revoke",
+      "revoked": "Revoked",
+      "expired": "Expired",
+      "active": "Active",
+      "error": "We could not load the links.",
+      "retry": "Try again"
+    },
+    "gated": {
+      "title": "Status links are not on yet",
+      "body": "This feature is switched off for your workspace until counsel clears its wording."
+    },
+    "languages": {
+      "en": "English",
+      "ta": "Tamil",
+      "kn": "Kannada"
     }
   },
   "offline": {

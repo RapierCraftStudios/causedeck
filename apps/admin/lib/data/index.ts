@@ -12,6 +12,7 @@ import {
   type CostBreach,
   type PlanReport,
 } from '@causedeck/core/business';
+import { listRules, type LimitationDeps, type RuleView } from '@causedeck/core/limitation';
 import {
   findMigrationOwner,
   getMigrationProgress,
@@ -388,6 +389,53 @@ export async function migrationRunReport(
     'migrations.report',
     workspaceId,
     (deps, actor) => getMigrationReport(deps, actor, { runId }).catch(() => null),
+    db,
+  );
+}
+
+export type { RuleView };
+
+/**
+ * Run `fn` as the owner of `workspaceId` for the limitation rules console (#942), after recording
+ * `staff.read` (actor kind `staff`, purpose and capability only). `null` when the workspace has no
+ * active owner. Core keeps every read and write to the workspace and checks the legal-gated
+ * `limitation.enabled` flag; no matter content is reachable from here.
+ */
+export function asLimitationOwner<T>(
+  staff: StaffActor,
+  purpose: string,
+  workspaceId: string,
+  fn: (deps: LimitationDeps, actor: { workspaceId: string; userId: string }) => Promise<T>,
+  db?: Database,
+): Promise<T | null> {
+  return staffCall(
+    staff,
+    { purpose, capability: 'limitation-rules', functions: [] },
+    async (handle) => {
+      const userId = await findMigrationOwner(
+        { db: handle, events: { emit: () => undefined } },
+        workspaceId,
+      );
+      return userId === null ? null : fn({ db: handle }, { workspaceId, userId });
+    },
+    db,
+  );
+}
+
+/**
+ * A workspace's rules with their review status (`draft` until counsel signs a rule off): codes,
+ * versions and periods only. `null` when the workspace has no owner to read them as.
+ */
+export function workspaceLimitationRules(
+  staff: StaffActor,
+  workspaceId: string,
+  db?: Database,
+): Promise<RuleView[] | null> {
+  return asLimitationOwner(
+    staff,
+    'limitation_rules.list',
+    workspaceId,
+    (deps, actor) => listRules(deps, actor),
     db,
   );
 }

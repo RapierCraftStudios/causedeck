@@ -272,6 +272,8 @@ export const courtExporter = tablesExporter('court', [
   ws('brief_state', { userColumn: 'updated_by' }),
   // Brief shares (#507): the sanitised snapshot the workspace chose to share, by creator.
   ws('brief_share', { userColumn: 'created_by' }),
+  ws('status_link', { exclude: ['token_hash'], userColumn: 'created_by' }),
+  ws('status_link_access'),
 ]);
 
 // Matters, their proceedings, links (#346) and state history (#363), their docket: listings, hearings, appearances,
@@ -296,6 +298,27 @@ export const mattersExporter = tablesExporter('matters', [
   ws('outward_share_log'),
   ws('task'),
   ws('person'),
+  // Client contacts (#82): phone, email and language of a client; personal data the workspace owns.
+  ws('client_contact'),
+  // Inbound enquiry log (#87): enquirer details and conflict-check hits; personal data the workspace owns.
+  ws('enquiry'),
+  ws('enquiry_party'),
+  ws('conflict_check_result'),
+  // Fees (#83): the workspace's own fee agreements, invoices, payments and client ledger lines.
+  ws('fee_agreement'),
+  ws('fee_invoice'),
+  ws('fee_invoice_line'),
+  ws('payment'),
+  ws('client_ledger_entry'),
+  // Proof-of-value (#86): the member's own ratings, pulses and context tests (ids, numbers, one short note).
+  ws('preparedness_rating'),
+  ws('load_pulse'),
+  ws('context_test_result'),
+  ws('pov_prefs', { keys: ['member_id'] }),
+  // Limitation tracker (#84): the workspace's own rules and its computations. Platform rules
+  // (null workspace_id) are public reference data, not the workspace's, so they are never matched.
+  ws('limitation_rule'),
+  ws('limitation_computation'),
   ws('organisation'),
   ws('role_edge'),
   ws('document', { exclude: ['storage_key'] }),

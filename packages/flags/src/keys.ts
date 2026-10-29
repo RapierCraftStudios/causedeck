@@ -125,11 +125,23 @@ export const FLAGS = {
     true,
     [500, 486],
   ),
+  'intake.enquiry_log': flag(
+    'intake.enquiry_log',
+    'Inbound enquiry log with a conflict check and no auto-reply (counsel sign-off required).',
+    true,
+    [87, 117],
+  ),
   bench_facts: flag(
     'bench_facts',
     "User-facing factual bench facts (a matter's bench card); internal bench data is never behind this flag (D-050).",
     true,
     [521, 118],
+  ),
+  'status_links.enabled': flag(
+    'status_links.enabled',
+    'Advocate-authored expiring client status links (counsel wording and Rule 36 review required).',
+    true,
+    [88, 117],
   ),
 } as const;
 

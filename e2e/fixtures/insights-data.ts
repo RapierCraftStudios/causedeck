@@ -1,14 +1,15 @@
 // Practice insights e2e data (#966, follow-up of #85). The dashboard is behind the `insights.enabled`
 // flag (off by default), so a spec turns it on and seeds past hearings on the matters workspace
 // (`chennai-solo`): the owner argued all six, the junior assisted on two. Dates are relative to now
-// (the server uses its real clock), so the 4 and 12 week ranges always hold what they should:
+// (the server uses its real clock), so the 4 and 12 week ranges always hold what they should. The
+// owner reads workspace totals, which count every appearance row, the junior's too:
 //
 //   offset (days)   -2   -9   -16   -40   -47   -54
 //   brief confirmed yes  yes  yes   NO    yes   yes
 //
-// 12 weeks: owner 5 of 6 kept (83%), no previous period. 4 weeks: 3 of 3 (100%) against 2 of 3
-// (67%) in the period before. The junior appeared on the -9 (kept) and -40 (not kept) days: 1 of 2
-// (50%). Five of the six get a preparedness rating, so the preparedness tile shows (it needs 5).
+// The junior appeared on the -9 (kept) and -40 (not kept) days: 1 of 2 (50%). Five of the six get
+// a preparedness rating, so the preparedness tile shows (it needs 5). INSIGHTS_EXPECTED derives
+// every figure from this table.
 // Rows go straight into the worker database as the superuser, as the other product helpers do. No
 // Playwright imports.
 import { randomUUID } from 'node:crypto';
@@ -44,14 +45,68 @@ export const INSIGHTS_HEARINGS: readonly InsightsHearing[] = [
   { offset: -54, briefed: true, rating: null, junior: false },
 ];
 
-/** What the seeded data reads as, per viewer and range (the specs assert these figures). */
+/** One range of the picker, as day offsets from today (inclusive; the server's window ends today). */
+interface Span {
+  from: number;
+  to: number;
+}
+
+/** 4 weeks is 28 days ending today; 12 weeks is 84; the previous period is the span just before. */
+const SPAN_4W: Span = { from: -27, to: 0 };
+const SPAN_12W: Span = { from: -83, to: 0 };
+const SPAN_PREVIOUS_4W: Span = { from: -55, to: -28 };
+
+/**
+ * The workspace totals of a span, by the core rule: every appearance row counts (the owner's and
+ * the junior's, so a hearing the junior assisted at is two appearances), and one is kept when a
+ * current brief was confirmed before the hearing (no obligations are seeded).
+ */
+function reading(span: Span, own: 'owner' | 'junior' | 'workspace') {
+  let appearances = 0;
+  let kept = 0;
+  for (const h of INSIGHTS_HEARINGS) {
+    if (h.offset < span.from || h.offset > span.to) continue;
+    const here =
+      own === 'workspace' ? 1 + Number(h.junior) : own === 'junior' ? Number(h.junior) : 1;
+    appearances += here;
+    if (h.briefed) kept += here;
+  }
+  const percent = appearances === 0 ? 0 : Math.round((kept / appearances) * 100);
+  return { appearances, kept, percent, text: `${String(percent)}%` };
+}
+
+const workspace12w = reading(SPAN_12W, 'workspace');
+const workspace4w = reading(SPAN_4W, 'workspace');
+const workspacePrevious = reading(SPAN_PREVIOUS_4W, 'workspace');
+const junior12w = reading(SPAN_12W, 'junior');
+const ratings = INSIGHTS_HEARINGS.flatMap((h) => (h.rating === null ? [] : [h.rating]));
+
+/**
+ * What the seeded data reads as, per viewer and range (the specs assert these figures). With the
+ * table above: workspace 12 weeks 6 of 8 (75%); 4 weeks 4 of 4 (100%) against 2 of 4 (50%) before;
+ * the junior 1 of 2 (50%). The owner sees workspace totals, so the junior's appearances count.
+ */
 export const INSIGHTS_EXPECTED = {
-  owner12w: { percent: '83%', appearances: 6, kept: 5 },
-  owner4w: { percent: '100%', appearances: 3, previousPercent: '67%' },
-  junior12w: { percent: '50%', appearances: 2 },
-  /** The five ratings 4, 4, 5, 3, 4. */
-  preparednessAverage: '4.0',
-  preparednessRatings: 5,
+  owner12w: {
+    percent: workspace12w.text,
+    percentNumber: workspace12w.percent,
+    appearances: workspace12w.appearances,
+    kept: workspace12w.kept,
+  },
+  owner4w: {
+    percent: workspace4w.text,
+    percentNumber: workspace4w.percent,
+    appearances: workspace4w.appearances,
+    previousPercentNumber: workspacePrevious.percent,
+  },
+  junior12w: {
+    percent: junior12w.text,
+    percentNumber: junior12w.percent,
+    appearances: junior12w.appearances,
+  },
+  /** The ratings 4, 4, 5, 3, 4: all five, since the rating is the owner's own. */
+  preparednessAverage: (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1),
+  preparednessRatings: ratings.length,
 } as const;
 
 async function withSql<T>(database: string, fn: (sql: postgres.Sql) => Promise<T>): Promise<T> {

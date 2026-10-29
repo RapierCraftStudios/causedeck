@@ -28,7 +28,7 @@ test.describe('practice insights', () => {
       ).toBeVisible();
       await expect(heroRate(page)).toHaveText(E.owner12w.percent);
       await expect(route(page)).toContainText(
-        `Prepared and kept: 83 percent of ${String(E.owner12w.appearances)} appearances.`,
+        `Prepared and kept: ${String(E.owner12w.percentNumber)} percent of ${String(E.owner12w.appearances)} appearances.`,
       );
       await expect(route(page)).toContainText('Totals for this workspace.');
       await expect(route(page).getByRole('link', { name: '12 weeks' })).toHaveAttribute(
@@ -59,8 +59,8 @@ test.describe('practice insights', () => {
     await expect(page).toHaveURL(/[?&]range=4w\b/);
     await expect(heroRate(page)).toHaveText(E.owner4w.percent);
     await expect(route(page)).toContainText(
-      `Prepared and kept: 100 percent of ${String(E.owner4w.appearances)} appearances. ` +
-        `Previous period: 67 percent.`,
+      `Prepared and kept: ${String(E.owner4w.percentNumber)} percent of ${String(E.owner4w.appearances)} appearances. ` +
+        `Previous period: ${String(E.owner4w.previousPercentNumber)} percent.`,
     );
     await expect(route(page).getByRole('link', { name: '4 weeks' })).toHaveAttribute(
       'aria-current',
@@ -124,7 +124,7 @@ test.describe('practice insights', () => {
       await expect(route(page)).not.toContainText('Totals for this workspace.');
       await expect(heroRate(page)).toHaveText(E.junior12w.percent);
       await expect(route(page)).toContainText(
-        `Prepared and kept: 50 percent of ${String(E.junior12w.appearances)} appearances.`,
+        `Prepared and kept: ${String(E.junior12w.percentNumber)} percent of ${String(E.junior12w.appearances)} appearances.`,
       );
       await expect(route(page)).toContainText('Small sample: only 2 appearances.');
       // The owner's five ratings are not the junior's.
@@ -137,7 +137,7 @@ test.describe('practice insights', () => {
   test('shows the empty state before any court day', async ({ page, asUser, db }) => {
     await openInsights(page, asUser, db.name, { seed: false });
     await expect(
-      route(page).getByRole('heading', { name: 'Insights appear after your first few court days' }),
+      route(page).getByText('Insights appear after your first few court days', { exact: true }),
     ).toBeVisible();
     await expect(heroRate(page)).toHaveCount(0);
   });

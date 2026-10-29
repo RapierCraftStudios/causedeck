@@ -1333,6 +1333,7 @@ export type Messages = {
         contact: string;
         enquiry: string;
         limitation: string;
+        fee: string;
       };
       actions: {
         workspace: {
@@ -1415,6 +1416,10 @@ export type Messages = {
           write: string;
         };
         enquiry: {
+          read: string;
+          write: string;
+        };
+        fee: {
           read: string;
           write: string;
         };
@@ -3756,6 +3761,73 @@ export type Messages = {
       title: string;
       reference: string;
       retry: string;
+    };
+  };
+  limitation: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    verifyLabel: string;
+    gatedNotice: string;
+    loading: string;
+    offline: string;
+    empty: {
+      title: string;
+      body: string;
+    };
+    noRules: {
+      title: string;
+      body: string;
+    };
+    list: {
+      label: string;
+    };
+    status: {
+      proposed: string;
+      confirmed: string;
+      superseded: string;
+    };
+    card: {
+      expires: string;
+      matter: string;
+      confirm: string;
+      details: string;
+      hideDetails: string;
+    };
+    steps: {
+      title: string;
+      rule: string;
+      period: string;
+      start: string;
+      excluded: string;
+      expires: string;
+      condonable: string;
+    };
+    form: {
+      trigger: string;
+      title: string;
+      matter: string;
+      rule: string;
+      start: string;
+      excluded: string;
+      submit: string;
+      cancel: string;
+      error: {
+        forbidden: string;
+        invalid: string;
+        conflict: string;
+        failed: string;
+      };
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    shortcuts: {
+      propose: string;
+      confirm: string;
+      close: string;
     };
   };
   matterTimeline: {

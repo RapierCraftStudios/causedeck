@@ -4520,6 +4520,139 @@ const CASES: Record<string, Case> = {
   listLimitations: async (f) => {
     await expectDenied(core.listLimitations(limitationDeps(f), bActsOnA(f)));
   },
+  // Fees (#83): the flag is on; B claiming A's workspace is refused, and B in its own workspace
+  // with A's ids finds nothing; A's fee tables are unchanged.
+  createFeeAgreement: async (f) =>
+    feesDenied(f, (d, who) => core.createFeeAgreement(d, who, feeAgreementInput(f))),
+  updateFeeAgreement: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.updateFeeAgreement(d, who, { agreementId: aFeeIds(f).agreementId, notes: 'x' }),
+      true,
+    ),
+  setFeeAgreementStatus: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.setFeeAgreementStatus(d, who, {
+          agreementId: aFeeIds(f).agreementId,
+          status: 'active',
+        }),
+      true,
+    ),
+  getFeeAgreement: async (f) =>
+    feesDenied(
+      f,
+      (d, who) => core.getFeeAgreement(d, who, { agreementId: aFeeIds(f).agreementId }),
+      true,
+    ),
+  listFeeAgreements: async (f) => {
+    await feesDenied(f, (d, who) => core.listFeeAgreements(d, who));
+    const own = await core.listFeeAgreements(feesDeps(f), asBInB(f));
+    expect(own.filter((r) => r.workspaceId === f.a.id)).toEqual([]);
+  },
+  prepareFeeInvoice: async (f) =>
+    feesDenied(f, (d, who) =>
+      core.prepareFeeInvoice(d, who, { invoice: feeInvoiceInput(f), supplier: FEE_SUPPLIER }),
+    ),
+  createDraftInvoice: async (f) =>
+    feesDenied(f, (d, who) =>
+      core.createDraftInvoice(d, who, { invoice: feeInvoiceInput(f), supplier: FEE_SUPPLIER }),
+    ),
+  updateDraftInvoice: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.updateDraftInvoice(d, who, {
+          invoiceId: aFeeIds(f).invoiceId,
+          invoice: feeInvoiceInput(f),
+          supplier: FEE_SUPPLIER,
+        }),
+      true,
+    ),
+  discardDraftInvoice: async (f) =>
+    feesDenied(
+      f,
+      (d, who) => core.discardDraftInvoice(d, who, { invoiceId: aFeeIds(f).invoiceId }),
+      true,
+    ),
+  issueInvoice: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.issueInvoice(d, who, { invoiceId: aFeeIds(f).invoiceId, supplier: FEE_SUPPLIER }),
+      true,
+    ),
+  recordPayment: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.recordPayment(d, who, {
+          invoiceId: aFeeIds(f).invoiceId,
+          amountPaise: 100,
+          method: 'upi',
+          receivedOn: '2026-11-03',
+        }),
+      true,
+    ),
+  issueCreditNote: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.issueCreditNote(d, who, {
+          invoiceId: aFeeIds(f).invoiceId,
+          amountPaise: 1,
+          reason: 'x',
+          occurredOn: '2026-11-03',
+        }),
+      true,
+    ),
+  getInvoice: async (f) =>
+    feesDenied(f, (d, who) => core.getInvoice(d, who, { invoiceId: aFeeIds(f).invoiceId }), true),
+  listInvoices: async (f) => {
+    await feesDenied(f, (d, who) => core.listInvoices(d, who));
+    const own = await core.listInvoices(feesDeps(f), asBInB(f));
+    expect(own.filter((r) => r.workspaceId === f.a.id)).toEqual([]);
+  },
+  recordClientExpense: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.recordClientExpense(d, who, {
+          personId: aFeeIds(f).personId,
+          amountPaise: 100,
+          description: 'x',
+          occurredOn: '2026-11-03',
+        }),
+      true,
+    ),
+  recordClientReceipt: async (f) =>
+    feesDenied(
+      f,
+      (d, who) =>
+        core.recordClientReceipt(d, who, {
+          personId: aFeeIds(f).personId,
+          amountPaise: 100,
+
+          receivedOn: '2026-11-03',
+        }),
+      true,
+    ),
+  listLedger: async (f) => {
+    await feesDenied(f, (d, who) => core.listLedger(d, who, { personId: aFeeIds(f).personId }));
+    expect(
+      await core.listLedger(feesDeps(f), asBInB(f), { personId: aFeeIds(f).personId }),
+    ).toEqual([]);
+  },
+  getClientBalance: async (f) => {
+    await feesDenied(f, (d, who) =>
+      core.getClientBalance(d, who, { personId: aFeeIds(f).personId }),
+    );
+    expect(
+      await core.getClientBalance(feesDeps(f), asBInB(f), { personId: aFeeIds(f).personId }),
+    ).toBe(0);
+  },
 };
 
 const limitationDeps = (f: Fixture) => ({
@@ -4531,6 +4664,62 @@ const aLimitation = (f: Fixture) =>
     await s.select().from(schema.limitationRule),
     await s.select().from(schema.limitationComputation),
   ]);
+
+const feesDeps = (f: Fixture) => ({ db: f.tx, flagEnabled: () => Promise.resolve(true) });
+const FEE_SUPPLIER = { name: 'Chambers', stateCode: '27', gstin: '27ABCDE1234F1Z5' };
+const aFeeIds = (f: Fixture) => ({
+  agreementId: String(f.a.rows.fee_agreement?.id),
+  invoiceId: String(f.a.rows.fee_invoice?.id),
+  matterId: String(f.a.rows.fee_agreement?.['matterId']),
+  personId: String(f.a.rows.fee_agreement?.['personId']),
+});
+const feeAgreementInput = (f: Fixture) => ({
+  matterId: aFeeIds(f).matterId,
+  personId: aFeeIds(f).personId,
+  basis: 'fixed',
+  amountPaise: 500_000,
+  gstTreatment: 'forward_charge',
+  startsOn: '2026-11-01',
+});
+const feeInvoiceInput = (f: Fixture) => ({
+  matterId: aFeeIds(f).matterId,
+  personId: aFeeIds(f).personId,
+  placeOfSupplyStateCode: '27',
+  lines: [
+    {
+      description: 'Drafting',
+      quantity: 1,
+      unitPricePaise: 100_000,
+      amountPaise: 100_000,
+      gstTreatment: 'forward_charge',
+    },
+  ],
+});
+const aFees = (f: Fixture) =>
+  inWorkspace(f.tx, f.a.id, async (s) => [
+    await s.select().from(schema.feeAgreement),
+    await s.select().from(schema.feeInvoice),
+    await s.select().from(schema.feeInvoiceLine),
+    await s.select().from(schema.payment),
+    await s.select().from(schema.clientLedgerEntry),
+  ]);
+/**
+ * B claiming A's workspace is refused (NOT_FOUND or FORBIDDEN); with `ownScope`, B in its own
+ * workspace using A's ids is refused too. A's fee tables are unchanged either way.
+ */
+async function feesDenied(
+  f: Fixture,
+  call: (
+    deps: ReturnType<typeof feesDeps>,
+    who: { userId: string; workspaceId: string },
+  ) => Promise<unknown>,
+  ownScope = false,
+): Promise<void> {
+  const before = await aFees(f);
+  await expectDenied(call(feesDeps(f), bActsOnA(f)));
+  if (ownScope) await expectDenied(call(feesDeps(f), asBInB(f)));
+  expect(await aFees(f)).toEqual(before);
+}
 
 const registered = Object.entries(SERVICE_TESTS)
   .filter(([, entry]) => entry.test === THIS_FILE)

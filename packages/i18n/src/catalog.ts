@@ -29,6 +29,7 @@ export const NAMESPACES = [
   'matters',
   'people',
   'enquiry',
+  'limitation',
   'matter-timeline',
   'drafting-templates',
   'drafting',

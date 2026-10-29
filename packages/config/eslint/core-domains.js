@@ -95,6 +95,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   intake: Object.freeze(['audit', 'automation', 'conflicts', 'workspaces']),
   // Client status links (#88, ADR 0050): flag-gated authored links; prefill reads an outward draft through its index.
   'status-links': Object.freeze(['workspaces', 'audit', 'outward']),
+  // Fees (#83, ADR 0048): the member's role through workspaces, events through audit, automation-origin
+  // agreements as `fee_entry` proposals through automation (whose handler writes the draft itself).
+  fees: Object.freeze(['audit', 'automation', 'workspaces']),
   // Cross-checked facts (#499): source agreement and confidence over listing provenance; tables only.
   facts: Object.freeze([]),
   // The review and correction queue (#518, D-049): every staff read of an item's record is audited.

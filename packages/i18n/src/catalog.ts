@@ -31,6 +31,7 @@ export const NAMESPACES = [
   'pov',
   'enquiry',
   'limitation',
+  'insights',
   'fees',
   'matter-timeline',
   'drafting-templates',

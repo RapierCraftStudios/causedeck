@@ -75,6 +75,14 @@ export const DRAFTS_ROUTE_BUDGET_BYTES = ROUTE_CHUNK_BUDGET_BYTES;
 export const DRAFTS_ROUTE_MANIFEST =
   'server/app/(app)/w/[slug]/drafts/[id]/page_client-reference-manifest.js';
 
+/**
+ * The practice insights route (#966, #85): same 40 KB as the Court-Day Board. The charts are inline
+ * SVG (no chart library), so the route's initial JS beyond shared code is the report components.
+ */
+export const INSIGHTS_ROUTE_BUDGET_BYTES = ROUTE_CHUNK_BUDGET_BYTES;
+export const INSIGHTS_ROUTE_MANIFEST =
+  'server/app/(app)/w/[slug]/insights/page_client-reference-manifest.js';
+
 /** Unique `.js` chunk paths (relative to `.next/`) the home route loads initially. */
 export function initialChunks(buildManifest, clientReferenceManifest) {
   const files = [
@@ -182,6 +190,7 @@ function main() {
   const timelineChunks = chunksOf(TIMELINE_ROUTE_MANIFEST);
   const workspaceChunks = chunksOf(MATTER_WORKSPACE_MANIFEST);
   const draftsChunks = chunksOf(DRAFTS_ROUTE_MANIFEST);
+  const insightsChunks = chunksOf(INSIGHTS_ROUTE_MANIFEST);
   const gzipBytes = {};
   for (const file of new Set([
     ...homeChunks,
@@ -191,6 +200,7 @@ function main() {
     ...timelineChunks,
     ...workspaceChunks,
     ...draftsChunks,
+    ...insightsChunks,
   ])) {
     gzipBytes[file] = gzipSync(readFileSync(path.join(nextDir, file))).length;
   }
@@ -243,6 +253,13 @@ function main() {
   console.log(`\nDrafting studio route ${DRAFTS_ROUTE_MANIFEST}, chunks beyond shared code:`);
   for (const file of drafts.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
   console.log(`${kb(drafts.total).padStart(10)}  route delta (budget ${kb(drafts.budget)} gzip)`);
+
+  const insights = shellDelta(sharedChunks, insightsChunks, gzipBytes, INSIGHTS_ROUTE_BUDGET_BYTES);
+  console.log(`\nPractice insights route ${INSIGHTS_ROUTE_MANIFEST}, chunks beyond shared code:`);
+  for (const file of insights.files) console.log(`${kb(gzipBytes[file]).padStart(10)}  ${file}`);
+  console.log(
+    `${kb(insights.total).padStart(10)}  route delta (budget ${kb(insights.budget)} gzip)`,
+  );
 
   const readCatalog = (locale) =>
     JSON.parse(readFileSync(path.join(appDir, GENERATED_MESSAGES, `${locale}.json`), 'utf8'));
@@ -300,6 +317,12 @@ function main() {
   if (!drafts.ok) {
     console.error(
       `Drafting studio route ${DRAFTS_ROUTE_MANIFEST} adds more initial JS than its budget.`,
+    );
+    failed = true;
+  }
+  if (!insights.ok) {
+    console.error(
+      `Practice insights route ${INSIGHTS_ROUTE_MANIFEST} adds more initial JS than its budget.`,
     );
     failed = true;
   }

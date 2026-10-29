@@ -12,7 +12,7 @@ export const CLERK_WORKSPACE = 'bengaluru-chamber';
 
 /**
  * Placeholder routes an owner sees with flags off (apps/web/lib/nav.ts `WORKSPACE_ROUTES`, minus
- * the flag-gated `invoices` and `limitation`, and `billing` and `activity`, real pages since #256
+ * the flag-gated `invoices`, `limitation` and `insights`, and `billing` and `activity`, real pages since #256
  * and #232 with their own specs in tests/billing and tests/activity, and `courts`, a real page since
  * #399 with its own states in tests/courts, #425, and `inbox`, a real page since #48 with its own
  * specs in tests/inbox, and `drafts`, a real page since #736 with its own specs in
@@ -25,17 +25,17 @@ export const PLACEHOLDER_ROUTES = [
   // `matters` is a real page since #388 (its own states are covered in tests/matters), and so are
   // `obligations` (#68, tests/obligations) and `memory` (#73, tests/memory).
   'briefs',
-  'people',
-  'insights',
+  // `people` is a real page since #848 (its own specs are in tests/people), and `insights` since
+  // #85 (its own specs are in tests/product/insights.spec.ts).
 ] as const;
 
 export type PlaceholderRoute = (typeof PLACEHOLDER_ROUTES)[number];
 
 /** Routes behind a flag that ships dark: they 404 for everyone. */
-export const FLAG_GATED_ROUTES = ['invoices', 'limitation'] as const;
+export const FLAG_GATED_ROUTES = ['invoices', 'limitation', 'insights'] as const;
 
 /**
- * `clerk` lacks `insights.read`: it renders the shell permission-denied page. Billing (also denied)
+ * `clerk` lacks `insights.read` (with `insights.enabled` on, #966): it renders the shell permission-denied page. Billing (also denied)
  * has its own owners-only copy since #256 (tests/billing).
  */
 export const CLERK_DENIED_ROUTES = ['insights'] as const;

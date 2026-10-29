@@ -27,6 +27,7 @@ import {
   listStaffSupportSessions,
   listSupportSessions,
   readSupportWorkspaceView,
+  requestMemberSupport,
   requestSession,
   revokeSession,
   staffSupportSession,
@@ -780,6 +781,59 @@ describe('the staff console reads (#314)', () => {
         }),
       ]);
       expect(await audits(tx, w.workspaceId, 'support.view')).toEqual([]);
+    });
+  });
+});
+
+describe('requestMemberSupport (#94)', () => {
+  it('records a pending, metadata-only request with the chosen length and audits it', async () => {
+    await withTestDb(async (tx) => {
+      const w = await seed(tx);
+      const ctx = { db: tx, userId: w.ownerId, workspaceId: w.workspaceId };
+      const row = await requestMemberSupport(ctx, { reason: ' Cannot import ', minutes: 120 });
+      expect(row).toMatchObject({
+        status: 'requested',
+        scope: 'metadata',
+        reason: 'Cannot import',
+        requestedByStaff: null,
+        requestedByUser: w.ownerId,
+        requestedMinutes: 120,
+      });
+      expect(await audits(tx, w.workspaceId, 'support.session_requested')).toEqual([
+        expect.objectContaining({
+          actorUserId: w.ownerId,
+          actorKind: 'user',
+          targetId: row.id,
+          metadata: { minutes: 120 },
+        }),
+      ]);
+      // The default is one hour.
+      expect((await requestMemberSupport(ctx, { reason: 'Again' })).requestedMinutes).toBe(60);
+    });
+  });
+
+  it('refuses a bad reason or length, a non-owner and a stranger', async () => {
+    await withTestDb(async (tx) => {
+      const w = await seed(tx);
+      const ctx = { db: tx, userId: w.ownerId, workspaceId: w.workspaceId };
+      expect(await codeOf(requestMemberSupport(ctx, { reason: '  ' }))).toBe('VALIDATION');
+      expect(await codeOf(requestMemberSupport(ctx, { reason: 'x', minutes: 241 }))).toBe(
+        'VALIDATION',
+      );
+      expect(
+        await codeOf(requestMemberSupport({ ...ctx, userId: randomUUID() }, { reason: 'x' })),
+      ).toBe('NOT_FOUND');
+    });
+  });
+
+  it('cannot be granted before a staff member picks it up, and staff see nothing of it', async () => {
+    await withTestDb(async (tx) => {
+      const w = await seed(tx);
+      const ctx = { db: tx, userId: w.ownerId, workspaceId: w.workspaceId };
+      const row = await requestMemberSupport(ctx, { reason: 'Help' });
+      expect(await codeOf(grantSession(ctx, { sessionId: row.id }))).toBe('CONFLICT');
+      expect(await listStaffSupportSessions(tx, staffId)).toEqual([]);
+      expect((await revokeSession(ctx, { sessionId: row.id })).status).toBe('ended');
     });
   });
 });

@@ -33,6 +33,9 @@ describe('registerSchedules', () => {
       'system.audit.verify',
       'system.audit.retention',
       'system.backup.health',
+      'system.enquiry.retention',
+      'system.status-link.retention',
+      'system.demo.reset',
       'system.export.expire',
       'system.support.session-expire',
       'system.deletion.tick',
@@ -44,6 +47,7 @@ describe('registerSchedules', () => {
       'system.causelist.poll',
       'system.board.poll',
       'system.notices.poll',
+      'system.status.publish',
       'system.judgment-alert.scan',
       'system.portfolio-alert.scan',
       'system.status.poll',
@@ -109,6 +113,12 @@ describe('registerSchedules', () => {
       ['system.audit.verify', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
       // Audit retention: daily 03:00 IST.
       ['system.audit.retention', '0 3 * * *', '2026-10-18T21:30:00.000Z'],
+      // Enquiry retention (#87): daily 03:30 IST.
+      ['system.enquiry.retention', '30 3 * * *', '2026-10-18T22:00:00.000Z'],
+      // Status link retention (#88): daily 03:45 IST.
+      ['system.status-link.retention', '45 3 * * *', '2026-10-18T22:15:00.000Z'],
+      // Demo reset (#93): daily 03:10 IST.
+      ['system.demo.reset', '10 3 * * *', '2026-10-18T21:40:00.000Z'],
       // Court data retention: daily 04:15 IST.
       ['system.court-data.retention', '15 4 * * *', '2026-10-18T22:45:00.000Z'],
       // Capture raw-object retention: daily 02:00 IST.
@@ -126,6 +136,8 @@ describe('registerSchedules', () => {
       ['system.board.poll', '*/5 10-16 * * 1-5', '2026-10-19T04:30:00.000Z'],
       // Notices poll (#586): hourly on the hour IST; 06:00 IST is 00:30 UTC.
       ['system.notices.poll', '0 * * * *', '2026-10-18T00:30:00.000Z'],
+      // Status publish (#769): every minute.
+      ['system.status.publish', '* * * * *', '2026-10-18T00:01:00.000Z'],
       // Obligation reminders (#67): daily 07:00 IST; 07:00 IST is 01:30 UTC.
       ['system.obligation.reminders', '0 7 * * *', '2026-10-18T01:30:00.000Z'],
     ] as const;

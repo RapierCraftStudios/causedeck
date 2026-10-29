@@ -120,6 +120,10 @@ describe('other drafting schemas', () => {
     expect(FormatPresetSchema.safeParse({ ...preset, fontSizePt: 2 }).success).toBe(false);
   });
 
+  it('knows the counsel.name slot resolver', () => {
+    expect(BlockSchema.safeParse({ type: 'slot', resolver: 'counsel.name' }).success).toBe(true);
+  });
+
   it('knows the client.name slot resolver and validates a system template seed', () => {
     expect(BlockSchema.safeParse({ type: 'slot', resolver: 'client.name' }).success).toBe(true);
     const seed = {

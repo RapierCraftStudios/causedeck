@@ -34,18 +34,43 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('DemoBanner (#182)', () => {
-  it('says "Demo data — fictional" in the demo workspace', () => {
-    renderBanner('demo');
-    const status = screen.getByRole('status');
-    expect(status).toBe(banner());
-    expect(status.textContent).toContain('Demo data — fictional');
-    expect(status.textContent).toContain(catalogs.en.shell.demoBanner.hint);
-    // Not dismissible.
-    expect(status.querySelector('button')).toBeNull();
+  it('says "Demo workspace, sample data" in the demo workspaces', () => {
+    for (const slug of ['demo', 'demo-chennai-solo', 'demo-bengaluru-chamber']) {
+      cleanup();
+      renderBanner(slug);
+      const status = screen.getByRole('status');
+      expect(status).toBe(banner());
+      expect(status.textContent).toContain('Demo workspace, sample data');
+      expect(status.textContent).toContain(
+        'Sample data only. Nothing here is real, and nothing leaves this workspace.',
+      );
+    }
+  });
+
+  it('offers Leave demo and Start your own workspace, both posting to /demo/leave, never dismissing', () => {
+    renderBanner('demo-chennai-solo');
+    const form = banner()?.querySelector('form');
+    expect(form?.getAttribute('action')).toBe('/demo/leave');
+    expect(form?.getAttribute('method')).toBe('post');
+    const buttons = [...(form?.querySelectorAll('button') ?? [])];
+    expect(buttons.map((b) => [b.textContent, b.value])).toEqual([
+      ['Leave demo', 'leave'],
+      ['Start your own workspace', 'start'],
+    ]);
+    // The primary button shows from 768 px; at 360 only the text button.
+    expect(buttons[1]?.className).toContain('hidden');
+    expect(buttons[1]?.className).toContain('md:inline-flex');
+    expect(buttons[0]?.className).not.toContain('hidden');
+    // Info colours, never the danger colours.
+    expect(banner()?.getAttribute('data-tone')).toBe('info');
+    expect(banner()?.className).not.toContain('danger');
   });
 
   it('renders nothing in any other workspace', () => {
     renderBanner('clerk-desk');
+    expect(banner()).toBeNull();
+    cleanup();
+    renderBanner('demonstrations');
     expect(banner()).toBeNull();
   });
 
@@ -68,7 +93,7 @@ describe('DemoBanner (#182)', () => {
         </AppShell>,
       );
     shell('demo');
-    expect(banner()?.textContent).toContain('Demo data — fictional');
+    expect(banner()?.textContent).toContain('Demo workspace, sample data');
     // Above the page, outside main.
     expect(document.querySelector('main#main [data-demo-banner]')).toBeNull();
     cleanup();

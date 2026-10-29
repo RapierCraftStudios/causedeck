@@ -71,10 +71,10 @@ const SHOTS: readonly Shot[] = [
     name: 'members-empty.png',
     setUp: async (page, asUser) => {
       await asUser('viewer');
-      await page.goto('/onboarding');
+      await page.goto('/onboarding/solo/workspace');
       await page.getByRole('textbox', { name: /Workspace name/ }).fill('Visual Members');
       await page.getByRole('button', { name: 'Create workspace' }).click();
-      await expect(page).toHaveURL(/\/w\/visual-members\/today$/);
+      await expect(page).toHaveURL(/\/onboarding\/solo\/profile\?w=visual-members$/);
       await page.goto('/w/visual-members/settings/members');
       await expect(page.getByText(/It is just you for now/)).toBeVisible();
       await shellReady(page);

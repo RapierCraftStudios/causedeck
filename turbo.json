@@ -6,7 +6,12 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "public/sw.js"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "out/**", "public/sw.js"]
+    },
+    "@causedeck/site#build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "out/**", "public/sw.js"],
+      "env": ["ALLOW_DRAFT_LEGAL"]
     },
     "lint": {
       "dependsOn": ["^lint"]

@@ -22,6 +22,7 @@ import {
   runChecksAction,
 } from './checks-actions.ts';
 import {
+  acknowledgeFactCheckAction,
   checkFactsLiveAction,
   ignoreFactAction,
   markAssertionAction,
@@ -95,8 +96,14 @@ export default async function DraftPage({ params }: DraftPageProps) {
   let loaded;
   try {
     const { inWorkspace } = await import('@causedeck/core/runtime');
-    const { exportBlockedByCitations, getCitationReport, getDraft, listFindings, renderDraft } =
-      await import('@causedeck/core/drafting');
+    const {
+      exportBlockedByCitations,
+      exportBlockedByFactCheck,
+      getCitationReport,
+      getDraft,
+      listFindings,
+      renderDraft,
+    } = await import('@causedeck/core/drafting');
     loaded = await inWorkspace(actor, async (tx) => {
       const detail = await getDraft({ db: tx }, actor, { draftId: id });
       const rendered = await renderDraft({ db: tx }, actor, { draftId: id });
@@ -115,9 +122,10 @@ export default async function DraftPage({ params }: DraftPageProps) {
         versionId,
         detail.version.blocks,
       );
+      const factGate = await exportBlockedByFactCheck(tx, actor.workspaceId, versionId);
       const found = await listFindings({ db: tx }, actor, { draftVersionId: versionId });
       const authorities = await pinnedAuthorities(tx, actor, detail.draft.matterId);
-      return { detail, rendered, older, authorities, report, gate, found };
+      return { detail, rendered, older, authorities, report, gate, factGate, found };
     });
   } catch (error) {
     const code = domainErrorCode(error);
@@ -126,7 +134,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
     throw error;
   }
 
-  const { detail, rendered, older, authorities, report, gate, found } = loaded;
+  const { detail, rendered, older, authorities, report, gate, factGate, found } = loaded;
   const precedentsOn = await precedentsEnabled(actor);
   const slotValues = Object.fromEntries(
     Object.entries(rendered.slots).map(([key, resolution]) => [key, resolution.value]),
@@ -180,7 +188,9 @@ export default async function DraftPage({ params }: DraftPageProps) {
           fix: applyFixAction,
           exportDraft: exportDraftAction,
           download: downloadDraftExportAction,
+          acknowledgeFacts: acknowledgeFactCheckAction,
         },
+        factUnresolved: factGate.unresolved,
         versionId: detail.version.id,
         citations: report.items.map((c) => ({
           id: c.id,

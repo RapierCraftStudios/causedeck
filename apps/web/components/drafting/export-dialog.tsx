@@ -32,8 +32,11 @@ export interface DraftExportDialogProps {
   aiAssisted: boolean;
   /** Not-found citations nobody acknowledged; any blocks the export. */
   unacknowledged: number;
+  /** Fact-check findings nobody decided or acknowledged; any blocks the export. */
+  factUnresolved?: number;
   disabled?: boolean;
   onAcknowledge: () => void;
+  onAcknowledgeFacts?: () => void;
   /** Resolves the download link, or null when the export failed. */
   onExport: (format: ExportFormat) => Promise<ExportLink | null>;
 }
@@ -44,8 +47,10 @@ export function DraftExportDialog({
   courtPreset,
   aiAssisted,
   unacknowledged,
+  factUnresolved = 0,
   disabled = false,
   onAcknowledge,
+  onAcknowledgeFacts,
   onExport,
 }: DraftExportDialogProps) {
   const t = useTranslations('drafting.export');
@@ -112,6 +117,16 @@ export function DraftExportDialog({
             </Button>
           </Alert>
         ) : null}
+        {factUnresolved > 0 ? (
+          <Alert tone="warning" role="status" data-export-facts="">
+            {t('factWarning', { count: factUnresolved })}{' '}
+            {onAcknowledgeFacts === undefined ? null : (
+              <Button type="button" size="sm" variant="link" onClick={onAcknowledgeFacts}>
+                {tc('acknowledge')}
+              </Button>
+            )}
+          </Alert>
+        ) : null}
         {failed ? (
           <Alert tone="danger" role="alert">
             {t('failed')}
@@ -138,7 +153,7 @@ export function DraftExportDialog({
           </Button>
           <Button
             type="button"
-            disabled={disabled || busy || unacknowledged > 0}
+            disabled={disabled || busy || unacknowledged > 0 || factUnresolved > 0}
             onClick={() => void run()}
           >
             {busy ? tc('preparing') : t('action')}

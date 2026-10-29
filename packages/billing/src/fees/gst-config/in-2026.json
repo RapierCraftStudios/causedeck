@@ -1,0 +1,19 @@
+{
+  "version": "in-2026",
+  "reviewed": false,
+  "note": "Placeholder rates and treatments. Counsel and a CA must review before the fees flag is enabled (docs/engineering/gst-invoicing.md).",
+  "treatments": {
+    "regular": { "rateBps": 1800, "chargedToRecipient": true, "reviewed": false },
+    "rcm": { "rateBps": 1800, "chargedToRecipient": false, "reviewed": false },
+    "exempt": { "rateBps": 0, "chargedToRecipient": false, "reviewed": false },
+    "unregistered": { "rateBps": 0, "chargedToRecipient": false, "reviewed": false }
+  },
+  "mapping": {
+    "forward_charge": "regular",
+    "reverse_charge": "rcm",
+    "exempt": "exempt",
+    "nil_rated": "exempt",
+    "out_of_scope": "exempt",
+    "pure_agent": "exempt"
+  }
+}

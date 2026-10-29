@@ -24,8 +24,19 @@ import { invitation, member, organization, user } from '../schema/auth.ts';
 import { billingEvent, entitlement, plan, subscription, usageCounter } from '../schema/billing.ts';
 import { bench, courtHall, forum } from '../schema/court.ts';
 import { briefState } from '../schema/brief.ts';
+import { clientContact } from '../schema/client-contact.ts';
+import { conflictCheckResult, enquiry, enquiryParty } from '../schema/enquiry.ts';
 import { handoverNote, matterView } from '../schema/continuity.ts';
+import {
+  clientLedgerEntry,
+  feeAgreement,
+  feeInvoice,
+  feeInvoiceLine,
+  payment,
+} from '../schema/fees.ts';
+import { limitationComputation, limitationRule } from '../schema/limitation.ts';
 import { briefShare } from '../schema/share.ts';
+import { statusLink, statusLinkAccess } from '../schema/status-link.ts';
 import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
@@ -58,9 +69,16 @@ import {
   whatsappLink,
   whatsappOtpChallenge,
 } from '../schema/whatsapp-link.ts';
+import { helpState } from '../schema/help-state.ts';
+import { onboardingState } from '../schema/onboarding-state.ts';
 import { webhookDelivery, webhookEndpoint } from '../schema/webhooks.ts';
 import { causeListWatch } from '../schema/cause-list-watch.ts';
-import { importBatch, importBatchFile, importPlan } from '../schema/import-batch.ts';
+import {
+  importBatch,
+  importBatchFile,
+  importColumnMapping,
+  importPlan,
+} from '../schema/import-batch.ts';
 import { workspaceFeatureFlag } from '../schema/flags.ts';
 import { icsFeed, icsFeedEvent, icsImportEvent } from '../schema/ics.ts';
 import { jobEffect } from '../schema/job-effect.ts';
@@ -68,6 +86,12 @@ import { notice, noticeMatch } from '../schema/notices.ts';
 import { deletionJob, exportJob } from '../schema/lifecycle.ts';
 import { judgment } from '../schema/corpus.ts';
 import { matter } from '../schema/matter-graph.ts';
+import {
+  contextTestResult,
+  loadPulse,
+  povPrefs,
+  preparednessRating,
+} from '../schema/proof-of-value.ts';
 import { judgmentAlert, matterIssueTag } from '../schema/matter-issue.ts';
 import { researchNote, researchProvider } from '../schema/research-note.ts';
 import { organisation, person, roleEdge } from '../schema/people.ts';
@@ -292,6 +316,35 @@ async function seedProceeding(tx: Transaction, workspaceId: string, tag: string)
   return first(rows, 'proceeding').id;
 }
 
+/** A matter, a client contact for it and one status link (#88) in `workspaceId`. */
+async function seedStatusLink(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  tag: string,
+): Promise<{ matterId: string; contactId: string; linkId: string }> {
+  const matterId = await seedMatter(tx, workspaceId, `${tag}-sl`);
+  const personId = await seedPerson(tx, workspaceId, `${tag}-sl-client`);
+  const contactRows = await tx
+    .insert(clientContact)
+    .values({ workspaceId, personId, phone: '+919876543211', createdBy: ownerId })
+    .returning({ id: clientContact.id });
+  const contactId = first(contactRows, 'client_contact').id;
+  const rows = await tx
+    .insert(statusLink)
+    .values({
+      workspaceId,
+      matterId,
+      clientContactId: contactId,
+      tokenHash: `seed-sl-${tag}-${crypto.randomUUID()}`,
+      payload: { headline: `Seed ${tag}`, note: 'Listed next month.', nextDate: null },
+      expiresAt: new Date('2099-01-01T00:00:00Z'),
+      createdBy: ownerId,
+    })
+    .returning({ id: statusLink.id });
+  return { matterId, contactId, linkId: first(rows, 'status_link').id };
+}
+
 /** A fictional party (#348). */
 async function seedPerson(tx: Transaction, workspaceId: string, tag: string): Promise<string> {
   const rows = await tx
@@ -299,6 +352,88 @@ async function seedPerson(tx: Transaction, workspaceId: string, tag: string): Pr
     .values({ workspaceId, name: `Party ${tag}`, kind: 'party', sourceType: 'manual' })
     .returning({ id: person.id });
   return first(rows, 'person').id;
+}
+
+/** A workspace's own (reviewed) limitation rule (#84). */
+async function seedLimitationRule(
+  tx: Transaction,
+  workspaceId: string,
+  tag: string,
+): Promise<string> {
+  const rows = await tx
+    .insert(limitationRule)
+    .values({
+      workspaceId,
+      code: `xt.${tag}`,
+      title: 'Seed rule',
+      statute: 'Seed Act',
+      periodValue: 3,
+      periodUnit: 'years',
+      startEvent: 'cause_of_action',
+      tableVersion: 'seed',
+    })
+    .returning({ id: limitationRule.id });
+  return first(rows, 'limitation_rule').id;
+}
+
+/** A fee agreement for a fresh matter and client (#83). */
+async function seedFeeAgreement(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  tag: string,
+): Promise<{ matterId: string; personId: string; id: string }> {
+  const matterId = await seedMatter(tx, workspaceId, `${tag}-fee`);
+  const personId = await seedPerson(tx, workspaceId, `${tag}-fee-client`);
+  const rows = await tx
+    .insert(feeAgreement)
+    .values({
+      workspaceId,
+      matterId,
+      personId,
+      basis: 'fixed',
+      amountPaise: 100,
+      gstTreatment: 'forward_charge',
+      startsOn: '2026-04-01',
+      createdBy: ownerId,
+    })
+    .returning({ id: feeAgreement.id });
+  return { matterId, personId, id: first(rows, 'fee_agreement').id };
+}
+
+/** A draft invoice under a fresh fee agreement (#83). */
+async function seedInvoice(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  tag: string,
+): Promise<{
+  matterId: string;
+  personId: string;
+  feeAgreementId: string;
+  invoiceId: string;
+  id: string;
+}> {
+  const agreement = await seedFeeAgreement(tx, workspaceId, ownerId, tag);
+  const rows = await tx
+    .insert(feeInvoice)
+    .values({
+      workspaceId,
+      matterId: agreement.matterId,
+      personId: agreement.personId,
+      feeAgreementId: agreement.id,
+      placeOfSupplyStateCode: '29',
+      createdBy: ownerId,
+    })
+    .returning({ id: feeInvoice.id });
+  const invoiceId = first(rows, 'fee_invoice').id;
+  return {
+    matterId: agreement.matterId,
+    personId: agreement.personId,
+    feeAgreementId: agreement.id,
+    invoiceId,
+    id: invoiceId,
+  };
 }
 
 /** A document of a fresh matter (#345). */
@@ -400,6 +535,19 @@ export async function ownerMemberId(tx: Transaction, workspaceId: string, ownerI
     .from(member)
     .where(and(eq(member.organizationId, workspaceId), eq(member.userId, ownerId)));
   return first(rows, 'member').id;
+}
+
+/**
+ * The owner's member id for a proof-of-value seeder. Seeding into another workspace (the denied
+ * insert in the cross-tenant suite) cannot see that member under RLS, so a throwaway id lets the
+ * insert reach the policy and fail with 42501 there.
+ */
+async function povMemberId(tx: Transaction, workspaceId: string, ownerId: string) {
+  const rows = await tx
+    .select({ id: member.id })
+    .from(member)
+    .where(and(eq(member.organizationId, workspaceId), eq(member.userId, ownerId)));
+  return rows[0]?.id ?? randomUUID();
 }
 
 async function seedOutwardDraft(
@@ -1366,6 +1514,26 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .returning({ id: portfolioPanelAdvocate.id });
     return { portfolioId, id: first(rows, 'portfolio_panel_advocate').id };
   },
+  help_state: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(helpState)
+      .values({ workspaceId, userId: ownerId, key: 'coachmark.today' })
+      .returning({ id: helpState.id });
+    return { id: first(rows, 'help_state').id };
+  },
+  onboarding_state: async (tx, { workspaceId, ownerId }) => {
+    const rows = await tx
+      .insert(onboardingState)
+      .values({
+        workspaceId,
+        userId: ownerId,
+        path: 'solo',
+        step: 'profile',
+        completed: ['workspace'],
+      })
+      .returning({ id: onboardingState.id });
+    return { id: first(rows, 'onboarding_state').id };
+  },
   whatsapp_link: async (tx, { workspaceId, ownerId, tag }) => {
     const now = new Date();
     const rows = await tx
@@ -1541,6 +1709,13 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
     await tx.insert(importPlan).values({ workspaceId, batchId, plan: { rows: [] } });
     return { batchId };
   },
+  import_column_mapping: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(importColumnMapping)
+      .values({ workspaceId, mapping: { caseNumber: `Case ${tag}` }, updatedBy: ownerId })
+      .returning({ id: importColumnMapping.id });
+    return { id: first(rows, 'import_column_mapping').id };
+  },
   matter: async (tx, { workspaceId, tag }) => ({
     matterId: await seedMatter(tx, workspaceId, tag),
   }),
@@ -1624,6 +1799,60 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .returning({ id: briefState.id });
     return { listingId, id: first(rows, 'brief_state').id };
   },
+  client_contact: async (tx, { workspaceId, ownerId, tag }) => {
+    const personId = await seedPerson(tx, workspaceId, `${tag}-client`);
+    const rows = await tx
+      .insert(clientContact)
+      .values({ workspaceId, personId, phone: '+919876543210', createdBy: ownerId })
+      .returning({ id: clientContact.id });
+    return { personId, id: first(rows, 'client_contact').id };
+  },
+  enquiry: async (tx, { workspaceId, ownerId, tag }) => {
+    const rows = await tx
+      .insert(enquiry)
+      .values({
+        workspaceId,
+        enquirerName: `${tag} enquirer`,
+        summary: 'Tenancy',
+        createdBy: ownerId,
+      })
+      .returning({ id: enquiry.id });
+    return { id: first(rows, 'enquiry').id };
+  },
+  enquiry_party: async (tx, { workspaceId, ownerId, tag }) => {
+    const parent = await tx
+      .insert(enquiry)
+      .values({
+        workspaceId,
+        enquirerName: `${tag} enquirer`,
+        summary: 'Tenancy',
+        createdBy: ownerId,
+      })
+      .returning({ id: enquiry.id });
+    const enquiryId = first(parent, 'enquiry').id;
+    const rows = await tx
+      .insert(enquiryParty)
+      .values({ workspaceId, enquiryId, name: `${tag} party`, side: 'adverse' })
+      .returning({ id: enquiryParty.id });
+    return { enquiryId, id: first(rows, 'enquiry_party').id };
+  },
+  conflict_check_result: async (tx, { workspaceId, ownerId, tag }) => {
+    const parent = await tx
+      .insert(enquiry)
+      .values({
+        workspaceId,
+        enquirerName: `${tag} enquirer`,
+        summary: 'Tenancy',
+        createdBy: ownerId,
+      })
+      .returning({ id: enquiry.id });
+    const enquiryId = first(parent, 'enquiry').id;
+    const rows = await tx
+      .insert(conflictCheckResult)
+      .values({ workspaceId, enquiryId, checkedBy: ownerId, partyCount: 1, hitCount: 0 })
+      .returning({ id: conflictCheckResult.id });
+    return { enquiryId, id: first(rows, 'conflict_check_result').id };
+  },
   matter_view: async (tx, { workspaceId, ownerId, tag }) => {
     const matterId = await seedMatter(tx, workspaceId, `${tag}-view`);
     const memberId = await ownerMemberId(tx, workspaceId, ownerId);
@@ -1649,6 +1878,119 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       .returning({ id: handoverNote.id });
     return { matterId, id: first(rows, 'handover_note').id };
   },
+  limitation_rule: async (tx, { workspaceId, tag }) => ({
+    id: await seedLimitationRule(tx, workspaceId, tag),
+  }),
+  limitation_computation: async (tx, { workspaceId, ownerId, tag }) => {
+    const matterId = await seedMatter(tx, workspaceId, `${tag}-limitation`);
+    const ruleId = await seedLimitationRule(tx, workspaceId, `${tag}-computation`);
+    const rows = await tx
+      .insert(limitationComputation)
+      .values({
+        workspaceId,
+        matterId,
+        ruleId,
+        input: { ruleCode: `xt.${tag}` },
+        result: { status: 'proposed' },
+        startDate: '2026-04-01',
+        expiresOn: '2029-04-01',
+        createdBy: ownerId,
+      })
+      .returning({ id: limitationComputation.id });
+    return { matterId, ruleId, id: first(rows, 'limitation_computation').id };
+  },
+  fee_agreement: async (tx, { workspaceId, ownerId, tag }) => ({
+    ...(await seedFeeAgreement(tx, workspaceId, ownerId, tag)),
+  }),
+  fee_invoice: async (tx, { workspaceId, ownerId, tag }) => ({
+    ...(await seedInvoice(tx, workspaceId, ownerId, tag)),
+  }),
+  fee_invoice_line: async (tx, { workspaceId, ownerId, tag }) => {
+    const seeded = await seedInvoice(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(feeInvoiceLine)
+      .values({
+        workspaceId,
+        invoiceId: seeded.invoiceId,
+        description: 'Seed appearance',
+        unitPricePaise: 100,
+        amountPaise: 100,
+        gstTreatment: 'forward_charge',
+      })
+      .returning({ id: feeInvoiceLine.id });
+    return { ...seeded, id: first(rows, 'fee_invoice_line').id };
+  },
+  // Proof-of-value (#86): the owner's own rows, content-free.
+  preparedness_rating: async (tx, { workspaceId, ownerId, tag }) => {
+    const memberId = await povMemberId(tx, workspaceId, ownerId);
+    const hearingId = await seedHearing(tx, workspaceId, tag);
+    const appearanceRows = await tx
+      .insert(appearance)
+      .values({ workspaceId, hearingId, memberId, capacity: 'arguing' })
+      .returning({ id: appearance.id });
+    const appearanceId = first(appearanceRows, 'appearance').id;
+    const rows = await tx
+      .insert(preparednessRating)
+      .values({ workspaceId, appearanceId, memberId, rating: 4 })
+      .returning({ id: preparednessRating.id });
+    return { appearanceId, hearingId, memberId, id: first(rows, 'preparedness_rating').id };
+  },
+  load_pulse: async (tx, { workspaceId, ownerId }) => {
+    const memberId = await povMemberId(tx, workspaceId, ownerId);
+    const rows = await tx
+      .insert(loadPulse)
+      .values({ workspaceId, memberId, isoWeek: '2026-W44', demand: 3, worry: 2, effort: 4 })
+      .returning({ id: loadPulse.id });
+    return { memberId, id: first(rows, 'load_pulse').id };
+  },
+  context_test_result: async (tx, { workspaceId, ownerId, tag }) => {
+    const memberId = await povMemberId(tx, workspaceId, ownerId);
+    const matterId = await seedMatter(tx, workspaceId, tag);
+    const rows = await tx
+      .insert(contextTestResult)
+      .values({ workspaceId, matterId, memberId })
+      .returning({ id: contextTestResult.id });
+    return { matterId, memberId, id: first(rows, 'context_test_result').id };
+  },
+  pov_prefs: async (tx, { workspaceId, ownerId }) => {
+    const memberId = await povMemberId(tx, workspaceId, ownerId);
+    await tx.insert(povPrefs).values({ workspaceId, memberId, promptsEnabled: false });
+    return { memberId };
+  },
+  payment: async (tx, { workspaceId, ownerId, tag }) => {
+    const seeded = await seedInvoice(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(payment)
+      .values({
+        workspaceId,
+        invoiceId: seeded.invoiceId,
+        amountPaise: 100,
+        method: 'upi',
+        receivedOn: '2026-05-01',
+        createdBy: ownerId,
+      })
+      .returning({ id: payment.id });
+    return { ...seeded, id: first(rows, 'payment').id };
+  },
+  client_ledger_entry: async (tx, { workspaceId, ownerId, tag }) => {
+    const seeded = await seedInvoice(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(clientLedgerEntry)
+      .values({
+        workspaceId,
+        personId: seeded.personId,
+        matterId: seeded.matterId,
+        invoiceId: seeded.invoiceId,
+        kind: 'fee',
+        direction: 'debit',
+        amountPaise: 100,
+        description: 'Seed fee',
+        occurredOn: '2026-05-01',
+        createdBy: ownerId,
+      })
+      .returning({ id: clientLedgerEntry.id });
+    return { ...seeded, id: first(rows, 'client_ledger_entry').id };
+  },
   brief_share: async (tx, { workspaceId, ownerId, tag }) => {
     const rows = await tx
       .insert(briefShare)
@@ -1669,6 +2011,18 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: briefShare.id });
     return { id: first(rows, 'brief_share').id };
+  },
+  status_link: async (tx, { workspaceId, ownerId, tag }) => {
+    const seeded = await seedStatusLink(tx, workspaceId, ownerId, tag);
+    return { ...seeded, id: seeded.linkId };
+  },
+  status_link_access: async (tx, { workspaceId, ownerId, tag }) => {
+    const seeded = await seedStatusLink(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(statusLinkAccess)
+      .values({ workspaceId, linkId: seeded.linkId, uaClass: 'mobile' })
+      .returning({ id: statusLinkAccess.id });
+    return { ...seeded, id: first(rows, 'status_link_access').id };
   },
   reminder_dispatch: async (tx, { workspaceId, ownerId, tag }) => {
     // The owner's own member row (the FK is composite), so seeding does not change the member counts

@@ -6,13 +6,19 @@ import { WORKSPACE_ROLE_VALUES } from './api/me';
 
 /**
  * The slug of the fictional demo workspace (#182). Only the demo seed (`pnpm db:seed:demo`) writes
- * it; the shell shows the "Demo data — fictional" banner for it, so no real workspace may take it.
+ * it; the shell shows the demo banner for it, so no real workspace may take it.
  */
 export const DEMO_WORKSPACE_SLUG = 'demo';
 
 /**
+ * The slugs of the two sample workspaces start with this (#93: `demo-chennai-solo`,
+ * `demo-bengaluru-chamber`). No real workspace may take a slug with this prefix.
+ */
+export const DEMO_SLUG_PREFIX = 'demo-';
+
+/**
  * Slugs that would shadow an app route (`/admin`, `/api`, `/sign-in`, ...), plus the demo
- * workspace's slug.
+ * workspace's slug (and every `demo-` slug, see `isReservedSlug`).
  */
 export const RESERVED_SLUGS = [
   'admin',
@@ -34,12 +40,14 @@ export const WORKSPACE_KIND_VALUES = ['solo', 'chamber'] as const;
 export const INVITE_ROLE_VALUES = ['advocate', 'junior', 'clerk', 'viewer'] as const;
 
 export function isReservedSlug(value: string): boolean {
-  return (RESERVED_SLUGS as readonly string[]).includes(value.toLowerCase());
+  const slug = value.toLowerCase();
+  return (RESERVED_SLUGS as readonly string[]).includes(slug) || slug.startsWith(DEMO_SLUG_PREFIX);
 }
 
-/** True for the fictional demo workspace's slug (case-insensitive, like slug lookup). */
+/** True for a demo workspace's slug: `demo` or `demo-...` (case-insensitive, like slug lookup). */
 export function isDemoWorkspaceSlug(value: string): boolean {
-  return value.toLowerCase() === DEMO_WORKSPACE_SLUG;
+  const slug = value.toLowerCase();
+  return slug === DEMO_WORKSPACE_SLUG || slug.startsWith(DEMO_SLUG_PREFIX);
 }
 
 /** A URL-safe workspace slug: lowercase words joined by single hyphens. */

@@ -10,6 +10,7 @@ import {
   STAFF_USAGE_COUNTER_FIELDS,
   STAFF_WORKSPACE_FIELDS,
 } from '@causedeck/core/support';
+import { asIncidentStaff, createIncident } from '@causedeck/core/status';
 import { setBudgetOverride } from '@causedeck/core/usage';
 import type { Transaction } from '@causedeck/db';
 import { closeTestDb, inWorkspace, schema, withTestDb } from '@causedeck/db/testing';
@@ -46,11 +47,18 @@ vi.mock('@causedeck/core/runtime', () => ({
 }));
 vi.mock('../lib/staff.ts', () => ({ requireStaff: () => Promise.resolve(state.staff) }));
 
-const { growthFunnel, searchWorkspaces, staffAuditLog, workspaceMetadata, workspaceUsage } =
-  await import('../lib/data/index.ts');
+const {
+  growthFunnel,
+  incidentConsole,
+  searchWorkspaces,
+  staffAuditLog,
+  workspaceMetadata,
+  workspaceUsage,
+} = await import('../lib/data/index.ts');
 const { default: WorkspacesPage } = await import('../app/(console)/workspaces/page.tsx');
 const { default: WorkspacePage } = await import('../app/(console)/workspaces/[id]/page.tsx');
 const { default: AuditPage } = await import('../app/(console)/audit/page.tsx');
+const { default: StatusPage } = await import('../app/(console)/status/page.tsx');
 
 /** Words that name workspace content; none may appear as a key or in rendered HTML. */
 const CONTENT = /\b(matters?|documents?|memor(y|ies)|part(y|ies)|drafts?)\b/i;
@@ -190,6 +198,34 @@ describe('the growth funnel carries counts only (#509)', () => {
       for (const email of await emails(tx, [t.ua])) expect(json).not.toContain(email);
       expect(json).not.toMatch(CONTENT);
       expect(keysDeep(funnel).filter((k) => /id$|email|name/i.test(k))).toEqual([]);
+    });
+  });
+});
+
+describe('the status console carries public incident text only (#770)', () => {
+  it('the data read and the page name no tenant id, email or content word', async () => {
+    await withTestDb(async (tx) => {
+      state.tx = tx;
+      const t = await seed(tx);
+      await createIncident(tx, asIncidentStaff(staffFixture.userId), {
+        title: 'Court lookups are slow',
+        severity: 'degraded',
+        component: 'court',
+      });
+      const incidents = await incidentConsole(state.staff as never);
+      expect(incidents.length).toBeGreaterThan(0);
+      const page = (await html(StatusPage({ searchParams: Promise.resolve({}) }))).replace(
+        /<[^>]+>/g,
+        ' ',
+      );
+      expect(page).toContain('Court lookups are slow');
+      const json = JSON.stringify(incidents);
+      const others = [t.a.id, t.b.id, t.a.slug, t.b.slug, ...(await emails(tx, [t.ua, t.uboth]))];
+      for (const text of [json, page]) {
+        for (const value of others) expect(text).not.toContain(value);
+        expect(text).not.toMatch(CONTENT);
+      }
+      expect(keysDeep(incidents).filter((k) => /workspace|email|user/i.test(k))).toEqual([]);
     });
   });
 });

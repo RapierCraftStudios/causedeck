@@ -1,0 +1,121 @@
+@import 'tailwindcss';
+/* The token files from @causedeck/ui/tokens/index.css, minus its fonts.css: next/font (app/fonts.ts)
+ * owns the @font-face rules, so the faces are not downloaded twice. */
+@import '@causedeck/ui/tokens/primitives.css';
+@import '@causedeck/ui/tokens/semantic.css';
+@import '@causedeck/ui/tokens/typography.css';
+@import '@causedeck/ui/tokens/spacing-radius-shadow.css';
+@import '@causedeck/ui/tokens/motion.css';
+@import '@causedeck/ui/tokens/z-index.css';
+@import '@causedeck/ui/tokens/base.css';
+@import '@causedeck/config/tailwind/preset.css';
+
+/* Compile utilities used inside @causedeck/ui components. */
+@source '../../../packages/ui/src';
+
+:root.cd-fonts {
+  --font-sans:
+    var(--font-geist), var(--font-tamil), var(--font-kannada), 'Geist Fallback', ui-sans-serif,
+    system-ui, sans-serif;
+  --font-serif:
+    var(--font-newsreader), var(--font-tamil), var(--font-kannada), 'Newsreader Fallback', Georgia,
+    serif;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Skip link: first in tab order, visible on focus. */
+.cd-skip-link {
+  position: absolute;
+  inset-inline-start: 0.75rem;
+  top: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: var(--radius-md, 0.5rem);
+  background-color: var(--accent);
+  color: var(--accent-ink, var(--surface));
+  padding: 0.5rem 0.75rem;
+}
+.cd-skip-link:focus {
+  transform: none;
+}
+
+/* Hover and focus transitions are 150 ms; reduced motion removes them. */
+.cd-link {
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cd-link {
+    transition: none;
+  }
+}
+
+/* Landing page (#90). Motion is decoration: nothing here hides content, and prefers-reduced-motion
+ * removes every animation below. */
+.cd-snap-strip {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+.cd-snap-item {
+  scroll-snap-align: start;
+}
+@media (min-width: 768px) {
+  .cd-snap-strip {
+    overflow: visible;
+  }
+}
+
+/* One cycle when the board comes into view: the listing that changed overnight settles. */
+@media (prefers-reduced-motion: no-preference) {
+  .cd-changed {
+    animation: cd-changed 900ms ease-out 600ms 1 both;
+  }
+  @keyframes cd-changed {
+    from {
+      background-color: var(--warning-soft);
+      transform: translateY(-4px);
+    }
+    to {
+      background-color: var(--surface);
+      transform: none;
+    }
+  }
+
+  /* Slow parallax between the board and the brief sheet behind it, and a soft reveal per section.
+   * Only where scroll-driven animations exist; start values stay mostly opaque. */
+  @supports (animation-timeline: view()) {
+    .cd-board-brief {
+      animation: cd-parallax linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+    .cd-reveal {
+      animation: cd-reveal 250ms ease-out both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 30%;
+    }
+  }
+  @keyframes cd-parallax {
+    from {
+      transform: translateY(10px);
+    }
+    to {
+      transform: translateY(-10px);
+    }
+  }
+  @keyframes cd-reveal {
+    from {
+      opacity: 0.6;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

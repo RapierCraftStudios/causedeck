@@ -9,6 +9,9 @@ data "aws_region" "replica" {
 }
 
 data "aws_iam_policy_document" "kms" {
+  #checkov:skip=CKV_AWS_356:KMS key policy: Resource * means this key (resource-based policy); access is scoped by principals and conditions
+  #checkov:skip=CKV_AWS_109:KMS key policy: Resource * means this key (resource-based policy); access is scoped by principals and conditions
+  #checkov:skip=CKV_AWS_111:KMS key policy: Resource * means this key (resource-based policy); access is scoped by principals and conditions
   statement {
     sid       = "Administer"
     actions   = ["kms:Create*", "kms:Describe*", "kms:Enable*", "kms:List*", "kms:Put*", "kms:Update*", "kms:Revoke*", "kms:Disable*", "kms:Get*", "kms:ScheduleKeyDeletion", "kms:CancelKeyDeletion", "kms:TagResource", "kms:UntagResource"]
@@ -53,6 +56,8 @@ resource "aws_kms_key" "replica" {
 # ---- Buckets ----
 
 resource "aws_s3_bucket" "documents" {
+  #checkov:skip=CKV2_AWS_62:No event consumers: documents are read through the app, not S3 events
+  #checkov:skip=CKV_AWS_18:Server access logs need a dedicated log bucket; object access is audited by the app
   bucket = "${var.name}-documents"
   tags   = var.tags
 
@@ -65,6 +70,9 @@ resource "aws_s3_bucket" "documents" {
 }
 
 resource "aws_s3_bucket" "replica" {
+  #checkov:skip=CKV2_AWS_62:No event consumers: documents are read through the app, not S3 events
+  #checkov:skip=CKV_AWS_18:Server access logs need a dedicated log bucket; object access is audited by the app
+  #checkov:skip=CKV2_AWS_61:Replica of legal documents: retention is governed by versioning and the source bucket; no expiry
   provider = aws.replica
 
   bucket = "${var.name}-documents-replica"

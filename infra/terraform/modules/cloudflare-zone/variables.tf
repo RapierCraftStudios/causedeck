@@ -14,9 +14,15 @@ variable "vps_ipv4" {
 }
 
 variable "vps_ipv6" {
-  description = "Public IPv6 of the India VPS; empty skips the AAAA records."
+  description = "Public IPv6 of the India VPS; used as the AAAA content when enable_ipv6 is set."
   type        = string
   default     = ""
+}
+
+variable "enable_ipv6" {
+  description = "Create the AAAA records. A plan-time constant (not derived from vps_ipv6, which is unknown until the VPS exists)."
+  type        = bool
+  default     = false
 }
 
 variable "app_proxied" {

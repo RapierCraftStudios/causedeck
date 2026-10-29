@@ -6,7 +6,7 @@
 ARG NODE_IMAGE=node:22.23.0-bookworm-slim
 
 FROM ${NODE_IMAGE} AS build
-# The root `prepare` script (lefthook install) runs during `pnpm deploy`; the image has no git.
+# The root `prepare` script (lefthook install) is a no-op without a .git directory; the image has no git.
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true LEFTHOOK=0
 RUN corepack enable
 WORKDIR /repo

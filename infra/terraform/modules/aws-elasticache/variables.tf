@@ -9,6 +9,8 @@ variable "name" {
   type        = string
 }
 
+# Kept as the India-only guard: its validation is asserted by test/stage-b-policy.test.mjs; the AWS provider region is set in the env root.
+# tflint-ignore: terraform_unused_declarations
 variable "region" {
   description = "Region. India only."
   type        = string

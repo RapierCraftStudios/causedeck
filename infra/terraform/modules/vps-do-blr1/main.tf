@@ -12,6 +12,7 @@ locals {
 }
 
 resource "digitalocean_droplet" "this" {
+  #checkov:skip=CKV_DIO_2:The deploy key is installed by cloud-init (deploy_pubkey); no DO account SSH key is attached
   name       = local.name
   region     = var.region
   size       = var.size
@@ -56,6 +57,7 @@ resource "digitalocean_volume_attachment" "data" {
 # Firewall: the `tags` argument of digitalocean_firewall selects target droplets, so it is not used
 # here; the firewall is bound by droplet id.
 resource "digitalocean_firewall" "this" {
+  #checkov:skip=CKV_DIO_4:Ports 80 and 443 are public by design (Caddy); SSH is limited to ssh_allowlist
   name        = local.name
   droplet_ids = [digitalocean_droplet.this.id]
 

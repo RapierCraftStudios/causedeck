@@ -44,7 +44,7 @@
     "env:example:check": "pnpm --filter @causedeck/config env:example:check",
     "audit:prod": "node scripts/audit-gate.mjs",
     "audit:prod:raw": "pnpm audit --prod --audit-level high",
-    "prepare": "lefthook install"
+    "prepare": "node -e \"require('fs').existsSync('.git')&&require('child_process').execSync('lefthook install',{stdio:'inherit'})\""
   },
   "prettier": "@causedeck/config/prettier",
   "devDependencies": {

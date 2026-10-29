@@ -4,7 +4,14 @@
 # Providers are mocked, so no credentials or network are needed. The OVH data source is mocked with
 # one IPv4 and one IPv6 address, like the real `ips` list.
 
-mock_provider "cloudflare" {}
+# The mocked zone needs a real-looking id: the CDN rules validate it as 32 hex characters.
+mock_provider "cloudflare" {
+  mock_resource "cloudflare_zone" {
+    defaults = {
+      id = "0123456789abcdef0123456789abcdef"
+    }
+  }
+}
 mock_provider "digitalocean" {}
 mock_provider "aws" {}
 
@@ -45,7 +52,7 @@ run "default_provider_is_ovh_mumbai" {
 }
 
 run "manual_plans_no_vps_and_uses_supplied_ips" {
-  command = apply
+  command = plan
 
   variables {
     vps_provider = "manual"
@@ -65,7 +72,7 @@ run "manual_plans_no_vps_and_uses_supplied_ips" {
 }
 
 run "manual_without_ipv6_is_allowed" {
-  command = apply
+  command = plan
 
   variables {
     vps_provider = "manual"

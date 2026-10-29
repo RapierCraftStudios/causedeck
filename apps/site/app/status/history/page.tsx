@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { StatusView } from '../../../components/status/status-view.tsx';
+import { siteEnv } from '../../../lib/env.ts';
 import { pageMetadata } from '../../../lib/seo.ts';
 
 export const metadata: Metadata = pageMetadata({
@@ -13,7 +14,11 @@ export default function StatusHistoryPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-ink text-3xl font-semibold">Status history</h1>
-      <StatusView mode="history" />
+      <StatusView
+        statusUrl={siteEnv.statusUrl}
+        verifyKey={siteEnv.statusVerifyKey}
+        mode="history"
+      />
     </div>
   );
 }

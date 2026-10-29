@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { StatusView } from '../../components/status/status-view.tsx';
+import { siteEnv } from '../../lib/env.ts';
 import { pageMetadata } from '../../lib/seo.ts';
 
 export const metadata: Metadata = pageMetadata({
@@ -13,7 +14,7 @@ export default function StatusPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <h1 className="text-ink text-3xl font-semibold">CauseDeck status</h1>
-      <StatusView />
+      <StatusView statusUrl={siteEnv.statusUrl} verifyKey={siteEnv.statusVerifyKey} />
     </div>
   );
 }

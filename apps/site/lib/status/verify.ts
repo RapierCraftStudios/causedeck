@@ -1,7 +1,7 @@
 // HMAC-SHA256 verification in the browser (WebCrypto). The algorithm is core's `canonicalStatusJson`
 // plus `verifySnapshot` (`packages/core/src/status/publish.ts`). The key is a public build-time
 // value, so this detects corruption and accidental tampering, not a forger who can read the key.
-import { statusSnapshotSchema, type StatusSnapshot } from './model.ts';
+import { parseStatusSnapshot, type StatusSnapshot } from './model.ts';
 
 /** JSON with object keys sorted at every level, undefined dropped (same bytes as core). */
 export function canonicalJson(value: unknown): string {
@@ -40,9 +40,9 @@ function safeEqual(a: string, b: string): boolean {
 
 /** The parsed snapshot when it matches the schema and its signature verifies, else null. */
 export async function verifySnapshot(raw: unknown, key: string): Promise<StatusSnapshot | null> {
-  const parsed = statusSnapshotSchema.safeParse(raw);
-  if (!parsed.success) return null;
-  const { signature, ...unsigned } = parsed.data;
+  const parsed = parseStatusSnapshot(raw);
+  if (parsed === null) return null;
+  const { signature, ...unsigned } = parsed;
   const expected = await hmacHex(canonicalJson(unsigned), key);
-  return safeEqual(expected, signature.value) ? parsed.data : null;
+  return safeEqual(expected, signature.value) ? parsed : null;
 }

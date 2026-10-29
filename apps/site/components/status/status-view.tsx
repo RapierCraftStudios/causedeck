@@ -3,7 +3,6 @@
 import { Alert, AlertDescription, AlertTitle } from '@causedeck/ui/alert';
 import { useCallback, useEffect, useState } from 'react';
 
-import { siteEnv } from '../../lib/env.ts';
 import { loadStatus, watchOnline, type StatusState } from '../../lib/status/state.ts';
 
 import { ComponentRow } from './component-row.tsx';
@@ -15,6 +14,10 @@ import { UptimeStrip } from './uptime-strip.tsx';
 export type StatusViewState = StatusState | { kind: 'loading' };
 
 interface Props {
+  /** Where `status.json` is fetched from and the key it is verified with. The pages pass them from
+   * the build env: importing `lib/env.ts` here would put zod in the client bundle. */
+  statusUrl?: string;
+  verifyKey?: string;
   /** `current` shows live components and open incidents; `history` the resolved ones. */
   mode?: 'current' | 'history';
   /** Fixed state for stories and tests; skips the fetch. */
@@ -23,18 +26,19 @@ interface Props {
   now?: Date;
 }
 
-export function StatusView({ mode = 'current', state: fixed, online: fixedOnline, now }: Props) {
+export function StatusView({
+  statusUrl = '/status/status.json',
+  verifyKey = '',
+  mode = 'current',
+  state: fixed,
+  online: fixedOnline,
+  now,
+}: Props) {
   const [loaded, setLoaded] = useState<StatusViewState>({ kind: 'loading' });
   const [online, setOnline] = useState(true);
   const fetchStatus = useCallback(
-    () =>
-      loadStatus(
-        (url, init) => fetch(url, init),
-        siteEnv.statusUrl,
-        siteEnv.statusVerifyKey,
-        new Date(),
-      ),
-    [],
+    () => loadStatus((url, init) => fetch(url, init), statusUrl, verifyKey, new Date()),
+    [statusUrl, verifyKey],
   );
   const retry = useCallback(() => {
     setLoaded({ kind: 'loading' });

@@ -102,12 +102,12 @@ for (const { name, viewport } of WIDTHS) {
       const dialog = page.getByRole('dialog', { name: 'Help' });
       await expect(dialog).toBeVisible();
 
-      // A light 1 px inset line in the ring token, not a 2 px outer outline.
+      // The tab's 2 px focus ring is drawn inside it (offset -2 px), so the sheet cannot clip it.
       const list = dialog.getByRole('tab', { name: 'Shortcuts' });
       await keyboardFocus(page, list);
       await expect
         .poll(() => outlineOf(list))
-        .toEqual({ focusVisible: true, style: 'solid', width: 1, offset: -1 });
+        .toEqual({ focusVisible: true, style: 'solid', width: 2, offset: -2 });
 
       await shot(page, testInfo, `${name}-shortcuts-dialog`);
     });

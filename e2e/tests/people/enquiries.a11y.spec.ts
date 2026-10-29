@@ -104,6 +104,6 @@ test.describe('enquiry log accessibility', { tag: '@a11y' }, () => {
   test('denied', async ({ page, asUser, db }) => {
     await seedEnquiries(db.name);
     await asUser('clerk', { workspace: MATTERS_WORKSPACE, path: enquiriesPath() });
-    await expect(page.getByText(/permission/i).first()).toBeVisible();
+    await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText('No access');
   });
 });

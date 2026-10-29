@@ -8,6 +8,7 @@ import { expect, test } from '../../fixtures/index.ts';
 
 import {
   ENQUIRIES,
+  dropFlagCache,
   emptyEnquiries,
   enableEnquiryLog,
   enquiriesPath,
@@ -22,7 +23,9 @@ test.describe('enquiry log', () => {
   test('enquiry-gated-off: the flag off makes the route a 404 and hides the nav entry', async ({
     page,
     asUser,
+    db,
   }) => {
+    await dropFlagCache(db.name);
     await asUser('owner', { workspace: MATTERS_WORKSPACE, path: 'people' });
     const response = await page.goto(url(enquiriesPath()));
     expect(response?.status()).toBe(404);
@@ -113,7 +116,7 @@ test.describe('enquiry log', () => {
     await expect(error.getByRole('button', { name: 'Retry' })).toBeVisible();
 
     await page.goto(url(enquiriesPath('__state=denied')));
-    await expect(page.getByText(/permission/i).first()).toBeVisible();
+    await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText('No access');
   });
 
   test('states: offline disables New enquiry and shows the banner', async ({
@@ -135,7 +138,7 @@ test.describe('enquiry log', () => {
     await enableEnquiryLog(db.name);
     await seedEnquiries(db.name);
     await asUser('clerk', { workspace: MATTERS_WORKSPACE, path: enquiriesPath() });
-    await expect(page.getByText(/permission/i).first()).toBeVisible();
+    await expect(page.locator('main').getByRole('heading', { level: 1 })).toHaveText('No access');
     await expect(page.locator('[data-enquiry-row]')).toHaveCount(0);
   });
 
@@ -153,8 +156,10 @@ test.describe('enquiry log', () => {
     await page.keyboard.press('j');
     await expect(enquiryRow(page, ENQUIRIES.logged)).toBeFocused();
     await page.keyboard.press('Tab');
-    await expect(page.getByRole('button', { name: 'Review' }).first()).toBeFocused();
-    await page.keyboard.press('Enter');
+    // `j` already selected the row, so Review reads as pressed (Enter would close it again).
+    const review = page.getByRole('button', { name: 'Review' }).first();
+    await expect(review).toBeFocused();
+    await expect(review).toHaveAttribute('aria-pressed', 'true');
     await page.keyboard.press('c');
     await expect(enquiryRow(page, ENQUIRIES.logged).locator('[data-conflict-count]')).toBeVisible();
 

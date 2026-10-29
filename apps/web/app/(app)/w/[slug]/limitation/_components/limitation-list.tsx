@@ -146,7 +146,8 @@ export function LimitationList({
               computation={computation}
               rule={rules.find((r) => r.id === computation.ruleId)}
               selected={computation.id === active}
-              canConfirm={canWrite && online}
+              canConfirm={canWrite}
+              offline={!online}
               busy={busy}
               onSelect={setActive}
               onConfirm={(id) => {

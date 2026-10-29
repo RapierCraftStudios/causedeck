@@ -142,6 +142,10 @@ export function ContactList({
           defaultValue={q}
           aria-label={t('search.label')}
           placeholder={t('search.placeholder')}
+          onKeyDown={(event) => {
+            // useHotkey ignores plain keys while typing, so Esc leaves the field here.
+            if (event.key === 'Escape') event.currentTarget.blur();
+          }}
           className="max-w-sm"
         />
         <select

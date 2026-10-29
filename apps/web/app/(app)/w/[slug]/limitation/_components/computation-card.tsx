@@ -13,6 +13,8 @@ export interface ComputationCardProps {
   rule?: RuleView | undefined;
   selected: boolean;
   canConfirm: boolean;
+  /** Offline: Confirm stays on the card but cannot be pressed. */
+  offline?: boolean;
   busy: boolean;
   onSelect: (id: string) => void;
   onConfirm: (id: string) => void;
@@ -24,6 +26,7 @@ export function ComputationCard({
   rule,
   selected,
   canConfirm,
+  offline = false,
   busy,
   onSelect,
   onConfirm,
@@ -59,7 +62,7 @@ export function ComputationCard({
           {proposed && canConfirm && (
             <Button
               size="sm"
-              disabled={busy}
+              disabled={busy || offline}
               onClick={() => {
                 onConfirm(computation.id);
               }}

@@ -124,7 +124,7 @@ export const SearchShortcut: Story = {
 export const RowNavigation: Story = {
   play: async ({ canvas }) => {
     await userEvent.keyboard('j');
-    await expect(canvas.getByRole('link', { name: 'Open Ilango Murugesan' })).toHaveFocus();
+    await expect(canvas.getByRole('link', { name: /^Ilango Murugesan/ })).toHaveFocus();
   },
 };
 

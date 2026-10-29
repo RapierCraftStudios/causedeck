@@ -1,0 +1,20 @@
+{
+  "Rules": [
+    {
+      "ID": "wal-and-base-backups-30d",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "causedeck-wal/" },
+      "Expiration": { "Days": 30 },
+      "NoncurrentVersionExpiration": { "NoncurrentDays": 30 },
+      "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+    },
+    {
+      "ID": "logs-180d",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "logs/" },
+      "Expiration": { "Days": 180 },
+      "NoncurrentVersionExpiration": { "NoncurrentDays": 180 },
+      "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 }
+    }
+  ]
+}

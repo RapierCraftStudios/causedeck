@@ -2,7 +2,11 @@
 # Automated restore drill (#101): restore the latest WAL-G base backup plus WAL into an isolated,
 # throwaway container on a fresh volume, verify it, write a JSON report, tear everything down.
 #
-#   restore-drill.sh [--target-time <ISO8601 UTC>|latest] [--report <file>] [--manifest <csv>]
+#   restore-drill.sh [--target-time <ISO8601 UTC>|latest] [--report <file>] [--manifest <csv>] [--dry-run]
+#
+# --dry-run validates the configuration only (India guard, target, key file, prefix) and writes the
+# report without touching Docker or storage; CI uses it to prove a drill can be pointed at the
+# Hyderabad replica (WALG_S3_PREFIX=s3://<REPLICA_BUCKET>/causedeck-wal, AWS_REGION=ap-south-2).
 #
 # Env: WALG_S3_PREFIX, AWS_ENDPOINT/AWS_REGION, AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY (READ-ONLY
 # restore credentials), WALG_LIBSODIUM_KEY_PATH (host path of the key file), DRILL_IMAGE (the
@@ -22,11 +26,13 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET="latest"
 REPORT="${TMPDIR:-/tmp}/restore-drill-report.json"
 MANIFEST=""
+DRY_RUN=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --target-time) TARGET="${2:?--target-time needs a value}"; shift 2 ;;
     --report) REPORT="${2:?--report needs a file}"; shift 2 ;;
     --manifest) MANIFEST="${2:?--manifest needs a file}"; shift 2 ;;
+    --dry-run) DRY_RUN=1; shift ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -34,7 +40,8 @@ done
 RPO_TARGET=900
 RTO_TARGET=14400
 TIMEOUT="${DRILL_TIMEOUT_SECONDS:-$RTO_TARGET}"
-IMAGE="${DRILL_IMAGE:?set DRILL_IMAGE}"
+IMAGE="${DRILL_IMAGE:-}"
+[[ "$DRY_RUN" == 1 ]] || : "${DRILL_IMAGE:?set DRILL_IMAGE}"
 TOL="${DRILL_ROWCOUNT_TOLERANCE:-0}"
 ID="drill-$$"
 START_EPOCH="$(date -u +%s)"
@@ -65,6 +72,11 @@ finish() {
   jq -s --arg s "$STARTED_AT" --arg t "$TARGET" --argjson rto "$RTO" --argjson rpo "$RPO" \
     --argjson ok "$ok" '{startedAt:$s,target:$t,rtoSeconds:$rto,rpoSeconds:$rpo,checks:.,ok:$ok}' \
     "$CHECKS" >"$REPORT"
+  if [[ "$DRY_RUN" == 1 ]]; then
+    [[ "$ok" == true ]] && { echo "restore drill dry run ok: $WALG_S3_PREFIX via ${AWS_ENDPOINT:-AWS S3} (${AWS_REGION:-})"; exit 0; }
+    echo "restore drill dry run FAILED, see $REPORT" >&2
+    exit 1
+  fi
   put_status drills/latest.json "$REPORT" || echo "could not publish the report" >&2
   if [[ "$ok" == true ]]; then
     put_status drills/last-success.json "$REPORT" || true
@@ -83,6 +95,12 @@ fi
 [[ "$TARGET" == latest || "$TARGET" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}[T\ ][0-9:]{8}(Z|\+00)?$ ]] ||
   { echo "--target-time must be 'latest' or a UTC timestamp" >&2; exit 2; }
 [[ -r "${WALG_LIBSODIUM_KEY_PATH:-}" ]] || { add_check restore false "encryption key file is not readable"; finish; }
+
+if [[ "$DRY_RUN" == 1 ]]; then
+  [[ "${WALG_S3_PREFIX:-}" == s3://* ]] || add_check config false "WALG_S3_PREFIX must be an s3:// prefix"
+  add_check dry_run true "configuration valid; no restore was run"
+  finish
+fi
 
 NET="${DRILL_DOCKER_NETWORK:-}"
 if [[ -z "$NET" ]]; then

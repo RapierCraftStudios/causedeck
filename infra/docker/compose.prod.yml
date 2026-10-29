@@ -416,7 +416,7 @@ services:
           cpus: '0.5'
     logging: *logging
 
-  # Nightly (02:00 IST) copy of the WAL, ops and app buckets to the second India location, plus a
+  # Nightly (02:00 IST) copy of the WAL, ops and app buckets to the off-host replica (AWS S3 ap-south-2, Hyderabad), plus a
   # continuous watch on the WAL bucket (REPLICATE_WATCH=1) so off-host RPO stays in minutes.
   minio-replicate:
     image: pgsty/mc:RELEASE.2026-10-18T00-00-00Z
@@ -433,6 +433,10 @@ services:
       PRIMARY_ACCESS_KEY: ${S3_ACCESS_KEY:?set S3_ACCESS_KEY}
       PRIMARY_SECRET_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
       REPLICA_ENDPOINT: ${REPLICA_ENDPOINT:-http://minio-replica:9000}
+      REPLICA_REGION: ${REPLICA_REGION:-ap-south-2}
+      REPLICA_BUCKET: ${REPLICA_BUCKET-}
+      REPLICA_SSE: ${REPLICA_SSE:-sse-s3}
+      REPLICA_KMS_KEY_ID: ${REPLICA_KMS_KEY_ID-}
       REPLICA_ACCESS_KEY: ${REPLICA_ACCESS_KEY-}
       REPLICA_SECRET_KEY: ${REPLICA_SECRET_KEY-}
       S3_BUCKET: ${S3_BUCKET:-}

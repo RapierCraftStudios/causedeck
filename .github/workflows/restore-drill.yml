@@ -11,6 +11,15 @@ on:
       target_time:
         description: 'Recovery target (UTC ISO 8601) or "latest"'
         default: latest
+      source:
+        description: 'Backup copy to restore: primary (staging MinIO) or replica (S3 ap-south-2, Hyderabad)'
+        type: choice
+        options: [primary, replica]
+        default: primary
+      dry_run:
+        description: 'Validate the configuration only, no restore'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -38,23 +47,27 @@ jobs:
       - name: Drill
         env:
           DRILL_IMAGE: ${{ vars.STAGING_POSTGRES_IMAGE }}
-          WALG_S3_PREFIX: ${{ vars.STAGING_WALG_S3_PREFIX }}
-          AWS_ENDPOINT: ${{ vars.STAGING_WALG_AWS_ENDPOINT }}
-          AWS_REGION: ${{ vars.STAGING_S3_REGION }}
+          # Primary copy by default; source=replica restores from the Hyderabad S3 replica (#884).
+          WALG_S3_PREFIX: ${{ inputs.source == 'replica' && vars.STAGING_REPLICA_WALG_S3_PREFIX || vars.STAGING_WALG_S3_PREFIX }}
+          AWS_ENDPOINT: ${{ inputs.source == 'replica' && vars.STAGING_REPLICA_ENDPOINT || vars.STAGING_WALG_AWS_ENDPOINT }}
+          AWS_REGION: ${{ inputs.source == 'replica' && vars.STAGING_REPLICA_REGION || vars.STAGING_S3_REGION }}
           # Read-only restore credentials; never the archiver or admin keys.
-          AWS_ACCESS_KEY_ID: ${{ secrets.STAGING_WALG_RESTORE_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.STAGING_WALG_RESTORE_SECRET_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ inputs.source == 'replica' && secrets.STAGING_REPLICA_RESTORE_ACCESS_KEY || secrets.STAGING_WALG_RESTORE_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ inputs.source == 'replica' && secrets.STAGING_REPLICA_RESTORE_SECRET_KEY || secrets.STAGING_WALG_RESTORE_SECRET_KEY }}
           OPS_ENDPOINT: ${{ vars.STAGING_WALG_AWS_ENDPOINT }}
           OPS_BUCKET: causedeck-ops
           OPS_REGION: ${{ vars.STAGING_S3_REGION }}
           OPS_ACCESS_KEY: ${{ secrets.STAGING_OPS_ACCESS_KEY }}
           OPS_SECRET_KEY: ${{ secrets.STAGING_OPS_SECRET_KEY }}
           TARGET_TIME: ${{ inputs.target_time || 'latest' }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
         run: |
           set -euo pipefail
           export WALG_LIBSODIUM_KEY_PATH="$RUNNER_TEMP/walg.key"
+          args=()
+          [ "$DRY_RUN" = 1 ] && args+=(--dry-run)
           bash infra/scripts/restore/restore-drill.sh --target-time "$TARGET_TIME" \
-            --report "$RUNNER_TEMP/drill-report.json"
+            --report "$RUNNER_TEMP/drill-report.json" "${args[@]}"
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

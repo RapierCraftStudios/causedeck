@@ -6,7 +6,9 @@ Last drilled: not yet drilled (record: [drills](drills/README.md))
 ## Purpose
 
 Stage A: WAL-G on the single India VPS archives to the stack's MinIO bucket `causedeck-wal`;
-`minio-replicate` copies it nightly to a second India location. Targets (PRD §8): RPO ≤ 15 min,
+`minio-replicate` copies it nightly (WAL continuously) to AWS S3 `ap-south-2` (Hyderabad), see
+[dr-hyderabad](dr-hyderabad.md) for the replica, its encryption and the bucket lifecycle (30 days for WAL and base
+backups, 180 days for logs). Targets (PRD §8): RPO ≤ 15 min,
 RTO ≤ 4 h. Scripts: `infra/scripts/backup/`, `infra/scripts/restore/`.
 
 Measured values: the weekly drill report (`.github/workflows/restore-drill.yml` artifact) and the signed records in
@@ -32,7 +34,7 @@ restored volume; a second custodian provides the backup key when needed.
 | WAL archive                    | `archive_command = 'wal-g wal-push %p'`, `archive_timeout = 60`          | continuous           |
 | WAL freshness check            | `docker compose --profile backup run --rm backup walg-wal-push-check.sh` | every minute         |
 | Base backup, verify, retention | `... run --rm backup walg-basebackup.sh`                                 | 01:00 daily          |
-| Replication                    | `... run --rm minio-replicate`                                           | 02:00 daily          |
+| Replication (to S3 ap-south-2) | `... run --rm minio-replicate`                                           | 02:00 daily          |
 | Health job                     | `system.backup.health` (worker) reads status JSON from `causedeck-ops`   | every minute         |
 | Restore drill                  | `.github/workflows/restore-drill.yml` against staging                    | weekly, Monday 03:00 |
 | Human drill                    | this runbook, signed off in `drills/`                                    | monthly              |
@@ -72,7 +74,9 @@ Point-in-time restore:
 
 1. Declare an incident; stop writes (`docker compose stop web api worker admin`).
 2. Provide `WALG_LIBSODIUM_KEY_PATH` (key from custody), `WALG_S3_PREFIX`, `AWS_ENDPOINT` and the
-   read-only restore credentials as `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`.
+   read-only restore credentials as `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`. To restore from the Hyderabad
+   replica use `WALG_S3_PREFIX=s3://<REPLICA_BUCKET>/causedeck-wal`, `AWS_ENDPOINT=https://s3.ap-south-2.amazonaws.com`,
+   `AWS_REGION=ap-south-2`.
 3. Pick the target: `latest`, or a UTC time just before the damage.
 4. Run `RESTORE_IMAGE=<postgres image> bash infra/scripts/restore/restore-prod.sh --i-understand
 --target-volume restore_<date> --target-time <UTC>`. It refuses without `--i-understand`, onto

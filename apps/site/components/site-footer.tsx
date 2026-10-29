@@ -2,10 +2,18 @@ import { Separator } from '@causedeck/ui/separator';
 import Link from 'next/link';
 
 const COLUMNS = [
-  { heading: 'Product', links: [{ href: '/', label: 'Overview' }] },
+  {
+    heading: 'Product',
+    links: [
+      { href: '/', label: 'Overview' },
+      { href: '/pricing/', label: 'Pricing' },
+      { href: '/changelog/', label: 'Changelog' },
+    ],
+  },
   {
     heading: 'Trust',
     links: [
+      { href: '/security/', label: 'Security and privacy' },
       { href: '/about/', label: 'About' },
       { href: '/status/', label: 'Status' },
     ],

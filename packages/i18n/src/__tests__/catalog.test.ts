@@ -117,6 +117,7 @@ describe('namespaced catalogs (#174)', () => {
         'emailIntake',
         'enquiry',
         'limitation',
+        'insights',
         'fees',
         'error',
         'home',
@@ -296,6 +297,23 @@ describe('limitation namespace (#941)', () => {
     );
     for (const catalog of [ta, kn]) {
       for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+    }
+  });
+});
+
+describe('insights namespace (#85)', () => {
+  it('is registered with en complete, the empty-state copy and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('insights');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('insights.'));
+    expect(leaves).toContain('insights.empty.title');
+    expect(getPath(en, 'insights.empty.title')).toBe(
+      'Insights appear after your first few court days',
+    );
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) {
+        expect(getPath(catalog, id), id).toBeTruthy();
+        expect(getPath(catalog, id), id).not.toBe(getPath(en, id));
+      }
     }
   });
 });

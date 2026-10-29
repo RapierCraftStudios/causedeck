@@ -150,7 +150,7 @@ the matrix, before the resource checks below.
 | Action | owner | advocate | junior | clerk | viewer |
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `limitation.read` | ✓     | ✓        | ✓      | —     | —      |
-| `insights.read` | ✓     | ✓        | —      | —     | —      |
+| `insights.read` | ✓     | ✓        | ✓      | —     | —      |
 | `settings.read` | ✓     | ✓        | ✓      | ✓     | —      |
 
 ## Settings and resource rules

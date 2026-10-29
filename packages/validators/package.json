@@ -17,6 +17,7 @@
     "./forum": "./src/forum.ts",
     "./gstin": "./src/gstin.ts",
     "./hearing-outcome": "./src/hearing-outcome.ts",
+    "./insights": "./src/insights.ts",
     "./limitation": "./src/limitation.ts",
     "./matter-graph": "./src/matter-graph.ts",
     "./matter-graph-inputs": "./src/matter-graph-inputs.ts",

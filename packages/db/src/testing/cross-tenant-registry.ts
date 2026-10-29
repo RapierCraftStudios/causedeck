@@ -295,6 +295,12 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   listPov: denies,
   deleteOwnRating: denies,
   povAggregate: denies,
+  // Practice insights (#85): B acting on A is denied; B in its own workspace sees none of A.
+  computePreparedKept: denies,
+  obligationHealth: denies,
+  preparednessSeries: denies,
+  loadSeries: denies,
+  getPracticeInsights: denies,
   buildPovReport: denies,
   shouldPrompt: denies,
   recordPreparedness: denies,

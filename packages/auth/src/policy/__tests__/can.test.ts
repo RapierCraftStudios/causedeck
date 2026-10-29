@@ -191,7 +191,7 @@ describe('role rules', () => {
     const stub = {
       owner: ['billing.read', 'invoices.read', 'limitation.read', 'insights.read', 'settings.read'],
       advocate: ['limitation.read', 'insights.read', 'settings.read'],
-      junior: ['limitation.read', 'settings.read'],
+      junior: ['limitation.read', 'insights.read', 'settings.read'],
       clerk: ['settings.read'],
       viewer: [],
     } as const;

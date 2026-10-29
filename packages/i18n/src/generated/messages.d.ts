@@ -3915,6 +3915,108 @@ export type Messages = {
       close: string;
     };
   };
+  insights: {
+    metaTitle: string;
+    title: string;
+    description: string;
+    loading: string;
+    offline: string;
+    computedAt: string;
+    scopeOwn: string;
+    scopeWorkspace: string;
+    shortcutsHint: string;
+    empty: {
+      title: string;
+      body: string;
+    };
+    error: {
+      title: string;
+      reference: string;
+      retry: string;
+    };
+    range: {
+      label: string;
+      '4w': string;
+      '12w': string;
+      custom: string;
+      from: string;
+      to: string;
+      apply: string;
+      window: string;
+    };
+    hero: {
+      label: string;
+      summary: string;
+      summaryAlone: string;
+      noRate: string;
+      pending: string;
+      small: string;
+      trend: string;
+      trendSummary: string;
+      definitionTitle: string;
+      definition: string;
+    };
+    tile: {
+      expand: string;
+      collapse: string;
+    };
+    delta: {
+      up: string;
+      down: string;
+      flat: string;
+      none: string;
+    };
+    obligations: {
+      title: string;
+      summary: string;
+      none: string;
+      due: string;
+      kept: string;
+      missed: string;
+      missedRate: string;
+      captureCompleteness: string;
+      captureNote: string;
+      reschedules: string;
+      rescheduleNote: string;
+    };
+    preparedness: {
+      title: string;
+      summary: string;
+      hidden: string;
+      chartTitle: string;
+      baseline: string;
+    };
+    load: {
+      title: string;
+      summary: string;
+      hidden: string;
+      chartTitle: string;
+      demand: string;
+      worry: string;
+      effort: string;
+    };
+    table: {
+      show: string;
+      hide: string;
+      week: string;
+      n: string;
+      average: string;
+      numerator: string;
+      denominator: string;
+      rate: string;
+      none: string;
+    };
+    report: {
+      title: string;
+      open: string;
+      print: string;
+      back: string;
+      definitions: string;
+      baselineDefinition: string;
+      missedDefinition: string;
+      private: string;
+    };
+  };
   fees: {
     metaTitle: string;
     title: string;

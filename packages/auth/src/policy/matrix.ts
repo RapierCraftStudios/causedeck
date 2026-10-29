@@ -54,7 +54,7 @@ export const MATRIX: Readonly<Record<Action, Role>> = {
   'support.manage': 'owner',
   'limitation.read': 'junior',
   'limitation.write': 'advocate',
-  'insights.read': 'advocate',
+  'insights.read': 'junior',
   'settings.read': 'clerk',
 };
 

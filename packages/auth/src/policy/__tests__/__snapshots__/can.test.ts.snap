@@ -67,6 +67,7 @@ exports[`can() totality and the matrix > returns a decision for every (role, act
     "draft.export",
     "contact.read",
     "limitation.read",
+    "insights.read",
     "settings.read",
   ],
   "owner": [

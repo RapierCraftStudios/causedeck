@@ -25,6 +25,8 @@ variable "replica_region" {
   }
 }
 
+# tflint-ignore: terraform_unused_declarations
+# Accepted for interface parity with the other stage-b modules; not yet referenced.
 variable "account_id" {
   description = "AWS account id that owns the KMS key policies."
   type        = string

@@ -54,6 +54,21 @@ cp "$ROOT/infra/docker/env/prod.env.example" "$ENV_FILE"
 # Later assignments win when the file is sourced, but compose's env parser keeps the LAST value too.
 export CAUSEDECK_ENV_FILE="$ENV_FILE"
 
+echo "smoke: sizing presets render within their memory budgets (#883)"
+# name, preset file, max total MiB of limits x replicas, min Postgres MiB. prod-vps3 leaves at
+# least 3 GB of the 12 GB for the core monitoring profile and the OS; staging-vps1 fits 3 GB.
+render_preset() {
+  docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" --env-file "$ROOT/infra/docker/env/$1.env" \
+    config --format json
+}
+for spec in "prod-vps3 9216 2048" "staging-vps1 3072 0"; do
+  set -- $spec
+  render_preset "$1" | node "$ROOT/infra/docker/test/preset-budget.mjs" "$1" "$2" "$3" \
+    || fail "preset $1 is over budget"
+done
+[ "$(render_preset staging-vps1 | node -e 'const c=JSON.parse(require("fs").readFileSync(0));console.log(c.services.web.deploy.replicas+","+c.services.worker.deploy.replicas)')" = "1,1" ] \
+  || fail "staging-vps1 must run 1 web and 1 worker"
+
 echo "smoke: migrate (owner role, one-off container)"
 bash "$ROOT/infra/scripts/migrate.sh"
 

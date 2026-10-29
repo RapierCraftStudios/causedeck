@@ -32,8 +32,8 @@ describe('compose.prod.yml services', () => {
     for (const name of [...DAEMONS, 'minio-init', 'migrate']) {
       assert.ok(name in services, `missing service ${name}`);
     }
-    assert.match(services.web, /replicas: 2\b/);
-    assert.match(services.worker, /replicas: 2\b/);
+    assert.match(services.web, /replicas: \$\{WEB_REPLICAS:-2\}/);
+    assert.match(services.worker, /replicas: \$\{WORKER_REPLICAS:-2\}/);
     for (const single of ['api', 'admin', 'postgres', 'minio', 'caddy']) {
       assert.doesNotMatch(services[single], /replicas:/, `${single} runs a single container`);
     }
@@ -243,5 +243,48 @@ describe('backup services (#101)', () => {
   it('gives the archiver its own write-only credential variables', () => {
     assert.match(services.postgres, /WALG_ARCHIVE_ACCESS_KEY/);
     assert.match(services.backup, /WALG_ADMIN_ACCESS_KEY/);
+  });
+});
+
+describe('sizing presets (#883)', () => {
+  const MIB = { m: 1, g: 1024 };
+  const parse = (file) =>
+    Object.fromEntries(
+      read(file)
+        .split('\n')
+        .filter((l) => /^[A-Z_]+=/.test(l))
+        .map((l) => l.split('=')),
+    );
+  const mib = (v) => Number(/^(\d+)([mg])$/.exec(v)[1]) * MIB[/([mg])$/.exec(v)[1]];
+  // Replica counts per sized service; services without a replica variable run once.
+  const total = (env) =>
+    ['CADDY', 'WEB', 'API', 'WORKER', 'ADMIN', 'POSTGRES', 'MINIO'].reduce(
+      (sum, svc) => sum + mib(env[`${svc}_MEM`]) * Number(env[`${svc}_REPLICAS`] ?? 1),
+      0,
+    );
+
+  it('prod-vps3 keeps the app stack at 9 GB or less and Postgres at 2 GB or more', () => {
+    const env = parse('env/prod-vps3.env');
+    assert.ok(total(env) <= 9 * 1024, `total ${total(env)} MiB`);
+    assert.ok(mib(env.POSTGRES_MEM) >= 2048);
+  });
+
+  it('staging-vps1 runs 1 web and 1 worker within 3 GB including Postgres and MinIO', () => {
+    const env = parse('env/staging-vps1.env');
+    assert.equal(env.WEB_REPLICAS, '1');
+    assert.equal(env.WORKER_REPLICAS, '1');
+    assert.ok(total(env) <= 3 * 1024, `total ${total(env)} MiB`);
+  });
+
+  it('staging.env.example agrees with the staging-vps1 preset', () => {
+    const preset = parse('env/staging-vps1.env');
+    const example = parse('env/staging.env.example');
+    for (const [key, value] of Object.entries(preset)) assert.equal(example[key], value, key);
+  });
+
+  it('the smoke test renders every preset', () => {
+    const smoke = read('test/compose-smoke.sh');
+    assert.match(smoke, /prod-vps3 9216/);
+    assert.match(smoke, /staging-vps1 3072/);
   });
 });

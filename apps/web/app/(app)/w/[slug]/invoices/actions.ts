@@ -8,11 +8,20 @@
 // - `createFeeAgreementAction`, `setFeeAgreementStatusAction`: the fee terms for a matter.
 // - `previewInvoiceAction`: the priced, non-persisted preview.
 // - `saveInvoiceDraftAction`, `discardInvoiceDraftAction`, `issueInvoiceAction`: the invoice draft.
+//   Saving or issuing also stores the supplier state code, so the editor stops asking (#963).
+// - `recordPaymentAction`, `issueCreditNoteAction`: money received against, or credited on, a final
+//   invoice. `recordClientExpenseAction`, `recordClientReceiptAction`: lines in the client ledger.
 import type { FeePreview } from '@causedeck/core/fees';
-import { FeeAgreementInput, InvoiceInput } from '@causedeck/validators/fees';
+import {
+  FeeAgreementInput,
+  InvoiceInput,
+  LedgerEntry,
+  PaymentRecord,
+} from '@causedeck/validators/fees';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import { logger } from '../../../../../src/health.ts';
 import { feesDeps } from '../../../../../lib/fees/fees-deps.ts';
 import { ActionError, type Result } from '../../../../../lib/safe-action.ts';
 import {
@@ -43,6 +52,16 @@ async function guarded<T>(run: () => Promise<T>): Promise<T> {
       throw new ActionError('FORBIDDEN', '');
     }
     throw error;
+  }
+}
+
+/** Remembers the supplier state for next time; the invoice is already saved, so a failure is logged only. */
+async function rememberSupplierState(ctx: WorkspaceActionCtx, stateCode: string): Promise<void> {
+  try {
+    const { setFeeSupplierState } = await import('@causedeck/core/fees');
+    await setFeeSupplierState(feesDeps(ctx.tx), actorOf(ctx), { stateCode });
+  } catch (error) {
+    logger.warn({ err: error }, 'fees: could not store the supplier state code');
   }
 }
 
@@ -142,6 +161,7 @@ const saveDraft = workspaceAction(
         ? fees.createDraftInvoice(deps, actorOf(ctx), body)
         : fees.updateDraftInvoice(deps, actorOf(ctx), { invoiceId: input.invoiceId, ...body }),
     );
+    await rememberSupplierState(ctx, input.supplier.stateCode);
     revalidateFees();
     return { id: row.id, status: row.status };
   },
@@ -188,6 +208,7 @@ const issue = workspaceAction(
           : { acknowledgeUnreviewedGst: input.acknowledgeUnreviewedGst }),
       }),
     );
+    await rememberSupplierState(ctx, input.supplier.stateCode);
     revalidateFees();
     return { id: row.id, status: row.status, ...(row.number ? { number: row.number } : {}) };
   },
@@ -196,4 +217,96 @@ const issue = workspaceAction(
 
 export async function issueInvoiceAction(raw: unknown): Promise<Result<SavedFee>> {
   return issue(raw);
+}
+
+const recordPayment = workspaceAction(
+  WorkspaceScoped.extend({ payment: PaymentRecord }),
+  async (input, ctx): Promise<SavedFee> => {
+    await requireFlag(ctx);
+    const { recordPayment: record } = await import('@causedeck/core/fees');
+    const row = await guarded(() => record(feesDeps(ctx.tx), actorOf(ctx), input.payment));
+    revalidateFees();
+    return { id: row.id, status: row.status, ...(row.number ? { number: row.number } : {}) };
+  },
+  WRITE,
+);
+
+/** Money received against a final invoice; it is marked paid once the payments settle it. */
+export async function recordPaymentAction(raw: unknown): Promise<Result<SavedFee>> {
+  return recordPayment(raw);
+}
+
+const CreditNote = z.strictObject({
+  invoiceId: z.uuid(),
+  amountPaise: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  reason: z.string().trim().min(1).max(500),
+  occurredOn: z.iso.date(),
+});
+
+const issueCreditNote = workspaceAction(
+  WorkspaceScoped.extend({ creditNote: CreditNote }),
+  async (input, ctx): Promise<SavedFee> => {
+    await requireFlag(ctx);
+    const { issueCreditNote: issueNote } = await import('@causedeck/core/fees');
+    const row = await guarded(() => issueNote(feesDeps(ctx.tx), actorOf(ctx), input.creditNote));
+    revalidateFees();
+    return { id: row.id, status: row.status, ...(row.number ? { number: row.number } : {}) };
+  },
+  WRITE,
+);
+
+/** A correction to a final invoice: a credit entry, never an edit of the invoice. */
+export async function issueCreditNoteAction(raw: unknown): Promise<Result<SavedFee>> {
+  return issueCreditNote(raw);
+}
+
+const Expense = LedgerEntry.pick({
+  personId: true,
+  matterId: true,
+  amountPaise: true,
+  description: true,
+  occurredOn: true,
+});
+
+const recordExpense = workspaceAction(
+  WorkspaceScoped.extend({ expense: Expense }),
+  async (input, ctx): Promise<SavedFee> => {
+    await requireFlag(ctx);
+    const { recordClientExpense } = await import('@causedeck/core/fees');
+    const row = await guarded(() =>
+      recordClientExpense(feesDeps(ctx.tx), actorOf(ctx), input.expense),
+    );
+    revalidateFees();
+    return { id: row.id, status: row.kind };
+  },
+  WRITE,
+);
+
+/** A disbursement paid for the client: a debit in their ledger. */
+export async function recordClientExpenseAction(raw: unknown): Promise<Result<SavedFee>> {
+  return recordExpense(raw);
+}
+
+const Receipt = LedgerEntry.pick({ personId: true, matterId: true, amountPaise: true }).extend({
+  reference: z.string().trim().min(1).max(200).optional(),
+  receivedOn: z.iso.date(),
+});
+
+const recordReceipt = workspaceAction(
+  WorkspaceScoped.extend({ receipt: Receipt }),
+  async (input, ctx): Promise<SavedFee> => {
+    await requireFlag(ctx);
+    const { recordClientReceipt } = await import('@causedeck/core/fees');
+    const row = await guarded(() =>
+      recordClientReceipt(feesDeps(ctx.tx), actorOf(ctx), input.receipt),
+    );
+    revalidateFees();
+    return { id: row.id, status: row.kind };
+  },
+  WRITE,
+);
+
+/** Money received from the client: a credit in their ledger. */
+export async function recordClientReceiptAction(raw: unknown): Promise<Result<SavedFee>> {
+  return recordReceipt(raw);
 }

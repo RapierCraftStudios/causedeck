@@ -83,3 +83,46 @@ export async function loadInvoice(context: WorkspaceContext, id: string): Promis
     return { kind: 'error' };
   }
 }
+
+/** One choice in a matter or client picker. */
+export interface PickerOption {
+  id: string;
+  label: string;
+}
+
+export interface FeePickers {
+  matters: PickerOption[];
+  clients: PickerOption[];
+  /** The stored supplier state code, or null before the first invoice. */
+  supplierStateCode: string | null;
+}
+
+const NO_PICKERS: FeePickers = { matters: [], clients: [], supplierStateCode: null };
+
+/**
+ * What the forms offer: the matters and clients the actor may see, and the stored supplier state.
+ * A failure is an empty picker (the form shows a hint), never a broken page: the lists are a
+ * convenience and the server checks every id again.
+ */
+export async function loadFeePickers(context: WorkspaceContext): Promise<FeePickers> {
+  try {
+    const runtime = await import('@causedeck/core/runtime');
+    const fees = await import('@causedeck/core/fees');
+    const graph = await import('@causedeck/core/matter-graph');
+    const scope = { workspaceId: context.workspace.id, userId: context.user.id };
+    return await runtime.inWorkspace(scope, async (tx) => {
+      const page = await graph.listMatters({ db: tx, events: { emit: () => undefined } }, scope, {
+        limit: 100,
+      });
+      const clients = await fees.listFeeClients(feesDeps(tx), scope);
+      return {
+        matters: page.items.map((m) => ({ id: m.id, label: m.title })),
+        clients: clients.map((client) => ({ id: client.id, label: client.name })),
+        supplierStateCode: await fees.getFeeSupplierState(feesDeps(tx), scope),
+      };
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'fees page: could not load the matter and client pickers');
+    return NO_PICKERS;
+  }
+}

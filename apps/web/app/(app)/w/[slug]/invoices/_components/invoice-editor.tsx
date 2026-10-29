@@ -15,8 +15,10 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { useOnline } from '../../../../../../components/matters/matters-offline-banner.tsx';
+import type { PickerOption } from '../../../../../../lib/fees/fees-deps.ts';
 import { rupeesToPaise } from '../../../../../../lib/fees/money.ts';
 
+import { FeePicker } from './fee-picker.tsx';
 import { feesErrorKey, type FeesActions } from './fees-actions.ts';
 import { InvoicePreview, type PreviewLine, type PreviewTotals } from './invoice-preview.tsx';
 
@@ -37,6 +39,8 @@ export interface EditorInitial {
   dueDate?: string | null;
   lines: readonly EditorLine[];
   supplierName: string;
+  /** The stored supplier state code, so the editor stops asking (#963). */
+  supplierStateCode?: string | null;
 }
 
 export interface InvoiceEditorProps {
@@ -48,6 +52,9 @@ export interface InvoiceEditorProps {
   /** Only an owner may mark an invoice final while GST is unreviewed. */
   isOwner: boolean;
   actions: Pick<FeesActions, 'preview' | 'saveDraft' | 'discardDraft' | 'issue'>;
+  /** The matters and clients to choose from (#963). */
+  matters?: readonly PickerOption[];
+  clients?: readonly PickerOption[];
   /** Dev preview of the offline state. */
   forceOffline?: boolean;
 }
@@ -73,6 +80,8 @@ export function InvoiceEditor({
   canWrite,
   isOwner,
   actions,
+  matters = [],
+  clients = [],
   forceOffline = false,
 }: InvoiceEditorProps) {
   const t = useTranslations('fees');
@@ -87,7 +96,7 @@ export function InvoiceEditor({
   const [recipientGstin, setRecipientGstin] = useState(initial.recipientGstin ?? '');
   const [dueDate, setDueDate] = useState(initial.dueDate ?? '');
   const [supplierName, setSupplierName] = useState(initial.supplierName);
-  const [supplierState, setSupplierState] = useState('');
+  const [supplierState, setSupplierState] = useState(initial.supplierStateCode ?? '');
   const [supplierGstin, setSupplierGstin] = useState('');
   const [counter, setCounter] = useState(initial.lines.length + 1);
   const [lines, setLines] = useState<FormLine[]>(() =>
@@ -133,8 +142,8 @@ export function InvoiceEditor({
     if (priced.some((line) => line === null)) return null;
     return {
       invoice: {
-        matterId: matterId.trim(),
-        personId: personId.trim(),
+        matterId,
+        personId,
         ...(agreementId.trim() === '' ? {} : { feeAgreementId: agreementId.trim() }),
         placeOfSupplyStateCode: placeOfSupply.trim(),
         ...(recipientGstin.trim() === '' ? {} : { recipientGstin: recipientGstin.trim() }),
@@ -299,26 +308,22 @@ export function InvoiceEditor({
           </Alert>
         )}
         <fieldset disabled={!editable} className="flex flex-col gap-4">
-          <Field label={t('editor.matter')} required>
-            <Input
-              autoComplete="off"
-              data-fees-field="matter"
-              value={matterId}
-              onChange={(event) => {
-                setMatterId(event.target.value);
-              }}
-            />
-          </Field>
-          <Field label={t('editor.person')} required>
-            <Input
-              autoComplete="off"
-              data-fees-field="person"
-              value={personId}
-              onChange={(event) => {
-                setPersonId(event.target.value);
-              }}
-            />
-          </Field>
+          <FeePicker
+            label={t('editor.matter')}
+            field="matter"
+            options={matters}
+            value={matterId}
+            onChange={setMatterId}
+            required
+          />
+          <FeePicker
+            label={t('editor.person')}
+            field="person"
+            options={clients}
+            value={personId}
+            onChange={setPersonId}
+            required
+          />
           <Field label={t('editor.agreement')}>
             <Input
               autoComplete="off"

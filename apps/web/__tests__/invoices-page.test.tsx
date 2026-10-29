@@ -49,6 +49,18 @@ const fees = vi.hoisted(() => ({
   issueInvoice: vi.fn(() =>
     Promise.resolve({ id: 'i1', status: 'issued', number: 'FE/26-27/000001' }),
   ),
+  listFeeClients: vi.fn((): Promise<unknown[]> => Promise.resolve([])),
+  getFeeSupplierState: vi.fn((): Promise<string | null> => Promise.resolve(null)),
+  setFeeSupplierState: vi.fn((): Promise<string> => Promise.resolve('29')),
+  recordPayment: vi.fn(() => Promise.resolve({ id: 'i1', status: 'paid' })),
+  issueCreditNote: vi.fn(() => Promise.resolve({ id: 'i1', status: 'issued' })),
+  recordClientExpense: vi.fn(() => Promise.resolve({ id: 'l1', kind: 'disbursement' })),
+  recordClientReceipt: vi.fn(() => Promise.resolve({ id: 'l2', kind: 'receipt' })),
+}));
+const graph = vi.hoisted(() => ({
+  listMatters: vi.fn((): Promise<{ items: unknown[]; nextCursor: null }> =>
+    Promise.resolve({ items: [], nextCursor: null }),
+  ),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -82,6 +94,7 @@ vi.mock('../src/health.ts', () => ({
 vi.mock('@causedeck/flags/server', () => ({ isEnabled: () => Promise.resolve(state.flag) }));
 vi.mock('@causedeck/core/runtime', () => runtime);
 vi.mock('@causedeck/core/fees', () => fees);
+vi.mock('@causedeck/core/matter-graph', () => graph);
 // Async server components cannot render under jsdom; stand in with the same copy.
 vi.mock('../app/(app)/w/[slug]/invoices/_components/gated-notice.tsx', () => ({
   FeesGatedNotice: () => <p>{catalogs.en.fees.gatedNotice}</p>,
@@ -95,6 +108,10 @@ const actions = await import('../app/(app)/w/[slug]/invoices/actions.ts');
 const { InvoiceList } = await import('../app/(app)/w/[slug]/invoices/_components/invoice-list.tsx');
 const { InvoiceEditor } =
   await import('../app/(app)/w/[slug]/invoices/_components/invoice-editor.tsx');
+const { PaymentForm, CreditNoteForm, LedgerEntryForm } =
+  await import('../app/(app)/w/[slug]/invoices/_components/fee-record-forms.tsx');
+const { FeeAgreementForm } =
+  await import('../app/(app)/w/[slug]/invoices/_components/fee-agreement-form.tsx');
 const { LedgerTable } = await import('../app/(app)/w/[slug]/invoices/_components/ledger-table.tsx');
 const { formatPaise, rupeesToPaise } = await import('../lib/fees/money.ts');
 
@@ -461,5 +478,448 @@ describe('ledger table', () => {
     expect(screen.getByText('₹1,000.00', { selector: 'td:last-child' })).toBeTruthy();
     expect(screen.getByText('₹600.00', { selector: 'td:last-child' })).toBeTruthy();
     expect(screen.getByText('The client owes ₹600.00')).toBeTruthy();
+  });
+});
+
+describe('pickers and the stored supplier state (#963)', () => {
+  it('offers the matters and clients the actor may see, and the stored state code', async () => {
+    graph.listMatters.mockResolvedValueOnce({
+      items: [{ id: MATTER, title: 'Synthetic v. Fictional' }],
+      nextCursor: null,
+    });
+    fees.listFeeClients.mockResolvedValueOnce([{ id: PERSON, name: 'Asha Fictional' }]);
+    fees.getFeeSupplierState.mockResolvedValueOnce('33');
+    withIntl(await NewInvoicePage({ params: Promise.resolve({ slug: 'demo' }) }));
+    expect(screen.getByRole('option', { name: 'Synthetic v. Fictional' })).toBeTruthy();
+    expect(screen.getAllByRole('option', { name: 'Asha Fictional' })).toHaveLength(1);
+    expect(
+      (document.querySelector('[data-fees-field="supplier-state"]') as HTMLInputElement).value,
+    ).toBe('33');
+  });
+
+  it('still renders, with a hint, when the pickers cannot load', async () => {
+    graph.listMatters.mockRejectedValueOnce(new Error('db down'));
+    withIntl(await NewInvoicePage({ params: Promise.resolve({ slug: 'demo' }) }));
+    expect(screen.getAllByText(en.picker.none).length).toBeGreaterThan(0);
+    expect(
+      (document.querySelector('[data-fees-field="supplier-state"]') as HTMLInputElement).value,
+    ).toBe('');
+  });
+
+  it('stores the supplier state when a draft is saved, and a failure there does not fail the save', async () => {
+    const input = {
+      workspaceId: WS,
+      invoice: {
+        matterId: MATTER,
+        personId: PERSON,
+        placeOfSupplyStateCode: '29',
+        lines: [
+          {
+            description: 'Appearance',
+            quantity: 1,
+            unitPricePaise: 100,
+            amountPaise: 100,
+            gstTreatment: 'forward_charge',
+          },
+        ],
+      },
+      supplier: { name: 'Chambers', stateCode: '33' },
+    };
+    expect(await actions.saveInvoiceDraftAction(input)).toMatchObject({ ok: true });
+    expect(fees.setFeeSupplierState).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+      stateCode: '33',
+    });
+    fees.setFeeSupplierState.mockRejectedValueOnce(new Error('settings down'));
+    expect(await actions.saveInvoiceDraftAction(input)).toMatchObject({ ok: true });
+  });
+
+  it('shows the agreement form with the pickers and refuses an empty choice', async () => {
+    const create = vi.fn<
+      (input: unknown) => Promise<{ ok: true; data: { id: string; status: string } }>
+    >(() => Promise.resolve({ ok: true, data: { id: 'a', status: 'x' } }));
+    withIntl(
+      <FeeAgreementForm
+        workspaceId={WS}
+        open
+        onOpenChange={vi.fn()}
+        create={create}
+        matters={[{ id: MATTER, label: 'Synthetic v. Fictional' }]}
+        clients={[{ id: PERSON, label: 'Asha Fictional' }]}
+      />,
+    );
+    fireEvent.change(document.querySelector('[data-fees-field="amount"]') as Element, {
+      target: { value: '1500' },
+    });
+    fireEvent.change(document.querySelector('[data-fees-field="starts"]') as Element, {
+      target: { value: '2026-04-01' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: en.agreementForm.submit }));
+    expect(await screen.findByText(en.error.invalid)).toBeTruthy();
+    expect(create).not.toHaveBeenCalled();
+    fireEvent.change(document.querySelector('[data-fees-field="matter"]') as Element, {
+      target: { value: MATTER },
+    });
+    fireEvent.change(document.querySelector('[data-fees-field="person"]') as Element, {
+      target: { value: PERSON },
+    });
+    fireEvent.click(screen.getByRole('button', { name: en.agreementForm.submit }));
+    await waitFor(() => {
+      expect(create).toHaveBeenCalledTimes(1);
+    });
+    expect(create.mock.calls[0]?.[0]).toMatchObject({
+      agreement: { matterId: MATTER, personId: PERSON, amountPaise: 150000 },
+    });
+  });
+});
+
+describe('payment, credit note and ledger actions (#963)', () => {
+  const payment = {
+    workspaceId: WS,
+    payment: { invoiceId: INVOICE, amountPaise: 500, method: 'upi', receivedOn: '2026-11-03' },
+  };
+  const note = {
+    workspaceId: WS,
+    creditNote: {
+      invoiceId: INVOICE,
+      amountPaise: 500,
+      reason: 'Fictional',
+      occurredOn: '2026-11-03',
+    },
+  };
+  const expense = {
+    workspaceId: WS,
+    expense: {
+      personId: PERSON,
+      amountPaise: 500,
+      description: 'Fictional',
+      occurredOn: '2026-11-03',
+    },
+  };
+  const receipt = {
+    workspaceId: WS,
+    receipt: { personId: PERSON, amountPaise: 500, receivedOn: '2026-11-03' },
+  };
+
+  it('are NOT_FOUND while the flag is off, and core never runs', async () => {
+    state.flag = false;
+    for (const result of [
+      await actions.recordPaymentAction(payment),
+      await actions.issueCreditNoteAction(note),
+      await actions.recordClientExpenseAction(expense),
+      await actions.recordClientReceiptAction(receipt),
+    ]) {
+      expect(result).toMatchObject({ ok: false, error: { code: 'NOT_FOUND' } });
+    }
+    expect(fees.recordPayment).not.toHaveBeenCalled();
+    expect(fees.recordClientExpense).not.toHaveBeenCalled();
+  });
+
+  it('are denied for a clerk', async () => {
+    for (const run of [
+      () => actions.recordPaymentAction(payment),
+      () => actions.issueCreditNoteAction(note),
+      () => actions.recordClientExpenseAction(expense),
+      () => actions.recordClientReceiptAction(receipt),
+    ]) {
+      runtime.memberRoleFor.mockResolvedValueOnce('clerk');
+      expect(await run()).toMatchObject({ ok: false, error: { code: 'FORBIDDEN' } });
+    }
+    expect(fees.recordPayment).not.toHaveBeenCalled();
+    expect(fees.issueCreditNote).not.toHaveBeenCalled();
+  });
+
+  it('return only ids and status, and hand core the validated input', async () => {
+    expect(await actions.recordPaymentAction(payment)).toEqual({
+      ok: true,
+      data: { id: 'i1', status: 'paid' },
+    });
+    expect(fees.recordPayment).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      payment.payment,
+    );
+    expect(await actions.issueCreditNoteAction(note)).toMatchObject({ ok: true });
+    expect(await actions.recordClientExpenseAction(expense)).toEqual({
+      ok: true,
+      data: { id: 'l1', status: 'disbursement' },
+    });
+    expect(await actions.recordClientReceiptAction(receipt)).toEqual({
+      ok: true,
+      data: { id: 'l2', status: 'receipt' },
+    });
+  });
+
+  it('refuse a malformed amount before core runs', async () => {
+    expect(
+      await actions.recordPaymentAction({
+        ...payment,
+        payment: { ...payment.payment, amountPaise: 1.5 },
+      }),
+    ).toMatchObject({ ok: false, error: { code: 'VALIDATION' } });
+    expect(
+      await actions.recordClientReceiptAction({
+        ...receipt,
+        receipt: { ...receipt.receipt, amountPaise: 0 },
+      }),
+    ).toMatchObject({ ok: false, error: { code: 'VALIDATION' } });
+    expect(fees.recordPayment).not.toHaveBeenCalled();
+    expect(fees.recordClientReceipt).not.toHaveBeenCalled();
+  });
+
+  it('maps core refusals to the action codes', async () => {
+    fees.recordPayment.mockRejectedValueOnce(
+      Object.assign(new Error('more than the balance'), {
+        name: 'WorkspaceError',
+        code: 'CONFLICT',
+      }),
+    );
+    expect(await actions.recordPaymentAction(payment)).toMatchObject({
+      ok: false,
+      error: { code: 'CONFLICT' },
+    });
+  });
+});
+
+describe('record forms (#963)', () => {
+  const ok = () => Promise.resolve({ ok: true as const, data: { id: 'x', status: 'paid' } });
+  const field = (name: string) => document.querySelector(`[data-fees-field="${name}"]`) as Element;
+  const type = (name: string, value: string) => {
+    fireEvent.change(field(name), { target: { value } });
+  };
+
+  it('records a payment in paise and refreshes', async () => {
+    const record = vi.fn(ok);
+    const close = vi.fn();
+    withIntl(
+      <PaymentForm
+        workspaceId={WS}
+        invoiceId={INVOICE}
+        open
+        onOpenChange={close}
+        record={record}
+      />,
+    );
+    type('payment-amount', '1,500.50');
+    type('payment-method', 'cheque');
+    type('payment-reference', ' 000123 ');
+    type('payment-date', '2026-11-03');
+    fireEvent.click(screen.getByRole('button', { name: en.paymentForm.submit }));
+    await waitFor(() => {
+      expect(record).toHaveBeenCalledTimes(1);
+    });
+    expect(record).toHaveBeenCalledWith({
+      workspaceId: WS,
+      payment: {
+        invoiceId: INVOICE,
+        amountPaise: 150050,
+        method: 'cheque',
+        receivedOn: '2026-11-03',
+        reference: '000123',
+      },
+    });
+    await waitFor(() => {
+      expect(router.refresh).toHaveBeenCalled();
+    });
+    expect(close).toHaveBeenCalledWith(false);
+  });
+
+  it('refuses a bad amount or a missing date on the page', async () => {
+    const record = vi.fn(ok);
+    withIntl(
+      <PaymentForm
+        workspaceId={WS}
+        invoiceId={INVOICE}
+        open
+        onOpenChange={vi.fn()}
+        record={record}
+      />,
+    );
+    type('payment-amount', '12.345');
+    type('payment-date', '2026-11-03');
+    fireEvent.click(screen.getByRole('button', { name: en.paymentForm.submit }));
+    expect(await screen.findByText(en.error.invalid)).toBeTruthy();
+    expect(record).not.toHaveBeenCalled();
+  });
+
+  it('shows the server refusal as a translated message and keeps the form open', async () => {
+    const record = vi.fn(() =>
+      Promise.resolve({
+        ok: false as const,
+        error: { code: 'CONFLICT', message: 'raw server text' },
+      }),
+    );
+    const close = vi.fn();
+    withIntl(
+      <PaymentForm
+        workspaceId={WS}
+        invoiceId={INVOICE}
+        open
+        onOpenChange={close}
+        record={record as never}
+      />,
+    );
+    type('payment-amount', '10');
+    type('payment-date', '2026-11-03');
+    fireEvent.click(screen.getByRole('button', { name: en.paymentForm.submit }));
+    expect(await screen.findByText(en.error.conflict)).toBeTruthy();
+    expect(screen.queryByText('raw server text')).toBeNull();
+    expect(close).not.toHaveBeenCalled();
+  });
+
+  it('is off while offline, and submitting does nothing', () => {
+    const record = vi.fn(ok);
+    withIntl(
+      <PaymentForm
+        workspaceId={WS}
+        invoiceId={INVOICE}
+        open
+        offline
+        onOpenChange={vi.fn()}
+        record={record}
+      />,
+    );
+    expect(screen.getByText(en.offline)).toBeTruthy();
+    const submit = screen.getByRole<HTMLButtonElement>('button', { name: en.paymentForm.submit });
+    expect(submit.disabled).toBe(true);
+    type('payment-amount', '10');
+    type('payment-date', '2026-11-03');
+    fireEvent.submit(submit.form as HTMLFormElement);
+    expect(record).not.toHaveBeenCalled();
+  });
+
+  it('saves with Cmd+Enter', async () => {
+    const record = vi.fn(ok);
+    withIntl(
+      <PaymentForm
+        workspaceId={WS}
+        invoiceId={INVOICE}
+        open
+        onOpenChange={vi.fn()}
+        record={record}
+      />,
+    );
+    type('payment-amount', '10');
+    type('payment-date', '2026-11-03');
+    fireEvent.keyDown(document.body, { key: 'Enter', ctrlKey: true });
+    await waitFor(() => {
+      expect(record).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('issues a credit note with a reason', async () => {
+    const issue = vi.fn(ok);
+    withIntl(
+      <CreditNoteForm
+        workspaceId={WS}
+        invoiceId={INVOICE}
+        open
+        onOpenChange={vi.fn()}
+        issue={issue}
+      />,
+    );
+    type('credit-amount', '250');
+    fireEvent.click(screen.getByRole('button', { name: en.creditNoteForm.submit }));
+    expect(await screen.findByText(en.error.invalid)).toBeTruthy();
+    expect(issue).not.toHaveBeenCalled();
+    type('credit-reason', ' Fictional correction ');
+    type('credit-date', '2026-11-04');
+    fireEvent.click(screen.getByRole('button', { name: en.creditNoteForm.submit }));
+    await waitFor(() => {
+      expect(issue).toHaveBeenCalledTimes(1);
+    });
+    expect(issue).toHaveBeenCalledWith({
+      workspaceId: WS,
+      creditNote: {
+        invoiceId: INVOICE,
+        amountPaise: 25000,
+        reason: 'Fictional correction',
+        occurredOn: '2026-11-04',
+      },
+    });
+  });
+
+  it('records an expense (needs a description) and a receipt (reference optional)', async () => {
+    const record = vi.fn(ok);
+    const matters = [{ id: MATTER, label: 'Synthetic v. Fictional' }];
+    withIntl(
+      <LedgerEntryForm
+        kind="expense"
+        workspaceId={WS}
+        personId={PERSON}
+        matterId={MATTER}
+        matters={matters}
+        open
+        onOpenChange={vi.fn()}
+        record={record}
+      />,
+    );
+    type('ledger-amount', '75');
+    type('ledger-date', '2026-11-05');
+    fireEvent.click(screen.getByRole('button', { name: en.expenseForm.submit }));
+    expect(await screen.findByText(en.error.invalid)).toBeTruthy();
+    type('ledger-text', 'Court fee');
+    fireEvent.click(screen.getByRole('button', { name: en.expenseForm.submit }));
+    await waitFor(() => {
+      expect(record).toHaveBeenCalledTimes(1);
+    });
+    expect(record).toHaveBeenCalledWith({
+      workspaceId: WS,
+      expense: {
+        personId: PERSON,
+        matterId: MATTER,
+        amountPaise: 7500,
+        description: 'Court fee',
+        occurredOn: '2026-11-05',
+      },
+    });
+    cleanup();
+    record.mockClear();
+    withIntl(
+      <LedgerEntryForm
+        kind="receipt"
+        workspaceId={WS}
+        personId={PERSON}
+        matters={matters}
+        open
+        onOpenChange={vi.fn()}
+        record={record}
+      />,
+    );
+    type('ledger-amount', '75');
+    type('ledger-date', '2026-11-05');
+    fireEvent.click(screen.getByRole('button', { name: en.receiptForm.submit }));
+    await waitFor(() => {
+      expect(record).toHaveBeenCalledTimes(1);
+    });
+    expect(record).toHaveBeenCalledWith({
+      workspaceId: WS,
+      receipt: { personId: PERSON, amountPaise: 7500, receivedOn: '2026-11-05' },
+    });
+  });
+
+  it('shows the record buttons on a final invoice and hides them from a read-only role', async () => {
+    const final = {
+      ...INVOICE_ROW,
+      taxablePaise: 10000,
+      taxPaise: 1800,
+      lines: [
+        { description: 'Appearance', quantity: 1, unitPricePaise: 10000, amountPaise: 10000 },
+      ],
+    };
+    fees.getInvoice.mockResolvedValueOnce(final);
+    withIntl(await InvoicePage({ params: Promise.resolve({ slug: 'demo', id: INVOICE }) }));
+    expect(screen.getByRole('button', { name: en.paymentForm.trigger })).toBeTruthy();
+    expect(screen.getByRole('button', { name: en.creditNoteForm.trigger })).toBeTruthy();
+    expect(screen.getByRole('button', { name: en.expenseForm.trigger })).toBeTruthy();
+    cleanup();
+    fees.getInvoice.mockResolvedValueOnce({ ...final, status: 'paid' });
+    withIntl(await InvoicePage({ params: Promise.resolve({ slug: 'demo', id: INVOICE }) }));
+    expect(screen.queryByRole('button', { name: en.paymentForm.trigger })).toBeNull();
+    expect(screen.getByRole('button', { name: en.creditNoteForm.trigger })).toBeTruthy();
+    cleanup();
+    state.context = testWorkspaceContext('demo', 'viewer');
+    fees.getInvoice.mockResolvedValueOnce(final);
+    withIntl(await InvoicePage({ params: Promise.resolve({ slug: 'demo', id: INVOICE }) }));
+    expect(screen.queryByRole('button', { name: en.paymentForm.trigger })).toBeNull();
   });
 });

@@ -10,14 +10,17 @@ import {
   createFeeAgreement,
   discardDraftInvoice,
   getClientBalance,
+  getFeeSupplierState,
   issueCreditNote,
   issueInvoice,
+  listFeeClients,
   listFeeAgreements,
   listLedger,
   prepareFeeInvoice,
   recordClientExpense,
   recordPayment,
   setFeeAgreementStatus,
+  setFeeSupplierState,
   updateDraftInvoice,
   updateFeeAgreement,
 } from '../index.ts';
@@ -251,6 +254,46 @@ describe('ledger anonymisation (DPDP)', () => {
       expect(rows[0]).toMatchObject({ description: null, amountPaise: 5_000 });
       expect(rows[0]?.anonymisedAt).toBeInstanceOf(Date);
       expect(await getClientBalance(d, c.owner, { personId: c.personId })).toBe(5_000);
+    });
+  });
+});
+
+describe('supplier state (#963)', () => {
+  it('is empty until stored, then reads back and updates in place', async () => {
+    await withTestDb(async (tx) => {
+      const c = await chamber(tx);
+      const d = deps(tx);
+      expect(await getFeeSupplierState(d, c.advocate)).toBeNull();
+      expect(await setFeeSupplierState(d, c.advocate, { stateCode: '29' })).toBe('29');
+      expect(await getFeeSupplierState(d, c.advocate)).toBe('29');
+      expect(await setFeeSupplierState(d, c.owner, { stateCode: '27' })).toBe('27');
+      expect(await getFeeSupplierState(d, c.owner)).toBe('27');
+    });
+  });
+
+  it('rejects a malformed code and refuses a clerk', async () => {
+    await withTestDb(async (tx) => {
+      const c = await chamber(tx);
+      const d = deps(tx);
+      await expect(setFeeSupplierState(d, c.advocate, { stateCode: '9' })).rejects.toMatchObject({
+        code: 'VALIDATION',
+      });
+      await expect(setFeeSupplierState(d, c.clerk, { stateCode: '29' })).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      });
+      await expect(getFeeSupplierState(d, c.clerk)).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    });
+  });
+});
+
+describe('client picker (#963)', () => {
+  it('lists the workspace clients by name for an advocate and refuses a clerk', async () => {
+    await withTestDb(async (tx) => {
+      const c = await chamber(tx);
+      const d = deps(tx);
+      const clients = await listFeeClients(d, c.advocate);
+      expect(clients.map((x) => x.id)).toContain(c.personId);
+      await expect(listFeeClients(d, c.clerk)).rejects.toMatchObject({ code: 'FORBIDDEN' });
     });
   });
 });

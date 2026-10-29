@@ -11,7 +11,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { PermissionDeniedPage } from '../../../../../components/shell/permission-denied-page.tsx';
 import { isDev } from '../../../../../lib/env.ts';
-import { loadFees } from '../../../../../lib/fees/fees-deps.ts';
+import { loadFeePickers, loadFees } from '../../../../../lib/fees/fees-deps.ts';
 import { requireWorkspaceFlag } from '../../../../../lib/flags.ts';
 import { can } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
@@ -47,6 +47,7 @@ export default async function InvoicesPage({ params, searchParams }: InvoicesPag
   if (load.kind === 'denied') return <PermissionDeniedPage />;
   if (load.kind === 'error') throw new Error('Could not load the fee records');
 
+  const pickers = await loadFeePickers(context);
   const t = await getTranslations('fees');
   return (
     <div data-route="invoices" className="flex flex-col gap-6">
@@ -61,6 +62,8 @@ export default async function InvoicesPage({ params, searchParams }: InvoicesPag
         agreements={load.agreements}
         invoices={load.invoices}
         canWrite={can(context.role, 'fee.write')}
+        matters={pickers.matters}
+        clients={pickers.clients}
         actions={{
           createAgreement: createFeeAgreementAction,
           setAgreementStatus: setFeeAgreementStatusAction,

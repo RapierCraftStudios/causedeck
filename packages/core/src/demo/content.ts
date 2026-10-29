@@ -7,6 +7,7 @@
 // and by the nightly reset (`system.demo.reset`), which wipes memory with the rest of the workspace.
 // Not exported from the package index: it is seed tooling, not a service.
 import { schema, withWorkspace, type Queryable } from '@causedeck/db';
+import { eq } from 'drizzle-orm';
 import {
   demoDocumentPdfs,
   demoMemory,
@@ -52,6 +53,12 @@ export async function seedDemoMemory(
   const dek = await getWorkspaceDek(db, keys, ws.id);
   const seal = (value: unknown) => encryptField(dek, ws.id, JSON.stringify(value));
   await withWorkspace(db, { workspaceId: ws.id }, async (tx) => {
+    // The one memory_item writer besides confirmMemory (#985): it must only ever touch a demo workspace.
+    const [org] = await tx
+      .select({ isDemo: schema.organization.isDemo })
+      .from(schema.organization)
+      .where(eq(schema.organization.id, ws.id));
+    if (org?.isDemo !== true) throw new Error(`seedDemoMemory: ${ws.id} is not a demo workspace`);
     if (memory.items.length > 0) {
       await tx
         .insert(memoryItem)

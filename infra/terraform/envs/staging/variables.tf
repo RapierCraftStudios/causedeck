@@ -15,14 +15,82 @@ variable "cloudflare_api_token" {
 }
 
 variable "vps_provider" {
-  description = "India VPS provider: do_blr1 or lightsail_mumbai."
+  description = "India VPS provider: ovh_mumbai (default, D-037), do_blr1, lightsail_mumbai, or manual (a hand-ordered host; supply vps_ipv4 and optionally vps_ipv6)."
   type        = string
-  default     = "do_blr1"
+  default     = "ovh_mumbai"
 
   validation {
-    condition     = contains(["do_blr1", "lightsail_mumbai"], var.vps_provider)
-    error_message = "vps_provider must be do_blr1 or lightsail_mumbai."
+    condition     = contains(["ovh_mumbai", "do_blr1", "lightsail_mumbai", "manual"], var.vps_provider)
+    error_message = "vps_provider must be ovh_mumbai, do_blr1, lightsail_mumbai or manual."
   }
+}
+
+variable "vps_datacenter" {
+  description = "OVH datacenter for ovh_mumbai. YNM (Mumbai) is the only value allowed (D-009 residency)."
+  type        = string
+  default     = "YNM"
+
+  validation {
+    condition     = contains(["YNM"], var.vps_datacenter)
+    error_message = "vps_datacenter must be YNM (OVH Mumbai); tenant data never leaves India (D-009)."
+  }
+}
+
+variable "vps_ipv4" {
+  description = "Public IPv4 of the host when vps_provider = manual. Ignored for the other providers."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.vps_provider != "manual" || can(cidrhost("${var.vps_ipv4}/32", 0))
+    error_message = "vps_provider = manual requires vps_ipv4 to be a valid IPv4 address."
+  }
+}
+
+variable "vps_ipv6" {
+  description = "Public IPv6 of the host when vps_provider = manual. Empty creates no AAAA records."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.vps_ipv6 == "" || can(cidrhost("${var.vps_ipv6}/128", 0))
+    error_message = "vps_ipv6 must be empty or a valid IPv6 address."
+  }
+}
+
+variable "ovh_subsidiary" {
+  description = "OVHcloud subsidiary that bills the order (ovh_mumbai)."
+  type        = string
+  default     = "IN"
+}
+
+variable "ovh_pricing_mode" {
+  description = "OVH pricing mode: upfront12 (12-month term, D-037) or default (monthly, no commitment)."
+  type        = string
+  default     = "upfront12"
+
+  validation {
+    condition     = contains(["upfront12", "default"], var.ovh_pricing_mode)
+    error_message = "ovh_pricing_mode must be upfront12 or default."
+  }
+}
+
+variable "vps_os" {
+  description = "Operating system ordered with the OVH VPS: Ubuntu 24.04 or Debian 13."
+  type        = string
+  default     = "Ubuntu 24.04"
+}
+
+variable "ovh_public_ssh_key" {
+  description = "Optional SSH public key OVH pre-installs on the VPS (needs ovh_image_id). Empty: install the deploy key with bootstrap-vps.sh."
+  type        = string
+  default     = ""
+}
+
+variable "ovh_image_id" {
+  description = "OVH image id, required when ovh_public_ssh_key is set."
+  type        = string
+  default     = ""
 }
 
 variable "app_proxied" {
@@ -86,7 +154,7 @@ variable "access_allowed_emails" {
 }
 
 variable "vps_size" {
-  description = "Provider size slug (droplet size or Lightsail bundle). Empty uses the module default."
+  description = "Provider size (droplet size, Lightsail bundle or OVH plan code). Empty uses the env default."
   type        = string
   default     = ""
 }

@@ -449,7 +449,7 @@ describe('workspace layout', () => {
     deletion.active = null;
   });
 
-  it('shows the demo-data banner in the demo workspace only, to every member (#182)', async () => {
+  it('shows the demo banner in the demo workspaces only, to every member (#182, #93)', async () => {
     const banner = async (slug: string) => {
       cleanup();
       withIntl(
@@ -458,7 +458,7 @@ describe('workspace layout', () => {
       return document.querySelector('[data-slot="demo-banner"]');
     };
     const demo = await banner('demo');
-    expect(demo?.textContent).toContain('Demo data — fictional');
+    expect(demo?.textContent).toContain('Demo workspace, sample data');
     expect(demo?.getAttribute('role')).toBe('status');
     // Above the page content, outside main#main.
     expect(document.getElementById('main')?.contains(demo ?? null)).toBe(false);

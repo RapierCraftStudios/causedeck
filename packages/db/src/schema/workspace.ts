@@ -53,6 +53,8 @@ export const workspaceSettings = pgTable(
     allowEvalReuse: boolean('allow_eval_reuse').notNull().default(false),
     /** Days without an event before a matter is flagged as stale (#70, `attention.stale_days`): 7 to 180. */
     attentionStaleDays: integer('attention_stale_days').notNull().default(30),
+    /** The seed version (`DEMO_VERSION`) a demo workspace was last restored to (#93); null elsewhere. */
+    demoVersion: text('demo_version'),
     ...timestamps(),
   },
   (t) => [

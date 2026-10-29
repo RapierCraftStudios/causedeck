@@ -25,6 +25,7 @@ import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/
 import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
 import { enquiryRetention } from './definitions/enquiry-retention.ts';
+import { demoReset } from './definitions/demo-reset.ts';
 import { statusLinkRetention } from './definitions/status-link-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { systemDataOpsEvaluate } from './definitions/data-ops-evaluate.ts';
@@ -209,6 +210,7 @@ export const registry = createRegistry([
   auditRetention,
   enquiryRetention,
   statusLinkRetention,
+  demoReset,
   exportBuild,
   draftingExport,
   draftingCitationsCheck,
@@ -289,6 +291,7 @@ export type JobMap = RegistryMap<
     typeof auditRetention,
     typeof enquiryRetention,
     typeof statusLinkRetention,
+    typeof demoReset,
     typeof exportBuild,
     typeof draftingExport,
     typeof draftingCitationsCheck,

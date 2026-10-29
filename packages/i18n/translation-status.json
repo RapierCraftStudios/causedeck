@@ -5591,7 +5591,22 @@
     "insights.report.definitions": "draft",
     "insights.report.baselineDefinition": "draft",
     "insights.report.missedDefinition": "draft",
-    "insights.report.private": "draft"
+    "insights.report.private": "draft",
+    "shell.demoBanner.leave": "draft",
+    "shell.demoBanner.start": "draft",
+    "shell.demoEntry.metaTitle": "draft",
+    "shell.demoEntry.title": "draft",
+    "shell.demoEntry.intro": "draft",
+    "shell.demoEntry.chennaiTitle": "draft",
+    "shell.demoEntry.chennaiDescription": "draft",
+    "shell.demoEntry.bengaluruTitle": "draft",
+    "shell.demoEntry.bengaluruDescription": "draft",
+    "shell.demoEntry.enter": "draft",
+    "shell.demoEntry.loading": "draft",
+    "shell.demoEntry.unavailable": "draft",
+    "shell.demoEntry.error": "draft",
+    "shell.demoEntry.busy": "draft",
+    "shell.demoEntry.back": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -10727,6 +10742,21 @@
     "insights.report.definitions": "draft",
     "insights.report.baselineDefinition": "draft",
     "insights.report.missedDefinition": "draft",
-    "insights.report.private": "draft"
+    "insights.report.private": "draft",
+    "shell.demoBanner.leave": "draft",
+    "shell.demoBanner.start": "draft",
+    "shell.demoEntry.metaTitle": "draft",
+    "shell.demoEntry.title": "draft",
+    "shell.demoEntry.intro": "draft",
+    "shell.demoEntry.chennaiTitle": "draft",
+    "shell.demoEntry.chennaiDescription": "draft",
+    "shell.demoEntry.bengaluruTitle": "draft",
+    "shell.demoEntry.bengaluruDescription": "draft",
+    "shell.demoEntry.enter": "draft",
+    "shell.demoEntry.loading": "draft",
+    "shell.demoEntry.unavailable": "draft",
+    "shell.demoEntry.error": "draft",
+    "shell.demoEntry.busy": "draft",
+    "shell.demoEntry.back": "draft"
   }
 }

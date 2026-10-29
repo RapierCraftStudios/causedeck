@@ -925,6 +925,13 @@
       "when": 1793246796777,
       "tag": "20261029040636_support_session_member_request",
       "breakpoints": true
+    },
+    {
+      "idx": 132,
+      "version": "7",
+      "when": 1793247931172,
+      "tag": "20261029042531_demo_workspace",
+      "breakpoints": true
     }
   ]
 }

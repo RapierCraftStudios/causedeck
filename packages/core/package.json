@@ -53,6 +53,7 @@
     "./help": "./src/help/index.ts",
     "./shares": "./src/shares/index.ts",
     "./status-links": "./src/status-links/index.ts",
+    "./demo": "./src/demo/index.ts",
     "./whatsapp-link": "./src/whatsapp-link/index.ts",
     "./status": "./src/status/index.ts",
     "./public-api": "./src/public-api/index.ts",

@@ -21,8 +21,9 @@ App and API are DNS-only (grey cloud) so TLS terminates on the VPS and matter da
 Cloudflare edges (D-037). Only the marketing site (Pages) and `static.<tld>` (no tenant data) are
 proxied. Caddy and fail2ban are the protection layer until the founder accepts a Cloudflare WAF
 trade-off. To proxy `app.<tld>`, record that decision, then set the Terraform variable
-`app_proxied=true` (default `false`); Terraform and its guard that fails a proxied app hostname
-without that variable belong to #99. If you do proxy, add Cloudflare's ranges to `trusted_proxies`
+`app_proxied=true` (default `false`) together with `residency_decision_ref` (a decision id such as
+`D-037` or an ADR path under `docs/adr/`). Terraform fails the plan when `app_proxied` is set
+without a well-formed reference (`infra/terraform/modules/cloudflare-zone`, tests in its `tests/`). If you do proxy, add Cloudflare's ranges to `trusted_proxies`
 in the Caddyfile so rate limits see real client IPs. The admin host can alternatively sit behind
 Cloudflare Access (proxy it and drop `admin_gate`); the allowlist is the default.
 

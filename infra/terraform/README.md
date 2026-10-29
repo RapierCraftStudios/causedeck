@@ -53,7 +53,8 @@ state bucket). Real values come from #107 (domain and Cloudflare token), #108 (V
   VPS and matter data never transits Cloudflare edges.
 - Only the Pages site and `static.<tld>` (hashed public assets, no tenant data) are proxied.
 - `app_proxied = true` and `enable_app_waf = true` are rejected by a validation block unless
-  `residency_decision_ref` is set (decision D-037). Cloudflare Access only protects proxied hostnames,
+  `residency_decision_ref` is set (decision D-037); the reference must be a decision id (`D-037`) or
+  an ADR path (`docs/adr/NNNN-name.md`). Cloudflare Access only protects proxied hostnames,
   so `enable_access` additionally needs `app_proxied`.
 - VPS modules reject any region except `blr1` / `ap-south-1`. The firewall opens only 80 and 443
   (tcp and udp) to the world and 22 to `ssh_allowlist`; Postgres, MinIO and admin ports are never public.

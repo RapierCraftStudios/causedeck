@@ -40,6 +40,11 @@ variable "residency_decision_ref" {
   description = "Reference to the recorded residency decision (D-037) that allows proxying app hostnames."
   type        = string
   default     = ""
+
+  validation {
+    condition     = var.residency_decision_ref == "" || can(regex("^(D-[0-9]+|docs/adr/[0-9]{4}-[A-Za-z0-9._-]+\\.md)", var.residency_decision_ref))
+    error_message = "residency_decision_ref must start with a decision id (D-<number>, e.g. D-037) or an ADR path (docs/adr/NNNN-name.md)."
+  }
 }
 
 variable "site_label" {

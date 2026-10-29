@@ -1,6 +1,7 @@
 // The preparedness and load series (#85): weekly points, the baseline delta, hidden below n = 5.
 import { schema } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { loadSeries, preparednessSeries } from '../index.ts';
@@ -27,14 +28,13 @@ async function rate(w: World, memberId: string, rating: number, at: string, base
   });
 }
 
-import { eq } from 'drizzle-orm';
 const eqHearing = (id: string) => eq(schema.appearance.hearingId, id);
 
 describe('preparednessSeries', () => {
   it('hides the numbers below five ratings and explains with n', async () => {
     await withTestDb(async (tx) => {
       const w = await insightsWorld(tx);
-      for (let i = 0; i < 4; i++) await rate(w, w.ownerMember, 4, `2026-11-0${i + 1}`);
+      for (let i = 0; i < 4; i++) await rate(w, w.ownerMember, 4, `2026-11-0${String(i + 1)}`);
       const result = await preparednessSeries({ db: tx, now: () => NOW }, w.owner, range);
       expect(result).toMatchObject({ n: 4, hidden: true, average: null, delta: null, points: [] });
     });
@@ -63,7 +63,7 @@ describe('preparednessSeries', () => {
   it("a junior's series holds only their own ratings", async () => {
     await withTestDb(async (tx) => {
       const w = await insightsWorld(tx);
-      for (let i = 1; i <= 5; i++) await rate(w, w.ownerMember, 5, `2026-11-0${i}`);
+      for (let i = 1; i <= 5; i++) await rate(w, w.ownerMember, 5, `2026-11-0${String(i)}`);
       const deps = { db: tx, now: () => NOW };
       expect((await preparednessSeries(deps, w.owner, range)).n).toBe(5);
       expect((await preparednessSeries(deps, w.junior, range)).n).toBe(0);

@@ -25,8 +25,8 @@ export const PLACEHOLDER_ROUTES = [
   // `matters` is a real page since #388 (its own states are covered in tests/matters), and so are
   // `obligations` (#68, tests/obligations) and `memory` (#73, tests/memory).
   'briefs',
-  // `people` is a real page since #848 (its own specs are in tests/people).
-  'insights',
+  // `people` is a real page since #848 (its own specs are in tests/people), and `insights` since
+  // #85 (its own specs are in tests/product/insights.spec.ts).
 ] as const;
 
 export type PlaceholderRoute = (typeof PLACEHOLDER_ROUTES)[number];

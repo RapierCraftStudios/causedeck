@@ -2,7 +2,11 @@
 // divided by due), the capture completeness of the obligations arising from orders, and the count
 // of deliberate reschedules, which are never a miss.
 import { schema, withWorkspace, type Transaction } from '@causedeck/db';
-import { InsightsQuery, type InsightsWindow, type ObligationHealth } from '@causedeck/validators/insights';
+import {
+  InsightsQuery,
+  type InsightsWindow,
+  type ObligationHealth,
+} from '@causedeck/validators/insights';
 import { and, eq, gte, isNotNull, lt, lte, notInArray } from 'drizzle-orm';
 
 import { invalid } from '../shared/errors.ts';

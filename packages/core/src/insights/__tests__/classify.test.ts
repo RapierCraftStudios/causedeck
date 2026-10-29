@@ -18,7 +18,11 @@ describe('classifyObligation', () => {
     ['open and not yet due', {}, 'pending'],
     ['due today is not yet a miss', { dueDate: TODAY }, 'pending'],
     ['overdue and never rescheduled', { dueDate: '2026-11-01' }, 'missed'],
-    ['overdue but deliberately rescheduled', { dueDate: '2026-11-01', reschedules: 1 }, 'rescheduled'],
+    [
+      'overdue but deliberately rescheduled',
+      { dueDate: '2026-11-01', reschedules: 1 },
+      'rescheduled',
+    ],
     ['not owned', { ownerMemberId: null }, 'uncaptured'],
     ['not owned even when done', { ownerMemberId: null, status: 'done' as const }, 'uncaptured'],
     ['open without a due date', { dueDate: null }, 'uncaptured'],

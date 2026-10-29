@@ -3,7 +3,11 @@
 // captured, owned and kept or deliberately rescheduled. "Arising from the hearing" means the
 // obligations drawn from an order of the same proceeding dated on the hearing day.
 import { schema, withWorkspace, type Transaction } from '@causedeck/db';
-import { InsightsQuery, type InsightsWindow, type PreparedKept } from '@causedeck/validators/insights';
+import {
+  InsightsQuery,
+  type InsightsWindow,
+  type PreparedKept,
+} from '@causedeck/validators/insights';
 import { and, count, eq, gte, inArray, lt, lte } from 'drizzle-orm';
 
 import { invalid } from '../shared/errors.ts';

@@ -2,7 +2,7 @@
 // range the picker chose and the equal range just before it (for "four weeks ago").
 import {
   INSIGHTS_MAX_RANGE_DAYS,
-  InsightsQuery,
+  type InsightsQuery,
   type InsightsWindow,
 } from '@causedeck/validators/insights';
 

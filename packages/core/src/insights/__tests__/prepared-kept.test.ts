@@ -54,7 +54,11 @@ describe('computePreparedKept', () => {
       const open = (heldOn: string) =>
         addHearing(w, { heldOn, appearing: [w.ownerMember], preparedAt: BEFORE });
       const missed = await open('2026-11-02');
-      await addDirection(w, { orderId: missed.orderId, owner: w.ownerMember, dueDate: '2026-11-05' });
+      await addDirection(w, {
+        orderId: missed.orderId,
+        owner: w.ownerMember,
+        dueDate: '2026-11-05',
+      });
       const unowned = await open('2026-11-03');
       await addDirection(w, { orderId: unowned.orderId, owner: null, dueDate: '2026-11-20' });
       const moved = await open('2026-11-04');
@@ -119,10 +123,16 @@ describe('computePreparedKept', () => {
         denominator: 1,
       });
       const other = { ...range, memberId: w.ownerMember };
-      expect(((await failure(computePreparedKept(deps, w.junior, other))) as { code: string }).code).toBe('FORBIDDEN');
+      expect(
+        ((await failure(computePreparedKept(deps, w.junior, other))) as { code: string }).code,
+      ).toBe('FORBIDDEN');
       for (const who of [w.clerk, w.viewer])
-        expect(((await failure(computePreparedKept(deps, who, range))) as { code: string }).code).toBe('FORBIDDEN');
-      expect(await computePreparedKept(deps, w.owner, { ...range, memberId: w.juniorMember })).toMatchObject({
+        expect(
+          ((await failure(computePreparedKept(deps, who, range))) as { code: string }).code,
+        ).toBe('FORBIDDEN');
+      expect(
+        await computePreparedKept(deps, w.owner, { ...range, memberId: w.juniorMember }),
+      ).toMatchObject({
         denominator: 1,
       });
     });

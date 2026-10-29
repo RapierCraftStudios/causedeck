@@ -27,7 +27,10 @@ describe('insights across workspaces', () => {
       await addDirection(a, { orderId: h.orderId, owner: a.ownerMember, dueDate: '2026-11-04' });
 
       const stranger = { userId: b.owner.userId, workspaceId: a.workspaceId };
-      for (const call of [getPracticeInsights(deps, stranger, range), obligationHealth(deps, stranger, range)])
+      for (const call of [
+        getPracticeInsights(deps, stranger, range),
+        obligationHealth(deps, stranger, range),
+      ])
         expect(((await failure(call)) as { code: string }).code).toBe('NOT_FOUND');
 
       const seenByB = await getPracticeInsights(deps, b.owner, range);
@@ -48,7 +51,9 @@ describe('insights across workspaces', () => {
       expect((await getPracticeInsights(deps, w.advocate, range)).scope).toBe('workspace');
       expect((await getPracticeInsights(deps, w.junior, range)).scope).toBe('own');
       for (const who of [w.clerk, w.viewer])
-        expect(((await failure(getPracticeInsights(deps, who, range))) as { code: string }).code).toBe('FORBIDDEN');
+        expect(
+          ((await failure(getPracticeInsights(deps, who, range))) as { code: string }).code,
+        ).toBe('FORBIDDEN');
     });
   });
 });
@@ -60,9 +65,9 @@ describe('the insights module', () => {
       .map((f) => path.join(import.meta.dirname, '..', f));
     expect(files.length).toBeGreaterThan(5);
     const found = files.flatMap((file) =>
-      [...readFileSync(file, 'utf8').matchAll(/\b(judge|bench|leaderboard|benchmark|ranking)\b/gi)].map(
-        (m) => `${path.basename(file)}: ${m[0]}`,
-      ),
+      [
+        ...readFileSync(file, 'utf8').matchAll(/\b(judge|bench|leaderboard|benchmark|ranking)\b/gi),
+      ].map((m) => `${path.basename(file)}: ${m[0]}`),
     );
     // The module's own comments state the rule; code never names the dimensions.
     expect(found.filter((line) => !line.includes('index.ts'))).toEqual([]);

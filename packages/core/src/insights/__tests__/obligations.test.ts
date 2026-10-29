@@ -15,17 +15,30 @@ describe('obligationHealth', () => {
       const w = await insightsWorld(tx);
       const h = await addHearing(w, { heldOn: '2026-11-02', appearing: [w.ownerMember] });
       const o = w.ownerMember;
-      await addDirection(w, { orderId: h.orderId, status: 'done', owner: o, dueDate: '2026-11-03' });
+      await addDirection(w, {
+        orderId: h.orderId,
+        status: 'done',
+        owner: o,
+        dueDate: '2026-11-03',
+      });
       await addDirection(w, { orderId: h.orderId, owner: o, dueDate: '2026-11-04' });
       await addDirection(w, {
         orderId: h.orderId,
         owner: o,
         dueDate: '2026-11-05',
-        reschedules: [{ at: new Date('2026-11-04T05:00:00Z') }, { at: new Date('2026-11-05T05:00:00Z') }],
+        reschedules: [
+          { at: new Date('2026-11-04T05:00:00Z') },
+          { at: new Date('2026-11-05T05:00:00Z') },
+        ],
       });
       // Not yet due, and closed as not applicable: neither is due.
       await addDirection(w, { orderId: h.orderId, owner: o, dueDate: '2026-11-30' });
-      await addDirection(w, { orderId: h.orderId, status: 'not_applicable', owner: o, dueDate: '2026-11-06' });
+      await addDirection(w, {
+        orderId: h.orderId,
+        status: 'not_applicable',
+        owner: o,
+        dueDate: '2026-11-06',
+      });
       const result = await obligationHealth({ db: tx, now: () => NOW }, w.owner, range);
       expect(result).toMatchObject({
         due: 3,
@@ -54,7 +67,10 @@ describe('obligationHealth', () => {
     await withTestDb(async (tx) => {
       const w = await insightsWorld(tx);
       const deps = { db: tx, now: () => NOW };
-      expect(await obligationHealth(deps, w.owner, range)).toMatchObject({ due: 0, missedRate: null });
+      expect(await obligationHealth(deps, w.owner, range)).toMatchObject({
+        due: 0,
+        missedRate: null,
+      });
       const h = await addHearing(w, { heldOn: '2026-11-02', appearing: [w.ownerMember] });
       await addDirection(w, { orderId: h.orderId, owner: w.ownerMember, dueDate: '2026-11-04' });
       await addDirection(w, { orderId: h.orderId, owner: w.juniorMember, dueDate: '2026-11-04' });

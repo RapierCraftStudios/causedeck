@@ -104,5 +104,7 @@ export async function loadSeries(
   if (!parsed.success) throw invalid(parsed.error.issues[0]?.message ?? 'Invalid range');
   const viewer = await insightsViewer(deps, actor, parsed.data.memberId);
   const window = resolveWindow(parsed.data, povIstDay((deps.now ?? (() => new Date()))()));
-  return withWorkspace(deps.db, actor, (tx) => loadIn(tx, actor.workspaceId, viewer.memberId, window));
+  return withWorkspace(deps.db, actor, (tx) =>
+    loadIn(tx, actor.workspaceId, viewer.memberId, window),
+  );
 }

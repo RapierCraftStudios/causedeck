@@ -4,7 +4,8 @@
 // amount is fictional. Export names carry the `Fees` prefix: story names are unique across apps/web.
 import type { FeeAgreementView, FeeInvoiceRow, LedgerEntryView } from '@causedeck/core/fees';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { expect, fn, screen, userEvent } from 'storybook/test';
+import { useState } from 'react';
+import { expect, fn, screen, userEvent, waitFor } from 'storybook/test';
 
 import { PermissionDeniedPage } from '../../../../../../components/shell/permission-denied-page.tsx';
 import type { Result } from '../../../../../../lib/safe-action.ts';
@@ -12,6 +13,9 @@ import InvoicesError from '../error.tsx';
 import InvoicesLoading from '../loading.tsx';
 
 import { FeeAgreementForm } from './fee-agreement-form.tsx';
+import { FeePicker } from './fee-picker.tsx';
+import { InvoiceRecordActions, LedgerRecordActions } from './fee-record-actions.tsx';
+import { CreditNoteForm, LedgerEntryForm, PaymentForm } from './fee-record-forms.tsx';
 import { FeeProposalCard } from './fee-proposal-card.tsx';
 import type { FeesActions } from './fees-actions.ts';
 import { FeesGatedNotice } from './gated-notice.tsx';
@@ -49,6 +53,10 @@ const actions = (): FeesActions => ({
   saveDraft: fn(saved),
   discardDraft: fn(() => Promise.resolve({ ok: true as const, data: { id: 'i' } })),
   issue: fn(saved),
+  recordPayment: fn(saved),
+  issueCreditNote: fn(saved),
+  recordExpense: fn(saved),
+  recordReceipt: fn(saved),
 });
 
 const MATTER = '00000000-0000-4000-8000-0000000a0001';
@@ -330,5 +338,308 @@ export const FeesLedgerSettled: Story = {
   render: () => <LedgerTable entries={LEDGER} balancePaise={0} />,
   play: async ({ canvas }) => {
     await expect(canvas.getByText('Nothing is owed')).toBeVisible();
+  },
+};
+
+const MATTERS = [{ id: MATTER, label: 'Synthetic v. Fictional, WP 101/2026' }];
+const CLIENTS = [{ id: PERSON, label: 'Asha Fictional' }];
+const WS = '00000000-0000-4000-8000-000000000001';
+const INVOICE_ID = '00000000-0000-4000-8000-0000000d0001';
+const failed = (): Promise<Saved> =>
+  Promise.resolve({ ok: false, error: { code: 'CONFLICT', message: 'x' } } as Saved);
+
+/** The agreement form with the matter and client pickers filled from the workspace. */
+export const FeesAgreementFormPickers: Story = {
+  render: (args) => (
+    <FeeAgreementForm
+      workspaceId={args.workspaceId}
+      open
+      onOpenChange={fn()}
+      create={args.actions.createAgreement}
+      matters={MATTERS}
+      clients={CLIENTS}
+    />
+  ),
+  play: async () => {
+    const dialog = await screen.findByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await userEvent.selectOptions(screen.getByLabelText(/Matter ID/), MATTER);
+    await userEvent.selectOptions(screen.getByLabelText(/Client ID/), PERSON);
+    await expect(screen.getByRole('option', { name: 'Asha Fictional' })).toBeInTheDocument();
+  },
+};
+
+const MANY = Array.from({ length: 12 }, (_, index) => ({
+  id: `00000000-0000-4000-8000-00000000${String(1000 + index)}`,
+  label: `Matter ${String(index + 1)}`,
+}));
+
+function PickerHarness({ options }: { options: { id: string; label: string }[] }) {
+  const [value, setValue] = useState('');
+  return (
+    <FeePicker label="Matter" field="matter" options={options} value={value} onChange={setValue} />
+  );
+}
+
+/** From twelve options a filter narrows the list. */
+export const FeesPickerFilter: Story = {
+  render: () => <PickerHarness options={MANY} />,
+  play: async ({ canvas }) => {
+    await userEvent.type(canvas.getByLabelText('Filter: Matter'), 'Matter 12');
+    await expect(canvas.getByRole('option', { name: 'Matter 12' })).toBeVisible();
+    await expect(canvas.queryByRole('option', { name: 'Matter 3' })).toBeNull();
+  },
+};
+
+/** Nothing to choose from: a hint says why. */
+export const FeesPickerEmpty: Story = {
+  render: () => <PickerHarness options={[]} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText(/Nothing to choose from yet/)).toBeVisible();
+  },
+};
+
+/** The stored supplier state fills the editor, so it stops asking. */
+export const FeesEditorStoredSupplierState: Story = {
+  render: () => (
+    <InvoiceEditor
+      workspaceId={WS}
+      basePath="/w/demo/invoices"
+      canWrite
+      isOwner
+      actions={EDITOR_ACTIONS}
+      matters={MATTERS}
+      clients={CLIENTS}
+      initial={{
+        matterId: MATTER,
+        personId: PERSON,
+        placeOfSupplyStateCode: '29',
+        supplierName: 'Synthetic Chambers',
+        supplierStateCode: '33',
+        lines: [],
+      }}
+    />
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByLabelText(/Your state code/)).toHaveValue('33');
+    await expect(canvas.getByRole('option', { name: 'Asha Fictional' })).toBeInTheDocument();
+  },
+};
+
+/** Recording a payment: the form fills in, saves and closes. */
+export const FeesPaymentForm: Story = {
+  render: () => {
+    const record = fn(saved);
+    return (
+      <PaymentForm
+        workspaceId={WS}
+        invoiceId={INVOICE_ID}
+        open
+        onOpenChange={fn()}
+        record={record}
+      />
+    );
+  },
+  play: async () => {
+    await expect(await screen.findByRole('dialog')).toBeVisible();
+    await userEvent.type(screen.getByLabelText(/Amount/), '5000');
+    await userEvent.type(screen.getByLabelText(/Received on/), '2026-11-03');
+    await expect(screen.getByRole('button', { name: 'Save payment' })).toBeEnabled();
+  },
+};
+
+/** The server refuses (the invoice is already settled): the error shows and the form stays. */
+export const FeesPaymentFormError: Story = {
+  render: () => (
+    <PaymentForm
+      workspaceId={WS}
+      invoiceId={INVOICE_ID}
+      open
+      onOpenChange={fn()}
+      record={fn(failed)}
+    />
+  ),
+  play: async () => {
+    await userEvent.type(await screen.findByLabelText(/Amount/), '5000');
+    await userEvent.type(screen.getByLabelText(/Received on/), '2026-11-03');
+    await userEvent.click(screen.getByRole('button', { name: 'Save payment' }));
+    await waitFor(() => expect(screen.getByRole('alert')).toBeVisible());
+    await expect(screen.getByText(/no longer possible/)).toBeVisible();
+  },
+};
+
+/** An amount that is not money is refused on the page, before anything is sent. */
+export const FeesPaymentFormInvalid: Story = {
+  render: () => (
+    <PaymentForm
+      workspaceId={WS}
+      invoiceId={INVOICE_ID}
+      open
+      onOpenChange={fn()}
+      record={fn(saved)}
+    />
+  ),
+  play: async () => {
+    await userEvent.click(await screen.findByRole('button', { name: 'Save payment' }));
+    await expect(await screen.findByText('Check the details and try again.')).toBeVisible();
+  },
+};
+
+/** Offline: the form says so and saving is off. */
+export const FeesPaymentFormOffline: Story = {
+  render: () => (
+    <PaymentForm
+      workspaceId={WS}
+      invoiceId={INVOICE_ID}
+      open
+      onOpenChange={fn()}
+      offline
+      record={fn(saved)}
+    />
+  ),
+  play: async () => {
+    await expect(await screen.findByText(/You are offline/)).toBeVisible();
+    await expect(screen.getByRole('button', { name: 'Save payment' })).toBeDisabled();
+  },
+};
+
+export const FeesCreditNoteForm: Story = {
+  render: () => (
+    <CreditNoteForm
+      workspaceId={WS}
+      invoiceId={INVOICE_ID}
+      open
+      onOpenChange={fn()}
+      issue={fn(saved)}
+    />
+  ),
+  play: async () => {
+    await expect(await screen.findByText(/The invoice itself is never edited/)).toBeVisible();
+    await userEvent.type(screen.getByLabelText(/Reason/), 'Fictional correction');
+    await expect(screen.getByRole('button', { name: 'Issue credit note' })).toBeEnabled();
+  },
+};
+
+export const FeesExpenseForm: Story = {
+  render: () => (
+    <LedgerEntryForm
+      kind="expense"
+      workspaceId={WS}
+      personId={PERSON}
+      matterId={MATTER}
+      matters={MATTERS}
+      open
+      onOpenChange={fn()}
+      record={fn(saved)}
+    />
+  ),
+  play: async () => {
+    await expect(await screen.findByRole('dialog')).toBeVisible();
+    await expect(screen.getByLabelText(/Matter/)).toHaveValue(MATTER);
+    await expect(screen.getByLabelText(/What it was for/)).toBeVisible();
+  },
+};
+
+export const FeesReceiptForm: Story = {
+  render: () => (
+    <LedgerEntryForm
+      kind="receipt"
+      workspaceId={WS}
+      personId={PERSON}
+      matters={MATTERS}
+      open
+      onOpenChange={fn()}
+      record={fn(saved)}
+    />
+  ),
+  play: async () => {
+    await expect(await screen.findByRole('button', { name: 'Save receipt' })).toBeEnabled();
+  },
+};
+
+/** The invoice page's buttons: an issued invoice takes a payment and a credit note. */
+export const FeesInvoiceRecordActions: Story = {
+  render: () => (
+    <InvoiceRecordActions
+      workspaceId={WS}
+      invoiceId={INVOICE_ID}
+      status="issued"
+      canWrite
+      actions={EDITOR_ACTIONS}
+    />
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Record payment' }));
+    await expect(await screen.findByRole('dialog')).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    await expect(canvas.getByRole('button', { name: 'Issue credit note' })).toBeEnabled();
+  },
+};
+
+/** A paid invoice takes a credit note but no further payment. */
+export const FeesInvoiceRecordActionsPaid: Story = {
+  render: () => (
+    <InvoiceRecordActions
+      workspaceId={WS}
+      invoiceId={INVOICE_ID}
+      status="paid"
+      canWrite
+      actions={EDITOR_ACTIONS}
+    />
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: 'Record payment' })).toBeNull();
+    await expect(canvas.getByRole('button', { name: 'Issue credit note' })).toBeVisible();
+  },
+};
+
+export const FeesInvoiceRecordActionsOffline: Story = {
+  render: () => (
+    <InvoiceRecordActions
+      workspaceId={WS}
+      invoiceId={INVOICE_ID}
+      status="issued"
+      canWrite
+      forceOffline
+      actions={EDITOR_ACTIONS}
+    />
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'Record payment' })).toBeDisabled();
+    await expect(canvas.getByRole('button', { name: 'Issue credit note' })).toBeDisabled();
+  },
+};
+
+/** A role that may read but not write sees no record buttons. */
+export const FeesLedgerRecordActionsReadOnly: Story = {
+  render: () => (
+    <LedgerRecordActions
+      workspaceId={WS}
+      personId={PERSON}
+      matters={MATTERS}
+      canWrite={false}
+      actions={EDITOR_ACTIONS}
+    />
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: 'Record expense' })).toBeNull();
+  },
+};
+
+export const FeesLedgerRecordActions: Story = {
+  render: () => (
+    <LedgerRecordActions
+      workspaceId={WS}
+      personId={PERSON}
+      matterId={MATTER}
+      matters={MATTERS}
+      canWrite
+      actions={EDITOR_ACTIONS}
+    />
+  ),
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Record receipt' }));
+    await expect(await screen.findByRole('dialog')).toBeVisible();
+    await userEvent.keyboard('{Escape}');
   },
 };

@@ -75,8 +75,8 @@ test.describe('fees and invoices', () => {
       .click();
     const dialog = page.getByRole('dialog', { name: 'New fee agreement' });
     await expect(dialog).toBeVisible();
-    await dialog.getByLabel('Matter ID').fill(FEES.matter.id);
-    await dialog.getByLabel('Client ID').fill(FEES.client.id);
+    await dialog.getByRole('combobox', { name: /^Matter ID/ }).selectOption(FEES.matter.id);
+    await dialog.getByRole('combobox', { name: /^Client ID/ }).selectOption(FEES.client.id);
     await dialog.getByLabel('Amount (rupees)').fill('25000.00');
     await dialog.getByLabel('Starts on').fill('2026-06-01');
     await dialog.getByRole('button', { name: 'Save agreement' }).click();
@@ -95,8 +95,8 @@ test.describe('fees and invoices', () => {
     });
     await expect(page.getByRole('heading', { level: 1, name: 'New invoice' })).toBeVisible();
     const form = page.getByRole('form', { name: 'New invoice' });
-    await form.getByLabel('Matter ID').fill(FEES.matter.id);
-    await form.getByLabel('Client ID').fill(FEES.client.id);
+    await form.getByRole('combobox', { name: /^Matter ID/ }).selectOption(FEES.matter.id);
+    await form.getByRole('combobox', { name: /^Client ID/ }).selectOption(FEES.client.id);
     await form.getByLabel('Your state code').fill(FEES.stateCode);
     await form.getByLabel('Place of supply').fill(FEES.stateCode);
     await form.getByLabel('Description').fill('Appearance, fictional matter');
@@ -185,7 +185,7 @@ test.describe('fees and invoices', () => {
         .click();
       const dialog = page.getByRole('dialog', { name: 'New fee agreement' });
       await expect(dialog).toBeVisible();
-      const matter = dialog.getByLabel('Matter ID');
+      const matter = dialog.getByLabel('Amount (rupees)');
       await matter.click();
       await page.keyboard.type('nn');
       await expect(matter).toHaveValue('nn');
@@ -202,8 +202,8 @@ test.describe('fees and invoices', () => {
         .first()
         .click();
       const dialog = page.getByRole('dialog', { name: 'New fee agreement' });
-      await dialog.getByLabel('Matter ID').fill(FEES.matter.id);
-      await dialog.getByLabel('Client ID').fill(FEES.client.id);
+      await dialog.getByRole('combobox', { name: /^Matter ID/ }).selectOption(FEES.matter.id);
+      await dialog.getByRole('combobox', { name: /^Client ID/ }).selectOption(FEES.client.id);
       await dialog.getByLabel('Amount (rupees)').fill('9000');
       await dialog.getByLabel('Starts on').fill('2026-06-01');
       await expect(async () => {
@@ -221,8 +221,8 @@ test.describe('fees and invoices', () => {
         path: 'invoices/new',
       });
       const form = page.getByRole('form', { name: 'New invoice' });
-      await form.getByLabel('Matter ID').fill(FEES.matter.id);
-      await form.getByLabel('Client ID').fill(FEES.client.id);
+      await form.getByRole('combobox', { name: /^Matter ID/ }).selectOption(FEES.matter.id);
+      await form.getByRole('combobox', { name: /^Client ID/ }).selectOption(FEES.client.id);
       await form.getByLabel('Your state code').fill(FEES.stateCode);
       await form.getByLabel('Place of supply').fill(FEES.stateCode);
       await form.getByLabel('Description').fill('Advice, fictional matter');

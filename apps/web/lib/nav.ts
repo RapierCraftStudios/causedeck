@@ -122,7 +122,10 @@ export const NAV_ITEMS: readonly NavItem[] = [
     requires: 'limitation.read',
     flag: 'limitation.enabled',
   }),
-  item('insights', BarChart3, 'practice', { requires: 'insights.read' }),
+  item('insights', BarChart3, 'practice', {
+    requires: 'insights.read',
+    flag: 'insights.enabled',
+  }),
   item('settings', Settings, 'settings', { requires: 'settings.read' }),
 ];
 

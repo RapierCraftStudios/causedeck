@@ -21,6 +21,7 @@ import {
   useOfflineSince,
   useOnline,
 } from '../../../../../../components/matters/matters-offline-banner.tsx';
+import type { PickerOption } from '../../../../../../lib/fees/fees-deps.ts';
 import { formatPaise } from '../../../../../../lib/fees/money.ts';
 
 import { FeeAgreementForm } from './fee-agreement-form.tsx';
@@ -36,6 +37,9 @@ export interface InvoiceListProps {
   /** Owners and advocates write. */
   canWrite: boolean;
   actions: Pick<FeesActions, 'createAgreement' | 'setAgreementStatus'>;
+  /** The matters and clients the agreement form offers (#963). */
+  matters?: readonly PickerOption[];
+  clients?: readonly PickerOption[];
   /** Dev preview of the offline banner. */
   forceOffline?: boolean;
 }
@@ -57,6 +61,8 @@ export function InvoiceList({
   invoices,
   canWrite,
   actions,
+  matters = [],
+  clients = [],
   forceOffline = false,
 }: InvoiceListProps) {
   const t = useTranslations('fees');
@@ -215,6 +221,8 @@ export function InvoiceList({
         onOpenChange={setFormOpen}
         offline={!online}
         create={actions.createAgreement}
+        matters={matters}
+        clients={clients}
       />
       <p className="text-ink-muted text-xs" data-slot="fees-shortcuts">
         {t('shortcuts.new')}

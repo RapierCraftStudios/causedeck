@@ -1,6 +1,6 @@
 {
-  "id": "02608456-05a8-4d57-9ca5-cc7ae1f843d5",
-  "prevId": "c8716e74-7f70-4ef6-a9c5-76470455ae2e",
+  "id": "15a90fec-0f2b-477c-9645-d3797a7fc4cd",
+  "prevId": "7f4ad486-51e3-486d-8db1-0fa28cd47bee",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -18653,6 +18653,136 @@
       },
       "isRLSEnabled": false
     },
+    "public.onboarding_state": {
+      "name": "onboarding_state",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "path": {
+          "name": "path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step": {
+          "name": "step",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "completed": {
+          "name": "completed",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "skipped": {
+          "name": "skipped",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "onboarding_state_workspace_id_idx": {
+          "name": "onboarding_state_workspace_id_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "onboarding_state_user_id_user_id_fk": {
+          "name": "onboarding_state_user_id_user_id_fk",
+          "tableFrom": "onboarding_state",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "tableTo": "user",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        },
+        "onboarding_state_workspace_id_fk": {
+          "name": "onboarding_state_workspace_id_fk",
+          "tableFrom": "onboarding_state",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "tableTo": "organization",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "onboarding_state_workspace_user_uq": {
+          "name": "onboarding_state_workspace_user_uq",
+          "columns": [
+            "workspace_id",
+            "user_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "onboarding_state_path_chk": {
+          "name": "onboarding_state_path_chk",
+          "value": "path in ('solo', 'chamber')"
+        },
+        "onboarding_state_step_chk": {
+          "name": "onboarding_state_step_chk",
+          "value": "step ~ '^[a-z][a-z-]{0,31}$'"
+        },
+        "onboarding_state_lists_chk": {
+          "name": "onboarding_state_lists_chk",
+          "value": "jsonb_typeof(completed) = 'array' and jsonb_typeof(skipped) = 'array'"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.order": {
       "name": "order",
       "schema": "",
@@ -19072,6 +19202,13 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
+        },
+        "is_demo": {
+          "name": "is_demo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",
@@ -28320,6 +28457,32 @@
           "notNull": true,
           "default": 30
         },
+        "fee_supplier_state_code": {
+          "name": "fee_supplier_state_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delegation_defaults": {
+          "name": "delegation_defaults",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "brief_format": {
+          "name": "brief_format",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'full'"
+        },
+        "demo_version": {
+          "name": "demo_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -28378,9 +28541,17 @@
           "name": "workspace_settings_enquiry_retention_months_chk",
           "value": "enquiry_retention_months between 1 and 120"
         },
+        "workspace_settings_fee_supplier_state_code_chk": {
+          "name": "workspace_settings_fee_supplier_state_code_chk",
+          "value": "fee_supplier_state_code ~ '^[0-9]{2}$'"
+        },
         "workspace_settings_attention_stale_days_chk": {
           "name": "workspace_settings_attention_stale_days_chk",
           "value": "attention_stale_days between 7 and 180"
+        },
+        "workspace_settings_brief_format_chk": {
+          "name": "workspace_settings_brief_format_chk",
+          "value": "brief_format in ('short', 'full')"
         }
       },
       "isRLSEnabled": false

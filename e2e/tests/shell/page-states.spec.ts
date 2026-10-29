@@ -5,6 +5,7 @@
 import { readFileSync } from 'node:fs';
 
 import { expect, test } from '../../fixtures/index.ts';
+import { enableInsights } from '../../fixtures/insights-data.ts';
 
 import {
   CLERK_DENIED_ROUTES,
@@ -86,7 +87,10 @@ test.describe('placeholder page states', () => {
   test('routes the role lacks permission for render permission-denied', async ({
     page,
     asUser,
+    db,
   }) => {
+    // `insights` is behind its flag (#966); on for every workspace, the permission check is next.
+    await enableInsights(db.name, 'global');
     await openShell(page, asUser, { wait: false });
     for (const route of CLERK_DENIED_ROUTES) {
       await page.goto(url(route, undefined, CLERK_WORKSPACE));

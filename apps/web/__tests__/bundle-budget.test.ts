@@ -28,6 +28,8 @@ interface BudgetModule {
   MATTERS_ROUTE_MANIFEST: string;
   DRAFTS_ROUTE_BUDGET_BYTES: number;
   DRAFTS_ROUTE_MANIFEST: string;
+  INSIGHTS_ROUTE_BUDGET_BYTES: number;
+  INSIGHTS_ROUTE_MANIFEST: string;
   TIMELINE_ROUTE_BUDGET_BYTES: number;
   TIMELINE_ROUTE_MANIFEST: string;
   MATTER_WORKSPACE_MANIFEST: string;
@@ -225,6 +227,24 @@ describe('drafting studio route budget (#827)', () => {
     expect(delta.ok).toBe(true);
     expect(
       budget.shellDelta(['shell.js'], ['shell.js', 'studio.js', 'editor.js'], sizes, limit).ok,
+    ).toBe(false);
+  });
+});
+
+describe('practice insights route budget (#966)', () => {
+  it('pins the budget and route', () => {
+    expect(budget.INSIGHTS_ROUTE_BUDGET_BYTES).toBe(40 * 1024);
+    expect(budget.INSIGHTS_ROUTE_MANIFEST).toBe(
+      'server/app/(app)/w/[slug]/insights/page_client-reference-manifest.js',
+    );
+  });
+
+  it('counts only chunks beyond shared code against the budget', () => {
+    const limit = budget.INSIGHTS_ROUTE_BUDGET_BYTES;
+    const sizes = { 'shell.js': 28_000, 'report.js': 30 * 1024, 'extra.js': 20 * 1024 };
+    expect(budget.shellDelta(['shell.js'], ['shell.js', 'report.js'], sizes, limit).ok).toBe(true);
+    expect(
+      budget.shellDelta(['shell.js'], ['shell.js', 'report.js', 'extra.js'], sizes, limit).ok,
     ).toBe(false);
   });
 });

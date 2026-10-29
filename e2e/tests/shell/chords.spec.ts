@@ -97,7 +97,9 @@ test.describe('keyboard chords', () => {
   });
 
   test('`?` opens a dialog listing every shortcut, grouped by area', async ({ page, asUser }) => {
-    await openShell(page, asUser);
+    // Not /today: the court-day board owns `?` there and opens its own, ungrouped list once its lazy
+    // chunk has loaded, so the shell dialog only wins the race. Settings has no page-level `?`.
+    await openShell(page, asUser, { path: 'settings/profile' });
     await page.keyboard.press('?');
     const dialog = page.getByRole('dialog', { name: 'Help' });
     await expect(dialog).toBeVisible();

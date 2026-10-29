@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { PermissionDeniedPage } from '../../../../../../components/shell/permission-denied-page.tsx';
+import { loadFeePickers } from '../../../../../../lib/fees/fees-deps.ts';
 import { requireWorkspaceFlag } from '../../../../../../lib/flags.ts';
 import { can } from '../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
@@ -33,6 +34,7 @@ export default async function NewInvoicePage({ params }: NewInvoicePageProps) {
   await requireWorkspaceFlag('invoices.enabled', context);
   if (!can(context.role, 'fee.write')) return <PermissionDeniedPage />;
 
+  const pickers = await loadFeePickers(context);
   const t = await getTranslations('fees');
   return (
     <div data-route="invoices-new" className="flex flex-col gap-6">
@@ -47,7 +49,10 @@ export default async function NewInvoicePage({ params }: NewInvoicePageProps) {
           placeOfSupplyStateCode: '',
           lines: [],
           supplierName: context.workspace.name,
+          supplierStateCode: pickers.supplierStateCode,
         }}
+        matters={pickers.matters}
+        clients={pickers.clients}
         canWrite
         isOwner={context.role === 'owner'}
         actions={{

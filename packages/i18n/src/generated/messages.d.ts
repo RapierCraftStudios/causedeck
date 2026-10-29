@@ -4197,6 +4197,53 @@ export type Messages = {
       title: string;
       body: string;
     };
+    picker: {
+      choose: string;
+      none: string;
+      filter: string;
+    };
+    record: {
+      saving: string;
+      cancel: string;
+      amount: string;
+      reference: string;
+      date: string;
+      matter: string;
+      noMatter: string;
+    };
+    paymentForm: {
+      trigger: string;
+      title: string;
+      method: string;
+      methods: {
+        cash: string;
+        upi: string;
+        bank_transfer: string;
+        cheque: string;
+        card: string;
+        other: string;
+      };
+      receivedOn: string;
+      submit: string;
+    };
+    creditNoteForm: {
+      trigger: string;
+      title: string;
+      hint: string;
+      reason: string;
+      submit: string;
+    };
+    expenseForm: {
+      trigger: string;
+      title: string;
+      description: string;
+      submit: string;
+    };
+    receiptForm: {
+      trigger: string;
+      title: string;
+      submit: string;
+    };
   };
   matterTimeline: {
     title: string;

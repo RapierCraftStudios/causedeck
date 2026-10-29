@@ -476,7 +476,7 @@ describe('workspace layout', () => {
     expect(document.querySelector('[data-shell]')?.getAttribute('data-sidebar')).toBe('collapsed');
   });
 
-  it('hides the invoices and limitation nav items while their flags are off', async () => {
+  it('hides the invoices, limitation and insights nav items while their flags are off', async () => {
     const navHrefs = async () => {
       cleanup();
       withIntl(
@@ -489,11 +489,13 @@ describe('workspace layout', () => {
     expect(off).toContain('/w/demo/today');
     expect(off).not.toContain('/w/demo/invoices');
     expect(off).not.toContain('/w/demo/limitation');
+    expect(off).not.toContain('/w/demo/insights');
 
-    state.flagsOn = ['invoices.enabled', 'limitation.enabled'];
+    state.flagsOn = ['invoices.enabled', 'limitation.enabled', 'insights.enabled'];
     const on = await navHrefs();
     expect(on).toContain('/w/demo/invoices');
     expect(on).toContain('/w/demo/limitation');
+    expect(on).toContain('/w/demo/insights');
   });
 
   it('placeholder pages refuse a non-member workspace on their own', async () => {
@@ -571,6 +573,8 @@ describe('placeholder pages', () => {
   it.each(['invoices', 'limitation', 'insights'] as const)(
     '%s renders permission-denied when the stub role lacks permission',
     async (route) => {
+      // `insights` is a real page behind its own flag (#966); the others are rebuilt with theirs on.
+      state.flagsOn = ['insights.enabled'];
       withIntl(await pageFor(route)(props('clerk-desk')));
       const denied = document.querySelector('[data-pattern-state="permission-denied"]');
       expect(denied?.textContent).toContain('You do not have access to this area.');
@@ -589,6 +593,7 @@ describe('placeholder pages', () => {
   it('keeps flagged pages behind notFound while the flag is off (the default)', async () => {
     await expect(PAGES.invoices(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
     await expect(PAGES.limitation(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
+    await expect(PAGES.insights(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
   it('serves flagged pages once the server evaluates their flag on', async () => {
@@ -715,6 +720,7 @@ describe('localised strings', () => {
 
   it('permission-denied and error screens render ta strings', async () => {
     state.locale = 'ta';
+    state.flagsOn = ['insights.enabled'];
     withIntl(await pageFor('insights')(props('clerk-desk')), 'ta');
     withIntl(<WorkspaceError error={new Error('x')} reset={() => undefined} />, 'ta');
     const text = document.body.textContent;

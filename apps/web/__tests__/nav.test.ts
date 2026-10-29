@@ -77,14 +77,16 @@ describe('navigation manifest', () => {
 });
 
 describe('flag-gated items', () => {
-  it('marks invoices and limitation as flagged, and nothing else', () => {
+  it('marks invoices, limitation and insights as flagged, and nothing else', () => {
     expect(getNavItem('invoices').flag).toBe('invoices.enabled');
     expect(getNavItem('limitation').flag).toBe('limitation.enabled');
+    expect(getNavItem('insights').flag).toBe('insights.enabled');
     expect(getNavItem('enquiries').flag).toBe('intake.enquiry_log');
     expect(NAV_ITEMS.filter((entry) => entry.flag).map((entry) => entry.id)).toEqual([
       'enquiries',
       'invoices',
       'limitation',
+      'insights',
     ]);
   });
 
@@ -92,7 +94,8 @@ describe('flag-gated items', () => {
     const visible = ids(visibleNavItems());
     expect(visible).not.toContain('invoices');
     expect(visible).not.toContain('limitation');
-    expect(visible).toHaveLength(SPIKE_ROUTES.length - 2);
+    expect(visible).not.toContain('insights');
+    expect(visible).toHaveLength(SPIKE_ROUTES.length - 3);
   });
 
   it('asks the injected isEnabled about each flag and shows only enabled ones', () => {
@@ -104,7 +107,12 @@ describe('flag-gated items', () => {
     const visible = ids(visibleNavItems({ isEnabled: onlyInvoices }));
     expect(visible).toContain('invoices');
     expect(visible).not.toContain('limitation');
-    expect(asked.sort()).toEqual(['intake.enquiry_log', 'invoices.enabled', 'limitation.enabled']);
+    expect(asked.sort()).toEqual([
+      'insights.enabled',
+      'intake.enquiry_log',
+      'invoices.enabled',
+      'limitation.enabled',
+    ]);
     expect(ids(visibleNavItems({ isEnabled: () => true }))).toEqual(
       [...SPIKE_ROUTES, 'enquiries'].sort(),
     );

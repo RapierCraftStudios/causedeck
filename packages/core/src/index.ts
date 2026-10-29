@@ -50,6 +50,8 @@ export {
   FeesDisabledError,
   getClientBalance,
   getFeeAgreement,
+  getFeeSupplierState,
+  listFeeClients,
   getInvoice,
   issueCreditNote,
   issueInvoice,
@@ -61,6 +63,7 @@ export {
   recordClientReceipt,
   recordPayment,
   setFeeAgreementStatus,
+  setFeeSupplierState,
   updateDraftInvoice,
   updateFeeAgreement,
 } from './fees/index.ts';

@@ -316,3 +316,19 @@ export const FeesLedgerEmpty: Story = {
     await expect(canvas.getByText('No ledger entries')).toBeVisible();
   },
 };
+
+/** The client has paid more than they owe: the summary says so in words. */
+export const FeesLedgerInCredit: Story = {
+  render: () => <LedgerTable entries={LEDGER} balancePaise={-250000} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('The client is in credit by ₹2,500.00')).toBeVisible();
+  },
+};
+
+/** Debits and credits cancel out. */
+export const FeesLedgerSettled: Story = {
+  render: () => <LedgerTable entries={LEDGER} balancePaise={0} />,
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Nothing is owed')).toBeVisible();
+  },
+};

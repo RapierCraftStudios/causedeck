@@ -9,8 +9,9 @@
 #   - cap_drop ALL, no-new-privileges, read-only root filesystem with tmpfs where needed;
 #   - every service has memory and CPU limits and a restart policy;
 #   - app images are ghcr.io/<org>/causedeck-<svc>:sha-<gitsha>; third-party images are pinned.
-# Limits below are per container and sized for 4 vCPU / 8 GB (README table); staging shrinks them
-# through the *_MEM / *_CPUS variables. No secrets live here: they come from the env file.
+# Limits below are per container and sized for 4 vCPU / 8 GB (README table); replicas and limits
+# resize through WEB_REPLICAS, WORKER_REPLICAS and the *_MEM / *_CPUS variables (sizing presets in
+# env/prod-vps3.env and env/staging-vps1.env). No secrets live here: they come from the env file.
 name: causedeck-${COMPOSE_ENV_NAME:-prod}
 
 networks:
@@ -107,7 +108,7 @@ services:
         condition: service_healthy
     stop_grace_period: 20s
     deploy:
-      replicas: 2
+      replicas: ${WEB_REPLICAS:-2}
       resources:
         limits:
           memory: ${WEB_MEM:-768m}
@@ -186,7 +187,7 @@ services:
         condition: service_healthy
     stop_grace_period: 40s
     deploy:
-      replicas: 2
+      replicas: ${WORKER_REPLICAS:-2}
       resources:
         limits:
           memory: ${WORKER_MEM:-512m}

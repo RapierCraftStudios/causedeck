@@ -8,7 +8,7 @@ locals {
   display_name = join("-", compact([var.project, var.env, var.name_suffix]))
 
   # vps-2027-modelN carries two mandatory addon families: local storage and the automated backup.
-  model = try(regex("^vps-2027-(model[0-9]+)$", var.plan_code), null)
+  model = try(regex("^vps-2027-(model[0-9]+)$", var.plan_code)[0], null)
 
   derived_options = local.model == null ? [] : [
     "option-storage-local-2027-${local.model}",

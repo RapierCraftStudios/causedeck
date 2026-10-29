@@ -27,15 +27,12 @@ const sources = SOURCES.flatMap(files).map((file) => ({
   text: readFileSync(file, 'utf8'),
 }));
 
-function flatten(value: unknown, prefix = ''): Record<string, string> {
-  if (typeof value === 'string') return { [prefix]: value };
-  return Object.entries(value as Record<string, unknown>).reduce<Record<string, string>>(
-    (all, [key, child]) => ({
-      ...all,
-      ...flatten(child, prefix === '' ? key : `${prefix}.${key}`),
-    }),
-    {},
-  );
+function flatten(value: unknown, prefix = '', into: Record<string, string> = {}) {
+  if (typeof value === 'string') into[prefix] = value;
+  else
+    for (const [key, child] of Object.entries(value as Record<string, unknown>))
+      flatten(child, prefix === '' ? key : `${prefix}.${key}`, into);
+  return into;
 }
 
 const en = flatten(catalogs.en.matters);
@@ -79,13 +76,17 @@ describe('matters i18n (#388)', () => {
   it('resolves every key the matters code asks for', () => {
     const missing: string[] = [];
     let checked = 0;
+    // Flatten once: every key, plus every parent path (template keys are checked through it).
+    const entries = Object.keys(flatten(catalogs.en));
+    const keys = new Set(entries);
+    for (const entry of entries)
+      for (let at = entry.indexOf('.'); at !== -1; at = entry.indexOf('.', at + 1))
+        keys.add(entry.slice(0, at));
     for (const { file, text } of sources) {
       for (const key of usedKeys(text)) {
         checked += 1;
         // Template keys (`filters.statusValues.${status}`) are checked through their parent.
-        const known = Object.keys(flatten(catalogs.en)).some(
-          (entry) => entry === key || entry.startsWith(`${key}.`),
-        );
+        const known = keys.has(key);
         if (!known) missing.push(`${file}: ${key}`);
       }
     }

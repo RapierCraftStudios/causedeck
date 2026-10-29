@@ -1,0 +1,152 @@
+name: Perf
+
+# k6 load tests, bundle budget and Lighthouse on an ephemeral Compose stack with mock providers (#105).
+# Nightly, on demand, or on a PR labelled `perf`. Never targets production: every k6 scenario and the
+# seed script check the target against the allow-list in e2e/perf/guard.ts. Budgets: docs/engineering/performance-budgets.md.
+
+on:
+  schedule:
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+  pull_request:
+    types: [labeled, synchronize]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perf-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  perf:
+    name: k6, bundle budget and Lighthouse
+    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'perf') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    env:
+      NODE_ENV: production
+      APP_URL: http://localhost:3100
+      NEXT_PUBLIC_APP_URL: http://localhost:3100
+      API_URL: http://localhost:3101
+      DATABASE_URL: postgres://causedeck_app:causedeck_app@127.0.0.1:5432/causedeck
+      DATABASE_URL_OWNER: postgres://causedeck_owner:causedeck_owner@127.0.0.1:5432/causedeck
+      ALLOW_MOCK_PROVIDERS: 'true'
+      EMAIL_PROVIDER: smtp
+      SMTP_URL: smtp://127.0.0.1:1025
+      AI_PROVIDER: mock
+      BILLING_PROVIDER: mock
+      S3_ENDPOINT: http://127.0.0.1:9000
+      S3_BUCKET: causedeck-dev
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      AUTH_GOOGLE_ENABLED: 'false'
+      SENTRY_ENABLED: 'false'
+      PERF_BASE_URL: http://localhost:3100
+      PERF_SOAK_DURATION: ${{ github.event_name == 'schedule' && '60m' || '5m' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Generate throwaway server secrets
+        run: |
+          echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" >>"$GITHUB_ENV"
+          echo "KEK_BASE64=$(openssl rand -base64 32)" >>"$GITHUB_ENV"
+      - name: Start the Compose stack (Postgres, MinIO, Mailpit)
+        run: bash infra/scripts/dev-up.sh
+      - name: Migrate and seed (demo seed, then the 1,000-seat tenants)
+        env:
+          # The demo seed and seed-scale refuse NODE_ENV=production.
+          NODE_ENV: development
+        run: |
+          pnpm --filter @causedeck/db db:migrate
+          pnpm --filter @causedeck/db db:seed --profile e2e
+          pnpm db:seed:demo
+          pnpm --filter @causedeck/e2e perf:seed 1000
+      - name: Build apps/web (production)
+        run: pnpm --filter @causedeck/web build
+      - name: Bundle budget (court-day route, with diff report)
+        run: pnpm --filter @causedeck/e2e perf:bundle
+      - uses: grafana/setup-k6-action@ffe7d7290dfa715e48c2ccc924d068444c94bde2 # v1.1.0
+      - name: Build and serve the site (static export, Lighthouse key pages)
+        run: |
+          pnpm --filter @causedeck/site build
+          (cd apps/site/out && nohup python3 -m http.server 3200 --bind 127.0.0.1 >"$RUNNER_TEMP/site.log" 2>&1 &)
+      - name: Start apps/web
+        run: |
+          (cd apps/web && nohup node node_modules/next/dist/bin/next start -p 3100 >"$RUNNER_TEMP/web.log" 2>&1 &)
+          for _ in $(seq 60); do curl -fs http://localhost:3100/readyz >/dev/null && exit 0; sleep 2; done
+          tail -40 "$RUNNER_TEMP/web.log"; exit 1
+      - name: Assert egress is blocked (mock providers only)
+        run: |
+          node --experimental-strip-types --no-warnings -e "
+            import('./e2e/perf/guard.ts').then(async (g) => {
+              const problems = g.checkMockProviders(process.env);
+              if (problems.length) throw new Error(problems.join('; '));
+              await g.assertEgressBlocked(() => fetch('https://egress-probe.invalid/', { signal: AbortSignal.timeout(5000) }).then(() => true));
+            })"
+      - name: Sample DB CPU, connections and queue lag
+        run: |
+          mkdir -p e2e/perf/results
+          PG="docker compose -f infra/docker/compose.dev.yml -p causedeck-dev"
+          (while true; do
+            conns=$($PG exec -T postgres psql -U causedeck_owner -d causedeck -Atc "select count(*) from pg_stat_activity" 2>/dev/null || echo 0)
+            lag=$($PG exec -T postgres psql -U causedeck_owner -d causedeck -Atc "select coalesce(extract(epoch from now() - min(created_on)),0) from pgboss.job where state='created'" 2>/dev/null || echo 0)
+            cpu=$(docker stats --no-stream --format '{{.CPUPerc}}' "$($PG ps -q postgres)" 2>/dev/null | tr -d '%' || echo 0)
+            echo "{\"dbCpuPercent\":${cpu:-0},\"dbConnections\":${conns:-0},\"queueLagSeconds\":${lag:-0}}" >>e2e/perf/results/samples.jsonl
+            sleep 10
+          done) &
+      - name: k6 scenarios
+        run: |
+          for scenario in evening-prepare morning-court uploads mixed-soak; do
+            k6 run --summary-export "e2e/perf/results/$scenario.summary.json" "e2e/perf/k6/scenarios/$scenario.ts"
+          done
+      - name: Stage B summary and p95 trend
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p previous
+          gh run download --name perf-results --dir previous \
+            --run-id "$(gh run list --workflow perf.yml --status success --event schedule --limit 1 --json databaseId --jq '.[0].databaseId')" || true
+          node --experimental-strip-types --no-warnings -e "
+            const fs = require('node:fs');
+            Promise.all([import('./e2e/perf/compare.ts')]).then(([c]) => {
+              const read = (f) => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null);
+              const cur = c.p95FromK6Summary(read('e2e/perf/results/mixed-soak.summary.json') ?? {});
+              const prev = c.p95FromK6Summary(read('previous/mixed-soak.summary.json') ?? {});
+              const samples = fs.existsSync('e2e/perf/results/samples.jsonl')
+                ? fs.readFileSync('e2e/perf/results/samples.jsonl', 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
+              const worst = Math.max(0, ...Object.values(cur));
+              fs.writeFileSync('e2e/perf/results/stage-b-summary.json', JSON.stringify(c.stageBSummary(worst, samples, 1000), null, 2));
+              const reg = c.compareP95(prev, cur);
+              if (reg.length) fs.writeFileSync('e2e/perf/results/regression.md', c.regressionReport(reg));
+            })"
+          cat e2e/perf/results/stage-b-summary.json || true
+      - name: Open an issue on a p95 regression (nightly only)
+        if: ${{ always() && github.event_name == 'schedule' && hashFiles('e2e/perf/results/regression.md') != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --title "perf: p95 regression over 15% in the nightly run" \
+            --label performance --body-file e2e/perf/results/regression.md
+      - name: Install Chromium for Lighthouse
+        run: pnpm --filter @causedeck/e2e exec playwright install --with-deps chromium
+      - name: Lighthouse (mobile profile, then the throttled Android-class profile; signed in)
+        run: |
+          pnpm --filter @causedeck/e2e perf:lighthouse mobile
+          pnpm --filter @causedeck/e2e perf:lighthouse android
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() }}
+        with:
+          name: perf-results
+          path: |
+            e2e/perf/results
+            e2e/.lighthouseci
+          if-no-files-found: ignore
+          retention-days: 90

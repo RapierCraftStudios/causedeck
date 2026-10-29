@@ -1,5 +1,11 @@
-import { defineProject } from 'vitest/config';
+import { defineConfig } from 'vitest/config';
 
-export default defineProject({
-  test: { name: '@causedeck/drafting' },
+export default defineConfig({
+  test: {
+    name: '@causedeck/drafting',
+    coverage: {
+      include: ['src/slots.ts', 'src/presets/**'],
+      thresholds: { lines: 90 },
+    },
+  },
 });

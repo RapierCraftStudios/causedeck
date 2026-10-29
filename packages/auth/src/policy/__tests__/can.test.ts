@@ -102,6 +102,32 @@ describe('role rules', () => {
     expect(can(actor('advocate'), 'member.invite', undefined, off)).toEqual({ allow: true });
   });
 
+  it('owner and advocate assign appearances; the owner setting can switch advocates off (#63)', () => {
+    expect(can(actor('owner'), 'appearance.assign')).toEqual({ allow: true });
+    expect(can(actor('advocate'), 'appearance.assign')).toEqual({ allow: true });
+    const off = { advocatesCanAssign: false };
+    expect(reasonOf(can(actor('advocate'), 'appearance.assign', undefined, off))).toBe(
+      'ROLE_DENIED',
+    );
+    expect(can(actor('owner'), 'appearance.assign', undefined, off)).toEqual({ allow: true });
+    for (const role of ['junior', 'clerk', 'viewer'] as const) {
+      expect(reasonOf(can(actor(role), 'appearance.assign')), role).toBe('ROLE_DENIED');
+    }
+  });
+
+  it('advocate views the whole court day by default, not when the workspace turns it off (#58)', () => {
+    expect(can(actor('advocate'), 'court_day.view_all')).toEqual({ allow: true });
+    const off = { advocatesCanViewAllCourtDay: false };
+    expect(reasonOf(can(actor('advocate'), 'court_day.view_all', undefined, off))).toBe(
+      'ROLE_DENIED',
+    );
+    expect(can(actor('owner'), 'court_day.view_all', undefined, off)).toEqual({ allow: true });
+    for (const role of ['junior', 'clerk', 'viewer'] as const) {
+      expect(reasonOf(can(actor(role), 'court_day.view_all')), role).toBe('ROLE_DENIED');
+    }
+    expect(can(actor('advocate'), 'audit.read', undefined, off)).toEqual({ allow: true });
+  });
+
   it('junior is limited to assigned, shared or own matters', () => {
     const junior = actor('junior', { assignedMatterIds: new Set(['matter-assigned']) });
     expect(can(junior, 'matter.read', matter({ matterId: 'matter-assigned' }))).toEqual({
@@ -140,8 +166,24 @@ describe('role rules', () => {
     for (const action of ['listing.read', 'task.read', 'document.read'] as const) {
       expect(can(actor('clerk'), action, matter()), action).toEqual({ allow: true });
     }
-    for (const action of ['strategy.read', 'memory.read', 'memory.write', 'draft.write'] as const) {
+    for (const action of [
+      'strategy.read',
+      'memory.read',
+      'memory.write',
+      'draft.read',
+      'draft.write',
+      'draft.export',
+    ] as const) {
       expect(reasonOf(can(actor('clerk'), action, matter())), action).toBe('ROLE_DENIED');
+    }
+  });
+
+  it('limitation.write is owner and advocate only (#940)', () => {
+    for (const role of ['owner', 'advocate'] as const) {
+      expect(can(actor(role), 'limitation.write').allow, role).toBe(true);
+    }
+    for (const role of ['junior', 'clerk', 'viewer'] as const) {
+      expect(reasonOf(can(actor(role), 'limitation.write')), role).toBe('ROLE_DENIED');
     }
   });
 
@@ -149,7 +191,7 @@ describe('role rules', () => {
     const stub = {
       owner: ['billing.read', 'invoices.read', 'limitation.read', 'insights.read', 'settings.read'],
       advocate: ['limitation.read', 'insights.read', 'settings.read'],
-      junior: ['limitation.read', 'settings.read'],
+      junior: ['limitation.read', 'insights.read', 'settings.read'],
       clerk: ['settings.read'],
       viewer: [],
     } as const;

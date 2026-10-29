@@ -105,6 +105,7 @@ export function useShortcuts(): ShortcutsApi {
 
 export interface ShortcutsProviderProps {
   slug: string;
+  workspaceId: string;
   role: Role;
   isEnabled?: ((flag: FlagKey) => boolean) | undefined;
   children: ReactNode;
@@ -112,12 +113,18 @@ export interface ShortcutsProviderProps {
 
 /**
  * The shell's keyboard shortcuts: `g` chords to destinations, `c` capture, `[` sidebar, `/` page
- * search, `Shift+N` notifications and `?` help, through one document listener. `mod+k` is listed
+ * search, `Shift+N` notifications and `?` help, through one window listener pair. `mod+k` is listed
  * here but bound by the palette itself (use-command-palette.ts). Also adds the capture, sidebar,
  * notifications and help actions to the command palette with their key hints. Needs
  * `<CaptureProvider>` and `<SidebarProvider>` above.
  */
-export function ShortcutsProvider({ slug, role, isEnabled, children }: ShortcutsProviderProps) {
+export function ShortcutsProvider({
+  slug,
+  workspaceId,
+  role,
+  isEnabled,
+  children,
+}: ShortcutsProviderProps) {
   // Flag-gated chords follow the server-evaluated snapshot unless a caller overrides it.
   const fromFlags = useIsEnabled();
   const enabled = isEnabled ?? fromFlags;
@@ -175,14 +182,34 @@ export function ShortcutsProvider({ slug, role, isEnabled, children }: Shortcuts
       shortcuts.filter((shortcut) => shortcut.action !== 'palette'),
       { mac },
     );
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
+    // One dispatch per event keeps the chord state single. The capture pass feeds it and finishes
+    // a `g` chord before any page hotkey sees the second key (a page `c` or `o` would otherwise
+    // claim it with `preventDefault`, and `g c` would never reach Courts). Single-key shortcuts
+    // wait for the bubble pass on `window`, which runs after every page-level `document` hotkey
+    // whatever order they bound in (a streamed page hydrates after the shell): a page that
+    // claims a key, like `c` for the board's carry list, calls `preventDefault` and the shell
+    // leaves it alone.
+    let fed: { event: KeyboardEvent; shortcut: ShortcutDefinition | null } | null = null;
+    const onCapture = (event: KeyboardEvent) => {
       const shortcut = dispatch(event);
-      if (shortcut && latest.current.run(shortcut)) event.preventDefault();
+      fed = { event, shortcut };
+      if (shortcut?.keys.includes(' then ') && latest.current.run(shortcut)) {
+        event.preventDefault();
+        event.stopPropagation();
+        fed = null;
+      }
     };
-    document.addEventListener('keydown', onKeyDown);
+    const onKeyDown = (event: KeyboardEvent) => {
+      const current = fed;
+      fed = null;
+      if (event.defaultPrevented || current?.event !== event) return;
+      if (current.shortcut && latest.current.run(current.shortcut)) event.preventDefault();
+    };
+    window.addEventListener('keydown', onCapture, true);
+    window.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keydown', onCapture, true);
+      window.removeEventListener('keydown', onKeyDown);
     };
   }, [shortcuts, mac]);
 
@@ -251,6 +278,8 @@ export function ShortcutsProvider({ slug, role, isEnabled, children }: Shortcuts
         <Dialog
           open={helpOpen}
           onOpenChange={setHelpOpen}
+          workspaceId={workspaceId}
+          role={role}
           shortcuts={
             helpOpen
               ? [...shortcuts, ...pageShortcuts(shortcuts, { role, isEnabled: enabled })]

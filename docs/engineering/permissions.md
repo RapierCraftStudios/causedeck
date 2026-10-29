@@ -66,6 +66,14 @@ the matrix, before the resource checks below.
 | `task.read` | ✓     | ✓        | ✓      | ✓     | ✓      |
 | `task.write` | ✓     | ✓        | ✓      | ✓     | —      |
 
+## obligation
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `obligation.read` | ✓     | ✓        | ✓      | ✓     | ✓      |
+| `obligation.write` | ✓     | ✓        | ✓      | —     | —      |
+| `obligation.track` | ✓     | ✓        | ✓      | ✓     | —      |
+
 ## listing
 
 | Action | owner | advocate | junior | clerk | viewer |
@@ -76,13 +84,48 @@ the matrix, before the resource checks below.
 
 | Action | owner | advocate | junior | clerk | viewer |
 | ------ | ----- | -------- | ------ | ----- | ------ |
+| `draft.read` | ✓     | ✓        | ✓      | —     | —      |
 | `draft.write` | ✓     | ✓        | ✓      | —     | —      |
+| `draft.export` | ✓     | ✓        | ✓      | —     | —      |
 
 ## audit
 
 | Action | owner | advocate | junior | clerk | viewer |
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `audit.read` | ✓     | ✓        | —      | —     | —      |
+
+## court_day
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `court_day.view_all` | ✓     | ✓        | —      | —     | —      |
+
+## appearance
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `appearance.assign` | ✓     | ✓        | —      | —     | —      |
+
+## contact
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `contact.read` | ✓     | ✓        | ✓      | ✓     | ✓      |
+| `contact.write` | ✓     | ✓        | —      | —     | —      |
+
+## enquiry
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `enquiry.read` | ✓     | ✓        | —      | —     | —      |
+| `enquiry.write` | ✓     | ✓        | —      | —     | —      |
+
+## fee
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `fee.read` | ✓     | ✓        | —      | —     | —      |
+| `fee.write` | ✓     | ✓        | —      | —     | —      |
 
 ## export
 
@@ -96,12 +139,18 @@ the matrix, before the resource checks below.
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `support.manage` | ✓     | —        | —      | —     | —      |
 
+## limitation
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `limitation.write` | ✓     | ✓        | —      | —     | —      |
+
 ## shell
 
 | Action | owner | advocate | junior | clerk | viewer |
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `limitation.read` | ✓     | ✓        | ✓      | —     | —      |
-| `insights.read` | ✓     | ✓        | —      | —     | —      |
+| `insights.read` | ✓     | ✓        | ✓      | —     | —      |
 | `settings.read` | ✓     | ✓        | ✓      | ✓     | —      |
 
 ## Settings and resource rules
@@ -110,6 +159,10 @@ the matrix, before the resource checks below.
   (workspace_settings.advocates_can_invite).
 - `advocatesCanReadAudit` (default true): when false, advocates are denied `audit.read`
   (workspace_settings.advocates_can_read_audit).
+- `advocatesCanViewAllCourtDay` (default true): when false, advocates are denied
+  `court_day.view_all` and see only their own court-day items (`mine` scope).
+- `advocatesCanAssign` (default true): when false, advocates are denied `appearance.assign`;
+  owners always may.
 - Restricted matters: only users in `restricted.allowUserIds` may act on them, plus owners
   while `ownersSeeRestrictedMatters` is true (the default;
   workspace_settings.owners_see_restricted).

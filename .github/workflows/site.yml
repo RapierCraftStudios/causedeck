@@ -52,8 +52,15 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup
       # The build runs the Rule 36 lint first and fails on denylisted copy or invalid frontmatter.
-      - name: Lint, typecheck, test and build
-        run: pnpm turbo run lint typecheck test build --filter=@causedeck/site
+      - name: Lint, typecheck and test
+        run: pnpm turbo run lint typecheck test --filter=@causedeck/site
+      # The build fails while a legal page is still `status: draft` (scripts/legal-status.ts).
+      # ALLOW_DRAFT_LEGAL=1 is set for every build except `main` (production), so staging and PR
+      # previews build with drafts. It is passed directly because turbo's strict env mode drops it.
+      - name: Build
+        env:
+          ALLOW_DRAFT_LEGAL: ${{ github.ref_name == 'main' && '0' || '1' }}
+        run: pnpm --filter @causedeck/site build
       - name: Upload the static export
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

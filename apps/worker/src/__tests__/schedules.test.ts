@@ -32,20 +32,29 @@ describe('registerSchedules', () => {
       'system.coverage.weekly',
       'system.audit.verify',
       'system.audit.retention',
+      'system.enquiry.retention',
+      'system.status-link.retention',
       'system.export.expire',
       'system.support.session-expire',
       'system.deletion.tick',
+      'system.memory.purge',
+      'system.memory.review-prepare',
       'system.capture.retention',
       'system.data-ops.evaluate',
       'system.corpus.poll',
       'system.causelist.poll',
       'system.board.poll',
       'system.notices.poll',
+      'system.status.publish',
       'system.judgment-alert.scan',
       'system.portfolio-alert.scan',
       'system.status.poll',
       'system.webhook.sweep',
       'system.orders.poll',
+      'system.obligation.reminders',
+      'system.attention.scan',
+      'system.brief.refresh-sweep',
+      'system.reminder.schedule',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -87,6 +96,8 @@ describe('registerSchedules', () => {
       ['system.billing.dunning-tick', '30 4 * * *', '2026-10-18T23:00:00.000Z'],
       // End-of-day digest scheduler (#49): every half hour from 18:00 to 23:30 IST; 18:00 IST is 12:30 UTC.
       ['system.activity.digest', '0,30 18-23 * * *', '2026-10-18T12:30:00.000Z'],
+      // Court-day reminders (#64): every half hour from 07:00 to 23:30 IST; 07:00 IST is 01:30 UTC.
+      ['system.reminder.schedule', '0,30 7-23 * * *', '2026-10-18T01:30:00.000Z'],
       // News digest scheduler (#481): every half hour, like the notification digest; 06:00 IST is 00:30 UTC.
       ['system.news.digest', '0,30 * * * *', '2026-10-18T00:30:00.000Z'],
       // News poll fan-out (#481): hourly at :10 IST, which is :40 UTC.
@@ -100,10 +111,18 @@ describe('registerSchedules', () => {
       ['system.audit.verify', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
       // Audit retention: daily 03:00 IST.
       ['system.audit.retention', '0 3 * * *', '2026-10-18T21:30:00.000Z'],
+      // Enquiry retention (#87): daily 03:30 IST.
+      ['system.enquiry.retention', '30 3 * * *', '2026-10-18T22:00:00.000Z'],
+      // Status link retention (#88): daily 03:45 IST.
+      ['system.status-link.retention', '45 3 * * *', '2026-10-18T22:15:00.000Z'],
       // Court data retention: daily 04:15 IST.
       ['system.court-data.retention', '15 4 * * *', '2026-10-18T22:45:00.000Z'],
       // Capture raw-object retention: daily 02:00 IST.
       ['system.capture.retention', '0 2 * * *', '2026-10-18T20:30:00.000Z'],
+      // Memory embedding purge (#72): hourly; 05:30 IST is 00:00 UTC, so the next hour is 06:00 IST.
+      ['system.memory.purge', '0 * * * *', '2026-10-18T00:30:00.000Z'],
+      // Memory monthly review (#72): the 1st at 06:00 IST.
+      ['system.memory.review-prepare', '0 6 1 * *', '2026-11-01T00:30:00.000Z'],
       // Data-ops evaluation (#515): every 15 minutes; 05:45 IST is 00:15 UTC.
       ['system.data-ops.evaluate', '*/15 * * * *', '2026-10-18T00:15:00.000Z'],
       // KHC cause-list poll (#482): 07:30 and 18:30 IST; 07:30 IST is 02:00 UTC.
@@ -113,6 +132,10 @@ describe('registerSchedules', () => {
       ['system.board.poll', '*/5 10-16 * * 1-5', '2026-10-19T04:30:00.000Z'],
       // Notices poll (#586): hourly on the hour IST; 06:00 IST is 00:30 UTC.
       ['system.notices.poll', '0 * * * *', '2026-10-18T00:30:00.000Z'],
+      // Status publish (#769): every minute.
+      ['system.status.publish', '* * * * *', '2026-10-18T00:01:00.000Z'],
+      // Obligation reminders (#67): daily 07:00 IST; 07:00 IST is 01:30 UTC.
+      ['system.obligation.reminders', '0 7 * * *', '2026-10-18T01:30:00.000Z'],
     ] as const;
     for (const [name, cron, firstRun] of others) {
       const row = await worker.boss.getSchedule(name);

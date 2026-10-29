@@ -55,6 +55,7 @@ Each action is either **security** or **informational**:
 | `auth.two_factor_disabled`            | security      | `databaseHooks.user.update` (`/two-factor/disable`)                                                                        |
 | `auth.session_revoked`                | security      | `databaseHooks.session.delete` (revoke paths)                                                                              |
 | `audit.exported`                      | security      | `exportAudit`, before the first byte (#229); `recordExportRun`                                                             |
+| `support.session_requested`           | security      | `requestMemberSupport` (#94)                                                                                               |
 | `support.session_started`             | security      | `recordSupportSessionStarted` (#27)                                                                                        |
 | `support.session_ended`               | security      | `recordSupportSessionEnded` (#27)                                                                                          |
 | `access.denied`                       | security      | web `guard`/`workspaceAction`, api `requireWorkspace`/`authorize`; core lifecycle step-up gate (role refusals, #304)        |
@@ -72,6 +73,8 @@ Each action is either **security** or **informational**:
 | `billing.invoice_downloaded`          | security      | `openSaasInvoicePdf`, before the first byte (#258)                                                                         |
 | `workspace.role_settings_updated`     | security      | `updateRoleSettings` (#285)                                                                                                |
 | `workspace.privacy_updated`           | security      | `updateWorkspacePrivacy` (#286)                                                                                            |
+| `workspace.eval_reuse_enabled`        | security      | `setAllowEvalReuse` (#558; owner-only; ids only, no metadata)                                                              |
+| `workspace.eval_reuse_disabled`       | security      | `setAllowEvalReuse` (#558; also withdraws per-item consents)                                                               |
 | `workspace.integration_token_rotated` | security      | `rotateIntegrationToken` (#287; metadata `kind` only)                                                                      |
 | `capture.created`                     | informational | `createCapture`, `createManualCapture` (#43; metadata channel, mime, size, `aiBlocked`; never the filename)                |
 | `capture.completed`                   | informational | `completeUpload` (#43; metadata `status`, `reason` or `duplicateOf`)                                                       |

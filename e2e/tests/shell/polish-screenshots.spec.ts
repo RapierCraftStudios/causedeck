@@ -99,11 +99,11 @@ for (const { name, viewport } of WIDTHS) {
     test('shortcuts dialog', async ({ page, asUser }, testInfo) => {
       await openShell(page, asUser);
       await page.keyboard.press('?');
-      const dialog = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+      const dialog = page.getByRole('dialog', { name: 'Help' });
       await expect(dialog).toBeVisible();
 
       // A light 1 px inset line in the ring token, not a 2 px outer outline.
-      const list = dialog.locator('[data-slot="shortcuts-list"]');
+      const list = dialog.getByRole('tab', { name: 'Shortcuts' });
       await keyboardFocus(page, list);
       await expect
         .poll(() => outlineOf(list))

@@ -30,6 +30,7 @@ const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
 const CORE_WHATSAPP_LINK_TEST = 'packages/core/src/__tests__/cross-tenant/whatsapp-link.test.ts';
+const CORE_MEMORY_TEST = 'packages/core/src/__tests__/cross-tenant/memory.test.ts';
 const CORE_PORTFOLIO_TEST = 'packages/core/src/__tests__/cross-tenant/portfolio.test.ts';
 const NOTIFICATIONS_SERVICES_TEST =
   'packages/notifications/src/__tests__/cross-tenant/services.test.ts';
@@ -76,6 +77,18 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   forum: DB_TABLES_TEST,
   court_hall: DB_TABLES_TEST,
   bench: DB_TABLES_TEST,
+  // Drafting (#766): template is global-or-workspace; draft_version is immutable.
+  template: DB_TABLES_TEST,
+  draft: DB_TABLES_TEST,
+  draft_version: DB_TABLES_TEST,
+  // Drafting exports (#768): one stored file per draft version and format.
+  draft_export: DB_TABLES_TEST,
+  // Citation checker (#77): one row per citation in a draft version.
+  authority: DB_TABLES_TEST,
+  // Consistency reports (#78): privileged matter data, one per draft version and graph revision.
+  draft_consistency_report: DB_TABLES_TEST,
+  // Fact-check state (#914): per-matter ignores and assertions, per-version blockers and acknowledgements.
+  draft_fact_ack: DB_TABLES_TEST,
   // Matter and documents (#345).
   matter: DB_TABLES_TEST,
   document: DB_TABLES_TEST,
@@ -92,6 +105,14 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   appearance: DB_TABLES_TEST,
   order: DB_TABLES_TEST,
   obligation: DB_TABLES_TEST,
+  // Obligation service tables (#67).
+  obligation_event: DB_TABLES_TEST,
+  defect: DB_TABLES_TEST,
+  certified_copy: DB_TABLES_TEST,
+  // Outward update drafts (#735).
+  outward_draft: DB_TABLES_TEST,
+  outward_draft_version: DB_TABLES_TEST,
+  outward_share_log: DB_TABLES_TEST,
   task: DB_TABLES_TEST,
   // People (#348).
   person: DB_TABLES_TEST,
@@ -122,8 +143,54 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   case_watch: DB_TABLES_TEST,
   case_status_snapshot: DB_TABLES_TEST,
 
+  // Court-day marker and list snapshots (#58).
+  court_day_marker: DB_TABLES_TEST,
+  list_snapshot: DB_TABLES_TEST,
+
+  // Brief state (#60).
+  brief_state: DB_TABLES_TEST,
+
+  // Continuity (#71).
+  matter_view: DB_TABLES_TEST,
+  handover_note: DB_TABLES_TEST,
+
+  // Brief sharing (#507).
+  brief_share: DB_TABLES_TEST,
+
+  // Client status links (#88).
+  status_link: DB_TABLES_TEST,
+  status_link_access: DB_TABLES_TEST,
+
+  // Client contacts (#82).
+  client_contact: DB_TABLES_TEST,
+
+  // Inbound enquiry log (#87).
+  enquiry: DB_TABLES_TEST,
+  enquiry_party: DB_TABLES_TEST,
+  conflict_check_result: DB_TABLES_TEST,
+  // Fees (#83).
+  fee_agreement: DB_TABLES_TEST,
+  fee_invoice: DB_TABLES_TEST,
+  fee_invoice_line: DB_TABLES_TEST,
+  payment: DB_TABLES_TEST,
+  client_ledger_entry: DB_TABLES_TEST,
+  // Proof-of-value (#86).
+  preparedness_rating: DB_TABLES_TEST,
+  load_pulse: DB_TABLES_TEST,
+  context_test_result: DB_TABLES_TEST,
+  pov_prefs: DB_TABLES_TEST,
+  // Limitation tracker (#84): rules are global-or-workspace; the reviewed-only read is in limitation-schema.test.ts.
+  limitation_rule: DB_TABLES_TEST,
+  limitation_computation: DB_TABLES_TEST,
+  // Court-day reminders (#64).
+  reminder_dispatch: DB_TABLES_TEST,
+
   // Review and correction queue (#518).
   review_correction: DB_TABLES_TEST,
+  // A0 corrections (#558).
+  correction: DB_TABLES_TEST,
+  // Stale-matter attention snoozes (#70).
+  attention_snooze: DB_TABLES_TEST,
 
   // Anchored order extraction (#46).
   extraction: DB_TABLES_TEST,
@@ -132,6 +199,8 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   import_batch: DB_TABLES_TEST,
   import_batch_file: DB_TABLES_TEST,
   import_plan: DB_TABLES_TEST,
+  // The chamber's saved spreadsheet column mapping (#778).
+  import_column_mapping: DB_TABLES_TEST,
 
   // Advocate identifiers for the bootstrap import (#57, #550).
   advocate_profile: DB_TABLES_TEST,
@@ -151,6 +220,16 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   whatsapp_link: DB_TABLES_TEST,
   whatsapp_otp_challenge: DB_TABLES_TEST,
   whatsapp_inbound_message: DB_TABLES_TEST,
+  // In-app help state (#94).
+  help_state: DB_TABLES_TEST,
+  // Lawyer memory (#72).
+  memory_item: DB_TABLES_TEST,
+  memory_proposal: DB_TABLES_TEST,
+  memory_embedding: DB_TABLES_TEST,
+  memory_usage: DB_TABLES_TEST,
+  memory_pause: DB_TABLES_TEST,
+  // M5 precedent bank (#901).
+  precedent_passage: DB_TABLES_TEST,
   // Enterprise onboarding (#682).
   sso_provider: DB_TABLES_TEST,
   scim_token: DB_TABLES_TEST,
@@ -163,6 +242,9 @@ export const TABLE_TESTS: Readonly<Record<string, string>> = {
   // Judgment alerts (#497).
   matter_issue_tag: DB_TABLES_TEST,
   judgment_alert: DB_TABLES_TEST,
+  // Research notes and providers (#80).
+  research_note: DB_TABLES_TEST,
+  research_provider: DB_TABLES_TEST,
   // Official notices feed (#584).
   notice_match: DB_TABLES_TEST,
 };
@@ -203,10 +285,71 @@ const rosterSelfScoped = {
 const nextDateChoiceDenies = { test: CORE_NEXT_DATE_CHOICE_TEST, kind: 'denies' } as const;
 const movePreviewDenies = { test: CORE_MOVE_PREVIEW_TEST, kind: 'denies' } as const;
 const documentPreviewDenies = { test: CORE_DOCUMENT_PREVIEW_TEST, kind: 'denies' } as const;
+const memoryDenies = { test: CORE_MEMORY_TEST, kind: 'denies' } as const;
 const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const;
 
 /** Exported `@causedeck/core` services that touch the database → their cross-tenant test. */
 export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  // Proof-of-value (#86).
+  requirePovMember: denies,
+  requirePovRecorder: denies,
+  promptsEnabled: denies,
+  getPovPrefs: denies,
+  setPovPrefs: denies,
+  listPov: denies,
+  deleteOwnRating: denies,
+  povAggregate: denies,
+  // Practice insights (#85): B acting on A is denied; B in its own workspace sees none of A.
+  computePreparedKept: denies,
+  obligationHealth: denies,
+  preparednessSeries: denies,
+  loadSeries: denies,
+  getPracticeInsights: denies,
+  buildPovReport: denies,
+  shouldPrompt: denies,
+  recordPreparedness: denies,
+  recordSkip: denies,
+  dueForPulse: denies,
+  recordLoadPulse: denies,
+  dismissLoadPulse: denies,
+  startContextTest: denies,
+  answerQuestion: denies,
+  finishContextTest: denies,
+  // Fees (#83): flag-gated, owner and advocate only; B claiming A's workspace is refused and A is unchanged.
+  createFeeAgreement: denies,
+  updateFeeAgreement: denies,
+  setFeeAgreementStatus: denies,
+  getFeeAgreement: denies,
+  listFeeAgreements: denies,
+  prepareFeeInvoice: denies,
+  createDraftInvoice: denies,
+  updateDraftInvoice: denies,
+  discardDraftInvoice: denies,
+  issueInvoice: denies,
+  recordPayment: denies,
+  issueCreditNote: denies,
+  getInvoice: denies,
+  listInvoices: denies,
+  recordClientExpense: denies,
+  recordClientReceipt: denies,
+  listLedger: denies,
+  getClientBalance: denies,
+  // Limitation tracker (#940): a root export of the flag-gated services; the domain also has its own
+  // cross-tenant case in limitation.test.ts.
+  loadRuleTable: denies,
+  listRules: denies,
+  computeLimitation: denies,
+  confirmLimitation: denies,
+  listLimitations: denies,
+  // Stale-matter attention (#70).
+  detectAttention: empty,
+  countAttention: denies,
+  scanWorkspaceAttention: empty,
+  snoozeFlag: denies,
+  dismissFlag: denies,
+  liftSnooze: denies,
+  listSnoozes: denies,
+  setStaleDays: denies,
   listMemberships: empty,
   listWorkspacesForUser: empty,
   memberRole: empty,
@@ -245,9 +388,17 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // role settings (#285)
   getRoleSettings: empty,
   updateRoleSettings: denies,
+  // SSO providers (#683)
+  listSsoProviders: empty,
+  saveSsoProvider: denies,
+  deleteSsoProvider: denies,
+  verifySsoDomain: denies,
   // privacy settings (#286)
   getPrivacySettings: empty,
   updateWorkspacePrivacy: denies,
+  // Eval-reuse consent (#558): B reads A's flag as the default, and may not opt A in.
+  getAllowEvalReuse: empty,
+  setAllowEvalReuse: denies,
   // integration tokens (#287)
   getIntegrations: empty,
   rotateIntegrationToken: denies,
@@ -491,6 +642,44 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   getLiveHalls: denies,
   // bench card (#521): the flagged read model opens withWorkspace on the given actor
   getBenchCard: denies,
+  // court day (#58): B acting on A's workspace is denied, A's rows are unchanged
+  getCourtDay: denies,
+  // calendar range (#66): B acting on A's workspace is denied, A's rows are unchanged
+  getCalendarRange: denies,
+  setCurrentItem: denies,
+  clearCurrentItem: denies,
+  snapshotList: denies,
+  // court-day board (#59): B reading A's list diffs is denied
+  getListDiffs: denies,
+  proposeCourtDayNextDate: denies,
+  listConflictCards: denies,
+  // hearing outcome (#62): B acting on A's hearing is denied (NOT_FOUND), A's hearing is unchanged
+  getOutcomeProposal: denies,
+  confirmOutcome: denies,
+  recordManualOutcome: denies,
+  // briefs (#60): B acting on A's listing is denied (NOT_FOUND), A's brief state is unchanged
+  // continuity (#71): B acting on A's matter or handover is denied, A's handovers and views are unchanged
+  generateHandover: denies,
+  saveHandover: denies,
+  listHandovers: denies,
+  acknowledgeHandover: denies,
+  generateHandoversForMember: denies,
+  recordView: denies,
+  whatChangedSince: denies,
+  changesForViewer: denies,
+  assembleBrief: denies,
+  markPrepared: denies,
+  unmarkPrepared: denies,
+  setCarryItem: denies,
+  setBriefNote: denies,
+  refreshBrief: denies,
+  // delegation (#63): B acting on A's listing or appearances is denied, A's appearances are unchanged
+  assignAppearance: denies,
+  reassignAppearance: denies,
+  unassign: denies,
+  suggestAssignments: denies,
+  myAppearances: denies,
+  chamberOutcomesLive: denies,
   createMatter: denies,
   updateMatter: denies,
   archiveMatter: denies,
@@ -554,12 +743,24 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   upsertPerson: denies,
   setRoleEdge: denies,
   setSensitive: denies,
+  // people (#82): B reading, changing, linking or archiving A's client contacts is denied, A's
+  // contacts, their activity and role edges are unchanged; B's own list holds none of A's
+  listContacts: empty,
+  getContactDetail: denies,
+  createContact: denies,
+  updateContact: denies,
+  undoContactChange: denies,
+  linkToMatter: denies,
+  archiveContact: denies,
   // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
   getDocumentPreview: documentPreviewDenies,
   // business dashboard (#519): a non-staff user is refused by app_staff_business_snapshot
   staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
   requestSession: denies,
+  requestMemberSupport: denies,
+  dismissCoachmark: denies,
+  listDismissedCoachmarks: denies,
   grantSession: denies,
   denySession: denies,
   revokeSession: denies,
@@ -845,6 +1046,51 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmTag: denies,
   dismissTag: denies,
   listRelevantJudgments: denies,
+  // drafts (#768): B on A's draft, version or export is denied; A's rows are unchanged.
+  createDraft: denies,
+  renderDraft: denies,
+  saveVersion: denies,
+  listVersions: denies,
+  // drafts read side (#824): B naming A's workspace is denied; B's own lists hold none of A's.
+  getDraft: denies,
+  listDrafts: empty,
+  listTemplates: empty,
+  restoreVersion: denies,
+  exportDraft: denies,
+  runDraftingExport: denies,
+  createDraftExportDownload: denies,
+  // citation checker (#77): B on A's version is denied; A's authority rows are unchanged.
+  checkDraft: denies,
+  getCitationReport: denies,
+  acknowledgeUnverified: denies,
+  // consistency (#78): B running, reading or applying a fix on A's version is denied; A's rows are unchanged.
+  runConsistencyCheck: denies,
+  getConsistencyReport: denies,
+  listFindings: denies,
+  loadConsistencyFacts: denies,
+  applyFix: denies,
+  // fact-check (#914): B running, ignoring, asserting, acknowledging or logging a fix on A's version is denied; A's rows are unchanged.
+  runFactCheck: denies,
+  ignoreForMatter: denies,
+  markAsAssertion: denies,
+  recordFactFix: denies,
+  acknowledgeFactCheck: denies,
+  loadFactCheckFacts: denies,
+  // live fact-check (#916): B checking text against A's matter is denied; nothing is stored.
+  checkFactsLive: denies,
+  // research notes, facts and provider templates (#80)
+  listNotes: denies,
+  createNote: denies,
+  updateNote: denies,
+  deleteNote: denies,
+  addAuthority: denies,
+  removeAuthority: denies,
+  setAuthorityPinned: denies,
+  getResearchFacts: denies,
+  listProviderTemplates: denies,
+  saveProviderTemplate: denies,
+  removeProviderTemplate: denies,
+  listLinkProviders: denies,
   // notices page and matter card (#588)
   listWorkspaceNotices: empty,
   getPublicCase: empty,
@@ -860,6 +1106,58 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'opens withWorkspace on the given workspace id; RLS keeps every other workspace out',
   },
+  // memory (#72): every call checks the actor's membership (NOT_FOUND for a non-member)
+  acceptMemoryDraft: memoryDenies,
+  confirmMemory: memoryDenies,
+  createMemoryNote: memoryDenies,
+  deleteMemory: memoryDenies,
+  dismissMemoryProposal: memoryDenies,
+  editMemory: memoryDenies,
+  isMemoryPaused: memoryDenies,
+  pauseMemory: memoryDenies,
+  setMemoryPauseAll: memoryDenies,
+  setSharedWithChamber: memoryDenies,
+  embedMemoryItem: memoryDenies,
+  searchMatterMemory: memoryDenies,
+  proposeFromCorrection: memoryDenies,
+  proposeFromEdit: memoryDenies,
+  proposeMemory: memoryDenies,
+  exportMemory: memoryDenies,
+  getMemory: memoryDenies,
+  listMemory: memoryDenies,
+  memoryFor: memoryDenies,
+  recordUsage: memoryDenies,
+  tenureMetrics: memoryDenies,
+  // M5 playbooks and the precedent bank (#901)
+  confirmPlaybook: memoryDenies,
+  deletePlaybook: memoryDenies,
+  listPlaybooks: memoryDenies,
+  proposePlaybook: memoryDenies,
+  deletePrecedent: memoryDenies,
+  listPrecedents: memoryDenies,
+  retirePrecedent: memoryDenies,
+  searchPrecedents: memoryDenies,
+  setM5Shared: memoryDenies,
+  confirmPrecedentProposal: memoryDenies,
+  dismissPrecedentProposal: memoryDenies,
+  proposePrecedent: memoryDenies,
+  // memory screen read models and the review date (#73)
+  listMemoryProposals: memoryDenies,
+  listMemoryUsage: memoryDenies,
+  listMemoryWithUsage: memoryDenies,
+  listReviewCandidates: memoryDenies,
+  getLastMemoryReview: memoryDenies,
+  completeMemoryReview: memoryDenies,
+  monthlyReview: {
+    test: CORE_MEMORY_TEST,
+    kind: 'caller-checked',
+    note: 'system job body: opens withWorkspace on the given workspace id and returns counts only; a B-scoped call for workspace A reads nothing of B',
+  },
+  purgeDeletedMemoryEmbeddings: {
+    test: CORE_MEMORY_TEST,
+    kind: 'caller-checked',
+    note: 'system job body: opens withWorkspace on the given workspace id; RLS keeps every other workspace out',
+  },
   // citations (#484): the global corpus, one answer for every workspace
   verifyCitation: {
     test: CORE_SERVICES_TEST,
@@ -870,7 +1168,77 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
 export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
+  // Proof-of-value (#86): rules and constants.
+  decidePrompt: 'pure',
+  requireUuidInput: 'pure',
+  STANDARD_QUESTIONS: 'constant',
+  MAX_PROMPTS_PER_DAY: 'constant',
+  SKIP_STREAK: 'constant',
+  SKIP_PAUSE_DAYS: 'constant',
+  POV_REPORT_HEADER: 'constant',
+  BASELINE_DAYS: 'constant',
+  isoWeekIst: 'pure',
+  povIstDay: 'pure',
+  pulseWindowOpen: 'pure',
+  isBaseline: 'pure',
+  // Fees (#83): the refusal while the legal-gated flag is off is an error class.
+  FeesDisabledError: 'error class',
+  // Limitation tracker (#940): the date engine is pure; the refusal is an error class.
+  computeExpiry: 'pure',
+  NoReviewedRuleError: 'error class',
+  // M5 playbook value codec (#901): pure conversion between a playbook and its memory value lines.
+  playbookToValue: 'pure',
+  playbookFromValue: 'pure',
+  // Stale-matter attention (#70): the rules are pure functions over loaded facts.
+  evaluateRules: 'pure',
+  noNextDate: 'pure',
+  pastDateNoOutcome: 'pure',
+  noRecentUpdate: 'pure',
+  obligationOverdueUnowned: 'pure',
+  HEARING_WINDOW_DAYS: 'constant',
+  // WhatsApp OTP (#711): rate-limit constants and the env-selected sender factory (no workspace data).
+  WHATSAPP_OTP_NUMBER_LIMIT: 'constant',
+  WHATSAPP_OTP_MEMBER_LIMIT: 'constant',
+  whatsappOtpSendFromProcess:
+    'factory (reads process env, returns a sender; touches no tenant data)',
   packageName: 'constant',
+  // research link-outs (#80): pure link building and provider templates, no database access
+  buildResearchLinks: 'pure function: builds URLs from the facts it is given, reads nothing',
+  researchQueryParts: 'pure function over the given facts',
+  researchFactsFromTags: 'pure function over the tags it is given',
+  validateProviderTemplate: 'pure function over a template string',
+  providerFromTemplate: 'pure function over a template row',
+  BUILT_IN_PROVIDERS: 'constant',
+  QUERY_PLACEHOLDER: 'constant',
+  // briefs (#60): pure scoring, the empty memory port, and the system sweep
+  computeReadiness: 'pure',
+  emptyMemoryProvider: 'constant: the default memory port returns nothing',
+  // brief memory and recognition-based matching (#74): every read goes through memoryFor / recordUsage
+  // (memoryDenies above); the cross-tenant brief case is briefs/__tests__/memory-wiring.test.ts
+  createBriefMemoryProvider:
+    'factory: every method reads through memoryFor and cites through recordUsage, both tenant-checked (memoryDenies); briefs/__tests__/memory-wiring.test.ts shows workspace B sees none of A',
+  applyBriefFormat: 'pure',
+  ALIAS_BOOST: 'constant',
+  ALIAS_PENALTY: 'constant',
+  CONFIDENT_MARGIN: 'constant',
+  needsConfirmation: 'pure',
+  rankCandidates: 'pure',
+  recognitionHints:
+    'reads only through memoryFor (memoryDenies): the actor workspace and own aliases',
+  rankWithMemory: 'reads through memoryFor and cites through recordUsage (memoryDenies)',
+  learnFromCorrection: 'delegates to proposeFromCorrection (memoryDenies)',
+  correctionRate: 'pure',
+  matchingWeeks:
+    'aggregate counts filtered by the caller workspace_id inside the scoped transaction of tenureMetrics (memory/review.ts)',
+  onCourtDayListChanged:
+    "trigger consumer: lists the changed list's listings inside the event's own workspace scope and enqueues a refresh each; covered by briefs/__tests__/state.test.ts",
+  refreshBriefTargets:
+    'system job body: no workspace; lists targets only through the owner-defined app_brief_refresh_targets and refreshes each in its own workspace scope; covered by briefs/__tests__/state.test.ts',
+  // delegation (#63): the offboarding provider runs only inside removeMember's workspace scope, and
+  // the registrar is a no-op wiring call; both covered by delegation/__tests__/assign.test.ts
+  appearanceReassignProvider:
+    "offboarding provider: runs on removeMember's workspace-scoped transaction; covered by delegation/__tests__/assign.test.ts",
+  registerAppearanceReassignProvider: 'wiring: registers the provider once, touches no data',
   // whatsapp-link (#678): constants
   WHATSAPP_OTP_TTL_MS: 'constant',
   WHATSAPP_OTP_RESEND_COOLDOWN_MS: 'constant',
@@ -971,6 +1339,15 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global tables `forum` (system catalogue rows only, `global_read`), `source`, `fetch_log` and `notice` (GLOBAL_TABLES, no RLS): ids, levels, counts and times, never tenant data',
   staffCoverageInputs:
     'app_staff_watch_demand() returns per-source counts only and runs only for an enabled staff_user (covered in packages/db/src/__tests__/staff-console-schema.test.ts)',
+  // citation checker (#77)
+  reportFromRows: 'pure (maps rows the caller already read to a report)',
+  assertCitationsClear: 'pure (throws on a gate value the caller computed)',
+  exportBlockedByCitations:
+    "reads authority rows inside the caller's workspace scope; reached only through exportDraft and runDraftingExport, which are covered",
+  // fact-check (#914)
+  assertFactCheckClear: 'pure (throws on a gate value the caller computed)',
+  exportBlockedByFactCheck:
+    "reads draft_fact_ack rows inside the caller's workspace scope; reached only through exportDraft and runDraftingExport, which are covered",
   // automation: pure helpers, constants and error classes (#47)
   decideLevel: 'pure (reads only the draft and the context it is given)',
   needsYouReason: 'pure',
@@ -1014,6 +1391,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   slugify: 'pure',
   SLUG_REDIRECT_DAYS: 'constant',
   INVITATION_TTL_MS: 'constant',
+  UNLINKED_AFTER_MS: 'constant',
   INVITE_RATE_LIMIT: 'constant',
   ACCEPT_RATE_LIMIT: 'constant',
   generateInvitationToken: 'pure (random bytes)',
@@ -1132,6 +1510,16 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   planBoardAlert: 'pure (decides the one alert a listed item earns from a board row)',
   pollBoards:
     'system job body: no workspace; reads halls only through the owner-defined app_board_poll_targets, writes the global content-free board_observation and notifies each matter owner in their own workspace scope; covered by court-day/board.test.ts',
+  detectClashes: 'pure (groups already-loaded items by date and member)',
+  diffLists: 'pure',
+  addDays: 'pure (calendar date arithmetic)',
+  buildEveningBrief: 'pure (counts over an already-loaded court day, which getCourtDay scopes)',
+  buildMorningDiff: 'pure (sums already-computed list diffs)',
+  eveningPushPayload: 'pure (drops the matter names from an evening brief)',
+  findMissingOutcomes: 'pure (filters hearings already read under the workspace scope)',
+  LOW_READINESS_BELOW: 'constant',
+  OUTCOME_FALLBACK_TIME: 'constant',
+  hashRows: 'pure',
   itemNumber: 'pure',
   paceSamples: 'pure',
   estimateCallWindow: 'pure',
@@ -1146,6 +1534,48 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'system job body: no workspace; fetches only cleared global notice sources and writes the global notice table (GLOBAL_TABLES, no tenant data); covered by notices.test.ts',
   NOTICES_POLL_CRON: 'constant',
   NOTICES_LIST_LIMIT: 'constant',
+  // status (#769): the public status snapshot; platform tables and public text only, no tenant data
+  COMPONENT_IDS: 'constant',
+  COMPONENT_STATES: 'constant',
+  INCIDENT_STATES: 'constant',
+  componentState: 'zod schema',
+  componentStatusSchema: 'zod schema',
+  incidentSchema: 'zod schema',
+  incidentUpdateSchema: 'zod schema',
+  statusSnapshotSchema: 'zod schema',
+  unsignedSnapshotSchema: 'zod schema',
+  COURT_COMPONENT_NAME: 'constant',
+  DEGRADED_SHARE: 'constant',
+  DOWN_FAILED_SHARE: 'constant',
+  INCIDENT_WINDOW_DAYS: 'constant',
+  MIN_RUNS_FOR_STATUS: 'constant',
+  REPUBLISH_AFTER_SEC: 'constant',
+  STALE_AFTER_SEC: 'constant',
+  STATUS_OBJECT_PATH: 'constant',
+  STATUS_PUBLISH_CRON: 'constant',
+  adapterState: 'pure',
+  worstState: 'pure',
+  courtState: 'pure',
+  canonicalStatusJson: 'pure',
+  signSnapshot: 'pure (HMAC over a supplied snapshot)',
+  verifySnapshot: 'pure',
+  isStale: 'pure',
+  sanitiseIncident: 'pure (allowlist projection of a supplied row)',
+  buildSnapshot:
+    'system code: reads only the platform incident tables (GLOBAL_TABLES) and the content-free adapter_health_summary view; no workspace, no tenant data',
+  publishStatus: 'system job body: see buildSnapshot; writes only the public status object',
+  runStatusPublish: 'system job body: see publishStatus',
+  statusPublish: 'job definition (handler is runStatusPublish)',
+  // status incidents (#770): staff-only writes to the platform incident tables (GLOBAL_TABLES), public text only
+  INCIDENT_SEVERITIES: 'constant',
+  INCIDENT_TEMPLATES: 'constant',
+  IncidentAdminError: 'error class',
+  asIncidentStaff: 'pure (builds the actor; createIncident checks staff_user in the transaction)',
+  createIncident:
+    'staff-only write to the platform incident tables (GLOBAL_TABLES, no tenant data); covered by status/incidents.test.ts',
+  addIncidentUpdate:
+    'staff-only write to the platform incident tables (GLOBAL_TABLES, no tenant data); covered by status/incidents.test.ts',
+  listIncidents: 'reads only the platform incident tables (GLOBAL_TABLES, no tenant data)',
   noticesPoll: 'job definition (handler is runNoticesPoll)',
   runNoticesPoll: 'system job body: see pollNotices',
   setNoticeFetcherFactory: 'wiring setter for the governed fetcher: no database access',
@@ -1392,6 +1822,18 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   MEMORY_ERASE_PRIORITY: 'constant',
   MEMORY_ERASURE_SLA_MS: 'constant',
   MEMORY_TABLES: 'constant',
+  // memory (#72): pure rules, constants and the in-process embedder
+  canReadMemory: 'pure',
+  canWriteMemory: 'pure',
+  memoryCitation: 'pure',
+  localMemoryEmbedder: 'pure, in-process hashing embedder',
+  MEMORY_CLERK_LAYERS: 'constant',
+  MEMORY_STALE_AFTER_DAYS: 'constant',
+  MEMORY_REVIEW_AFTER_DAYS: 'constant',
+  purgeMemoryTargets:
+    'system job target list: workspace ids only, through an owner-defined function',
+  reviewMemoryTargets:
+    'system job target list: workspace ids only, through an owner-defined function',
 };
 
 const notificationDenies = { test: NOTIFICATIONS_SERVICES_TEST, kind: 'denies' } as const;
@@ -1417,6 +1859,9 @@ export const NOTIFICATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> 
   // End-of-day digest preference (#49)
   getEndOfDayPreference: notificationDenies,
   setEndOfDayPreference: notificationDenies,
+  // Court-day reminder preferences (#64)
+  getReminderPreferences: notificationDenies,
+  setReminderPreferences: notificationDenies,
 };
 
 /** Every other runtime export of `@causedeck/notifications`, with why it needs no test. */

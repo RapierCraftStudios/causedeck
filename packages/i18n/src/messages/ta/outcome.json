@@ -1,0 +1,108 @@
+{
+  "outcome": {
+    "metaTitle": "விசாரணை முடிவு",
+    "title": "விசாரணை முடிவு",
+    "heldOn": "Held on {date}",
+    "processing": "Processing your note",
+    "processingHint": "The proposal appears here when your note is ready. You can enter the outcome yourself now.",
+    "needsYou": "Needs you",
+    "needsYouHint": "Some details were not found in your note or the order. They are left blank for you to fill in.",
+    "emptyHint": "No voice note or proposal for this hearing. Type the outcome and confirm.",
+    "confirmedHint": "This outcome is already confirmed.",
+    "denied": {
+      "title": "You cannot confirm outcomes",
+      "body": "Ask the matter owner or an admin to confirm this outcome."
+    },
+    "error": {
+      "title": "Couldn't load this outcome",
+      "retry": "Retry"
+    },
+    "loading": "Loading the hearing outcome",
+    "offline": {
+      "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
+      "queued": "Saved on this device. It will be applied when you are back online.",
+      "conflict": {
+        "title": "The next date changed while you were offline",
+        "server": "On file now",
+        "none": "No date",
+        "mine": "Your offline date",
+        "keepServer": "Keep the date on file",
+        "useMine": "Propose my date"
+      }
+    },
+    "summary": {
+      "label": "What happened",
+      "placeholder": "Type what happened at the hearing"
+    },
+    "adjournmentReason": "Adjournment reason",
+    "stageAfter": "Stage after",
+    "nextDate": {
+      "legend": "Next date",
+      "useProposed": "Confirm {date}",
+      "typed": "Enter a date",
+      "typedHint": "dd/mm/yyyy",
+      "typedInvalid": "Enter a real date as dd/mm/yyyy.",
+      "none": "No next date / disposed",
+      "deferred": "To be notified",
+      "required": "Choose the next date, or mark it none or to be notified.",
+      "unanchored": "This date is not in the voice note or the order. Enter it yourself to confirm it."
+    },
+    "conflict": {
+      "title": "The next date differs from the one on file",
+      "current": "On file",
+      "proposed": "Proposed",
+      "keepCurrent": "Keep this date",
+      "useProposed": "Use this date",
+      "required": "Pick which date to keep."
+    },
+    "obligations": {
+      "title": "Directions from the order",
+      "empty": "No directions were found.",
+      "confirm": "Confirm",
+      "edit": "Edit",
+      "dismiss": "Dismiss",
+      "dismissReason": "Reason",
+      "notApplicable": "Not applicable",
+      "description": "Description",
+      "dueDate": "Due date",
+      "owner": "Owner",
+      "confirmed": "Will be created",
+      "dismissed": "Dismissed",
+      "undecided": "Undecided. Nothing is created until you confirm it.",
+      "save": "Done"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "empty": "No tasks were proposed."
+    },
+    "transcript": {
+      "open": "Transcript",
+      "title": "Transcript",
+      "empty": "No transcript for this hearing.",
+      "language": "Original language: {language}",
+      "languages": {
+        "en": "English",
+        "ta": "Tamil",
+        "kn": "Kannada"
+      }
+    },
+    "source": {
+      "voice": "Voice note",
+      "order": "Order",
+      "manual": "Typed by you"
+    },
+    "confirm": "Confirm outcome",
+    "saveManual": "Confirm outcome",
+    "shortcut": "Ctrl Enter",
+    "blocked": {
+      "nextDate": "Choose the next date, or mark it none or to be notified.",
+      "summary": "Type what happened.",
+      "conflict": "Pick which date to keep.",
+      "obligation": "Decide each direction: confirm, edit or dismiss with a reason."
+    },
+    "done": "Outcome confirmed",
+    "failed": "Couldn't confirm the outcome. Try again.",
+    "forbidden": "You can't confirm this outcome.",
+    "delegated": "The matter owner is notified."
+  }
+}

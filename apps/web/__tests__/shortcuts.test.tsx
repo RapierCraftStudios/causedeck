@@ -15,6 +15,7 @@ import {
   NAV_CHORDS,
   SHORTCUTS,
   createShortcutDispatcher,
+  findDuplicateShortcuts,
   visibleShortcuts,
   type ShortcutDefinition,
 } from '../lib/shortcuts/registry.ts';
@@ -255,6 +256,31 @@ describe('shortcuts in the app shell', () => {
     expect(captureOpen()).toBe('true');
   });
 
+  it('lets a page hotkey that claims a key win, but g chords still reach the shell', () => {
+    renderShell();
+    const claimed: string[] = [];
+    const claim = (event: KeyboardEvent) => {
+      claimed.push(event.key);
+      event.preventDefault();
+    };
+    document.addEventListener('keydown', claim);
+    press({ key: 'c' });
+    expect(claimed).toEqual(['c']);
+    expect(captureOpen()).toBe('false');
+    for (const [second, href] of [
+      ['o', '/w/demo/obligations'],
+      ['c', '/w/demo/courts'],
+    ] as const) {
+      claimed.length = 0;
+      push.mockReset();
+      press({ key: 'g' });
+      press({ key: second });
+      expect(push).toHaveBeenCalledWith(href);
+      expect(claimed).toEqual(['g']);
+    }
+    document.removeEventListener('keydown', claim);
+  });
+
   it('mod+k opens the palette (bound once, so it stays open)', async () => {
     renderShell();
     press({ key: 'k', ctrlKey: true });
@@ -278,33 +304,28 @@ describe('shortcuts in the app shell', () => {
     expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Search matters' }));
   });
 
-  it('? opens a dialog listing every shortcut grouped by area', async () => {
+  it('? opens the help sheet on a labelled table of every shortcut grouped by area', async () => {
     renderShell();
     press({ key: '?', shiftKey: true });
-    const dialog = await screen.findByRole('dialog', { name: 'Keyboard shortcuts' });
-    const groups = [...dialog.querySelectorAll('[data-slot="shortcuts-group"]')].map((group) =>
-      group.getAttribute('aria-label'),
-    );
-    expect(groups).toEqual(['Navigation', 'Actions', 'Help']);
-    const navigation = within(dialog.querySelector('[aria-label="Navigation"]') as HTMLElement);
-    expect(navigation.getByText('Go to Today')).toBeTruthy();
-    expect(navigation.getByText('Go to Settings')).toBeTruthy();
-    // The shell registers `New matter` (`n`, matters list) with the palette: one page row on top.
-    expect(dialog.querySelectorAll('[data-slot="shortcut"]')).toHaveLength(SHORTCUTS.length + 1);
-    const actions = within(dialog.querySelector('[aria-label="Actions"]') as HTMLElement);
-    expect(actions.getByText('New matter')).toBeTruthy();
-    expect(within(dialog).getByText('Open command palette')).toBeTruthy();
-    expect(within(dialog).getByText('Search this page')).toBeTruthy();
-    expect(within(dialog).getByText('G then T')).toBeTruthy();
+    const dialog = await screen.findByRole('dialog', { name: 'Help' });
+    const table = within(dialog).getByRole('table');
+    expect(table.getAttribute('aria-label')).toBeTruthy();
+    const view = within(table);
+    expect(view.getByText('Go to Today')).toBeTruthy();
+    expect(view.getByText('Go to Settings')).toBeTruthy();
+    expect(view.getByText('New matter')).toBeTruthy();
+    expect(view.getByText('Open command palette')).toBeTruthy();
+    expect(view.getByText('Search this page')).toBeTruthy();
+    expect(view.getByText('g then t')).toBeTruthy();
+    // The shell registers `New matter` with the palette: one page row on top of the registry.
+    expect(table.querySelectorAll('tbody tr')).toHaveLength(SHORTCUTS.length + 1);
   });
 
   it('leaves New matter out of the dialog for a viewer, who cannot write matters', async () => {
     renderShell({ ...owner, role: 'viewer' });
     press({ key: '?', shiftKey: true });
-    const dialog = await screen.findByRole('dialog', { name: 'Keyboard shortcuts' });
-    expect(dialog.querySelectorAll('[data-slot="shortcut"]').length).toBeLessThanOrEqual(
-      SHORTCUTS.length,
-    );
+    const dialog = await screen.findByRole('dialog', { name: 'Help' });
+    expect(dialog.querySelectorAll('tbody tr').length).toBeLessThanOrEqual(SHORTCUTS.length);
     expect(within(dialog).queryByText('New matter')).toBeNull();
   });
 
@@ -314,7 +335,7 @@ describe('shortcuts in the app shell', () => {
     press({ key: 's' });
     expect(push).not.toHaveBeenCalled();
     press({ key: '?', shiftKey: true });
-    const dialog = await screen.findByRole('dialog', { name: 'Keyboard shortcuts' });
+    const dialog = await screen.findByRole('dialog', { name: 'Help' });
     expect(within(dialog).queryByText('Go to Settings')).toBeNull();
   });
 
@@ -333,7 +354,33 @@ describe('shortcuts in the app shell', () => {
     await screen.findByRole('dialog', { name: 'Command palette' });
     fireEvent.click(screen.getByRole('option', { name: /Keyboard shortcuts/ }));
     await waitFor(() => {
-      expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeTruthy();
+      expect(screen.getByRole('dialog', { name: 'Help' })).toBeTruthy();
     });
+  });
+});
+
+describe('shortcut conflicts (#94)', () => {
+  const sample = (id: string, keys: string, scope?: string): ShortcutDefinition => ({
+    id,
+    keys,
+    group: 'actions',
+    labelKey: 'x',
+    ...(scope === undefined ? {} : { scope }),
+  });
+
+  it('the registry has no duplicate key in the same scope', () => {
+    expect(findDuplicateShortcuts(SHORTCUTS)).toEqual([]);
+  });
+
+  it('reports a duplicate key in one scope and allows it across scopes', () => {
+    expect(findDuplicateShortcuts([sample('a', 'x'), sample('b', 'X')])).toEqual([
+      { scope: 'global', keys: 'x', ids: ['a', 'b'] },
+    ]);
+    expect(
+      findDuplicateShortcuts([sample('a', 'x', 'inbox'), sample('b', 'x', 'matters')]),
+    ).toEqual([]);
+    expect(
+      findDuplicateShortcuts([sample('a', 'g then t'), sample('b', 'g  then t')]),
+    ).toHaveLength(1);
   });
 });

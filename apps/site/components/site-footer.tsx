@@ -5,8 +5,24 @@ import { POSITIONING_LINE } from '../content/landing.ts';
 
 const COLUMNS = [
   { heading: 'Product', links: [{ href: '/', label: 'Overview' }] },
-  { heading: 'Trust', links: [{ href: '/about/', label: 'About' }] },
-  { heading: 'Legal', links: [{ href: '/legal/draft-notice/', label: 'Legal drafts' }] },
+  {
+    heading: 'Trust',
+    links: [
+      { href: '/about/', label: 'About' },
+      { href: '/status/', label: 'Status' },
+    ],
+  },
+  {
+    heading: 'Legal',
+    links: [
+      { href: '/legal/', label: 'Legal' },
+      { href: '/legal/terms/', label: 'Terms of Service' },
+      { href: '/legal/privacy/', label: 'Privacy Policy' },
+      { href: '/legal/dpa/', label: 'Data Processing Agreement' },
+      { href: '/legal/ai-disclosure/', label: 'AI Disclosure' },
+      { href: '/legal/sub-processors/', label: 'Sub-processors' },
+    ],
+  },
 ];
 
 export function SiteFooter() {

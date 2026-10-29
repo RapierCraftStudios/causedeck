@@ -7,15 +7,12 @@ import { PROPOSAL_KINDS, type ProposalKind } from '@causedeck/validators/proposa
 import type { ProposalHandler } from '../types.ts';
 
 import { documentAttachHandler } from './document-attach.ts';
-import {
-  feeEntryHandler,
-  hearingOutcomeHandler,
-  memoryItemHandler,
-  outwardDraftHandler,
-} from './disabled.ts';
+import { hearingOutcomeHandler, outwardDraftHandler } from './disabled.ts';
+import { feeEntryHandler } from './fee-entry.ts';
 import { caseStatusChangeHandler } from './case-status-change.ts';
 import { duplicateMergeHandler } from './duplicate-merge.ts';
 import { listingUpdateHandler } from './listing-update.ts';
+import { memoryItemHandler } from './memory-item.ts';
 import { newMatterHandler } from './new-matter.ts';
 import { newProceedingHandler } from './new-proceeding.ts';
 import { nextDateHandler } from './next-date.ts';

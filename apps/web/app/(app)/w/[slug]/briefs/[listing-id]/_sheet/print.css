@@ -1,0 +1,76 @@
+/* The Brief Sheet's print stylesheet (#61, ADR 0041): the single source of layout truth for the
+   printout and the saved PDF. A4 with 14 mm margins, ink on white in both themes, chips as short
+   footnote text, nothing split across pages, private court notes hidden unless opted in. */
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    color-scheme: light;
+  }
+
+  /* Only the sheet prints: the shell, rails, bars and banners are hidden, the sheet is lifted out. */
+  body * {
+    visibility: hidden;
+  }
+
+  [data-brief-sheet] article,
+  [data-brief-sheet] article * {
+    visibility: visible;
+  }
+
+  [data-brief-sheet] > *:not(article),
+  [data-slot='provenance-chip'],
+  [data-slot='shortcuts-dialog'] {
+    display: none !important;
+  }
+
+  [data-brief-sheet] article {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    box-shadow: none !important;
+    color: #000 !important;
+    background: #fff !important;
+    overflow: visible !important;
+  }
+
+  [data-brief-sheet] article * {
+    color: #000 !important;
+    background: transparent !important;
+    overflow-wrap: anywhere;
+  }
+
+  [data-statement],
+  [data-obligation],
+  [data-carry-item],
+  blockquote,
+  li,
+  section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  [data-section] h2 {
+    break-after: avoid;
+  }
+
+  [data-brief-sheet][data-print-notes='off'] [data-section='court_notes'] {
+    display: none !important;
+  }
+
+  [data-slot='provenance-footnote'] {
+    display: inline !important;
+    font-size: 0.85em;
+  }
+
+  :lang(ta),
+  :lang(kn) {
+    line-height: 1.7;
+  }
+}

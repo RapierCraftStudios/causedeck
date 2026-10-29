@@ -273,14 +273,41 @@ describe('handler round trips restore the graph', () => {
 });
 
 describe('kinds that are registered but not enabled', () => {
-  it.each(['memory_item', 'fee_entry', 'outward_draft', 'hearing_outcome'] as const)(
-    '%s throws KindNotEnabled',
-    (kind) => {
-      const handler = HANDLERS[kind];
-      expect(handler.enabled).toBe(false);
-      expect(() => handler.validate({})).toThrow(KindNotEnabled);
-    },
-  );
+  it.each(['outward_draft', 'hearing_outcome'] as const)('%s throws KindNotEnabled', (kind) => {
+    const handler = HANDLERS[kind];
+    expect(handler.enabled).toBe(false);
+    expect(() => handler.validate({})).toThrow(KindNotEnabled);
+  });
+});
+
+describe('fee_entry (#83)', () => {
+  it('is enabled and validates a fee agreement payload', () => {
+    const handler = HANDLERS['fee_entry'];
+    expect(handler.enabled).toBe(true);
+    expect(() => handler.validate({})).toThrow();
+    expect(
+      handler.validate({
+        matterId: '11111111-1111-4111-8111-111111111111',
+        personId: '22222222-2222-4222-8222-222222222222',
+        basis: 'fixed',
+        amountPaise: 100,
+        gstTreatment: 'forward_charge',
+        startsOn: '2026-11-01',
+      }),
+    ).toMatchObject({ basis: 'fixed' });
+  });
+});
+
+describe('memory_item (#72)', () => {
+  it('is enabled, validates a memory proposal and rejects a judge or an unregistered key', () => {
+    const handler = HANDLERS['memory_item'];
+    expect(handler.enabled).toBe(true);
+    expect(
+      handler.validate({ key: 'M2.always_carry', value: 'vakalat copy', scope: 'user' }),
+    ).toMatchObject({ key: 'M2.always_carry', scope: 'user' });
+    expect(() => handler.validate({ key: 'M2.judge_habit', value: 'x', scope: 'user' })).toThrow();
+    expect(() => handler.validate({})).toThrow();
+  });
 });
 
 describe('the registry', () => {

@@ -81,24 +81,46 @@ describe('namespaced catalogs (#174)', () => {
     expect(JSON.parse(generated['src/generated/messages/kn.json'] ?? '')).toEqual(kn);
   });
 
+  it('registers the offline namespace with the offline page keys and a ta/kn leaf for every en leaf (#742)', () => {
+    expect(NAMESPACES).toContain('offline');
+    const offlineLeaves = flattenKeys({ offline: en.offline });
+    expect(offlineLeaves).toContain('offline.title');
+    expect(offlineLeaves).toContain('offline.privacy.lostPhone');
+    for (const catalog of [ta, kn]) {
+      expect(flattenKeys({ offline: catalog.offline }).sort()).toEqual([...offlineLeaves].sort());
+    }
+  });
+
   it('keeps the top-level keys app call sites use', () => {
     expect(Object.keys(en).sort()).toEqual(
       [
         'activity',
+        'attention',
         'audit',
         'auth',
         'billing',
         'bootstrapImport',
+        'brief',
         'calendar',
+        'calendarView',
         'camera',
         'caseWatch',
         'common',
+        'continuity',
         'courtDay',
+        'drafting',
+        'draftingTemplates',
+        'delegation',
         'courtInsights',
         'courts',
         'courtsRosters',
         'emailIntake',
+        'enquiry',
+        'limitation',
+        'insights',
+        'fees',
         'error',
+        'help',
         'home',
         'importReview',
         'inbox',
@@ -108,27 +130,82 @@ describe('namespaced catalogs (#174)', () => {
         'matterTimeline',
         'matters',
         'members',
+        'memory',
+        'memoryCitations',
+        'memoryM5',
         'nav',
         'notFound',
         'notices',
         'notifications',
+        'obligations',
         'offline',
         'onboardingDiscovery',
+        'outward',
+        'outcome',
         'palette',
+        'people',
         'portfolio',
+        'pov',
         'provisioning',
         'pwa',
+        'reminders',
         'settings',
+        'share',
         'shell',
         'shortcuts',
+        'status',
+        'statusLink',
         'theme',
         'usage',
         'voice',
         'whatsappImport',
         'whatsappLink',
+        'research',
+        'settingsResearch',
         'workspace',
       ].sort(),
     );
+  });
+});
+
+describe('drafting studio copy (#825)', () => {
+  it('has the drafting namespace in every locale with citation statuses and the acknowledgement', () => {
+    for (const catalog of [en, ta, kn]) {
+      expect(catalog.drafting.panels.citations.status.verified).not.toBe('');
+      expect(catalog.drafting.panels.citations.status.notFound).not.toBe('');
+      expect(catalog.drafting.panels.citations.status.unknown).not.toBe('');
+      const factCheck = catalog.drafting.factCheck;
+      for (const text of [
+        ...Object.values(factCheck.status),
+        ...Object.values(factCheck.actions),
+        factCheck.source,
+        factCheck.noSource,
+        factCheck.page,
+        factCheck.openPage,
+        factCheck.announce,
+        factCheck.noIssues,
+        ...Object.values(factCheck.panel.group),
+        factCheck.panel.title,
+        factCheck.panel.tab,
+        factCheck.panel.badge,
+        factCheck.panel.empty,
+        factCheck.panel.undo,
+      ]) {
+        expect(text).not.toBe('');
+      }
+      expect(catalog.drafting.acknowledgement.statement).not.toBe('');
+    }
+  });
+});
+
+describe('share namespace (#507)', () => {
+  it.each(LOCALES)('%s has the share page and import strings', (locale) => {
+    const catalog = { en, ta, kn }[locale] as { share?: { states?: Record<string, string> } };
+    expect(Object.keys(catalog.share?.states ?? {}).sort()).toEqual([
+      'expired',
+      'invalid',
+      'revoked',
+    ]);
   });
 });
 
@@ -187,6 +264,107 @@ describe('whatsapp link copy (#681)', () => {
       expect(catalog.whatsappLink.consent).not.toBe('');
       expect(catalog.whatsappLink.unlink).not.toBe('');
       expect(catalog.whatsappLink.linked).toContain('{number}');
+    }
+  });
+});
+
+describe('help copy (#94)', () => {
+  it('has the help namespace in every locale with the footer and contact strings', () => {
+    for (const catalog of [en, ta, kn]) {
+      expect(catalog.help.footer).not.toBe('');
+      expect(catalog.help.contact.whatsapp).toContain('{number}');
+      expect(catalog.help.contact.email).toContain('{email}');
+    }
+    expect(en.help.footer).toBe('This is software documentation, not legal advice.');
+  });
+});
+
+describe('people namespace (#848)', () => {
+  it('is registered with en complete and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('people');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('people.'));
+    expect(leaves).toContain('people.list.linked');
+    expect(leaves).toContain('people.detail.log.title');
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+    }
+  });
+
+  it('has a label for every contact kind and language preference', () => {
+    expect(Object.keys(en.people.kinds).sort()).toEqual(
+      ['accounts', 'family', 'instructing', 'primary'].sort(),
+    );
+    expect(Object.keys(en.people.languages).sort()).toEqual(
+      ['en', 'hi', 'kn', 'ml', 'mr', 'ta', 'te'].sort(),
+    );
+  });
+});
+
+describe('limitation namespace (#941)', () => {
+  it('is registered with en complete, the verify label and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('limitation');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('limitation.'));
+    expect(leaves).toContain('limitation.verifyLabel');
+    expect(getPath(en, 'limitation.verifyLabel')).toBe(
+      "Computed from your counsel's rule table. Verify before relying on it.",
+    );
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+    }
+  });
+});
+
+describe('insights namespace (#85)', () => {
+  it('is registered with en complete, the empty-state copy and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('insights');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('insights.'));
+    expect(leaves).toContain('insights.empty.title');
+    expect(getPath(en, 'insights.empty.title')).toBe(
+      'Insights appear after your first few court days',
+    );
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) {
+        expect(getPath(catalog, id), id).toBeTruthy();
+        expect(getPath(catalog, id), id).not.toBe(getPath(en, id));
+      }
+    }
+  });
+});
+
+describe('fees namespace (#871)', () => {
+  it('is registered with en complete, the review wording and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('fees');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('fees.'));
+    expect(leaves).toContain('fees.gatedNotice');
+    expect(getPath(en, 'fees.gatedNotice')).toBe(
+      'Prepared for you to review and send yourself. Nothing is sent, charged or transferred from here.',
+    );
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+    }
+  });
+});
+
+describe('enquiry namespace (#874)', () => {
+  it('is registered with en complete and a ta/kn leaf for every en leaf', () => {
+    expect(NAMESPACES).toContain('enquiry');
+    const leaves = flattenKeys(en).filter((id) => id.startsWith('enquiry.'));
+    expect(leaves).toContain('enquiry.conflict.warning');
+    expect(leaves).toContain('enquiry.form.title');
+    expect(getPath(en, 'nav.enquiries')).toBeTruthy();
+    for (const catalog of [ta, kn]) {
+      for (const id of leaves) expect(getPath(catalog, id), id).toBeTruthy();
+      expect(getPath(catalog, 'nav.enquiries')).toBeTruthy();
+    }
+  });
+});
+
+describe('research copy (#80)', () => {
+  it('has the research namespaces in every locale with the link-out hint', () => {
+    for (const catalog of [en, kn, ta]) {
+      expect(catalog.research.linkOut.hint).not.toBe('');
+      expect(catalog.research.notes.denied).not.toBe('');
+      expect(catalog.settingsResearch.templateHint).toContain('{q}');
     }
   });
 });

@@ -36,7 +36,11 @@ export default async function CourtInsightsPage({ params, searchParams }: Insigh
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   const context = await getWorkspaceContext(slug);
   if (!context) notFound();
-  if (!can(context.role, 'insights.read')) return <PermissionDeniedPage />;
+  // `insights.read` also admits a junior to their own practice report (#85); the workspace-wide court
+  // analytics stay with owners and advocates.
+  if (!can(context.role, 'insights.read') || context.role === 'junior') {
+    return <PermissionDeniedPage />;
+  }
 
   const today = new Date().toISOString().slice(0, 10);
   const fiveYearsAgo = `${String(Number(today.slice(0, 4)) - 5)}${today.slice(4)}`;

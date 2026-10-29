@@ -68,16 +68,12 @@ describe('matter tab registry (#390)', () => {
   it('registers Overview, Proceedings, Timeline, People and Documents from the manifest, idempotently, for every role that reads matters', () => {
     registerMatterTabs();
     registerMatterTabs();
-    for (const role of ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const) {
-      expect(ids(role)).toEqual([
-        'overview',
-        'proceedings',
-        'timeline',
-        'people',
-        'documents',
-        'research',
-      ]);
+    const base = ['overview', 'proceedings', 'timeline', 'people', 'documents', 'research'];
+    for (const role of ['owner', 'advocate', 'junior'] as const) {
+      expect(ids(role)).toEqual([...base, 'memory']);
     }
+    // Memory (#73) needs `memory.read`: junior and above.
+    for (const role of ['clerk', 'viewer'] as const) expect(ids(role)).toEqual(base);
     expect(matterTabs('viewer')[0]).toMatchObject({ labelKey: 'overview', segment: '' });
     expect(matterTabs('viewer')[1]).toMatchObject({
       labelKey: 'proceedings',

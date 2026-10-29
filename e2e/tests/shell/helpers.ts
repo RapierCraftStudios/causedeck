@@ -15,20 +15,18 @@ export const CLERK_WORKSPACE = 'bengaluru-chamber';
  * the flag-gated `invoices` and `limitation`, and `billing` and `activity`, real pages since #256
  * and #232 with their own specs in tests/billing and tests/activity, and `courts`, a real page since
  * #399 with its own states in tests/courts, #425, and `inbox`, a real page since #48 with its own
- * specs in tests/inbox). `settings` redirects to its profile section since
+ * specs in tests/inbox, and `drafts`, a real page since #736 with its own specs in
+ * tests/product/outward-drafts). `settings` redirects to its profile section since
  * #284 (tests/settings).
  */
 export const PLACEHOLDER_ROUTES = [
-  'today',
-  'tomorrow',
-  'calendar',
-  // `matters` is a real page since #388 (its own states are covered in tests/matters).
+  // `today` and `tomorrow` are the Court-Day Board (#59) and `calendar` is real (#66): their
+  // states are covered in tests/product/court-day-board.spec.ts and tests/calendar.
+  // `matters` is a real page since #388 (its own states are covered in tests/matters), and so are
+  // `obligations` (#68, tests/obligations) and `memory` (#73, tests/memory).
   'briefs',
-  'obligations',
-  'drafts',
-  'memory',
-  'people',
-  'insights',
+  // `people` is a real page since #848 (its own specs are in tests/people), and `insights` since
+  // #85 (its own specs are in tests/product/insights.spec.ts).
 ] as const;
 
 export type PlaceholderRoute = (typeof PLACEHOLDER_ROUTES)[number];

@@ -1,0 +1,32 @@
+---
+title: AI Disclosure
+description: How CauseDeck uses AI. India-only by default, the lawyer confirms every proposal, and no training on customer content.
+date: 2026-10-25
+status: draft
+version: 0.0-draft
+history:
+  - date: 2026-10-25
+    summary: Placeholder structure published as a draft; legal text pending counsel (#117).
+---
+
+CauseDeck is software for advocates, not legal services.
+
+## What the software does
+
+- India-only mode is on by default. Requests to AI providers stay in India.
+- AI proposes and the lawyer confirms. Nothing is sent, filed or committed without the lawyer's
+  confirmation.
+- AI outputs may be wrong. Check every output before relying on it.
+- Customer content is not used to train models.
+- Citations are never generated. A citation shown in the product comes from the lawyer or from a
+  source the software can link to.
+
+## Models used, by provider
+
+| Provider                                               | Models and use                                     |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| Amazon Web Services (Bedrock, India inference profile) | Claude models for drafts and summaries.            |
+| Sarvam                                                 | Speech-to-text, OCR and Indic-language processing. |
+
+TODO(counsel): review of this wording. The [sub-processor list](/legal/sub-processors/) names each
+provider's region.

@@ -53,3 +53,69 @@ body {
     transition: none;
   }
 }
+
+/* Landing page (#90). Motion is decoration: nothing here hides content, and prefers-reduced-motion
+ * removes every animation below. */
+.cd-snap-strip {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+.cd-snap-item {
+  scroll-snap-align: start;
+}
+@media (min-width: 768px) {
+  .cd-snap-strip {
+    overflow: visible;
+  }
+}
+
+/* One cycle when the board comes into view: the listing that changed overnight settles. */
+@media (prefers-reduced-motion: no-preference) {
+  .cd-changed {
+    animation: cd-changed 900ms ease-out 600ms 1 both;
+  }
+  @keyframes cd-changed {
+    from {
+      background-color: var(--warning-soft);
+      transform: translateY(-4px);
+    }
+    to {
+      background-color: var(--surface);
+      transform: none;
+    }
+  }
+
+  /* Slow parallax between the board and the brief sheet behind it, and a soft reveal per section.
+   * Only where scroll-driven animations exist; start values stay mostly opaque. */
+  @supports (animation-timeline: view()) {
+    .cd-board-brief {
+      animation: cd-parallax linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+    .cd-reveal {
+      animation: cd-reveal 250ms ease-out both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 30%;
+    }
+  }
+  @keyframes cd-parallax {
+    from {
+      transform: translateY(10px);
+    }
+    to {
+      transform: translateY(-10px);
+    }
+  }
+  @keyframes cd-reveal {
+    from {
+      opacity: 0.6;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

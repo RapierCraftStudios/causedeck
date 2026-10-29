@@ -36,6 +36,8 @@ export const siteEnvSchema = z.object({
 export interface SiteEnv {
   siteUrl: string;
   appUrl: string;
+  /** False when NEXT_PUBLIC_APP_URL was not provided and `appUrl` is only the default. */
+  appUrlConfigured: boolean;
   analyticsSrc: string | undefined;
   statusUrl: string;
   statusVerifyKey: string;
@@ -48,6 +50,7 @@ export function readSiteEnv(raw: Record<string, string | undefined>): SiteEnv {
   return {
     siteUrl: parsed.NEXT_PUBLIC_SITE_URL,
     appUrl: parsed.NEXT_PUBLIC_APP_URL,
+    appUrlConfigured: cleaned.NEXT_PUBLIC_APP_URL !== undefined,
     analyticsSrc: parsed.NEXT_PUBLIC_ANALYTICS_SRC,
     statusUrl: parsed.NEXT_PUBLIC_STATUS_URL,
     statusVerifyKey: parsed.NEXT_PUBLIC_STATUS_VERIFY_KEY,

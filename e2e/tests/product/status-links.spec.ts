@@ -15,7 +15,7 @@ const SIZES = [
 
 test.describe('status links', () => {
   for (const size of SIZES) {
-    test(`create, view and revoke at ${size.width}px`, async ({ page, asUser }) => {
+    test(`create, view and revoke at ${String(size.width)}px`, async ({ page, asUser }) => {
       await page.setViewportSize(size);
       await asUser('owner', { workspace: MATTERS_WORKSPACE, path: `matters/${MATTERS.appeal.id}` });
       await contentReady(page);

@@ -3829,6 +3829,169 @@
       "close": "Esc: close"
     }
   },
+  "fees": {
+    "metaTitle": "Fees and invoices",
+    "title": "Fees and invoices",
+    "description": "Fee agreements, invoices and what each client owes. Records only.",
+    "gatedNotice": "Prepared for you to review and send yourself. Nothing is sent, charged or transferred from here.",
+    "ledgerNotice": "The ledger is a record. It cannot start a payment, link a bank account or move money.",
+    "gstBanner": "GST treatment not yet counsel-reviewed. Rates and treatments are placeholders; only an owner can mark an invoice final, and must acknowledge this first.",
+    "loading": "Loading fees and invoices",
+    "offline": "You are offline. Fees and invoices are read-only until you are back online.",
+    "dismiss": "Close",
+    "shortcuts": {
+      "new": "n new invoice",
+      "save": "Cmd/Ctrl+S save draft",
+      "issue": "Cmd/Ctrl+Enter mark final"
+    },
+    "agreements": {
+      "title": "Fee agreements",
+      "label": "Fee agreements",
+      "empty": {
+        "title": "No fee agreements yet",
+        "body": "Record the fee terms agreed with a client for a matter. An agreement is a draft until you activate it."
+      }
+    },
+    "invoices": {
+      "title": "Invoices",
+      "label": "Invoices",
+      "new": "New invoice",
+      "open": "Open",
+      "draftNumber": "Draft",
+      "matter": "Matter {id}",
+      "empty": {
+        "title": "No invoices yet",
+        "body": "Prepare an invoice for a matter. It stays a draft until you mark it final."
+      }
+    },
+    "status": {
+      "draft": "Draft",
+      "issued": "Final",
+      "paid": "Paid",
+      "void": "Credited"
+    },
+    "agreementStatus": {
+      "draft": "Proposed",
+      "active": "Active",
+      "ended": "Ended"
+    },
+    "basis": {
+      "fixed": "Fixed fee",
+      "hourly": "Hourly",
+      "retainer": "Retainer",
+      "per_appearance": "Per appearance"
+    },
+    "gst": {
+      "forward_charge": "Forward charge",
+      "reverse_charge": "Reverse charge (RCM)",
+      "exempt": "Exempt",
+      "nil_rated": "Nil rated",
+      "out_of_scope": "Out of scope",
+      "pure_agent": "Pure agent"
+    },
+    "agreement": {
+      "amount": "Amount",
+      "starts": "Starts",
+      "ends": "Ends",
+      "matter": "Matter {id}",
+      "activate": "Activate",
+      "end": "End agreement",
+      "proposedNote": "A proposal: nothing is agreed until you activate it."
+    },
+    "agreementForm": {
+      "trigger": "New fee agreement",
+      "title": "New fee agreement",
+      "matter": "Matter ID",
+      "person": "Client ID",
+      "basis": "Basis",
+      "amount": "Amount (rupees)",
+      "gst": "GST treatment",
+      "starts": "Starts on",
+      "ends": "Ends on",
+      "notes": "Notes",
+      "submit": "Save agreement",
+      "cancel": "Cancel"
+    },
+    "editor": {
+      "titleNew": "New invoice",
+      "titleDraft": "Draft invoice",
+      "matter": "Matter ID",
+      "person": "Client ID",
+      "agreement": "Fee agreement ID",
+      "placeOfSupply": "Place of supply (state code)",
+      "recipientGstin": "Client GSTIN",
+      "dueDate": "Due date",
+      "supplierName": "Your name or chambers",
+      "supplierState": "Your state code",
+      "supplierGstin": "Your GSTIN",
+      "lines": "Lines",
+      "description": "Description",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price (rupees)",
+      "treatment": "GST treatment",
+      "addLine": "Add line",
+      "removeLine": "Remove line",
+      "preview": "Preview",
+      "save": "Save draft",
+      "issue": "Mark final",
+      "discard": "Discard draft",
+      "acknowledge": "I acknowledge the GST rates and treatments here are unreviewed placeholders.",
+      "ownerOnly": "Only an owner can mark an invoice final while GST is unreviewed.",
+      "saved": "Draft saved.",
+      "final": "This invoice is final. A correction is a credit note, not an edit."
+    },
+    "preview": {
+      "title": "Invoice preview",
+      "empty": "Press Preview to price the lines.",
+      "supplier": "From",
+      "number": "Invoice number",
+      "billTo": "Client {id}",
+      "taxable": "Taxable value",
+      "cgst": "CGST",
+      "sgst": "SGST",
+      "igst": "IGST",
+      "rcm": "Tax payable by you under reverse charge",
+      "total": "Total",
+      "line": "{quantity} x {price}"
+    },
+    "ledger": {
+      "title": "Client ledger",
+      "label": "Ledger entries",
+      "empty": {
+        "title": "No ledger entries",
+        "body": "Issuing an invoice, recording a receipt or an expense adds a line."
+      },
+      "date": "Date",
+      "kind": "Type",
+      "description": "Description",
+      "debit": "Debit",
+      "credit": "Credit",
+      "balance": "Balance",
+      "owes": "The client owes {amount}",
+      "inCredit": "The client is in credit by {amount}",
+      "settled": "Nothing is owed",
+      "kinds": {
+        "fee": "Fee",
+        "disbursement": "Expense",
+        "receipt": "Receipt",
+        "refund": "Refund",
+        "adjustment": "Adjustment"
+      }
+    },
+    "error": {
+      "title": "Could not load fees and invoices",
+      "reference": "Reference {digest}",
+      "retry": "Retry",
+      "forbidden": "You cannot do that.",
+      "invalid": "Check the details and try again.",
+      "conflict": "That is no longer possible, for example the invoice is already final.",
+      "failed": "Something went wrong. Try again."
+    },
+    "notFound": {
+      "title": "Invoice not found",
+      "body": "It may have been discarded."
+    }
+  },
   "matterTimeline": {
     "title": "Timeline",
     "loading": "Loading the timeline",

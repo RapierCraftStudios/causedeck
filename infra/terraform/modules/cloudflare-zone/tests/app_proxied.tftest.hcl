@@ -44,7 +44,7 @@ run "proxied_with_blank_decision_fails" {
     residency_decision_ref = "   "
   }
 
-  expect_failures = [var.app_proxied]
+  expect_failures = [var.residency_decision_ref]
 }
 
 run "proxied_with_malformed_decision_fails" {

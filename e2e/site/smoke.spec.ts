@@ -10,6 +10,7 @@ const ROUTES = [
   { path: '/pricing/', noindex: false },
   { path: '/security/', noindex: false },
   { path: '/changelog/', noindex: false },
+  { path: '/contact/', noindex: false },
   { path: '/legal/draft-notice/', noindex: true },
   { path: '/legal/', noindex: true },
   { path: '/legal/terms/', noindex: true },

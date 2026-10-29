@@ -38,6 +38,8 @@ jobs:
             --entrypoint promtool prom/prometheus:v3.5.0 test rules /etc/prometheus/tests/alerts.test.yml
           docker run --rm -v "$GITHUB_WORKSPACE/infra/monitoring/prometheus:/etc/prometheus:ro" \
             --entrypoint promtool prom/prometheus:v3.5.0 check config /etc/prometheus/prometheus.yml
+          docker run --rm -v "$GITHUB_WORKSPACE/infra/monitoring/prometheus:/etc/prometheus:ro" \
+            --entrypoint promtool prom/prometheus:v3.5.0 check config /etc/prometheus/prometheus.core.yml
       - name: amtool check-config
         run: |
           sed -e 's|__[A-Z_]*URL__|http://mock:9095/h|g' -e 's|__ALERT_EMAIL_[A-Z]*__|a@example.com|g' \

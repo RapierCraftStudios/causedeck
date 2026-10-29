@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily CauseDeck log archive upload
+
+[Timer]
+# logrotate runs from the system timer around 00:00 UTC; upload an hour later.
+OnCalendar=*-*-* 01:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

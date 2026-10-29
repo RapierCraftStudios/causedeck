@@ -93,6 +93,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The enquiry log (#87): the flag-gated enquiry services over the conflict check, the automation
   // engine's `new_matter` proposals, audit events and membership roles.
   intake: Object.freeze(['audit', 'automation', 'conflicts', 'workspaces']),
+  // Client status links (#88, ADR 0050): flag-gated authored links; prefill reads an outward draft through its index.
+  'status-links': Object.freeze(['workspaces', 'audit', 'outward']),
   // Fees (#83, ADR 0048): the member's role through workspaces, events through audit, automation-origin
   // agreements as `fee_entry` proposals through automation (whose handler writes the draft itself).
   fees: Object.freeze(['audit', 'automation', 'workspaces']),
@@ -228,6 +230,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'business',
     'case-watch',
     'webhooks',
+    'status-links',
   ]),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.

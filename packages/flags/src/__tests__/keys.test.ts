@@ -24,6 +24,7 @@ const LEGAL = [
   'capture.whatsapp-import',
   'conflicts.check',
   'intake.enquiry_log',
+  'status_links.enabled',
   'bench_facts',
 ];
 

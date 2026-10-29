@@ -40,6 +40,11 @@ function uploadOrigin(): string | undefined {
   }
 }
 
+/** `/s/<token>`: the public client status link page (#88). */
+export function isStatusLinkPath(pathname: string): boolean {
+  return pathname.startsWith('/s/');
+}
+
 export function proxy(request: NextRequest): NextResponse {
   // A share that reached the server (no service worker yet) has no page to POST to: the files were
   // never read, so send the person to the share screen's "share from another app" empty state.
@@ -77,6 +82,11 @@ export function proxy(request: NextRequest): NextResponse {
     }
   }
   response.headers.set('Content-Security-Policy', csp);
+  if (isStatusLinkPath(request.nextUrl.pathname)) {
+    // The signed-out client status page (#88): never indexed, never leaks the token in a referrer.
+    response.headers.set('Referrer-Policy', 'no-referrer');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  }
 
   if (!request.cookies.has(LOCALE_COOKIE)) {
     const locale = negotiateLocale(undefined, request.headers.get('accept-language'));

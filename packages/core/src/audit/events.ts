@@ -75,6 +75,23 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'The retention job deleted closed enquiries past the workspace retention',
   },
+  // Client status links (#88, ADR 0050). Metadata holds ids, language and expiry days, never the note.
+  'status_link.created': {
+    security: false,
+    description: 'An advocate created a client status link',
+  },
+  'status_link.revoked': {
+    security: false,
+    description: 'An advocate revoked a client status link',
+  },
+  'status_link.extended': {
+    security: false,
+    description: 'An advocate extended a client status link',
+  },
+  'status_link.purged': {
+    security: false,
+    description: 'The retention job cleared the payload of long-expired status links',
+  },
   // Fees (#83, ADR 0048). Metadata holds ids, counts and enum values only, never amounts' text,
   // notes or ledger descriptions.
   'fee.agreement_created': { security: false, description: 'A member created a fee agreement' },

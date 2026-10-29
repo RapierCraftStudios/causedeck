@@ -36,6 +36,7 @@ import {
 } from '../schema/fees.ts';
 import { limitationComputation, limitationRule } from '../schema/limitation.ts';
 import { briefShare } from '../schema/share.ts';
+import { statusLink, statusLinkAccess } from '../schema/status-link.ts';
 import { reminderDispatch } from '../schema/reminder.ts';
 import { courtDayMarker, listSnapshot } from '../schema/court-day.ts';
 import { anchor, document, documentPage } from '../schema/documents.ts';
@@ -306,6 +307,35 @@ async function seedProceeding(tx: Transaction, workspaceId: string, tag: string)
     })
     .returning({ id: proceeding.id });
   return first(rows, 'proceeding').id;
+}
+
+/** A matter, a client contact for it and one status link (#88) in `workspaceId`. */
+async function seedStatusLink(
+  tx: Transaction,
+  workspaceId: string,
+  ownerId: string,
+  tag: string,
+): Promise<{ matterId: string; contactId: string; linkId: string }> {
+  const matterId = await seedMatter(tx, workspaceId, `${tag}-sl`);
+  const personId = await seedPerson(tx, workspaceId, `${tag}-sl-client`);
+  const contactRows = await tx
+    .insert(clientContact)
+    .values({ workspaceId, personId, phone: '+919876543211', createdBy: ownerId })
+    .returning({ id: clientContact.id });
+  const contactId = first(contactRows, 'client_contact').id;
+  const rows = await tx
+    .insert(statusLink)
+    .values({
+      workspaceId,
+      matterId,
+      clientContactId: contactId,
+      tokenHash: `seed-sl-${tag}-${crypto.randomUUID()}`,
+      payload: { headline: `Seed ${tag}`, note: 'Listed next month.', nextDate: null },
+      expiresAt: new Date('2099-01-01T00:00:00Z'),
+      createdBy: ownerId,
+    })
+    .returning({ id: statusLink.id });
+  return { matterId, contactId, linkId: first(rows, 'status_link').id };
 }
 
 /** A fictional party (#348). */
@@ -1947,6 +1977,18 @@ export const TENANT_SEEDERS: Record<string, TenantSeeder> = {
       })
       .returning({ id: briefShare.id });
     return { id: first(rows, 'brief_share').id };
+  },
+  status_link: async (tx, { workspaceId, ownerId, tag }) => {
+    const seeded = await seedStatusLink(tx, workspaceId, ownerId, tag);
+    return { ...seeded, id: seeded.linkId };
+  },
+  status_link_access: async (tx, { workspaceId, ownerId, tag }) => {
+    const seeded = await seedStatusLink(tx, workspaceId, ownerId, tag);
+    const rows = await tx
+      .insert(statusLinkAccess)
+      .values({ workspaceId, linkId: seeded.linkId, uaClass: 'mobile' })
+      .returning({ id: statusLinkAccess.id });
+    return { ...seeded, id: first(rows, 'status_link_access').id };
   },
   reminder_dispatch: async (tx, { workspaceId, ownerId, tag }) => {
     // The owner's own member row (the FK is composite), so seeding does not change the member counts

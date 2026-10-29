@@ -271,6 +271,8 @@ export const courtExporter = tablesExporter('court', [
   ws('brief_state', { userColumn: 'updated_by' }),
   // Brief shares (#507): the sanitised snapshot the workspace chose to share, by creator.
   ws('brief_share', { userColumn: 'created_by' }),
+  ws('status_link', { exclude: ['token_hash'], userColumn: 'created_by' }),
+  ws('status_link_access'),
 ]);
 
 // Matters, their proceedings, links (#346) and state history (#363), their docket: listings, hearings, appearances,

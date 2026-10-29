@@ -143,6 +143,7 @@ describe('enqueue', () => {
       'audit.verify',
       'system.audit.retention',
       'system.enquiry.retention',
+      'system.status-link.retention',
       'export.build',
       'drafting.export',
       'drafting.citations.check',

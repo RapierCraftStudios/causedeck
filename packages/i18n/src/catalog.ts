@@ -58,6 +58,7 @@ export const NAMESPACES = [
   'brief',
   'continuity',
   'share',
+  'status-link',
   'offline',
   'errors',
 ] as const;

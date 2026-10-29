@@ -6599,6 +6599,76 @@
       }
     }
   },
+  "statusLink": {
+    "metaTitle": "Case status",
+    "page": {
+      "unavailable": "This link is no longer available",
+      "unavailableBody": "Ask your advocate for a new link.",
+      "preparedBy": "Prepared by {name}",
+      "preparedByUnknown": "Prepared by your advocate",
+      "nextDate": "Next date: {date}",
+      "expires": "This link expires on {date}",
+      "loading": "Loading your status"
+    },
+    "sheet": {
+      "open": "Share a status link",
+      "title": "Client status link",
+      "description": "Write the note your client will see. CauseDeck does not send it.",
+      "headline": "Headline",
+      "note": "Note",
+      "includeNextDate": "Include the next date",
+      "nextDate": "Next date",
+      "contact": "Client contact",
+      "contactPlaceholder": "Choose a contact",
+      "expiry": "Expires after",
+      "expiryDays": "{days, plural, one {# day} other {# days}}",
+      "language": "Language",
+      "prefill": "Start from an update draft",
+      "preview": "Preview",
+      "previewHint": "This is exactly what your client will see.",
+      "create": "Create link",
+      "creating": "Creating",
+      "cancel": "Cancel",
+      "close": "Close",
+      "shortcut": "Ctrl or Cmd + Enter creates the link; Esc closes.",
+      "loading": "Loading",
+      "empty": "No client contacts yet. Add a client contact to this matter's people first.",
+      "error": "We could not complete that.",
+      "retry": "Try again",
+      "offline": "You are offline. Creating a link needs a connection.",
+      "denied": "Only an advocate or an owner can create status links."
+    },
+    "created": {
+      "title": "Your link is ready",
+      "once": "This is the only time the full link is shown.",
+      "shareYourself": "Share it yourself. CauseDeck does not send it.",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "url": "Status link"
+    },
+    "list": {
+      "title": "Status links",
+      "empty": "No links yet.",
+      "loading": "Loading links",
+      "viewed": "{count, plural, =0 {Not viewed} one {Viewed # time} other {Viewed # times}}",
+      "expires": "Expires {date}",
+      "revoke": "Revoke",
+      "revoked": "Revoked",
+      "expired": "Expired",
+      "active": "Active",
+      "error": "We could not load the links.",
+      "retry": "Try again"
+    },
+    "gated": {
+      "title": "Status links are not on yet",
+      "body": "This feature is switched off for your workspace until counsel clears its wording."
+    },
+    "languages": {
+      "en": "English",
+      "ta": "Tamil",
+      "kn": "Kannada"
+    }
+  },
   "offline": {
     "title": "இணைப்பில்லை",
     "body": "நீங்கள் இணைப்பில்லாமல் உள்ளீர்கள். ஒத்திசைத்த பிறகு சேமித்த நீதிமன்ற நாட்களும் சுருக்கங்களும் கிடைக்கும்.",

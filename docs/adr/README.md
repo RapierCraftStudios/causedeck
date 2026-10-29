@@ -57,6 +57,7 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0047](0047-enquiry-log-no-autoreply.md) | Enquiry log with no auto-reply | Proposed | 2026-10-26 | — |
 | [0048](0048-legal-gated-billing-flag.md) | Legal-gated billing flag and ledger retention | Proposed | 2026-10-26 | — |
 | [0049](0049-limitation-rule-tables.md) | Limitation rule tables and reviewed-only platform rules | Proposed | 2026-10-28 | — |
+| [0050](0050-status-links-token-and-privacy.md) | Client status links: hashed token, security-definer read, no send | Proposed | 2026-10-28 | — |
 
 ## Statuses
 

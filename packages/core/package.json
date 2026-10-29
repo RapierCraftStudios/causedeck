@@ -50,6 +50,7 @@
     "./network": "./src/network/index.ts",
     "./portfolio": "./src/portfolio/index.ts",
     "./shares": "./src/shares/index.ts",
+    "./status-links": "./src/status-links/index.ts",
     "./whatsapp-link": "./src/whatsapp-link/index.ts",
     "./public-api": "./src/public-api/index.ts",
     "./research": "./src/research/index.ts",

@@ -137,6 +137,12 @@ export const FLAGS = {
     true,
     [521, 118],
   ),
+  'status_links.enabled': flag(
+    'status_links.enabled',
+    'Advocate-authored expiring client status links (counsel wording and Rule 36 review required).',
+    true,
+    [88, 117],
+  ),
 } as const;
 
 /** A registered flag key. Anything else is a compile error. */

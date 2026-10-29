@@ -4,9 +4,17 @@
 // starts clean and its "today" lists are today's. It has no workspace of its own: the demo
 // workspaces are found through the owner-defined `app_demo_workspaces()`, and a deployment with no
 // demo workspace does nothing. Idempotent.
+import { serverEnv } from '@causedeck/config/env';
+import { createObjectStoreFromEnv, EnvKeyProvider } from '@causedeck/storage';
 import { z } from 'zod';
 
-import { resetDemo, sweepExpiredDemoVisitors, type DemoResetSummary } from '../../demo/index.ts';
+import {
+  resetDemo,
+  seedDemoFiles,
+  seedDemoMemory,
+  sweepExpiredDemoVisitors,
+  type DemoResetSummary,
+} from '../../demo/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 
@@ -24,6 +32,24 @@ export async function runDemoReset(
     { db: ctx.db, ...(deps.now ? { now: deps.now } : {}) },
     deps.today === undefined ? {} : { today: deps.today },
   );
+  // The sealed memory and the sample PDFs' blob rows went with the workspace's rows: write them
+  // again. A deployment without a key or a bucket configured keeps the rest of the reset.
+  for (const w of workspaces) {
+    try {
+      await seedDemoMemory(
+        { db: ctx.db, keys: EnvKeyProvider.fromEnv(serverEnv()) },
+        w.key,
+        deps.today === undefined ? {} : { today: deps.today },
+      );
+      await seedDemoFiles(
+        { db: ctx.db, store: createObjectStoreFromEnv(serverEnv()) },
+        w.key,
+        deps.today === undefined ? {} : { today: deps.today },
+      );
+    } catch (error) {
+      ctx.log.warn({ workspace: w.key, error: String(error) }, 'demo reset: content not restored');
+    }
+  }
   const visitorsSwept = await sweepExpiredDemoVisitors({
     db: ctx.db,
     ...(deps.now ? { now: deps.now } : {}),

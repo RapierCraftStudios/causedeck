@@ -64,6 +64,12 @@ jobs:
         run: >-
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/prod
           "$TF_IMAGE" test
+      - name: terraform test (staging, mocked providers)
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/staging \
+            "$TF_IMAGE" init -backend=false -input=false
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/staging \
+            "$TF_IMAGE" test
       - name: terraform test (cloudflare-zone module, mocked providers)
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/modules/cloudflare-zone \
@@ -94,6 +100,10 @@ jobs:
         env: [staging, prod, stage-b]
     env:
       DIGITALOCEAN_TOKEN: dummy-token-for-ci-plan-only
+      OVH_ENDPOINT: ovh-eu
+      OVH_APPLICATION_KEY: dummy
+      OVH_APPLICATION_SECRET: dummy
+      OVH_CONSUMER_KEY: dummy
       AWS_ACCESS_KEY_ID: dummy
       AWS_SECRET_ACCESS_KEY: dummy
     steps:
@@ -105,6 +115,7 @@ jobs:
           run_tf() {
             docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e TF_IN_AUTOMATION=1 \
               -e DIGITALOCEAN_TOKEN -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+              -e OVH_ENDPOINT -e OVH_APPLICATION_KEY -e OVH_APPLICATION_SECRET -e OVH_CONSUMER_KEY \
               -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/${{ matrix.env }}" \
               "$TF_IMAGE" "$@"
           }
@@ -147,6 +158,11 @@ jobs:
       TF_VAR_ssh_allowlist: ${{ secrets.TF_SSH_ALLOWLIST }}
       TF_VAR_deploy_pubkey: ${{ secrets.TF_DEPLOY_PUBKEY }}
       DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      # Used only when vps_provider = ovh_mumbai (read from the terraform-<env> environment).
+      OVH_ENDPOINT: ${{ secrets.OVH_ENDPOINT }}
+      OVH_APPLICATION_KEY: ${{ secrets.OVH_APPLICATION_KEY }}
+      OVH_APPLICATION_SECRET: ${{ secrets.OVH_APPLICATION_SECRET }}
+      OVH_CONSUMER_KEY: ${{ secrets.OVH_CONSUMER_KEY }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
@@ -162,6 +178,7 @@ jobs:
               -e TF_VAR_cloudflare_api_token -e TF_VAR_domain -e TF_VAR_cloudflare_account_id \
               -e TF_VAR_owner -e TF_VAR_ssh_allowlist -e TF_VAR_deploy_pubkey \
               -e DIGITALOCEAN_TOKEN -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+              -e OVH_ENDPOINT -e OVH_APPLICATION_KEY -e OVH_APPLICATION_SECRET -e OVH_CONSUMER_KEY \
               -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/${{ matrix.env }}" \
               "$TF_IMAGE" "$@"
           }
@@ -188,6 +205,11 @@ jobs:
       TF_VAR_ssh_allowlist: ${{ secrets.TF_SSH_ALLOWLIST }}
       TF_VAR_deploy_pubkey: ${{ secrets.TF_DEPLOY_PUBKEY }}
       DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      # Used only when vps_provider = ovh_mumbai (read from the terraform-<env> environment).
+      OVH_ENDPOINT: ${{ secrets.OVH_ENDPOINT }}
+      OVH_APPLICATION_KEY: ${{ secrets.OVH_APPLICATION_KEY }}
+      OVH_APPLICATION_SECRET: ${{ secrets.OVH_APPLICATION_SECRET }}
+      OVH_CONSUMER_KEY: ${{ secrets.OVH_CONSUMER_KEY }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
@@ -203,6 +225,7 @@ jobs:
               -e TF_VAR_cloudflare_api_token -e TF_VAR_domain -e TF_VAR_cloudflare_account_id \
               -e TF_VAR_owner -e TF_VAR_ssh_allowlist -e TF_VAR_deploy_pubkey \
               -e DIGITALOCEAN_TOKEN -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+              -e OVH_ENDPOINT -e OVH_APPLICATION_KEY -e OVH_APPLICATION_SECRET -e OVH_CONSUMER_KEY \
               -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/${{ inputs.env }}" \
               "$TF_IMAGE" "$@"
           }

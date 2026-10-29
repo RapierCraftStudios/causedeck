@@ -2,8 +2,10 @@
 
 > **Provider direction (D-037 amendment, 2026-10-27, #882).** Stage A runs on OVH Mumbai: prod on a
 > VPS-3 (₹1,160/mo) and staging on its own VPS-1 (₹420/mo), on separate hosts (OVH India catalogue,
-> 2026-10-27, ex-GST, 12-month term). OVH VPS are ordered by hand (#108) and are not managed by the
-> VPS modules below. The DigitalOcean and Lightsail modules remain as alternatives. Stage B is a
+> 2026-10-27, ex-GST, 12-month term). `vps_provider` defaults to `ovh_mumbai` (`modules/vps-ovh-mumbai`,
+> #885), which orders the VPS through the OVH API in the Mumbai datacenter `YNM`; `manual` takes the
+> IPs of a hand-ordered host (#108) and plans no VPS at all. The DigitalOcean and Lightsail modules
+> remain as alternatives. Stage B is a
 > Postgres box (VPS-4 or dedicated) with a streaming replica and PgBouncer plus 2+ app VPS behind
 > Cloudflare LB or DNS; Stage C is k3s or Docker Swarm. The AWS modules (RDS, S3, ALB, ECS) are
 > optional, no longer the default ([ADR 0053](../../docs/adr/0053-stage-b-c-scale-path.md)).
@@ -13,7 +15,7 @@
 
 Infrastructure that is not the application (#99): Cloudflare (zone, DNS, DNSSEC, Pages for
 `apps/site`, the `static.<tld>` CDN host, optional Access and WAF) and the India VPS (DigitalOcean
-BLR1 or AWS Lightsail ap-south-1) for `prod` and `staging`. The VPS runs `infra/scripts/bootstrap-vps.sh`
+BLR1, AWS Lightsail ap-south-1, OVH Mumbai, or a hand-ordered host) for `prod` and `staging`. The VPS runs `infra/scripts/bootstrap-vps.sh`
 on first boot; the compose stack (`infra/docker/compose.prod.yml`) is deployed by #100.
 
 ```
@@ -25,6 +27,7 @@ infra/terraform/
   modules/cloudflare-waf         managed rules + rate limit (enable_app_waf, off)
   modules/vps-do-blr1            DigitalOcean droplet, firewall, volume, backups
   modules/vps-lightsail-mumbai   Lightsail instance, public ports, disk, snapshots
+  modules/vps-ovh-mumbai         OVH VPS ordered through ovh_vps in YNM (Mumbai) only
   modules/aws-rds-postgres       Stage B RDS Postgres 17, CMK KMS, PITR, Hyderabad replica (#106)
   modules/aws-s3-documents       Stage B documents bucket: public block, versioning, SSE-KMS, replication
   modules/aws-alb-multinode      Stage B ALB (default multi-node entry), /readyz health check
@@ -44,7 +47,12 @@ infra/terraform/
 | `domain`                                | required  | Registered domain; each env owns its own zone (see below)      |
 | `cloudflare_account_id`                 | required  | Cloudflare account                                             |
 | `cloudflare_api_token`                  | required  | Sensitive; `TF_VAR_cloudflare_api_token`, scoped to zone + Pages |
-| `vps_provider`                          | `do_blr1` | `do_blr1` or `lightsail_mumbai`; both modules expose the same outputs |
+| `vps_provider`                          | `ovh_mumbai` | `ovh_mumbai`, `do_blr1`, `lightsail_mumbai` or `manual` |
+| `vps_datacenter`                        | `YNM`     | OVH datacenter; `YNM` (Mumbai) is the only accepted value (D-009) |
+| `vps_ipv4`, `vps_ipv6`                  | `""`      | Host addresses for `manual` (`vps_ipv4` required, empty `vps_ipv6` skips AAAA records) |
+| `vps_size`                              | `""`      | Droplet size, Lightsail bundle or OVH plan code; empty uses the env default (`vps-2027-model3` prod, `vps-2027-model1` staging) |
+| `ovh_subsidiary`, `vps_os`              | `IN`, `Ubuntu 24.04` | OVH billing subsidiary and OS (`Ubuntu 24.04` or `Debian 13`) |
+| `ovh_public_ssh_key`, `ovh_image_id`    | `""`      | Optional key OVH pre-installs; OVH requires the image id with it |
 | `app_proxied`                           | `false`   | Proxy app/api/admin; requires `residency_decision_ref`         |
 | `enable_app_waf`                        | `false`   | WAF and rate limits; requires `residency_decision_ref`         |
 | `enable_access`                         | `false`   | Access for admin; needs the admin host proxied                 |
@@ -54,9 +62,44 @@ infra/terraform/
 Outputs: `vps_ipv4`, `vps_ipv6`, `dns_record_ids`, `dns_app_hosts_proxied`, `pages_project_name`, `name_servers`.
 
 Credentials come from the environment and are never committed: `TF_VAR_cloudflare_api_token`,
-`DIGITALOCEAN_TOKEN` (do_blr1), `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` (lightsail_mumbai and the
-state bucket). Real values come from #107 (domain and Cloudflare token), #108 (VPS and SSH keys) and
+`DIGITALOCEAN_TOKEN` (do_blr1), `OVH_ENDPOINT`, `OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET` and
+`OVH_CONSUMER_KEY` (ovh_mumbai only; the `provider "ovh"` block is empty),
+`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` (lightsail_mumbai and the state bucket). `manual` needs no
+VPS credentials. Real values come from #107 (domain and Cloudflare token), #108 (VPS and SSH keys) and
 #116 (GitHub environments). Validate and plan need only dummy values.
+
+## OVH Mumbai and manual hosts
+
+`ovh_mumbai` orders the VPS through OVH's order workflow (`ovh_vps`), so the account needs a default
+payment method. Plan codes: `vps-2027-model3` (VPS-3, prod) and `vps-2027-model1` (VPS-1, staging);
+the OVH catalogue (`GET /order/catalog/public/vps`) lists the duration and pricing mode that match a
+12-month term (`plan_duration`, `plan_pricing_mode` in the module, default `P1M` / `default`).
+The module reads the addresses back with the `ovh_vps` data source. OVH VPS have no firewall or
+volume API: after delivery run `infra/scripts/bootstrap-vps.sh` (ufw, deploy key, key-only SSH) by
+hand or via the OVH-installed key. Reinstalling is never done by Terraform (`image_id` is ignored
+after the order).
+
+`manual` plans no VPS resource. Set `vps_provider = "manual"` and `vps_ipv4` (and `vps_ipv6` if the
+host has one); Cloudflare records and the static CDN origin use those addresses.
+
+### OVH API credentials and routes
+
+Create the application and a consumer key restricted to the routes below (no `/*` wildcard), store
+the four values as secrets of the GitHub environment `terraform-<env>` (`OVH_ENDPOINT`,
+`OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY`), and never put them in tfvars.
+Per the provider's guide "Consumer key access rules for resources that place orders", `ovh_vps`
+needs:
+
+| Route                      | Methods                    | Used for                                                          |
+| -------------------------- | -------------------------- | ----------------------------------------------------------------- |
+| `/order/*`                 | GET, POST                  | cart, VPS item, configuration (`vps_datacenter`, `vps_os`), checkout |
+| `/me/order/*`              | GET, POST                  | pay the order, read its status and details                        |
+| `/me/payment/method`       | GET                        | look up the default payment method                                |
+| `/vps/*`                   | GET, POST, PUT             | read the VPS and its `ips`, terminate and confirm termination     |
+
+Without `ovh_subsidiary` the provider also calls `GET /me`; the module always sets it, so that route
+is not needed. `OVH_ENDPOINT` is the API region (for example `ovh-eu`); the endpoint for an India
+account is confirmed when the keys are created (#108).
 
 ## Residency rules
 
@@ -67,7 +110,8 @@ state bucket). Real values come from #107 (domain and Cloudflare token), #108 (V
   `residency_decision_ref` is set (decision D-037); the reference must be a decision id (`D-037`) or
   an ADR path (`docs/adr/NNNN-name.md`). Cloudflare Access only protects proxied hostnames,
   so `enable_access` additionally needs `app_proxied`.
-- VPS modules reject any region except `blr1` / `ap-south-1`. The firewall opens only 80 and 443
+- VPS modules reject any region except `blr1` / `ap-south-1`, and OVH any datacenter except `YNM`
+  (Mumbai); the env roots validate `vps_datacenter` too, whatever `vps_provider` is. The firewall opens only 80 and 443
   (tcp and udp) to the world and 22 to `ssh_allowlist`; Postgres, MinIO and admin ports are never public.
 - Every VPS resource is tagged `project`, `env`, `owner`, `data_residency=in`.
 
@@ -140,6 +184,9 @@ when the repository variable `TF_BACKEND_CONFIGURED` is `true`. Repository varia
 and environment secrets `CLOUDFLARE_API_TOKEN`, `DIGITALOCEAN_TOKEN`, `AWS_ACCESS_KEY_ID`,
 `AWS_SECRET_ACCESS_KEY`, `TF_OWNER`, `TF_DOMAIN`, `TF_CLOUDFLARE_ACCOUNT_ID`, `TF_SSH_ALLOWLIST`
 (JSON list), `TF_DEPLOY_PUBKEY` are set in #116.
+
+`terraform test` also runs for `envs/staging` (`tests/vps_provider.tftest.hcl`). The plan jobs set
+dummy `OVH_*` values; the real ones are read only by apply and drift.
 
 Local checks (no Terraform needed): `node --test infra/terraform/test/policy.test.mjs`.
 

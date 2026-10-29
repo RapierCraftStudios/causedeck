@@ -246,6 +246,100 @@ describe('VPS modules', () => {
   });
 });
 
+describe('OVH Mumbai and manual hosts (#885)', () => {
+  const ovh = (f) => mod('vps-ovh-mumbai', f);
+
+  it('YNM is the only OVH datacenter, in the module and in both envs', () => {
+    const texts = [
+      variable(ovh('variables.tf'), 'datacenter').body,
+      ...ENVS.map((e) => variable(read('envs', e, 'variables.tf'), 'vps_datacenter').body),
+    ];
+    for (const t of texts) {
+      assert.match(t, /default\s*=\s*"YNM"/);
+      assert.match(t, /contains\(\["YNM"\]/);
+    }
+    assert.match(ovh('main.tf'), /label = "vps_datacenter", value = var\.datacenter/);
+    assert.doesNotMatch(ovh('main.tf'), /"(GRA|SBG|RBX|WAW|BHS|SGP|SYD)"/);
+  });
+
+  it('orders through ovh_vps, reads addresses from the data source and sets no credentials', () => {
+    const main = ovh('main.tf');
+    assert.match(main, /resource "ovh_vps" "this"/);
+    assert.match(main, /data "ovh_vps" "this"/);
+    assert.match(ovh('versions.tf'), /ovh\/ovh/);
+    for (const e of ENVS) {
+      assert.match(
+        read('envs', e, 'main.tf'),
+        /provider "ovh" \{\}/,
+        `${e}: provider ovh must be empty`,
+      );
+    }
+    for (const file of allTf()) {
+      assert.doesNotMatch(
+        readFileSync(file, 'utf8'),
+        /application_(key|secret)\s*=|consumer_key\s*=/,
+        path.relative(tf, file),
+      );
+    }
+  });
+
+  it('defaults the plan code to VPS-3 for prod and VPS-1 for staging', () => {
+    assert.match(variable(ovh('variables.tf'), 'plan_code').body, /vps-2027-model3/);
+    assert.match(read('envs', 'prod', 'main.tf'), /"vps-2027-model3"/);
+    assert.match(read('envs', 'staging', 'main.tf'), /"vps-2027-model1"/);
+  });
+
+  it('manual plans no VPS module and takes the IPs from variables', () => {
+    for (const e of ENVS) {
+      const main = read('envs', e, 'main.tf');
+      const vars = read('envs', e, 'variables.tf');
+      assert.match(main, /use_manual\s*=\s*var\.vps_provider == "manual"/);
+      assert.match(main, /vps_ipv4 = local\.use_manual \? var\.vps_ipv4 : one\(concat\(/);
+      assert.match(main, /module\.vps_ovh\[\*\]\.ipv4/);
+      assert.match(variable(vars, 'vps_ipv4').body, /vps_provider != "manual"/);
+      // plan-time constant: derived from variables only, never from a module output
+      assert.match(main, /enable_ipv6 = local\.use_manual \? var\.vps_ipv6 != "" : true/);
+      for (const m of ['vps_do', 'vps_lightsail', 'vps_ovh']) {
+        assert.match(main, new RegExp(`module "${m}" \\{\\s*count\\s*=\\s*local\\.use_`));
+      }
+    }
+  });
+
+  it('ovh module has no 0.0.0.0 rule and mentions no service ports', () => {
+    assert.doesNotMatch(
+      ovh('main.tf'),
+      /0\.0\.0\.0\/0|\b(5432|9000|9001|9090|3000|3001|3002|8080)\b/,
+    );
+  });
+
+  it('terraform.yml passes the four OVH variables from the environment secrets', () => {
+    const wf = readFileSync(path.join(repo, '.github/workflows/terraform.yml'), 'utf8');
+    for (const v of [
+      'OVH_ENDPOINT',
+      'OVH_APPLICATION_KEY',
+      'OVH_APPLICATION_SECRET',
+      'OVH_CONSUMER_KEY',
+    ]) {
+      assert.match(wf, new RegExp(`${v}: \\$\\{\\{ secrets\\.${v} \\}\\}`));
+    }
+  });
+
+  it('README lists the OVH API routes the credentials need', () => {
+    const readme = read('README.md');
+    for (const route of ['/order/*', '/vps/*', '/me/order/*', '/me/payment/method']) {
+      assert.ok(readme.includes(route), `README lacks ${route}`);
+    }
+  });
+
+  it('example tfvars carry no real credentials and stay valid for a CI plan', () => {
+    for (const e of ENVS) {
+      const t = read('envs', e, 'terraform.tfvars.example');
+      assert.doesNotMatch(t, /^\s*(application_key|consumer_key|OVH_\w+)\s*=/m);
+      assert.match(t, /^vps_provider\s*=\s*"manual"/m);
+    }
+  });
+});
+
 describe('optional Cloudflare modules are off by default', () => {
   it('Access and WAF are count-gated and default to false', () => {
     const access = mod('cloudflare-access', 'main.tf');
@@ -282,8 +376,9 @@ describe('optional Cloudflare modules are off by default', () => {
       }
       assert.match(
         variable(vars, 'vps_provider').body,
-        /contains\(\["do_blr1", "lightsail_mumbai"\]/,
+        /contains\(\["ovh_mumbai", "do_blr1", "lightsail_mumbai", "manual"\]/,
       );
+      assert.match(variable(vars, 'vps_provider').body, /default\s*=\s*"ovh_mumbai"/);
     }
   });
 });

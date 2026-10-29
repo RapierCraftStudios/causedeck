@@ -5,6 +5,7 @@
 
 mock_provider "cloudflare" {}
 mock_provider "digitalocean" {}
+mock_provider "ovh" {}
 mock_provider "aws" {}
 
 variables {
@@ -78,4 +79,28 @@ run "proxying_rejects_malformed_decision_reference" {
   }
 
   expect_failures = [var.residency_decision_ref]
+}
+
+# D-009: OVH VPS may only be ordered in Mumbai (YNM).
+run "ovh_datacenter_other_than_ynm_is_rejected" {
+  command = plan
+
+  variables {
+    vps_provider   = "ovh_mumbai"
+    vps_datacenter = "GRA"
+  }
+
+  expect_failures = [var.vps_datacenter]
+}
+
+run "ovh_datacenter_is_rejected_for_any_provider" {
+  command = plan
+
+  variables {
+    vps_provider   = "manual"
+    vps_ipv4       = "203.0.113.10"
+    vps_datacenter = "SBG"
+  }
+
+  expect_failures = [var.vps_datacenter]
 }

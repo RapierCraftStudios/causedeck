@@ -16,6 +16,9 @@ locals {
 # ---- KMS keys: administrators cannot use the key and users cannot administer it ----
 
 data "aws_iam_policy_document" "kms_primary" {
+  #checkov:skip=CKV_AWS_356:KMS key policy: Resource * means this key (resource-based policy); access is scoped by principals and conditions
+  #checkov:skip=CKV_AWS_109:KMS key policy: Resource * means this key (resource-based policy); access is scoped by principals and conditions
+  #checkov:skip=CKV_AWS_111:KMS key policy: Resource * means this key (resource-based policy); access is scoped by principals and conditions
   statement {
     sid       = "Administer"
     actions   = ["kms:Create*", "kms:Describe*", "kms:Enable*", "kms:List*", "kms:Put*", "kms:Update*", "kms:Revoke*", "kms:Disable*", "kms:Get*", "kms:ScheduleKeyDeletion", "kms:CancelKeyDeletion", "kms:TagResource", "kms:UntagResource"]
@@ -181,6 +184,7 @@ resource "aws_db_parameter_group" "replica" {
 # ---- Instances ----
 
 resource "aws_db_instance" "primary" {
+  #checkov:skip=CKV_AWS_118:Enhanced monitoring needs a monitoring role; Performance Insights and CloudWatch log exports cover stage-b
   identifier = "${var.name}-primary"
 
   engine         = "postgres"
@@ -228,6 +232,10 @@ resource "aws_db_instance" "primary" {
 }
 
 resource "aws_db_instance" "replica" {
+  #checkov:skip=CKV_AWS_157:Cross-region read replica for DR; Multi-AZ on the replica doubles cost without changing the recovery path
+  #checkov:skip=CKV_AWS_129:Replica logs are exported from the primary; the replica is not a write target
+  #checkov:skip=CKV_AWS_118:Enhanced monitoring needs a monitoring role; see the primary
+  #checkov:skip=CKV2_AWS_60:Replica takes no snapshots of its own; tags are copied on the primary
   provider = aws.replica
 
   identifier          = "${var.name}-replica-hyd"

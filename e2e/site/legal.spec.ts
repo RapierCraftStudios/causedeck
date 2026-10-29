@@ -22,7 +22,11 @@ for (const legal of PAGES) {
       await expect(page.getByRole('heading', { level: 1, name: legal.title })).toBeVisible();
       await expect(page.getByText('Version', { exact: true }).first()).toBeAttached();
       await expect(page.getByText('Effective date', { exact: true }).first()).toBeAttached();
-      await expect(page.getByRole('navigation', { name: 'On this page' }).first()).toBeAttached();
+      // Below 1280 px the contents sit in a collapsed block or a closed sheet, so they are in the
+      // DOM but not in the accessibility tree until opened.
+      await expect(
+        page.getByRole('navigation', { name: 'On this page', includeHidden: true }).first(),
+      ).toBeAttached();
       await expect(page.getByRole('heading', { name: 'Version history' })).toBeVisible();
       await expect(page.getByText('Draft pending counsel review')).toBeVisible();
       await expect(page.getByText('This document is available in English only.')).toBeVisible();

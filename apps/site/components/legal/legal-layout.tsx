@@ -32,7 +32,7 @@ export const legalMdxComponents = { ...mdxComponents, h2: anchored('h2'), h3: an
 const PRINT_CSS = `@page { size: A4; margin: 20mm; @bottom-center { content: counter(page); } }
 @media print {
   body { background: #fff; color: #000; }
-  body > a, header, footer, .legal-doc aside { display: none !important; }
+  body > a, body > header, body > footer, .legal-doc aside { display: none !important; }
   .legal-doc { display: block; }
   .legal-doc article { max-width: none; font-size: 11pt; line-height: 1.5; }
   .legal-doc a { color: inherit; text-decoration: none; }
@@ -90,7 +90,7 @@ export function LegalLayout({
       </aside>
       <article className="max-w-[680px] font-serif text-[17px] leading-[1.7] md:text-[18px] [&_a]:underline [&_a]:underline-offset-2 [&_h1]:text-3xl [&_h1]:font-semibold [&_h2]:mt-10 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mt-6 [&_h3]:text-xl [&_li]:mt-1 [&_p]:mt-4 [&_ul]:mt-4 [&_ul]:list-disc [&_ul]:ps-6">
         {legal.status === 'draft' ? <DraftBanner /> : null}
-        <header>
+        <div>
           <h1>{page.frontmatter.title}</h1>
           <dl className="text-ink-muted mt-3 flex flex-wrap gap-x-6 gap-y-1 font-sans text-sm">
             <div className="flex gap-2">
@@ -103,7 +103,7 @@ export function LegalLayout({
             </div>
           </dl>
           <p className="text-ink-muted mt-3 font-sans text-sm">{chrome.languageNote}</p>
-        </header>
+        </div>
         {children}
         <div className="mt-6">{page.content}</div>
         {afterBody}

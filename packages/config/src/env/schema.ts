@@ -132,6 +132,33 @@ export const serverKeys = {
     credentialIssue: 116,
     secret: true,
   },
+  DB_POOL_MAX: {
+    domain: 'server',
+    type: 'integer (1-200)',
+    description:
+      'Connections in the app-role Postgres pool of one process (web, api, worker, admin). Size it so replicas x pools x this stays under Postgres max_connections, or under the PgBouncer pool (docs/engineering/database.md).',
+    default: '10',
+    requiredWhen: 'never (defaults to 10)',
+    ownerIssue: 805,
+  },
+  DB_AUTH_POOL_MAX: {
+    domain: 'server',
+    type: 'integer (0-50)',
+    description:
+      'Connections in the small dedicated pool for Better Auth session lookups, so a page-load query burst cannot starve them. 0 shares the main pool.',
+    default: '3',
+    requiredWhen: 'never (defaults to 3)',
+    ownerIssue: 805,
+  },
+  DB_CONNECT_TIMEOUT_SECONDS: {
+    domain: 'server',
+    type: 'integer (1-120)',
+    description:
+      'Seconds to wait for a Postgres connection before failing. Short on purpose: a saturated database fails fast and visibly instead of hanging a page for 30 s.',
+    default: '5',
+    requiredWhen: 'never (defaults to 5)',
+    ownerIssue: 805,
+  },
   APP_URL: {
     domain: 'server',
     type: 'url',
@@ -483,6 +510,14 @@ export function isIpAllowlist(value: string): boolean {
 export const serverShape = {
   DATABASE_URL: secret(postgresUrl).describe(d(serverKeys.DATABASE_URL)),
   DATABASE_URL_OWNER: secret(postgresUrl).optional().describe(d(serverKeys.DATABASE_URL_OWNER)),
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(200).describe(d(serverKeys.DB_POOL_MAX)),
+  DB_AUTH_POOL_MAX: z.coerce.number().int().min(0).max(50).describe(d(serverKeys.DB_AUTH_POOL_MAX)),
+  DB_CONNECT_TIMEOUT_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(120)
+    .describe(d(serverKeys.DB_CONNECT_TIMEOUT_SECONDS)),
   APP_URL: z.url().describe(d(serverKeys.APP_URL)),
   API_URL: z.url().describe(d(serverKeys.API_URL)),
   BETTER_AUTH_SECRET: secret(z.string().min(32, 'must be at least 32 characters')).describe(

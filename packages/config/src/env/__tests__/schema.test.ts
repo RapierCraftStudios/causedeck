@@ -260,3 +260,39 @@ describe('SKIP_ENV_VALIDATION', () => {
     );
   });
 });
+
+describe('database pool sizing (#805)', () => {
+  it('defaults to 10 connections, a dedicated auth pool of 3 and a 5 s connect timeout', () => {
+    const env = createEnv({ NODE_ENV: 'test' });
+
+    expect(env.DB_POOL_MAX).toBe(10);
+    expect(env.DB_AUTH_POOL_MAX).toBe(3);
+    expect(env.DB_CONNECT_TIMEOUT_SECONDS).toBe(5);
+  });
+
+  it('reads overrides, coerced from strings', () => {
+    const env = createEnv({
+      NODE_ENV: 'test',
+      DB_POOL_MAX: '20',
+      DB_AUTH_POOL_MAX: '0',
+      DB_CONNECT_TIMEOUT_SECONDS: '3',
+    });
+
+    expect(env.DB_POOL_MAX).toBe(20);
+    expect(env.DB_AUTH_POOL_MAX).toBe(0);
+    expect(env.DB_CONNECT_TIMEOUT_SECONDS).toBe(3);
+  });
+
+  it.each([
+    ['DB_POOL_MAX', '0'],
+    ['DB_POOL_MAX', '201'],
+    ['DB_POOL_MAX', 'many'],
+    ['DB_AUTH_POOL_MAX', '-1'],
+    ['DB_AUTH_POOL_MAX', '51'],
+    ['DB_CONNECT_TIMEOUT_SECONDS', '0'],
+    ['DB_CONNECT_TIMEOUT_SECONDS', '121'],
+    ['DB_CONNECT_TIMEOUT_SECONDS', '2.5'],
+  ])('rejects %s=%s', (key, value) => {
+    expect(envError({ NODE_ENV: 'test', [key]: value }).message).toContain(key);
+  });
+});

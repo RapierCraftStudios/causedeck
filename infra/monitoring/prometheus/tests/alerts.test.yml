@@ -410,3 +410,64 @@ tests:
         exp_samples:
           - labels: 'causedeck:court_day_window:active'
             value: 0
+    # database pools (#805): wait above 1 s for 3 minutes
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_db_pool_wait_seconds{pool="app"}'
+        values: '2x6'
+      - series: 'causedeck_db_pool_wait_seconds{pool="auth"}'
+        values: '0.01x6'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: DbPoolWaitHigh
+        exp_alerts:
+          - exp_labels:
+              pool: 'app'
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Waiting over 1 s for a database connection (pool app)'
+    # idle in a transaction for over 5 s
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_db_idle_in_transaction_max_seconds{pool="app"}'
+        values: '9x5'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: DbIdleInTransactionLong
+        exp_alerts:
+          - exp_labels:
+              pool: 'app'
+              severity: 'ticket'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'A connection (pool app) has been idle in a transaction for over 5 s'
+    # a healthy pool stays quiet
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_db_pool_wait_seconds{pool="app"}'
+        values: '0.05x10'
+      - series: 'causedeck_db_idle_in_transaction_max_seconds{pool="app"}'
+        values: '0.4x10'
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: DbPoolWaitHigh
+        exp_alerts: []
+      - eval_time: 8m
+        alertname: DbIdleInTransactionLong
+        exp_alerts: []
+    # connect timeouts (failed probes) page
+  - interval: 1m
+    input_series:
+      - series: 'causedeck_db_pool_probe_errors_total{pool="auth"}'
+        values: '0+1x8'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: DbConnectFailures
+        exp_alerts:
+          - exp_labels:
+              pool: 'auth'
+              severity: 'page'
+              priority: 'P1'
+            exp_annotations:
+              summary: 'Cannot get a database connection (pool auth): connect timeout or database down'

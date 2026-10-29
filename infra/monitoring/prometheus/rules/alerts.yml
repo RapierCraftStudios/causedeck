@@ -4,6 +4,8 @@
 #   causedeck_queue_lag_seconds, causedeck_queue_dead_letter_total   worker queues
 #   causedeck_backup_wal_age_seconds, causedeck_backup_base_age_seconds,
 #   causedeck_backup_restore_drill_success                            backups (#101)
+#   causedeck_db_pool_wait_seconds, causedeck_db_idle_in_transaction_max_seconds,
+#   causedeck_db_pool_probe_errors_total                               app DB pools (#805)
 #   adapter_parse_success_ratio, adapter_last_success_timestamp        court adapters
 groups:
   - name: availability
@@ -80,6 +82,27 @@ groups:
         labels: { severity: ticket, priority: P1 }
         annotations:
           summary: 'Dead-letter queue {{ $labels.queue }} grew by more than 5 in 15 minutes'
+  - name: database-pools
+    rules:
+      # The probe queues behind busy connections, so its time is the pool wait plus one round trip.
+      - alert: DbPoolWaitHigh
+        expr: max by (pool) (causedeck_db_pool_wait_seconds) > 1
+        for: 3m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Waiting over 1 s for a database connection (pool {{ $labels.pool }})'
+      - alert: DbIdleInTransactionLong
+        expr: max by (pool) (causedeck_db_idle_in_transaction_max_seconds) > 5
+        for: 2m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'A connection (pool {{ $labels.pool }}) has been idle in a transaction for over 5 s'
+      - alert: DbConnectFailures
+        expr: sum by (pool) (increase(causedeck_db_pool_probe_errors_total[5m])) > 0
+        for: 1m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'Cannot get a database connection (pool {{ $labels.pool }}): connect timeout or database down'
   - name: backups
     rules:
       - alert: BackupWalStale

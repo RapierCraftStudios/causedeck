@@ -1,6 +1,6 @@
 import { Secret } from '@causedeck/config/env';
 import { schema } from '@causedeck/db';
-import { closeTestDb, testAppDb } from '@causedeck/db/testing';
+import { closeTestDb, createDb, testAppDb, testDatabaseUrls } from '@causedeck/db/testing';
 import { eq, sql } from 'drizzle-orm';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -521,3 +521,30 @@ async function findUserById(id: string) {
   const [row] = await testAppDb().select().from(schema.user).where(eq(schema.user.id, id));
   return row;
 }
+
+describe('dedicated session pool (#805)', () => {
+  it('runs Better Auth sessions through sessionDb, not the main pool', async () => {
+    const sessionDb = createDb({
+      url: new Secret(testDatabaseUrls().app),
+      role: 'app',
+      purpose: 'auth',
+      max: 2,
+    });
+    try {
+      const { auth } = makeAuth({ sessionDb });
+      const { cookie } = await devSignInAs(auth);
+      const response = await authRequest(auth, '/get-session', { method: 'GET', cookie });
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as { user?: { id?: string } };
+      expect(body.user?.id).toBeTruthy();
+
+      const rows = await testAppDb().execute<{ n: number }>(
+        sql`select count(*)::int as n from pg_stat_activity
+            where datname = current_database() and application_name = 'causedeck-app-auth'`,
+      );
+      expect(rows[0]?.n).toBeGreaterThan(0);
+    } finally {
+      await sessionDb.$client.end();
+    }
+  });
+});

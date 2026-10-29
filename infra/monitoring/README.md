@@ -5,8 +5,35 @@ SaaS outside India. Design: [observability.md](../../docs/engineering/observabil
 
 ```bash
 export CAUSEDECK_ENV_FILE=/etc/causedeck/prod.env   # adds LOKI_S3_*, GRAFANA_ADMIN_PASSWORD and receivers
-docker compose -f infra/monitoring/compose.monitoring.yml --env-file "$CAUSEDECK_ENV_FILE" up -d --wait
+# lean (VPS-1 staging, VPS-3 prod at launch): 960 MB of limits
+docker compose -f infra/monitoring/compose.monitoring.yml --env-file "$CAUSEDECK_ENV_FILE" --profile core up -d --wait
+# everything (Loki, Grafana, collector): 2.5 GB of limits
+docker compose -f infra/monitoring/compose.monitoring.yml --env-file "$CAUSEDECK_ENV_FILE" --profile full up -d --wait
 ```
+
+## Profiles (#886)
+
+No service starts without a profile. Run one profile at a time (`prometheus` and `prometheus-core` share ports);
+switch with `down` then `up`.
+
+| Profile | Services                                                                    | Memory limits | Logs                                  |
+| ------- | --------------------------------------------------------------------------- | ------------- | ------------------------------------- |
+| `core`  | prometheus-core (512 MB), alertmanager, cAdvisor, node-exporter, blackbox   | 960 MB        | Lean archive: daily gzip to an India bucket, 180 days |
+| `full`  | the same plus Loki, Grafana and the OpenTelemetry collector; Prometheus 768 MB | 2,496 MB   | Loki, 200 days (as before)            |
+
+`core` loads the same `prometheus/rules` and delivers every alert, including `BackupWalStale`, `BackupBaseStale`
+and `RestoreDrillFailed` (#792). Differences from `full`:
+
+- Application metrics reach Prometheus over OTLP with no collector: set
+  `OTEL_EXPORTER_OTLP_ENDPOINT=http://prometheus:9090/api/v1/otlp` on the services (the app stack's edge network
+  resolves `prometheus` to `prometheus-core`). Metric names are unchanged (`http_server_duration_milliseconds_*`,
+  `causedeck_*`). Traces have no receiver on `core`; the exporter logs a benign 404 for the 10 % sampled spans.
+- `prometheus.core.yml` omits the Loki and collector scrape jobs (those services do not exist in `core`).
+- cAdvisor stays in `core` (192 MB) because `DatabaseCpuHigh` reads container CPU; without it that rule would
+  never fire. This is the one deviation from "cAdvisor is full-only".
+- Compose interpolates every service, so the env file must still define `LOKI_S3_ACCESS_KEY`, `LOKI_S3_SECRET_KEY` and
+  `GRAFANA_ADMIN_PASSWORD` on `core` hosts (any placeholder; nothing reads them there).
+- No Grafana: use Prometheus on `127.0.0.1:9090` (SSH tunnel) until the host moves to `full`.
 
 | Piece                | Role                                                                        | Config                         |
 | -------------------- | --------------------------------------------------------------------------- | ------------------------------ |
@@ -42,9 +69,32 @@ mock, so set them at deploy. Sentry stays optional: without `SENTRY_DSN` (human 
   deleted since the first ingest, recorded in `/var/lib/causedeck/monitoring/first-ingest`). Run it monthly.
 - The host must run NTP (`chrony`); node_exporter's `node_timex_offset_seconds` drives `ClockDriftHigh` (above 1 s).
 
+## Lean log path (`core` profile, #886)
+
+Without Loki, CERT-In's 180 days of logs are kept as gzip files of Docker's JSON logs in an India bucket. Files in
+`log-retention/`:
+
+| File                          | Role                                                                                   |
+| ----------------------------- | -------------------------------------------------------------------------------------- |
+| `logrotate-docker.conf`       | Daily gzip with `copytruncate`; install to `/etc/logrotate.d/causedeck-docker`          |
+| `archive-logs.sh`             | Uploads rotated files to `docker/<host>/<date>/<container>.json.log.gz`, deletes each local file after its upload; `--init` creates the bucket with object lock; `--check-config` validates env |
+| `archive-lifecycle.json`      | 180-day COMPLIANCE object lock, expiry after 200 days, region `ap-south-2`              |
+| `causedeck-log-archive.*`     | systemd service and timer (01:00 UTC) that run the upload                               |
+
+Destination: `LOG_ARCHIVE_REGION` is `ap-south-2` (Hyderabad) by default; only `ap-south-1` and `ap-south-2` pass
+(`infra/scripts/backup/lib/india-guard.sh`, tested in `test/log-archive.test.ts`), and the endpoint host must be an
+India endpoint. Two targets: the Hyderabad off-host bucket from #884 (`LOG_ARCHIVE_ENDPOINT=https://s3.ap-south-2.amazonaws.com`,
+use a prefix-scoped write-only IAM user) or the stack's MinIO (`http://minio:9000` with `ALLOW_LOCAL_ENDPOINTS=1`,
+survives only until the host is lost, so prefer off-host). Credentials are `LOG_ARCHIVE_ACCESS_KEY` and
+`LOG_ARCHIVE_SECRET_KEY` in the env file, never in the repo. Procedure and evidence retrieval:
+[log-archive runbook](../runbooks/log-archive.md).
+
 ## Resource limits (Stage A)
 
-Limits are per container and overridable with `*_MEM` and `*_CPUS`. Typical use is about a third of the limit.
+Limits are per container and overridable with `*_MEM` and `*_CPUS` (`PROMETHEUS_CORE_MEM` for the lean
+Prometheus). Typical use is about a third of the limit. The table is the `full` profile; `core` is prometheus-core
+512 MB, cadvisor 192 MB, alertmanager 128 MB, node-exporter 64 MB and blackbox 64 MB (960 MB, 1.1 CPUs), checked by
+`test/profiles.test.ts` and, on the rendered config, by `infra/docker/test/compose-smoke.sh`.
 
 | Service        | Memory | CPUs |
 | -------------- | ------ | ---- |
@@ -80,6 +130,6 @@ for Prometheus. Locked objects cannot be freed early, so size the bucket for the
 
 ## Tests
 
-`pnpm test:monitoring` (static checks and the retention fixture), `promtool test rules` and the config checks in
+`pnpm test:monitoring` (static checks, profiles, the log-archive guard and the retention fixture), `promtool test rules` and the config checks in
 `.github/workflows/monitoring.yml`, which also runs `test/synthetic-alert.sh`: a synthetic P0 and P1 must reach the
 on-call and fallback receivers through the webhook mock.

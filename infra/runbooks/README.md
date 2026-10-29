@@ -38,6 +38,7 @@ suspected, or when a scheduled rotation or drill falls due.
 | [key-rotation](key-rotation.md)            | KEK, DEKs, secrets, SSH/deploy and backup keys      | Engineering lead |
 | [restore](restore.md)                      | Point-in-time restore (RPO 15 min, RTO 4 h)         | Engineering lead |
 | [dr-hyderabad](dr-hyderabad.md)            | Losing the VPS                                      | Engineering lead |
+| [log-archive](log-archive.md)              | Lean 180-day log archive (no Loki), evidence retrieval | Engineering lead |
 | [court-day-freeze](court-day-freeze.md)    | Deploy freeze in court windows (owned by #100)      | Engineering lead |
 | [workspace-deletion](workspace-deletion.md) | Workspace deletion and crypto-erase                 | Engineering lead |
 | [data-ops](data-ops/runbook.md)            | Source and adapter operations                       | Engineering lead |

@@ -2,7 +2,14 @@
 # same VPS (or a small monitoring VPS next to it). No telemetry leaves the host: log shipping to a
 # SaaS outside India is prohibited (CERT-In, spike §3, §6).
 #
-#   docker compose -f infra/monitoring/compose.monitoring.yml --env-file "$CAUSEDECK_ENV_FILE" up -d --wait
+#   docker compose -f infra/monitoring/compose.monitoring.yml --env-file "$CAUSEDECK_ENV_FILE" \
+#     --profile core up -d --wait      # lean: Prometheus, Alertmanager, cAdvisor, node-exporter, blackbox
+#   ... --profile full up -d --wait    # everything: adds Loki, Grafana and the OpenTelemetry collector
+#
+# Profiles (#886): `core` fits the VPS-1 and VPS-3 budgets (1 GB of memory limits or less) and
+# delivers every alert rule; app metrics arrive over OTLP straight into Prometheus. `full` is the
+# stack as before. Never start both: `prometheus` (full) and `prometheus-core` share ports. Logs
+# on `core` take the lean path in log-retention/ (daily gzip, 180 days in an India bucket).
 #
 # Rules this file keeps (asserted by infra/monitoring/test/config.test.ts):
 #   - nothing is published except on 127.0.0.1; Grafana is reached through the admin gate (Caddy,
@@ -49,6 +56,7 @@ x-hardening: &hardening
 services:
   prometheus:
     <<: *hardening
+    profiles: [full]
     image: prom/prometheus:v3.5.0
     read_only: true
     command:
@@ -73,8 +81,44 @@ services:
           memory: ${PROMETHEUS_MEM:-768m}
           cpus: '${PROMETHEUS_CPUS:-0.5}'
 
+  # Lean Prometheus (#886): same rules as `prometheus`, no Loki, collector or Grafana scrapes. It
+  # also takes application metrics over OTLP, so services point OTEL_EXPORTER_OTLP_ENDPOINT at
+  # http://prometheus:9090/api/v1/otlp (the alias below) instead of the collector.
+  prometheus-core:
+    <<: *hardening
+    profiles: [core]
+    image: prom/prometheus:v3.5.0
+    read_only: true
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-30d}
+      - --storage.tsdb.retention.size=${PROMETHEUS_RETENTION_SIZE:-8GB}
+      - --web.listen-address=:9090
+      - --web.enable-otlp-receiver
+    environment:
+      TZ: UTC
+    volumes:
+      - ./prometheus/prometheus.core.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - ./prometheus/targets:/etc/prometheus/targets:ro
+      - prometheus_data:/prometheus
+    ports:
+      - '127.0.0.1:9090:9090'
+    networks:
+      monitoring:
+        aliases: [prometheus]
+      app:
+        aliases: [prometheus]
+    deploy:
+      resources:
+        limits:
+          memory: ${PROMETHEUS_CORE_MEM:-512m}
+          cpus: '${PROMETHEUS_CPUS:-0.5}'
+
   alertmanager:
     <<: *hardening
+    profiles: [core, full]
     image: prom/alertmanager:v0.28.1
     read_only: true
     # Alertmanager does not expand env vars: render the receivers from env, then exec.
@@ -101,6 +145,9 @@ services:
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
+    # The entrypoint renders the receivers into /tmp; the root filesystem is read-only.
+    tmpfs:
+      - /tmp
     ports:
       - '127.0.0.1:9093:9093'
     networks: [monitoring, egress]
@@ -112,6 +159,7 @@ services:
 
   loki:
     <<: *hardening
+    profiles: [full]
     image: grafana/loki:3.5.1
     read_only: true
     command: ['-config.file=/etc/loki/loki-config.yml', '-config.expand-env=true']
@@ -135,6 +183,7 @@ services:
 
   otel-collector:
     <<: *hardening
+    profiles: [full]
     image: otel/opentelemetry-collector-contrib:0.130.0
     read_only: true
     command: ['--config=/etc/otelcol/otel-collector.yml']
@@ -156,6 +205,7 @@ services:
 
   cadvisor:
     <<: *hardening
+    profiles: [core, full]
     image: gcr.io/cadvisor/cadvisor:v0.52.1
     read_only: true
     # cAdvisor needs host read access; it publishes nothing.
@@ -175,6 +225,7 @@ services:
 
   node-exporter:
     <<: *hardening
+    profiles: [core, full]
     image: prom/node-exporter:v1.9.1
     read_only: true
     command:
@@ -192,6 +243,7 @@ services:
 
   blackbox:
     <<: *hardening
+    profiles: [core, full]
     image: prom/blackbox-exporter:v0.27.0
     read_only: true
     command: ['--config.file=/etc/blackbox/blackbox.yml']
@@ -206,6 +258,7 @@ services:
 
   grafana:
     <<: *hardening
+    profiles: [full]
     image: grafana/grafana:12.1.0
     read_only: true
     environment:

@@ -1,0 +1,9 @@
+# Uploads the rotated Docker logs to the India archive bucket (#886). Env file holds LOG_ARCHIVE_*.
+[Unit]
+Description=CauseDeck lean log archive upload (180-day India bucket)
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/causedeck/prod.env
+ExecStart=/opt/causedeck/infra/monitoring/log-retention/archive-logs.sh

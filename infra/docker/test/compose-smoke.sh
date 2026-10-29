@@ -66,6 +66,11 @@ for spec in "prod-vps3 9216 2048" "staging-vps1 3072 0"; do
   render_preset "$1" | node "$ROOT/infra/docker/test/preset-budget.mjs" "$1" "$2" "$3" \
     || fail "preset $1 is over budget"
 done
+# The lean monitoring profile (#886) must stay within 1 GB, so it fits beside either preset.
+LOKI_S3_ACCESS_KEY=x LOKI_S3_SECRET_KEY=x GRAFANA_ADMIN_PASSWORD=x \
+  docker compose -f "$ROOT/infra/monitoring/compose.monitoring.yml" --profile core config --format json \
+  | node "$ROOT/infra/docker/test/preset-budget.mjs" monitoring-core 1024 \
+  || fail "monitoring core profile is over 1 GB"
 [ "$(render_preset staging-vps1 | node -e 'const c=JSON.parse(require("fs").readFileSync(0));console.log(c.services.web.deploy.replicas+","+c.services.worker.deploy.replicas)')" = "1,1" ] \
   || fail "staging-vps1 must run 1 web and 1 worker"
 

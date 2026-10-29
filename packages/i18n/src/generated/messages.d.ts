@@ -1333,6 +1333,7 @@ export type Messages = {
         contact: string;
         enquiry: string;
         limitation: string;
+        fee: string;
       };
       actions: {
         workspace: {
@@ -1415,6 +1416,10 @@ export type Messages = {
           write: string;
         };
         enquiry: {
+          read: string;
+          write: string;
+        };
+        fee: {
           read: string;
           write: string;
         };

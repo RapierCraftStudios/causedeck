@@ -372,7 +372,8 @@
         "appearance": "Appearances",
         "contact": "Client contacts",
         "enquiry": "Enquiry log",
-        "limitation": "Limitation tracker"
+        "limitation": "Limitation tracker",
+        "fee": "Fees and invoices"
       },
       "actions": {
         "workspace": {
@@ -457,6 +458,10 @@
         "enquiry": {
           "read": "Read the enquiry log",
           "write": "Manage the enquiry log"
+        },
+        "fee": {
+          "read": "See fee agreements, invoices and the ledger",
+          "write": "Manage fee agreements, invoices and the ledger"
         }
       },
       "settings": {

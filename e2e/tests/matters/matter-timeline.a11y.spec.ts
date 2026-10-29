@@ -55,6 +55,6 @@ test.describe('matter timeline accessibility', { tag: '@a11y' }, () => {
     await openMatters(page, asUser, { path: path() });
     await page.locator('body').click();
     await page.keyboard.press('?');
-    await expect(page.getByRole('dialog', { name: 'Help' })).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeVisible();
   });
 });

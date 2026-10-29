@@ -45,7 +45,3 @@ export default function (): void {
 export function readiness(): void {
   pollReadiness();
 }
-
-export function handleSummary(data: unknown): Record<string, string> {
-  return { 'e2e/perf/results/mixed-soak.json': JSON.stringify(data) };
-}

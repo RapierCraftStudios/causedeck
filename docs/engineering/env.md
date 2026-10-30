@@ -80,9 +80,13 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `SKIP_ENV_VALIDATION` | literal(1) | — | never | #4 | — |
 | `DATABASE_URL` | secret url | dev placeholder (non-prod only) | NODE_ENV=production | #6 | #116 |
 | `DATABASE_URL_OWNER` | secret url | dev placeholder (non-prod only) | running migrations | #6 | #116 |
+| `DB_POOL_MAX` | integer (1-200) | `10` | never (defaults to 10) | #805 | — |
+| `DB_AUTH_POOL_MAX` | integer (0-50) | `3` | never (defaults to 3) | #805 | — |
+| `DB_CONNECT_TIMEOUT_SECONDS` | integer (1-120) | `5` | never (defaults to 5) | #805 | — |
 | `APP_URL` | url | `http://localhost:3000` (non-prod only) | NODE_ENV=production | #10 | — |
 | `API_URL` | url | `http://localhost:3001` (non-prod only) | NODE_ENV=production | #14 | — |
 | `BETTER_AUTH_SECRET` | secret (>= 32 chars) | dev placeholder (non-prod only) | NODE_ENV=production | #12 | #116 |
+| `STATUS_SIGNING_KEY` | secret (>= 32 chars) | dev placeholder (non-prod only) | NODE_ENV=production | #769 | — |
 | `KEK_BASE64` | secret base64 (32 bytes) | dev placeholder (non-prod only) | NODE_ENV=production | #21 | #116 |
 | `VAPID_PUBLIC_KEY` | string | — | VAPID_PRIVATE_KEY is set | #23 | #116 |
 | `VAPID_PRIVATE_KEY` | secret | — | VAPID_PUBLIC_KEY is set | #23 | #116 |
@@ -151,4 +155,5 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `SENTRY_ENABLED` | boolean | `false` | never (defaults to false) | #13 | — |
 | `SENTRY_DSN` | url | — | SENTRY_ENABLED=true | #13 | #115 |
 | `NEXT_PUBLIC_APP_URL` | url | `http://localhost:3000` (non-prod only) | NODE_ENV=production | #10 | — |
+| `NEXT_PUBLIC_SUPPORT_WHATSAPP` | string (E.164) | — | never | #94 | — |
 | `KILL_*` | boolean | — | never | #22 | — |

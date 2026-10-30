@@ -1,0 +1,19 @@
+# Dummy values: enough for `terraform validate` and `plan` in CI. Real values go in an untracked
+# terraform.tfvars; the Cloudflare token comes from TF_VAR_cloudflare_api_token.
+domain                 = "example.in"
+cloudflare_account_id  = "00000000000000000000000000000000"
+cloudflare_api_token   = "dummy-token-for-ci-plan-only"
+# ovh_mumbai is the default (D-037); CI plans use manual so no OVH API call is needed.
+vps_provider           = "manual"
+vps_ipv4               = "203.0.113.10"
+vps_ipv6               = "2001:db8::10"
+# vps_provider         = "ovh_mumbai"   # needs OVH_ENDPOINT, OVH_APPLICATION_KEY, OVH_APPLICATION_SECRET, OVH_CONSUMER_KEY
+# vps_datacenter       = "YNM"          # the only allowed value
+owner                  = "founder"
+ssh_allowlist          = ["203.0.113.4/32"]
+deploy_pubkey          = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDummyDummyDummyDummyDummyDummyDummyDummy0 deploy@example"
+
+app_proxied            = false
+enable_app_waf         = false
+enable_access          = false
+residency_decision_ref = ""

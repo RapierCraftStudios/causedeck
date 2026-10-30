@@ -7,6 +7,8 @@
 import { schema, withWorkspace, type Database, type Transaction } from '@causedeck/db';
 import { and, eq, sql } from 'drizzle-orm';
 
+import { isDemoWorkspace } from '../shared/index.ts';
+
 const { caseStatusSnapshot, caseWatch, matter, source, webhookDelivery, webhookEndpoint } = schema;
 
 type Queryable = Database | Transaction;
@@ -44,6 +46,8 @@ export async function emitWebhookEvent(
 ): Promise<number> {
   const { workspaceId } = input;
   const created = await withWorkspace(deps.db, { workspaceId }, async (tx) => {
+    // A demo workspace sends nothing outside it (#93): no delivery is created.
+    if (await isDemoWorkspace(tx, workspaceId)) return [];
     if (input.matterId !== undefined && input.matterId !== null) {
       const [row] = await tx
         .select({ sensitive: matter.sensitive })

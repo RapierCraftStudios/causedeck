@@ -192,8 +192,25 @@
       "action": "Set up two-factor"
     },
     "demoBanner": {
-      "label": "Demo data — fictional",
-      "hint": "Every matter, party and case number in this workspace is invented."
+      "label": "Demo workspace, sample data",
+      "hint": "Sample data only. Nothing here is real, and nothing leaves this workspace.",
+      "leave": "Leave demo",
+      "start": "Start your own workspace"
+    },
+    "demoEntry": {
+      "metaTitle": "Demo workspace",
+      "title": "Explore a demo workspace",
+      "intro": "Pick a sample workspace. Everything in it is made up, nothing is sent outside it, and your session ends after 4 hours.",
+      "chennaiTitle": "Chennai solo advocate",
+      "chennaiDescription": "One advocate on the Madras High Court: writs, bail, suits and appeals.",
+      "bengaluruTitle": "Bengaluru chamber",
+      "bengaluruDescription": "A chamber with a junior and a clerk: High Court of Karnataka and the city courts.",
+      "enter": "Open this demo",
+      "loading": "Starting your demo workspace",
+      "unavailable": "The demo is not available right now. Please try again later.",
+      "error": "We could not start the demo. Please try again.",
+      "busy": "Too many demos were started from this network. Please try again in an hour.",
+      "back": "Back to sign in"
     }
   }
 }

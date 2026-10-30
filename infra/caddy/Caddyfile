@@ -1,0 +1,122 @@
+# Production edge for CauseDeck (#98): automatic TLS, HTTP/3, security headers, rate limits, body
+# limits, JSON access logs and the admin gate. Hostnames are app., api., admin. and static. under
+# $DOMAIN (README). Snippets live in ./snippets and are imported below; the image is built from
+# ./Dockerfile because the rate-limit module is not in stock Caddy.
+#
+# The web app owns its Content-Security-Policy: Next.js mints a nonce per request in
+# apps/web/proxy.ts, which Caddy cannot do, so Caddy passes the app and admin CSP through unchanged.
+{
+	# No admin endpoint: config changes ship as a new container.
+	admin off
+	order rate_limit before basicauth
+
+	servers {
+		protocols h1 h2 h3
+		# Slow-loris protection: bounded header, body, write and idle times.
+		timeouts {
+			read_header 10s
+			read_body 30s
+			write 60s
+			idle 2m
+		}
+		max_header_size 16KB
+		# Only private ranges may set X-Forwarded-For. App and API are DNS-only, so clients reach
+		# Caddy directly and client_ip is the real peer; rate limits and fail2ban key on it.
+		trusted_proxies static private_ranges
+		client_ip_headers X-Forwarded-For
+	}
+}
+
+import snippets/*.caddy
+
+(tls_policy) {
+	tls {
+		protocols tls1.2 tls1.3
+	}
+}
+
+# Compose healthcheck (plain HTTP, no redirect). Known hosts are redirected to HTTPS automatically.
+:80 {
+	@healthz path /healthz
+	handle @healthz {
+		respond "ok" 200
+	}
+	handle {
+		respond "Not found" 404
+	}
+}
+
+app.{$DOMAIN} {
+	import tls_policy
+	import access_log
+	# Camera and microphone are used by the capture sheet and voice recorder on our own origin.
+	import security_headers "camera=(self), microphone=(self), geolocation=()" "same-origin"
+	import body_limits
+	import rate_limits
+	encode zstd gzip
+	# Never let a CDN cache HTML or API responses; assets keep the immutable header Next.js sets.
+	header ?Cache-Control "private, no-store"
+	handle {
+		reverse_proxy web:3000 {
+			lb_try_duration 5s
+		}
+	}
+}
+
+api.{$DOMAIN} {
+	import tls_policy
+	import access_log
+	import security_headers "camera=(), microphone=(), geolocation=()" "same-site"
+	import strict_csp
+	import body_limits
+	import rate_limits
+	encode zstd gzip
+	header ?Cache-Control "private, no-store"
+	handle {
+		reverse_proxy api:3001 {
+			lb_try_duration 5s
+		}
+	}
+}
+
+admin.{$DOMAIN} {
+	import tls_policy
+	import access_log
+	import security_headers "camera=(), microphone=(), geolocation=()" "same-origin"
+	import body_limits
+	import rate_limits
+	import admin_gate
+	encode zstd gzip
+	header ?Cache-Control "private, no-store"
+	handle {
+		reverse_proxy admin:3200 {
+			lb_try_duration 5s
+		}
+	}
+}
+
+# The only hostname that may be proxied and CDN-cached (Cloudflare): hashed build assets only, no
+# cookies, no tenant data. Everything else is a 404.
+static.{$DOMAIN} {
+	import tls_policy
+	import access_log
+	import security_headers "camera=(), microphone=(), geolocation=()" "cross-origin"
+	import strict_csp
+	encode zstd gzip
+	request_body {
+		max_size 1KB
+	}
+	@assets path /_next/static/*
+	handle @assets {
+		reverse_proxy web:3000 {
+			header_up -Cookie
+			header_up -Authorization
+			header_down -Set-Cookie
+			header_down Cache-Control "public, max-age=31536000, immutable"
+			header_down Access-Control-Allow-Origin "https://app.{$DOMAIN}"
+		}
+	}
+	handle {
+		respond "Not found" 404
+	}
+}

@@ -15,8 +15,19 @@ const INDICATOR = 'bg-accent absolute inset-y-1.5 left-0 w-0.5 rounded-full';
 
 /** Whether `pathname` is `item`'s route or below it (Settings is active on every section). */
 export function isNavItemActive(item: NavItem, slug: string, pathname: string): boolean {
-  const base = `/w/${encodeURIComponent(slug)}/${item.id}`;
+  const base = `/w/${encodeURIComponent(slug)}/${item.path}`;
   return pathname === base || pathname.startsWith(`${base}/`);
+}
+
+/** The active item: the deepest route that matches, so People is not active on its Enquiries. */
+export function activeNavItem(
+  items: readonly NavItem[],
+  slug: string,
+  pathname: string,
+): NavItem | undefined {
+  return items
+    .filter((entry) => isNavItemActive(entry, slug, pathname))
+    .sort((a, b) => b.path.length - a.path.length)[0];
 }
 
 export interface SidebarNavProps {
@@ -36,7 +47,7 @@ export function SidebarNav({ slug, role, isEnabled = flagsOff }: SidebarNavProps
   const pathname = usePathname();
   const { collapsed } = useSidebar();
   const items = visibleNavItems({ role, isEnabled });
-  const active = items.find((entry) => isNavItemActive(entry, slug, pathname));
+  const active = activeNavItem(items, slug, pathname);
   const [focused, setFocused] = useState<string | null>(null);
   const tabbable =
     items.find((entry) => entry.id === focused)?.id ?? active?.id ?? items[0]?.id ?? null;

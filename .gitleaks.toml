@@ -9,3 +9,12 @@ useDefault = true
 description = "Court case numbers in adapter fixtures (\"matchKey\": \"CC/9173/2019\"), not secrets"
 regexTarget = "line"
 regexes = ['''"matchKey": "[A-Z][A-Z.()]*/\d+/\d{4}"''']
+# Example and CI env files hold placeholders and mock-safe defaults by design (docs/engineering/env.md).
+# Listed explicitly: a real `.env` or any other file is never allow-listed. The seeded-secret template
+# is a placeholder that the security workflow fills in at run time to prove the scanner fails.
+paths = [
+  '''^\.env\.example$''',
+  '''^\.env\.ci$''',
+  '''^infra/docker/env/[a-z]+\.env\.example$''',
+  '''^infra/security/gitleaks/fixtures/seeded-secret\.txt$''',
+]

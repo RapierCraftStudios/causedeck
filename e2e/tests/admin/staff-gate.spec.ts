@@ -100,12 +100,14 @@ test.describe('admin staff gate', () => {
       'Review queue',
       'Coverage',
       'Flags',
+      'Status',
       'Workspaces',
       'Support sessions',
       'Audit',
       'Business',
       'Growth',
       'Migrations',
+      'Limitation rules',
     ]);
     const headers = (await page.request.get('/flags')).headers();
     expect(headers['x-robots-tag']).toBe('noindex, nofollow');

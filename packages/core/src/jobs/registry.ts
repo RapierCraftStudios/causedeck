@@ -24,6 +24,10 @@ import { courtDataRetention } from './definitions/court-data-retention.ts';
 import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
 import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
+import { backupHealth } from './definitions/backup-health.ts';
+import { enquiryRetention } from './definitions/enquiry-retention.ts';
+import { demoReset } from './definitions/demo-reset.ts';
+import { statusLinkRetention } from './definitions/status-link-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { systemDataOpsEvaluate } from './definitions/data-ops-evaluate.ts';
 import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
@@ -57,6 +61,7 @@ import { deletionTick } from './definitions/deletion-tick.ts';
 import { boardPoll } from './definitions/board-poll.ts';
 import { causelistPoll } from './definitions/causelist-poll.ts';
 import { noticesPoll } from './definitions/notices-poll.ts';
+import { statusPublish } from './definitions/status-publish.ts';
 import { draftingCitationsCheck } from './definitions/drafting-citations-check.ts';
 import { draftingConsistencyCheck } from './definitions/drafting-consistency-check.ts';
 import { draftingExport } from './definitions/drafting-export.ts';
@@ -204,6 +209,10 @@ export const registry = createRegistry([
   systemAuditVerify,
   auditVerify,
   auditRetention,
+  backupHealth,
+  enquiryRetention,
+  statusLinkRetention,
+  demoReset,
   exportBuild,
   draftingExport,
   draftingCitationsCheck,
@@ -235,6 +244,7 @@ export const registry = createRegistry([
   causelistPoll,
   boardPoll,
   noticesPoll,
+  statusPublish,
   judgmentAlertScan,
   portfolioAlertScan,
   statusPoll,
@@ -281,6 +291,10 @@ export type JobMap = RegistryMap<
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,
+    typeof backupHealth,
+    typeof enquiryRetention,
+    typeof statusLinkRetention,
+    typeof demoReset,
     typeof exportBuild,
     typeof draftingExport,
     typeof draftingCitationsCheck,
@@ -312,6 +326,7 @@ export type JobMap = RegistryMap<
     typeof causelistPoll,
     typeof boardPoll,
     typeof noticesPoll,
+    typeof statusPublish,
     typeof judgmentAlertScan,
     typeof portfolioAlertScan,
     typeof statusPoll,

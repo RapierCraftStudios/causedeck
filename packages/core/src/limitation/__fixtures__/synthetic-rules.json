@@ -1,0 +1,33 @@
+{
+  "version": "synthetic-1",
+  "rules": [
+    {
+      "code": "synthetic.suit_recovery",
+      "title": "Synthetic suit for recovery",
+      "statute": "Fictional Limitation Code, Schedule A",
+      "periodValue": 3,
+      "periodUnit": "years",
+      "startEvent": "cause_of_action",
+      "condonable": true,
+      "citation": "Fictional Code s. 1(a)"
+    },
+    {
+      "code": "synthetic.appeal_order",
+      "title": "Synthetic appeal from an order",
+      "statute": "Fictional Limitation Code, Schedule B",
+      "periodValue": 30,
+      "periodUnit": "days",
+      "startEvent": "order_date",
+      "condonable": false
+    },
+    {
+      "code": "synthetic.notice_period",
+      "title": "Synthetic notice period",
+      "statute": "Fictional Limitation Code, Schedule C",
+      "periodValue": 6,
+      "periodUnit": "months",
+      "startEvent": "knowledge",
+      "condonable": true
+    }
+  ]
+}

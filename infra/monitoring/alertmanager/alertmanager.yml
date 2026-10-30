@@ -1,0 +1,66 @@
+# Alertmanager (#102). The __PLACEHOLDERS__ are rendered from env by the container entrypoint
+# (compose.monitoring.yml). P0 and P1 go to the on-call receiver and to a fallback receiver
+# (email plus a second webhook); tickets and info go to the ticket webhook. IST time-of-day muting
+# applies to the ticket and info routes only, to reduce noise: P0/P1 are never muted.
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: '__SMTP_SMARTHOST__'
+  smtp_from: '__ALERT_EMAIL_FROM__'
+  smtp_require_tls: false
+
+time_intervals:
+  - name: night-ist
+    time_intervals:
+      - times:
+          - start_time: '23:00'
+            end_time: '24:00'
+          - start_time: '00:00'
+            end_time: '07:00'
+        location: Asia/Kolkata
+
+route:
+  receiver: ticket
+  group_by: [alertname, severity]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: ['priority=~"P0|P1"']
+      receiver: oncall
+      group_wait: 10s
+      repeat_interval: 1h
+      continue: true
+    - matchers: ['priority=~"P0|P1"']
+      receiver: fallback
+      group_wait: 2m
+      repeat_interval: 2h
+    - matchers: ['severity="info"']
+      receiver: info
+      mute_time_intervals: [night-ist]
+    - matchers: ['severity="ticket"']
+      receiver: ticket
+      mute_time_intervals: [night-ist]
+
+receivers:
+  - name: oncall
+    webhook_configs:
+      - url: '__ONCALL_WEBHOOK_URL__'
+        send_resolved: true
+  - name: fallback
+    email_configs:
+      - to: '__ALERT_EMAIL_TO__'
+        send_resolved: true
+    webhook_configs:
+      - url: '__FALLBACK_WEBHOOK_URL__'
+        send_resolved: true
+  - name: ticket
+    webhook_configs:
+      - url: '__TICKET_WEBHOOK_URL__'
+  - name: info
+    webhook_configs:
+      - url: '__TICKET_WEBHOOK_URL__'
+
+inhibit_rules:
+  - source_matchers: ['alertname="ServiceDown"']
+    target_matchers: ['alertname="ReadyzFailing"']
+    equal: []

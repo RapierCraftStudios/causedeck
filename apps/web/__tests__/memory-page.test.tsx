@@ -25,6 +25,8 @@ const core = vi.hoisted(() => ({
 }));
 const view = vi.hoisted(() => vi.fn());
 
+// The help strip (#94) is covered by its own tests.
+vi.mock('../components/help/surface-help.tsx', () => ({ SurfaceHelp: () => null }));
 vi.mock('next/navigation', () => ({
   notFound: () => {
     throw new Error('NEXT_NOT_FOUND');

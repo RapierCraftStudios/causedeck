@@ -1,5 +1,7 @@
 // Structured JSON logger (spike §1, §6): one JSON object per line on stdout, UTC ISO-8601 time,
 // base service fields, request correlation from AsyncLocalStorage and redaction by default.
+import { isSpanContextValid, trace } from '@opentelemetry/api';
+
 import { serverEnv } from '@causedeck/config/env';
 import { pino, stdTimeFunctions, type DestinationStream, type Level, type Logger } from 'pino';
 
@@ -114,10 +116,21 @@ export function createLogger(options: CreateLoggerOptions): Logger {
         log: (object) => redactDeep(object) as Record<string, unknown>,
       },
       mixin: () => {
+        const fields: Record<string, string> = {};
+        const span = trace.getActiveSpan()?.spanContext();
+        if (span !== undefined && isSpanContextValid(span)) {
+          fields.trace_id = span.traceId;
+          fields.span_id = span.spanId;
+        }
         const ctx = getRequestContext();
-        if (ctx === undefined) return {};
-        const fields: Record<string, string> = { requestId: ctx.requestId };
-        if (ctx.workspaceId !== undefined) fields.workspaceId = ctx.workspaceId;
+        if (ctx === undefined) return fields;
+        // snake_case is the log-pipeline schema (Loki labels, spike §1); camelCase stays for existing readers.
+        fields.requestId = ctx.requestId;
+        fields.request_id = ctx.requestId;
+        if (ctx.workspaceId !== undefined) {
+          fields.workspaceId = ctx.workspaceId;
+          fields.workspace_id = ctx.workspaceId;
+        }
         if (ctx.userId !== undefined) fields.userId = ctx.userId;
         if (ctx.jobId !== undefined) fields.jobId = ctx.jobId;
         return fields;

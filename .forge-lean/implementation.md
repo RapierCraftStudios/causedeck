@@ -24,3 +24,11 @@ Queue drain in `packages/intelligence/src/corpus/ocr-drain.ts` (claim with `for 
 
 ## Sibling-list fix
 Checked the 24 flagged tests: none enumerate the new symbols (they are unrelated mocks or unit tests), so each is recorded in result.json not_members.
+
+### Validate results (per contract)
+- V1 core corpus-ocr, corpus-bulk-import, registry tests: pass (19 tests, rc 0)
+- V2 intelligence src/corpus src/ocr: pass (rc 0, forgedock check)
+- V3 worker registry and schedules tests: pass (rc 0, forgedock check)
+- V4 db src/index.test.ts: pass (rc 0, forgedock check)
+- V5 core cross-tenant services.test.ts: pass (341 tests, rc 0 with a 1700s timeout; forgedock check's 300s limit times out on this host)
+- V6 admin data-ops and server-actions-audit tests: pass (rc 0, forgedock check)

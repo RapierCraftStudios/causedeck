@@ -82,6 +82,15 @@ jobs:
           -e CI=true -e E2E_ASSERT_RESET_MS=2000 -e E2E_SCOPE -e E2E_PERF=only -e E2E_SKIP_BUILD=1
           -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
           node support/playwright.mjs --workers=1 --reporter=list,github --output=test-results-perf
+      # CSP violation reporting (#104): a deliberate violation must reach /v1/csp-report. The spec also
+      # runs in the shards above; this named step keeps the check visible and reuses the build.
+      - name: Playwright CSP violation report
+        if: ${{ !cancelled() && matrix.shard == 1 }}
+        run: >-
+          docker run --rm --network host --ipc host
+          -e CI=true -e E2E_ASSERT_RESET_MS=2000 -e E2E_SCOPE -e E2E_PERF=skip -e E2E_SKIP_BUILD=1
+          -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
+          node support/playwright.mjs tests/security/csp.spec.ts --workers=1 --output=test-results-csp
       # Postgres diagnostics (ship PR #759: CONNECT_TIMEOUT stalls): connection counts by state and
       # the slow-statement and lock-wait log lines (compose.ci.yml). Report-only; never fails the job.
       - name: Postgres diagnostics

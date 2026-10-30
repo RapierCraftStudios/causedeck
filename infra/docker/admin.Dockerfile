@@ -1,10 +1,12 @@
-# Admin image (#309): Next.js standalone server for apps/admin (the staff console), runs as the
-# non-root `node` user and exposes `/healthz`.
+# Admin image (#309): Next.js standalone server for the staff console; exposes /healthz only (no /readyz).
 # Build from the repo root:  docker build -f infra/docker/admin.Dockerfile -t causedeck-admin .
-# Exposure is per deployment and never baked in: put it behind Cloudflare Access (CF_ACCESS_AUD,
-# CF_ACCESS_TEAM_DOMAIN) and/or ADMIN_IP_ALLOWLIST at runtime (docs/engineering/admin-console.md).
+# Hardened for production (#97): digest-pinned base (see base/README.md), tini as PID 1, numeric
+# non-root user, no package-manager caches, UTC. Next.js writes only to /tmp and .next/cache: run
+# with a read-only root filesystem and tmpfs on /tmp and /app/apps/admin/.next/cache.
+# Exposure is per deployment: Caddy allowlist or Cloudflare Access (docs/engineering/admin-console.md).
+ARG NODE_IMAGE=node:22.23.0-bookworm-slim
 
-FROM node:22.23.0-bookworm-slim AS build
+FROM ${NODE_IMAGE} AS build
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable
 WORKDIR /repo
@@ -19,16 +21,21 @@ ARG ADMIN_URL
 ENV ADMIN_URL=${ADMIN_URL}
 RUN pnpm --filter @causedeck/admin build
 
-FROM node:22.23.0-bookworm-slim AS runtime
-ENV NODE_ENV=production PORT=3200 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1
+FROM ${NODE_IMAGE} AS runtime
+ENV NODE_ENV=production TZ=UTC PORT=3200 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends tini \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 WORKDIR /app
 # Standalone output: a traced server.js plus only the node_modules it needs; static assets beside it.
-COPY --from=build --chown=node:node /repo/apps/admin/.next/standalone ./
-COPY --from=build --chown=node:node /repo/apps/admin/.next/static ./apps/admin/.next/static
-USER node
+COPY --from=build /repo/apps/admin/.next/standalone ./
+COPY --from=build /repo/apps/admin/.next/static ./apps/admin/.next/static
+# 1000 is the image's `node` user; numeric so runtimes can enforce runAsNonRoot.
+USER 1000:1000
 EXPOSE 3200
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||3200)+'/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
 STOPSIGNAL SIGTERM
+ENTRYPOINT ["/usr/bin/tini", "--"]
 # Exec form so SIGTERM reaches node directly.
 CMD ["node", "apps/admin/server.js"]

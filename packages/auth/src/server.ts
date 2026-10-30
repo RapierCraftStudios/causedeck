@@ -111,6 +111,12 @@ export const noopSecurityEventRecorder: SecurityEventRecorder = {
 
 export interface CreateAuthDeps {
   db: Database;
+  /**
+   * The handle Better Auth's own adapter reads and writes sessions, users and accounts through
+   * (#805). Pass the small dedicated pool (`authDb`) so `getSession` is not queued behind a page-load
+   * burst on `db`; defaults to `db`. Everything else (security events, SSO, rate limits) uses `db`.
+   */
+  sessionDb?: Database;
   env: AuthEnv;
   mailer: Mailer;
   /** Delivers phone sign-in OTPs. Without it the phone sign-in endpoints are not mounted. */
@@ -339,6 +345,7 @@ function phoneOtpPlugin(sms: SmsSender, logger: AuthLogger, disableSignUp: boole
 
 export function createAuth({
   db,
+  sessionDb = db,
   env,
   mailer,
   sms,
@@ -432,9 +439,9 @@ export function createAuth({
     secret: env.BETTER_AUTH_SECRET.reveal(),
     trustedOrigins: [appUrl.origin],
     database: withSsoProviderLookup(
-      db,
+      sessionDb,
       env.BETTER_AUTH_SECRET.reveal(),
-      drizzleAdapter(db, { provider: 'pg', schema }),
+      drizzleAdapter(sessionDb, { provider: 'pg', schema }),
     ),
     emailAndPassword: { enabled: false },
     socialProviders: env.AUTH_GOOGLE_ENABLED

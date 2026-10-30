@@ -5,9 +5,12 @@ import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { organization } from './schema/auth.ts';
 
 export {
+  authDb,
   closeDb,
   createDb,
   db,
+  hasDedicatedAuthPool,
+  probeDbPool,
   type CreateDbOptions,
   type Database,
   type DbRole,
@@ -15,6 +18,18 @@ export {
   type Transaction,
 } from './client.ts';
 export * from './columns.ts';
+export {
+  authPoolEnabled,
+  DEFAULT_AUTH_POOL_MAX,
+  DEFAULT_CONNECT_TIMEOUT_SECONDS,
+  DEFAULT_POOL_MAX,
+  resolvePool,
+  type PoolEnv,
+  type PoolProbe,
+  type PoolPurpose,
+  type PoolRequest,
+  type PoolSettings,
+} from './pool.ts';
 export {
   checkSchemaConventions,
   GLOBAL_OR_WORKSPACE_TABLES,

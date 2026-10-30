@@ -59,6 +59,8 @@ ADRs 0001-0010 record decisions that were already accepted in the spike (§1, §
 | [0049](0049-limitation-rule-tables.md) | Limitation rule tables and reviewed-only platform rules | Proposed | 2026-10-28 | — |
 | [0050](0050-status-links-token-and-privacy.md) | Client status links: hashed token, security-definer read, no send | Proposed | 2026-10-28 | — |
 | [0051](0051-corpus-storage-enrichment-and-retrieval.md) | Corpus storage, enrichment and retrieval | Proposed | 2026-10-27 | — |
+| [0052](0052-incident-and-key-rotation-policy.md) | Incident and key rotation policy | Proposed | 2026-10-25 | — |
+| [0053](0053-stage-b-c-scale-path.md) | Stage B and C scale path | Proposed | 2026-10-25 | — |
 
 ## Statuses
 

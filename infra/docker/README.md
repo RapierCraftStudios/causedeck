@@ -108,3 +108,53 @@ docker build -f infra/docker/admin.Dockerfile --build-arg ADMIN_URL=https://admi
 docker run --rm -p 127.0.0.1:3200:3200 --env-file .env.admin causedeck-admin
 curl -s http://127.0.0.1:3200/healthz
 ```
+
+## Production and staging stack
+
+`infra/docker/compose.prod.yml` is the single-VPS stack (spike §3.1, Stage A). Staging runs the same file with `env/staging.env.example` (smaller limits, preview data only, never production data). Run it with the env file passed for both interpolation and the containers:
+
+```sh
+export CAUSEDECK_ENV_FILE=/etc/causedeck/prod.env   # 0600, from env/prod.env.example
+docker compose -f infra/docker/compose.prod.yml --env-file "$CAUSEDECK_ENV_FILE" up -d --wait
+bash infra/scripts/migrate.sh                        # owner-role migrations in a one-off container
+bash infra/scripts/healthcheck.sh                    # probes every service
+```
+
+`infra/scripts/bootstrap-vps.sh` prepares a fresh host (firewall: 22 limited to an allowlist, 80, 443; fail2ban; unattended security upgrades; chrony). It is idempotent. Only Caddy publishes ports (80, 443, 443/udp); Postgres and MinIO sit on an internal network. Every container drops all capabilities, sets `no-new-privileges` and uses a read-only root filesystem with tmpfs for scratch paths. `/readyz` fails when the host clock drifts more than 1 s from `CLOCK_DRIFT_REFERENCE_URL`.
+
+### Resource limits (4 vCPU / 8 GB)
+
+Limits are per container; override with the `*_MEM` / `*_CPUS` variables. Memory limits total about 6.4 GB, leaving the rest for the kernel, page cache and the host. CPU limits intentionally oversubscribe 4 vCPU because the services rarely peak together. A 4 vCPU / 8 GB VPS in India costs roughly ₹3 to 6k per month, so prod plus a staging host stays inside the ₹6 to 12k target.
+
+| Service | Replicas | Memory | CPUs | Staging memory / CPUs |
+|---|---|---|---|---|
+| `caddy` | 1 | 128m | 0.25 | 64m / 0.15 |
+| `web` | 2 | 768m | 1.0 | 384m / 0.5 |
+| `api` | 1 | 768m | 1.0 | 384m / 0.5 |
+| `worker` | 2 | 512m | 0.75 | 256m / 0.35 |
+| `admin` | 1 | 384m | 0.5 | 256m / 0.25 |
+| `postgres` | 1 | 2g | 2.0 | 1g / 1.0 |
+| `minio` | 1 | 512m | 0.5 | 256m / 0.25 |
+
+### Sizing presets by box size (#883)
+
+`WEB_REPLICAS` and `WORKER_REPLICAS` default to 2, so with nothing set the rendered config is unchanged. Each box size has a preset env file in `env/` that sets replicas and every `*_MEM` / `*_CPUS`. Append it to the environment's env file (the last assignment wins), then run compose as above:
+
+```sh
+cat infra/docker/env/prod-vps3.env >> /etc/causedeck/prod.env
+```
+
+The sum of limits is a ceiling, not actual use: containers normally sit well below their limits and the kernel reclaims page cache first. Totals are limits times replicas for every service that runs by default (the `init`, `backup` and `migrate` profiles are not counted).
+
+| Box | Preset | Web / worker replicas | Memory limits total | Budget | Notes |
+|---|---|---|---|---|---|
+| OVH VPS-1 (2 vCPU / 4 GB), staging | `env/staging-vps1.env` | 1 / 1 | 2624m | 3 GB or less, Postgres and MinIO included | Same values as `env/staging.env.example` |
+| OVH VPS-3 (6 vCPU / 12 GB), prod | `env/prod-vps3.env` | 2 / 2 | 7936m | 9 GB or less, so 3 GB or more remain for the `core` monitoring profile and the OS | Postgres 3g (never below 2g) |
+| OVH VPS-4 or larger, Stage B | none yet | n/a | n/a | n/a | Postgres moves to its own box (ADR 0053); size the app nodes with the VPS-3 preset or raise `WEB_REPLICAS` |
+| 4 vCPU / 8 GB (original sizing) | none (defaults) | 2 / 2 | 6400m | n/a | The table above |
+
+`infra/docker/test/compose-smoke.sh` renders each preset with `docker compose config` and fails if its total exceeds the budget; `node --test infra/scripts/` checks the same statically.
+
+### Backups and restore (#101)
+
+WAL-G archives WAL continuously (`archive_timeout = 60`, encrypted with a libsodium key file) and the `backup` profile runs the nightly base backup (14 daily + 8 weekly, `BACKUP_RETAIN_*`), the one-minute WAL freshness check and the nightly MinIO replication to a second India location (`minio-replicate`, versioned, deletes never propagated). All storage targets pass `infra/scripts/backup/lib/india-guard.sh`. Variables: `postgres/wal-g.env.example`, `env/prod.env.example`. Restore, drills, key custody and alert thresholds: `infra/runbooks/restore.md`; losing the VPS: `infra/runbooks/dr-hyderabad.md`.

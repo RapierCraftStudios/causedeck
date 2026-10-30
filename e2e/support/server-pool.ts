@@ -98,6 +98,8 @@ export function serverEnv(
     PORT: String(port),
     APP_URL: originFor(port),
     NEXT_PUBLIC_APP_URL: originFor(port),
+    // The CSP names `${API_URL}/v1/csp-report` only when API_URL is set (#104); csp.spec answers it.
+    API_URL: inheritedEnv.API_URL ?? 'http://localhost:3101',
     DATABASE_URL: dbUrl,
     BETTER_AUTH_SECRET: E2E_AUTH_SECRET,
     ...E2E_VAPID,

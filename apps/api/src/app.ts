@@ -11,6 +11,7 @@ import type { WhatsAppInboundProvider } from '@causedeck/core/whatsapp-link';
 import type { JobSender } from '@causedeck/core/jobs';
 import type { Database } from '@causedeck/db';
 import { createHealthHandlers, type HealthCheck, type Logger } from '@causedeck/observability';
+import { clockDriftCheckFromEnv } from '@causedeck/observability/health';
 import { Scalar } from '@scalar/hono-api-reference';
 import { sql } from 'drizzle-orm';
 
@@ -32,6 +33,11 @@ import { requestLogger } from './middleware/logger.ts';
 import { rateLimit, type RateLimitOptions, type RateLimitRule } from './middleware/rate-limit.ts';
 import { requestId } from './middleware/request-id.ts';
 import { secureHeaders } from './middleware/secure-headers.ts';
+import {
+  CSP_REPORT_MAX_BYTES,
+  CSP_REPORT_PATH,
+  CSP_REPORT_RATE_LIMIT,
+} from './routes/csp-report.ts';
 import { v1Router } from './routes/v1/index.ts';
 
 export interface AppDeps {
@@ -87,11 +93,13 @@ export const DOCS_PATH = '/docs';
 export function createApp(deps: AppDeps): AppRouter {
   const { db, logger } = deps;
   const origins = allowedOrigins(deps.allowedOrigins);
+  const clock = clockDriftCheckFromEnv();
   const health = createHealthHandlers({
     checks: {
       db: async () => {
         await db.execute(sql`select 1`);
       },
+      ...(clock !== undefined && { clock }),
       ...deps.readyChecks,
     },
   });
@@ -109,7 +117,13 @@ export function createApp(deps: AppDeps): AppRouter {
   });
   app.use('*', secureHeaders);
   app.use('*', cors(origins));
-  app.use('*', bodyLimit(deps.bodyLimit));
+  app.use(
+    '*',
+    bodyLimit({
+      ...deps.bodyLimit,
+      groups: { [CSP_REPORT_PATH]: CSP_REPORT_MAX_BYTES, ...deps.bodyLimit?.groups },
+    }),
+  );
 
   app.get('/healthz', (c) => health.healthz(c.req.raw));
   app.get('/readyz', (c) => health.readyz(c.req.raw));
@@ -126,6 +140,7 @@ export function createApp(deps: AppDeps): AppRouter {
         groups: {
           '/v1/webhooks': WEBHOOK_RATE_LIMIT,
           '/v1/inbound': WEBHOOK_RATE_LIMIT,
+          [CSP_REPORT_PATH]: CSP_REPORT_RATE_LIMIT,
           ...deps.rateLimit?.groups,
         },
       }),
@@ -135,6 +150,7 @@ export function createApp(deps: AppDeps): AppRouter {
     ...(deps.billing && { billing: { ...deps.billing, logger, now } }),
     ...(deps.inboundEmail && { inboundEmail: { ...deps.inboundEmail, logger, now } }),
     ...(deps.inboundWhatsapp && { inboundWhatsapp: { ...deps.inboundWhatsapp, logger, now } }),
+    cspReport: { logger },
     ...(deps.routes && { routes: deps.routes }),
   });
   app.route(`/${API_VERSION}`, v1);

@@ -9,6 +9,7 @@ import type { MiddlewareHandler } from 'hono';
 import { publicV1Router } from '../../public/v1/index.ts';
 import { createRouter, type AppEnv, type AppRouter } from '../../lib/openapi.ts';
 
+import { cspReportRouter, type CspReportDeps } from '../csp-report.ts';
 import { inboundEmailRouter, type InboundEmailDeps } from '../inbound-email.ts';
 import { inboundWhatsAppRouter, type InboundWhatsAppDeps } from '../inbound-whatsapp.ts';
 import { razorpayWebhookRouter, type RazorpayWebhookDeps } from '../webhooks/razorpay.ts';
@@ -29,6 +30,8 @@ export interface V1Options {
   inboundEmail?: Omit<InboundEmailDeps, 'db'>;
   /** Inbound WhatsApp deps (#680); without a provider the route rejects every call with 400. */
   inboundWhatsapp?: Omit<InboundWhatsAppDeps, 'db'>;
+  /** CSP violation reports (#104). */
+  cspReport?: CspReportDeps;
   /** Extra routes (tests, and later webhook groups) registered after the built-in ones. */
   routes?: (v1: AppRouter) => void;
 }
@@ -41,6 +44,7 @@ export function v1Router({
   billing,
   inboundEmail,
   inboundWhatsapp,
+  cspReport,
   routes,
 }: V1Options): AppRouter {
   const v1 = createRouter();
@@ -72,6 +76,7 @@ export function v1Router({
       ...(inboundWhatsapp ?? { provider: null, logger: { info: noop, warn: noop } }),
     }),
   );
+  v1.route('/', cspReportRouter(cspReport ?? { logger: { info: noop, warn: noop } }));
   routes?.(v1);
   return v1;
 }

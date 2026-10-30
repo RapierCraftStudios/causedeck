@@ -24,6 +24,7 @@ import { courtDataRetention } from './definitions/court-data-retention.ts';
 import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
 import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
+import { backupHealth } from './definitions/backup-health.ts';
 import { enquiryRetention } from './definitions/enquiry-retention.ts';
 import { demoReset } from './definitions/demo-reset.ts';
 import { statusLinkRetention } from './definitions/status-link-retention.ts';
@@ -208,6 +209,7 @@ export const registry = createRegistry([
   systemAuditVerify,
   auditVerify,
   auditRetention,
+  backupHealth,
   enquiryRetention,
   statusLinkRetention,
   demoReset,
@@ -289,6 +291,7 @@ export type JobMap = RegistryMap<
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,
+    typeof backupHealth,
     typeof enquiryRetention,
     typeof statusLinkRetention,
     typeof demoReset,

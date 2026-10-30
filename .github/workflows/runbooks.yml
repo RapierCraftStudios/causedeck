@@ -1,0 +1,60 @@
+name: Runbooks
+
+# Validates the incident and key-rotation runbooks (#103): structure, owners, Last drilled, links and
+# secret patterns (node tests), a gitleaks scan scoped to infra/runbooks, the evidence-export test
+# against a seeded fake Loki, and rotate-kek.sh against staging-like data in a scratch database
+# (every document decrypts after rotation, the old KEK is rejected).
+
+on:
+  pull_request:
+    paths:
+      - 'infra/runbooks/**'
+      - 'infra/scripts/runbooks/**'
+      - 'infra/scripts/backup/lib/india-guard.sh'
+      - 'packages/storage/src/**'
+      - '.github/workflows/runbooks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'infra/runbooks/**'
+      - 'infra/scripts/runbooks/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runbooks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  runbooks:
+    name: Structure, links, secrets and evidence export
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Runbook structure, links and secret patterns, evidence export
+        run: node --experimental-strip-types --no-warnings --test infra/runbooks/test/
+      - name: gitleaks on infra/runbooks
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo
+          ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
+          dir --redact --verbose --exit-code 1 --config /repo/.gitleaks.toml
+          /repo/infra/runbooks
+
+  rotate-kek:
+    name: rotate-kek.sh against staging-like data
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Rotate the KEK and prove decrypt-after-rotation
+        run: pnpm --filter @causedeck/storage exec vitest run src/__tests__/rotate-kek-script.test.ts

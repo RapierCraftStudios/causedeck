@@ -1,0 +1,29 @@
+# Dummy values: enough for `terraform validate` and `plan` in CI. Real values go in an untracked
+# terraform.tfvars; the Cloudflare token comes from TF_VAR_cloudflare_api_token.
+plan_with_dummy_credentials = true
+aws_region                  = "ap-south-1"
+replica_region              = "ap-south-2"
+account_id                  = "123456789012"
+owner                       = "founder"
+
+kms_admin_role_arns        = ["arn:aws:iam::123456789012:role/causedeck-kms-admin"]
+kms_user_role_arns         = ["arn:aws:iam::123456789012:role/causedeck-restore"]
+app_role_arns              = ["arn:aws:iam::123456789012:role/causedeck-app"]
+vpc_id                     = "vpc-00000000000000001"
+private_subnet_ids         = ["subnet-00000000000000001", "subnet-00000000000000002"]
+public_subnet_ids          = ["subnet-00000000000000003", "subnet-00000000000000004"]
+replica_vpc_id             = "vpc-00000000000000002"
+replica_private_subnet_ids = ["subnet-00000000000000005", "subnet-00000000000000006"]
+app_security_group_ids     = ["sg-00000000000000001"]
+certificate_arn            = "arn:aws:acm:ap-south-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
+multi_az                   = true
+
+domain                = "example.in"
+cloudflare_account_id = "00000000000000000000000000000000"
+cloudflare_zone_id    = "00000000000000000000000000000000"
+cloudflare_api_token  = "dummy-token-for-ci-plan-only-00000000000"
+
+enable_cloudflare_lb   = false
+residency_decision_ref = ""
+approval_doc           = ""
+enable_stage_c         = false

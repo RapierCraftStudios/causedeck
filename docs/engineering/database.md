@@ -34,6 +34,44 @@ pnpm db:check-rls  # live catalog: RLS on every tenant table, no cross-workspace
 The owner-role client (`src/owner.ts`) and the migrator (`src/migrate.ts`) are deliberately not
 exported: application code never holds schema-owner credentials.
 
+## Connection pools and sizing (#805)
+
+Every process holds its own postgres-js pools; nothing is shared across replicas.
+
+| Pool | Env | Default | Used by |
+| ---- | --- | ------- | ------- |
+| app (`db`) | `DB_POOL_MAX` | 10 | page-load and API queries, jobs' app-role work |
+| auth (`authDb`) | `DB_AUTH_POOL_MAX` | 3 (0 shares the app pool) | Better Auth's adapter only: `getSession`, sign-in, SSO lookups |
+| owner | none | 1 | migrations and the worker's pg-boss |
+| connect timeout | `DB_CONNECT_TIMEOUT_SECONDS` | 5 s | every pool (postgres-js default was 30 s) |
+
+Why a separate auth pool: a page load fans out many concurrent queries over the app pool of 10. When transactions
+sit idle-in-transaction under CPU pressure, new work queues, and `getSession` queued with it ("Failed to get
+session", every page broken). Session lookups are short; three connections of their own keep them out of that queue.
+The pools are told apart in `pg_stat_activity` by `application_name` (`causedeck-app`, `causedeck-app-auth`).
+
+Sizing rule. Peak server connections = sum over processes of (`DB_POOL_MAX` + `DB_AUTH_POOL_MAX` + 1 owner where it
+applies) and must stay below Postgres `max_connections` minus 10 for superuser, WAL-G, and monitoring.
+
+| Preset | Processes (replicas) | Per process | Peak connections |
+| ------ | -------------------- | ----------- | ---------------- |
+| prod-vps3 | web 2, api 1, admin 1, worker 2 | web, api, admin: 10 + 3; worker: 10 + 1 owner | 2x13 + 13 + 13 + 2x11 = 74 |
+| staging-vps1 | web 1, api 1, admin 1, worker 1 | same | 13 + 13 + 13 + 11 = 50 |
+
+Set `max_connections` to 100 on both (the compose default), or shrink `DB_POOL_MAX` per process. Behind PgBouncer in
+transaction mode (#887), the app pools talk to PgBouncer, not Postgres: size `DB_POOL_MAX` for what one process may
+want at once (client side, it can exceed the server pool) and set PgBouncer's `default_pool_size` against
+`max_connections` using the same sum. `prepare: false` is already set for transaction pooling. Keep the connect
+timeout short either way: a saturated pool should fail in 5 s and show up in the alerts below, not hang a page.
+
+Signals (`@causedeck/observability/db-pool-metrics`, started by web, api and worker): `causedeck_db_pool_wait_seconds`
+(a probe query's time, which queues like any query), `causedeck_db_pool_connections`, `causedeck_db_pool_active`,
+`causedeck_db_idle_in_transaction`, `causedeck_db_idle_in_transaction_max_seconds` and
+`causedeck_db_pool_probe_errors_total`, each per `pool` (`app`, `auth`). Alerts: `DbPoolWaitHigh` (over 1 s for
+3 min), `DbIdleInTransactionLong` (over 5 s for 2 min), `DbConnectFailures` (any failed probe, pages P1); see
+`infra/monitoring/prometheus/rules/alerts.yml`. The acceptance load test (p95 session lookup under 50 ms and no
+idle-in-transaction over 1 s under #105's k6 profile) runs against a deployed stack, not in CI.
+
 ## Role model
 
 Defined once in `infra/docker/postgres/init/02-roles.sql` and replayed verbatim by the test

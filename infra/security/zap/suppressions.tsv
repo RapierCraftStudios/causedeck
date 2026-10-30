@@ -1,0 +1,2 @@
+# Reviewed ZAP suppressions (infra/runbooks/vuln-triage.md): pluginid TAB reason TAB expiry (YYYY-MM-DD, max 90 days).
+# check-target.mjs alerts fails on medium or higher alerts not listed here; an expired row suppresses nothing.

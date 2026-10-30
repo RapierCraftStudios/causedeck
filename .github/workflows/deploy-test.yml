@@ -1,0 +1,36 @@
+name: Deploy test
+
+# Runs infra/scripts/deploy.test.sh (#100) on the runner's Docker daemon: rolling order, zero-downtime
+# probe, release.json and /readyz sha, automatic rollback of a deliberately unhealthy image.
+
+on:
+  pull_request:
+    paths:
+      - 'infra/scripts/**'
+      - 'infra/docker/compose.prod.yml'
+      - 'packages/db/migrations/**'
+      - '.github/workflows/deploy-test.yml'
+  push:
+    branches: [main, staging]
+    paths:
+      - 'infra/scripts/**'
+      - 'infra/docker/compose.prod.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-test-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  deploy-test:
+    name: Deploy, rollback and zero-downtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Deploy pipeline test
+        run: bash infra/scripts/deploy.test.sh

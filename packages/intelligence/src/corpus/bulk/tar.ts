@@ -30,7 +30,7 @@ export function gunzipIfNeeded(
   key: string,
 ): AsyncIterable<Uint8Array> {
   if (!/\.(tar\.gz|tgz)$/i.test(key)) return chunks;
-  return Readable.from(chunks).pipe(createGunzip()) as unknown as AsyncIterable<Uint8Array>;
+  return Readable.from(chunks).pipe(createGunzip());
 }
 
 /** Regular-file entries of a tar stream, in archive order. */

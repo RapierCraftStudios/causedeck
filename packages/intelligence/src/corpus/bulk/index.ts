@@ -9,7 +9,12 @@ export {
   type BulkImportDeps,
 } from './import.ts';
 export { indexMetadata, mapMetadataRow, rowEntryName, type BulkMetadata } from './metadata.ts';
-export { BulkHttpError, createS3HttpSource, type HttpFetch } from './s3-http.ts';
+export {
+  BULK_DATASET_HOSTS,
+  BulkHttpError,
+  createS3HttpSource,
+  type HttpFetch,
+} from './s3-http.ts';
 export { gunzipIfNeeded, readTar, type TarEntry } from './tar.ts';
 export type {
   BulkBudget,

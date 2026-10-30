@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { mapMetadataRow } from './metadata.ts';
 import { listArchives, metadataKey, runBulkImport, type BulkImportDeps } from './import.ts';
-import { createS3HttpSource } from './s3-http.ts';
+import { BulkHttpError, createS3HttpSource } from './s3-http.ts';
 import { readTar } from './tar.ts';
 import type { BulkObjectSource } from './types.ts';
 
@@ -267,5 +267,16 @@ describe('bulk helpers', () => {
     await expect(
       createS3HttpSource(BASE, () => Promise.resolve(new Response('', { status: 404 }))).read('k'),
     ).rejects.toThrow('404');
+  });
+
+  it('opens only the two dataset buckets, over https', () => {
+    const ok = () => Promise.resolve(new Response(''));
+    expect(() => createS3HttpSource('https://example.com/', ok)).toThrow(BulkHttpError);
+    expect(() =>
+      createS3HttpSource('http://indian-supreme-court-judgments.s3.ap-south-1.amazonaws.com/', ok),
+    ).toThrow(BulkHttpError);
+    expect(() =>
+      createS3HttpSource('https://indian-high-court-judgments.s3.ap-south-1.amazonaws.com/', ok),
+    ).not.toThrow();
   });
 });

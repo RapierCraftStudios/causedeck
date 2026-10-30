@@ -22,11 +22,24 @@ export class BulkHttpError extends Error {
   }
 }
 
+/**
+ * The only hosts a bulk import reads: the two CC-BY-4.0 AWS Open Data buckets (ADR 0051, D-053).
+ * Another host is refused, so a source row cannot point the importer anywhere else.
+ */
+export const BULK_DATASET_HOSTS: ReadonlySet<string> = new Set([
+  'indian-supreme-court-judgments.s3.ap-south-1.amazonaws.com',
+  'indian-high-court-judgments.s3.ap-south-1.amazonaws.com',
+]);
+
 export function createS3HttpSource(
   baseUrl: string,
+  // nosemgrep: infra.security.semgrep.causedeck.fetch-to-unlisted-host -- anonymous reads pinned to BULK_DATASET_HOSTS below
   fetchFn: HttpFetch = (url) => fetch(url),
 ): BulkObjectSource {
   const base = new URL(baseUrl);
+  if (base.protocol !== 'https:' || !BULK_DATASET_HOSTS.has(base.host)) {
+    throw new BulkHttpError(0);
+  }
   const get = async (url: string): Promise<Response> => {
     if (new URL(url).host !== base.host) throw new BulkHttpError(0);
     const response = await fetchFn(url);

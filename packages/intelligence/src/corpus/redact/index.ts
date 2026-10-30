@@ -14,5 +14,9 @@ export {
   type LowConfidenceSpan,
   type ResolverReply,
 } from './gateway.ts';
-export { detectSensitiveCategory, SENSITIVE_CATEGORIES, type SensitiveCategory } from './sensitive.ts';
+export {
+  detectSensitiveCategory,
+  SENSITIVE_CATEGORIES,
+  type SensitiveCategory,
+} from './sensitive.ts';
 export type { PersonRole } from './roles.ts';

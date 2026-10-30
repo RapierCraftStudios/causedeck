@@ -46,7 +46,8 @@ export const AUDIT_ACTIONS = {
   // A court order or request to mask a judgment was applied (#892). Metadata holds ids, status and the legal basis, never text.
   'corpus.mask_applied': {
     security: true,
-    description: 'Staff applied a mask request to a judgment: title masked, text re-redacted, caches cleared',
+    description:
+      'Staff applied a mask request to a judgment: title masked, text re-redacted, caches cleared',
   },
   // The public status page's incident log (#770). Metadata holds the change and the old and new state.
   'incident.changed': {

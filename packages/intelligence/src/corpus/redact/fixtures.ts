@@ -17,11 +17,88 @@ export interface LabelledJudgment {
   victimIdentifiers: string[];
 }
 
-const FIRST = ['Ramesh', 'Suresh', 'Lakshmi', 'Anitha', 'Prakash', 'Mohan', 'Geetha', 'Venkatesh', 'Shobha', 'Manjunath', 'Farhan', 'Salma', 'Arjun', 'Kavitha', 'Harish', 'Meena', 'Rajesh', 'Sunita', 'Naveen', 'Divya', 'Imran', 'Rukmini', 'Dinesh', 'Pooja'];
-const SUR = ['Rao', 'Reddy', 'Naidu', 'Gowda', 'Iyer', 'Nair', 'Menon', 'Sharma', 'Verma', 'Singh', 'Patel', 'Shetty', 'Kulkarni', 'Joshi', 'Pillai', 'Banerjee', 'Khan', 'Ansari', 'Fernandes', 'Mathew', 'Thomas', 'Hegde', 'Murthy', 'Bhat'];
-const JUDGES = ['Suraj Govindaraj', 'Krishna Dixit', 'Ashok Kinagi', 'Srishananda Bellur', 'Hemant Chandangoudar', 'Sathyanarayan Pandey', 'Devdas Raghunath', 'Anitha Sundaram'];
-const ADVOCATES = ['Kiran Raghavan', 'Deepa Venugopal', 'Sandeep Chitnis', 'Rohini Mudgal', 'Ganesh Prabhu', 'Tara Mehrotra', 'Vivek Chandran', 'Neeta Salian'];
-const PLACES = ['Hubballi', 'Mysuru', 'Mangaluru', 'Belagavi', 'Tumakuru', 'Chennai', 'Madurai', 'Salem'];
+const FIRST = [
+  'Ramesh',
+  'Suresh',
+  'Lakshmi',
+  'Anitha',
+  'Prakash',
+  'Mohan',
+  'Geetha',
+  'Venkatesh',
+  'Shobha',
+  'Manjunath',
+  'Farhan',
+  'Salma',
+  'Arjun',
+  'Kavitha',
+  'Harish',
+  'Meena',
+  'Rajesh',
+  'Sunita',
+  'Naveen',
+  'Divya',
+  'Imran',
+  'Rukmini',
+  'Dinesh',
+  'Pooja',
+];
+const SUR = [
+  'Rao',
+  'Reddy',
+  'Naidu',
+  'Gowda',
+  'Iyer',
+  'Nair',
+  'Menon',
+  'Sharma',
+  'Verma',
+  'Singh',
+  'Patel',
+  'Shetty',
+  'Kulkarni',
+  'Joshi',
+  'Pillai',
+  'Banerjee',
+  'Khan',
+  'Ansari',
+  'Fernandes',
+  'Mathew',
+  'Thomas',
+  'Hegde',
+  'Murthy',
+  'Bhat',
+];
+const JUDGES = [
+  'Suraj Govindaraj',
+  'Krishna Dixit',
+  'Ashok Kinagi',
+  'Srishananda Bellur',
+  'Hemant Chandangoudar',
+  'Sathyanarayan Pandey',
+  'Devdas Raghunath',
+  'Anitha Sundaram',
+];
+const ADVOCATES = [
+  'Kiran Raghavan',
+  'Deepa Venugopal',
+  'Sandeep Chitnis',
+  'Rohini Mudgal',
+  'Ganesh Prabhu',
+  'Tara Mehrotra',
+  'Vivek Chandran',
+  'Neeta Salian',
+];
+const PLACES = [
+  'Hubballi',
+  'Mysuru',
+  'Mangaluru',
+  'Belagavi',
+  'Tumakuru',
+  'Chennai',
+  'Madurai',
+  'Salem',
+];
 
 // Distinct people per fixture: the index walks the pools with co-prime steps.
 const person = (i: number, k: number): { full: string; first: string; sur: string } => {
@@ -29,11 +106,11 @@ const person = (i: number, k: number): { full: string; first: string; sur: strin
   const sur = SUR[(i * 11 + k * 5 + 3) % SUR.length] ?? 'Rao';
   return { full: `${first} ${sur}`, first, sur };
 };
-const judge = (i: number): string => JUDGES[i % JUDGES.length] ?? JUDGES[0]!;
-const advocate = (i: number, k: number): string => ADVOCATES[(i + k * 3) % ADVOCATES.length] ?? ADVOCATES[0]!;
+const judge = (i: number): string => JUDGES[i % JUDGES.length] ?? '';
+const advocate = (i: number, k: number): string => ADVOCATES[(i + k * 3) % ADVOCATES.length] ?? '';
 
 const header = (i: number, caseType: string): string =>
-  `IN THE HIGH COURT OF KARNATAKA AT BENGALURU\nDATED THIS THE ${10 + (i % 18)}TH DAY OF MARCH 2025\nBEFORE\nTHE HON'BLE MR. JUSTICE ${judge(i).toUpperCase()}\n${caseType} No. ${1000 + i} of 2024`;
+  `IN THE HIGH COURT OF KARNATAKA AT BENGALURU\nDATED THIS THE ${String(10 + (i % 18))}TH DAY OF MARCH 2025\nBEFORE\nTHE HON'BLE MR. JUSTICE ${judge(i).toUpperCase()}\n${caseType} No. ${String(1000 + i)} of 2024`;
 
 function criminalAppeal(i: number): LabelledJudgment {
   const a = person(i, 1);
@@ -45,20 +122,40 @@ function criminalAppeal(i: number): LabelledJudgment {
   const name = caps ? a.full.toUpperCase() : a.full;
   const p1 = `${header(i, 'CRIMINAL APPEAL')}
 BETWEEN:
-${name} S/o Late ${f.full}, aged 41 years, R/o ${place}, Karnataka 560001 ... APPELLANT
+${name} S/o Late ${f.full}, aged 41 years, R/o ${String(place)}, Karnataka 560001 ... APPELLANT
 (By Sri. ${advocate(i, 1)}, Advocate)
 AND:
-State of Karnataka by the Station House Officer, ${place} Police Station ... RESPONDENT
+State of Karnataka by the Station House Officer, ${String(place)} Police Station ... RESPONDENT
 (By Sri. ${advocate(i, 2)}, Additional State Public Prosecutor)
 This appeal is filed under Section 374(2) of the Code of Criminal Procedure against the judgment dated 5.1.2024.`;
   const p2 = `The case of the prosecution is that the complainant ${c.full} lodged a complaint on 3.2.2022 alleging that ${a.first} had cheated him of Rs. 4,50,000. PW-1 ${c.full} deposed accordingly. PW-2 ${w.full} turned hostile. ${a.first} denied the charge. Mobile number 98450 12345 and email ${a.first.toLowerCase()}@example.com were produced. The vehicle KA 05 MN 1234 was seized. Account No. 123456789012 was frozen.`;
   const p3 = `Learned counsel ${advocate(i, 1)} submits that ${a.full} is innocent and ${w.first} is an interested witness. ${advocate(i, 2)}, learned counsel for the State, opposes. Having heard, the court finds that ${a.sur} was rightly convicted under Section 420 of the Indian Penal Code. The appeal is dismissed.`;
   return {
-    id: `crl-appeal-${i}`,
+    id: `crl-appeal-${String(i)}`,
     kind: 'criminal appeal',
     pages: [p1, p2, p3],
-    persons: [a.full, f.full, c.full, w.full, a.first, w.first, a.sur, '98450 12345', `${a.first.toLowerCase()}@example.com`, 'KA 05 MN 1234', '123456789012'],
-    keep: [judge(i), advocate(i, 1), advocate(i, 2), 'State of Karnataka', 'Section 420 of the Indian Penal Code', '3.2.2022', 'Rs. 4,50,000'],
+    persons: [
+      a.full,
+      f.full,
+      c.full,
+      w.full,
+      a.first,
+      w.first,
+      a.sur,
+      '98450 12345',
+      `${a.first.toLowerCase()}@example.com`,
+      'KA 05 MN 1234',
+      '123456789012',
+    ],
+    keep: [
+      judge(i),
+      advocate(i, 1),
+      advocate(i, 2),
+      'State of Karnataka',
+      'Section 420 of the Indian Penal Code',
+      '3.2.2022',
+      'Rs. 4,50,000',
+    ],
     sensitive: null,
     victimIdentifiers: [],
   };
@@ -67,7 +164,12 @@ This appeal is filed under Section 374(2) of the Code of Criminal Procedure agai
 function civilSuit(i: number): LabelledJudgment {
   const d = person(i, 1);
   const w = person(i, 2);
-  const co = ['Sri Lakshmi Textiles Private Limited', 'Karnataka State Financial Corporation', 'Canara Bank'][i % 3] ?? 'Canara Bank';
+  const co =
+    [
+      'Sri Lakshmi Textiles Private Limited',
+      'Karnataka State Financial Corporation',
+      'Canara Bank',
+    ][i % 3] ?? 'Canara Bank';
   const p1 = `${header(i, 'REGULAR FIRST APPEAL')}
 BETWEEN:
 ${co} ... PLAINTIFF
@@ -78,11 +180,19 @@ ${d.full} ... DEFENDANT
   const p2 = `The plaintiff claims Rs. 12,00,000 due under a loan agreement dated 7.8.2019. DW-1 ${w.full} was examined. The defendant ${d.full}, residing at 14, MG Road, Mysuru, admitted the signature. ${d.first} contends that limitation expired.`;
   const p3 = `Counsel ${advocate(i, 2)} relies on Article 137 of the Limitation Act. ${d.sur} failed to prove payment. The suit is decreed against ${d.full} with costs.`;
   return {
-    id: `civil-${i}`,
+    id: `civil-${String(i)}`,
     kind: 'civil suit',
     pages: [p1, p2, p3],
     persons: [d.full, w.full, d.first, d.sur, '14, MG Road, Mysuru'],
-    keep: [judge(i), advocate(i, 1), advocate(i, 2), co, 'Article 137 of the Limitation Act', 'Rs. 12,00,000', '7.8.2019'],
+    keep: [
+      judge(i),
+      advocate(i, 1),
+      advocate(i, 2),
+      co,
+      'Article 137 of the Limitation Act',
+      'Rs. 12,00,000',
+      '7.8.2019',
+    ],
     sensitive: null,
     victimIdentifiers: [],
   };
@@ -102,7 +212,7 @@ State of Karnataka ... RESPONDENT
   const p2 = `The petition seeks regular bail. The complainant ${c.full} alleges that the petitioner ${p.first} threatened him. ${wf.full}, wife of the complainant, supports the allegation. The accused ${p.sur} is in custody since 2.1.2025.`;
   const p3 = `${advocate(i, 1)} argues that ${p.full} has no antecedents. The Complainant's wife ${wf.first} is not an eyewitness. Bail is granted to ${p.full} on conditions.`;
   return {
-    id: `bail-${i}`,
+    id: `bail-${String(i)}`,
     kind: 'bail petition',
     pages: [p1, p2, p3],
     persons: [p.full, c.full, wf.full, p.first, wf.first, p.sur],
@@ -155,7 +265,8 @@ const SENSITIVE_TEMPLATES: Record<
 };
 
 function sensitive(i: number, key: string): LabelledJudgment {
-  const t = SENSITIVE_TEMPLATES[key]!;
+  const t = SENSITIVE_TEMPLATES[key];
+  if (t === undefined) throw new Error(`unknown sensitive template ${key}`);
   const a = person(i, 1);
   const v = person(i, 2);
   const par = person(i, 3);
@@ -181,13 +292,21 @@ State of Karnataka ... RESPONDENT
   const p2 = `${t.extra} ${v.first} is identified only in the sealed cover. ${victimBlock} Born on 12.4.2010 (date of birth), residing at 22, Temple Street, Hubballi.`;
   const p3 = `${operative} ${v.sur} family is directed to receive compensation.`;
   return {
-    id: `sensitive-${key}-${i}`,
+    id: `sensitive-${key}-${String(i)}`,
     kind: `sensitive ${key}`,
     pages: [p1, p2, p3],
     persons: [a.full, v.full, par.full, a.first, v.first, v.sur, a.sur],
     keep: [judge(i), advocate(i, 1), advocate(i, 2), 'State of Karnataka', t.statute],
     sensitive: t.category,
-    victimIdentifiers: [v.full, v.first, par.full, 'aged 14 years', school, '12.4.2010', '22, Temple Street'],
+    victimIdentifiers: [
+      v.full,
+      v.first,
+      par.full,
+      'aged 14 years',
+      school,
+      '12.4.2010',
+      '22, Temple Street',
+    ],
   };
 }
 

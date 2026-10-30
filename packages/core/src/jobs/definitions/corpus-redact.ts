@@ -52,9 +52,13 @@ export async function runCorpusRedact(
       .select({ judgmentId: corpusMaskRequest.judgmentId, names: corpusMaskRequest.names })
       .from(corpusMaskRequest)
       .where(
-        and(inArray(corpusMaskRequest.judgmentId, maskedIds), eq(corpusMaskRequest.status, 'applied')),
+        and(
+          inArray(corpusMaskRequest.judgmentId, maskedIds),
+          eq(corpusMaskRequest.status, 'applied'),
+        ),
       );
-    for (const r of requests) names.set(r.judgmentId, [...(names.get(r.judgmentId) ?? []), ...r.names]);
+    for (const r of requests)
+      names.set(r.judgmentId, [...(names.get(r.judgmentId) ?? []), ...r.names]);
   }
 
   for (const row of rows) {

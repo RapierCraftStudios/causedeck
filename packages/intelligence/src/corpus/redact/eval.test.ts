@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 
@@ -30,7 +30,12 @@ describe('redaction evaluation (#892)', () => {
 
   it('matches the committed report', () => {
     const report = renderReport(result);
-    if (process.env.UPDATE_REDACTION_REPORT === '1') writeFileSync(REPORT, report);
-    expect(readFileSync(REPORT, 'utf8')).toBe(report);
+    // Prettier pads table cells; compare the content, not the padding.
+    const flat = (t: string): string =>
+      t
+        .replace(/-{3,}/g, '---')
+        .replace(/[ \t]+/g, ' ')
+        .replace(/ \|/g, '|');
+    expect(flat(readFileSync(REPORT, 'utf8'))).toBe(flat(report));
   });
 });

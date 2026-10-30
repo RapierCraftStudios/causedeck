@@ -70,7 +70,8 @@ export async function applyMaskRequest(
       .select({ pageText: judgment.pageText, bench: judgment.bench })
       .from(judgment)
       .where(eq(judgment.id, request.judgmentId));
-    if (!row) throw new MaskRequestError('NOT_FOUND', 'The judgment of the request is not in the corpus');
+    if (!row)
+      throw new MaskRequestError('NOT_FOUND', 'The judgment of the request is not in the corpus');
 
     const maskReason = `mask_request:${request.id}`;
     const redacted = redactJudgment({

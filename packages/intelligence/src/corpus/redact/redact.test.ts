@@ -55,7 +55,9 @@ describe('redactJudgment', () => {
         'The accused Anil Rao and the accused Bharat Sen. Anil fled.',
       ),
     });
-    expect(r.pages[1]?.text).toBe('The accused Accused 1 and the accused Accused 2. Accused 1 fled.');
+    expect(r.pages[1]?.text).toBe(
+      'The accused Accused 1 and the accused Accused 2. Accused 1 fled.',
+    );
   });
 
   it('keeps judges, advocates, courts, bodies, statutes, dates and amounts', () => {
@@ -79,7 +81,9 @@ Canara Bank paid Rs. 5,00,000 on 3.2.2022 under Section 420 of the Indian Penal 
 
   it('labels a relative by the role they relate to', () => {
     const r = redactJudgment({
-      pages: pagesOf('The complainant Mohan Das filed it. Latha Das, wife of the complainant, agrees.'),
+      pages: pagesOf(
+        'The complainant Mohan Das filed it. Latha Das, wife of the complainant, agrees.',
+      ),
     });
     expect(r.pages[0]?.text).toBe(
       "The complainant the Complainant filed it. the Complainant's wife, wife of the complainant, agrees.",
@@ -107,17 +111,21 @@ describe('sensitive categories', () => {
 
   it('has a fixture for POCSO, sexual offence, JJ and matrimonial', () => {
     const kinds = new Set(sensitive.map((f) => f.sensitive));
-    for (const k of ['pocso', 'sexual_offence', 'juvenile', 'matrimonial']) expect(kinds).toContain(k);
+    for (const k of ['pocso', 'sexual_offence', 'juvenile', 'matrimonial'])
+      expect(kinds).toContain(k);
   });
 
-  it.each(sensitive.map((f) => [f.id, f] as const))('masks the title and victim details of %s', (_id, f) => {
-    const r = redactJudgment({ pages: pagesOf(...f.pages) });
-    expect(r.sensitiveCategory).toBe(f.sensitive);
-    expect(r.titleMasked).toBe(true);
-    expect(r.maskReason).toBe(`auto:${f.sensitive}`);
-    const all = `${r.caseTitle ?? ''}\n${r.pages.map((p) => p.text).join('\n')}`.toLowerCase();
-    for (const id of f.victimIdentifiers) expect(all).not.toContain(id.toLowerCase());
-  });
+  it.each(sensitive.map((f) => [f.id, f] as const))(
+    'masks the title and victim details of %s',
+    (_id, f) => {
+      const r = redactJudgment({ pages: pagesOf(...f.pages) });
+      expect(r.sensitiveCategory).toBe(f.sensitive);
+      expect(r.titleMasked).toBe(true);
+      expect(r.maskReason).toBe(`auto:${String(f.sensitive)}`);
+      const all = `${r.caseTitle ?? ''}\n${r.pages.map((p) => p.text).join('\n')}`.toLowerCase();
+      for (const id of f.victimIdentifiers) expect(all).not.toContain(id.toLowerCase());
+    },
+  );
 
   it('detects sections of the BNS and IPC and 228A', () => {
     for (const text of [
@@ -130,7 +138,9 @@ describe('sensitive categories', () => {
   });
 
   it('leaves an ordinary judgment unmasked', () => {
-    const r = redactJudgment({ pages: pagesOf(CAUSE, 'The appeal concerns a cheque under Section 138.') });
+    const r = redactJudgment({
+      pages: pagesOf(CAUSE, 'The appeal concerns a cheque under Section 138.'),
+    });
     expect(r.sensitiveCategory).toBeNull();
     expect(r.titleMasked).toBe(false);
     expect(r.maskReason).toBeNull();
@@ -163,7 +173,7 @@ describe('redactWithResolver', () => {
   it('redacts a span the resolver confirms as a person', async () => {
     const r = await redactWithResolver(
       { pages: pagesOf(text) },
-      { resolve: async () => ({ spans: [{ text: 'Meera Pillai', isPerson: true }] }) },
+      { resolve: () => Promise.resolve({ spans: [{ text: 'Meera Pillai', isPerson: true }] }) },
     );
     expect(r.pages[0]?.text).not.toContain('Meera');
     expect(r.pages[0]?.text).toContain('Person 1');
@@ -172,10 +182,13 @@ describe('redactWithResolver', () => {
   it('leaves a span the resolver rejects, and ignores an invalid reply', async () => {
     const rejected = await redactWithResolver(
       { pages: pagesOf(text) },
-      { resolve: async () => ({ spans: [{ text: 'Meera Pillai', isPerson: false }] }) },
+      { resolve: () => Promise.resolve({ spans: [{ text: 'Meera Pillai', isPerson: false }] }) },
     );
     expect(rejected.pages[0]?.text).toContain('Meera Pillai');
-    const invalid = await redactWithResolver({ pages: pagesOf(text) }, { resolve: async () => ({ nope: 1 }) });
+    const invalid = await redactWithResolver(
+      { pages: pagesOf(text) },
+      { resolve: () => Promise.resolve({ nope: 1 }) },
+    );
     expect(invalid.pages[0]?.text).toContain('Meera Pillai');
     expect(invalid.lowConfidence).toBeGreaterThan(0);
     const thrown = await redactWithResolver(

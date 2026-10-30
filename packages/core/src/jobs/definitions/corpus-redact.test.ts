@@ -21,7 +21,10 @@ const PAGES = [
 
 const ctx = { log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } } as never;
 
-async function insert(db: Queryable, redactionVersion: number): Promise<{ id: string; sha256: string }> {
+async function insert(
+  db: Queryable,
+  redactionVersion: number,
+): Promise<{ id: string; sha256: string }> {
   const sha256 = randomUUID().replaceAll('-', '');
   const [row] = await db
     .insert(schema.judgment)
@@ -42,7 +45,7 @@ async function insert(db: Queryable, redactionVersion: number): Promise<{ id: st
       redactionVersion,
     })
     .returning({ id: schema.judgment.id });
-  return { id: row!.id, sha256 };
+  return { id: row?.id ?? '', sha256 };
 }
 
 describe('runCorpusRedact', () => {

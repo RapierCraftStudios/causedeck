@@ -48,12 +48,11 @@ const RTO = new Set(
 );
 // A mobile number written in two groups: 98450 12345.
 const SPACED_PHONE_RE = /(?<![\d])[6-9]\d{4}[\s-]\d{5}(?!\d)/g;
-const SENTINEL = (i: number): string => `${i}`;
+const SENTINEL = (i: number): string => `${String(i)}`;
 const SENTINEL_RE = /(\d+)/g;
 
 const wordEdge = (body: string): string => `(?<![\\p{L}\\p{N}])${body}(?![\\p{L}\\p{N}])`;
-const surfacePattern = (s: string): string =>
-  s.trim().split(/\s+/).map(escapeRe).join('\\s+');
+const surfacePattern = (s: string): string => s.trim().split(/\s+/).map(escapeRe).join('\\s+');
 
 /** Remove personal data by shape. */
 function stripPii(text: string, sensitive: boolean): string {
@@ -64,15 +63,19 @@ function stripPii(text: string, sensitive: boolean): string {
     .replace(PHONE_RE, '[phone removed]')
     .replace(SPACED_PHONE_RE, '[phone removed]')
     .replace(BANK_ACCOUNT_RE, (m, digits: string) => m.replace(digits, '[account removed]'))
-    .replace(VEHICLE_NUMBER_RE, (m) =>
-      RTO.has(m.slice(0, 2)) ? '[vehicle number removed]' : m,
-    )
+    .replace(VEHICLE_NUMBER_RE, (m) => (RTO.has(m.slice(0, 2)) ? '[vehicle number removed]' : m))
     .replace(ADDRESS_CUE_RE, '[address removed]');
   if (sensitive) {
     out = out
-      .replace(/\b(?:aged|age\s+of)\s+(?:about\s+)?\d{1,2}(?:\s*(?:years|yrs\.?|year))?/gi, 'aged [removed]')
+      .replace(
+        /\b(?:aged|age\s+of)\s+(?:about\s+)?\d{1,2}(?:\s*(?:years|yrs\.?|year))?/gi,
+        'aged [removed]',
+      )
       .replace(/\b\d{1,2}[\s-]*(?:years?|yrs?\.?)[\s-]*old\b/gi, '[age removed]')
-      .replace(/\b(?:born\s+on|date\s+of\s+birth(?:\s+is)?)\s*:?\s*[\d./\-A-Za-z, ]{6,24}/gi, '[date of birth removed]')
+      .replace(
+        /\b(?:born\s+on|date\s+of\s+birth(?:\s+is)?)\s*:?\s*[\d./\-A-Za-z, ]{6,24}/gi,
+        '[date of birth removed]',
+      )
       .replace(/\b(?:[A-Z][a-z]+\s+){1,3}(?:School|College|Anganwadi)\b/g, '[school removed]');
   }
   return out;
@@ -93,7 +96,16 @@ function surfacesOf(entities: readonly Entity[], keptTokens: ReadonlySet<string>
 }
 
 const tokenSet = (names: readonly string[]): Set<string> =>
-  new Set(names.flatMap((n) => n.toLowerCase().replace(/[.,'’]/g, ' ').split(/\s+/)).filter((t) => t !== ''));
+  new Set(
+    names
+      .flatMap((n) =>
+        n
+          .toLowerCase()
+          .replace(/[.,'’]/g, ' ')
+          .split(/\s+/),
+      )
+      .filter((t) => t !== ''),
+  );
 
 /** Replace persons in `text`; judges and advocates are shielded behind sentinels first. */
 function applyEntities(
@@ -125,7 +137,10 @@ export function extractCaseTitle(firstPage: string): string | null {
   const clean = (s: string): string =>
     s
       .replace(/^\s*(?:\d+[.)]\s*)?(?:between|and)\s*:?\s*/i, '')
-      .replace(/\s*(?:\.{2,}|…|,)?\s*\(?(?:the\s+)?(?:petitioner|appellant|respondent|accused|complainant|plaintiff|defendant|applicant)s?(?:\s+No\.?\s*\d+)?\)?[\s.]*$/i, '')
+      .replace(
+        /\s*(?:\.{2,}|…|,)?\s*\(?(?:the\s+)?(?:petitioner|appellant|respondent|accused|complainant|plaintiff|defendant|applicant)s?(?:\s+No\.?\s*\d+)?\)?[\s.]*$/i,
+        '',
+      )
       .replace(/,?\s*(?:aged|R\/o|resident of)\b.*$/i, '')
       .replace(/\s+(?:S\/o|D\/o|W\/o|H\/o)\b.*$/i, '')
       .replace(/\s+by\s+the\s+.*$/i, '')
@@ -207,8 +222,11 @@ export function redactJudgment(input: RedactInput): RedactionResult {
     caseTitle,
     titleMasked,
     sensitiveCategory: detected,
-    maskReason: forced ? (input.forceMask?.reason ?? null) : detected === null ? null : `auto:${detected}`,
+    maskReason: forced
+      ? (input.forceMask?.reason ?? null)
+      : detected === null
+        ? null
+        : `auto:${detected}`,
     redactionVersion: REDACTION_VERSION,
   };
 }
-

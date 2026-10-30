@@ -1,16 +1,7 @@
 // Legal NER by role (#892, D-053): finds the persons of a judgment (parties, witnesses, relatives and
 // other persons) with rules over the cause title and the wording of the text, and the names that
 // stay (judges and advocates). Pure and deterministic; low-confidence spans go to the gateway hook.
-import {
-  anyOf,
-  escapeRe,
-  HONORIFIC,
-  NAME,
-  PARTY_ROLES,
-  trimName,
-  tokensOf,
-  ci,
-} from './names.ts';
+import { anyOf, escapeRe, HONORIFIC, NAME, PARTY_ROLES, trimName, tokensOf, ci } from './names.ts';
 
 export type PersonRole =
   | 'petitioner'
@@ -84,7 +75,8 @@ const PARENTAGE: Record<string, string> = {
 
 const ROLE_WORD = anyOf(PARTY_ROLES);
 const REL_WORD = anyOf(RELATIONS);
-const PARENT_WORD = '(?:[Ss]\\/[Oo]|[Dd]\\/[Oo]|[Ww]\\/[Oo]|[Hh]\\/[Oo]|[Ss]on of|[Dd]aughter of|[Ww]ife of|[Hh]usband of)';
+const PARENT_WORD =
+  '(?:[Ss]\\/[Oo]|[Dd]\\/[Oo]|[Ww]\\/[Oo]|[Hh]\\/[Oo]|[Ss]on of|[Dd]aughter of|[Ww]ife of|[Hh]usband of)';
 const OPT_HON = `(?:${HONORIFIC}\\s+)?`;
 
 const roleOf = (word: string): PersonRole => ROLE_OF[word.toLowerCase()] ?? 'other';
@@ -105,7 +97,8 @@ export function collectKept(text: string, bench: readonly string[]): string[] {
   ];
   for (const re of patterns) for (const m of text.matchAll(re)) add(m[1]);
   // Companies and other bodies keep their names even where a word in them is also a person's name.
-  const body = /\b(?:M\/s\.?\s+)?((?:[A-Z][\w&.'-]*[ \t]+){1,6}(?:Private[ \t]+Limited|Pvt\.?[ \t]+Ltd\.?|Limited|Ltd\.?|Bank|Corporation|Company|Industries|Enterprises|Association|Society|Trust))\b/g;
+  const body =
+    /\b(?:M\/s\.?\s+)?((?:[A-Z][\w&.'-]*[ \t]+){1,6}(?:Private[ \t]+Limited|Pvt\.?[ \t]+Ltd\.?|Limited|Ltd\.?|Bank|Corporation|Company|Industries|Enterprises|Association|Society|Trust))\b/g;
   for (const m of text.matchAll(body)) {
     const raw = (m[1] ?? '').replace(/^(?:Sri|Shri|Smt|Mr|Mrs|Ms|Dr)\.?\s+/, '');
     kept.add(m[1] ?? raw);
@@ -143,7 +136,8 @@ class Registry {
     holder?: Entity | PersonRole,
     relation?: string,
   ): Entity | undefined {
-    const name = raw === undefined ? null : trimName(raw.replace(new RegExp(`^${HONORIFIC}\\s+`), ''));
+    const name =
+      raw === undefined ? null : trimName(raw.replace(new RegExp(`^${HONORIFIC}\\s+`), ''));
     if (name === null || this.isKept(name)) return undefined;
     const known = this.find(name);
     if (known !== undefined) {
@@ -184,7 +178,9 @@ function readTitleBlock(registry: Registry, firstPage: string): void {
     const owner = registry.add(mainRaw, roleOf(m[2] ?? ''));
     for (let i = 1; i + 1 < parts.length && owner !== undefined; i += 2) {
       const rel = PARENTAGE[(parts[i] ?? '').toLowerCase().replace(/\s+/g, ' ')] ?? 'parent';
-      const chunk = (parts[i + 1] ?? '').replace(/^(?:late\s+)/i, '').split(/,|\baged\b|R\/o|resident/i)[0];
+      const chunk = (parts[i + 1] ?? '')
+        .replace(/^(?:late\s+)/i, '')
+        .split(/,|\baged\b|R\/o|resident/i)[0];
       registry.add(chunk?.replace(new RegExp(`^${HONORIFIC}\\s+`), ''), 'relative', owner, rel);
     }
   }
@@ -208,28 +204,44 @@ export function collectEntities(
   readTitleBlock(reg, pages[0] ?? '');
 
   for (const m of text.matchAll(
-    new RegExp(`(${NAME})\\s*\\(\\s*(?:hereinafter|herein\\s+after)\\s+(?:referred\\s+to\\s+as\\s+)?(?:the\\s+)?['"“‘]*(${ROLE_WORD})`, 'g'),
+    new RegExp(
+      `(${NAME})\\s*\\(\\s*(?:hereinafter|herein\\s+after)\\s+(?:referred\\s+to\\s+as\\s+)?(?:the\\s+)?['"“‘]*(${ROLE_WORD})`,
+      'g',
+    ),
   )) {
     reg.add(m[1], roleOf(m[2] ?? ''));
   }
 
   // "X, wife of the Complainant" / "X, the son of Y"
   for (const m of text.matchAll(
-    new RegExp(`${OPT_HON}(${NAME})\\s*,\\s*(?:the\\s+)?(${REL_WORD})\\s+of\\s+(?:the\\s+)?(?:(${ROLE_WORD})\\b|${OPT_HON}(${NAME}))`, 'g'),
+    new RegExp(
+      `${OPT_HON}(${NAME})\\s*,\\s*(?:the\\s+)?(${REL_WORD})\\s+of\\s+(?:the\\s+)?(?:(${ROLE_WORD})\\b|${OPT_HON}(${NAME}))`,
+      'g',
+    ),
   )) {
     const holder =
-      m[3] !== undefined ? roleOf(m[3]) : m[4] === undefined ? undefined : (reg.add(m[4], 'other') ?? undefined);
+      m[3] !== undefined
+        ? roleOf(m[3])
+        : m[4] === undefined
+          ? undefined
+          : (reg.add(m[4], 'other') ?? undefined);
     reg.add(m[1], 'relative', holder, (m[2] ?? '').toLowerCase());
   }
   // "the Complainant's wife Smt. X"
   for (const m of text.matchAll(
-    new RegExp(`(?:the\\s+)?(${ROLE_WORD})['’]s\\s+(${REL_WORD})\\s*,?\\s*${OPT_HON}(${NAME})`, 'g'),
+    new RegExp(
+      `(?:the\\s+)?(${ROLE_WORD})['’]s\\s+(${REL_WORD})\\s*,?\\s*${OPT_HON}(${NAME})`,
+      'g',
+    ),
   )) {
     reg.add(m[3], 'relative', roleOf(m[1] ?? ''), (m[2] ?? '').toLowerCase());
   }
   // "X S/o Y", "X wife of Y"
   for (const m of text.matchAll(
-    new RegExp(`${OPT_HON}(${NAME})\\s*,?\\s*(${PARENT_WORD})\\s*(?:[Ll]ate\\s+)?${OPT_HON}(${NAME})`, 'g'),
+    new RegExp(
+      `${OPT_HON}(${NAME})\\s*,?\\s*(${PARENT_WORD})\\s*(?:[Ll]ate\\s+)?${OPT_HON}(${NAME})`,
+      'g',
+    ),
   )) {
     const owner = reg.add(m[1], 'other');
     const rel = PARENTAGE[(m[2] ?? '').toLowerCase().replace(/\s+/g, ' ')] ?? 'parent';
@@ -238,28 +250,40 @@ export function collectEntities(
 
   // "his wife Anitha Khan", "the father Rajesh"
   for (const m of text.matchAll(
-    new RegExp(`\\b(?:${ci('his')}|${ci('her')}|${ci('their')}|${ci('the')})\\s+(${REL_WORD})\\s*,?\\s*${OPT_HON}(${NAME})`, 'g'),
+    new RegExp(
+      `\\b(?:${ci('his')}|${ci('her')}|${ci('their')}|${ci('the')})\\s+(${REL_WORD})\\s*,?\\s*${OPT_HON}(${NAME})`,
+      'g',
+    ),
   )) {
     reg.add(m[2], 'relative', undefined, (m[1] ?? '').toLowerCase());
   }
 
   // "the accused Ramesh", "Petitioner No. 2 Smt. Lakshmi"
   for (const m of text.matchAll(
-    new RegExp(`(?:\\bthe\\s+|\\bThe\\s+)?\\b(${ROLE_WORD})(?:\\s+No\\.?\\s*\\d+)?\\s*,?\\s*(?:(?:namely|named|by\\s+name)\\s+)?${OPT_HON}(${NAME})`, 'g'),
+    new RegExp(
+      `(?:\\bthe\\s+|\\bThe\\s+)?\\b(${ROLE_WORD})(?:\\s+No\\.?\\s*\\d+)?\\s*,?\\s*(?:(?:namely|named|by\\s+name)\\s+)?${OPT_HON}(${NAME})`,
+      'g',
+    ),
   )) {
     reg.add(m[2], roleOf(m[1] ?? ''));
   }
 
   // "PW-1 Ramesh", "witness Ramesh"
   for (const m of text.matchAll(
-    new RegExp(`(?:\\b(?:PW|DW|CW)[- ]?\\d+|\\b${ci('witness')}(?:es)?)\\s*[:,-]?\\s*${OPT_HON}(${NAME})`, 'g'),
+    new RegExp(
+      `(?:\\b(?:PW|DW|CW)[- ]?\\d+|\\b${ci('witness')}(?:es)?)\\s*[:,-]?\\s*${OPT_HON}(${NAME})`,
+      'g',
+    ),
   )) {
     reg.add(m[1], 'witness');
   }
 
   if (opts.sensitive) {
     for (const m of text.matchAll(
-      new RegExp(`\\b(?:${ci('minor')}|${ci('child')})\\s+(?:${anyOf(['girl', 'boy', 'daughter', 'son'])}\\s*,?\\s*)?${OPT_HON}(${NAME})`, 'g'),
+      new RegExp(
+        `\\b(?:${ci('minor')}|${ci('child')})\\s+(?:${anyOf(['girl', 'boy', 'daughter', 'son'])}\\s*,?\\s*)?${OPT_HON}(${NAME})`,
+        'g',
+      ),
     )) {
       reg.add(m[1], 'victim');
     }
@@ -285,9 +309,9 @@ function assignLabels(entities: Entity[]): void {
     const n = (seen.get(e.role) ?? 0) + 1;
     seen.set(e.role, n);
     const many = count(e.role) > 1;
-    if (e.role === 'witness') e.label = `Witness ${n}`;
-    else if (e.role === 'other') e.label = `Person ${n}`;
-    else e.label = many ? `${cap(e.role)} ${n}` : `the ${cap(e.role)}`;
+    if (e.role === 'witness') e.label = `Witness ${String(n)}`;
+    else if (e.role === 'other') e.label = `Person ${String(n)}`;
+    else e.label = many ? `${cap(e.role)} ${String(n)}` : `the ${cap(e.role)}`;
   }
   const dup = new Map<string, number>();
   let loose = 0;
@@ -304,13 +328,13 @@ function assignLabels(entities: Entity[]): void {
             : undefined;
     if (base === undefined || e.relation === undefined) {
       loose += 1;
-      e.label = `Relative ${loose}`;
+      e.label = `Relative ${String(loose)}`;
       continue;
     }
     const label = `${base}'s ${e.relation}`;
     const n = (dup.get(label) ?? 0) + 1;
     dup.set(label, n);
-    e.label = n === 1 ? label : `${label} ${n}`;
+    e.label = n === 1 ? label : `${label} ${String(n)}`;
   }
 }
 

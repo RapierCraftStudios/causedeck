@@ -28,7 +28,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  for (const id of [opsId, supportId]) await owner.delete(schema.user).where(eq(schema.user.id, id));
+  for (const id of [opsId, supportId])
+    await owner.delete(schema.user).where(eq(schema.user.id, id));
   await owner.$client.end();
   await closeTestDb();
 });
@@ -67,21 +68,21 @@ async function seed(tx: never): Promise<{ judgmentId: string; requestId: string;
   const [r] = await db
     .insert(schema.corpusMaskRequest)
     .values({
-      judgmentId: j!.id,
+      judgmentId: j?.id ?? '',
       requestedBy: 'Registrar, High Court',
       requestedAction: 'mask title and text',
       names: ['Neha Sharma'],
       legalBasis: 'Order dated 1.10.2026',
     })
     .returning({ id: schema.corpusMaskRequest.id });
-  return { judgmentId: j!.id, requestId: r!.id, sha256 };
+  return { judgmentId: j?.id ?? '', requestId: r?.id ?? '', sha256 };
 }
 
 describe('applyMaskRequest', () => {
   it('masks the title and text, records handled_at and audits', async () => {
     await withTestDb(async (tx) => {
       const { judgmentId, requestId, sha256 } = await seed(tx as never);
-      const out = await applyMaskRequest(tx as never, { userId: opsId }, requestId);
+      const out = await applyMaskRequest(tx, { userId: opsId }, requestId);
       expect(out.maskReason).toBe(`mask_request:${requestId}`);
 
       const [j] = await tx.select().from(schema.judgment).where(eq(schema.judgment.id, judgmentId));
@@ -114,13 +115,13 @@ describe('applyMaskRequest', () => {
   it('refuses non-ops staff and a request already handled', async () => {
     await withTestDb(async (tx) => {
       const { requestId } = await seed(tx as never);
-      await expect(
-        applyMaskRequest(tx as never, { userId: supportId }, requestId),
-      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
-      await applyMaskRequest(tx as never, { userId: opsId }, requestId);
-      await expect(
-        applyMaskRequest(tx as never, { userId: opsId }, requestId),
-      ).rejects.toBeInstanceOf(MaskRequestError);
+      await expect(applyMaskRequest(tx, { userId: supportId }, requestId)).rejects.toMatchObject({
+        code: 'FORBIDDEN',
+      });
+      await applyMaskRequest(tx, { userId: opsId }, requestId);
+      await expect(applyMaskRequest(tx, { userId: opsId }, requestId)).rejects.toBeInstanceOf(
+        MaskRequestError,
+      );
     });
   });
 });

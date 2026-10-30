@@ -39,8 +39,11 @@ export function findLowConfidenceSpans(
       if (seen.has(span) || trimName(span) !== span || isInstitution(span)) continue;
       if (keepLower.some((k) => k.includes(span.toLowerCase()))) continue;
       if (/\b(?:Act|Code|Section|Article|Rules?|Court|Sanhita)\b/.test(span)) continue;
-      const at = m.index ?? 0;
-      seen.set(span, { text: span, context: text.slice(Math.max(0, at - 80), at + span.length + 80) });
+      const at = m.index;
+      seen.set(span, {
+        text: span,
+        context: text.slice(Math.max(0, at - 80), at + span.length + 80),
+      });
       if (seen.size >= MAX_SPANS) return [...seen.values()];
     }
   }

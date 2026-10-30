@@ -165,7 +165,10 @@ export const isInstitution = (name: string): boolean => INSTITUTION.test(name);
 /** Trim connective and designation words off a captured name; null when no person name is left. */
 export function trimName(raw: string): string | null {
   const words = raw.trim().split(/[ \t]+/);
-  while (words.length > 0 && TRAILING.has((words.at(-1) ?? '').replace(/[.,]$/, '').toLowerCase())) {
+  while (
+    words.length > 0 &&
+    TRAILING.has((words.at(-1) ?? '').replace(/[.,]$/, '').toLowerCase())
+  ) {
     words.pop();
   }
   const first = (words[0] ?? '').replace(/[.,]$/, '').toLowerCase();
@@ -185,7 +188,18 @@ export const tokensOf = (name: string): string[] =>
 
 export const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const GENERIC = new Set(['late', 'smt', 'shri', 'sri', 'mrs', 'miss', 'kum', 'master', 'bin', 'devi']);
+const GENERIC = new Set([
+  'late',
+  'smt',
+  'shri',
+  'sri',
+  'mrs',
+  'miss',
+  'kum',
+  'master',
+  'bin',
+  'devi',
+]);
 /** A token of a party name that is safe to replace on its own (a real name part, not a title). */
 export const isSafeToken = (t: string): boolean =>
   t.length >= 3 && !GENERIC.has(t) && !TRAILING.has(t) && !LEADING_STOP.has(t);

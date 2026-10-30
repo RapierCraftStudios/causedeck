@@ -10,15 +10,15 @@ name, by surname, in capitals, with initials, as witnesses and as relatives. The
 the rules hold on this set; they are not a measure on real judgments. Re-run this evaluation on the
 #119 fixtures or on imported judgments (#890) before relying on the recall.
 
-| Measure | Result | Target |
-| --- | --- | --- |
-| Judgments | 40 | at least 30 |
-| Person-name mentions | 310 | |
-| Person mentions that survived | 0 | |
-| Person-name recall | 100.00% | at least 98% |
-| Judge, advocate and body mentions | 236 | |
-| Judge, advocate and body mentions redacted | 0 | |
-| Over-redaction | 0.00% | at most 2% |
-| Sensitive judgments | 16 | |
-| Sensitive judgments with category read and title masked | 16 | all |
-| Victim or minor identifiers that survived | 0 | 0 |
+| Measure                                                 | Result  | Target       |
+| ------------------------------------------------------- | ------- | ------------ |
+| Judgments                                               | 40      | at least 30  |
+| Person-name mentions                                    | 310     |              |
+| Person mentions that survived                           | 0       |              |
+| Person-name recall                                      | 100.00% | at least 98% |
+| Judge, advocate and body mentions                       | 236     |              |
+| Judge, advocate and body mentions redacted              | 0       |              |
+| Over-redaction                                          | 0.00%   | at most 2%   |
+| Sensitive judgments                                     | 16      |              |
+| Sensitive judgments with category read and title masked | 16      | all          |
+| Victim or minor identifiers that survived               | 0       | 0            |

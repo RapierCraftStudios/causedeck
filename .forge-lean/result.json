@@ -93,6 +93,11 @@
    "id": "V6",
    "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/data-ops.test.tsx __tests__/server-actions-audit.test.ts",
    "exit": 0
+  },
+  {
+   "id": "V8",
+   "command": "PATH=node_modules/.bin:$PATH turbo run typecheck --filter='...[base]' (web: tsc --noEmit with a 6 GB heap)",
+   "exit": 0
   }
  ],
  "tests": [

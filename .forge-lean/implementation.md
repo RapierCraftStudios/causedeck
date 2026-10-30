@@ -35,3 +35,8 @@ Checked the 24 flagged tests: none enumerate the new symbols (they are unrelated
 
 ### CI fix: .env.example
 CI's config test failed because `.env.example` was not regenerated after adding CORPUS_OCR_ENABLED and CORPUS_OCR_DAILY_PAISE. Ran `pnpm env:example`; `src/env/__tests__/example.test.ts` now passes (4 tests).
+
+## Merge check (turbo not found)
+The failure was `turbo: command not found` (exit 127), an environment PATH problem, not a code conflict. With node_modules/.bin on PATH, the scoped typecheck gave no TS errors for config, db, adapters, intelligence, core and the other packages. The four app typechecks (web, worker, api, admin) were killed by the time limit, so they are unverified. No source change was needed.
+
+Post-merge typecheck: the scoped `turbo run typecheck` failed with exit 127 only because turbo was not on PATH (it is in node_modules/.bin). With PATH set, 23 of 24 tasks passed; @causedeck/web hit a Node heap limit (exit 134), and `tsc --noEmit` for apps/web with NODE_OPTIONS=--max-old-space-size=6144 exits 0. No merged-tree type errors; no code change needed.

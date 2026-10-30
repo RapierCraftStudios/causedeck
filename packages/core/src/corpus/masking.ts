@@ -1,6 +1,6 @@
 // Applying a mask request (#892, D-053, ADR 0051 §Takedown): staff act on a court order or request.
 // The judgment's title is masked, its anonymised text is re-redacted from the raw `page_text` with
-// the request's names removed, and the derived retrieval cache (the embedding) is cleared in the same
+// the request's names removed, and the derived retrieval caches (the embedding and the segments, #893) are cleared in the same
 // transaction, so nothing derived from the unmasked text is served afterwards; the 72 h purge window
 // of the issue is an upper bound this meets at once. `page_text` and `sha256` are never touched.
 // The request is stamped `applied` with `handled_at`, and the action is audited.
@@ -10,7 +10,7 @@ import { and, eq, inArray, isNull } from 'drizzle-orm';
 
 import { record } from '../audit/index.ts';
 
-const { judgment, corpusMaskRequest, staffUser } = schema;
+const { judgment, judgmentSegment, corpusMaskRequest, staffUser } = schema;
 
 /** The longest a mask may take to reach every served copy (hours); `applyMaskRequest` does it at once. */
 export const MASK_PURGE_DEADLINE_HOURS = 72;
@@ -90,8 +90,11 @@ export async function applyMaskRequest(
         sensitiveCategory: redacted.sensitiveCategory,
         maskReason,
         embedding: null,
+        // The segments hold the unmasked text: drop them now; `system.corpus.segment` rebuilds them.
+        segmentVersion: 0,
       })
       .where(eq(judgment.id, request.judgmentId));
+    await tx.delete(judgmentSegment).where(eq(judgmentSegment.judgmentId, request.judgmentId));
 
     const handledAt = new Date();
     await tx

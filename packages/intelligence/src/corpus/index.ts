@@ -10,6 +10,29 @@ export {
 export * from './bulk/index.ts';
 export * from './redact/index.ts';
 export {
+  classifyParagraphs,
+  estimateTokens,
+  fullText,
+  MAX_SEGMENT_TOKENS,
+  MIN_SEGMENT_TOKENS,
+  packSegments,
+  resolveLowConfidence,
+  roleReplySchema,
+  ROLE_CONFIDENCE_THRESHOLD,
+  SEGMENT_ROLES,
+  SEGMENT_VERSION,
+  segmentJudgment,
+  segmentJudgmentWithResolver,
+  splitParagraphs,
+  type Paragraph as SegmentParagraph,
+  type RoleGuess,
+  type RoleQuestion,
+  type RoleResolver,
+  type Segment,
+  type SegmentPage,
+  type SegmentRole,
+} from './segment.ts';
+export {
   bodyBytes,
   corpusBlobKey,
   ingestJudgment,

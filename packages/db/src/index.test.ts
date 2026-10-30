@@ -139,6 +139,7 @@ describe('@causedeck/db root entry point', () => {
       'job_effect',
       'judgment',
       'judgment_alert',
+      'judgment_segment',
       'legal_hold_invoice',
       'limitation_computation',
       'limitation_rule',

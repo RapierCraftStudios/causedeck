@@ -7,6 +7,8 @@ describe('@causedeck/db root entry point', () => {
   it('exports the client, column helpers, conventions and vector helpers', () => {
     for (const name of [
       'createDb',
+      'corpus_import_cursor',
+      'corpus_ocr_queue',
       'db',
       'id',
       'timestamps',

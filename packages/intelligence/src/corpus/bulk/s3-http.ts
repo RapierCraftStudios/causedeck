@@ -1,0 +1,65 @@
+// Anonymous reads of a public S3 bucket over HTTPS (the `--no-sign-request` equivalent, #890):
+// ListObjectsV2 for the keys, a plain GET for an object. Every request stays on the bucket's own
+// host; the caller has already cleared the source through `policyFor`.
+import type { BulkObjectSource } from './types.ts';
+
+export type HttpFetch = (url: string) => Promise<Response>;
+
+const encodeKey = (key: string): string => key.split('/').map(encodeURIComponent).join('/');
+
+const unescapeXml = (value: string): string =>
+  value
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&');
+
+export class BulkHttpError extends Error {
+  override name = 'BulkHttpError';
+  constructor(readonly status: number) {
+    super(`bulk read failed with HTTP ${String(status)}`);
+  }
+}
+
+export function createS3HttpSource(
+  baseUrl: string,
+  fetchFn: HttpFetch = (url) => fetch(url),
+): BulkObjectSource {
+  const base = new URL(baseUrl);
+  const get = async (url: string): Promise<Response> => {
+    if (new URL(url).host !== base.host) throw new BulkHttpError(0);
+    const response = await fetchFn(url);
+    if (!response.ok) throw new BulkHttpError(response.status);
+    return response;
+  };
+  const objectUrl = (key: string): string => new URL(encodeKey(key), base).toString();
+
+  return {
+    async list(prefix) {
+      const keys: string[] = [];
+      let token: string | undefined;
+      do {
+        const url = new URL(base);
+        url.searchParams.set('list-type', '2');
+        url.searchParams.set('prefix', prefix);
+        if (token !== undefined) url.searchParams.set('continuation-token', token);
+        const xml = await (await get(url.toString())).text();
+        for (const match of xml.matchAll(/<Key>([^<]*)<\/Key>/g)) {
+          keys.push(unescapeXml(match[1] ?? ''));
+        }
+        const next = /<NextContinuationToken>([^<]*)<\/NextContinuationToken>/.exec(xml);
+        token = /<IsTruncated>true<\/IsTruncated>/.test(xml) ? unescapeXml(next?.[1] ?? '') : undefined;
+      } while (token !== undefined && token !== '');
+      return keys;
+    },
+    async read(key) {
+      return new Uint8Array(await (await get(objectUrl(key))).arrayBuffer());
+    },
+    async *stream(key) {
+      const response = await get(objectUrl(key));
+      if (response.body === null) return;
+      for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) yield chunk;
+    },
+  };
+}

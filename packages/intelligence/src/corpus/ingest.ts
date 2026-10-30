@@ -7,10 +7,11 @@ import { schema, type Queryable } from '@causedeck/db';
 import { eq } from 'drizzle-orm';
 
 import { readPdfText, type PdfPageText } from '../text/pdf-text.ts';
+import { coverage, DEFAULT_MIN_PAGE_CHARS } from '../text/quality.ts';
 
-import { extractJudgmentHeader } from './header.ts';
+import { courtOfCitation, extractJudgmentHeader } from './header.ts';
 
-const { judgment } = schema;
+const { judgment, corpusOcrQueue } = schema;
 
 /** The part of `FetchResult` ingestion reads. */
 export interface CorpusFetchResult {
@@ -24,16 +25,40 @@ export interface CorpusFetcher {
   fetchSource(sourceId: string, url: string): Promise<CorpusFetchResult>;
 }
 
-export interface IngestDeps {
+/** Where original PDFs are kept, keyed by sha256 (ADR 0051); absent means `blob_key` stays null. */
+export interface CorpusBlobStore {
+  put(key: string, body: Uint8Array, contentType: string): Promise<void>;
+}
+
+/** The object key of a judgment's original PDF. */
+export const corpusBlobKey = (sha256: string): string => `corpus/${sha256}.pdf`;
+
+export interface StoreDeps {
   db: Queryable;
-  fetcher: CorpusFetcher;
   /** Defaults to `readPdfText`; tests pass a fake. */
   readPdf?: (data: Uint8Array) => Promise<PdfPageText[]>;
+  blobs?: CorpusBlobStore | null | undefined;
+}
+
+export interface IngestDeps extends StoreDeps {
+  fetcher: CorpusFetcher;
+}
+
+/** Header fields known from a dataset's own metadata; they win over what the PDF text yields. */
+export interface JudgmentMetadata {
+  court?: string | null;
+  neutralCitation?: string | null;
+  caseNumbers?: string[];
+  bench?: string[];
+  judgmentDate?: string | null;
 }
 
 export type IngestOutcome =
   | { status: 'inserted' | 'duplicate'; judgmentId: string; sha256: string }
   | { status: 'unreadable'; sha256: string };
+
+/** What `storeJudgment` reports: the outcome and how many pages the text layer had. */
+export type StoredOutcome = IngestOutcome & { pages: number };
 
 /**
  * The bytes of a fetched body. The provider returns text: a body that starts with `%PDF` is taken
@@ -51,39 +76,85 @@ export async function ingestJudgment(
   input: { sourceId: string; url: string },
 ): Promise<IngestOutcome> {
   const fetched = await deps.fetcher.fetchSource(input.sourceId, input.url);
-  const { sha256 } = fetched.provenance;
+  const { pages: _pages, ...outcome } = await storeJudgment(deps, {
+    sourceId: input.sourceId,
+    bytes: bodyBytes(fetched.body, fetched.contentType),
+    provenance: fetched.provenance,
+  });
+  return outcome;
+}
+
+/**
+ * Store the bytes of one judgment: dedupe on sha256, read the text layer, upload the PDF when a blob
+ * store is given, insert the row and queue every page without a usable text layer for OCR. Shared by
+ * `ingestJudgment` (corpus.poll) and the bulk importer.
+ */
+export async function storeJudgment(
+  deps: StoreDeps,
+  input: {
+    sourceId: string;
+    bytes: Uint8Array;
+    provenance: schema.JudgmentProvenance;
+    metadata?: JudgmentMetadata;
+  },
+): Promise<StoredOutcome> {
+  const { sha256 } = input.provenance;
 
   const [existing] = await deps.db
     .select({ id: judgment.id })
     .from(judgment)
     .where(eq(judgment.sha256, sha256))
     .limit(1);
-  if (existing !== undefined) return { status: 'duplicate', judgmentId: existing.id, sha256 };
+  if (existing !== undefined) return { status: 'duplicate', judgmentId: existing.id, sha256, pages: 0 };
 
   let pages: PdfPageText[];
   try {
-    pages = await (deps.readPdf ?? readPdfText)(bodyBytes(fetched.body, fetched.contentType));
+    pages = await (deps.readPdf ?? readPdfText)(input.bytes);
   } catch {
-    return { status: 'unreadable', sha256 };
+    return { status: 'unreadable', sha256, pages: 0 };
   }
   const header = extractJudgmentHeader(pages.map((p) => p.text));
+  const meta = input.metadata ?? {};
+  const neutralCitation = header.neutralCitation ?? meta.neutralCitation ?? null;
+  const caseNumbers = header.caseNumbers.length > 0 ? header.caseNumbers : (meta.caseNumbers ?? []);
+  const bench = header.bench.length > 0 ? header.bench : (meta.bench ?? []);
+
+  let blobKey: string | null = null;
+  if (deps.blobs !== undefined && deps.blobs !== null) {
+    blobKey = corpusBlobKey(sha256);
+    await deps.blobs.put(blobKey, input.bytes, 'application/pdf');
+  }
 
   const [row] = await deps.db
     .insert(judgment)
     .values({
       sourceId: input.sourceId,
-      court: header.court ?? input.sourceId,
-      neutralCitation: header.neutralCitation,
-      caseNumbers: header.caseNumbers,
-      bench: header.bench,
-      judgmentDate: header.judgmentDate,
+      court:
+        header.court ??
+        (neutralCitation === null ? null : courtOfCitation(neutralCitation)) ??
+        meta.court ??
+        input.sourceId,
+      neutralCitation,
+      caseNumbers,
+      bench,
+      judgmentDate: header.judgmentDate ?? meta.judgmentDate ?? null,
+      blobKey,
       sha256,
-      provenance: fetched.provenance,
+      provenance: input.provenance,
       pageText: pages,
     })
     .onConflictDoNothing({ target: judgment.sha256 })
     .returning({ id: judgment.id });
-  if (row !== undefined) return { status: 'inserted', judgmentId: row.id, sha256 };
+  if (row !== undefined) {
+    const blank = pages.filter((p) => coverage(p.text) < DEFAULT_MIN_PAGE_CHARS);
+    if (blank.length > 0) {
+      await deps.db
+        .insert(corpusOcrQueue)
+        .values(blank.map((p) => ({ judgmentId: row.id, pageNo: p.pageNo })))
+        .onConflictDoNothing();
+    }
+    return { status: 'inserted', judgmentId: row.id, sha256, pages: pages.length };
+  }
 
   // Lost a race with a concurrent ingest of the same bytes.
   const [winner] = await deps.db
@@ -91,6 +162,6 @@ export async function ingestJudgment(
     .from(judgment)
     .where(eq(judgment.sha256, sha256))
     .limit(1);
-  if (winner === undefined) return { status: 'unreadable', sha256 };
-  return { status: 'duplicate', judgmentId: winner.id, sha256 };
+  if (winner === undefined) return { status: 'unreadable', sha256, pages: 0 };
+  return { status: 'duplicate', judgmentId: winner.id, sha256, pages: 0 };
 }

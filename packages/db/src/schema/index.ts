@@ -106,7 +106,17 @@ export {
   type FlagChangeRequestStatus,
 } from './flags.ts';
 export { fetchLog } from './fetch-log.ts';
-export { judgment, type JudgmentPageText, type JudgmentProvenance } from './corpus.ts';
+export {
+  CORPUS_BULK_DATASETS,
+  CORPUS_IMPORT_STATUSES,
+  corpusImportCursor,
+  corpusOcrQueue,
+  judgment,
+  type CorpusBulkDataset,
+  type CorpusImportStatus,
+  type JudgmentPageText,
+  type JudgmentProvenance,
+} from './corpus.ts';
 export {
   NEWS_EXCERPT_MAX,
   NEWS_FORUMS,

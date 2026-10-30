@@ -174,6 +174,7 @@ describe('enqueue', () => {
       'import.file',
       'system.data-ops.evaluate',
       'system.corpus.poll',
+      'system.corpus.bulk_import',
       'system.causelist.poll',
       'system.board.poll',
       'system.notices.poll',

@@ -7,9 +7,16 @@ export {
   HEADER_PAGES,
   type JudgmentHeader,
 } from './header.ts';
+export * from './bulk/index.ts';
 export {
   bodyBytes,
+  corpusBlobKey,
   ingestJudgment,
+  storeJudgment,
+  type CorpusBlobStore,
+  type JudgmentMetadata,
+  type StoreDeps,
+  type StoredOutcome,
   type CorpusFetcher,
   type CorpusFetchResult,
   type IngestDeps,

@@ -6,8 +6,10 @@
 // verification (`verifyCitation` in core) resolves a normalised neutral citation to one row.
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   date,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -33,6 +35,8 @@ export interface JudgmentProvenance {
   sourceVersion: string;
   tierUsed: string;
   costDollars: number;
+  /** The licence the source publishes under (open datasets, #890), e.g. `CC-BY-4.0`. */
+  licence?: string;
 }
 
 export const judgment = pgTable(
@@ -70,4 +74,58 @@ export const judgment = pgTable(
     index('judgment_neutral_citation_idx').on(t.neutralCitation),
     index('judgment_embedding_hnsw_idx').using('hnsw', t.embedding.op('vector_cosine_ops')),
   ],
+);
+
+/** The open-data datasets `corpus.bulk_import` reads (#890): `sc` Supreme Court, `hc` High Courts. */
+export const CORPUS_BULK_DATASETS = ['sc', 'hc'] as const;
+export type CorpusBulkDataset = (typeof CORPUS_BULK_DATASETS)[number];
+
+/** Where a bulk archive stands: `pending` until a run reaches it, `complete` once every entry was read. */
+export const CORPUS_IMPORT_STATUSES = ['pending', 'running', 'complete', 'failed'] as const;
+export type CorpusImportStatus = (typeof CORPUS_IMPORT_STATUSES)[number];
+
+/**
+ * The resume point and running counts of one bulk archive (#890, D-053). `position` is the number
+ * of archive entries already handled, so an interrupted run continues after them. Global table:
+ * counts and object keys only, no document content.
+ */
+export const corpusImportCursor = pgTable(
+  'corpus_import_cursor',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** The registry source the archive belongs to (`aws-open-data-sc`, `aws-open-data-hc`). */
+    sourceId: text('source_id').notNull(),
+    dataset: text('dataset').$type<CorpusBulkDataset>().notNull(),
+    /** The court path segment for High Court archives; null for the Supreme Court. */
+    court: text('court'),
+    year: integer('year').notNull(),
+    /** The archive's object key in the dataset bucket. */
+    archiveKey: text('archive_key').notNull(),
+    position: integer('position').notNull().default(0),
+    status: text('status').$type<CorpusImportStatus>().notNull().default('pending'),
+    rowsAdded: integer('rows_added').notNull().default(0),
+    duplicatesSkipped: integer('duplicates_skipped').notNull().default(0),
+    failures: integer('failures').notNull().default(0),
+    /** Bytes of PDFs stored for this archive. */
+    bytesStored: bigint('bytes_stored', { mode: 'number' }).notNull().default(0),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('corpus_import_cursor_archive_uq').on(t.sourceId, t.archiveKey),
+    index('corpus_import_cursor_dataset_idx').on(t.dataset, t.year),
+  ],
+);
+
+/** A judgment page whose text layer is missing or too thin and waits for OCR (#890). */
+export const corpusOcrQueue = pgTable(
+  'corpus_ocr_queue',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    judgmentId: uuid('judgment_id')
+      .notNull()
+      .references(() => judgment.id),
+    pageNo: integer('page_no').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('corpus_ocr_queue_page_uq').on(t.judgmentId, t.pageNo)],
 );

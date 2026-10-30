@@ -1,5 +1,5 @@
-// The public developer API reads (#625, part 2 of #487, D-048). Every record leaves with its
-// provenance and a `source_license`, and fails closed: a record is served only when its source is
+// The public developer API reads (#625, part 2 of #487, D-048). Every record leaves with an `asOf` and
+// an `officialUrl` (never a source, route or licence: D-053), and fails closed: a record is served only when its source is
 // cleared (`decideSourceClearance`), and shared (global) records only when the source is also
 // `non-personal` (`exposableThroughApi`). Personal data leaves only for the caller's own matters,
 // read under the workspace scope. Nothing here carries a contributor workspace, a party name from
@@ -24,24 +24,18 @@ const {
 export const PUBLIC_API_MAX_LIMIT = 100;
 export const PUBLIC_API_DEFAULT_LIMIT = 50;
 
-export interface PublicProvenance {
-  sourceId: string;
-  /** `fetched` from a cleared source, or `contributed` (a shared public copy). */
-  kind: 'fetched' | 'contributed';
-  /** Where the record came from: a source reference or the official URL. */
-  ref: string | null;
-  capturedAt: Date;
-  confidence: number | null;
-}
-
+/**
+ * What a public record says about its origin (D-053 item 4): when it was captured, and a link to the
+ * court's own copy where there is one. Source ids, fetch routes and licences are never exposed.
+ */
 export interface PublicRecord {
-  provenance: PublicProvenance;
-  /** The terms the record is served under (derived from the source; see `sourceLicense`). */
-  sourceLicense: string;
+  asOf: Date;
+  /** The court's own document; null unless the URL sits on the host of a court or notice source. */
+  officialUrl: string | null;
 }
 
-/** The licence line for a record: derived from the source owner, as the registry has no licence text. */
-export function sourceLicense(owner: string, kind: PublicProvenance['kind']): string {
+/** The licence line for a record, derived from the source owner. Internal use only; not part of public responses. */
+export function sourceLicense(owner: string, kind: 'fetched' | 'contributed'): string {
   return kind === 'contributed'
     ? `contributed-public-document; original publisher: ${owner}`
     : `${owner} public record (terms and counsel cleared)`;
@@ -50,6 +44,21 @@ export function sourceLicense(owner: string, kind: PublicProvenance['kind']): st
 interface ServedSource {
   id: string;
   owner: string;
+  kind: string;
+  baseUrl: string;
+}
+
+/** `url` when it is a web link on the host of a court source (or a subdomain of it), else null. */
+function officialUrlOf(origin: ServedSource, url: string | null): string | null {
+  if (url === null || (origin.kind !== 'court' && origin.kind !== 'notice')) return null;
+  try {
+    const link = new URL(url);
+    const host = new URL(origin.baseUrl).hostname;
+    const onHost = link.hostname === host || link.hostname.endsWith(`.${host}`);
+    return (link.protocol === 'https:' || link.protocol === 'http:') && onHost ? link.href : null;
+  } catch {
+    return null;
+  }
 }
 
 /** The sources among `ids` that may be served; `sharedOnly` also demands a non-personal data class. */
@@ -67,15 +76,13 @@ async function servableSources(
   for (const row of rows) {
     if (decideSourceClearance(row) !== null) continue;
     if (shared && !exposableThroughApi(row.dataClass)) continue;
-    served.set(row.id, { id: row.id, owner: row.owner });
+    served.set(row.id, { id: row.id, owner: row.owner, kind: row.kind, baseUrl: row.baseUrl });
   }
   return served;
 }
 
 const clampLimit = (limit: number | undefined) =>
   Math.min(Math.max(limit ?? PUBLIC_API_DEFAULT_LIMIT, 1), PUBLIC_API_MAX_LIMIT);
-
-const toNumber = (value: string | null) => (value === null ? null : Number(value));
 
 export interface PublicActor {
   workspaceId: string;
@@ -86,7 +93,7 @@ export interface PublicOrder {
   date: string | null;
   number: string | null;
   summary: string | null;
-  url: string | null;
+  officialUrl: string | null;
 }
 
 export interface PublicCase extends PublicRecord {
@@ -111,13 +118,13 @@ interface SnapshotFields {
 
 const str = (value: unknown): string | null => (typeof value === 'string' ? value : null);
 
-function ordersOf(fields: SnapshotFields): PublicOrder[] {
+function ordersOf(fields: SnapshotFields, origin: ServedSource): PublicOrder[] {
   if (!Array.isArray(fields.orders)) return [];
   return (fields.orders as Record<string, unknown>[]).map((o) => ({
     date: str(o.date),
     number: str(o.number),
     summary: str(o.summary),
-    url: str(o.href),
+    officialUrl: officialUrlOf(origin, str(o.href)),
   }));
 }
 
@@ -130,9 +137,7 @@ async function ownSnapshots(db: Queryable, actor: PublicActor, cnr: string | und
         sourceId: caseWatch.sourceId,
         fields: caseStatusSnapshot.fields,
         fetchedAt: caseStatusSnapshot.fetchedAt,
-        sourceRef: caseStatusSnapshot.sourceRef,
         capturedAt: caseStatusSnapshot.capturedAt,
-        confidence: caseStatusSnapshot.confidence,
       })
       .from(caseStatusSnapshot)
       .innerJoin(
@@ -195,15 +200,9 @@ export async function getPublicCase(
       stage: str(fields.stage?.raw),
       bench: str(fields.bench),
       fetchedAt: row.fetchedAt,
-      orders: ordersOf(fields),
-      provenance: {
-        sourceId: origin.id,
-        kind: 'fetched',
-        ref: row.sourceRef,
-        capturedAt: row.capturedAt,
-        confidence: toNumber(row.confidence),
-      },
-      sourceLicense: sourceLicense(origin.owner, 'fetched'),
+      orders: ordersOf(fields, origin),
+      asOf: row.capturedAt,
+      officialUrl: null,
     };
   }
   return null;
@@ -222,7 +221,6 @@ export interface PublicOrderRecord extends PublicRecord {
   date: string | null;
   number: string | null;
   summary: string | null;
-  url: string | null;
   /** The text of a shared public order; null for an order read from the caller's own case. */
   content: string | null;
   forum: string | null;
@@ -306,14 +304,8 @@ export async function listPublicCauseLists(
     forum: row.forumLabel,
     listingDate: row.listingDate,
     content,
-    provenance: {
-      sourceId: origin.id,
-      kind: 'contributed',
-      ref: null,
-      capturedAt: row.contributedAt,
-      confidence: null,
-    },
-    sourceLicense: sourceLicense(origin.owner, 'contributed'),
+    asOf: row.contributedAt,
+    officialUrl: null,
   }));
 }
 
@@ -334,11 +326,13 @@ export async function listPublicOrders(
     return found.orders.slice(0, limit).map((order) => ({
       id: `${found.cnr}:${order.number ?? order.date ?? ''}`,
       case: found.cnr,
-      ...order,
+      date: order.date,
+      number: order.number,
+      summary: order.summary,
       content: null,
       forum: null,
-      provenance: found.provenance,
-      sourceLicense: found.sourceLicense,
+      asOf: found.asOf,
+      officialUrl: order.officialUrl,
     }));
   }
   const docs = await sharedDocuments(db, 'order', query);
@@ -348,17 +342,10 @@ export async function listPublicOrders(
     date: row.listingDate,
     number: null,
     summary: null,
-    url: null,
     content,
     forum: row.forumLabel,
-    provenance: {
-      sourceId: origin.id,
-      kind: 'contributed',
-      ref: null,
-      capturedAt: row.contributedAt,
-      confidence: null,
-    },
-    sourceLicense: sourceLicense(origin.owner, 'contributed'),
+    asOf: row.contributedAt,
+    officialUrl: null,
   }));
 }
 
@@ -402,13 +389,7 @@ export async function listPublicNotices(
       effectiveOn: row.effectiveOn,
       url: row.url,
       forumCodes: row.forumCodes,
-      provenance: {
-        sourceId: origin.id,
-        kind: 'fetched',
-        ref: row.sourceRef ?? row.url,
-        capturedAt: row.capturedAt,
-        confidence: toNumber(row.confidence),
-      },
-      sourceLicense: sourceLicense(origin.owner, 'fetched'),
+      asOf: row.capturedAt,
+      officialUrl: officialUrlOf(origin, row.url),
     }));
 }

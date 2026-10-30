@@ -68,7 +68,7 @@ describe('legal pages (R1, R2, R7, R13)', () => {
   });
   it('flags drafts for the production gate', async () => {
     const pages = await loadAllLegalPages();
-    expect(draftSlugs(pages)).toHaveLength(5);
+    expect(draftSlugs(pages)).toHaveLength(6);
     expect(draftSlugs([{ slug: ['legal', 'terms'], legal: { status: 'final' } }])).toEqual([]);
   });
   it('fails the gate on drafts unless ALLOW_DRAFT_LEGAL=1 (R2)', () => {

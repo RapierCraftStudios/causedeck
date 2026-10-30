@@ -4373,7 +4373,7 @@ const CASES: Record<string, Case> = {
     // Global notices only: no record names a workspace, and the seeded personal-class sources give none.
     const notices = await f.asB((s) => core.listPublicNotices(s, {}));
     expect(JSON.stringify(notices)).not.toContain(f.a.id);
-    expect(notices.every((n) => n.sourceLicense.length > 0 && n.provenance.sourceId !== '')).toBe(
+    expect(notices.every((n) => !Number.isNaN(n.asOf.getTime()) && !('provenance' in n))).toBe(
       true,
     );
   },

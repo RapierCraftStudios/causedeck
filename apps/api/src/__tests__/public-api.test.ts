@@ -1,6 +1,6 @@
 // The public v1 data routes (#625, #487 part 2) through the real app: a key without the route's
 // scope gets 403; only cleared sources are served, shared records only from non-personal ones;
-// every record carries provenance and `source_license`; another workspace's case is invisible; no
+// every record carries `as_of` and `official_url` and no source name or licence (D-053); another workspace's case is invisible; no
 // response holds a judge rating, ranking or prediction (D-048, D-050).
 import { randomUUID } from 'node:crypto';
 
@@ -103,6 +103,9 @@ const get = async (path: string, bearer: string) => {
   return { status: response.status, body: (await response.json()) as Record<string, unknown> };
 };
 
+/** Keys that would name a source, aggregator, fetch route or licence (D-053 item 4). */
+const FORBIDDEN_KEYS = ['source_id', 'source_license', 'provenance', 'ref', 'url'];
+
 const ROUTES = [`/v1/cases/${CASE_CNR}`, '/v1/causelists', '/v1/orders', '/v1/notices'];
 
 describe('public API scopes', () => {
@@ -117,7 +120,7 @@ describe('public API scopes', () => {
 });
 
 describe('notices, cause lists and orders', () => {
-  it('serves only cleared non-personal sources, with provenance and source_license', async () => {
+  it('serves only cleared non-personal sources, with as_of and official_url and no source fields', async () => {
     for (const path of [
       `/v1/notices?forum=pa-${tag}`,
       `/v1/causelists?forum=PA%20${tag}`,
@@ -125,18 +128,41 @@ describe('notices, cause lists and orders', () => {
     ]) {
       const { status, body } = await get(path, keyA);
       expect(status).toBe(200);
-      const data = (
-        body.data as { provenance: { source_id: string }; source_license: string }[]
-      ).filter((r) => r.provenance.source_id.startsWith(`pa.${tag}`));
-      expect(
-        data.map((r) => r.provenance.source_id),
-        path,
-      ).toEqual([ids.open]);
+      // The seeded text carries its source id, so it identifies which sources were served.
+      const data = (body.data as Record<string, unknown>[]).filter((r) =>
+        JSON.stringify(r).includes(`pa.${tag}`),
+      );
+      expect(data, path).toHaveLength(1);
+      expect(JSON.stringify(data[0])).toContain(ids.open);
       for (const record of data) {
-        expect(record.source_license).not.toBe('');
-        expect(record.provenance).toMatchObject({ source_id: ids.open });
+        expect(Number.isNaN(Date.parse(String(record.as_of)))).toBe(false);
+        expect(record).toHaveProperty('official_url');
+        expect(FORBIDDEN_KEYS.filter((k) => k in record)).toEqual([]);
       }
     }
+  });
+
+  it('keeps official_url only for a link on the court’s own host', async () => {
+    const { body } = await get(`/v1/notices?forum=pa-${tag}`, keyA);
+    const open = (body.data as { title: string; official_url: string | null }[]).find((r) =>
+      r.title.includes(ids.open),
+    );
+    expect(open?.official_url).toMatch(/^https:\/\/pa\.example\.test\//);
+  });
+
+  it('declares no source field in any v1 response schema', async () => {
+    const response = await call(app, '/openapi.json', {});
+    const { paths } = (await response.json()) as { paths: Record<string, unknown> };
+    const spec = JSON.stringify(
+      Object.entries(paths).filter(([route]) =>
+        ['/v1/cases/', '/v1/causelists', '/v1/orders', '/v1/notices'].some((p) =>
+          route.startsWith(p),
+        ),
+      ),
+    );
+    const keys = [...spec.matchAll(/"([a-z_]+)":\{"type"/g)].map((m) => m[1] ?? '');
+    expect(keys.length).toBeGreaterThan(0);
+    expect(FORBIDDEN_KEYS.filter((k) => keys.includes(k))).toEqual([]);
   });
 
   it('never narrows shared text by advocate unless the workspace watches that name', async () => {
@@ -146,14 +172,13 @@ describe('notices, cause lists and orders', () => {
 });
 
 describe('cases', () => {
-  it('serves the caller’s own case with provenance and source_license', async () => {
+  it('serves the caller’s own case with as_of and no source fields', async () => {
     const { status, body } = await get(`/v1/cases/${CASE_CNR}`, keyA);
     expect(status).toBe(200);
-    expect(body).toMatchObject({
-      cnr: CASE_CNR,
-      provenance: { source_id: ids.personal, kind: 'fetched' },
-    });
-    expect(String(body.source_license)).not.toBe('');
+    expect(body).toMatchObject({ cnr: CASE_CNR });
+    expect(Number.isNaN(Date.parse(String(body.as_of)))).toBe(false);
+    expect(FORBIDDEN_KEYS.filter((k) => k in body)).toEqual([]);
+    expect(JSON.stringify(body)).not.toContain(ids.personal);
     const orders = await get(`/v1/orders?case=${CASE_CNR}`, keyA);
     expect(orders.status).toBe(200);
   });

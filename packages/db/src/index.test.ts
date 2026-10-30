@@ -87,6 +87,8 @@ describe('@causedeck/db root entry point', () => {
       'context_test_result',
       'contributed_document',
       'contribution_ledger',
+      'corpus_import_cursor',
+      'corpus_ocr_queue',
       'correction',
       'court_day_marker',
       'court_hall',

@@ -35,6 +35,8 @@
     "@causedeck/storage": "workspace:*",
     "@causedeck/validators": "workspace:*",
     "drizzle-orm": "catalog:",
+    "hyparquet": "1.31.5",
+    "hyparquet-compressors": "1.1.1",
     "mammoth": "catalog:",
     "mupdf": "catalog:",
     "pdfjs-dist": "catalog:",

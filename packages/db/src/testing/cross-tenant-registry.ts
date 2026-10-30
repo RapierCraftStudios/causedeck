@@ -1294,6 +1294,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
   setSourceKillSwitch:
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  // bulk corpus import (#890): progress of the open-data importer, read by the admin console
+  listBulkImports:
+    'global table `corpus_import_cursor` (GLOBAL_TABLES, no workspace_id, no RLS): per-archive import progress of public datasets, never tenant data',
   // court document network (#485): `findContributed` reads the global `contributed_document` table (no
   // workspace_id, no RLS), whose rows carry no contributor; the ledger linking them is tenant data
   findContributed:

@@ -20,6 +20,7 @@ import {
 import { SECURITY_COPY, SECURITY_SECTIONS } from '../content/security.ts';
 import { buildChangelogRss, loadChangelog, scanChangelog, sortEntries } from '../lib/changelog.ts';
 import { formatInr } from '../lib/inr.ts';
+import { loadAllLegalPages } from '../lib/legal.ts';
 import { isPageOwned } from '../lib/pages.ts';
 import {
   pricingJsonLd,
@@ -264,6 +265,15 @@ describe('metadata, sitemap and rule 36', () => {
       expect(urls.filter((url) => url.endsWith(`/${page}/`))).toHaveLength(1);
     }
     expect(urls.some((url) => url.includes('/changelog/0-1-0'))).toBe(false);
+  });
+  it('lists the open-data attribution on the Data sources and licences page and in the API terms (#890)', async () => {
+    const attribution =
+      'Dattam Labs, Indian Supreme Court and High Court Judgments, AWS Open Data, CC-BY-4.0';
+    expect(read('content/legal/data-sources.mdx')).toContain(attribution);
+    expect(read('content/developers/api.md')).toContain(attribution);
+    // A draft legal page stays out of the sitemap with the rest; it is on the legal index.
+    const slugs = (await loadAllLegalPages()).map((page) => page.slug[1]);
+    expect(slugs).toContain('data-sources');
   });
   it('leaves the owned slugs to their own routes', () => {
     expect(isPageOwned(['security'])).toBe(true);

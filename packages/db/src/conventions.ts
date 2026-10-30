@@ -77,6 +77,8 @@ export const GLOBAL_TABLES: readonly string[] = [
   'data_ops_alert',
   'data_ops_oncall',
   'judgment',
+  'corpus_import_cursor',
+  'corpus_ocr_queue',
   'cause_list_publication',
   'board_observation',
   'notice',

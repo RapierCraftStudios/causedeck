@@ -73,6 +73,13 @@ Notices. Query: `forum`, `limit`.
 curl -H "Authorization: Bearer $KEY" "https://<api-host>/v1/notices?forum=<forum>"
 ```
 
+## Data sources and attribution
+
+Part of the judgment data behind the API comes from an open dataset published under CC-BY-4.0.
+Attribution: Dattam Labs, Indian Supreme Court and High Court Judgments, AWS Open Data, CC-BY-4.0.
+See [Data sources and licences](/legal/data-sources/). Where the API serves a judgment, it shows only
+the court, case number, citation, date and a link to the official copy, never the dataset it came from.
+
 ## Webhooks
 
 Register an HTTPS receiver with `POST /v1/webhook-endpoints` (the signing secret, `whsec_...`, is

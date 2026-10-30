@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  corpusObjectKey,
   InvalidObjectKeyError,
   isObjectKey,
   objectKey,
@@ -116,5 +117,17 @@ describe('publicObjectKey (#769)', () => {
   ])('does not widen parseObjectKey to %j', (raw) => {
     expect(() => publicObjectKey(raw as 'status/status.json')).toThrow(InvalidObjectKeyError);
     expect(() => parseObjectKey(raw)).toThrow(InvalidObjectKeyError);
+  });
+});
+
+describe('corpus object keys (#890)', () => {
+  it('accepts only corpus/<sha256>.pdf', async () => {
+    const sha = 'a'.repeat(64);
+    const key = corpusObjectKey(sha);
+    expect(parseObjectKey(key).key).toBe(key);
+    const store = createMemoryObjectStore();
+    await store.put({ key, body: new Uint8Array([1]), contentType: 'application/pdf' });
+    expect(() => corpusObjectKey('abc')).toThrow(InvalidObjectKeyError);
+    expect(() => parseObjectKey('corpus/../x.pdf')).toThrow(InvalidObjectKeyError);
   });
 });

@@ -299,7 +299,7 @@ export async function listPublicCauseLists(
     onlySources = [...new Set(watches.map((w) => w.sourceId))];
   }
   const docs = await sharedDocuments(db, 'cause_list', query, onlySources);
-  return docs.slice(0, clampLimit(query.limit)).map(({ row, origin, content }) => ({
+  return docs.slice(0, clampLimit(query.limit)).map(({ row, content }) => ({
     id: row.id,
     forum: row.forumLabel,
     listingDate: row.listingDate,
@@ -336,7 +336,7 @@ export async function listPublicOrders(
     }));
   }
   const docs = await sharedDocuments(db, 'order', query);
-  return docs.slice(0, limit).map(({ row, origin, content }) => ({
+  return docs.slice(0, limit).map(({ row, content }) => ({
     id: row.id,
     case: null,
     date: row.listingDate,

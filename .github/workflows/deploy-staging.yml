@@ -24,8 +24,10 @@ jobs:
     uses: ./.github/workflows/images.yml
     with:
       publish: true
+    # A called workflow may not ask for more than its caller grants: images.yml's publish job takes
+    # `contents: write` (SBOMs on a tag build), so a read grant here fails the run at startup.
     permissions:
-      contents: read
+      contents: write
       packages: write
       id-token: write
 

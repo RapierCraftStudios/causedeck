@@ -381,6 +381,14 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 371,
   },
+  RESEARCH_EVAL_PRIVATE_DIR: {
+    domain: 'server',
+    type: 'path',
+    description:
+      'Directory with an advocate-written research evaluation set (corpus.json, queries.json). Never committed; reported separately and unset in CI.',
+    requiredWhen: 'never',
+    ownerIssue: 899,
+  },
   ALTERLAB_API_KEY: {
     domain: 'server',
     type: 'secret',
@@ -601,6 +609,12 @@ export const serverShape = {
     .min(1)
     .optional()
     .describe(d(serverKeys.ADAPTER_PRIVATE_FIXTURES_DIR)),
+  // Advocate-written research eval set (#899); the eval CLI skips the private set when unset.
+  RESEARCH_EVAL_PRIVATE_DIR: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(d(serverKeys.RESEARCH_EVAL_PRIVATE_DIR)),
   // The governed fetch layer (#479, D-048): no key means the mock provider.
   ALTERLAB_API_KEY: secret(z.string().min(1)).optional().describe(d(serverKeys.ALTERLAB_API_KEY)),
   // Data-ops alert routing (#515, D-049): both unset means alerts are logged.

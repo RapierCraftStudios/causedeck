@@ -31,11 +31,13 @@ public paths in this document.
 
 Errors are `application/problem+json` using the shared `Problem` schema in the spec.
 
-## Provenance
+## Data sources
 
-Every record carries provenance and a `source_license` field. Only data from cleared sources or
-contributed copies is served, and personal data only for your own matters (see the court data
-posture).
+Records carry `as_of` (when the record was captured) and `official_url` (a link to the court's own
+copy, or `null` where there is none). Only data from cleared sources or contributed copies is served,
+and personal data only for your own matters (see the court data posture). Where the data comes from,
+and the attribution each source's licence requires, is on the
+[Data sources and licences](/legal/data-sources) page.
 
 ## Endpoints
 

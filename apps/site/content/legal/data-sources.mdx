@@ -1,27 +1,33 @@
 ---
 title: Data sources and licences
-description: The open datasets behind CauseDeck's judgment search, with their licences and the attribution each requires.
+description: The attribution that the licences of our public data sources require, and the terms the public API serves records under.
 date: 2026-10-30
 status: draft
 version: 0.0-draft
 history:
   - date: 2026-10-30
-    summary: Placeholder structure published as a draft with the open judgment dataset attribution; legal text pending counsel (#117).
+    summary: Page added; the API and the app no longer name sources per record (D-053). Legal text pending counsel (#117).
 ---
 
-## Open judgment data
+## Why this page exists
 
-Part of CauseDeck's judgment search is built from a public dataset of Indian court judgments,
-published under the Creative Commons Attribution 4.0 licence (CC-BY-4.0).
+CauseDeck and its public API do not name the portal, aggregator, dataset or route a record came from. The attribution that a licence requires is given here instead. Records carry the date they were captured (`as_of`) and, where the court publishes its own copy, a link to it (`official_url`).
 
-Attribution: Dattam Labs, Indian Supreme Court and High Court Judgments, AWS Open Data, CC-BY-4.0.
+## Attributions
 
-The dataset is made available through AWS Open Data. We have changed it: PDF text is extracted and
-indexed, and each judgment is matched to its court, case number, citation and date.
+### Indian Supreme Court and High Court judgment datasets
 
-## What CauseDeck shows
+- Publisher: Dattam Labs, on AWS Open Data (Supreme Court judgments 1950 onwards, and judgments of the High Courts).
+- Licence: [Creative Commons Attribution 4.0 International (CC-BY-4.0)](https://creativecommons.org/licenses/by/4.0/).
+- Attribution: "Indian Supreme Court and High Court judgments, compiled by Dattam Labs, licensed under CC-BY-4.0." We changed the data by extracting text, metadata and citations from it.
+- Attribution (as published): Dattam Labs, Indian Supreme Court and High Court Judgments, AWS Open Data, CC-BY-4.0.
 
-A judgment in CauseDeck shows its court, case number, citation, date and a link to the official
-copy. It does not show which dataset the judgment came from.
+A judgment in CauseDeck shows only its court, case number, citation, date and a link to the official copy, never the dataset it came from.
 
-TODO(counsel): confirm the attribution wording and the licence notice for each court dataset.
+### Court and notice records
+
+Case status, cause lists, orders and notices come from the public records of the courts. They are served only from sources whose terms we have cleared, and each link points to the court's own copy. These records need no further attribution.
+
+## Using the public API
+
+The API terms apply to every record from the [developer API](/developers/api). Where a record carries an `official_url`, the court's copy is the authoritative one.

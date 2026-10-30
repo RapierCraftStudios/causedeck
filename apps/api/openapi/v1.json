@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CauseDeck API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Public REST API. Errors are RFC 9457 problem+json; see docs/engineering/api.md."
   },
   "servers": [
@@ -611,37 +611,18 @@
                           "summary": {
                             "type": ["string", "null"]
                           },
-                          "url": {
+                          "official_url": {
                             "type": ["string", "null"]
                           }
                         },
-                        "required": ["date", "number", "summary", "url"]
+                        "required": ["date", "number", "summary", "official_url"]
                       }
                     },
-                    "provenance": {
-                      "type": "object",
-                      "properties": {
-                        "source_id": {
-                          "type": "string"
-                        },
-                        "kind": {
-                          "type": "string",
-                          "enum": ["fetched", "contributed"]
-                        },
-                        "ref": {
-                          "type": ["string", "null"]
-                        },
-                        "captured_at": {
-                          "type": "string"
-                        },
-                        "confidence": {
-                          "type": ["number", "null"]
-                        }
-                      },
-                      "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
-                    },
-                    "source_license": {
+                    "as_of": {
                       "type": "string"
+                    },
+                    "official_url": {
+                      "type": ["string", "null"]
                     }
                   },
                   "required": [
@@ -653,8 +634,8 @@
                     "bench",
                     "fetched_at",
                     "orders",
-                    "provenance",
-                    "source_license"
+                    "as_of",
+                    "official_url"
                   ]
                 }
               }
@@ -792,30 +773,11 @@
                           "content": {
                             "type": "string"
                           },
-                          "provenance": {
-                            "type": "object",
-                            "properties": {
-                              "source_id": {
-                                "type": "string"
-                              },
-                              "kind": {
-                                "type": "string",
-                                "enum": ["fetched", "contributed"]
-                              },
-                              "ref": {
-                                "type": ["string", "null"]
-                              },
-                              "captured_at": {
-                                "type": "string"
-                              },
-                              "confidence": {
-                                "type": ["number", "null"]
-                              }
-                            },
-                            "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
-                          },
-                          "source_license": {
+                          "as_of": {
                             "type": "string"
+                          },
+                          "official_url": {
+                            "type": ["string", "null"]
                           }
                         },
                         "required": [
@@ -823,8 +785,8 @@
                           "forum",
                           "listing_date",
                           "content",
-                          "provenance",
-                          "source_license"
+                          "as_of",
+                          "official_url"
                         ]
                       }
                     }
@@ -939,39 +901,17 @@
                           "summary": {
                             "type": ["string", "null"]
                           },
-                          "url": {
-                            "type": ["string", "null"]
-                          },
                           "content": {
                             "type": ["string", "null"]
                           },
                           "forum": {
                             "type": ["string", "null"]
                           },
-                          "provenance": {
-                            "type": "object",
-                            "properties": {
-                              "source_id": {
-                                "type": "string"
-                              },
-                              "kind": {
-                                "type": "string",
-                                "enum": ["fetched", "contributed"]
-                              },
-                              "ref": {
-                                "type": ["string", "null"]
-                              },
-                              "captured_at": {
-                                "type": "string"
-                              },
-                              "confidence": {
-                                "type": ["number", "null"]
-                              }
-                            },
-                            "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
-                          },
-                          "source_license": {
+                          "as_of": {
                             "type": "string"
+                          },
+                          "official_url": {
+                            "type": ["string", "null"]
                           }
                         },
                         "required": [
@@ -980,11 +920,10 @@
                           "date",
                           "number",
                           "summary",
-                          "url",
                           "content",
                           "forum",
-                          "provenance",
-                          "source_license"
+                          "as_of",
+                          "official_url"
                         ]
                       }
                     }
@@ -1100,39 +1039,17 @@
                           "effective_on": {
                             "type": ["string", "null"]
                           },
-                          "url": {
-                            "type": "string"
-                          },
                           "forum_codes": {
                             "type": "array",
                             "items": {
                               "type": "string"
                             }
                           },
-                          "provenance": {
-                            "type": "object",
-                            "properties": {
-                              "source_id": {
-                                "type": "string"
-                              },
-                              "kind": {
-                                "type": "string",
-                                "enum": ["fetched", "contributed"]
-                              },
-                              "ref": {
-                                "type": ["string", "null"]
-                              },
-                              "captured_at": {
-                                "type": "string"
-                              },
-                              "confidence": {
-                                "type": ["number", "null"]
-                              }
-                            },
-                            "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
-                          },
-                          "source_license": {
+                          "as_of": {
                             "type": "string"
+                          },
+                          "official_url": {
+                            "type": ["string", "null"]
                           }
                         },
                         "required": [
@@ -1141,10 +1058,9 @@
                           "kind",
                           "issued_on",
                           "effective_on",
-                          "url",
                           "forum_codes",
-                          "provenance",
-                          "source_license"
+                          "as_of",
+                          "official_url"
                         ]
                       }
                     }

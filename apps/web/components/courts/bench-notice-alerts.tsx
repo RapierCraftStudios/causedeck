@@ -70,9 +70,6 @@ export function BenchNoticeAlerts({ alerts, slug }: BenchNoticeAlertsProps) {
                 dates: alert.listDates.join(', '),
               })}
             </p>
-            <p data-provenance="source" className="text-ink-muted text-xs">
-              {t('benchAlerts.source', { source: alert.sourceName })}
-            </p>
             {isWebUrl(alert.url) ? (
               <a
                 href={alert.url}

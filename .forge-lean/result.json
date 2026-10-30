@@ -1,260 +1,266 @@
 {
  "status": "fixed",
- "summary": "Corpus OCR drain job system.corpus.ocr with platform AI scope, retry/park, admin queue view",
+ "summary": "Corpus redaction pipeline, judgment columns and mask requests, audited masking action and re-redact job delivered; R12 measured on a synthetic set (post-deploy amendment)",
  "requirements": [
   {
    "id": "R1",
    "status": "implemented",
-   "evidence": "packages/intelligence/src/corpus/ocr-drain.ts"
+   "evidence": "packages/intelligence/src/corpus/redact/redact.ts"
   },
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "packages/core/src/ai/platform-ports.ts"
+   "evidence": "packages/adapters/src/workbench/pii-patterns.ts"
   },
   {
    "id": "R3",
    "status": "implemented",
-   "evidence": "packages/intelligence/src/corpus/ocr-drain.ts"
+   "evidence": "packages/intelligence/src/corpus/redact/roles.ts"
   },
   {
    "id": "R4",
    "status": "implemented",
-   "evidence": "packages/core/src/ai/platform-ports.ts"
+   "evidence": "packages/intelligence/src/corpus/redact/redact.ts"
   },
   {
    "id": "R5",
    "status": "implemented",
-   "evidence": "apps/admin/app/(console)/data-ops/page.tsx"
+   "evidence": "packages/intelligence/src/corpus/redact/names.ts"
   },
   {
    "id": "R6",
    "status": "implemented",
-   "evidence": "packages/core/src/jobs/definitions/corpus-ocr.ts"
+   "evidence": "packages/intelligence/src/corpus/redact/sensitive.ts"
   },
   {
    "id": "R7",
    "status": "implemented",
-   "evidence": "packages/intelligence/src/corpus/ocr-drain.ts"
+   "evidence": "packages/intelligence/src/corpus/redact/version.ts"
   },
   {
    "id": "R8",
    "status": "implemented",
-   "evidence": "packages/core/src/jobs/definitions/corpus-ocr.ts"
+   "evidence": "packages/db/src/schema/corpus.ts"
   },
   {
    "id": "R9",
    "status": "implemented",
-   "evidence": "packages/intelligence/src/corpus/ocr-drain.ts"
+   "evidence": "packages/db/src/schema/corpus.ts"
   },
   {
    "id": "R10",
    "status": "implemented",
-   "evidence": "packages/core/src/jobs/definitions/corpus-ocr.ts"
+   "evidence": "packages/core/src/corpus/masking.ts"
   },
   {
    "id": "R11",
    "status": "implemented",
-   "evidence": "packages/core/src/ai/platform-ports.ts"
+   "evidence": "packages/core/src/__tests__/page-text-access.test.ts"
   },
   {
    "id": "R12",
+   "status": "partial",
+   "evidence": "packages/intelligence/src/corpus/redact/EVALUATION.md:6"
+  },
+  {
+   "id": "R13",
    "status": "implemented",
-   "evidence": "apps/worker/src/__tests__/registry.test.ts"
+   "evidence": "packages/intelligence/src/corpus/redact/redact.test.ts"
+  },
+  {
+   "id": "R14",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/redact/eval.test.ts"
+  },
+  {
+   "id": "R15",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/corpus-redact.ts"
+  },
+  {
+   "id": "R16",
+   "status": "implemented",
+   "evidence": "packages/core/src/corpus/masking.ts"
+  },
+  {
+   "id": "R17",
+   "status": "implemented",
+   "evidence": "packages/core/src/__tests__/page-text-access.test.ts"
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-ocr.test.ts src/jobs/definitions/corpus-bulk-import.test.ts src/jobs/registry.test.ts",
+   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/corpus --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "exit": 0
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/corpus src/ocr",
+   "command": "pnpm --filter @causedeck/adapters exec vitest run src/workbench --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "exit": 0
   },
   {
    "id": "V3",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts",
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/schema/corpus.test.ts src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "exit": 0
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts",
+   "command": "pnpm --filter @causedeck/db db:check",
    "exit": 0
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts",
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/corpus src/__tests__/page-text-access.test.ts src/jobs/definitions/corpus-redact.test.ts src/jobs/definitions/judgment-alert-scan.test.ts src/citations src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "exit": 0
   },
   {
    "id": "V6",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/data-ops.test.tsx __tests__/server-actions-audit.test.ts",
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "exit": 0
   },
   {
-   "id": "V8",
-   "command": "PATH=node_modules/.bin:$PATH turbo run typecheck --filter='...[base]' (web: tsc --noEmit with a 6 GB heap)",
+   "id": "V7",
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "vitest run src/jobs/definitions/corpus-ocr.test.ts",
+   "command": "V1-V7",
    "result": "pass",
    "fails_without_fix": true
-  },
-  {
-   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts",
-   "result": "pass: 341 tests (rerun alone with a 1700s timeout; forgedock check hit its 300s limit on the shared host)",
-   "fails_without_fix": "unknown"
   }
  ],
  "self_review": [
   {
    "question": "1",
    "answer": "yes",
-   "evidence": "R1-R12 above"
+   "evidence": "R1-R17 in requirements; R12 post-deploy amendment"
   },
   {
    "question": "2",
    "answer": "yes",
-   "evidence": "cross-tenant services test 341 pass"
+   "evidence": "V2, V5, V6, V7 pass on the merged tree"
   },
   {
    "question": "3",
    "answer": "yes",
-   "evidence": "forgedock check passes"
+   "evidence": "deliverables changed; P1-P4 preserved (V2, V5); V1-V7 pass"
   },
   {
    "question": "4",
    "answer": "yes",
-   "evidence": "only deliverable paths and tests changed"
+   "evidence": "only deliverable paths and tests changed; migration renumbered to 20261030201232 after the merge"
   }
  ],
- "amendments": [],
+ "amendments": [
+  {
+   "kind": "post-deploy",
+   "requirement": "R12",
+   "why": "The labelled set must come from #119 or imported judgments; #119 fixtures are an open human-collection issue and the #890 staging import is post-deploy. The 40-judgment synthetic set (recall 100%, over-redaction 0%) and the eval harness are committed per contract decision K4; re-running the harness on real judgments and committing that report is the post-deploy check."
+  }
+ ],
  "not_members": [
   {
-   "symbol": "ocrQueueOverview",
+   "symbol": "CORPUS_MASK_REQUEST_STATUSES",
    "test": "apps/admin/__tests__/growth-page.test.tsx",
-   "why": "Mock factory for the growth page only; that page never imports ocrQueueOverview."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "ocrQueueOverview",
-   "test": "apps/admin/__tests__/migrations-page.test.tsx",
-   "why": "Mock factory for the migrations page only; it does not use the data-ops queue query."
-  },
-  {
-   "symbol": "corpusOcrCall",
+   "symbol": "corpusMaskRequest",
    "test": "apps/admin/__tests__/growth-page.test.tsx",
-   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "corpusOcrCall",
+   "symbol": "CORPUS_MASK_REQUEST_STATUSES",
    "test": "apps/admin/__tests__/headers.test.ts",
-   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "corpusOcrCall",
+   "symbol": "corpusMaskRequest",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
+  },
+  {
+   "symbol": "CORPUS_MASK_REQUEST_STATUSES",
    "test": "apps/admin/__tests__/server-actions-audit.test.ts",
-   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "corpusOcrCall",
+   "symbol": "corpusMaskRequest",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
+  },
+  {
+   "symbol": "CORPUS_MASK_REQUEST_STATUSES",
    "test": "apps/admin/__tests__/sources-actions.test.ts",
-   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "corpusOcrCall",
+   "symbol": "corpusMaskRequest",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
+  },
+  {
+   "symbol": "CORPUS_MASK_REQUEST_STATUSES",
    "test": "apps/web/__tests__/activity-export-route.test.ts",
-   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "corpusOcrCall",
+   "symbol": "corpusMaskRequest",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
+  },
+  {
+   "symbol": "CORPUS_MASK_REQUEST_STATUSES",
    "test": "apps/web/__tests__/billing-actions.test.ts",
-   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "corpusOcrCall",
+   "symbol": "corpusMaskRequest",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
+  },
+  {
+   "symbol": "CORPUS_MASK_REQUEST_STATUSES",
    "test": "apps/web/__tests__/case-watch-actions.test.ts",
-   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "corpusOcrCall",
+   "symbol": "corpusMaskRequest",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
+  },
+  {
+   "symbol": "CORPUS_MASK_REQUEST_STATUSES",
    "test": "apps/web/__tests__/conflicts-action.test.ts",
-   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "corpusOcrCall",
+   "symbol": "corpusMaskRequest",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
+  },
+  {
+   "symbol": "CORPUS_MASK_REQUEST_STATUSES",
    "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
-   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "corpusOcrCall",
+   "symbol": "corpusMaskRequest",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
+  },
+  {
+   "symbol": "CORPUS_MASK_REQUEST_STATUSES",
    "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
-   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   },
   {
-   "symbol": "DEFAULT_OCR_DRAIN_BUDGET",
-   "test": "packages/intelligence/src/diary/to-proposals.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "OCR_MAX_ATTEMPTS",
-   "test": "packages/intelligence/src/diary/to-proposals.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "drainOcrQueue",
-   "test": "packages/intelligence/src/diary/to-proposals.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "ocrBackoffMs",
-   "test": "packages/intelligence/src/diary/to-proposals.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "DEFAULT_OCR_DRAIN_BUDGET",
-   "test": "packages/intelligence/src/structure/hearing.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "OCR_MAX_ATTEMPTS",
-   "test": "packages/intelligence/src/structure/hearing.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "drainOcrQueue",
-   "test": "packages/intelligence/src/structure/hearing.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "ocrBackoffMs",
-   "test": "packages/intelligence/src/structure/hearing.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "DEFAULT_OCR_DRAIN_BUDGET",
-   "test": "packages/intelligence/src/transcribe/transcribe.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "OCR_MAX_ATTEMPTS",
-   "test": "packages/intelligence/src/transcribe/transcribe.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "drainOcrQueue",
-   "test": "packages/intelligence/src/transcribe/transcribe.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
-  },
-  {
-   "symbol": "ocrBackoffMs",
-   "test": "packages/intelligence/src/transcribe/transcribe.test.ts",
-   "why": "Unit test of one module; it does not enumerate the package index exports."
+   "symbol": "corpusMaskRequest",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "The test mocks its own collaborators and lists no @causedeck/db schema exports; none of the existing corpus siblings appear in it either, so there is no list for this symbol to join."
   }
  ]
 }

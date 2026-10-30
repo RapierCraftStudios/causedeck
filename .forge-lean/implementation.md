@@ -1,42 +1,18 @@
 ### Approach
-Queue drain in `packages/intelligence/src/corpus/ocr-drain.ts` (claim with `for update skip locked` and a lease, render, gateway OCR, store text and delete the row in one transaction, backoff then park). Platform AI scope in `packages/core/src/ai/platform-ports.ts` meters spend in the new global `corpus_ocr_call` table, never a workspace. Job `system.corpus.ocr` is scheduled every 10 minutes and does nothing unless `CORPUS_OCR_ENABLED` is true. The mock provider serves OCR when no providers are configured. Admin Data Ops shows queue depth and parked failures.
+Rules-first redaction pipeline in `@causedeck/intelligence` (versioned, per-judgment in-memory placeholder allocator, optional injected zod-validated gateway hook for low-confidence spans). Derived columns on `judgment` hold the output; raw `page_text` and `sha256` are never written. Shared PII patterns moved to `pii-patterns.ts`. Core gets `applyMaskRequest` (audited) and the `system.corpus.redact` job (no fetch).
 
 ### Changes
-- packages/db: migration 20261030000001_corpus_ocr, schema/corpus.ts, conventions.ts, index.test.ts, cross-tenant-registry.ts.
-- packages/core: ai/platform-ports.ts, jobs/definitions/corpus-ocr.ts (+test), jobs/registry.ts, sources/bulk-import.ts (ocrQueueStats).
-- packages/intelligence: corpus/ocr-drain.ts, ocr/ocr.ts (purpose and idempotency prefix options), index.ts.
-- packages/config: env schema; docs/engineering/env.md.
-- apps/worker: registry and schedules tests. apps/admin: data layer, Data Ops page, tests.
+- packages/adapters/src/workbench/pii-patterns.ts (+ test), detect.ts: shared patterns, plus bank account, vehicle number and address cues
+- packages/intelligence/src/corpus/redact/*: pipeline, roles, names, sensitive categories, gateway hook, 40 synthetic fixtures, eval, EVALUATION.md, tests; corpus/index.ts exports it; ingest.ts redacts before insert
+- packages/db: judgment columns, `corpus_mask_request`, migration 20261030201232_corpus_redaction (renumbered after the base's corpus_ocr; snapshot regenerated with drizzle-kit, SQL unchanged), conventions, tests, cross-tenant registry
+- packages/core: corpus/masking.ts, audit event `corpus.mask_applied`, corpus-redact job and registry, research/alerts.ts reads `redacted_text`, static page-text access test, domain deps and docs
+- apps/worker registry test: `system.corpus.redact`
 
 ### Acceptance Criteria Status
-- R1 ✅ ocr-drain.ts storePage; R2 ✅ platform-ports.ts createPlatformAiGateway (mock); R3 ✅ ocr-drain.ts fail
-- R4 ✅ platform-ports.ts audit.record to corpus_ocr_call; R5 ✅ data-ops/page.tsx OCR queue
-- R6 ✅ corpus-ocr.ts; R7 ✅ ocr-drain.ts claim; R8 ✅ corpus-ocr.ts runCorpusOcr; R9 ✅ ocr-drain.ts storePage/fail
-- R10 ✅ corpus-ocr.ts (budgets, flag, schedule); R11 ✅ platform-ports.ts; R12 ✅ worker registry/schedules tests
+R1 ✅ redact/redact.ts; R2 ✅ pii-patterns.ts; R3 ✅ redact/roles.ts, gateway.ts; R4 ✅ redact/redact.ts; R5 ✅ redact/names.ts; R6 ✅ redact/sensitive.ts; R7 ✅ redact/version.ts, ingest.ts; R8 ✅ db/schema/corpus.ts; R9 ✅ db/schema/corpus.ts, db/src/index.test.ts; R10 ✅ core/corpus/masking.ts (registry: NOT_A_SERVICE, global tables); R11 ✅ __tests__/page-text-access.test.ts, research/alerts.ts; R12 ◐ post-deploy amendment (40 synthetic judgments, recall 100%, over-redaction 0%; EVALUATION.md:6); R13 ✅ redact/redact.test.ts; R14 ✅ redact/eval.test.ts; R15 ✅ jobs/definitions/corpus-redact.ts + test; R16 ✅ corpus/masking.ts + masking.test.ts; R17 ✅ page-text-access.test.ts
 
 ### Verification
-- forgedock check validate commands V1-V6 pass; V5 (core cross-tenant services.test.ts, 341 tests) passed on a rerun with a longer timeout after the 300s limit.
-- corpus-ocr.test.ts: 5 pass; the tests exercise new code and fail without it.
+After the merge: V1, V2, V3, V4, V5 and V7 pass (V7: 2 files, 11 tests). V6 (cross-tenant services, 341 tests) passed before the merge; the merge only added a NOT_A_SERVICE key beside the base's. forgedock check caps each command at 300s, which V5-V7 exceed on this loaded host; they pass when run directly. Typecheck: turbo (with node_modules/.bin on PATH) passes except web, which needs a 6 GB heap and then exits 0. New tests fail without the fix: the modules and columns do not exist.
 
 ### Notes
-- New env vars: CORPUS_OCR_ENABLED (default false), CORPUS_OCR_DAILY_PAISE (default 500000).
-- Fixed a missing `and` import risk in platform-ports.ts and made the job tests deterministic.
-
-## Sibling-list fix
-Checked the 24 flagged tests: none enumerate the new symbols (they are unrelated mocks or unit tests), so each is recorded in result.json not_members.
-
-### Validate results (per contract)
-- V1 core corpus-ocr, corpus-bulk-import, registry tests: pass (19 tests, rc 0)
-- V2 intelligence src/corpus src/ocr: pass (rc 0, forgedock check)
-- V3 worker registry and schedules tests: pass (rc 0, forgedock check)
-- V4 db src/index.test.ts: pass (rc 0, forgedock check)
-- V5 core cross-tenant services.test.ts: pass (341 tests, rc 0 with a 1700s timeout; forgedock check's 300s limit times out on this host)
-- V6 admin data-ops and server-actions-audit tests: pass (rc 0, forgedock check)
-
-### CI fix: .env.example
-CI's config test failed because `.env.example` was not regenerated after adding CORPUS_OCR_ENABLED and CORPUS_OCR_DAILY_PAISE. Ran `pnpm env:example`; `src/env/__tests__/example.test.ts` now passes (4 tests).
-
-## Merge check (turbo not found)
-The failure was `turbo: command not found` (exit 127), an environment PATH problem, not a code conflict. With node_modules/.bin on PATH, the scoped typecheck gave no TS errors for config, db, adapters, intelligence, core and the other packages. The four app typechecks (web, worker, api, admin) were killed by the time limit, so they are unverified. No source change was needed.
-
-Post-merge typecheck: the scoped `turbo run typecheck` failed with exit 127 only because turbo was not on PATH (it is in node_modules/.bin). With PATH set, 23 of 24 tasks passed; @causedeck/web hit a Node heap limit (exit 134), and `tsc --noEmit` for apps/web with NODE_OPTIONS=--max-old-space-size=6144 exits 0. No merged-tree type errors; no code change needed.
+No env vars. Migration is additive. R12's labelled set is synthetic (K4); re-run the eval on #119 or imported judgments post-deploy. Ten admin and web tests were checked and do not list schema exports, so they are recorded in result.json not_members. scripts/check-devdocs-freshness.sh does not exist in this repo.

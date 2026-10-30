@@ -25,12 +25,14 @@ import {
 } from '@causedeck/core/migration';
 import {
   coverageReport,
+  listBulkImports,
   listSources,
   sourceFetchLogs,
   sourceOpsOverview,
   staffConflictRate,
   staffCoverageInputs,
   staffParseYield,
+  type BulkImportProgress,
   type CoverageChange,
   type CoverageGap,
   type ForumCoverage,
@@ -292,6 +294,23 @@ export async function dataOpsOverview(
     { purpose: 'data_ops.overview', capability: 'data-ops', tables: ['fetch_log', 'source'] },
     (tx) =>
       sourceOpsOverview(tx, now, { day, week }, sourceId, { day: conflictDay, week: conflictWeek }),
+    db,
+  );
+}
+
+/** Progress of the bulk judgment import per dataset archive (#890): counts and years only. */
+export function bulkImportOverview(
+  staff: StaffActor,
+  db?: Database,
+): Promise<BulkImportProgress[]> {
+  return staffQuery(
+    staff,
+    {
+      purpose: 'data_ops.bulk_import',
+      capability: 'data-ops',
+      tables: ['corpus_import_cursor'],
+    },
+    (tx) => listBulkImports(tx),
     db,
   );
 }

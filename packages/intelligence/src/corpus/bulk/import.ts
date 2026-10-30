@@ -14,12 +14,7 @@ import { storeJudgment, type StoreDeps } from '../ingest.ts';
 import { indexMetadata, type BulkMetadata } from './metadata.ts';
 import { readParquetRows } from './parquet.ts';
 import { gunzipIfNeeded, readTar } from './tar.ts';
-import type {
-  BulkBudget,
-  BulkImportReport,
-  BulkImportRequest,
-  BulkObjectSource,
-} from './types.ts';
+import type { BulkBudget, BulkImportReport, BulkImportRequest, BulkObjectSource } from './types.ts';
 
 const { corpusImportCursor } = schema;
 
@@ -146,7 +141,8 @@ export async function runBulkImport(
     budgetReached: false,
   };
   const concurrency = Math.max(1, deps.concurrency ?? BULK_DEFAULT_CONCURRENCY);
-  const exhausted = (): boolean => report.pages >= budget.maxPages || report.bytes >= budget.maxBytes;
+  const exhausted = (): boolean =>
+    report.pages >= budget.maxPages || report.bytes >= budget.maxBytes;
 
   for (const archive of await listArchives(deps.objects, request)) {
     if (exhausted() || signal?.aborted === true) {
@@ -230,7 +226,7 @@ export async function runBulkImport(
       batch.push({ name: entry.name.split('/').pop() ?? entry.name, data: entry.data });
       if (batch.length >= concurrency) {
         await flush();
-        if (exhausted() || signal?.aborted === true) {
+        if (exhausted() || Boolean(signal?.aborted)) {
           finished = false;
           break;
         }

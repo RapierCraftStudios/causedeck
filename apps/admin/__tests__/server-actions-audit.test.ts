@@ -66,6 +66,7 @@ vi.mock('@causedeck/core/review', () => {
     },
   };
 });
+vi.mock('@causedeck/core/jobs', () => ({ enqueue: () => Promise.resolve('job') }));
 vi.mock('@causedeck/core/runtime', () => ({
   db: {},
   requestSupportSessionFor: async (ctx: { staffUserId: string }) => {
@@ -99,6 +100,7 @@ vi.mock('@causedeck/core/sources', () => {
     SourceAdminError: class SourceAdminError extends Error {},
     asSourceStaff: (userId: string) => ({ userId }),
     listSources: () => Promise.resolve([]),
+    listBulkImports: () => Promise.resolve([]),
     sourceFetchLogs: () => Promise.resolve([]),
     sourceOpsOverview: () => Promise.resolve([]),
     staffParseYield: () => Promise.resolve([]),
@@ -403,6 +405,12 @@ const ACTIONS: Record<string, () => Promise<unknown>> = {
     const { setSourceKillSwitchAction } = await import('../app/(console)/sources/actions.ts');
     return setSourceKillSwitchAction(form({ id: 'in.nclt.bengaluru', killSwitch: 'true' }));
   },
+  'app/(console)/data-ops/actions.ts#startBulkImportAction': async () => {
+    const { startBulkImportAction } = await import('../app/(console)/data-ops/actions.ts');
+    return startBulkImportAction(
+      form({ dataset: 'hc', court: '33_10', yearFrom: '2020', yearTo: '2021' }),
+    );
+  },
   'app/(console)/limitation-rules/actions.ts#importRuleTableAction': async () => {
     const { importRuleTableAction } = await import('../app/(console)/limitation-rules/actions.ts');
     return importRuleTableAction(
@@ -523,6 +531,7 @@ describe('admin data layer reads', () => {
     staffAuditLog: (d) => d.staffAuditLog(staff),
     workspaceUsage: (d) => d.workspaceUsage(staff, WORKSPACE_ID),
     dataOpsOverview: (d) => d.dataOpsOverview(staff),
+    bulkImportOverview: (d) => d.bulkImportOverview(staff),
     dataOpsFetchLogs: (d) => d.dataOpsFetchLogs(staff, 'court.test'),
     coverageOverview: (d) => d.coverageOverview(staff),
     businessMetrics: (d) =>

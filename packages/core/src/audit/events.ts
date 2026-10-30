@@ -38,6 +38,11 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'Staff created or changed an external data source or flipped its kill switch',
   },
+  // The bulk judgment import (#890, D-053). Metadata holds the dataset, court and year range only.
+  'corpus.bulk_import_started': {
+    security: false,
+    description: 'Staff started the bulk import of an open judgment dataset',
+  },
   // The public status page's incident log (#770). Metadata holds the change and the old and new state.
   'incident.changed': {
     security: true,

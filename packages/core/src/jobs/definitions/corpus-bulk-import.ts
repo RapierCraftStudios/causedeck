@@ -1,4 +1,4 @@
-// `system.corpus.bulk_import` (#890, D-053): imports the AWS Open Data Supreme Court or High Court
+// `system.corpus.bulk-import` (#890, D-053): imports the AWS Open Data Supreme Court or High Court
 // judgment dataset (CC-BY-4.0, Dattam Labs) into the global `judgment` corpus. Off by default: it has
 // no schedule and runs only when staff start it from the admin console, per dataset, court and year
 // range. The source must be cleared (`policyFor` throws before any read), a run is bounded by a page
@@ -39,7 +39,12 @@ export const corpusBulkImportSchema = z
     yearFrom: year.optional(),
     yearTo: year.optional(),
     maxPages: z.number().int().min(1).max(1_000_000).optional(),
-    maxBytes: z.number().int().min(1).max(50 * 1024 ** 3).optional(),
+    maxBytes: z
+      .number()
+      .int()
+      .min(1)
+      .max(50 * 1024 ** 3)
+      .optional(),
   })
   .refine((p) => (p.yearFrom === undefined) === (p.yearTo === undefined), {
     message: 'yearFrom and yearTo go together',
@@ -121,7 +126,7 @@ export async function runCorpusBulkImport(
 }
 
 export const corpusBulkImport = defineJob({
-  name: 'system.corpus.bulk_import',
+  name: 'system.corpus.bulk-import',
   schema: corpusBulkImportSchema,
   concurrency: 1,
   singleton: {

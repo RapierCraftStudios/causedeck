@@ -134,6 +134,36 @@ describe('Data Ops console', () => {
     });
   });
 
+  it('shows bulk import progress: rows added, duplicates skipped, failures and storage used (#890)', async () => {
+    await withTestDb(async (tx) => {
+      state.tx = tx;
+      await tx.insert(schema.corpusImportCursor).values({
+        sourceId: 'aws-open-data-hc',
+        dataset: 'hc',
+        court: '33_10',
+        year: 2021,
+        archiveKey: 'data/tar/year=2021/court=33_10/pdfs.tar',
+        position: 7,
+        status: 'running',
+        rowsAdded: 5,
+        duplicatesSkipped: 2,
+        failures: 1,
+        bytesStored: 3 * 1024 * 1024,
+      });
+      const page = await html(DataOpsPage());
+      for (const label of [
+        'Bulk judgment import',
+        'Rows added',
+        'Duplicates skipped',
+        'Storage used',
+      ]) {
+        expect(page).toContain(label);
+      }
+      expect(page).toContain('33_10');
+      expect(page).toContain('3.0 MB');
+      expect(page).not.toContain('pdfs.tar');
+    });
+  });
   it('drills down to recent fetch logs without content', async () => {
     await withTestDb(async (tx) => {
       state.tx = tx;

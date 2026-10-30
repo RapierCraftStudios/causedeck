@@ -13,7 +13,9 @@ const log = { info: vi.fn(), warn: vi.fn() } as never;
 /** A `source` table with one row; `policyFor` reads it through `select().from().where().limit()`. */
 const sourceDb = (row: Record<string, unknown> | undefined): Queryable =>
   ({
-    select: () => ({ from: () => ({ where: () => ({ limit: () => Promise.resolve(row ? [row] : []) }) }) }),
+    select: () => ({
+      from: () => ({ where: () => ({ limit: () => Promise.resolve(row ? [row] : []) }) }),
+    }),
   }) as unknown as Queryable;
 
 const clearedRow = {
@@ -32,17 +34,23 @@ const clearedRow = {
   maxTier: 'http',
   maxCostDollars: '0',
   captchaBulkCleared: false,
+  updatedAt: new Date('2026-10-01T00:00:00Z'),
 };
 
-describe('system.corpus.bulk_import', () => {
+describe('system.corpus.bulk-import', () => {
   it('is off by default: no schedule, one run per dataset and court', () => {
-    expect(corpusBulkImport.name).toBe('system.corpus.bulk_import');
+    expect(corpusBulkImport.name).toBe('system.corpus.bulk-import');
     expect(corpusBulkImport.schedule).toBeUndefined();
     expect(corpusBulkImport.concurrency).toBe(1);
   });
 
   it('validates the dataset, the year range and the court', () => {
-    const ok = corpusBulkImportSchema.safeParse({ dataset: 'hc', court: '33_10', yearFrom: 2022, yearTo: 2023 });
+    const ok = corpusBulkImportSchema.safeParse({
+      dataset: 'hc',
+      court: '33_10',
+      yearFrom: 2022,
+      yearTo: 2023,
+    });
     expect(ok.success).toBe(true);
     for (const bad of [
       { dataset: 'x' },
@@ -62,7 +70,11 @@ describe('system.corpus.bulk_import', () => {
       { ...clearedRow, clearedAt: null, termsStatus: 'pending' },
       { ...clearedRow, killSwitch: true },
     ]) {
-      const report = await runCorpusBulkImport({ log }, { dataset: 'sc' }, { db: sourceDb(row), openSource });
+      const report = await runCorpusBulkImport(
+        { log },
+        { dataset: 'sc' },
+        { db: sourceDb(row), openSource },
+      );
       expect(report).toMatchObject({ skipped: true, inserted: 0 });
     }
     expect(openSource).not.toHaveBeenCalled();

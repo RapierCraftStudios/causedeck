@@ -9,12 +9,14 @@ import {
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { dataOpsOverview } from '../../../lib/data/index.ts';
+import { bulkImportOverview, dataOpsOverview } from '../../../lib/data/index.ts';
+import { startBulkImportAction } from './actions.ts';
 import { requireStaff } from '../../../lib/staff.ts';
 
 export const metadata: Metadata = { title: 'Data Ops' };
 
 const percent = (v: number | null): string => (v === null ? '-' : `${(v * 100).toFixed(1)}%`);
+const megabytes = (v: number): string => `${(v / 1024 ** 2).toFixed(1)} MB`;
 const dollars = (v: number): string => `$${v.toFixed(4)}`;
 
 function tierMix(w: SourceOpsWindow): string {
@@ -59,6 +61,7 @@ export default async function DataOpsPage() {
   const staff = await requireStaff('data-ops');
   const rows = await dataOpsOverview(staff);
   const failing = topFailingSources(rows);
+  const imports = await bulkImportOverview(staff);
   return (
     <section aria-labelledby="page-title" className="grid gap-6">
       <div className="grid gap-1">
@@ -131,6 +134,71 @@ export default async function DataOpsPage() {
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="grid gap-2">
+        <h2 className="font-medium">Bulk judgment import</h2>
+        <p className="text-ink-muted text-sm">
+          Off by default. Starts the open-data import for a dataset, optionally one court and a year
+          range; the source must be cleared on Sources first. Counts only.
+        </p>
+        <form action={startBulkImportAction} className="flex flex-wrap items-end gap-2 text-sm">
+          <label className="grid gap-1">
+            Dataset
+            <select name="dataset" defaultValue="sc">
+              <option value="sc">Supreme Court</option>
+              <option value="hc">High Courts</option>
+            </select>
+          </label>
+          <label className="grid gap-1">
+            Court (High Courts)
+            <input name="court" maxLength={40} />
+          </label>
+          <label className="grid gap-1">
+            From year
+            <input name="yearFrom" inputMode="numeric" maxLength={4} />
+          </label>
+          <label className="grid gap-1">
+            To year
+            <input name="yearTo" inputMode="numeric" maxLength={4} />
+          </label>
+          <button type="submit" className="underline">
+            Start import
+          </button>
+        </form>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">Bulk import progress</caption>
+            <thead>
+              <tr>
+                <th scope="col">Dataset</th>
+                <th scope="col">Court</th>
+                <th scope="col">Year</th>
+                <th scope="col">Status</th>
+                <th scope="col">Rows added</th>
+                <th scope="col">Duplicates skipped</th>
+                <th scope="col">Failures</th>
+                <th scope="col">Storage used</th>
+              </tr>
+            </thead>
+            <tbody>
+              {imports.map((i) => (
+                <tr key={`${i.sourceId}:${i.court ?? ''}:${String(i.year)}`}>
+                  <th scope="row">{i.dataset}</th>
+                  <td>{i.court ?? '-'}</td>
+                  <td>{i.year}</td>
+                  <td>{i.status}</td>
+                  <td>{i.rowsAdded}</td>
+                  <td>{i.duplicatesSkipped}</td>
+                  <td>{i.failures}</td>
+                  <td>{megabytes(i.bytesStored)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {imports.length === 0 ? (
+            <p className="text-ink-muted text-sm">No bulk import has run.</p>
+          ) : null}
+        </div>
       </div>
       <div className="grid gap-2">
         <h2 className="font-medium">Top failing sources (24h)</h2>

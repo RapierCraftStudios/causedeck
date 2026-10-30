@@ -32,3 +32,6 @@ Checked the 24 flagged tests: none enumerate the new symbols (they are unrelated
 - V4 db src/index.test.ts: pass (rc 0, forgedock check)
 - V5 core cross-tenant services.test.ts: pass (341 tests, rc 0 with a 1700s timeout; forgedock check's 300s limit times out on this host)
 - V6 admin data-ops and server-actions-audit tests: pass (rc 0, forgedock check)
+
+### CI fix: .env.example
+CI's config test failed because `.env.example` was not regenerated after adding CORPUS_OCR_ENABLED and CORPUS_OCR_DAILY_PAISE. Ran `pnpm env:example`; `src/env/__tests__/example.test.ts` now passes (4 tests).

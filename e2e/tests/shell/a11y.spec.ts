@@ -60,7 +60,8 @@ test.describe('shell accessibility', { tag: '@a11y' }, () => {
   });
 
   test('with the shortcuts dialog open', async ({ page, asUser }) => {
-    await openShell(page, asUser);
+    // Not /today: the court-day board owns `?` there (see chords.spec.ts).
+    await openShell(page, asUser, { path: 'settings/profile' });
     await page.keyboard.press('?');
     await expect(page.getByRole('dialog', { name: 'Help' })).toBeVisible();
   });

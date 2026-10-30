@@ -111,6 +111,8 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `BILLING_SAC` | string (99xxxx) | `998314` | never (defaults to 998314) | #253 | — |
 | `ADAPTER_PRIVATE_FIXTURES_DIR` | path | — | never | #371 | — |
 | `RESEARCH_EVAL_PRIVATE_DIR` | path | — | never | #899 | — |
+| `CORPUS_OCR_ENABLED` | boolean | `false` | never (off unless set) | #1030 | — |
+| `CORPUS_OCR_DAILY_PAISE` | integer (1-100000000) | `500000` | never (defaults to 500000) | #1030 | — |
 | `ALTERLAB_API_KEY` | secret | — | never (the mock provider is used when unset) | #479 | — |
 | `DATA_OPS_SLACK_WEBHOOK_URL` | secret | — | never (alerts are logged when unset) | #515 | — |
 | `DATA_OPS_ALERT_EMAIL` | email | — | never (alerts are logged when unset) | #515 | — |

@@ -27,6 +27,7 @@ import {
   coverageReport,
   listBulkImports,
   listSources,
+  ocrQueueStats,
   sourceFetchLogs,
   sourceOpsOverview,
   staffConflictRate,
@@ -35,6 +36,7 @@ import {
   type BulkImportProgress,
   type CoverageChange,
   type CoverageGap,
+  type OcrQueueStats,
   type ForumCoverage,
   type SourceFetchLogEntry,
   type SourceOpsRow,
@@ -311,6 +313,16 @@ export function bulkImportOverview(
       tables: ['corpus_import_cursor'],
     },
     (tx) => listBulkImports(tx),
+    db,
+  );
+}
+
+/** Corpus OCR queue depth and parked failures (#1030): counts, ids and error codes only. */
+export function ocrQueueOverview(staff: StaffActor, db?: Database): Promise<OcrQueueStats> {
+  return staffQuery(
+    staff,
+    { purpose: 'data_ops.ocr_queue', capability: 'data-ops', tables: ['corpus_ocr_queue'] },
+    (tx) => ocrQueueStats(tx),
     db,
   );
 }

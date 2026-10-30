@@ -70,6 +70,7 @@ export function ocrBackoffMs(attempts: number): number {
 
 async function claim(db: Queryable, limit: number, now: Date): Promise<Claimed[]> {
   const lease = new Date(now.getTime() + LEASE_MS);
+  // nosemgrep: infra.security.semgrep.causedeck.raw-sql-bypasses-with-workspace -- corpus_ocr_queue is a global platform table (no workspace_id, no RLS); public judgments only
   const rows = await db.execute(sql`
     update corpus_ocr_queue q
     set next_attempt_at = ${lease.toISOString()}::timestamptz

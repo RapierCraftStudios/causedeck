@@ -4,6 +4,7 @@
 // range. The source must be cleared (`policyFor` throws before any read), a run is bounded by a page
 // and a byte budget, and the importer resumes from the per-archive cursor, so a re-run only picks up
 // what is left. Only ids, counts and keys are logged.
+import { serverEnv } from '@causedeck/config/env';
 import { db as rootDb, type Queryable } from '@causedeck/db';
 import {
   createS3HttpSource,
@@ -13,6 +14,7 @@ import {
   type BulkObjectSource,
   type CorpusBlobStore,
 } from '@causedeck/intelligence';
+import { corpusObjectKey, createObjectStoreFromEnv, type ObjectStore } from '@causedeck/storage';
 import { z } from 'zod';
 
 import { policyFor, SourceNotCleared } from '../../sources/index.ts';
@@ -67,7 +69,19 @@ export interface CorpusBulkImportDeps {
   blobs?: CorpusBlobStore | null;
 }
 
-let configuredBlobs: CorpusBlobStore | null = null;
+let configuredBlobs: CorpusBlobStore | null | undefined;
+let envStore: ObjectStore | undefined;
+
+/** The deployment's object store, writing originals at `corpus/<sha256>.pdf` (ADR 0006). */
+function defaultBlobs(): CorpusBlobStore {
+  return {
+    put: (key, body, contentType) => {
+      const sha = /^corpus\/([0-9a-f]{64})\.pdf$/.exec(key)?.[1] ?? '';
+      envStore ??= createObjectStoreFromEnv(serverEnv());
+      return envStore.put({ key: corpusObjectKey(sha), body, contentType });
+    },
+  };
+}
 
 /** The object store original PDFs go to (keyed by sha256); null keeps `judgment.blob_key` empty. */
 export function setCorpusBlobStore(store: CorpusBlobStore | null): void {
@@ -105,7 +119,7 @@ export async function runCorpusBulkImport(
     {
       db,
       objects: (deps.openSource ?? createS3HttpSource)(baseUrl),
-      blobs: deps.blobs === undefined ? configuredBlobs : deps.blobs,
+      blobs: deps.blobs === undefined ? (configuredBlobs ?? defaultBlobs()) : deps.blobs,
     },
     {
       dataset: payload.dataset,

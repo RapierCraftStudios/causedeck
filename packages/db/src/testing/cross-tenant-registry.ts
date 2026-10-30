@@ -1297,6 +1297,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // bulk corpus import (#890): progress of the open-data importer, read by the admin console
   listBulkImports:
     'global table `corpus_import_cursor` (GLOBAL_TABLES, no workspace_id, no RLS): per-archive import progress of public datasets, never tenant data',
+  // corpus masking (#892): staff apply a mask request to the global corpus
+  applyMaskRequest:
+    'global tables `judgment` and `corpus_mask_request` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments and takedown requests, never tenant data; needs an enabled ops or admin staff_user',
+  MaskRequestError: 'error class',
+  MASK_PURGE_DEADLINE_HOURS: 'constant',
   // court document network (#485): `findContributed` reads the global `contributed_document` table (no
   // workspace_id, no RLS), whose rows carry no contributor; the ledger linking them is tenant data
   findContributed:

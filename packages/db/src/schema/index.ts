@@ -109,11 +109,14 @@ export { fetchLog } from './fetch-log.ts';
 export {
   CORPUS_BULK_DATASETS,
   CORPUS_IMPORT_STATUSES,
+  CORPUS_MASK_REQUEST_STATUSES,
   corpusImportCursor,
+  corpusMaskRequest,
   corpusOcrQueue,
   judgment,
   type CorpusBulkDataset,
   type CorpusImportStatus,
+  type CorpusMaskRequestStatus,
   type JudgmentPageText,
   type JudgmentProvenance,
 } from './corpus.ts';

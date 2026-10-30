@@ -2,7 +2,7 @@
 
 export const HONORIFIC = String.raw`(?:Smt|Shri|Sri|Mr|Mrs|Ms|Miss|Dr|Kum|Master|Late|Shrimati|Km)\.?`;
 /** One to four capitalised words (initials allowed); never crosses a line. */
-export const NAME = String.raw`[A-Z][A-Za-z'’.-]*(?:[ \t]+[A-Z][A-Za-z'’.-]*){0,3}`;
+export const NAME = String.raw`(?:[A-Z]\.|[A-Z][A-Za-z'’-]*)(?:[ \t]+(?:[A-Z]\.|[A-Z][A-Za-z'’-]*)){0,3}`;
 
 /** A case-insensitive spelling of `word` that keeps the surrounding pattern case-sensitive. */
 export const ci = (word: string): string =>
@@ -157,7 +157,7 @@ const LEADING_STOP = new Set(
 );
 
 const INSTITUTION =
-  /\b(?:State|Union|Government|Govt|Ltd|Limited|Pvt|Private|Bank|Corporation|Board|Commission|Commissioner|Department|Ministry|Company|University|Municipal|Municipality|Authority|Police|Secretary|Registrar|Collector|Inspector|Tribunal|Committee|Council|Trust|Society|Association|Institute|Council|Railway|Railways|Insurance|Industries|Enterprises|Corp|Court|Station|Panchayat|Revenue|Magistrate|Officer|Director|Directorate|Authority|India|Bharat|Kerala|Karnataka|Tamil\s+Nadu|Maharashtra|Delhi)\b/i;
+  /\b(?:State|Union|Government|Govt|Ltd|Limited|Pvt|Private|Bank|Corporation|Board|Commission|Commissioner|Department|Ministry|Company|University|Municipal|Municipality|Authority|Police|Secretary|Registrar|Collector|Inspector|Tribunal|Committee|Council|Trust|Society|Association|Institute|Council|Railway|Railways|Insurance|Industries|Enterprises|Corp|Court|Station|Panchayat|Revenue|Magistrate|Officer|Director|Directorate|Authority|India|Kerala|Karnataka|Tamil\s+Nadu|Maharashtra|Delhi)\b/i;
 
 /** True for a state, company, court or other body that stays in the text. */
 export const isInstitution = (name: string): boolean => INSTITUTION.test(name);

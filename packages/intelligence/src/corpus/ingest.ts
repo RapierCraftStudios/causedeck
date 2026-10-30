@@ -10,6 +10,7 @@ import { readPdfText, type PdfPageText } from '../text/pdf-text.ts';
 import { coverage, DEFAULT_MIN_PAGE_CHARS } from '../text/quality.ts';
 
 import { courtOfCitation, extractJudgmentHeader } from './header.ts';
+import { redactJudgment } from './redact/index.ts';
 
 const { judgment, corpusOcrQueue } = schema;
 
@@ -122,6 +123,9 @@ export async function storeJudgment(
   const caseNumbers = header.caseNumbers.length > 0 ? header.caseNumbers : (meta.caseNumbers ?? []);
   const bench = header.bench.length > 0 ? header.bench : (meta.bench ?? []);
 
+  // Anonymised before it is stored (#892): the placeholder mapping is dropped inside `redactJudgment`.
+  const redacted = redactJudgment({ pages, bench });
+
   let blobKey: string | null = null;
   if (deps.blobs !== undefined && deps.blobs !== null) {
     blobKey = corpusBlobKey(sha256);
@@ -145,6 +149,12 @@ export async function storeJudgment(
       sha256,
       provenance: input.provenance,
       pageText: pages,
+      redactedText: redacted.pages,
+      caseTitle: redacted.caseTitle,
+      titleMasked: redacted.titleMasked,
+      redactionVersion: redacted.redactionVersion,
+      sensitiveCategory: redacted.sensitiveCategory,
+      maskReason: redacted.maskReason,
     })
     .onConflictDoNothing({ target: judgment.sha256 })
     .returning({ id: judgment.id });

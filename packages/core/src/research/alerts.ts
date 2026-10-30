@@ -418,7 +418,7 @@ export async function scanJudgments(
         id: judgment.id,
         court: judgment.court,
         neutralCitation: judgment.neutralCitation,
-        pageText: judgment.pageText,
+        redactedText: judgment.redactedText,
       })
       .from(judgment)
       .where(and(isNotNull(judgment.neutralCitation), gte(judgment.createdAt, since)))
@@ -432,7 +432,7 @@ export async function scanJudgments(
       const verified = await verifyCitation(j.neutralCitation, { db: tx });
       if (verified.status !== 'VERIFIED' || verified.judgmentId !== j.id) continue;
       const perMatter = new Map<string, { tagId: string; pageNo: number }>();
-      for (const hit of matchJudgmentToTags(j.pageText, tags)) {
+      for (const hit of matchJudgmentToTags(j.redactedText ?? [], tags)) {
         const matterId = matterOf.get(hit.tagId);
         if (matterId !== undefined && !perMatter.has(matterId)) {
           perMatter.set(matterId, { tagId: hit.tagId, pageNo: hit.pageNo });

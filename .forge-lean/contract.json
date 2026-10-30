@@ -2,103 +2,103 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`packages/intelligence/src/corpus/redact/`: a versioned redaction pipeline.",
+   "quote": "`packages/db/src/schema/corpus.ts` and a migration: a global `judgment_segment` table (ADR 0050 §Segments).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "reuse and move the shared patterns from `packages/adapters/src/workbench/detect.ts` (Aadhaar, PAN, phone, email) into a shared module, and add bank account, vehicle number and address cues.",
+   "quote": "Columns: `judgment_id`, `ordinal`, `role` (check constraint), `page_from`, `page_to`, `text` (redacted), `court`, `court_level`, `judgment_year`.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Legal NER for persons by role: petitioner, respondent, appellant, accused, complainant, witness, relative, other person. An OpenNyAI-style model or rules first; the AI gateway for low-confidence spans, with schema-validated output.",
+   "quote": "`search_tsv`: generated `setweight(to_tsvector('english', text),'A') || to_tsvector('simple', text)`, with a GIN index.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Role placeholders that stay consistent within a judgment (\"the Appellant\", \"Accused 1\", \"the Complainant's wife\").",
+   "quote": "`embedding halfvec(CORPUS_EMBEDDING_DIMENSIONS)` (nullable; filled by #).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Kept: judges, advocates, courts, institutions, government bodies, companies, statutes, dates and amounts.",
+   "quote": "Range-partitioned by `judgment_year` in decades, with hand-written partition SQL in the migration and a default partition.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "Sensitive categories: POCSO, BNS ss.63–72 and IPC 375–376, 228A, the JJ Act, matrimonial and family matters, in-camera proceedings and acquittals of individuals. These are detected from case type, statutes and title. Victim and minor details are removed outright, and the title is masked.",
+   "quote": "`lz4` compression on `text`, and on `judgment.page_text`.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "The placeholder mapping is never stored. `REDACTION_VERSION` is recorded per judgment.",
+   "quote": "Add it to the root table list in `packages/db/src/index.test.ts` (global, no RLS; the app role has SELECT only).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "`packages/db`: `judgment` gains `case_title`, `title_masked`, `redaction_version`, `sensitive_category` and `mask_reason`.",
+   "quote": "`packages/db/src/vector.ts`: export `CORPUS_EMBEDDING_DIMENSIONS` and a `halfvec` column helper.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "A `corpus_mask_request` global table for court orders and requests: who, what, legal basis, status, and `handled_at`. Add it to the root table list in `packages/db/src/index.test.ts`.",
+   "quote": "Split into paragraphs, using the court's numbered paragraphs where present.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "`packages/core/src/corpus/masking.ts`: a staff action to apply a mask request. It masks the title, re-redacts and purges caches within 72 h, and is audited. Register new core exports in `cross-tenant-registry.ts`.",
+   "quote": "Classify each paragraph's rhetorical role: rules plus a classifier, and the AI gateway below a confidence threshold.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "A static test: modules under research, search and the public API never select `judgment.page_text`.",
+   "quote": "Pack 300–600-token segments that never cross a role boundary, keeping page anchors.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "On a labelled set of at least 30 judgments (from #119 or imported ones), person-name recall is at least 0.98 and over-redaction of judges, advocates and institutions is at most 2%. The evaluation report is committed.",
+   "quote": "`apps/worker`: a `corpus.segment` job chained after redaction, which also backfills existing rows. Register it in the worker registry tests.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "Placeholders are consistent within a judgment, and the same person gets the same role label on every page.",
+   "quote": "Every judgment in the pinned sample produces segments whose concatenated text equals its redacted text (no loss), with valid page anchors. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R14",
-   "quote": "Every sensitive-category fixture (POCSO, sexual offence, JJ, matrimonial) has its title masked and no victim or minor identifiers in the output.",
+   "quote": "Role accuracy on a labelled set of at least 20 judgments: macro-F1 of at least 0.75, reported. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R15",
-   "quote": "Bumping `REDACTION_VERSION` re-redacts affected rows through a job, without re-fetching.",
+   "quote": "`websearch_to_tsquery('english', '\"res ipsa loquitur\"')` and a section query (`304A`) return the expected segments from fixtures. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R16",
-   "quote": "A mask request masks the title and text everywhere it is served (search, API, snippets) and records `handled_at`.",
+   "quote": "An `EXPLAIN` of a year-filtered query shows partition pruning. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R17",
-   "quote": "The static `page_text` access test passes.",
+   "quote": "The migration declares lz4 compression on the large text columns. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -106,259 +106,237 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/adapters/src/workbench/pii-patterns.ts",
-   "change": "New shared module holding EMAIL/PHONE/AADHAAR/PAN regexes and placeholders moved from detect.ts, plus BANK_ACCOUNT, VEHICLE_NUMBER and address-cue patterns.",
+   "path": "packages/db/src/vector.ts",
+   "change": "Export CORPUS_EMBEDDING_DIMENSIONS (=EMBEDDING_DIMENSIONS, 1024) and a halfvecEmbedding() helper using drizzle halfvec.",
    "requirements": [
-    "R2"
+    "R4",
+    "R8"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/adapters/src/workbench/detect.ts",
-   "change": "Import and re-export the patterns from pii-patterns.ts; behaviour unchanged.",
+   "path": "packages/db/src/schema/corpus.ts",
+   "change": "Add judgmentSegment table (columns, role CHECK, generated search_tsv via custom tsvector type, GIN index, unique (judgment_id, ordinal, judgment_year)), JUDGMENT_SEGMENT_ROLES, and judgment.segment_version integer default 0.",
    "requirements": [
-    "R2"
+    "R1",
+    "R2",
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D3",
-   "path": "packages/intelligence/src/corpus/redact/",
-   "change": "New directory: REDACTION_VERSION, roles/NER rules, placeholder allocator (in-memory, per judgment), kept-entity rules, sensitive-category detection and title masking, optional injected low-confidence gateway hook with zod-validated output, redactJudgment(pages, header) -> {pages, caseTitle, titleMasked, sensitiveCategory, version}; unit tests and labelled fixtures (>=30 synthetic judgments) with an eval test and committed report redact/EVALUATION.md.",
+   "path": "packages/db/migrations/20261031000000_corpus_segments.sql",
+   "change": "drizzle-generated then hand-edited: partitioned judgment_segment (decade partitions + DEFAULT), GIN index, SET COMPRESSION lz4 on judgment_segment.text, judgment.page_text, judgment.redacted_text; GRANT SELECT (and the INSERT/DELETE the segment job needs) plus UPDATE(segment_version) on judgment; use next free number if taken.",
    "requirements": [
     "R1",
     "R3",
-    "R4",
     "R5",
     "R6",
     "R7",
-    "R12",
-    "R13",
-    "R14"
+    "R17"
    ]
   },
   {
    "id": "D4",
-   "path": "packages/intelligence/src/corpus/index.ts",
-   "change": "Export the redact module.",
+   "path": "packages/db/migrations/meta/20261031000000_snapshot.json",
+   "change": "Regenerated snapshot and journal entry for the migration (plus meta/_journal.json if present).",
    "requirements": [
     "R1"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/intelligence/src/corpus/ingest.ts",
-   "change": "storeJudgment redacts before insert and writes redactedText, caseTitle, titleMasked, redactionVersion, sensitiveCategory.",
+   "path": "packages/db/src/conventions.ts",
+   "change": "Add judgment_segment to GLOBAL_TABLES.",
    "requirements": [
-    "R1",
-    "R6",
     "R7"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/db/src/schema/corpus.ts",
-   "change": "Add judgment columns case_title, title_masked, redaction_version, sensitive_category, mask_reason and redacted_text (jsonb, nullable); add corpusMaskRequest table.",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add judgment_segment to the root table list.",
    "requirements": [
-    "R8",
-    "R9"
+    "R7"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/db/migrations/",
-   "change": "Next free numbered migration (after 20261030000000_corpus_bulk_import) adding the columns and corpus_mask_request (global, no RLS) with the generated snapshot and journal entry; additive only.",
+   "path": "packages/db/src/__tests__/corpus-segments.test.ts",
+   "change": "Migration text test (lz4 on segment text and judgment.page_text, partition + default) and testcontainers integration: FTS queries for 'res ipsa loquitur' and '304A', EXPLAIN of year-filtered query prunes partitions.",
    "requirements": [
-    "R8",
-    "R9"
+    "R5",
+    "R6",
+    "R15",
+    "R16",
+    "R17"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Add corpus_mask_request to the root table list.",
+   "path": "packages/intelligence/src/corpus/segment.ts",
+   "change": "Pure segmenter: paragraph split with numbered paragraphs, rule-based role classifier with confidence, injectable zod-validated low-confidence resolver port, 300-600 token packer that never crosses a role, page anchors, SEGMENT_VERSION.",
    "requirements": [
-    "R9"
+    "R9",
+    "R10",
+    "R11"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/db/src/schema/corpus.test.ts",
-   "change": "Cover new columns and table.",
+   "path": "packages/intelligence/src/corpus/index.ts",
+   "change": "Export the segment module.",
    "requirements": [
-    "R8",
     "R9"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/core/src/corpus/masking.ts",
-   "change": "Staff service applyMaskRequest: masks title, re-redacts judgment from page_text with the mask applied, clears derived caches, sets status and handled_at, writes an audit event. Plus corpus/index.ts exporting it.",
+   "path": "packages/intelligence/src/corpus/segment.test.ts",
+   "change": "Unit tests: no-loss concatenation over the pinned fixture sample with valid page anchors; role boundary and size packing; resolver failure fallback.",
    "requirements": [
+    "R9",
     "R10",
-    "R16"
+    "R11",
+    "R13"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/core/src/audit/events.ts",
-   "change": "Add corpus.mask_applied audit event.",
+   "path": "packages/intelligence/src/corpus/segment-eval.test.ts",
+   "change": "Macro-F1 evaluation over >=20 labelled judgments (fixtures committed alongside, e.g. segment-fixtures.ts) asserting >=0.75; commit the report as packages/intelligence/src/corpus/SEGMENT-EVALUATION.md.",
    "requirements": [
-    "R10"
+    "R14"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/core/src/jobs/definitions/corpus-redact.ts",
-   "change": "Job system.corpus.redact: batches judgments with redaction_version below REDACTION_VERSION and re-redacts from page_text without fetching; register in jobs/registry.ts.",
+   "path": "packages/core/src/jobs/definitions/corpus-segment.ts",
+   "change": "system.corpus.segment job: batch-select judgments with redacted_text and segment_version/redaction mismatch, replace their segments in a transaction from redactedText only, set segment_version; scheduled so it follows redaction and backfills.",
    "requirements": [
-    "R15"
+    "R12"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Register corpusRedact.",
+   "path": "packages/core/src/jobs/definitions/corpus-segment.test.ts",
+   "change": "Job test: backfill, re-segment after redaction bump, idempotent rerun, reads redacted_text not page_text.",
    "requirements": [
-    "R15"
+    "R12"
    ]
   },
   {
    "id": "D14",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add system.corpus.redact to the expected job list.",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Register corpusSegment in the job list and type tuple.",
    "requirements": [
-    "R15"
+    "R12"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/core/src/research/alerts.ts",
-   "change": "Select and match redactedText instead of pageText; masked judgments never expose raw text.",
+   "path": "apps/worker/src/schedules.ts",
+   "change": "Add the corpus.segment schedule if the job defines one (match corpus.ocr).",
    "requirements": [
-    "R11",
-    "R16"
+    "R12"
    ]
   },
   {
    "id": "D16",
-   "path": "packages/core/src/__tests__/page-text-access.test.ts",
-   "change": "Static test scanning research, search and public-api modules (allowlisting citations/verify.ts and masking/redact internals) for page_text/pageText selects.",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add 'system.corpus.segment' to the expected job names.",
    "requirements": [
-    "R11",
-    "R17"
+    "R12"
    ]
   },
   {
    "id": "D17",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "Register new core runtime exports (applyMaskRequest etc.) in SERVICE_TESTS or NOT_A_SERVICE with reason (global table).",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "Add the segment schedule to the expected list.",
    "requirements": [
-    "R10"
+    "R12"
    ]
   },
   {
    "id": "D18",
-   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
-   "change": "Real case for any SERVICE_TESTS entry added.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "NOT_A_SERVICE entries (reason: global corpus job/schema, no tenant data) for new @causedeck/core runtime exports corpusSegment, corpusSegmentSchema, runCorpusSegment, CORPUS_SEGMENT_BATCH.",
    "requirements": [
-    "R10"
-   ]
-  },
-  {
-   "id": "D19",
-   "path": "packages/core/src/corpus/masking.test.ts",
-   "change": "Integration test: mask request masks title and text, records handled_at, is audited.",
-   "requirements": [
-    "R16"
-   ]
-  },
-  {
-   "id": "D20",
-   "path": "packages/core/src/index.ts",
-   "change": "Export the corpus masking service if the barrel lists domains; add CORE_DOMAIN_DEPENDENCIES and docs/engineering/core-domains.md entries for a new corpus domain if the domain test requires them.",
-   "requirements": [
-    "R10"
+    "R12"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "detect.ts public exports (findPii, findLeaks, namePattern, regex and placeholder constants) and workbench redact/build-fixture behaviour in packages/adapters/src/workbench."
+   "what": "judgment.page_text and sha256 stay immutable for the app role; only derived columns are updatable (packages/db/migrations/20261030181659_corpus_redaction.sql grants)."
   },
   {
    "id": "P2",
-   "what": "verifyCitation in packages/core/src/citations/verify.ts keeps reading raw pageText (ADR 0051:103) with unchanged results."
+   "what": "packages/core/src/__tests__/page-text-access.test.ts: the segment job and segment code read redacted_text, never judgment.pageText."
   },
   {
    "id": "P3",
-   "what": "Bulk import and corpus.poll dedupe by sha256 and the cursor/OCR queue behaviour in packages/intelligence/src/corpus/bulk/import.ts and ingest.ts."
+   "what": "corpus.redact job behaviour (packages/core/src/jobs/definitions/corpus-redact.ts) and REDACTION_VERSION semantics are unchanged."
   },
   {
    "id": "P4",
-   "what": "Judgment sha256 and raw page_text are never altered by redaction or masking; only derived columns change."
+   "what": "judgment.embedding column and its HNSW index (packages/db/src/schema/corpus.ts:77,89) stay; dropping is a later contract migration."
+  },
+  {
+   "id": "P5",
+   "what": "Existing migrations and their snapshots are not edited; new migration uses the next free number."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/corpus --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/corpus/segment.test.ts src/corpus/segment-eval.test.ts src/corpus/redact --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/adapters exec vitest run src/workbench --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/corpus-segments.test.ts src/__tests__/docket-schema.test.ts src/__tests__/people-schema.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/schema/corpus.test.ts src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-segment.test.ts src/jobs/definitions/corpus-redact.test.ts src/jobs/registry.test.ts src/__tests__/page-text-access.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V4",
-   "command": "pnpm --filter @causedeck/db db:check"
-  },
-  {
-   "id": "V5",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/corpus src/__tests__/page-text-access.test.ts src/jobs/definitions/corpus-redact.test.ts src/jobs/definitions/judgment-alert-scan.test.ts src/citations src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V6",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V7",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "Store redacted pages in a new nullable judgment.redacted_text jsonb column rather than judgment_segment.",
-   "justification": "judgment_segment does not exist yet (only specified in docs/adr/0051-corpus-storage-enrichment-and-retrieval.md:70-82); the issue scopes columns to judgment. A later segmentation issue will derive segments from redacted_text.",
-   "source": "doc"
-  },
-  {
-   "id": "K2",
-   "choice": "Reuse patterns via the existing @causedeck/adapters/workbench export; no new workspace dependency.",
-   "justification": "packages/intelligence/package.json:32 already depends on @causedeck/adapters; packages/adapters/package.json:10 exports ./workbench.",
+   "choice": "Chain via a self-selecting scheduled job keyed on a new judgment.segment_version plus redaction_version, instead of enqueueing from corpus.redact.",
+   "justification": "JobContext has no enqueue API (packages/core/src/jobs/context.ts); corpus-redact.ts:28-86 has no downstream hook; corpus.ocr is the schedule precedent (apps/worker/src/__tests__/schedules.test.ts:47).",
    "source": "precedent"
   },
   {
+   "id": "K2",
+   "choice": "Segment text is built from judgment.redacted_text only.",
+   "justification": "ADR 0051 §Anonymised text; page-text-access.test.ts forbids raw readers outside the allow-list.",
+   "source": "doc"
+  },
+  {
    "id": "K3",
-   "choice": "Rules-first NER with an injected low-confidence gateway interface; tests use a fake, no live model call.",
-   "justification": "Issue says 'rules first; the AI gateway for low-confidence spans'; CLAUDE.md forbids heavy/slow local runs and ADR 0051 routes models through the AI gateway.",
-   "source": "spec"
+   "choice": "Hand-write partitioned DDL (decade ranges + DEFAULT) with PK including judgment_year; drizzle does not model partitions.",
+   "justification": "ADR 0051 §Segments: 'hand-written SQL in the migration, because drizzle does not model partitions'.",
+   "source": "doc"
   },
   {
    "id": "K4",
-   "choice": "The labelled evaluation set is synthetic fixtures committed in-repo, and the report says so.",
-   "justification": "#119 real fixtures are an open human-collection issue; the issue allows 'imported ones' only after staging import (#890 R5 is post-deploy).",
+   "choice": "Add judgment_segment to GLOBAL_TABLES (no RLS, app role SELECT-only plus the job's write grants).",
+   "justification": "packages/db/src/conventions.ts:79-83 lists every global corpus table; ADR 0051 'global tables need no RLS'.",
    "source": "precedent"
   },
   {
    "id": "K5",
-   "choice": "citations/verify.ts stays allowlisted in the static test.",
-   "justification": "docs/adr/0051-corpus-storage-enrichment-and-retrieval.md:103 permits citation verification internals to read page_text.",
-   "source": "doc"
+   "choice": "No new workspace package dependencies; the low-confidence resolver is a port like redact/gateway.ts so intelligence imports no gateway.",
+   "justification": "packages/intelligence/src/corpus/redact/gateway.ts:1-5.",
+   "source": "precedent"
   }
  ]
 }

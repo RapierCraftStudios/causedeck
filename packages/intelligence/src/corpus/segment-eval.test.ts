@@ -20,7 +20,11 @@ describe('segment role accuracy', () => {
   });
 
   it('is reported in SEGMENT-EVALUATION.md', () => {
-    const report = readFileSync(path.join(import.meta.dirname, 'SEGMENT-EVALUATION.md'), 'utf8');
+    // The formatter pads table cells, so compare with whitespace runs collapsed.
+    const report = readFileSync(
+      path.join(import.meta.dirname, 'SEGMENT-EVALUATION.md'),
+      'utf8',
+    ).replace(/[ \t]+/g, ' ');
     expect(report).toContain(`measured macro-F1 ${result.macroF1.toFixed(3)}`);
     for (const s of result.perRole.filter((r) => r.support > 0))
       expect(report).toContain(

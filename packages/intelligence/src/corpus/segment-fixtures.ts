@@ -35,9 +35,9 @@ type Pool = ((who: string, matter: string, law: string) => string)[];
 
 const POOLS: Record<SegmentRole, Pool> = {
   header: [
-    (w, m) =>
+    (w) =>
       `IN THE SUPREME COURT OF INDIA\nCIVIL APPEAL NO. 4821 OF 2024\n${w} versus State of Karnataka\nBEFORE: HON'BLE MR. JUSTICE A. KUMAR`,
-    (w, m) =>
+    (w) =>
       `IN THE HIGH COURT OF JUDICATURE AT MADRAS\nW.P. No. 1922 of 2023\n${w} vs. Union of India\nCORAM: THE HON'BLE MRS. JUSTICE R. DEVI\nJUDGMENT`,
     (w) =>
       `REPORTABLE\nCRIMINAL APPEAL NO. 77 OF 2022\n${w} v. State of Tamil Nadu\nDate of Decision: 12.03.2025`,
@@ -63,7 +63,7 @@ const POOLS: Record<SegmentRole, Pool> = {
   arguments: [
     (w, m, l) =>
       `Learned senior counsel for ${w} submitted that the courts below erred in law, and that ${l} was wrongly applied to ${m}.`,
-    (w, m, l) =>
+    (w, m) =>
       `Learned counsel appearing for the State contended that no interference is called for, and urged that the findings on ${m} are findings of fact.`,
     (w, m, l) =>
       `On the other hand, it was argued by counsel for the respondent that ${w} had suffered no prejudice, relying on ${l}.`,
@@ -75,17 +75,17 @@ const POOLS: Record<SegmentRole, Pool> = {
       `We are of the view that ${l} must be read in its context. This Court has held in several decisions that the principle applies only where the facts of ${m} warrant it.`,
     (w, m, l) =>
       `In our opinion the test laid down for ${l} is not met. The doctrine cannot be extended to ${m}, and the reasoning of the High Court does not survive scrutiny.`,
-    (w, m, l) =>
+    (w, m) =>
       `Section 5 of the Act provides that the limitation runs from the date of knowledge. Applying the settled position to ${m}, we find that ${w} could not have been unaware of the order; therefore the delay is not explained.`,
     (w, m, l) =>
       `It is well settled that ${l} is to be construed strictly. We have perused the record of ${m} and consequently hold that the finding cannot be sustained.`,
   ],
   decision: [
-    (w, m) =>
+    () =>
       `In the result, the appeal is allowed. The impugned judgment is set aside and the matter is remanded. There shall be no order as to costs.`,
-    (w, m) =>
+    () =>
       `For the reasons recorded above, the petition is accordingly dismissed. Pending applications, if any, stand disposed of.`,
-    (w, m) =>
+    () =>
       `We accordingly allow the appeal, quash the order and direct the respondent to comply within a period of eight weeks. Costs of Rs. 25,000 shall be paid.`,
   ],
   other: [],

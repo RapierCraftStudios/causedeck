@@ -88,7 +88,7 @@ async function makeMatter(
       matterId: m.id,
       forumId,
       caseTypeCode: 'WP',
-      number: String(Math.floor(Math.random() * 9000) + 100),
+      number: String(Math.floor(Math.random() * 9_000_000) + 100),
       year: 2026,
       sourceType: 'manual',
     })

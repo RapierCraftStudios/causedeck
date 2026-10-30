@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "eval": "vitest run src/extract/eval.test.ts"
+    "eval": "vitest run src/extract/eval.test.ts",
+    "research-eval": "node src/research/eval/cli.ts"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",

@@ -2,85 +2,73 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Importing a pinned sample (one SC year and one HC court-year) creates `judgment` rows with provenance pointing at the dataset object and its licence.",
+   "quote": "A judgment imported with a page that has no text layer gets that page's text from OCR, and its queue row is removed.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Re-running the import adds nothing (sha256 dedupe), and an interrupted run resumes from its cursor.",
+   "quote": "With the mock provider, the review stack drains the queue end to end with no AI keys.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Pages without a text layer are queued for OCR through the existing document pipeline, not dropped.",
+   "quote": "A failing page is retried with backoff, then parked with its error; it is never lost.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "The attribution text is listed on the public \"Data sources and licences\" page and in the API terms; judgments served to users and the API show only the court, case number, citation, date and official-copy link, never the dataset (D-053 item 4).",
+   "quote": "OCR spend is attributed to the platform scope, never to a workspace.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Full SC import, then Madras HC and Karnataka HC, run on staging, with counts and storage recorded on this issue.",
-   "disposition": "post-deploy",
-   "why": "Needs the deployed worker, staging object storage and AWS network access."
+   "quote": "Admin data ops shows queue depth and parked failures.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "`packages/core/src/sources/`: two registry rows (`aws-open-data-sc`, `aws-open-data-hc`).",
+   "quote": "`packages/core/src/jobs/definitions/corpus-ocr.ts`: a `corpus.ocr` job.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "`packages/intelligence/src/corpus/bulk/`: a streaming importer.",
+   "quote": "Claims queued pages in small batches (`for update skip locked`).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "Resumable: a cursor per archive, stored in a progress table or `source` state.",
+   "quote": "Renders each page from the stored PDF (object key `corpus/\u003csha256>.pdf`) and runs it through the gateway OCR with a platform (non-workspace) scope.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "`apps/worker`: a `corpus.bulk_import` job.",
+   "quote": "Writes the text back into the judgment's text, sets the page's text source to `ocr`, deletes the queue row, and records attempts and the last error for retries.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "Off by default; started from the admin console per dataset, per court and per year range.",
+   "quote": "Bounded per run (pages, bytes, AI budget); off by default behind a flag; scheduled when on.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Bounded concurrency, with a per-run budget for pages and bytes.",
+   "quote": "The gateway: a platform scope for corpus OCR that is metered separately from workspaces, using the mock OCR provider when no AI keys are configured (staging review).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "Register it in `apps/worker/src/__tests__/registry.test.ts`.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R13",
-   "quote": "`apps/admin` data ops: import progress, rows added, duplicates skipped, failures, and storage used.",
-   "disposition": "deliver",
-   "verify": "in_lane"
-  },
-  {
-   "id": "R14",
-   "quote": "Extracts the PDF text layer with the existing layout code, uploads the PDF to object storage keyed by sha256 (ADR 0006), and inserts through the same path as `corpus.poll`, deduping by sha256.",
+   "quote": "`apps/worker`: register the job and schedule, and update `apps/worker/src/__tests__/registry.test.ts` and `schedules.test.ts`.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -88,127 +76,243 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/migrations/20261030000000_corpus_bulk_import.sql",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/db/src/schema/corpus.ts",
+   "change": "Add attempts, last_error, next_attempt_at, parked_at to corpusOcrQueue; optional `source?: 'text'|'ocr'` on JudgmentPageText; new global table corpusOcrCall (platform AI call/spend ledger).",
+   "requirements": [
+    "R3",
+    "R4",
+    "R9"
+   ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/corpus.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/db/migrations/20261030000001_corpus_ocr.sql",
+   "change": "Hand-reviewed migration (use next free number, regenerate snapshot in migrations/meta): add queue columns, corpus_ocr_call table, grants SELECT/UPDATE/DELETE on queue and SELECT/INSERT on corpus_ocr_call to causedeck_app, revoke from others.",
+   "requirements": [
+    "R3",
+    "R4",
+    "R9"
+   ]
   },
   {
    "id": "D3",
-   "path": "packages/intelligence/src/corpus/ingest.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/db/src/conventions.ts",
+   "change": "Add corpus_ocr_call to GLOBAL_TABLES.",
+   "requirements": [
+    "R4"
+   ]
   },
   {
    "id": "D4",
-   "path": "packages/intelligence/src/corpus/bulk/index.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add corpus_ocr_call to root table list.",
+   "requirements": [
+    "R4"
+   ]
   },
   {
    "id": "D5",
-   "path": "packages/intelligence/package.json",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register new global tables and every new core runtime export (platform ports, job body, ocrQueueStats) as NOT_A_SERVICE/ SERVICE_TESTS with reason (global, no tenant data).",
+   "requirements": [
+    "R4",
+    "R5",
+    "R6"
+   ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/jobs/definitions/corpus-bulk-import.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/core/src/ai/platform-ports.ts",
+   "change": "createPlatformAiPorts(db): GatewayPorts keyed by a constant platform scope: budget from daily sum of corpus_ocr_call vs a platform cap, audit into corpus_ocr_call, no workspace tables touched, no tenant policy (india-only on). Export through packages/core/src/ai/index.ts and add a createPlatformAiGateway that uses mock provider when no providers configured.",
+   "requirements": [
+    "R2",
+    "R4",
+    "R11"
+   ]
   },
   {
    "id": "D7",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/intelligence/src/ocr/ocr.ts",
+   "change": "Make purpose and idempotency-key prefix overridable in GatewayOcrOptions (default unchanged: capture.ocr / capture-ocr:) so corpus uses `corpus.ocr`.",
+   "requirements": [
+    "R8",
+    "R11"
+   ]
   },
   {
    "id": "D8",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/intelligence/src/corpus/ocr-drain.ts",
+   "change": "drainOcrQueue(deps, budget): claim batch FOR UPDATE SKIP LOCKED (parked_at null, next_attempt_at\u003c=now), fetch PDF via blob store get, render page with PageRenderer, OCR, write page text with source 'ocr' into judgment.page_text, delete row; on failure attempts+1, exponential backoff, park at max with last_error. Bounded by pages, bytes, budget. Export in packages/intelligence/src/index.ts.",
+   "requirements": [
+    "R1",
+    "R3",
+    "R7",
+    "R8",
+    "R9",
+    "R10"
+   ]
   },
   {
    "id": "D9",
-   "path": "apps/admin/app/(console)/data-ops/page.tsx",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/intelligence/src/index.ts",
+   "change": "Export drainOcrQueue and its types.",
+   "requirements": [
+    "R8"
+   ]
   },
   {
    "id": "D10",
-   "path": "apps/site/app/legal/data-sources/page.tsx",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/core/src/jobs/definitions/corpus-ocr.ts",
+   "change": "defineJob `system.corpus.ocr`: no-op unless CORPUS_OCR_ENABLED; builds platform gateway and object store (reuse blob/store pattern of corpus-bulk-import.ts); schedule every 10 minutes; singleton; exported run function with injectable deps.",
+   "requirements": [
+    "R6",
+    "R10",
+    "R11"
+   ]
   },
   {
    "id": "D11",
-   "path": "apps/site/content/developers/api.md",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Import and register corpusOcr in the list and the type tuple.",
+   "requirements": [
+    "R6",
+    "R12"
+   ]
   },
   {
    "id": "D12",
-   "path": "apps/api/src/public/v1/schemas.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/config/src/env/schema.ts",
+   "change": "Add CORPUS_OCR_ENABLED (default false) and CORPUS_OCR_DAILY_PAISE cap, described.",
+   "requirements": [
+    "R10"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "docs/engineering/env.md",
+   "change": "Document the new env keys.",
+   "requirements": [
+    "R10"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add 'system.corpus.ocr'.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "Add 'system.corpus.ocr'.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/core/src/sources/bulk-import.ts",
+   "change": "Add ocrQueueStats(db): depth, parked count, and newest parked rows (judgment id, page, attempts, last_error; no content).",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "apps/admin/lib/data/index.ts",
+   "change": "Add ocrQueueOverview staff query (capability data-ops, tables corpus_ocr_queue).",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "apps/admin/app/(console)/data-ops/page.tsx",
+   "change": "Show queue depth and parked failures beside import progress.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "apps/admin/__tests__/data-ops.test.tsx",
+   "change": "Test rendering of queue depth and parked failures.",
+   "requirements": [
+    "R5"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/core/src/jobs/definitions/corpus-ocr.test.ts",
+   "change": "Integration tests: drain with mock provider removes row and writes ocr text (R1,R2); failure backoff then park, row kept (R3); spend rows land in corpus_ocr_call with no workspace usage rows (R4); disabled flag is a no-op.",
+   "requirements": [
+    "R1",
+    "R2",
+    "R3",
+    "R4"
+   ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "corpus.poll behaviour and exports; ingestJudgment signature and outcome statuses; existing corpus-poll and ingest tests stay green."
+   "what": "Capture OCR behaviour: createGatewayOcr defaults (purpose capture.ocr, idempotency key format) used by packages/core/src/capture/process.ts."
   },
   {
    "id": "P2",
-   "what": "judgment table global, no RLS, sha256 unique index stays the dedupe key."
+   "what": "storeJudgment queueing contract in packages/intelligence/src/corpus/ingest.ts (rows inserted with only judgmentId, pageNo; onConflictDoNothing) and corpus-bulk-import job/tests."
   },
   {
    "id": "P3",
-   "what": "Every external read goes through policyFor and the kill switch; uncleared or killed aws-open-data source skipped without network access."
-  },
-  {
-   "id": "P4",
-   "what": "The importer never logs URLs, document text or party data."
-  },
-  {
-   "id": "P5",
-   "what": "Public API and web never expose source id, provenance or dataset for corpus judgments (D-053 item 4)."
+   "what": "Workspace gateway ports createAiPorts in packages/core/src/ai/wiring.ts remain tenant-scoped and unchanged."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/intelligence exec vitest run src/corpus --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-ocr.test.ts src/jobs/definitions/corpus-bulk-import.test.ts src/jobs/registry.test.ts"
   },
   {
    "id": "V2",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-poll.test.ts src/jobs/definitions/corpus-bulk-import.test.ts src/sources --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/corpus src/ocr"
   },
   {
    "id": "V3",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts"
   },
   {
    "id": "V4",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/schema/corpus.test.ts src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/data-ops.test.tsx __tests__/server-actions-audit.test.ts __tests__/data-layer.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts"
   },
   {
    "id": "V6",
-   "command": "pnpm --filter @causedeck/site exec vitest run src/marketing-pages.test.tsx src/developer-docs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/data-ops.test.tsx __tests__/server-actions-audit.test.ts"
+  }
+ ],
+ "decisions": [
+  {
+   "id": "K1",
+   "choice": "Platform scope uses separate global ports and a global corpus_ocr_call ledger rather than a sentinel workspace row.",
+   "justification": "Gateway ports and ai_call/usage tables are tenant tables with workspace_id and RLS (packages/core/src/ai/wiring.ts:38-160, packages/db/src/schema/audit.ts:109); a fake workspace would pollute tenant billing and break cross-tenant guards.",
+   "source": "precedent"
   },
   {
-   "id": "V7",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "id": "K2",
+   "choice": "Per-page text source stored as an optional field inside judgment.page_text jsonb, not a new column.",
+   "justification": "JudgmentPageText is jsonb (packages/db/src/schema/corpus.ts:24-27,67); additive and backward compatible with readers.",
+   "source": "precedent"
+  },
+  {
+   "id": "K3",
+   "choice": "Feature flag via env CORPUS_OCR_ENABLED, registered in env schema and docs.",
+   "justification": "Env keys are registered in packages/config/src/env/schema.ts and docs/engineering/env.md (commit 44021bbe).",
+   "source": "precedent"
   }
  ]
 }

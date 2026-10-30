@@ -1,26 +1,37 @@
 ### Approach
-Streaming importer in packages/intelligence/src/corpus/bulk reads the AWS Open Data archives, stores each PDF through the shared `storeJudgment` (sha256 dedupe, blob upload, OCR queue), and keeps a cursor per archive. Job `system.corpus.bulk-import` has no schedule and is started from the admin Data Ops console. Merged origin/milestone/court-data-network; conflicts in data-sources.mdx and legal.test.ts resolved keeping both sides.
+Queue drain in `packages/intelligence/src/corpus/ocr-drain.ts` (claim with `for update skip locked` and a lease, render, gateway OCR, store text and delete the row in one transaction, backoff then park). Platform AI scope in `packages/core/src/ai/platform-ports.ts` meters spend in the new global `corpus_ocr_call` table, never a workspace. Job `system.corpus.ocr` is scheduled every 10 minutes and does nothing unless `CORPUS_OCR_ENABLED` is true. The mock provider serves OCR when no providers are configured. Admin Data Ops shows queue depth and parked failures.
 
 ### Changes
-- packages/db: migration 20261030000000_corpus_bulk_import (cursor and OCR queue tables, two source rows), schema/corpus.ts, index.test.ts.
-- packages/intelligence/src/corpus: ingest.ts (`storeJudgment`), bulk/* importer, package.json (hyparquet, hyparquet-compressors).
-- packages/core: jobs/definitions/corpus-bulk-import.ts (+test), registry.ts, sources/bulk-import.ts, audit/events.ts.
-- apps/worker registry test; apps/admin data-ops page, actions.ts, lib/data, tests.
-- apps/site: data-sources page and mdx, legal.ts slug, api.md attribution, tests.
+- packages/db: migration 20261030000001_corpus_ocr, schema/corpus.ts, conventions.ts, index.test.ts, cross-tenant-registry.ts.
+- packages/core: ai/platform-ports.ts, jobs/definitions/corpus-ocr.ts (+test), jobs/registry.ts, sources/bulk-import.ts (ocrQueueStats).
+- packages/intelligence: corpus/ocr-drain.ts, ocr/ocr.ts (purpose and idempotency prefix options), index.ts.
+- packages/config: env schema; docs/engineering/env.md.
+- apps/worker: registry and schedules tests. apps/admin: data layer, Data Ops page, tests.
 
 ### Acceptance Criteria Status
-- R1, R2, R7, R8 ✅ packages/intelligence/src/corpus/bulk/import.ts
-- R3, R14 ✅ packages/intelligence/src/corpus/ingest.ts
-- R4 ✅ apps/site/content/legal/data-sources.mdx, apps/site/content/developers/api.md (no judgment endpoint exists in the API)
-- R5 post-deploy (staging run)
-- R6 ✅ migration 20261030000000_corpus_bulk_import.sql
-- R9, R11 ✅ packages/core/src/jobs/definitions/corpus-bulk-import.ts:124
-- R10 ✅ apps/admin/app/(console)/data-ops/actions.ts
-- R12 ✅ apps/worker/src/__tests__/registry.test.ts:177
-- R13 ✅ apps/admin/app/(console)/data-ops/page.tsx
+- R1 ✅ ocr-drain.ts storePage; R2 ✅ platform-ports.ts createPlatformAiGateway (mock); R3 ✅ ocr-drain.ts fail
+- R4 ✅ platform-ports.ts audit.record to corpus_ocr_call; R5 ✅ data-ops/page.tsx OCR queue
+- R6 ✅ corpus-ocr.ts; R7 ✅ ocr-drain.ts claim; R8 ✅ corpus-ocr.ts runCorpusOcr; R9 ✅ ocr-drain.ts storePage/fail
+- R10 ✅ corpus-ocr.ts (budgets, flag, schedule); R11 ✅ platform-ports.ts; R12 ✅ worker registry/schedules tests
 
 ### Verification
-V1-V7 all pass via `forgedock check` after the merge. `pnpm turbo run typecheck` passes for all 24 packages (web needs NODE_OPTIONS=--max-old-space-size=8192). New tests not confirmed to fail without the fix.
+- forgedock check validate commands V1-V6 pass; V5 (core cross-tenant services.test.ts, 341 tests) passed on a rerun with a longer timeout after the 300s limit.
+- corpus-ocr.test.ts: 5 pass; the tests exercise new code and fail without it.
 
 ### Notes
-Job name is `system.corpus.bulk-import`, not `bulk_import` (name pattern). The merge replaced this lane's .forge-lean files with another lane's tracked copies; contract.json was reconstructed from the frozen contract text. The pre-commit eslint OOMs on the merged-in files, so the merge commit used LEFTHOOK=0. Worker wiring of the blob store was not added.
+- New env vars: CORPUS_OCR_ENABLED (default false), CORPUS_OCR_DAILY_PAISE (default 500000).
+- Fixed a missing `and` import risk in platform-ports.ts and made the job tests deterministic.
+
+## Sibling-list fix
+Checked the 24 flagged tests: none enumerate the new symbols (they are unrelated mocks or unit tests), so each is recorded in result.json not_members.
+
+### Validate results (per contract)
+- V1 core corpus-ocr, corpus-bulk-import, registry tests: pass (19 tests, rc 0)
+- V2 intelligence src/corpus src/ocr: pass (rc 0, forgedock check)
+- V3 worker registry and schedules tests: pass (rc 0, forgedock check)
+- V4 db src/index.test.ts: pass (rc 0, forgedock check)
+- V5 core cross-tenant services.test.ts: pass (341 tests, rc 0 with a 1700s timeout; forgedock check's 300s limit times out on this host)
+- V6 admin data-ops and server-actions-audit tests: pass (rc 0, forgedock check)
+
+### CI fix: .env.example
+CI's config test failed because `.env.example` was not regenerated after adding CORPUS_OCR_ENABLED and CORPUS_OCR_DAILY_PAISE. Ran `pnpm env:example`; `src/env/__tests__/example.test.ts` now passes (4 tests).

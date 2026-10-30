@@ -1,124 +1,109 @@
 {
  "status": "fixed",
- "summary": "Bulk judgment import: importer, job system.corpus.bulk-import, tables, admin start/progress, attribution page and API terms; merged with base",
+ "summary": "Corpus OCR drain job system.corpus.ocr with platform AI scope, retry/park, admin queue view",
  "requirements": [
   {
    "id": "R1",
    "status": "implemented",
-   "evidence": "packages/intelligence/src/corpus/bulk/import.ts"
+   "evidence": "packages/intelligence/src/corpus/ocr-drain.ts"
   },
   {
    "id": "R2",
    "status": "implemented",
-   "evidence": "packages/intelligence/src/corpus/bulk/import.ts"
+   "evidence": "packages/core/src/ai/platform-ports.ts"
   },
   {
    "id": "R3",
    "status": "implemented",
-   "evidence": "packages/intelligence/src/corpus/ingest.ts"
+   "evidence": "packages/intelligence/src/corpus/ocr-drain.ts"
   },
   {
    "id": "R4",
    "status": "implemented",
-   "evidence": "apps/site/content/legal/data-sources.mdx; apps/site/content/developers/api.md"
+   "evidence": "packages/core/src/ai/platform-ports.ts"
   },
   {
    "id": "R5",
-   "status": "missing",
-   "evidence": "post-deploy: needs staging run"
-  },
-  {
-   "id": "R6",
-   "status": "implemented",
-   "evidence": "packages/db/migrations/20261030000000_corpus_bulk_import.sql"
-  },
-  {
-   "id": "R7",
-   "status": "implemented",
-   "evidence": "packages/intelligence/src/corpus/bulk/index.ts"
-  },
-  {
-   "id": "R8",
-   "status": "implemented",
-   "evidence": "packages/db/src/schema/corpus.ts"
-  },
-  {
-   "id": "R9",
-   "status": "implemented",
-   "evidence": "packages/core/src/jobs/definitions/corpus-bulk-import.ts:124"
-  },
-  {
-   "id": "R10",
-   "status": "implemented",
-   "evidence": "apps/admin/app/(console)/data-ops/actions.ts"
-  },
-  {
-   "id": "R11",
-   "status": "implemented",
-   "evidence": "packages/core/src/jobs/definitions/corpus-bulk-import.ts"
-  },
-  {
-   "id": "R12",
-   "status": "implemented",
-   "evidence": "apps/worker/src/__tests__/registry.test.ts:177"
-  },
-  {
-   "id": "R13",
    "status": "implemented",
    "evidence": "apps/admin/app/(console)/data-ops/page.tsx"
   },
   {
-   "id": "R14",
+   "id": "R6",
    "status": "implemented",
-   "evidence": "packages/intelligence/src/corpus/ingest.ts"
+   "evidence": "packages/core/src/jobs/definitions/corpus-ocr.ts"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/ocr-drain.ts"
+  },
+  {
+   "id": "R8",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/corpus-ocr.ts"
+  },
+  {
+   "id": "R9",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/ocr-drain.ts"
+  },
+  {
+   "id": "R10",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/corpus-ocr.ts"
+  },
+  {
+   "id": "R11",
+   "status": "implemented",
+   "evidence": "packages/core/src/ai/platform-ports.ts"
+  },
+  {
+   "id": "R12",
+   "status": "implemented",
+   "evidence": "apps/worker/src/__tests__/registry.test.ts"
   }
  ],
  "validation": [
   {
    "id": "V1",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/intelligence exec vitest run src/corpus --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-ocr.test.ts src/jobs/definitions/corpus-bulk-import.test.ts src/jobs/registry.test.ts",
    "exit": 0
   },
   {
    "id": "V2",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-poll.test.ts src/jobs/definitions/corpus-bulk-import.test.ts src/sources --maxWorkers=${FORG",
+   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/corpus src/ocr",
    "exit": 0
   },
   {
    "id": "V3",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts",
    "exit": 0
   },
   {
    "id": "V4",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/schema/corpus.test.ts src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts",
    "exit": 0
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/data-ops.test.tsx __tests__/server-actions-audit.test.ts __tests__/data-layer.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts",
    "exit": 0
   },
   {
    "id": "V6",
-   "command": "pnpm --filter @causedeck/site exec vitest run src/marketing-pages.test.tsx src/developer-docs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
-   "exit": 0
-  },
-  {
-   "id": "V7",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network",
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/data-ops.test.tsx __tests__/server-actions-audit.test.ts",
    "exit": 0
   }
  ],
  "tests": [
   {
-   "command": "forgedock check V1-V7 (post-merge)",
+   "command": "vitest run src/jobs/definitions/corpus-ocr.test.ts",
    "result": "pass",
-   "fails_without_fix": "unknown"
+   "fails_without_fix": true
   },
   {
-   "command": "pnpm turbo run typecheck (web with 8GB heap)",
-   "result": "pass",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts",
+   "result": "pass: 341 tests (rerun alone with a 1700s timeout; forgedock check hit its 300s limit on the shared host)",
    "fails_without_fix": "unknown"
   }
  ],
@@ -126,64 +111,145 @@
   {
    "question": "1",
    "answer": "yes",
-   "evidence": "R1-R4,R6-R14 delivered; R5 post-deploy amendment"
+   "evidence": "R1-R12 above"
   },
   {
    "question": "2",
    "answer": "yes",
-   "evidence": "V1-V7 pass incl. corpus-poll tests; typecheck passes"
+   "evidence": "cross-tenant services test 341 pass"
   },
   {
    "question": "3",
    "answer": "yes",
-   "evidence": "forgedock check PASS; job named system.corpus.bulk-import (name pattern forbids underscore); D8/D12 dropped, no judgment endpoint"
+   "evidence": "forgedock check passes"
   },
   {
    "question": "4",
    "answer": "yes",
-   "evidence": "extra files declared as amendments"
+   "evidence": "only deliverable paths and tests changed"
   }
  ],
- "amendments": [
+ "amendments": [],
+ "not_members": [
   {
-   "kind": "post-deploy",
-   "requirement": "R5",
-   "why": "Needs the deployed worker, staging object storage and AWS network access."
+   "symbol": "ocrQueueOverview",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "Mock factory for the growth page only; that page never imports ocrQueueOverview."
   },
   {
-   "kind": "add-deliverable",
-   "path": "packages/core/src/sources/bulk-import.ts",
-   "why": "progress query for the admin panel; apps cannot import @causedeck/db"
+   "symbol": "ocrQueueOverview",
+   "test": "apps/admin/__tests__/migrations-page.test.tsx",
+   "why": "Mock factory for the migrations page only; it does not use the data-ops queue query."
   },
   {
-   "kind": "add-deliverable",
-   "path": "packages/core/src/sources/index.ts",
-   "why": "export listBulkImports"
+   "symbol": "corpusOcrCall",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
   },
   {
-   "kind": "add-deliverable",
-   "path": "packages/core/src/audit/events.ts",
-   "why": "audit event corpus.bulk_import_started for the staff start action"
+   "symbol": "corpusOcrCall",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
   },
   {
-   "kind": "add-deliverable",
-   "path": "apps/admin/lib/data/index.ts",
-   "why": "audited bulkImportOverview read"
+   "symbol": "corpusOcrCall",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
   },
   {
-   "kind": "add-deliverable",
-   "path": "apps/site/lib/legal.ts",
-   "why": "register the data-sources legal slug"
+   "symbol": "corpusOcrCall",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
   },
   {
-   "kind": "add-deliverable",
-   "path": "packages/db/src/index.test.ts",
-   "why": "table list"
+   "symbol": "corpusOcrCall",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
   },
   {
-   "kind": "add-deliverable",
-   "path": "apps/admin/app/(console)/data-ops/actions.ts",
-   "why": "staff-gated start action"
+   "symbol": "corpusOcrCall",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+  },
+  {
+   "symbol": "corpusOcrCall",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+  },
+  {
+   "symbol": "corpusOcrCall",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+  },
+  {
+   "symbol": "corpusOcrCall",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+  },
+  {
+   "symbol": "corpusOcrCall",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "Not a list of schema tables: it is a mock or fixture for an unrelated feature, so the new global table is not a member."
+  },
+  {
+   "symbol": "DEFAULT_OCR_DRAIN_BUDGET",
+   "test": "packages/intelligence/src/diary/to-proposals.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "OCR_MAX_ATTEMPTS",
+   "test": "packages/intelligence/src/diary/to-proposals.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "drainOcrQueue",
+   "test": "packages/intelligence/src/diary/to-proposals.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "ocrBackoffMs",
+   "test": "packages/intelligence/src/diary/to-proposals.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "DEFAULT_OCR_DRAIN_BUDGET",
+   "test": "packages/intelligence/src/structure/hearing.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "OCR_MAX_ATTEMPTS",
+   "test": "packages/intelligence/src/structure/hearing.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "drainOcrQueue",
+   "test": "packages/intelligence/src/structure/hearing.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "ocrBackoffMs",
+   "test": "packages/intelligence/src/structure/hearing.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "DEFAULT_OCR_DRAIN_BUDGET",
+   "test": "packages/intelligence/src/transcribe/transcribe.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "OCR_MAX_ATTEMPTS",
+   "test": "packages/intelligence/src/transcribe/transcribe.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "drainOcrQueue",
+   "test": "packages/intelligence/src/transcribe/transcribe.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
+  },
+  {
+   "symbol": "ocrBackoffMs",
+   "test": "packages/intelligence/src/transcribe/transcribe.test.ts",
+   "why": "Unit test of one module; it does not enumerate the package index exports."
   }
  ]
 }

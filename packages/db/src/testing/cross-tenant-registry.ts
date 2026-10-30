@@ -1297,6 +1297,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // bulk corpus import (#890): progress of the open-data importer, read by the admin console
   listBulkImports:
     'global table `corpus_import_cursor` (GLOBAL_TABLES, no workspace_id, no RLS): per-archive import progress of public datasets, never tenant data',
+  // corpus OCR drain (#1030): queue depth and parked pages of the global `corpus_ocr_queue`
+  ocrQueueStats:
+    'global table `corpus_ocr_queue` (GLOBAL_TABLES, no workspace_id, no RLS): judgment page ids and error codes of the public corpus, never tenant data',
   // court document network (#485): `findContributed` reads the global `contributed_document` table (no
   // workspace_id, no RLS), whose rows carry no contributor; the ledger linking them is tenant data
   findContributed:

@@ -110,6 +110,7 @@ export {
   CORPUS_BULK_DATASETS,
   CORPUS_IMPORT_STATUSES,
   corpusImportCursor,
+  corpusOcrCall,
   corpusOcrQueue,
   judgment,
   type CorpusBulkDataset,

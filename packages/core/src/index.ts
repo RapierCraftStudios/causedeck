@@ -14,6 +14,7 @@ export * from './status/index.ts';
 export * from './conflicts/index.ts';
 export * from './facts/index.ts';
 export * from './citations/index.ts';
+export * from './corpus/index.ts';
 export * from './court/index.ts';
 export * from './court-day/index.ts';
 export * from './hearings/index.ts';

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { GLOBAL_TABLES } from '../conventions.ts';
 
-import { judgment } from './corpus.ts';
+import { corpusMaskRequest, judgment } from './corpus.ts';
 
 /** Words that would make a column editorial content (headnote, summary, holding, citator, ...). */
 const EDITORIAL =
@@ -44,6 +44,40 @@ describe('judgment schema', () => {
 
   it('is a global table', () => {
     expect(GLOBAL_TABLES).toContain('judgment');
+    expect(columns).not.toContain('workspace_id');
+  });
+
+  it('has the redaction columns (#892)', () => {
+    expect(columns).toEqual(
+      expect.arrayContaining([
+        'redacted_text',
+        'case_title',
+        'title_masked',
+        'redaction_version',
+        'sensitive_category',
+        'mask_reason',
+      ]),
+    );
+  });
+});
+
+describe('corpus_mask_request schema', () => {
+  const columns = Object.values(getTableColumns(corpusMaskRequest)).map((c) => c.name);
+
+  it('records who, what, legal basis, status and handled_at', () => {
+    expect(columns).toEqual(
+      expect.arrayContaining([
+        'requested_by',
+        'requested_action',
+        'legal_basis',
+        'status',
+        'handled_at',
+      ]),
+    );
+  });
+
+  it('is a global table', () => {
+    expect(GLOBAL_TABLES).toContain('corpus_mask_request');
     expect(columns).not.toContain('workspace_id');
   });
 });

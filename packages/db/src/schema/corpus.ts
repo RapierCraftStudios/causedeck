@@ -2,11 +2,12 @@
 // read from a cleared public source (Madras HC, Karnataka HC, Supreme Court). It holds the document
 // as published (text layer per page, sha256, provenance) and nothing editorial: no headnotes,
 // summaries, holdings or citator (D-001 amended; *EBC v. D.B. Modak*). `judgment` is a global table
-// (GLOBAL_TABLES, no RLS); the app role may SELECT and INSERT, never UPDATE or DELETE. Citation
+// (GLOBAL_TABLES, no RLS); the app role may SELECT and INSERT, never DELETE, and UPDATE only the derived redaction columns (#892). Citation
 // verification (`verifyCitation` in core) resolves a normalised neutral citation to one row.
 import { sql } from 'drizzle-orm';
 import {
   bigint,
+  boolean,
   date,
   index,
   integer,
@@ -67,6 +68,17 @@ export const judgment = pgTable(
     provenance: jsonb('provenance').$type<JudgmentProvenance>().notNull(),
     /** The text layer per page; anchors are page numbers into this array. */
     pageText: jsonb('page_text').$type<JudgmentPageText[]>().notNull(),
+    /** The anonymised text per page (#892, ADR 0051); derived from `page_text`, null until redacted. Served instead of `page_text`. */
+    redactedText: jsonb('redacted_text').$type<JudgmentPageText[]>(),
+    /** The case title as published, or its masked form when `title_masked`. */
+    caseTitle: text('case_title'),
+    titleMasked: boolean('title_masked').notNull().default(false),
+    /** The `REDACTION_VERSION` that produced `redacted_text`; 0 means not yet redacted. */
+    redactionVersion: integer('redaction_version').notNull().default(0),
+    /** POCSO, sexual offence, juvenile, matrimonial, in camera or acquittal; null when none. */
+    sensitiveCategory: text('sensitive_category'),
+    /** Why the title is masked: `auto:<category>` or `mask_request:<id>`. */
+    maskReason: text('mask_reason'),
     /** Retrieval embedding; null until an ADR picks the model and a job fills it. */
     embedding: embedding(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -140,6 +152,41 @@ export const corpusOcrQueue = pgTable(
   (t) => [uniqueIndex('corpus_ocr_queue_page_uq').on(t.judgmentId, t.pageNo)],
 );
 
+/** Where a mask request stands (#892): `pending` until staff apply it, `applied` once done, `rejected` when declined. */
+export const CORPUS_MASK_REQUEST_STATUSES = ['pending', 'applied', 'rejected'] as const;
+export type CorpusMaskRequestStatus = (typeof CORPUS_MASK_REQUEST_STATUSES)[number];
+
+/**
+ * A court order or request to mask a judgment (#892, D-053): who asked, what to mask, on what legal
+ * basis, and when staff handled it. Global table, no workspace data.
+ */
+export const corpusMaskRequest = pgTable(
+  'corpus_mask_request',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /** The judgment to mask; not a foreign key, so a request survives a corpus rebuild. */
+    judgmentId: uuid('judgment_id').notNull(),
+    /** Who asked: the court, a party, a lawyer or a data subject. */
+    requestedBy: text('requested_by').notNull(),
+    /** What to mask: the title, named persons, or the whole text. */
+    requestedAction: text('requested_action').notNull(),
+    /** Names to remove from the text beyond what the rules found. */
+    names: text('names')
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    /** The order or rule the request rests on. */
+    legalBasis: text('legal_basis').notNull(),
+    status: text('status').$type<CorpusMaskRequestStatus>().notNull().default('pending'),
+    receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
+    handledAt: timestamp('handled_at', { withTimezone: true }),
+    handledBy: uuid('handled_by'),
+  },
+  (t) => [
+    index('corpus_mask_request_judgment_idx').on(t.judgmentId),
+    index('corpus_mask_request_status_idx').on(t.status),
+  ],
+);
 /**
  * One row per gateway call made for corpus OCR (#1030): the platform scope's own ledger, global and
  * apart from `ai_call` (tenant). Its daily sum is the platform OCR budget. Hashes and ids only.

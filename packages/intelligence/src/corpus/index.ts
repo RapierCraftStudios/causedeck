@@ -8,6 +8,7 @@ export {
   type JudgmentHeader,
 } from './header.ts';
 export * from './bulk/index.ts';
+export * from './redact/index.ts';
 export {
   bodyBytes,
   corpusBlobKey,

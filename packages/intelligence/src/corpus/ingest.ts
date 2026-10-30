@@ -76,12 +76,14 @@ export async function ingestJudgment(
   input: { sourceId: string; url: string },
 ): Promise<IngestOutcome> {
   const fetched = await deps.fetcher.fetchSource(input.sourceId, input.url);
-  const { pages: _pages, ...outcome } = await storeJudgment(deps, {
+  const stored = await storeJudgment(deps, {
     sourceId: input.sourceId,
     bytes: bodyBytes(fetched.body, fetched.contentType),
     provenance: fetched.provenance,
   });
-  return outcome;
+  return stored.status === 'unreadable'
+    ? { status: stored.status, sha256: stored.sha256 }
+    : { status: stored.status, judgmentId: stored.judgmentId, sha256: stored.sha256 };
 }
 
 /**
@@ -105,7 +107,8 @@ export async function storeJudgment(
     .from(judgment)
     .where(eq(judgment.sha256, sha256))
     .limit(1);
-  if (existing !== undefined) return { status: 'duplicate', judgmentId: existing.id, sha256, pages: 0 };
+  if (existing !== undefined)
+    return { status: 'duplicate', judgmentId: existing.id, sha256, pages: 0 };
 
   let pages: PdfPageText[];
   try {

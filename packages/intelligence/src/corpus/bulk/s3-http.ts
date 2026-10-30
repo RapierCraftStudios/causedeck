@@ -49,7 +49,9 @@ export function createS3HttpSource(
           keys.push(unescapeXml(match[1] ?? ''));
         }
         const next = /<NextContinuationToken>([^<]*)<\/NextContinuationToken>/.exec(xml);
-        token = /<IsTruncated>true<\/IsTruncated>/.test(xml) ? unescapeXml(next?.[1] ?? '') : undefined;
+        token = /<IsTruncated>true<\/IsTruncated>/.test(xml)
+          ? unescapeXml(next?.[1] ?? '')
+          : undefined;
       } while (token !== undefined && token !== '');
       return keys;
     },

@@ -19,14 +19,22 @@ function tar(files: Record<string, string>): Uint8Array {
     header.write(name, 0, 'utf8');
     header.write(`${Buffer.byteLength(content).toString(8).padStart(11, '0')}\0`, 124, 'ascii');
     header.write('0', 156, 'ascii');
-    parts.push(header, Buffer.from(content), Buffer.alloc((512 - (Buffer.byteLength(content) % 512)) % 512));
+    parts.push(
+      header,
+      Buffer.from(content),
+      Buffer.alloc((512 - (Buffer.byteLength(content) % 512)) % 512),
+    );
   }
   parts.push(Buffer.alloc(1024));
   return Buffer.concat(parts);
 }
 
-async function* chunks(bytes: Uint8Array, size = 700): AsyncGenerator<Uint8Array> {
+function* sliceChunks(bytes: Uint8Array, size: number): Generator<Uint8Array> {
   for (let i = 0; i < bytes.length; i += size) yield bytes.subarray(i, i + size);
+}
+
+function chunks(bytes: Uint8Array, size = 700): AsyncIterable<Uint8Array> {
+  return ReadableStream.from(sliceChunks(bytes, size));
 }
 
 /** In-memory stand-in for the three tables the importer touches. */
@@ -34,17 +42,19 @@ function fakeDb() {
   const judgments: { id: string; sha256: string; values: Record<string, unknown> }[] = [];
   const cursors: Record<string, unknown>[] = [];
   const queue: Record<string, unknown>[] = [];
-  let target: unknown;
   const db = {
     select: () => ({
       from: (table: unknown) => {
-        target = table;
         return {
           where: (cond: unknown) => ({
             limit: () => {
               if (table !== judgment) return Promise.resolve(cursors.slice(0, 1));
-              const sha = /[0-9a-f]{64}/.exec(JSON.stringify(cond, (k, v: unknown) => (k === 'table' ? undefined : v)))?.[0];
-              return Promise.resolve(judgments.filter((r) => r.sha256 === sha).map((r) => ({ id: r.id })));
+              const sha = /[0-9a-f]{64}/.exec(
+                JSON.stringify(cond, (k, v: unknown) => (k === 'table' ? undefined : v)),
+              )?.[0];
+              return Promise.resolve(
+                judgments.filter((r) => r.sha256 === sha).map((r) => ({ id: r.id })),
+              );
             },
           }),
         };
@@ -85,7 +95,6 @@ function fakeDb() {
       }),
     }),
   };
-  void target;
   return { db: db as unknown as Queryable, judgments, cursors, queue };
 }
 
@@ -96,7 +105,9 @@ function objects(files: Record<string, string>, streamed: string[] = []): BulkOb
   const archive = tar(files);
   return {
     list: (prefix) =>
-      Promise.resolve([ARCHIVE, 'data/tar/year=2023/english/readme.txt'].filter((k) => k.startsWith(prefix))),
+      Promise.resolve(
+        [ARCHIVE, 'data/tar/year=2023/english/readme.txt'].filter((k) => k.startsWith(prefix)),
+      ),
     read: () => Promise.reject(new Error('no metadata')),
     stream: (key) => {
       streamed.push(key);
@@ -159,11 +170,9 @@ describe('runBulkImport', () => {
     expect(cursors[0]).toMatchObject({ status: 'running', position: 2 });
     const second = await runBulkImport(deps({ db }), request);
     expect(second).toMatchObject({ inserted: 1, budgetReached: false });
-    expect(judgments.map((r) => (r.values as { provenance: { url: string } }).provenance.url)).toEqual([
-      `${BASE}${ARCHIVE}#a.pdf`,
-      `${BASE}${ARCHIVE}#b.pdf`,
-      `${BASE}${ARCHIVE}#c.pdf`,
-    ]);
+    expect(
+      judgments.map((r) => (r.values as { provenance: { url: string } }).provenance.url),
+    ).toEqual([`${BASE}${ARCHIVE}#a.pdf`, `${BASE}${ARCHIVE}#b.pdf`, `${BASE}${ARCHIVE}#c.pdf`]);
   });
 
   it('skips a completed archive without reading it', async () => {
@@ -178,7 +187,9 @@ describe('runBulkImport', () => {
 
   it('uses the dataset metadata for fields the PDF text does not give', async () => {
     const { db, judgments } = fakeDb();
-    const source = objects({ 'a.pdf': 'plain text without any header at all, long enough to read ok' });
+    const source = objects({
+      'a.pdf': 'plain text without any header at all, long enough to read ok',
+    });
     await runBulkImport(
       deps({
         db,
@@ -229,7 +240,9 @@ describe('bulk helpers', () => {
   });
 
   it('maps metadata columns leniently', () => {
-    expect(mapMetadataRow({ judge: 'X; Y', decision_date: '04-05-2023', case_no: 'W.P. 1 of 2023' })).toEqual({
+    expect(
+      mapMetadataRow({ judge: 'X; Y', decision_date: '04-05-2023', case_no: 'W.P. 1 of 2023' }),
+    ).toEqual({
       court: null,
       neutralCitation: null,
       caseNumbers: ['W.P. 1 of 2023'],
@@ -251,6 +264,8 @@ describe('bulk helpers', () => {
     });
     expect(await source.list('data/')).toEqual(['a&b.tar', 'c.tar']);
     expect(urls[1]).toContain('continuation-token=t1');
-    await expect(createS3HttpSource(BASE, () => Promise.resolve(new Response('', { status: 404 }))).read('k')).rejects.toThrow('404');
+    await expect(
+      createS3HttpSource(BASE, () => Promise.resolve(new Response('', { status: 404 }))).read('k'),
+    ).rejects.toThrow('404');
   });
 });

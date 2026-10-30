@@ -112,6 +112,7 @@ export {
   CORPUS_MASK_REQUEST_STATUSES,
   corpusImportCursor,
   corpusMaskRequest,
+  corpusOcrCall,
   corpusOcrQueue,
   judgment,
   type CorpusBulkDataset,

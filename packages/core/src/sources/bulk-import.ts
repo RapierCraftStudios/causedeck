@@ -2,8 +2,8 @@
 // with its resume position and counts. Counts, years and object keys only, never document content.
 import { schema, type Queryable } from '@causedeck/db';
 
-const { corpusImportCursor } = schema;
-import { asc, desc } from 'drizzle-orm';
+const { corpusImportCursor, corpusOcrQueue } = schema;
+import { asc, desc, isNotNull, sql } from 'drizzle-orm';
 
 export interface BulkImportProgress {
   sourceId: string;
@@ -42,4 +42,49 @@ export async function listBulkImports(db: Queryable): Promise<BulkImportProgress
     bytesStored: r.bytesStored,
     updatedAt: r.updatedAt,
   }));
+}
+
+/** A judgment page OCR gave up on (#1030): ids and the error code, never page content. */
+export interface ParkedOcrPage {
+  judgmentId: string;
+  pageNo: number;
+  attempts: number;
+  lastError: string | null;
+  parkedAt: Date;
+}
+
+export interface OcrQueueStats {
+  /** Pages still waiting or retrying. */
+  depth: number;
+  /** Pages parked after their last attempt, kept with their error. */
+  parked: number;
+  /** The newest parked pages. */
+  failures: ParkedOcrPage[];
+}
+
+/** Queue depth and parked failures of the corpus OCR drain, for the Data Ops console. */
+export async function ocrQueueStats(db: Queryable, limit = 20): Promise<OcrQueueStats> {
+  const [counts] = await db
+    .select({
+      depth: sql<number>`count(*) filter (where ${corpusOcrQueue.parkedAt} is null)::int`,
+      parked: sql<number>`count(*) filter (where ${corpusOcrQueue.parkedAt} is not null)::int`,
+    })
+    .from(corpusOcrQueue);
+  const failures = await db
+    .select({
+      judgmentId: corpusOcrQueue.judgmentId,
+      pageNo: corpusOcrQueue.pageNo,
+      attempts: corpusOcrQueue.attempts,
+      lastError: corpusOcrQueue.lastError,
+      parkedAt: corpusOcrQueue.parkedAt,
+    })
+    .from(corpusOcrQueue)
+    .where(isNotNull(corpusOcrQueue.parkedAt))
+    .orderBy(desc(corpusOcrQueue.parkedAt))
+    .limit(limit);
+  return {
+    depth: counts?.depth ?? 0,
+    parked: counts?.parked ?? 0,
+    failures: failures.map((f) => ({ ...f, parkedAt: f.parkedAt as Date })),
+  };
 }

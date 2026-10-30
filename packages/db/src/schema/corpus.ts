@@ -25,6 +25,8 @@ import { embedding } from '../vector.ts';
 export interface JudgmentPageText {
   pageNo: number;
   text: string;
+  /** Where the page text came from; absent means the PDF text layer. */
+  source?: 'text' | 'ocr';
 }
 
 /** Where and when the judgment was read (the `FetchProvenance` of `@causedeck/fetch`). */
@@ -137,6 +139,14 @@ export const corpusOcrQueue = pgTable(
       .notNull()
       .references(() => judgment.id),
     pageNo: integer('page_no').notNull(),
+    /** Failed OCR attempts so far (#1030). */
+    attempts: integer('attempts').notNull().default(0),
+    /** The last failure code; never page content. */
+    lastError: text('last_error'),
+    /** Backoff: the page is not claimed before this time. */
+    nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+    /** Set once retries are exhausted; a parked page is kept with its error and never claimed. */
+    parkedAt: timestamp('parked_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex('corpus_ocr_queue_page_uq').on(t.judgmentId, t.pageNo)],
@@ -177,3 +187,24 @@ export const corpusMaskRequest = pgTable(
     index('corpus_mask_request_status_idx').on(t.status),
   ],
 );
+
+/**
+ * One row per gateway call made for corpus OCR (#1030): the platform scope's own ledger, global and
+ * apart from `ai_call` (tenant). Its daily sum is the platform OCR budget. Hashes and ids only.
+ */
+export const corpusOcrCall = pgTable('corpus_ocr_call', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  purpose: text('purpose').notNull(),
+  task: text('task').notNull(),
+  provider: text('provider').notNull(),
+  model: text('model').notNull(),
+  region: text('region').notNull(),
+  inputTokens: integer('input_tokens').notNull().default(0),
+  outputTokens: integer('output_tokens').notNull().default(0),
+  costPaise: integer('cost_paise').notNull().default(0),
+  status: text('status').notNull(),
+  errorCode: text('error_code'),
+  inputSha256: text('input_sha256'),
+  latencyMs: integer('latency_ms'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});

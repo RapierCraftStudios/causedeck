@@ -9,7 +9,7 @@ import {
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { bulkImportOverview, dataOpsOverview } from '../../../lib/data/index.ts';
+import { bulkImportOverview, dataOpsOverview, ocrQueueOverview } from '../../../lib/data/index.ts';
 import { startBulkImportAction } from './actions.ts';
 import { requireStaff } from '../../../lib/staff.ts';
 
@@ -62,6 +62,7 @@ export default async function DataOpsPage() {
   const rows = await dataOpsOverview(staff);
   const failing = topFailingSources(rows);
   const imports = await bulkImportOverview(staff);
+  const ocr = await ocrQueueOverview(staff);
   return (
     <section aria-labelledby="page-title" className="grid gap-6">
       <div className="grid gap-1">
@@ -197,6 +198,35 @@ export default async function DataOpsPage() {
           </table>
           {imports.length === 0 ? (
             <p className="text-ink-muted text-sm">No bulk import has run.</p>
+          ) : null}
+        </div>
+        <div className="grid gap-1 text-sm">
+          <h3 className="font-medium">OCR queue</h3>
+          <p>
+            Queue depth: {ocr.depth}. Parked failures: {ocr.parked}.
+          </p>
+          {ocr.failures.length > 0 ? (
+            <table className="w-full text-left text-sm">
+              <caption className="sr-only">Parked OCR failures</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Judgment</th>
+                  <th scope="col">Page</th>
+                  <th scope="col">Attempts</th>
+                  <th scope="col">Last error</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ocr.failures.map((f) => (
+                  <tr key={`${f.judgmentId}:${String(f.pageNo)}`}>
+                    <th scope="row">{f.judgmentId}</th>
+                    <td>{f.pageNo}</td>
+                    <td>{f.attempts}</td>
+                    <td>{f.lastError ?? '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : null}
         </div>
       </div>

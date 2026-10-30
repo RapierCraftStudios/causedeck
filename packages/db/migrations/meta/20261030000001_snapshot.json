@@ -1,5 +1,5 @@
 {
-  "id": "3dc4d248-bc30-4397-b477-06271f6a181f",
+  "id": "8dd5f302-f991-470b-a3ef-872a9e4ce0e9",
   "prevId": "00cb626e-fd5d-46c7-a086-bcb959126b52",
   "version": "7",
   "dialect": "postgresql",
@@ -6802,8 +6802,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.corpus_mask_request": {
-      "name": "corpus_mask_request",
+    "public.corpus_ocr_call": {
+      "name": "corpus_ocr_call",
       "schema": "",
       "columns": {
         "id": {
@@ -6813,96 +6813,90 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "judgment_id": {
-          "name": "judgment_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "requested_by": {
-          "name": "requested_by",
+        "purpose": {
+          "name": "purpose",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "requested_action": {
-          "name": "requested_action",
+        "task": {
+          "name": "task",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "names": {
-          "name": "names",
-          "type": "text[]",
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "region": {
+          "name": "region",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_tokens": {
+          "name": "input_tokens",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{}'::text[]"
+          "default": 0
         },
-        "legal_basis": {
-          "name": "legal_basis",
-          "type": "text",
+        "output_tokens": {
+          "name": "output_tokens",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": 0
+        },
+        "cost_paise": {
+          "name": "cost_paise",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "status": {
           "name": "status",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
+          "notNull": true
         },
-        "received_at": {
-          "name": "received_at",
+        "error_code": {
+          "name": "error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "input_sha256": {
+          "name": "input_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "latency_ms": {
+          "name": "latency_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "handled_at": {
-          "name": "handled_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "handled_by": {
-          "name": "handled_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
         }
       },
-      "indexes": {
-        "corpus_mask_request_judgment_idx": {
-          "name": "corpus_mask_request_judgment_idx",
-          "columns": [
-            {
-              "expression": "judgment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "corpus_mask_request_status_idx": {
-          "name": "corpus_mask_request_status_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -6932,6 +6926,32 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_attempt_at": {
+          "name": "next_attempt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "parked_at": {
+          "name": "parked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -13778,44 +13798,6 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true
-        },
-        "redacted_text": {
-          "name": "redacted_text",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "case_title": {
-          "name": "case_title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "title_masked": {
-          "name": "title_masked",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "redaction_version": {
-          "name": "redaction_version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "sensitive_category": {
-          "name": "sensitive_category",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mask_reason": {
-          "name": "mask_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "embedding": {
           "name": "embedding",

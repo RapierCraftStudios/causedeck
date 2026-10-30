@@ -1,7 +1,7 @@
 // Shared pieces of the public v1 data routes (#625): the workspace for a key or a member, the
-// provenance and `source_license` fields every record carries, and the snake_case record mapping.
+// `as_of` and `official_url` fields every record carries (D-053: no source names), and the snake_case record mapping.
 // Responses hold no contributor workspace and no judge rating, ranking or prediction (D-048, D-050).
-import type { PublicActor, PublicProvenance, PublicRecord } from '@causedeck/core/public-api';
+import type { PublicActor, PublicRecord } from '@causedeck/core/public-api';
 import type { Database } from '@causedeck/db';
 import { z } from '@hono/zod-openapi';
 import type { Context, MiddlewareHandler } from 'hono';
@@ -27,32 +27,14 @@ export function actorOf(c: Context<AppEnv>): PublicActor {
   return { workspaceId: c.get('workspaceId'), userId: principalOf(c).user.id };
 }
 
-export const ProvenanceSchema = z.object({
-  source_id: z.string(),
-  kind: z.enum(['fetched', 'contributed']),
-  ref: z.string().nullable(),
-  captured_at: z.string(),
-  confidence: z.number().nullable(),
-});
-
-/** Fields every record carries. */
+/** Fields every record carries: when it was captured, and the court's own copy where one exists. */
 export const recordShape = {
-  provenance: ProvenanceSchema,
-  source_license: z.string(),
+  as_of: z.string(),
+  official_url: z.string().nullable(),
 };
 
 export const LimitQuery = z.coerce.number().int().min(1).max(100).optional();
 
-export function provenanceOf(p: PublicProvenance): z.infer<typeof ProvenanceSchema> {
-  return {
-    source_id: p.sourceId,
-    kind: p.kind,
-    ref: p.ref,
-    captured_at: p.capturedAt.toISOString(),
-    confidence: p.confidence,
-  };
-}
-
 export function recordOf(record: PublicRecord) {
-  return { provenance: provenanceOf(record.provenance), source_license: record.sourceLicense };
+  return { as_of: record.asOf.toISOString(), official_url: record.officialUrl };
 }

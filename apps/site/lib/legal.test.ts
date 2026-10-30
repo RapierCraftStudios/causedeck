@@ -55,7 +55,7 @@ describe('legal frontmatter (R7, R13)', () => {
 });
 
 describe('legal pages (R1, R2, R7, R13)', () => {
-  it('loads all five pages as noindex drafts with version history and no effective date', async () => {
+  it('loads all six pages as noindex drafts with version history and no effective date', async () => {
     const pages = await loadAllLegalPages();
     expect(pages.map((page) => page.slug[1])).toEqual([...LEGAL_SLUGS]);
     for (const page of pages) {
@@ -68,7 +68,8 @@ describe('legal pages (R1, R2, R7, R13)', () => {
   });
   it('flags drafts for the production gate', async () => {
     const pages = await loadAllLegalPages();
-    expect(draftSlugs(pages)).toHaveLength(5);
+    expect(draftSlugs(pages)).toHaveLength(6);
+    expect(draftSlugs(pages)).toContain('legal/data-sources');
     expect(draftSlugs([{ slug: ['legal', 'terms'], legal: { status: 'final' } }])).toEqual([]);
   });
   it('fails the gate on drafts unless ALLOW_DRAFT_LEGAL=1 (R2)', () => {

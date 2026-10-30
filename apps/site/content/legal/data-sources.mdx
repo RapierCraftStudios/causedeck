@@ -1,0 +1,30 @@
+---
+title: Data sources and licences
+description: The attribution that the licences of our public data sources require, and the terms the public API serves records under.
+date: 2026-10-30
+status: draft
+version: 0.0-draft
+history:
+  - date: 2026-10-30
+    summary: Page added; the API and the app no longer name sources per record (D-053). Legal text pending counsel (#117).
+---
+
+## Why this page exists
+
+CauseDeck and its public API do not name the portal, aggregator, dataset or route a record came from. The attribution that a licence requires is given here instead. Records carry the date they were captured (`as_of`) and, where the court publishes its own copy, a link to it (`official_url`).
+
+## Attributions
+
+### Indian Supreme Court and High Court judgment datasets
+
+- Publisher: Dattam Labs, on AWS Open Data (Supreme Court judgments 1950 onwards, and judgments of the High Courts).
+- Licence: [Creative Commons Attribution 4.0 International (CC-BY-4.0)](https://creativecommons.org/licenses/by/4.0/).
+- Attribution: "Indian Supreme Court and High Court judgments, compiled by Dattam Labs, licensed under CC-BY-4.0." We changed the data by extracting text, metadata and citations from it.
+
+### Court and notice records
+
+Case status, cause lists, orders and notices come from the public records of the courts. They are served only from sources whose terms we have cleared, and each link points to the court's own copy. These records need no further attribution.
+
+## Using the public API
+
+The API terms apply to every record from the [developer API](/developers/api). Where a record carries an `official_url`, the court's copy is the authoritative one.

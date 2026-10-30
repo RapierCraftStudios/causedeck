@@ -20,7 +20,6 @@ const NoticeSchema = z.object({
   kind: z.string(),
   issued_on: z.string(),
   effective_on: z.string().nullable(),
-  url: z.string(),
   forum_codes: z.array(z.string()),
   ...recordShape,
 });
@@ -62,7 +61,6 @@ export function noticesRouter(db: Database): AppRouter {
           kind: n.kind,
           issued_on: n.issuedOn,
           effective_on: n.effectiveOn,
-          url: n.url,
           forum_codes: n.forumCodes,
           ...recordOf(n),
         })),

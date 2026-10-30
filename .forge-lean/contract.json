@@ -2,266 +2,213 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "The runner computes the metrics on the synthetic set and writes a JSON and Markdown report.",
+   "quote": "Importing a pinned sample (one SC year and one HC court-year) creates `judgment` rows with provenance pointing at the dataset object and its licence.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "The CI job fails on an injected ranking regression.",
+   "quote": "Re-running the import adds nothing (sha256 dedupe), and an interrupted run resumes from its cursor.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "(Human part tracked in #899; not required for merge) At least 50 real queries come from the advocate cohort: fact patterns (for example, medical negligence with a post-operative infection and no consent) and statute queries (for example, s.37 NDPS bail with a commercial quantity). Relevant judgments are graded by an advocate.",
-   "disposition": "defer",
-   "why": "Needs advocate-written, advocate-graded queries; tracked in open issue #899 and explicitly not required for merge."
+   "quote": "Pages without a text layer are queued for OCR through the existing document pipeline, not dropped.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "Dataset format: a query, optional facets, and judged relevant judgment ids with grades 0–3.",
+   "quote": "The attribution text is listed on the public \"Data sources and licences\" page and in the API terms; judgments served to users and the API show only the court, case number, citation, date and official-copy link, never the dataset (D-053 item 4).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Runner: nDCG@10 and recall@50 for retrieval, and quote and citation faithfulness for answers (each quote must match segment text, and each cited id must exist).",
-   "disposition": "deliver",
-   "verify": "in_lane"
+   "quote": "Full SC import, then Madras HC and Karnataka HC, run on staging, with counts and storage recorded on this issue.",
+   "disposition": "post-deploy",
+   "why": "Needs the deployed worker, staging object storage and AWS network access."
   },
   {
    "id": "R6",
-   "quote": "Pinned corpus sample manifest: sha256 list.",
+   "quote": "`packages/core/src/sources/`: two registry rows (`aws-open-data-sc`, `aws-open-data-hc`).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "A synthetic starter set (about 15 queries over the fixture corpus) so CI runs now.",
+   "quote": "`packages/intelligence/src/corpus/bulk/`: a streaming importer.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "The real set lives privately (env `RESEARCH_EVAL_PRIVATE_DIR`) and is reported separately, like `ADAPTER_PRIVATE_FIXTURES_DIR`.",
+   "quote": "Resumable: a cursor per archive, stored in a progress table or `source` state.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "A CI job, `research-eval`, in the fast tier on changes to `packages/intelligence/src/research/**` or `corpus/**`. It fails on a regression of more than 2 nDCG points against the committed baseline.",
+   "quote": "`apps/worker`: a `corpus.bulk_import` job.",
    "disposition": "deliver",
-   "verify": "out_of_band",
-   "evidence": "the research-eval job in .github/workflows/research-eval.yml measures it on PRs; the comparison logic itself is unit-tested in lane"
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "Off by default; started from the admin console per dataset, per court and per year range.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "Bounded concurrency, with a per-run budget for pages and bytes.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "Register it in `apps/worker/src/__tests__/registry.test.ts`.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R13",
+   "quote": "`apps/admin` data ops: import progress, rows added, duplicates skipped, failures, and storage used.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "Extracts the PDF text layer with the existing layout code, uploads the PDF to object storage keyed by sha256 (ADR 0006), and inserts through the same path as `corpus.poll`, deduping by sha256.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/intelligence/src/research/eval/types.ts",
-   "change": "Dataset, corpus segment, judgment grade (0-3), Ranker, answer and report types; zod schemas for the dataset and corpus files.",
-   "requirements": [
-    "R4",
-    "R5"
-   ]
+   "path": "packages/db/migrations/20261030000000_corpus_bulk_import.sql",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D2",
-   "path": "packages/intelligence/src/research/eval/metrics.ts",
-   "change": "ndcgAtK (gain 2^g-1, log2 discount) and recallAtK over judged relevant ids (grade>=1), plus means.",
-   "requirements": [
-    "R5"
-   ]
+   "path": "packages/db/src/schema/corpus.ts",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D3",
-   "path": "packages/intelligence/src/research/eval/faithfulness.ts",
-   "change": "Quote faithfulness (whitespace-normalised substring of the cited segment) and citation existence checks.",
-   "requirements": [
-    "R5"
-   ]
+   "path": "packages/intelligence/src/corpus/ingest.ts",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D4",
-   "path": "packages/intelligence/src/research/eval/manifest.ts",
-   "change": "Compute and verify the sha256 manifest of corpus files; fail on drift.",
-   "requirements": [
-    "R6"
-   ]
+   "path": "packages/intelligence/src/corpus/bulk/index.ts",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D5",
-   "path": "packages/intelligence/src/research/eval/runner.ts",
-   "change": "Load the dataset and corpus, verify the manifest, run a Ranker, compute metrics, load the optional RESEARCH_EVAL_PRIVATE_DIR set and report it separately (never gated), compare to the baseline with a 0.02 nDCG@10 tolerance.",
-   "requirements": [
-    "R1",
-    "R5",
-    "R8",
-    "R9"
-   ]
+   "path": "packages/intelligence/package.json",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D6",
-   "path": "packages/intelligence/src/research/eval/report.ts",
-   "change": "Render the JSON and Markdown reports.",
-   "requirements": [
-    "R1"
-   ]
+   "path": "packages/core/src/jobs/definitions/corpus-bulk-import.ts",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D7",
-   "path": "packages/intelligence/src/research/eval/baseline-ranker.ts",
-   "change": "Deterministic BM25 lexical ranker over the synthetic corpus, the system under test until the real retriever lands.",
-   "requirements": [
-    "R1",
-    "R2"
-   ]
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D8",
-   "path": "packages/intelligence/src/research/eval/cli.ts",
-   "change": "CLI entry: run, write reports to an output dir, exit non-zero on regression; flag to rewrite the baseline.",
-   "requirements": [
-    "R1",
-    "R9"
-   ]
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D9",
-   "path": "packages/intelligence/src/research/eval/runner.test.ts",
-   "change": "Unit tests: metrics on hand-computed values, faithfulness, manifest drift, report files written, and an injected-regression test where a degraded ranker fails the baseline comparison.",
-   "requirements": [
-    "R1",
-    "R2",
-    "R5",
-    "R6"
-   ]
+   "path": "apps/admin/app/(console)/data-ops/page.tsx",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D10",
-   "path": "packages/intelligence/src/research/index.ts",
-   "change": "Barrel for the research package (eval exports).",
-   "requirements": [
-    "R5"
-   ]
+   "path": "apps/site/app/legal/data-sources/page.tsx",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D11",
-   "path": "fixtures/research-eval/corpus.json",
-   "change": "Synthetic fixture corpus of fictional judgments split into page-anchored segments.",
-   "requirements": [
-    "R7"
-   ]
+   "path": "apps/site/content/developers/api.md",
+   "change": "see issue #890",
+   "requirements": []
   },
   {
    "id": "D12",
-   "path": "fixtures/research-eval/queries.json",
-   "change": "About 15 synthetic queries (fact-pattern and statute) with facets and graded judgments 0-3.",
-   "requirements": [
-    "R4",
-    "R7"
-   ]
-  },
-  {
-   "id": "D13",
-   "path": "fixtures/research-eval/manifest.json",
-   "change": "sha256 list pinning corpus.json and queries.json.",
-   "requirements": [
-    "R6"
-   ]
-  },
-  {
-   "id": "D14",
-   "path": "fixtures/research-eval/baseline.json",
-   "change": "Committed baseline metrics produced by the baseline ranker.",
-   "requirements": [
-    "R9"
-   ]
-  },
-  {
-   "id": "D15",
-   "path": "packages/intelligence/package.json",
-   "change": "Add script research-eval running the CLI with node/tsx-free type stripping consistent with the other eval scripts; no new dependencies.",
-   "requirements": [
-    "R1",
-    "R9"
-   ]
-  },
-  {
-   "id": "D16",
-   "path": ".github/workflows/research-eval.yml",
-   "change": "Workflow with job research-eval on pull_request paths packages/intelligence/src/research/**, packages/intelligence/src/corpus/**, fixtures/research-eval/**; runs the eval CLI, uploads the JSON and Markdown reports, fails on regression. Pinned action SHAs copied from ci.yml, setup action reused, permissions contents: read.",
-   "requirements": [
-    "R9"
-   ]
-  },
-  {
-   "id": "D17",
-   "path": "docs/engineering/ci.md",
-   "change": "Add a Research eval row to the workflows table and a short paragraph on the baseline, tolerance and private set.",
-   "requirements": [
-    "R8",
-    "R9"
-   ]
-  },
-  {
-   "id": "D18",
-   "path": ".env.example",
-   "change": "Document RESEARCH_EVAL_PRIVATE_DIR= next to ADAPTER_PRIVATE_FIXTURES_DIR.",
-   "requirements": [
-    "R8"
-   ]
+   "path": "apps/api/src/public/v1/schemas.ts",
+   "change": "see issue #890",
+   "requirements": []
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "The required ci.yml job names lint, typecheck, test, build and tenancy (.github/workflows/ci.yml, docs/engineering/ci.md)."
+   "what": "corpus.poll behaviour and exports; ingestJudgment signature and outcome statuses; existing corpus-poll and ingest tests stay green."
   },
   {
    "id": "P2",
-   "what": "Existing @causedeck/intelligence public exports in packages/intelligence/src/index.ts and the corpus barrel packages/intelligence/src/corpus/index.ts."
+   "what": "judgment table global, no RLS, sha256 unique index stays the dedupe key."
   },
   {
    "id": "P3",
-   "what": "The voice eval at packages/intelligence/eval/voice/ and the `eval` script in packages/intelligence/package.json."
+   "what": "Every external read goes through policyFor and the kill switch; uncleared or killed aws-open-data source skipped without network access."
+  },
+  {
+   "id": "P4",
+   "what": "The importer never logs URLs, document text or party data."
+  },
+  {
+   "id": "P5",
+   "what": "Public API and web never expose source id, provenance or dataset for corpus judgments (D-053 item 4)."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/research/eval/runner.test.ts src/index.test.ts src/corpus --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/intelligence exec vitest run src/corpus --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "pnpm --filter @causedeck/intelligence run research-eval"
-  }
- ],
- "decisions": [
-  {
-   "id": "K1",
-   "choice": "Separate workflow research-eval.yml with a paths filter instead of a job in ci.yml",
-   "justification": "ci.yml has no path-filter mechanism and its job names are required checks; lint-workflows.yml:3-9 is the path-scoped workflow precedent.",
-   "source": "precedent"
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-poll.test.ts src/jobs/definitions/corpus-bulk-import.test.ts src/sources --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
-   "id": "K2",
-   "choice": "Runner takes a Ranker interface and ships a BM25 baseline ranker",
-   "justification": "No retrieval implementation exists yet (src/research absent), and ADR 0051:154-158 requires the gate before the retriever; the real hybrid retriever plugs in later.",
-   "source": "doc"
+   "id": "V3",
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
-   "id": "K3",
-   "choice": "Private set via RESEARCH_EVAL_PRIVATE_DIR reported separately and never gated in CI",
-   "justification": "Mirrors ADAPTER_PRIVATE_FIXTURES_DIR (.env.example:176, ci.yml:141).",
-   "source": "precedent"
+   "id": "V4",
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/schema/corpus.test.ts src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
-   "id": "K4",
-   "choice": "ADR number is 0051, not 0050",
-   "justification": "Maintainer comment on #891; docs/adr/0051-corpus-storage-enrichment-and-retrieval.md:154.",
-   "source": "doc"
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/data-ops.test.tsx __tests__/server-actions-audit.test.ts __tests__/data-layer.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/site exec vitest run src/marketing-pages.test.tsx src/developer-docs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  },
+  {
+   "id": "V7",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
   }
  ]
 }

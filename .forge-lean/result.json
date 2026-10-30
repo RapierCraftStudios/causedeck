@@ -1,1 +1,189 @@
-{"status": "fixed", "summary": "Research eval harness, synthetic set, manifest, baseline and CI job verified complete on the branch; fixed two unrelated CI flakes in core/db test fixtures", "requirements": [{"id": "R1", "status": "implemented", "evidence": "packages/intelligence/src/research/eval/runner.ts"}, {"id": "R2", "status": "implemented", "evidence": "packages/intelligence/src/research/eval/runner.test.ts"}, {"id": "R4", "status": "implemented", "evidence": "packages/intelligence/src/research/eval/types.ts"}, {"id": "R5", "status": "implemented", "evidence": "packages/intelligence/src/research/eval/metrics.ts"}, {"id": "R6", "status": "implemented", "evidence": "packages/intelligence/src/research/eval/manifest.ts"}, {"id": "R7", "status": "implemented", "evidence": "fixtures/research-eval/queries.json"}, {"id": "R8", "status": "implemented", "evidence": "packages/intelligence/src/research/eval/runner.ts"}, {"id": "R9", "status": "implemented", "evidence": ".github/workflows/research-eval.yml", "instrumented": true}], "validation": [{"id": "V1", "command": "pnpm --filter @causedeck/intelligence exec vitest run src/research/eval/runner.test.ts src/index.test.ts src/corpus", "exit": 0}, {"id": "V2", "command": "pnpm --filter @causedeck/intelligence run research-eval", "exit": 0}], "tests": [{"command": "vitest run src/research/eval/runner.test.ts", "result": "pass", "fails_without_fix": true}], "self_review": [{"question": "1", "answer": "yes", "evidence": "all deliver requirements mapped in implementation.md"}, {"question": "2", "answer": "yes", "evidence": "index.test.ts and corpus tests pass"}, {"question": "3", "answer": "yes", "evidence": "V1, V2 exit 0; forgedock check PASS"}, {"question": "4", "answer": "yes", "evidence": "git diff lists only deliverable paths"}], "amendments": [{"kind": "add-deliverable", "path": "packages/core/src/drafting/__tests__/factcheck-service.test.ts", "why": "CI flake: the test asserts audit JSON does not contain '7f3a', but random workspace UUIDs can contain that hex string (e7f3aac4-...). Marker renamed to a non-hex string."}, {"kind": "add-deliverable", "path": "packages/db/src/seed/brief-fixtures.ts", "why": "CI flake: proceeding number was random in a 9000 range so two fixtures can collide on proceeding_identity_uq; range widened to 9,000,000."}, {"kind": "add-deliverable", "path": "packages/config/src/env/schema.ts", "why": "D18 adds RESEARCH_EVAL_PRIVATE_DIR to .env.example, which is generated from the env schema; the guard test failed until the key was registered."}, {"kind": "add-deliverable", "path": "docs/engineering/env.md", "why": "The env docs guard test requires a row for every schema key."}]}
+{
+ "status": "fixed",
+ "summary": "Bulk judgment import: importer, job system.corpus.bulk-import, tables, admin start/progress, attribution page and API terms; merged with base",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/bulk/import.ts"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/bulk/import.ts"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/ingest.ts"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "apps/site/content/legal/data-sources.mdx; apps/site/content/developers/api.md"
+  },
+  {
+   "id": "R5",
+   "status": "missing",
+   "evidence": "post-deploy: needs staging run"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "packages/db/migrations/20261030000000_corpus_bulk_import.sql"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/bulk/index.ts"
+  },
+  {
+   "id": "R8",
+   "status": "implemented",
+   "evidence": "packages/db/src/schema/corpus.ts"
+  },
+  {
+   "id": "R9",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/corpus-bulk-import.ts:124"
+  },
+  {
+   "id": "R10",
+   "status": "implemented",
+   "evidence": "apps/admin/app/(console)/data-ops/actions.ts"
+  },
+  {
+   "id": "R11",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/corpus-bulk-import.ts"
+  },
+  {
+   "id": "R12",
+   "status": "implemented",
+   "evidence": "apps/worker/src/__tests__/registry.test.ts:177"
+  },
+  {
+   "id": "R13",
+   "status": "implemented",
+   "evidence": "apps/admin/app/(console)/data-ops/page.tsx"
+  },
+  {
+   "id": "R14",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/ingest.ts"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/intelligence exec vitest run src/corpus --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-poll.test.ts src/jobs/definitions/corpus-bulk-import.test.ts src/sources --maxWorkers=${FORG",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/schema/corpus.test.ts src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/data-ops.test.tsx __tests__/server-actions-audit.test.ts __tests__/data-layer.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
+   "exit": 0
+  },
+  {
+   "id": "V6",
+   "command": "pnpm --filter @causedeck/site exec vitest run src/marketing-pages.test.tsx src/developer-docs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}",
+   "exit": 0
+  },
+  {
+   "id": "V7",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "forgedock check V1-V7 (post-merge)",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  },
+  {
+   "command": "pnpm turbo run typecheck (web with 8GB heap)",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R4,R6-R14 delivered; R5 post-deploy amendment"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "V1-V7 pass incl. corpus-poll tests; typecheck passes"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "forgedock check PASS; job named system.corpus.bulk-import (name pattern forbids underscore); D8/D12 dropped, no judgment endpoint"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "extra files declared as amendments"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "post-deploy",
+   "requirement": "R5",
+   "why": "Needs the deployed worker, staging object storage and AWS network access."
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/sources/bulk-import.ts",
+   "why": "progress query for the admin panel; apps cannot import @causedeck/db"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/sources/index.ts",
+   "why": "export listBulkImports"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/core/src/audit/events.ts",
+   "why": "audit event corpus.bulk_import_started for the staff start action"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/admin/lib/data/index.ts",
+   "why": "audited bulkImportOverview read"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/site/lib/legal.ts",
+   "why": "register the data-sources legal slug"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/src/index.test.ts",
+   "why": "table list"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "apps/admin/app/(console)/data-ops/actions.ts",
+   "why": "staff-gated start action"
+  }
+ ]
+}

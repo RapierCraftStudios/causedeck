@@ -2,85 +2,103 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "Importing a pinned sample (one SC year and one HC court-year) creates `judgment` rows with provenance pointing at the dataset object and its licence.",
+   "quote": "`packages/intelligence/src/corpus/redact/`: a versioned redaction pipeline.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Re-running the import adds nothing (sha256 dedupe), and an interrupted run resumes from its cursor.",
+   "quote": "reuse and move the shared patterns from `packages/adapters/src/workbench/detect.ts` (Aadhaar, PAN, phone, email) into a shared module, and add bank account, vehicle number and address cues.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Pages without a text layer are queued for OCR through the existing document pipeline, not dropped.",
+   "quote": "Legal NER for persons by role: petitioner, respondent, appellant, accused, complainant, witness, relative, other person. An OpenNyAI-style model or rules first; the AI gateway for low-confidence spans, with schema-validated output.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "The attribution text is listed on the public \"Data sources and licences\" page and in the API terms; judgments served to users and the API show only the court, case number, citation, date and official-copy link, never the dataset (D-053 item 4).",
+   "quote": "Role placeholders that stay consistent within a judgment (\"the Appellant\", \"Accused 1\", \"the Complainant's wife\").",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "Full SC import, then Madras HC and Karnataka HC, run on staging, with counts and storage recorded on this issue.",
-   "disposition": "post-deploy",
-   "why": "Needs the deployed worker, staging object storage and AWS network access."
+   "quote": "Kept: judges, advocates, courts, institutions, government bodies, companies, statutes, dates and amounts.",
+   "disposition": "deliver",
+   "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "`packages/core/src/sources/`: two registry rows (`aws-open-data-sc`, `aws-open-data-hc`).",
+   "quote": "Sensitive categories: POCSO, BNS ss.63–72 and IPC 375–376, 228A, the JJ Act, matrimonial and family matters, in-camera proceedings and acquittals of individuals. These are detected from case type, statutes and title. Victim and minor details are removed outright, and the title is masked.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "`packages/intelligence/src/corpus/bulk/`: a streaming importer.",
+   "quote": "The placeholder mapping is never stored. `REDACTION_VERSION` is recorded per judgment.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "Resumable: a cursor per archive, stored in a progress table or `source` state.",
+   "quote": "`packages/db`: `judgment` gains `case_title`, `title_masked`, `redaction_version`, `sensitive_category` and `mask_reason`.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "`apps/worker`: a `corpus.bulk_import` job.",
+   "quote": "A `corpus_mask_request` global table for court orders and requests: who, what, legal basis, status, and `handled_at`. Add it to the root table list in `packages/db/src/index.test.ts`.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "Off by default; started from the admin console per dataset, per court and per year range.",
+   "quote": "`packages/core/src/corpus/masking.ts`: a staff action to apply a mask request. It masks the title, re-redacts and purges caches within 72 h, and is audited. Register new core exports in `cross-tenant-registry.ts`.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Bounded concurrency, with a per-run budget for pages and bytes.",
+   "quote": "A static test: modules under research, search and the public API never select `judgment.page_text`.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "Register it in `apps/worker/src/__tests__/registry.test.ts`.",
+   "quote": "On a labelled set of at least 30 judgments (from #119 or imported ones), person-name recall is at least 0.98 and over-redaction of judges, advocates and institutions is at most 2%. The evaluation report is committed.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "`apps/admin` data ops: import progress, rows added, duplicates skipped, failures, and storage used.",
+   "quote": "Placeholders are consistent within a judgment, and the same person gets the same role label on every page.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R14",
-   "quote": "Extracts the PDF text layer with the existing layout code, uploads the PDF to object storage keyed by sha256 (ADR 0006), and inserts through the same path as `corpus.poll`, deduping by sha256.",
+   "quote": "Every sensitive-category fixture (POCSO, sexual offence, JJ, matrimonial) has its title masked and no victim or minor identifiers in the output.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "Bumping `REDACTION_VERSION` re-redacts affected rows through a job, without re-fetching.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R16",
+   "quote": "A mask request masks the title and text everywhere it is served (search, API, snippets) and records `handled_at`.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R17",
+   "quote": "The static `page_text` access test passes.",
    "disposition": "deliver",
    "verify": "in_lane"
   }
@@ -88,127 +106,259 @@
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/db/migrations/20261030000000_corpus_bulk_import.sql",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/adapters/src/workbench/pii-patterns.ts",
+   "change": "New shared module holding EMAIL/PHONE/AADHAAR/PAN regexes and placeholders moved from detect.ts, plus BANK_ACCOUNT, VEHICLE_NUMBER and address-cue patterns.",
+   "requirements": [
+    "R2"
+   ]
   },
   {
    "id": "D2",
-   "path": "packages/db/src/schema/corpus.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/adapters/src/workbench/detect.ts",
+   "change": "Import and re-export the patterns from pii-patterns.ts; behaviour unchanged.",
+   "requirements": [
+    "R2"
+   ]
   },
   {
    "id": "D3",
-   "path": "packages/intelligence/src/corpus/ingest.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/intelligence/src/corpus/redact/",
+   "change": "New directory: REDACTION_VERSION, roles/NER rules, placeholder allocator (in-memory, per judgment), kept-entity rules, sensitive-category detection and title masking, optional injected low-confidence gateway hook with zod-validated output, redactJudgment(pages, header) -> {pages, caseTitle, titleMasked, sensitiveCategory, version}; unit tests and labelled fixtures (>=30 synthetic judgments) with an eval test and committed report redact/EVALUATION.md.",
+   "requirements": [
+    "R1",
+    "R3",
+    "R4",
+    "R5",
+    "R6",
+    "R7",
+    "R12",
+    "R13",
+    "R14"
+   ]
   },
   {
    "id": "D4",
-   "path": "packages/intelligence/src/corpus/bulk/index.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/intelligence/src/corpus/index.ts",
+   "change": "Export the redact module.",
+   "requirements": [
+    "R1"
+   ]
   },
   {
    "id": "D5",
-   "path": "packages/intelligence/package.json",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/intelligence/src/corpus/ingest.ts",
+   "change": "storeJudgment redacts before insert and writes redactedText, caseTitle, titleMasked, redactionVersion, sensitiveCategory.",
+   "requirements": [
+    "R1",
+    "R6",
+    "R7"
+   ]
   },
   {
    "id": "D6",
-   "path": "packages/core/src/jobs/definitions/corpus-bulk-import.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/db/src/schema/corpus.ts",
+   "change": "Add judgment columns case_title, title_masked, redaction_version, sensitive_category, mask_reason and redacted_text (jsonb, nullable); add corpusMaskRequest table.",
+   "requirements": [
+    "R8",
+    "R9"
+   ]
   },
   {
    "id": "D7",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/db/migrations/",
+   "change": "Next free numbered migration (after 20261030000000_corpus_bulk_import) adding the columns and corpus_mask_request (global, no RLS) with the generated snapshot and journal entry; additive only.",
+   "requirements": [
+    "R8",
+    "R9"
+   ]
   },
   {
    "id": "D8",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add corpus_mask_request to the root table list.",
+   "requirements": [
+    "R9"
+   ]
   },
   {
    "id": "D9",
-   "path": "apps/admin/app/(console)/data-ops/page.tsx",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/db/src/schema/corpus.test.ts",
+   "change": "Cover new columns and table.",
+   "requirements": [
+    "R8",
+    "R9"
+   ]
   },
   {
    "id": "D10",
-   "path": "apps/site/app/legal/data-sources/page.tsx",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/core/src/corpus/masking.ts",
+   "change": "Staff service applyMaskRequest: masks title, re-redacts judgment from page_text with the mask applied, clears derived caches, sets status and handled_at, writes an audit event. Plus corpus/index.ts exporting it.",
+   "requirements": [
+    "R10",
+    "R16"
+   ]
   },
   {
    "id": "D11",
-   "path": "apps/site/content/developers/api.md",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/core/src/audit/events.ts",
+   "change": "Add corpus.mask_applied audit event.",
+   "requirements": [
+    "R10"
+   ]
   },
   {
    "id": "D12",
-   "path": "apps/api/src/public/v1/schemas.ts",
-   "change": "see issue #890",
-   "requirements": []
+   "path": "packages/core/src/jobs/definitions/corpus-redact.ts",
+   "change": "Job system.corpus.redact: batches judgments with redaction_version below REDACTION_VERSION and re-redacts from page_text without fetching; register in jobs/registry.ts.",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Register corpusRedact.",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add system.corpus.redact to the expected job list.",
+   "requirements": [
+    "R15"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "packages/core/src/research/alerts.ts",
+   "change": "Select and match redactedText instead of pageText; masked judgments never expose raw text.",
+   "requirements": [
+    "R11",
+    "R16"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/core/src/__tests__/page-text-access.test.ts",
+   "change": "Static test scanning research, search and public-api modules (allowlisting citations/verify.ts and masking/redact internals) for page_text/pageText selects.",
+   "requirements": [
+    "R11",
+    "R17"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "Register new core runtime exports (applyMaskRequest etc.) in SERVICE_TESTS or NOT_A_SERVICE with reason (global table).",
+   "requirements": [
+    "R10"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "change": "Real case for any SERVICE_TESTS entry added.",
+   "requirements": [
+    "R10"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/core/src/corpus/masking.test.ts",
+   "change": "Integration test: mask request masks title and text, records handled_at, is audited.",
+   "requirements": [
+    "R16"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "packages/core/src/index.ts",
+   "change": "Export the corpus masking service if the barrel lists domains; add CORE_DOMAIN_DEPENDENCIES and docs/engineering/core-domains.md entries for a new corpus domain if the domain test requires them.",
+   "requirements": [
+    "R10"
+   ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "corpus.poll behaviour and exports; ingestJudgment signature and outcome statuses; existing corpus-poll and ingest tests stay green."
+   "what": "detect.ts public exports (findPii, findLeaks, namePattern, regex and placeholder constants) and workbench redact/build-fixture behaviour in packages/adapters/src/workbench."
   },
   {
    "id": "P2",
-   "what": "judgment table global, no RLS, sha256 unique index stays the dedupe key."
+   "what": "verifyCitation in packages/core/src/citations/verify.ts keeps reading raw pageText (ADR 0051:103) with unchanged results."
   },
   {
    "id": "P3",
-   "what": "Every external read goes through policyFor and the kill switch; uncleared or killed aws-open-data source skipped without network access."
+   "what": "Bulk import and corpus.poll dedupe by sha256 and the cursor/OCR queue behaviour in packages/intelligence/src/corpus/bulk/import.ts and ingest.ts."
   },
   {
    "id": "P4",
-   "what": "The importer never logs URLs, document text or party data."
-  },
-  {
-   "id": "P5",
-   "what": "Public API and web never expose source id, provenance or dataset for corpus judgments (D-053 item 4)."
+   "what": "Judgment sha256 and raw page_text are never altered by redaction or masking; only derived columns change."
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/intelligence exec vitest run src/corpus --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/corpus --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V2",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-poll.test.ts src/jobs/definitions/corpus-bulk-import.test.ts src/sources --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/adapters exec vitest run src/workbench --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V3",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V4",
    "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/schema/corpus.test.ts src/testing --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/db db:check"
+  },
+  {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/admin exec vitest run __tests__/data-ops.test.tsx __tests__/server-actions-audit.test.ts __tests__/data-layer.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/corpus src/__tests__/page-text-access.test.ts src/jobs/definitions/corpus-redact.test.ts src/jobs/definitions/judgment-alert-scan.test.ts src/citations src/domains.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V6",
-   "command": "pnpm --filter @causedeck/site exec vitest run src/marketing-pages.test.tsx src/developer-docs.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
   },
   {
    "id": "V7",
-   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network"
+   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+  }
+ ],
+ "decisions": [
+  {
+   "id": "K1",
+   "choice": "Store redacted pages in a new nullable judgment.redacted_text jsonb column rather than judgment_segment.",
+   "justification": "judgment_segment does not exist yet (only specified in docs/adr/0051-corpus-storage-enrichment-and-retrieval.md:70-82); the issue scopes columns to judgment. A later segmentation issue will derive segments from redacted_text.",
+   "source": "doc"
+  },
+  {
+   "id": "K2",
+   "choice": "Reuse patterns via the existing @causedeck/adapters/workbench export; no new workspace dependency.",
+   "justification": "packages/intelligence/package.json:32 already depends on @causedeck/adapters; packages/adapters/package.json:10 exports ./workbench.",
+   "source": "precedent"
+  },
+  {
+   "id": "K3",
+   "choice": "Rules-first NER with an injected low-confidence gateway interface; tests use a fake, no live model call.",
+   "justification": "Issue says 'rules first; the AI gateway for low-confidence spans'; CLAUDE.md forbids heavy/slow local runs and ADR 0051 routes models through the AI gateway.",
+   "source": "spec"
+  },
+  {
+   "id": "K4",
+   "choice": "The labelled evaluation set is synthetic fixtures committed in-repo, and the report says so.",
+   "justification": "#119 real fixtures are an open human-collection issue; the issue allows 'imported ones' only after staging import (#890 R5 is post-deploy).",
+   "source": "precedent"
+  },
+  {
+   "id": "K5",
+   "choice": "citations/verify.ts stays allowlisted in the static test.",
+   "justification": "docs/adr/0051-corpus-storage-enrichment-and-retrieval.md:103 permits citation verification internals to read page_text.",
+   "source": "doc"
   }
  ]
 }

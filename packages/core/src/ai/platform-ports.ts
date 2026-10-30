@@ -34,7 +34,10 @@ const startOfUtcDay = (d: Date): Date =>
   new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 
 /** Gateway ports for the platform scope, metered in `corpus_ocr_call`. */
-export function createPlatformAiPorts(db: Queryable, options: PlatformAiOptions = {}): GatewayPorts {
+export function createPlatformAiPorts(
+  db: Queryable,
+  options: PlatformAiOptions = {},
+): GatewayPorts {
   const now = options.now ?? (() => new Date());
   const dailyPaise = options.dailyPaise ?? DEFAULT_PLATFORM_OCR_DAILY_PAISE;
   const held = new Map<string, number>();
@@ -47,7 +50,7 @@ export function createPlatformAiPorts(db: Queryable, options: PlatformAiOptions 
         const [row] = await db
           .select({ spent: sql<number>`coalesce(sum(${corpusOcrCall.costPaise}), 0)::int` })
           .from(corpusOcrCall)
-          .where(and(gte(corpusOcrCall.createdAt, startOfUtcDay(now()))));
+          .where(gte(corpusOcrCall.createdAt, startOfUtcDay(now())));
         if ((row?.spent ?? 0) + heldPaise() + estimatedPaise > dailyPaise) {
           throw Object.assign(new Error('platform OCR budget spent for today'), {
             code: 'BUDGET_EXCEEDED',
@@ -98,10 +101,7 @@ export function createPlatformAiPorts(db: Queryable, options: PlatformAiOptions 
 }
 
 /** A gateway for the platform scope. With no providers, the deterministic mock serves OCR. */
-export function createPlatformAiGateway(
-  db: Queryable,
-  options: PlatformAiOptions = {},
-): AiGateway {
+export function createPlatformAiGateway(db: Queryable, options: PlatformAiOptions = {}): AiGateway {
   const providers = options.providers?.length ? options.providers : [createMockProvider()];
   return createGateway({
     providers,

@@ -92,14 +92,12 @@ function errorCode(error: unknown): string {
 }
 
 const isBudgetError = (error: unknown): boolean =>
-  typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'BUDGET_EXCEEDED';
+  typeof error === 'object' &&
+  error !== null &&
+  (error as { code?: unknown }).code === 'BUDGET_EXCEEDED';
 
 /** Store the page text and drop the queue row together. */
-async function storePage(
-  db: Queryable,
-  row: Claimed,
-  text: string,
-): Promise<void> {
+async function storePage(db: Queryable, row: Claimed, text: string): Promise<void> {
   await db.transaction(async (tx) => {
     const [target] = await tx
       .select({ pageText: judgment.pageText })

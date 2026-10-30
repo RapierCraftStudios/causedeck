@@ -5,7 +5,7 @@
 import { createMailer } from '@causedeck/auth/mailer';
 import { createAuth, type Auth } from '@causedeck/auth/server';
 import { createSecurityEventRecorder } from '@causedeck/core/audit';
-import { db } from '@causedeck/core/runtime';
+import { authDb, db } from '@causedeck/core/runtime';
 
 import { adminEnv } from './env.ts';
 import { logger } from './health.ts';
@@ -19,6 +19,8 @@ export function getAuth(): Auth {
     const env = adminEnv();
     instance = createAuth({
       db,
+      // Session lookups get their own small pool (#805).
+      sessionDb: authDb,
       env: { ...env, APP_URL: env.ADMIN_URL },
       mailer: createMailer(env, logger),
       logger,

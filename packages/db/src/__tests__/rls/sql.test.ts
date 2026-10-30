@@ -190,6 +190,11 @@ describe('row-level security catalog', () => {
         'whatsapp_link',
         'whatsapp_otp_challenge',
         'whatsapp_inbound_message',
+
+        // In-app help state (#94).
+        'help_state',
+        // Onboarding wizard state (#92).
+        'onboarding_state',
         // Lawyer memory (#72).
         'memory_item',
         'memory_proposal',
@@ -236,6 +241,7 @@ describe('row-level security catalog', () => {
         'import_batch',
         'import_batch_file',
         'import_plan',
+        'import_column_mapping',
 
         // Advocate identifiers for the bootstrap import (#57, #550).
         'advocate_profile',
@@ -253,6 +259,32 @@ describe('row-level security catalog', () => {
 
         // Official notices feed (#584).
         'notice_match',
+
+        // Client status links (#88).
+        'status_link',
+        'status_link_access',
+
+        // Client contacts (#82).
+        'client_contact',
+
+        // Inbound enquiry log (#87).
+        'enquiry',
+        'enquiry_party',
+        'conflict_check_result',
+        // Fees (#83).
+        'fee_agreement',
+        'fee_invoice',
+        'fee_invoice_line',
+        'payment',
+        'client_ledger_entry',
+        // Proof-of-value (#86).
+        'preparedness_rating',
+        'load_pulse',
+        'context_test_result',
+        'pov_prefs',
+        // Limitation tracker (#84).
+        'limitation_rule',
+        'limitation_computation',
       ].sort(),
     );
     for (const row of rows)
@@ -336,14 +368,18 @@ describe('row-level security catalog', () => {
 });
 
 describe('global-or-workspace reference tables (#344)', () => {
-  it('forum, court_hall, bench and template have exactly ws_isolation, global_read and owner_catalogue', async () => {
+  it('forum, court_hall, bench, template and limitation_rule have exactly ws_isolation, global_read and owner_catalogue', async () => {
     const rows = await owner.execute<{ tablename: string; policyname: string; cmd: string }>(sql`
       select tablename::text, policyname::text, cmd::text from pg_policies
-      where tablename in ('forum', 'court_hall', 'bench', 'template') order by 1, 2`);
+      where tablename in ('forum', 'court_hall', 'bench', 'template', 'limitation_rule') order by 1, 2`);
     expect(rows).toEqual(
-      ['bench', 'court_hall', 'forum', 'template'].flatMap((t) => [
+      ['bench', 'court_hall', 'forum', 'limitation_rule', 'template'].flatMap((t) => [
         { tablename: t, policyname: 'global_read', cmd: 'SELECT' },
         { tablename: t, policyname: 'owner_catalogue', cmd: 'ALL' },
+        // Platform limitation rules are readable only once counsel has reviewed them (#84).
+        ...(t === 'limitation_rule'
+          ? [{ tablename: t, policyname: 'reviewed_only', cmd: 'SELECT' }]
+          : []),
         { tablename: t, policyname: 'ws_isolation', cmd: 'ALL' },
       ]),
     );

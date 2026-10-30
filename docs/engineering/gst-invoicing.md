@@ -153,3 +153,11 @@ invoices table once `pdf_blob_id` is set.
   once turnover is known.
 - Credit and debit notes, discounts, multi-currency, export of services (LUT, zero-rated).
 - Reverse charge supplies: SaaS sold by CauseDeck is forward charge.
+
+## Fee invoices (legal-gated, #83)
+
+`packages/billing/src/fees/` holds the pure GST, numbering, print and ledger logic for advocate fee
+invoices. The treatments and rates in `fees/gst-config/in-2026.json` are placeholders
+(`reviewed: false`): `needs CA review` before the fees flag is enabled. Fee invoices use the `FE`
+series, gapless per financial year. These modules move no money: no transport, no payment SDK, no
+transfers (a static test enforces it); Razorpay stays in the SaaS billing modules.

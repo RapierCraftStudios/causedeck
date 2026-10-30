@@ -18,7 +18,8 @@ export async function openBrief(
 ): Promise<void> {
   await page.setViewportSize(size);
   await asUser(role, { workspace: MATTERS_WORKSPACE, path: `briefs/${BRIEF_LISTING_ID}` });
-  await expect(page.locator('[data-brief-sheet]')).toBeVisible();
+  // Streaming can leave a hidden copy of the sheet (a Suspense placeholder) next to the real one.
+  await expect(page.locator('[data-brief-sheet]').filter({ visible: true })).toBeVisible();
   // The sheet is server-rendered, so it is visible before React hydrates; a click, a fill or a key
   // press that lands earlier is lost (the Add button stays disabled, the Prepared mark never flips).
   await contentReady(page);

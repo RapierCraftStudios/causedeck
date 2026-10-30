@@ -19,7 +19,10 @@ export interface DemoPdf {
   sha256: string;
 }
 
-export const DEMO_PDF_HEADING = 'DEMO DATA - FICTIONAL';
+/** The visible watermark of every seeded document (#93): printed top and bottom of the page. */
+export const DEMO_PDF_WATERMARK = 'SYNTHETIC';
+
+export const DEMO_PDF_HEADING = 'SYNTHETIC - DEMO DATA - FICTIONAL';
 
 const LOREM =
   'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.';
@@ -34,7 +37,18 @@ function pdfText(value: string): string {
 }
 
 export function demoOrderPdf(input: DemoPdfInput): DemoPdf {
-  const body = [DEMO_PDF_HEADING, '', input.caseNumber, input.title, '', ...input.lines, '', LOREM];
+  const body = [
+    DEMO_PDF_HEADING,
+    '',
+    input.caseNumber,
+    input.title,
+    '',
+    ...input.lines,
+    '',
+    LOREM,
+    '',
+    DEMO_PDF_WATERMARK,
+  ];
   const ops = ['BT', '/F1 12 Tf', '16 TL', '72 770 Td'];
   for (const line of body) ops.push(`(${pdfText(line)}) Tj T*`);
   ops.push('ET');

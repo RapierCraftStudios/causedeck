@@ -681,6 +681,11 @@ test.describe('court-day board', () => {
 
     // Long-press opens the sheet.
     const card = firstCard;
+    // The first-run coachmark (#94) pushes the board down, so on a phone the first card can sit
+    // under the bottom bar: bring it to the middle of the viewport before pressing it.
+    await card.evaluate((el) => {
+      el.scrollIntoView({ block: 'center' });
+    });
     const box = await card.boundingBox();
     if (!box) throw new Error('no card box');
     await page.mouse.move(box.x + 60, box.y + 12);

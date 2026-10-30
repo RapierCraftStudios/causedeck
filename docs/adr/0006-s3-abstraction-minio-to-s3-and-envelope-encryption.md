@@ -39,6 +39,8 @@ Lawyers upload privileged documents (orders, cause lists, briefs, audio), and th
 - Cloudflare R2 is **not** used for tenant documents.
 - Uploads are MIME-sniffed against an allow-list and size-capped, then scanned by ClamAV in a worker (optional at Stage A, required at Stage B). PDFs are rendered to images for preview, and uploaded PDF JavaScript never runs.
 
+Stage B storage note (D-037 amendment 2026-10-27): the default Stage B path keeps **MinIO on the Mumbai host** (OVH Public Cloud has no Mumbai object storage), with off-host backups to AWS S3 ap-south-2 (Hyderabad). Moving documents to AWS S3 ap-south-1 is optional, not the default; see [ADR 0053](0053-stage-b-c-scale-path.md). D-009 residency is unchanged.
+
 Nuance made explicit: D-033 speaks of "India-region KMS". The spike (§6) places the KEK in env and a secret manager at bootstrap, with KMS from Stage B. This ADR follows the spike, which wins until it is amended.
 
 ## Consequences
@@ -49,7 +51,7 @@ Nuance made explicit: D-033 speaks of "India-region KMS". The spike (§6) places
 
 ## Revisit when
 
-- Spike §3.2 Stage B triggers: p95 latency > 400 ms, DB CPU > 60%, or > 1k seats. MinIO then moves to S3 ap-south-1 and the KEK to KMS.
+- Spike §3.2 Stage B triggers: p95 latency > 400 ms, DB CPU > 60%, or > 1k seats. The KEK moves to KMS if AWS is adopted; MinIO moves to S3 ap-south-1 only if the optional AWS path is chosen.
 - An India-only guarantee becomes available from another provider at materially lower cost.
 
 ## Links

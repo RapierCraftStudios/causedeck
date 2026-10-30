@@ -9,22 +9,24 @@ Registered seeders:
 
 - `plans` (`plans.ts`, every profile, order 0): the plan catalogue from `@causedeck/billing/plans`, upserted by id so a price edited in the catalogue reaches the table on the next seed.
 - `e2e-workspaces` (`e2e.ts`, `e2e` profile, order 10): the fixed e2e workspaces, users and invitations.
-- `demo-workspace` (`demo/`, `demo` profile, order 20, #182): the fictional `demo` workspace described below.
+- `demo-workspace` (`demo/`, `demo` profile, order 20, #182, #93): the two fictional demo workspaces described below.
 
-## The demo workspace (`pnpm db:seed:demo`)
+## The demo workspaces (`pnpm db:seed:demo`)
 
-`pnpm db:seed:demo` runs the `demo` profile as the owner role (`DATABASE_URL_OWNER`); `pnpm db:seed` runs the same seeders as the app role. After `pnpm stack:up` and `pnpm db:migrate` it creates:
+`pnpm db:seed:demo` runs the `demo` profile as the owner role (`DATABASE_URL_OWNER`); `pnpm db:seed` runs the same seeders as the app role. `--workspace=chennai-solo|bengaluru-chamber|all` picks which (default all); `--reset` deletes the workspace's rows and visitors first. After `pnpm stack:up` and `pnpm db:migrate` it creates two workspaces (#93; the full description is `docs/engineering/demo-seed.md`). Since #985 every product module has seed data too; memory and the sample PDFs are written by `pnpm db:seed:demo:content` (needs the storage package):
 
-- the workspace `demo` ("Kaveri Demo Chambers (fictional)"; the slug is reserved, and the shell shows a "Demo data — fictional" banner for it) with three members who sign in by magic link (Mailpit in the local stack): `advocate@demo.causedeck.test` (the lead advocate, `owner` role), `junior@demo.causedeck.test` and `clerk@demo.causedeck.test`;
-- the workspace's own forums for the Madras High Court, the City Civil Court, Bengaluru and the High Court of Karnataka, with halls and fictional benches;
-- 25 matters (writ, civil suit, bail, arbitration, family), each with a client, an opposing party and counsel, its proceedings (one W.P. with two W.M.P.s and a W.A.), two past hearings, a canonical next listing (some today and tomorrow), an order with a generated sample PDF, obligations (overdue, due today, upcoming, done) and tasks.
+- `demo-chennai-solo` ("Nila Arivazhagan, Advocate (fictional)", Madras High Court) with an advocate (`owner`) and a clerk;
+- `demo-bengaluru-chamber` ("Kaveri Demo Chambers (fictional)", High Court of Karnataka, City Civil Court and Mayo Hall) with an advocate (`owner`), a junior and a clerk;
+- members sign in by magic link (Mailpit in the local stack): `<advocate|junior|clerk>.<chennai-solo|bengaluru-chamber>@demo.causedeck.test`;
+- each workspace has 40 matters (hand-written anchors plus matters from a seeded PRNG), 60+ orders with generated `SYNTHETIC` sample PDFs, 120+ obligations (defects, certified copies, carry-forward items), hearings and lists on every one of the last 30 days, and a canonical next date (some today and tomorrow).
 
 Rules:
 
 - Fictional only: every name ends in "(fictional)", case numbers are `DEMO-NNNN` (shown as `WP-DEMO/2026/0001`), no CNR or neutral citation is ever set, emails use `.test`.
-- Idempotent: fixed ids and `onConflictDoNothing`, so re-running writes nothing. Dates are offsets from the day of the first run (Asia/Kolkata), so the "today" rows drift on later days; `pnpm stack:reset` and a re-seed brings them back.
-- Never in production: the script and `seedDemo` refuse when `NODE_ENV=production`.
-- Not yet seeded: the PDF objects themselves (the document rows carry the generated PDF's key and sha256; `@causedeck/db` cannot depend on `@causedeck/storage`), notes and activity items (no tables yet). The screens that read this data arrive with their own issues; the full demo mode is #93.
+- Idempotent and deterministic: fixed ids, a seeded PRNG and `onConflictDoNothing`, so re-running writes nothing. Dates are offsets from the day of the first run (Asia/Kolkata), so the "today" rows drift on later days; `--reset` (or the nightly `system.demo.reset` job) brings them back.
+- Versioned: `DEMO_VERSION` (`demo/meta.ts`) is written to `workspace_settings.demo_version`; `organization.is_demo` marks the workspace and blocks every outward channel and AI spend in it.
+- Never in production: the script and `seedDemo` refuse when `NODE_ENV=production`; the nightly reset only restores demo workspaces that already exist.
+- Not yet seeded: the PDF objects themselves (the document rows carry the generated PDF's key and sha256; `@causedeck/db` cannot depend on `@causedeck/storage`), memory items M1 to M5, a conflict card, a list diff and the junior handover (no seed service for them yet), notes and activity items (no tables yet).
 
 ## Synthetic matter sets (`@causedeck/db/seed/synthetic`)
 

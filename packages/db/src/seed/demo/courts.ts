@@ -7,9 +7,10 @@ import type { InferInsertModel } from 'drizzle-orm';
 import type { bench, courtHall, forum } from '../../schema/court.ts';
 
 import { fictional } from './people.ts';
-import { DEMO_WORKSPACE_ID, demoId, ID_KIND } from './shared.ts';
+import { demoId, ID_KIND } from './shared.ts';
+import type { DemoWorkspaceSpec } from './workspaces.ts';
 
-export type DemoForumKey = 'mhc' | 'ccc' | 'khc';
+export type DemoForumKey = 'mhc' | 'ccc' | 'khc' | 'mayo';
 
 interface ForumSpec {
   n: number;
@@ -59,24 +60,39 @@ const FORUMS: Record<DemoForumKey, ForumSpec> = {
       { judges: ['Hon. Justice M. Sharavathi', 'Hon. Justice P. Kabini'], kind: 'division' },
     ],
   },
+  mayo: {
+    n: 4,
+    code: 'demo.in.ka.bengaluru-mayo-hall',
+    court: 'Mayo Hall Court Complex, Bengaluru',
+    establishment: 'Metropolitan Magistrate Courts',
+    seat: 'Bengaluru',
+    jurisdictionKind: 'district',
+    halls: ['MH-3', 'MH-14'],
+    benches: [{ judges: ['Hon. Magistrate B. Netravati'], kind: 'single' }],
+  },
 };
 
 export const DEMO_FORUM_KEYS = Object.keys(FORUMS) as DemoForumKey[];
 
-export function forumId(key: DemoForumKey): string {
-  return demoId(ID_KIND.forum, FORUMS[key].n);
+export function forumId(ws: DemoWorkspaceSpec, key: DemoForumKey): string {
+  return demoId(ID_KIND.forum, FORUMS[key].n, ws.index);
+}
+
+/** The forum's court name, for the matters of the demo. */
+export function forumCourt(key: DemoForumKey): string {
+  return FORUMS[key].court;
 }
 
 /** The forum's `i`-th hall (cycled). */
-export function hallId(key: DemoForumKey, i: number): string {
+export function hallId(ws: DemoWorkspaceSpec, key: DemoForumKey, i: number): string {
   const spec = FORUMS[key];
-  return demoId(ID_KIND.hall, spec.n * 100 + (i % spec.halls.length) + 1);
+  return demoId(ID_KIND.hall, spec.n * 100 + (i % spec.halls.length) + 1, ws.index);
 }
 
 /** The forum's `i`-th bench (cycled). */
-export function benchId(key: DemoForumKey, i: number): string {
+export function benchId(ws: DemoWorkspaceSpec, key: DemoForumKey, i: number): string {
   const spec = FORUMS[key];
-  return demoId(ID_KIND.bench, spec.n * 100 + (i % spec.benches.length) + 1);
+  return demoId(ID_KIND.bench, spec.n * 100 + (i % spec.benches.length) + 1, ws.index);
 }
 
 export interface DemoCourtRows {
@@ -85,12 +101,12 @@ export interface DemoCourtRows {
   benches: InferInsertModel<typeof bench>[];
 }
 
-export function demoCourtRows(at: Date): DemoCourtRows {
+export function demoCourtRows(ws: DemoWorkspaceSpec, at: Date): DemoCourtRows {
   const rows: DemoCourtRows = { forums: [], halls: [], benches: [] };
-  for (const key of DEMO_FORUM_KEYS) {
+  for (const key of ws.forums) {
     const spec = FORUMS[key];
-    const id = forumId(key);
-    const stamp = { workspaceId: DEMO_WORKSPACE_ID, createdAt: at, updatedAt: at };
+    const id = forumId(ws, key);
+    const stamp = { workspaceId: ws.id, createdAt: at, updatedAt: at };
     rows.forums.push({
       id,
       ...stamp,
@@ -105,7 +121,7 @@ export function demoCourtRows(at: Date): DemoCourtRows {
     });
     spec.halls.forEach((hallNo, i) => {
       rows.halls.push({
-        id: hallId(key, i),
+        id: hallId(ws, key, i),
         ...stamp,
         forumId: id,
         hallNo,
@@ -114,7 +130,7 @@ export function demoCourtRows(at: Date): DemoCourtRows {
     });
     spec.benches.forEach((b, i) => {
       rows.benches.push({
-        id: benchId(key, i),
+        id: benchId(ws, key, i),
         ...stamp,
         forumId: id,
         judges: b.judges.map(fictional),

@@ -1,0 +1,108 @@
+# ZAP baseline against the staging-like compose stack (#104). Weekly and on demand. The stack is
+# built from the checked-out sources and runs on the runner with mock providers (like
+# infra/docker/test/compose-smoke.sh); the target is checked against an allow-list before ZAP starts,
+# so the scan can never reach production or a third-party host. No repository secrets: the test user's
+# password is generated per run.
+name: ZAP baseline
+
+on:
+  schedule:
+    - cron: '30 3 * * 1' # Mondays 03:30 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zap-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_TAG: node:22.23.0-bookworm-slim
+  ZAP_IMAGE: zaproxy/zap-stable:2.16.0@sha256:391f66efa53b30de40d4a1c6e28146477263552fc828bc7613c9cd11a2949908
+  ZAP_TARGET: http://app.localhost
+
+jobs:
+  zap:
+    name: zap baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Refuse targets outside the allow-list
+        run: node infra/security/zap/check-target.mjs target "$ZAP_TARGET"
+      - name: Build images
+        run: |
+          set -euo pipefail
+          cp infra/docker/.dockerignore .dockerignore
+          org="${GITHUB_REPOSITORY_OWNER,,}"
+          for svc in web api worker admin; do
+            docker build --build-arg NODE_IMAGE="$NODE_TAG" \
+              -f "infra/docker/$svc.Dockerfile" -t "ghcr.io/$org/causedeck-$svc:sha-$GITHUB_SHA" .
+          done
+      - name: Start the stack and create a test user
+        run: |
+          set -euo pipefail
+          rand() { head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24; }
+          env_file="$RUNNER_TEMP/zap.env"
+          cp infra/docker/env/prod.env.example "$env_file"
+          {
+            echo "COMPOSE_ENV_NAME=zap"
+            echo "DOMAIN=localhost"
+            echo "ADMIN_ALLOWLIST="
+            echo "IMAGE_ORG=${GITHUB_REPOSITORY_OWNER,,}"
+            echo "GIT_SHA=$GITHUB_SHA"
+            echo "NODE_ENV=production"
+            echo "APP_URL=http://app.localhost"
+            echo "NEXT_PUBLIC_APP_URL=http://app.localhost"
+            echo "API_URL=http://api.localhost"
+            echo "ADMIN_URL=http://admin.localhost"
+            echo "POSTGRES_PASSWORD=$(rand)"
+            echo "OWNER_DB_PASSWORD=$(rand)"
+            echo "APP_DB_PASSWORD=$(rand)"
+            echo "S3_BUCKET=causedeck-zap"
+            echo "S3_ACCESS_KEY=zap$(rand)"
+            echo "S3_SECRET_KEY=$(rand)$(rand)"
+            echo "BETTER_AUTH_SECRET=$(rand)$(rand)"
+            echo "KEK_BASE64=$(head -c 32 /dev/urandom | base64)"
+            echo "BILLING_SUPPLIER_LEGAL_NAME=ZAP Test LLP"
+            echo "BILLING_SUPPLIER_GSTIN=29ABCDE1234F1Z5"
+            echo "SARVAM_NO_TRAINING_CONFIRMED=true"
+            echo "CLOCK_DRIFT_REFERENCE_URL="
+          } >>"$env_file"
+          zap_password="Zap-$(rand)"
+          echo "::add-mask::$zap_password"
+          echo "ZAP_PASSWORD=$zap_password" >>"$GITHUB_ENV"
+          echo "ZAP_USER=zap-test@example.test" >>"$GITHUB_ENV"
+          export CAUSEDECK_ENV_FILE="$env_file" COMPOSE_PROJECT_NAME=causedeck-zap
+          echo "CAUSEDECK_ENV_FILE=$env_file" >>"$GITHUB_ENV"
+          bash infra/scripts/migrate.sh
+          docker compose -f infra/docker/compose.prod.yml --env-file "$env_file" up -d --wait --wait-timeout 180
+          curl -fsS -H 'Host: app.localhost' -H 'Content-Type: application/json' \
+            -H 'Origin: http://app.localhost' \
+            -d "{\"email\":\"zap-test@example.test\",\"password\":\"$zap_password\",\"name\":\"ZAP Test\"}" \
+            http://localhost/api/auth/sign-up/email >/dev/null
+      - name: ZAP baseline (authenticated, passive)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/zap" && chmod 777 "$RUNNER_TEMP/zap"
+          cp infra/security/zap/baseline.yaml "$RUNNER_TEMP/zap/baseline.yaml"
+          docker run --rm --network host -v "$RUNNER_TEMP/zap:/zap/wrk" \
+            -e ZAP_TARGET -e ZAP_USER -e ZAP_PASSWORD "$ZAP_IMAGE" \
+            zap.sh -cmd -autorun /zap/wrk/baseline.yaml
+      - name: Fail on new medium or higher alerts
+        run: node infra/security/zap/check-target.mjs alerts "$RUNNER_TEMP/zap/zap-report.json" infra/security/zap/suppressions.tsv
+      - name: Upload report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: zap-report
+          path: ${{ runner.temp }}/zap/zap-report.json
+          if-no-files-found: ignore
+      - name: Tear down
+        if: ${{ always() }}
+        run: |
+          COMPOSE_PROJECT_NAME=causedeck-zap docker compose -f infra/docker/compose.prod.yml \
+            --env-file "$CAUSEDECK_ENV_FILE" --profile init --profile migrate down -v --remove-orphans || true

@@ -16,6 +16,10 @@
     "lhci:calendar": "node support/lighthouse-courts.mjs lighthouserc.calendar.json",
     "lhci:court-day": "node support/lighthouse-courts.mjs lighthouserc.court-day.json /w/chennai-solo/today",
     "lhci:matters": "node --experimental-strip-types --no-warnings support/lighthouse-matters.mjs",
+    "perf:test": "vitest run",
+    "perf:seed": "node --experimental-strip-types --no-warnings perf/seed-scale.ts",
+    "perf:lighthouse": "node --experimental-strip-types --no-warnings perf/lighthouse/run.mjs",
+    "perf:bundle": "node --experimental-strip-types --no-warnings ../scripts/check-bundle-budget.ts",
     "lhci:drafting": "node --experimental-strip-types --no-warnings support/lighthouse-matters.mjs lighthouserc.drafting.json"
   },
   "devDependencies": {
@@ -29,6 +33,7 @@
     "eslint": "catalog:",
     "lighthouse": "catalog:",
     "postgres": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

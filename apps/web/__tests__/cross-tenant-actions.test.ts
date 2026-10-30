@@ -105,11 +105,13 @@ const drafts = await import('../app/(app)/w/[slug]/drafts/actions.ts');
 const profile = await import('../app/(app)/w/[slug]/settings/profile/actions.ts');
 const roles = await import('../app/(app)/w/[slug]/settings/roles/actions.ts');
 const sso = await import('../app/(app)/w/[slug]/settings/sso/actions.ts');
+const pov = await import('../app/(app)/w/[slug]/_pov/actions.ts');
 const privacy = await import('../app/(app)/w/[slug]/settings/privacy/actions.ts');
 const integrations = await import('../app/(app)/w/[slug]/settings/integrations/actions.ts');
 const emailIntake = await import('../app/(app)/w/[slug]/settings/integrations/email/actions.ts');
 const activity = await import('../app/(app)/w/[slug]/activity/actions.ts');
 const support = await import('../app/(app)/w/[slug]/settings/support/actions.ts');
+const help = await import('../app/(app)/w/[slug]/help/actions.ts');
 const exports = await import('../app/(app)/w/[slug]/settings/export/actions.ts');
 const courtWatch = await import('../app/(app)/w/[slug]/settings/court-watch/actions.ts');
 const caseWatch = await import('../app/(app)/w/[slug]/settings/case-watch/actions.ts');
@@ -121,6 +123,10 @@ const matters = await import('../app/(app)/w/[slug]/matters/actions.ts');
 const matterWorkspace = await import('../app/(app)/w/[slug]/matters/[id]/actions.ts');
 const proceedingsTab = await import('../app/(app)/w/[slug]/matters/[id]/proceedings/actions.ts');
 const matterPeople = await import('../app/(app)/w/[slug]/matters/[id]/people/actions.ts');
+const peopleContacts = await import('../app/(app)/w/[slug]/people/actions.ts');
+const enquiries = await import('../app/(app)/w/[slug]/people/enquiries/actions.ts');
+const limitation = await import('../app/(app)/w/[slug]/limitation/actions.ts');
+const feeActions = await import('../app/(app)/w/[slug]/invoices/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
@@ -143,6 +149,8 @@ const calendar = await import('../app/(app)/w/[slug]/settings/integrations/calen
 const courtDay = await import('../app/(app)/w/[slug]/_court-day/actions.ts');
 const offlineActions = await import('../app/(app)/w/[slug]/_offline/actions.ts');
 const shareActions = await import('../app/(public)/share/[token]/actions.ts');
+const statusLinkActions =
+  await import('../app/(app)/w/[slug]/matters/[id]/_status-links/actions.ts');
 const continuityActions = await import('../app/(app)/w/[slug]/matters/[id]/_continuity/actions.ts');
 const briefShareActions = await import('../app/(app)/w/[slug]/briefs/actions.ts');
 const { loadWorkspaceContext } = await import('../lib/workspace-loader.ts');
@@ -172,6 +180,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   createBriefShareAction: briefShareActions,
   revokeBriefShareAction: briefShareActions,
   createWorkspaceAction: onboarding,
+  completeOnboardingStepAction: onboarding,
   setLocaleAction: account,
   updateAccountProfileAction: account,
   enableTwoFactorAction: account,
@@ -203,6 +212,19 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   approveClerkSetupAction: welcome,
   updateWorkspacePrivacyAction: privacy,
   setAllowEvalReuseAction: privacy,
+  ratePreparednessAction: pov,
+  skipPreparednessAction: pov,
+  submitLoadPulseAction: pov,
+  dismissLoadPulseAction: pov,
+  startContextTestAction: pov,
+  answerContextTestAction: pov,
+  finishContextTestAction: pov,
+  setPovPrefsAction: pov,
+  getPovPrefsAction: pov,
+  listOwnPovAction: pov,
+  deleteOwnRatingAction: pov,
+  povAggregateAction: pov,
+  downloadPovReportAction: pov,
   rotateIntegrationTokenAction: integrations,
   createIntakeAddressAction: emailIntake,
   rotateIntakeAddressAction: emailIntake,
@@ -220,6 +242,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   grantSupportSessionAction: support,
   denySupportSessionAction: support,
   revokeSupportSessionAction: support,
+  dismissCoachmarkAction: help,
+  requestSupportSessionAction: help,
   requestExportAction: exports,
   listExportsAction: exports,
   listCourtWatchesAction: courtWatch,
@@ -269,6 +293,11 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   listHandoversAction: continuityActions,
   acknowledgeHandoverAction: continuityActions,
   recordViewAction: continuityActions,
+  createStatusLinkAction: statusLinkActions,
+  revokeStatusLinkAction: statusLinkActions,
+  extendStatusLinkAction: statusLinkActions,
+  listStatusLinksAction: statusLinkActions,
+  prefillStatusLinkAction: statusLinkActions,
   whatChangedAction: continuityActions,
   setCarryItemAction: briefSheet,
   setBriefNoteAction: briefSheet,
@@ -299,6 +328,28 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   undoSplitAction: proceedingsTab,
   upsertPersonAction: matterPeople,
   setRoleEdgeAction: matterPeople,
+  createContactAction: peopleContacts,
+  updateContactAction: peopleContacts,
+  undoContactChangeAction: peopleContacts,
+  linkContactToMatterAction: peopleContacts,
+  archiveContactAction: peopleContacts,
+  logEnquiryAction: enquiries,
+  updateEnquiryAction: enquiries,
+  runConflictCheckAction: enquiries,
+  acceptEnquiryAction: enquiries,
+  closeEnquiryAction: enquiries,
+  computeLimitationAction: limitation,
+  confirmLimitationAction: limitation,
+  createFeeAgreementAction: feeActions,
+  setFeeAgreementStatusAction: feeActions,
+  previewInvoiceAction: feeActions,
+  saveInvoiceDraftAction: feeActions,
+  discardInvoiceDraftAction: feeActions,
+  issueInvoiceAction: feeActions,
+  recordPaymentAction: feeActions,
+  issueCreditNoteAction: feeActions,
+  recordClientExpenseAction: feeActions,
+  recordClientReceiptAction: feeActions,
   enableChannelAction: inbox,
   discardCaptureAction: inbox,
   pinCaptureAction: inbox,
@@ -416,6 +467,10 @@ function snapshotA() {
       })
       .from(schema.organization),
     workspaceSettings: await tx.select().from(schema.workspaceSettings),
+    onboardingState: await tx
+      .select()
+      .from(schema.onboardingState)
+      .orderBy(schema.onboardingState.id),
     notifications: await tx
       .select({ id: schema.notification.id, readAt: schema.notification.readAt })
       .from(schema.notification)
@@ -455,6 +510,12 @@ function snapshotA() {
       })
       .from(schema.apiKey)
       .orderBy(schema.apiKey.id),
+    // A's client status links and their views (#88).
+    statusLinks: await tx.select().from(schema.statusLink).orderBy(schema.statusLink.id),
+    statusLinkViews: await tx
+      .select()
+      .from(schema.statusLinkAccess)
+      .orderBy(schema.statusLinkAccess.id),
     // A's intake addresses, allow-list and messages (#54).
     intakeAddresses: await tx.select().from(schema.intakeAddress).orderBy(schema.intakeAddress.id),
     intakeAllowlist: await tx
@@ -686,6 +747,30 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     // Eval reuse consent (#558): ub, owner of B, may not opt A in.
     setAllowEvalReuseAction: { workspaceId, allowEvalReuse: true },
+    // Proof-of-value (#86): ub, owner of B, may not rate, pulse, test or read A's measures.
+    ratePreparednessAction: {
+      workspaceId,
+      hearingId: t.a.rows.preparedness_rating?.hearingId,
+      rating: 3,
+    },
+    skipPreparednessAction: { workspaceId, hearingId: t.a.rows.preparedness_rating?.hearingId },
+    submitLoadPulseAction: { workspaceId, demand: 1, worry: 1, effort: 1 },
+    dismissLoadPulseAction: { workspaceId },
+    startContextTestAction: { workspaceId, matterId: t.a.rows.context_test_result?.matterId },
+    answerContextTestAction: {
+      workspaceId,
+      runId: t.a.rows.context_test_result?.id,
+      question: 'next_date',
+      correct: true,
+      atMs: 1,
+    },
+    finishContextTestAction: { workspaceId, runId: t.a.rows.context_test_result?.id },
+    setPovPrefsAction: { workspaceId, promptsEnabled: false },
+    getPovPrefsAction: { workspaceId },
+    listOwnPovAction: { workspaceId },
+    deleteOwnRatingAction: { workspaceId, ratingId: t.a.rows.preparedness_rating?.id },
+    povAggregateAction: { workspaceId },
+    downloadPovReportAction: { workspaceId },
     rotateIntegrationTokenAction: { workspaceId, kind: 'ics_feed' },
     // Email intake (#54): ub, owner of B, may not create, rotate or revoke an address, edit the
     // allow-list or enable the email channel on A.
@@ -722,6 +807,9 @@ function inputs(workspaceId: string): Record<string, unknown> {
     grantSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
     denySupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
     revokeSupportSessionAction: { workspaceId, sessionId: aSupportSessionId },
+    // Help (#94): ub, owner of B, may not dismiss a coachmark or ask for support in A.
+    dismissCoachmarkAction: { workspaceId, key: 'coachmark.probe' },
+    requestSupportSessionAction: { workspaceId, reason: 'Probe', minutes: 60 },
     // Lifecycle (#305): ub, owner of B, may not export, delete or cancel A's deletion.
     requestExportAction: { workspaceId },
     listExportsAction: { workspaceId },
@@ -814,6 +902,17 @@ function inputs(workspaceId: string): Record<string, unknown> {
     },
     discoveryProgressAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
     recordOnboardingStepAction: { workspaceId, step: 'confirm_grid_done' },
+    // The wizard (#92): ub may not complete a step, save a profile or advance onboarding in A's workspace.
+    completeOnboardingStepAction: {
+      workspaceId,
+      step: 'profile',
+      payload: {
+        enrolmentNumber: 'MS/1/2020',
+        barCouncil: 'karnataka',
+        practiceAreas: ['civil'],
+        languages: ['en'],
+      },
+    },
     getImportPlanAction: { workspaceId, batchId: t.a.rows.import_batch?.id },
     saveImportPlanEditsAction: {
       workspaceId,
@@ -1110,6 +1209,18 @@ function inputs(workspaceId: string): Record<string, unknown> {
       matterId: t.a.rows.handover_note?.matterId,
       since: '2026-01-01T00:00:00.000Z',
     },
+    // Client status links (#88): ub may not create, revoke, extend, list or pre-fill from A's matter, link or draft.
+    createStatusLinkAction: {
+      workspaceId,
+      matterId: t.a.rows.status_link?.matterId,
+      clientContactId: t.a.rows.status_link?.contactId,
+      headline: 'Cross-tenant probe',
+      note: 'Cross-tenant probe',
+    },
+    revokeStatusLinkAction: { workspaceId, linkId: t.a.rows.status_link?.id },
+    extendStatusLinkAction: { workspaceId, linkId: t.a.rows.status_link?.id, expiryDays: 30 },
+    listStatusLinksAction: { workspaceId, matterId: t.a.rows.status_link?.matterId },
+    prefillStatusLinkAction: { workspaceId, draftId: t.a.rows.status_link?.id },
     // Brief sheet (#61): ub may not mark, tick or note A's listing.
     markPreparedAction: { workspaceId, listingId: t.a.rows.listing?.listingId, prepared: true },
     setCarryItemAction: {
@@ -1206,9 +1317,127 @@ function inputs(workspaceId: string): Record<string, unknown> {
       personId: t.a.rows.person?.personId,
       kind: 'represents',
     },
+    // People screens (#848): A's client and contact
+    createContactAction: {
+      workspaceId,
+      personId: t.a.rows.client_contact?.personId,
+      phone: '+919876543299',
+    },
+    updateContactAction: {
+      workspaceId,
+      contactId: t.a.rows.client_contact?.id,
+      phone: '+919876543298',
+    },
+    undoContactChangeAction: { workspaceId, activityId: randomUUID() },
+    linkContactToMatterAction: {
+      workspaceId,
+      contactId: t.a.rows.client_contact?.id,
+      matterId: t.a.rows.matter?.matterId,
+    },
+    archiveContactAction: { workspaceId, contactId: t.a.rows.client_contact?.id },
+    // Enquiry log (#874): ub may not log into, change, check, accept or close A's enquiries.
+    logEnquiryAction: { workspaceId, enquirerName: 'Probe', summary: 'Probe', parties: [] },
+    updateEnquiryAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id, summary: 'Changed' },
+    runConflictCheckAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id },
+    acceptEnquiryAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id },
+    closeEnquiryAction: { workspaceId, enquiryId: t.a.rows.enquiry?.id },
+    // Limitation tracker (#941): ub may not compute against A's matter or confirm A's computation.
+    computeLimitationAction: {
+      workspaceId,
+      matterId: t.a.rows.limitation_computation?.matterId,
+      ruleCode: 'xt.probe',
+      startDate: '2026-04-01',
+    },
+    confirmLimitationAction: { workspaceId, computationId: t.a.rows.limitation_computation?.id },
+    // Fees and invoices (#871): ub may not agree fees on, or invoice, A's matter and client, nor
+    // activate, change, discard or issue A's agreement and invoice.
+    createFeeAgreementAction: {
+      workspaceId,
+      agreement: {
+        matterId: t.a.rows.fee_agreement?.matterId,
+        personId: t.a.rows.fee_agreement?.personId,
+        basis: 'fixed',
+        amountPaise: 100,
+        gstTreatment: 'forward_charge',
+        startsOn: '2026-04-01',
+      },
+    },
+    setFeeAgreementStatusAction: {
+      workspaceId,
+      agreementId: t.a.rows.fee_agreement?.id,
+      status: 'active',
+    },
+    previewInvoiceAction: feeInvoiceProbe(workspaceId),
+    saveInvoiceDraftAction: feeInvoiceProbe(workspaceId),
+    discardInvoiceDraftAction: { workspaceId, invoiceId: t.a.rows.fee_invoice?.invoiceId },
+    issueInvoiceAction: {
+      workspaceId,
+      invoiceId: t.a.rows.fee_invoice?.invoiceId,
+      supplier: { name: 'Probe', stateCode: '29' },
+    },
+    // Payments, credit notes and ledger entries (#963): A's invoice, client and matter.
+    recordPaymentAction: {
+      workspaceId,
+      payment: {
+        invoiceId: t.a.rows.fee_invoice?.invoiceId,
+        amountPaise: 100,
+        method: 'upi',
+        receivedOn: '2026-11-03',
+      },
+    },
+    issueCreditNoteAction: {
+      workspaceId,
+      creditNote: {
+        invoiceId: t.a.rows.fee_invoice?.invoiceId,
+        amountPaise: 100,
+        reason: 'Probe',
+        occurredOn: '2026-11-03',
+      },
+    },
+    recordClientExpenseAction: {
+      workspaceId,
+      expense: {
+        personId: t.a.rows.fee_invoice?.personId,
+        matterId: t.a.rows.fee_invoice?.matterId,
+        amountPaise: 100,
+        description: 'Probe',
+        occurredOn: '2026-11-03',
+      },
+    },
+    recordClientReceiptAction: {
+      workspaceId,
+      receipt: {
+        personId: t.a.rows.fee_invoice?.personId,
+        matterId: t.a.rows.fee_invoice?.matterId,
+        amountPaise: 100,
+        receivedOn: '2026-11-03',
+      },
+    },
     // Proceedings tab (#392): ub may not add to, change, link, move, merge or split A's matters and
     // proceedings, nor undo a merge or split naming them.
     ...proceedingsInputs(workspaceId),
+  };
+}
+
+/** A draft invoice for A's matter and client, as `previewInvoiceAction` and `saveInvoiceDraftAction` take it. */
+function feeInvoiceProbe(workspaceId: string) {
+  return {
+    workspaceId,
+    invoice: {
+      matterId: t.a.rows.fee_invoice?.matterId,
+      personId: t.a.rows.fee_invoice?.personId,
+      placeOfSupplyStateCode: '29',
+      lines: [
+        {
+          description: 'Probe',
+          quantity: 1,
+          unitPricePaise: 100,
+          amountPaise: 100,
+          gstTreatment: 'forward_charge',
+        },
+      ],
+    },
+    supplier: { name: 'Probe', stateCode: '29' },
   };
 }
 
@@ -1752,6 +1981,29 @@ describe('cross-tenant server actions', () => {
       // People tab (#393): A's matter and person
       'upsertPersonAction',
       'setRoleEdgeAction',
+      // People screens (#848): A's contact, client and matter
+      'createContactAction',
+      'updateContactAction',
+      'linkContactToMatterAction',
+      'archiveContactAction',
+      // Enquiry log (#874): A's enquiry
+      'updateEnquiryAction',
+      'runConflictCheckAction',
+      'acceptEnquiryAction',
+      'closeEnquiryAction',
+      // Limitation tracker (#941): A's matter and computation
+      'computeLimitationAction',
+      'confirmLimitationAction',
+      // Fees and invoices (#871): A's agreement, invoice, matter and client
+      'createFeeAgreementAction',
+      'setFeeAgreementStatusAction',
+      'saveInvoiceDraftAction',
+      'discardInvoiceDraftAction',
+      'issueInvoiceAction',
+      'recordPaymentAction',
+      'issueCreditNoteAction',
+      'recordClientExpenseAction',
+      'recordClientReceiptAction',
     ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createEnv, EnvValidationError, resetEnvCache, serverEnv } from '../index.ts';
-import { DEV_BETTER_AUTH_SECRET, DEV_KEK_BASE64 } from '../schema.ts';
+import { DEV_BETTER_AUTH_SECRET, DEV_KEK_BASE64, DEV_STATUS_SIGNING_KEY } from '../schema.ts';
 import { envError, productionEnv } from './helpers.ts';
 
 afterEach(() => {
@@ -90,6 +90,18 @@ describe('production', () => {
       'BETTER_AUTH_SECRET',
       'KEK_BASE64',
     ]);
+  });
+
+  it('defaults STATUS_SIGNING_KEY in development and rejects the placeholder in production (#769)', () => {
+    expect(createEnv({ NODE_ENV: 'development' }).STATUS_SIGNING_KEY.reveal()).toBe(
+      DEV_STATUS_SIGNING_KEY,
+    );
+    expect(
+      envError({ ...productionEnv, STATUS_SIGNING_KEY: DEV_STATUS_SIGNING_KEY }).message,
+    ).toContain('STATUS_SIGNING_KEY: must not use the development placeholder');
+    expect(envError({ ...productionEnv, STATUS_SIGNING_KEY: 'short' }).message).toContain(
+      'STATUS_SIGNING_KEY: must be at least 32 characters',
+    );
   });
 
   it('rejects a BETTER_AUTH_SECRET shorter than 32 characters', () => {
@@ -246,5 +258,41 @@ describe('SKIP_ENV_VALIDATION', () => {
     expect(envError({ ...invalid, SKIP_ENV_VALIDATION: 'true' }).message).toContain(
       'SKIP_ENV_VALIDATION',
     );
+  });
+});
+
+describe('database pool sizing (#805)', () => {
+  it('defaults to 10 connections, a dedicated auth pool of 3 and a 5 s connect timeout', () => {
+    const env = createEnv({ NODE_ENV: 'test' });
+
+    expect(env.DB_POOL_MAX).toBe(10);
+    expect(env.DB_AUTH_POOL_MAX).toBe(3);
+    expect(env.DB_CONNECT_TIMEOUT_SECONDS).toBe(5);
+  });
+
+  it('reads overrides, coerced from strings', () => {
+    const env = createEnv({
+      NODE_ENV: 'test',
+      DB_POOL_MAX: '20',
+      DB_AUTH_POOL_MAX: '0',
+      DB_CONNECT_TIMEOUT_SECONDS: '3',
+    });
+
+    expect(env.DB_POOL_MAX).toBe(20);
+    expect(env.DB_AUTH_POOL_MAX).toBe(0);
+    expect(env.DB_CONNECT_TIMEOUT_SECONDS).toBe(3);
+  });
+
+  it.each([
+    ['DB_POOL_MAX', '0'],
+    ['DB_POOL_MAX', '201'],
+    ['DB_POOL_MAX', 'many'],
+    ['DB_AUTH_POOL_MAX', '-1'],
+    ['DB_AUTH_POOL_MAX', '51'],
+    ['DB_CONNECT_TIMEOUT_SECONDS', '0'],
+    ['DB_CONNECT_TIMEOUT_SECONDS', '121'],
+    ['DB_CONNECT_TIMEOUT_SECONDS', '2.5'],
+  ])('rejects %s=%s', (key, value) => {
+    expect(envError({ NODE_ENV: 'test', [key]: value }).message).toContain(key);
   });
 });

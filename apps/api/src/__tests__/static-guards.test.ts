@@ -43,6 +43,7 @@ describe('static guards', () => {
         'routes/webhooks/razorpay.ts',
         'routes/inbound-email.ts',
         'routes/inbound-whatsapp.ts',
+        'routes/csp-report.ts',
       ]),
     );
   });
@@ -52,6 +53,8 @@ describe('static guards', () => {
     (_name, file) => {
       const text = readFileSync(file, 'utf8');
       for (const pattern of SQL_IN_ROUTES) expect(text, String(pattern)).not.toMatch(pattern);
+      // The CSP report route (#104) reads no data: it logs and counts, so it imports no core domain.
+      if (_name === 'routes/csp-report.ts') return;
       expect(text).toMatch(
         /from '@causedeck\/core\/(workspaces|billing|email-intake|whatsapp-link|court-day|webhooks)'|from '\.\/(me|workspaces)\.ts'/,
       );

@@ -1,0 +1,60 @@
+# Per-IP, per-route rate limits (#98) with the pinned mholt/caddy-ratelimit module (Dockerfile).
+# Over the limit the module answers 429 with a Retry-After header. Keys use client_ip, which honours
+# the trusted_proxies setting in the Caddyfile.
+(rate_limits) {
+	# Sign-in and magic link: at most 10 requests per minute per IP.
+	@signin path /api/auth/sign-in /api/auth/sign-in/* /api/auth/magic-link/*
+	rate_limit @signin {
+		zone signin {
+			key {client_ip}
+			events 10
+			window 1m
+		}
+	}
+
+	# Webhooks are allow-listed by path and get a roomy burst (providers deliver in bursts).
+	@webhooks path /v1/webhooks/* /v1/inbound/* /api/captures/whatsapp
+	rate_limit @webhooks {
+		zone webhooks {
+			key {client_ip}
+			events 1200
+			window 1m
+		}
+	}
+
+	# Upload endpoints: capped by rate here and by size in body_limits.
+	@uploads path /api/uploads /api/uploads/* /api/captures /api/captures/*
+	rate_limit @uploads {
+		zone uploads {
+			key {client_ip}
+			events 60
+			window 1m
+		}
+	}
+
+	# Everything else: a generous per-IP ceiling against floods.
+	@other not path /api/auth/sign-in /api/auth/sign-in/* /api/auth/magic-link/* /v1/webhooks/* /v1/inbound/* /api/captures /api/captures/* /api/uploads /api/uploads/*
+	rate_limit @other {
+		zone general {
+			key {client_ip}
+			events 600
+			window 1m
+		}
+	}
+}
+
+# Request body size per route: uploads get the configured cap, webhooks 5 MB, the rest 1 MB.
+(body_limits) {
+	@uploadbody path /api/uploads /api/uploads/* /api/captures /api/captures/*
+	request_body @uploadbody {
+		max_size {$UPLOAD_MAX_BODY:25MB}
+	}
+	@webhookbody path /v1/webhooks/* /v1/inbound/* /api/captures/whatsapp
+	request_body @webhookbody {
+		max_size 5MB
+	}
+	@smallbody not path /api/uploads /api/uploads/* /api/captures /api/captures/* /v1/webhooks/* /v1/inbound/*
+	request_body @smallbody {
+		max_size 1MB
+	}
+}

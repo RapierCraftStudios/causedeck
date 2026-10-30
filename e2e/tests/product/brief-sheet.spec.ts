@@ -43,9 +43,13 @@ test.describe('brief sheet', () => {
       .getByRole('button', { name: /mark.*prepared/i })
       .first()
       .click();
-    await expect(page.locator('[data-prepared]')).toContainText(/prepared by|by/i);
+    await expect(page.locator('[data-prepared]').filter({ visible: true })).toContainText(
+      /prepared by|by/i,
+    );
     await page.reload();
-    await expect(page.locator('[data-prepared] [aria-pressed="true"]')).toBeVisible();
+    await expect(
+      page.locator('[data-prepared] [aria-pressed="true"]').filter({ visible: true }),
+    ).toBeVisible();
   });
 
   test('carry items can be added, ticked and removed', async ({ page, asUser }) => {

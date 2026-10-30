@@ -1,0 +1,181 @@
+# Alert rules (#102). Severity routes in alertmanager.yml: page (P0), ticket (P1/P2 follow-up),
+# info. `priority` is P0 or P1 and selects the on-call route. Metric names:
+#   http_server_duration_milliseconds_*   OTel HTTP server histogram (packages/observability)
+#   causedeck_queue_lag_seconds, causedeck_queue_dead_letter_total   worker queues
+#   walg_last_archive_age_seconds, walg_last_backup_age_seconds, walg_last_backup_ok,
+#   restore_drill_last_success_timestamp, restore_drill_rto_seconds,
+#   restore_drill_last_ok                                             backups (#101)
+#   causedeck_db_pool_wait_seconds, causedeck_db_idle_in_transaction_max_seconds,
+#   causedeck_db_pool_probe_errors_total                               app DB pools (#805)
+#   adapter_parse_success_ratio, adapter_last_success_timestamp        court adapters
+groups:
+  - name: availability
+    rules:
+      - alert: ServiceDown
+        expr: up{job=~"otel-collector|cadvisor|node|loki|alertmanager"} == 0
+        for: 5m
+        labels: { severity: page, priority: P0 }
+        annotations:
+          summary: '{{ $labels.job }} has been down for 5 minutes'
+      - alert: ReadyzFailing
+        expr: probe_success{job="blackbox-readyz"} == 0
+        for: 2m
+        labels: { severity: page, priority: P0 }
+        annotations:
+          summary: '{{ $labels.instance }} is failing /readyz'
+      - alert: PublicEndpointDown
+        expr: probe_success{job="blackbox-public"} == 0
+        for: 3m
+        labels: { severity: page, priority: P0 }
+        annotations:
+          summary: '{{ $labels.instance }} is unreachable from the probe'
+      - alert: CertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry{job="blackbox-public"} - time() < 14 * 86400
+        for: 1h
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Certificate for {{ $labels.instance }} expires in under 14 days'
+  - name: performance
+    rules:
+      - alert: ApiLatencyP95High
+        expr: >-
+          histogram_quantile(0.95, sum by (le) (rate(http_server_duration_milliseconds_bucket[5m]))) > 400
+        for: 10m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'p95 request latency above 400 ms for 10 minutes'
+      - alert: ErrorRateSpike
+        expr: >-
+          sum(rate(http_server_duration_milliseconds_count{http_response_status_code=~"5.."}[5m]))
+          / sum(rate(http_server_duration_milliseconds_count[5m])) > 0.05
+        for: 5m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: '5xx responses above 5% of requests'
+      - alert: DatabaseCpuHigh
+        expr: >-
+          sum(rate(container_cpu_usage_seconds_total{name=~".*postgres.*"}[5m]))
+          / (sum(container_spec_cpu_quota{name=~".*postgres.*"}) / sum(container_spec_cpu_period{name=~".*postgres.*"}))
+          > 0.6
+        for: 15m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Postgres CPU above 60% of its limit for 15 minutes'
+  - name: capacity
+    rules:
+      - alert: DiskUsageHigh
+        expr: >-
+          1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) > 0.8
+        for: 10m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Disk {{ $labels.mountpoint }} above 80%'
+  - name: queues
+    rules:
+      - alert: QueueLagHigh
+        expr: max by (queue) (causedeck_queue_lag_seconds) > 300
+        for: 10m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Queue {{ $labels.queue }} lag above 5 minutes'
+      - alert: DeadLetterGrowth
+        expr: sum by (queue) (increase(causedeck_queue_dead_letter_total[15m])) > 5
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Dead-letter queue {{ $labels.queue }} grew by more than 5 in 15 minutes'
+  - name: database-pools
+    rules:
+      # The probe queues behind busy connections, so its time is the pool wait plus one round trip.
+      - alert: DbPoolWaitHigh
+        expr: max by (pool) (causedeck_db_pool_wait_seconds) > 1
+        for: 3m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Waiting over 1 s for a database connection (pool {{ $labels.pool }})'
+      - alert: DbIdleInTransactionLong
+        expr: max by (pool) (causedeck_db_idle_in_transaction_max_seconds) > 5
+        for: 2m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'A connection (pool {{ $labels.pool }}) has been idle in a transaction for over 5 s'
+      - alert: DbConnectFailures
+        expr: sum by (pool) (increase(causedeck_db_pool_probe_errors_total[5m])) > 0
+        for: 1m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'Cannot get a database connection (pool {{ $labels.pool }}): connect timeout or database down'
+  - name: backups
+    # system.backup.health runs every minute and the scrape is 30s; `for` keeps the end-to-end
+    # delay (job + scrape + for + group_wait 10s) under the 10 minutes R9 allows. A value of -1 means
+    # the report is missing or unreadable and is treated as stale or unknown, never as healthy.
+    rules:
+      - alert: BackupWalStale
+        expr: max(walg_last_archive_age_seconds) < 0 or max(walg_last_archive_age_seconds) > 300
+        for: 2m
+        labels: { severity: page, priority: P0 }
+        annotations:
+          summary: 'Newest archived WAL segment is older than 5 minutes'
+      - alert: BackupBaseStale
+        expr: max(walg_last_backup_age_seconds) < 0 or max(walg_last_backup_age_seconds) > 26 * 3600
+        for: 2m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'Newest base backup is older than 26 hours'
+      - alert: BackupFailed
+        expr: min(walg_last_backup_ok) == 0
+        for: 2m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'The last base backup run failed'
+      - alert: RestoreDrillFailed
+        expr: min(restore_drill_last_ok) == 0
+        for: 2m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'The last automated restore drill failed'
+      - alert: RestoreDrillRtoBreach
+        expr: max(restore_drill_rto_seconds) > 14400
+        for: 2m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'The last restore drill took longer than the 4 hour RTO'
+      - alert: RestoreDrillStale
+        expr: time() - min(restore_drill_last_success_timestamp) > 8 * 86400
+        for: 2m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'No successful restore drill in the last 8 days'
+      - alert: BackupMetricsAbsent
+        expr: absent(walg_last_archive_age_seconds)
+        for: 5m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'system.backup.health is not reporting backup metrics'
+  - name: time
+    rules:
+      # CERT-In requires accurate timestamps: the host clock must stay within 1 s of NTP.
+      - alert: ClockDriftHigh
+        expr: abs(node_timex_offset_seconds) > 1
+        for: 2m
+        labels: { severity: page, priority: P1 }
+        annotations:
+          summary: 'Host clock offset above 1 s'
+      - alert: NtpNotSynchronised
+        expr: node_timex_sync_status == 0
+        for: 15m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Host clock is not NTP-synchronised'
+  - name: adapters
+    rules:
+      - alert: AdapterParseRatioLow
+        expr: adapter_parse_success_ratio < 0.9
+        for: 30m
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Adapter {{ $labels.adapter }} parse success below 90%'
+      - alert: AdapterStale
+        expr: time() - adapter_last_success_timestamp > 6 * 3600
+        labels: { severity: ticket, priority: P1 }
+        annotations:
+          summary: 'Adapter {{ $labels.adapter }} has not succeeded for 6 hours'

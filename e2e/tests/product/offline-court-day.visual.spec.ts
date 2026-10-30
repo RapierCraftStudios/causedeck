@@ -37,7 +37,7 @@ test.describe('offline court day visual', { tag: '@visual' }, () => {
     await page.goto(`/w/${SHELL_WORKSPACE}/today`);
     await expectOfflineBoard(page);
     await page.goto(await briefHref(page, COURT_DAY.sharedTitle));
-    await expect(page.locator('[data-brief-sheet]')).toBeVisible();
+    await expect(page.locator('[data-brief-sheet]').filter({ visible: true })).toBeVisible();
     await expect(page).toHaveScreenshot('offline-brief.png', { fullPage: true });
   });
 });

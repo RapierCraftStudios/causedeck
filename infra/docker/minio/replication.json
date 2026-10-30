@@ -1,0 +1,9 @@
+{
+  "buckets": ["causedeck-wal", "causedeck-ops"],
+  "includeAppBucket": true,
+  "versioning": true,
+  "objectLock": { "mode": "GOVERNANCE", "retentionDays": 30 },
+  "propagateDeletes": false,
+  "maxLagHours": 24,
+  "canaryPrefix": "replication-canary/"
+}

@@ -12,7 +12,13 @@ import { createSecurityEventRecorder } from '@causedeck/core/audit';
 import { inboundProviderFromProcess } from '@causedeck/core/email-intake';
 import { whatsappInboundProviderFromProcess } from '@causedeck/core/whatsapp-link';
 import { closeProducer } from '@causedeck/core/jobs';
-import { closeAppDb, db, startAppFlagListener } from '@causedeck/core/runtime';
+import {
+  authDb,
+  closeAppDb,
+  db,
+  startAppFlagListener,
+  startDbPoolMetrics,
+} from '@causedeck/core/runtime';
 import {
   createLogger,
   initTelemetry,
@@ -119,9 +125,12 @@ export function readyChecksFromEnv(env: StorageEnv): Record<string, HealthCheck>
 async function main(): Promise<void> {
   const env = serverEnv();
   const telemetry = initTelemetry({ service: 'api' });
+  await startDbPoolMetrics();
   const logger = createLogger({ service: 'api' });
   const auth = createAuth({
     db,
+    // Session lookups get their own small pool (#805).
+    sessionDb: authDb,
     env,
     mailer: createMailer(env, logger),
     logger,

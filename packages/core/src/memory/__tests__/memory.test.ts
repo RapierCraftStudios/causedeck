@@ -120,7 +120,15 @@ describe('R1: confirm before save', () => {
       /\.insert\((?:schema\.)?memoryItem\)|insert\s+into\s+memory_item\b/i.test(text),
     );
     // `completeMemoryReview` (#73) writes the review date, a bookkeeping row that is never a card.
-    expect(writers.map((f) => f.file)).toEqual(['memory/confirm.ts', 'memory/review.ts']);
+    // `seedDemoMemory` (#985) writes fictional cards into the seeded demo workspaces only (it refuses
+    // any organization without is_demo).
+    expect(writers.map((f) => f.file)).toEqual([
+      'demo/content.ts',
+      'memory/confirm.ts',
+      'memory/review.ts',
+    ]);
+    const demo = writers.find((f) => f.file === 'demo/content.ts');
+    expect(demo?.text).toMatch(/is not a demo workspace/);
     const confirm = writers.find((f) => f.file === 'memory/confirm.ts');
     expect((confirm?.text.match(/\.insert\(memoryItem\)/g) ?? []).length).toBe(2);
   });

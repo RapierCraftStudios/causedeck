@@ -112,6 +112,36 @@ describe('applyMaskRequest', () => {
     });
   });
 
+  it("drops the judgment's segments and marks it for re-segmentation (#893)", async () => {
+    await withTestDb(async (tx) => {
+      const { judgmentId, requestId } = await seed(tx as never);
+      await tx
+        .update(schema.judgment)
+        .set({ segmentVersion: 1 })
+        .where(eq(schema.judgment.id, judgmentId));
+      await tx.insert(schema.judgmentSegment).values({
+        judgmentId,
+        ordinal: 1,
+        role: 'facts',
+        pageFrom: 1,
+        pageTo: 1,
+        text: 'Ramesh Kumar met Neha Sharma at the market.',
+        court: 'MHC',
+        courtLevel: 'high_court',
+        judgmentYear: 2026,
+      });
+      await applyMaskRequest(tx, { userId: opsId }, requestId);
+
+      const left = await tx
+        .select({ id: schema.judgmentSegment.id })
+        .from(schema.judgmentSegment)
+        .where(eq(schema.judgmentSegment.judgmentId, judgmentId));
+      expect(left).toEqual([]);
+      const [j] = await tx.select().from(schema.judgment).where(eq(schema.judgment.id, judgmentId));
+      expect(j?.segmentVersion).toBe(0);
+    });
+  });
+
   it('refuses non-ops staff and a request already handled', async () => {
     await withTestDb(async (tx) => {
       const { requestId } = await seed(tx as never);

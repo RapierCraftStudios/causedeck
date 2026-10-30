@@ -8,18 +8,21 @@ import { sql } from 'drizzle-orm';
 import {
   bigint,
   boolean,
+  check,
+  customType,
   date,
   index,
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { embedding } from '../vector.ts';
+import { embedding, halfvecEmbedding } from '../vector.ts';
 
 /** One page of the stored text layer; `pageNo` is 1-based and is the anchor a citation points at. */
 export interface JudgmentPageText {
@@ -79,6 +82,10 @@ export const judgment = pgTable(
     sensitiveCategory: text('sensitive_category'),
     /** Why the title is masked: `auto:<category>` or `mask_request:<id>`. */
     maskReason: text('mask_reason'),
+    /** The `SEGMENT_VERSION` of the segments built from `redacted_text` at `redaction_version`; 0 means not yet segmented (#893). */
+    segmentVersion: integer('segment_version').notNull().default(0),
+    /** The `redaction_version` the current segments were built from. */
+    segmentedRedactionVersion: integer('segmented_redaction_version').notNull().default(0),
     /** Retrieval embedding; null until an ADR picks the model and a job fills it. */
     embedding: embedding(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -207,3 +214,58 @@ export const corpusOcrCall = pgTable('corpus_ocr_call', {
   latencyMs: integer('latency_ms'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** The rhetorical role of a segment (ADR 0051 §Segments). */
+export const JUDGMENT_SEGMENT_ROLES = [
+  'header',
+  'facts',
+  'issues',
+  'arguments',
+  'reasoning',
+  'decision',
+  'other',
+] as const;
+export type JudgmentSegmentRole = (typeof JUDGMENT_SEGMENT_ROLES)[number];
+
+const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' });
+
+/**
+ * A passage of the redacted text, the unit of retrieval (#893, ADR 0051). Global table, no RLS: the
+ * app role may SELECT, and the segment job its writes. The migration range-partitions it by
+ * `judgment_year` in decades (drizzle does not model partitions), so the primary key carries the year,
+ * and sets lz4 compression on `text`.
+ */
+export const judgmentSegment = pgTable(
+  'judgment_segment',
+  {
+    id: uuid('id').defaultRandom().notNull(),
+    judgmentId: uuid('judgment_id')
+      .notNull()
+      .references(() => judgment.id, { onDelete: 'cascade' }),
+    ordinal: integer('ordinal').notNull(),
+    role: text('role').$type<JudgmentSegmentRole>().notNull(),
+    pageFrom: integer('page_from').notNull(),
+    pageTo: integer('page_to').notNull(),
+    /** The redacted text (D-053); never derived from `judgment.page_text`. */
+    text: text('text').notNull(),
+    /** `judgment.court`, `court_level` and year, denormalised for filtering and partitioning. */
+    court: text('court').notNull(),
+    courtLevel: text('court_level').notNull(),
+    judgmentYear: integer('judgment_year').notNull(),
+    searchTsv: tsvector('search_tsv').generatedAlwaysAs(
+      sql`setweight(to_tsvector('english', "text"), 'A') || to_tsvector('simple', "text")`,
+    ),
+    /** Filled by the embedding job; null until then. */
+    embedding: halfvecEmbedding(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.id, t.judgmentYear] }),
+    uniqueIndex('judgment_segment_ordinal_uq').on(t.judgmentId, t.ordinal, t.judgmentYear),
+    index('judgment_segment_search_tsv_idx').using('gin', t.searchTsv),
+    check(
+      'judgment_segment_role_check',
+      sql`${t.role} in ('header','facts','issues','arguments','reasoning','decision','other')`,
+    ),
+    check('judgment_segment_pages_check', sql`${t.pageFrom} >= 1 and ${t.pageTo} >= ${t.pageFrom}`),
+  ],
+);

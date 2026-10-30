@@ -5,10 +5,6 @@
 
 // Shared by the leak detector and the corpus redaction pipeline (#892).
 import {
-  AADHAAR_PLACEHOLDER,
-  ADDRESS_CUE_RE,
-  BANK_ACCOUNT_RE,
-  VEHICLE_NUMBER_RE,
   AADHAAR_RE,
   EMAIL_PLACEHOLDER,
   EMAIL_RE,
@@ -17,20 +13,6 @@ import {
   PHONE_PLACEHOLDER,
   PHONE_RE,
 } from './pii-patterns.ts';
-
-export {
-  AADHAAR_PLACEHOLDER,
-  ADDRESS_CUE_RE,
-  BANK_ACCOUNT_RE,
-  VEHICLE_NUMBER_RE,
-  AADHAAR_RE,
-  EMAIL_PLACEHOLDER,
-  EMAIL_RE,
-  PAN_PLACEHOLDER,
-  PAN_RE,
-  PHONE_PLACEHOLDER,
-  PHONE_RE,
-};
 
 export type LeakKind = 'name' | 'email' | 'phone' | 'aadhaar' | 'pan';
 

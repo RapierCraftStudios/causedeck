@@ -1,7 +1,7 @@
 // Legal NER by role (#892, D-053): finds the persons of a judgment (parties, witnesses, relatives and
 // other persons) with rules over the cause title and the wording of the text, and the names that
 // stay (judges and advocates). Pure and deterministic; low-confidence spans go to the gateway hook.
-import { anyOf, escapeRe, HONORIFIC, NAME, PARTY_ROLES, trimName, tokensOf, ci } from './names.ts';
+import { anyOf, HONORIFIC, NAME, PARTY_ROLES, trimName, tokensOf, ci } from './names.ts';
 
 export type PersonRole =
   | 'petitioner'
@@ -337,5 +337,3 @@ function assignLabels(entities: Entity[]): void {
     e.label = n === 1 ? label : `${label} ${String(n)}`;
   }
 }
-
-export { escapeRe };

@@ -141,8 +141,17 @@ test.describe('hearing outcome', () => {
     const { hearingId } = await seedHearing(db.name, { proposals: false });
     await openOutcome(page, asUser, hearingId);
     await context.setOffline(true);
+    // Let the page observe the offline event: the switch re-renders the form and detaches the
+    // buttons mid-click otherwise (#995).
+    await page.waitForFunction(() => !navigator.onLine);
     await page.getByLabel('What happened').fill('Adjourned');
-    await page.getByRole('button', { name: 'No next date / disposed' }).click();
+    // A re-render can still land after the event; retry the pick until the choice has stuck.
+    await expect(async () => {
+      await page.getByRole('button', { name: 'No next date / disposed' }).click({ timeout: 2000 });
+      await expect(page.getByRole('button', { name: 'Confirm outcome' })).toBeEnabled({
+        timeout: 1000,
+      });
+    }).toPass({ timeout: 15_000 });
     await page.getByRole('button', { name: 'Confirm outcome' }).click();
     await expect(page.getByText('Saved on this device').first()).toBeVisible();
   });

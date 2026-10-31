@@ -20,6 +20,7 @@ import {
   findAllowedType,
   finalizeUpload,
   isCompatible,
+  storedMime,
   MAX_OBJECT_BYTES,
   sniffMime,
 } from '../index.ts';
@@ -47,12 +48,14 @@ const FILES: Record<keyof typeof SAMPLES, { kind: string; filename: string; mime
   ogg: { kind: 'audio', filename: 'PTT-2026.opus', mime: 'audio/ogg' },
   webm: { kind: 'audio', filename: 'recording.webm', mime: 'audio/webm' },
   zip: { kind: 'zip', filename: 'WhatsApp Chat.zip', mime: 'application/zip' },
+  eml: { kind: 'document', filename: 'mail.eml', mime: 'message/rfc822' },
   html: { kind: 'document', filename: 'page.html', mime: 'text/html' },
+  svg: { kind: 'image', filename: 'logo.svg', mime: 'image/svg+xml' },
   exe: { kind: 'document', filename: 'setup.exe', mime: 'application/x-msdownload' },
 };
 
 const ALLOWED_SAMPLES = (Object.keys(FILES) as (keyof typeof SAMPLES)[]).filter(
-  (name) => name !== 'html' && name !== 'exe',
+  (name) => name !== 'svg' && name !== 'exe',
 );
 
 describe('upload allow-list and sniffing', () => {
@@ -72,7 +75,9 @@ describe('upload allow-list and sniffing', () => {
       [
         'csv',
         'docx',
+        'eml',
         'heic',
+        'html',
         'ics',
         'jpeg',
         'm4a',
@@ -95,7 +100,10 @@ describe('upload allow-list and sniffing', () => {
     ['brief.pdf.exe', 'application/pdf', 'document'],
     ['brief.exe.pdf', 'application/pdf', 'document'],
     ['run.sh', 'text/plain', 'document'],
-    ['index.html', 'text/html', 'document'],
+    ['index.html', 'application/pdf', 'document'],
+    ['page.html.exe', 'text/html', 'document'],
+    ['page.svg.html', 'text/html', 'document'],
+    ['mail.eml', 'text/html', 'document'],
     ['notes.txt', 'text/html', 'document'],
     ['logo.svg', 'image/svg+xml', 'image'],
     ['app.js', 'text/javascript', 'document'],
@@ -133,6 +141,30 @@ describe('upload allow-list and sniffing', () => {
       expect(await sniffMime(new Uint8Array(Buffer.from(text)))).toBe('text/html');
     }
     expect(await sniffMime(SAMPLES.html)).toBe('text/html');
+  });
+
+  it('sniffs a mail header block as message/rfc822 and keeps plain text plain', async () => {
+    expect(await sniffMime(SAMPLES.eml)).toBe('message/rfc822');
+    expect(await sniffMime(SAMPLES.txt)).toBe('text/plain');
+    const note = new TextEncoder().encode('Subject to the court order, we will file.\n');
+    expect(await sniffMime(note)).toBe('text/plain');
+  });
+
+  it('accepts HTML only as the inert html entry, stored as text/plain', async () => {
+    const html = findAllowedType('document', 'page.htm', 'text/html');
+    expect(html).toMatchObject({ name: 'html', mime: 'text/plain' });
+    if (html === null) return;
+    expect(storedMime(html, 'text/html')).toBe('text/plain');
+    expect(isCompatible(html, await sniffMime(SAMPLES.html))).toBe(true);
+    // Markup-looking text is stored inert as text/plain; non-text content and denied types are not.
+    expect(isCompatible(html, await sniffMime(SAMPLES.png))).toBe(false);
+    expect(isCompatible(html, await sniffMime(SAMPLES.txt))).toBe(false);
+    expect(isCompatible(html, 'image/svg+xml')).toBe(false);
+    expect(isCompatible(html, 'application/xml')).toBe(false);
+    expect(findAllowedType('document', 'page.html', 'image/svg+xml')).toBeNull();
+    const txt = findAllowedType('document', 'a.txt', 'text/plain');
+    if (txt === null) throw new Error('allow-list entry missing');
+    expect(isCompatible(txt, await sniffMime(SAMPLES.html))).toBe(false);
   });
 
   it('rejects HTML content for a pdf, an executable for a zip, and a zip for a docx', async () => {
@@ -219,7 +251,7 @@ describe('createUploadIntent and finalizeUpload', () => {
       expect(await errorOf(createUploadIntent(ctx, { ...FILES.exe, size: 10 }))).toMatchObject({
         code: 'VALIDATION',
       });
-      expect(await errorOf(createUploadIntent(ctx, { ...FILES.html, size: 10 }))).toMatchObject({
+      expect(await errorOf(createUploadIntent(ctx, { ...FILES.svg, size: 10 }))).toMatchObject({
         code: 'VALIDATION',
       });
       expect(

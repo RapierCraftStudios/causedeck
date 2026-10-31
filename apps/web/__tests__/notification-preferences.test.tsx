@@ -115,6 +115,7 @@ function defaults(): PreferenceView[] {
     'reminder.evening': ['in_app', 'email', 'push'],
     'reminder.morning': ['in_app', 'email', 'push'],
     'reminder.outcome_missing': ['in_app', 'email', 'push'],
+    'onboarding.nudge': ['in_app'],
     'system.notice': ['in_app'],
   };
   return ALL_CATEGORY_KEYS.flatMap((category) =>

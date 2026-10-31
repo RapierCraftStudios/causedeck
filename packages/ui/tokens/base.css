@@ -13,15 +13,20 @@ body {
   color: var(--ink);
 }
 
-/* Focus is always visible for keyboard users: 2 px ring in --ring, offset 2 px. Never remove it. */
-:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
+/* Focus is always visible for keyboard users: 2 px ring in --ring, offset 2 px. Never remove it.
+ * In `@layer base` (Tailwind v4 orders theme, base, components, utilities; every app and Storybook
+ * import 'tailwindcss' first) so component utilities win, e.g. the inset `-outline-offset-2` on
+ * TabsTrigger. Unlayered rules would beat every utility. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 
-/* Pointer focus stays quiet; keyboard focus still gets the ring above. */
-:focus:not(:focus-visible) {
-  outline: none;
+  /* Pointer focus stays quiet; keyboard focus still gets the ring above. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
 }
 
 ::selection {

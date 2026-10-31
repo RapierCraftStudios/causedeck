@@ -19,7 +19,15 @@ export interface ScalePlan {
   /** Matters and listings the demo workspaces carry per seat group (40 matters per workspace). */
   matters: number;
   listings: number;
+  /** Open proposals and needs-you captures seeded into each demo workspace's inbox (#489). */
+  inboxItems: number;
 }
+
+/** The inbox budget is measured with this many items per workspace (#48: p95 under 300 ms). */
+export const INBOX_ITEMS = 200;
+
+/** The demo workspaces whose inbox carries `INBOX_ITEMS` items: the ones the k6 users sign in to. */
+export const INBOX_WORKSPACE_SLUGS = ['demo-chennai-solo', 'demo-bengaluru-chamber'] as const;
 
 /** Seats per workspace: a solo advocate has 2 (advocate, clerk), a chamber 3. About 2 in 3 are solo. */
 export function planScale(seats: number): ScalePlan {
@@ -45,6 +53,7 @@ export function planScale(seats: number): ScalePlan {
     chambers,
     matters: workspaces * 40,
     listings: workspaces * 40 * 3,
+    inboxItems: INBOX_ITEMS,
   };
 }
 
@@ -55,6 +64,35 @@ export function scaleSlug(n: number): string {
 
 export function scaleWorkspaceId(n: number): string {
   return `00000000-0000-4000-9${n.toString(16).padStart(3, '0')}-000000000000`;
+}
+
+/** Rows of one workspace's inbox: a proposal and an unreadable capture per item. Fictional. */
+export async function seedInboxItems(
+  sql: ReturnType<typeof createDb>['$client'],
+  slug: string,
+  items: number = INBOX_ITEMS,
+): Promise<number> {
+  const [org] = await sql<{ id: string }[]>`select id from organization where slug = ${slug}`;
+  if (!org) return 0;
+  await sql.begin(async (tx) => {
+    await tx`select set_config('app.workspace_id', ${org.id}, true)`;
+    await tx`delete from proposal where workspace_id = ${org.id}::uuid and idempotency_key like 'perf-inbox-%'`;
+    await tx`delete from capture where workspace_id = ${org.id}::uuid and source_meta ->> 'perfInbox' = '1'`;
+    await tx`
+      insert into proposal (id, workspace_id, kind, level, status, payload, meta, idempotency_key, confidence)
+      select gen_random_uuid(), ${org.id}::uuid, 'task', 'L2', 'proposed',
+             jsonb_build_object('title', 'File the counter ' || n || ' (fictional)'),
+             jsonb_build_object('source', jsonb_build_object('type', 'deterministic', 'input', 'form'),
+               'patternKey', 'task', 'match', null, 'duplicate', null, 'ambiguous', false),
+             'perf-inbox-' || n, 0.930
+      from generate_series(1, ${items}) n`;
+    await tx`
+      insert into capture (id, workspace_id, channel, status, mime, size_bytes, source_meta)
+      select gen_random_uuid(), ${org.id}::uuid, 'upload', 'needs_you', 'application/pdf', 1000,
+             jsonb_build_object('perfInbox', '1')
+      from generate_series(1, ${items}) n`;
+  });
+  return items;
 }
 
 export async function seedScale(databaseUrl: string, seats: number): Promise<ScalePlan> {
@@ -68,6 +106,8 @@ export async function seedScale(databaseUrl: string, seats: number): Promise<Sca
   try {
     // The two demo workspaces with their matters, listings, orders and obligations.
     await seedDemo(db);
+    // 200 captures with proposals in the demo inboxes the perf users read (#489).
+    for (const slug of INBOX_WORKSPACE_SLUGS) await seedInboxItems(sql, slug);
     // Synthetic tenants and seats around them (roles: owner, junior or clerk; solo 2 seats, chamber 3).
     await sql`
       insert into "user" (id, name, email, email_verified)

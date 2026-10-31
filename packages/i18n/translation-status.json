@@ -456,7 +456,8 @@
     "limitation.shortcuts.propose",
     "limitation.shortcuts.confirm",
     "limitation.shortcuts.close",
-    "onboarding.invite.emailPlaceholder"
+    "onboarding.invite.emailPlaceholder",
+    "courtInsights.timeline.proceeding"
   ],
   "ta": {
     "auth.checkEmail.body": "draft",
@@ -3322,6 +3323,8 @@
     "notifications.email.newsDigest.note": "draft",
     "notifications.preferences.categories.digestNews.label": "draft",
     "notifications.preferences.categories.digestNews.description": "draft",
+    "notifications.preferences.categories.onboardingNudge.label": "draft",
+    "notifications.preferences.categories.onboardingNudge.description": "draft",
     "notifications.news.metaTitle": "draft",
     "notifications.news.title": "draft",
     "notifications.news.description": "draft",
@@ -3676,6 +3679,7 @@
     "whatsappLink.categories.courtBoard": "draft",
     "whatsappLink.categories.statusOrder": "draft",
     "whatsappLink.categories.digestEndOfDay": "draft",
+    "whatsappLink.categories.onboardingNudge": "draft",
     "whatsappLink.unlink": "draft",
     "whatsappLink.unlinked": "draft",
     "whatsappLink.saved": "draft",
@@ -5144,6 +5148,7 @@
     "people.shortcuts.open": "draft",
     "people.shortcuts.close": "draft",
     "nav.enquiries": "draft",
+    "nav.import": "draft",
     "enquiry.metaTitle": "draft",
     "enquiry.title": "draft",
     "enquiry.description": "draft",
@@ -5981,7 +5986,15 @@
     "settings.account.learn.modules.listings-and-mentions": "draft",
     "settings.account.learn.modules.filing-and-defect-cures": "draft",
     "settings.account.learn.modules.limitation-basics": "draft",
-    "settings.account.learn.modules.using-the-os": "draft"
+    "settings.account.learn.modules.using-the-os": "draft",
+    "courtInsights.timeline.title": "draft",
+    "courtInsights.timeline.hint": "draft",
+    "courtInsights.timeline.proceeding": "draft",
+    "courtInsights.timeline.listingDelay": "draft",
+    "courtInsights.timeline.disposalTime": "draft",
+    "courtInsights.timeline.basedOn": "draft",
+    "courtInsights.timeline.narrowedToStage": "draft",
+    "courtInsights.timeline.minimum": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -8847,6 +8860,8 @@
     "notifications.email.newsDigest.note": "draft",
     "notifications.preferences.categories.digestNews.label": "draft",
     "notifications.preferences.categories.digestNews.description": "draft",
+    "notifications.preferences.categories.onboardingNudge.label": "draft",
+    "notifications.preferences.categories.onboardingNudge.description": "draft",
     "notifications.news.metaTitle": "draft",
     "notifications.news.title": "draft",
     "notifications.news.description": "draft",
@@ -9201,6 +9216,7 @@
     "whatsappLink.categories.courtBoard": "draft",
     "whatsappLink.categories.statusOrder": "draft",
     "whatsappLink.categories.digestEndOfDay": "draft",
+    "whatsappLink.categories.onboardingNudge": "draft",
     "whatsappLink.unlink": "draft",
     "whatsappLink.unlinked": "draft",
     "whatsappLink.saved": "draft",
@@ -10669,6 +10685,7 @@
     "people.shortcuts.open": "draft",
     "people.shortcuts.close": "draft",
     "nav.enquiries": "draft",
+    "nav.import": "draft",
     "enquiry.metaTitle": "draft",
     "enquiry.title": "draft",
     "enquiry.description": "draft",
@@ -11506,6 +11523,14 @@
     "settings.account.learn.modules.listings-and-mentions": "draft",
     "settings.account.learn.modules.filing-and-defect-cures": "draft",
     "settings.account.learn.modules.limitation-basics": "draft",
-    "settings.account.learn.modules.using-the-os": "draft"
+    "settings.account.learn.modules.using-the-os": "draft",
+    "courtInsights.timeline.title": "draft",
+    "courtInsights.timeline.hint": "draft",
+    "courtInsights.timeline.proceeding": "draft",
+    "courtInsights.timeline.listingDelay": "draft",
+    "courtInsights.timeline.disposalTime": "draft",
+    "courtInsights.timeline.basedOn": "draft",
+    "courtInsights.timeline.narrowedToStage": "draft",
+    "courtInsights.timeline.minimum": "draft"
   }
 }

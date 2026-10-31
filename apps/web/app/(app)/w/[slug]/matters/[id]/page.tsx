@@ -10,6 +10,7 @@
 // empty cards, offline (banner, mutations off), permission-denied, and not-found (another
 // workspace, a restricted matter or an unknown id). In development
 // `?__state=loading|error|denied|offline|empty` previews them.
+import type { MatterExpectedTimeline } from '@causedeck/intelligence';
 import type { SnoozeRecord } from '@causedeck/validators/attention';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -21,6 +22,7 @@ import {
   type NoticeView,
 } from '../../../../../../components/notices/notice-list.tsx';
 import { ReportError } from '../../../../../../components/matters/report-error.tsx';
+import { ExpectedTimelineCard } from '../../../../../../components/matters/expected-timeline-card.tsx';
 import { MatterOverview } from '../../../../../../components/matters/matter-overview.tsx';
 import { MattersPermissionDenied } from '../../../../../../components/matters/matters-list.tsx';
 import {
@@ -153,6 +155,27 @@ async function loadMatterSnoozes(
   }
 }
 
+/**
+ * The expected timeline from this workspace's own matters in the same forum and case type (#655).
+ * Gated like the court insights page (`insights.read`, not a junior). A failed read hides the card,
+ * never breaks the page.
+ */
+async function loadExpectedTimeline(
+  context: WorkspaceContext,
+  matterId: string,
+): Promise<MatterExpectedTimeline | null> {
+  if (!can(context.role, 'insights.read') || context.role === 'junior') return null;
+  try {
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { getMatterExpectedTimeline } = await import('@causedeck/intelligence');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    return await inWorkspace(actor, (tx) => getMatterExpectedTimeline(tx, matterId));
+  } catch (error) {
+    logger.error({ err: error }, 'matter overview: could not load the expected timeline');
+    return null;
+  }
+}
+
 /** The owner's brief-sharing panel data (#507). A failed read hides the panel, never breaks the page. */
 async function loadBriefSharing(
   context: WorkspaceContext,
@@ -245,6 +268,7 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   const benchNotices = dev === 'empty' ? [] : await loadBenchNotices(context, id);
   const sharing = dev === 'empty' ? null : await loadBriefSharing(context, id);
   const snoozes = dev === 'empty' ? null : await loadMatterSnoozes(context, id);
+  const timeline = dev === 'empty' ? null : await loadExpectedTimeline(context, id);
   const view = toOverviewView(loaded.overview, { locale, now: new Date() });
   const proceedingId = view.nextDate?.proceedingId;
   const corrections =
@@ -301,6 +325,7 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
           updateMatter: updateMatterAction,
         }}
       />
+      {timeline === null ? null : <ExpectedTimelineCard timeline={timeline} />}
       {snoozes === null ? null : (
         <AttentionSnoozes
           workspaceId={context.workspace.id}

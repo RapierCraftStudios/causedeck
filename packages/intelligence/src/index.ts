@@ -4,6 +4,7 @@
 export const packageName: string = '@causedeck/intelligence';
 
 export * from './analytics/index.ts';
+export * from './analytics/timeline.ts';
 export * from './bench-facts/index.ts';
 export * from './classify/index.ts';
 export * from './events.ts';

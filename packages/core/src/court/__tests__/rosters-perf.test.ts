@@ -124,7 +124,11 @@ describe(`roster lookups with ${String(ROSTERS)} rosters of ${String(ENTRIES)} e
         const indexes = (nodes: PlanNode[]) =>
           nodes.flatMap((n) => (n['Index Name'] === undefined ? [] : [n['Index Name']]));
         expect(indexes(rosterPlan).some((name) => name.startsWith('bench_roster_'))).toBe(true);
-        expect(indexes(benchPlan)).toContain('bench_roster_entry_workspace_roster_idx');
+        // Any index of the entry table proves the lookup is index-backed. Naming the one index
+        // flaked: with seqscans off the planner may pick another equally valid one (#995).
+        expect(indexes(benchPlan).some((name) => name.startsWith('bench_roster_entry_'))).toBe(
+          true,
+        );
         await s.execute(sql`set local enable_seqscan = on`);
       });
     });

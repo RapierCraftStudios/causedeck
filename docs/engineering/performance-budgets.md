@@ -9,6 +9,7 @@ Verification of the budgets in the technical spike (§3.2 Stage B triggers, §10
 | p95 server action                                    | under 300 ms            | k6 threshold, group `action`                         |
 | p95 any read route                                   | under 400 ms            | k6 threshold, group `read`                           |
 | Court-day board data from the cache path, p95        | under 300 ms            | k6 threshold, group `court_day_cache`                |
+| Inbox route server render with 200 items, p95        | under 300 ms            | k6 threshold, group `inbox`                          |
 | Brief assembly per listing, p95                      | under 5 s               | k6 threshold, group `brief_assembly`                 |
 | Error rate                                           | under 0.5%              | k6 `http_req_failed`                                 |
 | Readiness flaps (a failed `/readyz` poll in the run) | none                    | k6 counter `readiness_flaps`                         |
@@ -24,7 +25,7 @@ Lighthouse key pages: sign-in, today, brief sheet, obligations (signed in as the
 
 `e2e/perf/k6/scenarios/` (k6 1.x runs TypeScript directly):
 
-- `evening-prepare.ts`: the 18:00 to 23:00 IST peak (briefs, obligations, board, memory), compressed to minutes.
+- `evening-prepare.ts`: the 18:00 to 23:00 IST peak (briefs, obligations, board, memory, inbox), compressed to minutes.
 - `morning-court.ts`: the 07:00 to 10:30 IST peak (board, offline cache sync, hearings).
 - `uploads.ts`: bursts of document uploads.
 - `mixed-soak.ts`: 60 minutes of all of them plus a readiness poll every 5 s.
@@ -46,6 +47,8 @@ pnpm --filter @causedeck/web build && pnpm --filter @causedeck/e2e perf:bundle
 ## Reading results and the nightly run
 
 `.github/workflows/perf.yml` runs nightly and on a PR labelled `perf`. k6 summaries, Lighthouse reports and the Stage B summary are stored as artifacts. The nightly compares each route group's p95 with the previous nightly's artifact (`compareP95`); a rise of more than 15% opens a GitHub issue with the table from `regressionReport`.
+
+The same workflow's `budgets` job (nightly and manual dispatch) runs the wall-clock budgets that are off on shared PR runners behind `PERF_GATE=1`: the 20-page PDF render (`packages/intelligence/src/pipeline/pipeline.test.ts`, 20 s) and the 500-event ICS render (`packages/capture/src/ics/export.test.ts`, 200 ms). It runs each file 5 times and fails the job if any run is over budget (the worst of 5 runs, a conservative stand-in for p95).
 
 ## Mapping to the Stage A to B trigger
 

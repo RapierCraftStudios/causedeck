@@ -16,7 +16,7 @@ import { and, eq } from 'drizzle-orm';
 import { storageAuditSink } from './audit.ts';
 import { isUuid, objectKey, parseObjectKey, type ObjectKey } from './keys.ts';
 import { assertWithinLimit, isObjectKind, ObjectTooLargeError, type ObjectKind } from './limits.ts';
-import { findAllowedType, isCompatible, sniffMime } from './mime.ts';
+import { findAllowedType, isCompatible, sniffMime, storedMime } from './mime.ts';
 import { ObjectNotFoundError, type ObjectStore, type SignedUpload } from './provider.ts';
 
 export type StorageAction = 'document.read' | 'document.write';
@@ -229,7 +229,7 @@ export async function finalizeUpload(ctx: StorageCtx, blobId: string): Promise<F
     const sha256 = createHash('sha256').update(body).digest('hex');
     const [updated] = await tx
       .update(blob)
-      .set({ mime: sniffed, sha256, scanStatus: 'pending', finalizedAt: now })
+      .set({ mime: storedMime(allowed, sniffed), sha256, scanStatus: 'pending', finalizedAt: now })
       .where(eq(blob.id, row.id))
       .returning();
     if (updated === undefined) throw blobNotFound();

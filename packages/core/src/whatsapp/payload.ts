@@ -80,7 +80,9 @@ export function rebuildExportText(
     .join('\n');
 }
 
-const ALLOWED_EXTENSIONS = new Set(ALLOWED_TYPES.flatMap((t) => t.extensions));
+const ALLOWED_EXTENSIONS = new Set(
+  ALLOWED_TYPES.filter((t) => t.allowMarkup !== true).flatMap((t) => t.extensions),
+);
 
 /** The file name when it is a plain name with an allow-listed extension, else `null`. */
 export function safeMediaName(name: string): string | null {

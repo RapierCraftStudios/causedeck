@@ -69,6 +69,7 @@ export {
   isDeniedMime,
   normalizeMime,
   sniffMime,
+  storedMime,
   type AllowedType,
 } from './mime.ts';
 export {

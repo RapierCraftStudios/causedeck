@@ -9,6 +9,8 @@ export const BUDGETS = {
   readP95Ms: 400,
   /** Court-day board data from the cache path, p95 ms. */
   courtDayCacheP95Ms: 300,
+  /** Inbox route server render with 200 items, p95 ms (#48 R16c). */
+  inboxP95Ms: 300,
   /** Brief assembly per listing, p95 ms. */
   briefAssemblyP95Ms: 5000,
   /** Failed-request rate; a run fails at or above it. */
@@ -31,7 +33,13 @@ export const STAGE_B_TRIGGERS = {
 } as const;
 
 /** Route groups the scenarios tag requests with (`group` tag). */
-export const ROUTE_GROUPS = ['action', 'read', 'court_day_cache', 'brief_assembly'] as const;
+export const ROUTE_GROUPS = [
+  'action',
+  'read',
+  'court_day_cache',
+  'inbox',
+  'brief_assembly',
+] as const;
 export type RouteGroup = (typeof ROUTE_GROUPS)[number];
 
 /** k6 `options.thresholds`: `p(95)<N` fails the run at N or above. */
@@ -40,6 +48,7 @@ export function k6Thresholds(): Record<string, string[]> {
     'http_req_duration{group:action}': [`p(95)<${String(BUDGETS.actionP95Ms)}`],
     'http_req_duration{group:read}': [`p(95)<${String(BUDGETS.readP95Ms)}`],
     'http_req_duration{group:court_day_cache}': [`p(95)<${String(BUDGETS.courtDayCacheP95Ms)}`],
+    'http_req_duration{group:inbox}': [`p(95)<${String(BUDGETS.inboxP95Ms)}`],
     'http_req_duration{group:brief_assembly}': [`p(95)<${String(BUDGETS.briefAssemblyP95Ms)}`],
     http_req_failed: [`rate<${String(BUDGETS.errorRate)}`],
     // Any readiness poll that fails counts as a flap.

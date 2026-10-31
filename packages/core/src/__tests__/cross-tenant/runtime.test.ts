@@ -420,6 +420,12 @@ const CASES: Record<string, () => Promise<void>> = {
     await expectDenied(runtime.openExportDownloadFor(forged(), aExportId, 'forged.token', deps));
     await expectDenied(runtime.openExportDownloadFor(asB(), aExportId, 'forged.token', deps));
   },
+  openDocumentPageImageFor: async () => {
+    const deps = { store: {} as never, keys: {} as never };
+    const input = { documentId: t.a.rows.document_page?.documentId ?? '', pageNo: 1 };
+    await expectDenied(runtime.openDocumentPageImageFor(forged(), input, deps));
+    await expectDenied(runtime.openDocumentPageImageFor(asB(), input, deps));
+  },
   // Court rosters (#434): ub may not parse A's upload nor confirm a roster on A's forum.
   previewRosterImportFor: async () => {
     const before = await aRosterState();

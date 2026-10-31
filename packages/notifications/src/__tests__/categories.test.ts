@@ -23,6 +23,7 @@ describe('category registry', () => {
         'judgment.alert',
         'member.joined',
         'notices',
+        'onboarding.nudge',
         'portfolio.adverse_order',
         'portfolio.missed_date',
         'proposal.new',

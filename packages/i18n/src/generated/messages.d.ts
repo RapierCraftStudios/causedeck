@@ -47,6 +47,7 @@ export type Messages = {
       settings: string;
     };
     enquiries: string;
+    import: string;
   };
   palette: {
     title: string;
@@ -899,6 +900,10 @@ export type Messages = {
           description: string;
         };
         digestNews: {
+          label: string;
+          description: string;
+        };
+        onboardingNudge: {
           label: string;
           description: string;
         };
@@ -3043,6 +3048,16 @@ export type Messages = {
     empty: {
       title: string;
       hint: string;
+    };
+    timeline: {
+      title: string;
+      hint: string;
+      proceeding: string;
+      listingDelay: string;
+      disposalTime: string;
+      basedOn: string;
+      narrowedToStage: string;
+      minimum: string;
     };
   };
   matters: {
@@ -5386,6 +5401,7 @@ export type Messages = {
       courtBoard: string;
       statusOrder: string;
       digestEndOfDay: string;
+      onboardingNudge: string;
     };
     unlink: string;
     unlinked: string;

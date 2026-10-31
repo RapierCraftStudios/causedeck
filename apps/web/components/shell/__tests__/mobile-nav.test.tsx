@@ -89,6 +89,7 @@ describe('mobile bottom navigation', () => {
       'memory',
       'activity',
       'people',
+      'import',
       'courts',
       'notices',
       'portfolio',

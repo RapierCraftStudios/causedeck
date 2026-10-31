@@ -284,6 +284,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'capture',
     'email-intake',
     'automation',
+    // Page image wrapper (#489): the decrypted stored image of a document page.
+    'matter-graph',
   ]),
 });
 

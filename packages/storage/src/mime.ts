@@ -1,7 +1,8 @@
 // Upload type hygiene (#217; spike §6 Uploads, ADR 0006). An upload is accepted only when its
 // kind, file extension and declared MIME match one allow-list entry, and at finalize only when the
 // type sniffed from its bytes is one that entry accepts. Executables, scripts and markup are denied
-// outright, whatever the allow-list says. Nothing here parses or renders a document: sniffing reads
+// outright, whatever the allow-list says, with one narrow exception: the `html` entry (#567) opts
+// in to `.html`/`.htm`, is stored as `text/plain` and is never rendered or served as markup. Nothing here parses or renders a document: sniffing reads
 // magic bytes (`file-type`) and, for text, checks encoding and the first bytes.
 import { fileTypeFromBuffer } from 'file-type';
 
@@ -19,12 +20,17 @@ export interface AllowedType {
   declared: readonly string[];
   /** MIME types the sniffer may report for it (parameters stripped). */
   sniffed: readonly string[];
+  /**
+   * Opt-in past the markup denial (`.html`/`.htm`, `text/html`) for this entry only. Every other
+   * denial (svg, xml, scripts, executables) still applies. The stored MIME is `mime`, never markup.
+   */
+  allowMarkup?: boolean;
 }
 
 const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-/** The upload allow-list: PDF, DOCX, `.csv`, `.xlsx`, `.ics`, `.txt`, PNG, JPEG, WebP, HEIC, audio and `.zip`. */
+/** The upload allow-list: PDF, DOCX, `.csv`, `.xlsx`, `.ics`, `.eml`, inert HTML, `.txt`, PNG, JPEG, WebP, HEIC, audio and `.zip`. */
 export const ALLOWED_TYPES: readonly AllowedType[] = Object.freeze([
   {
     name: 'pdf',
@@ -56,7 +62,27 @@ export const ALLOWED_TYPES: readonly AllowedType[] = Object.freeze([
     mime: 'text/plain',
     extensions: ['txt'],
     declared: ['text/plain'],
-    sniffed: ['text/plain', 'text/calendar'],
+    sniffed: ['text/plain', 'text/calendar', 'message/rfc822'],
+  },
+  {
+    name: 'eml',
+    kind: 'document',
+    mime: 'message/rfc822',
+    extensions: ['eml'],
+    declared: ['message/rfc822'],
+    sniffed: ['message/rfc822', 'text/plain'],
+  },
+  {
+    // Stored inert: the stored type is `text/plain`, so it is never served as markup. The capture
+    // pipeline reads it only through `htmlToText` (packages/capture/src/email/sanitize.ts).
+    name: 'html',
+    kind: 'document',
+    mime: 'text/plain',
+    extensions: ['html', 'htm'],
+    // `text/plain` is the stored type, which finalize looks the entry up by again.
+    declared: ['text/html', 'text/plain'],
+    sniffed: ['text/html'],
+    allowMarkup: true,
   },
   {
     name: 'csv',
@@ -206,27 +232,37 @@ export function findAllowedType(
   filename: string,
   declaredMime: string,
 ): AllowedType | null {
-  if (hasDeniedExtension(filename) || isDeniedMime(declaredMime)) return null;
   const extension = suffixes(filename).at(-1);
   if (extension === undefined) return null;
   const mime = normalizeMime(declaredMime);
-  return (
+  const entry =
     ALLOWED_TYPES.find(
-      (entry) =>
-        entry.kind === kind &&
-        entry.extensions.includes(extension) &&
-        entry.declared.includes(mime),
-    ) ?? null
-  );
+      (candidate) =>
+        candidate.kind === kind &&
+        candidate.extensions.includes(extension) &&
+        candidate.declared.includes(mime),
+    ) ?? null;
+  if (entry === null) return null;
+  if (entry.allowMarkup === true) {
+    // Markup opt-in: only the markup denials are lifted, and only for the final extension.
+    const inner = suffixes(filename).slice(0, -1);
+    return inner.some((part) => DENIED_EXTENSIONS.has(part.trim())) ? null : entry;
+  }
+  return hasDeniedExtension(filename) || isDeniedMime(declaredMime) ? null : entry;
 }
 
 /** Markup and script openings a text upload must not start with. */
 const MARKUP_START =
   /^(?:<!doctype|<html|<head|<body|<script|<svg|<\?xml|<iframe|<object|<embed|<meta|<!--|#!)/i;
 
+/** An RFC 822 header block: a well-known header first, then at least one more header line. */
+const RFC822_START =
+  /^(?:received|from|to|date|subject|message-id|mime-version|return-path|delivered-to|x-[a-z0-9-]+):[^\r\n]*(?:\r?\n[ \t][^\r\n]*)*\r?\n[A-Za-z][A-Za-z0-9-]*:/i;
+
 /**
  * The type sniffed from the bytes: what `file-type` reports for binary formats; for text (valid
- * UTF-8, no NUL) `text/calendar` when it opens with `BEGIN:VCALENDAR`, `text/html` when it opens
+ * UTF-8, no NUL) `text/calendar` when it opens with `BEGIN:VCALENDAR`, `message/rfc822` when it opens with a mail
+ * header block, `text/html` when it opens
  * with markup or a shebang, else `text/plain`. `null` when it is neither.
  */
 export async function sniffMime(bytes: Uint8Array): Promise<string | null> {
@@ -242,11 +278,22 @@ export async function sniffMime(bytes: Uint8Array): Promise<string | null> {
   const start = text.trimStart();
   if (MARKUP_START.test(start)) return 'text/html';
   if (/^BEGIN:VCALENDAR\r?\n/.test(start)) return 'text/calendar';
+  if (RFC822_START.test(start)) return 'message/rfc822';
   return 'text/plain';
 }
 
 /** Whether a sniffed type is acceptable for the allow-list entry chosen at intent. */
 export function isCompatible(entry: AllowedType, sniffed: string | null): sniffed is string {
-  if (sniffed === null || isDeniedMime(sniffed)) return false;
+  if (sniffed === null) return false;
+  if (isDeniedMime(sniffed) && entry.allowMarkup !== true) return false;
+  if (entry.allowMarkup === true && normalizeMime(sniffed) !== 'text/html') {
+    // Only text that sniffs as markup is HTML; a denied non-HTML type (svg, xml, script) is not.
+    return false;
+  }
   return entry.sniffed.includes(normalizeMime(sniffed));
+}
+
+/** The MIME to store for a finalized upload: the sniffed type, except inert markup stays `entry.mime`. */
+export function storedMime(entry: AllowedType, sniffed: string): string {
+  return entry.allowMarkup === true ? entry.mime : sniffed;
 }

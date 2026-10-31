@@ -45,7 +45,8 @@
       "practice": "Practice",
       "settings": "Settings"
     },
-    "enquiries": "Enquiries"
+    "enquiries": "Enquiries",
+    "import": "Import"
   },
   "palette": {
     "title": "Command palette",
@@ -900,6 +901,10 @@
         "digestNews": {
           "label": "Legal news digest",
           "description": "One daily digest of legal news, with the items for your practice areas and forums first."
+        },
+        "onboardingNudge": {
+          "label": "Setup reminders",
+          "description": "A nudge for the next setup step you have not finished."
         }
       },
       "mandatory": "Security alerts are always sent in the app and by email so you never miss a sign-in or account change.",
@@ -3042,6 +3047,16 @@
     "empty": {
       "title": "No figures yet",
       "hint": "Figures appear once matters in this workspace have filing dates, listings and hearings."
+    },
+    "timeline": {
+      "title": "Expected timeline",
+      "hint": "From this workspace's own matters in the same forum and case type. An estimate, not a promise.",
+      "proceeding": "{court}, {caseType}",
+      "listingDelay": "Median time to first listing",
+      "disposalTime": "Median time to disposal",
+      "basedOn": "Based on {count, plural, one {# matter} other {# matters}}",
+      "narrowedToStage": "Matters first listed at the same stage.",
+      "minimum": "Figures from fewer than {min} matters are withheld."
     }
   },
   "matters": {
@@ -5384,7 +5399,8 @@
     "categories": {
       "courtBoard": "Court board alerts",
       "statusOrder": "New order alerts",
-      "digestEndOfDay": "Evening court-day summary"
+      "digestEndOfDay": "Evening court-day summary",
+      "onboardingNudge": "Setup reminders"
     },
     "unlink": "Unlink WhatsApp",
     "unlinked": "WhatsApp unlinked. No more messages will be sent.",

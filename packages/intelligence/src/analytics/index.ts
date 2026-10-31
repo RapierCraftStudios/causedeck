@@ -59,10 +59,10 @@ export interface SummariseOptions {
 
 const DAY_MS = 86_400_000;
 
-const daysBetween = (from: string, to: string): number =>
+export const daysBetween = (from: string, to: string): number =>
   Math.round((Date.parse(to) - Date.parse(from)) / DAY_MS);
 
-function median(values: readonly number[]): number {
+export function median(values: readonly number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
   const mid = (sorted.length - 1) / 2;
   return ((sorted[Math.floor(mid)] ?? 0) + (sorted[Math.ceil(mid)] ?? 0)) / 2;
@@ -70,7 +70,11 @@ function median(values: readonly number[]): number {
 
 const withheld: Metric = { value: null, n: null };
 
-function metric(values: readonly number[], minCell: number, reduce: (v: number[]) => number) {
+export function metric(
+  values: readonly number[],
+  minCell: number,
+  reduce: (v: number[]) => number,
+) {
   if (values.length === 0 || values.length < minCell) return withheld;
   return { value: reduce([...values]), n: values.length } satisfies Metric;
 }
@@ -174,9 +178,14 @@ export interface CourtInsights {
 const isoDate = (value: Date | string): string =>
   typeof value === 'string' ? value : value.toISOString().slice(0, 10);
 
-/** The workspace's court insights. Run it inside the workspace's RLS transaction. */
-export async function getCourtInsights(db: Db, query: CourtInsightsQuery): Promise<CourtInsights> {
-  const { proceeding, listing, hearing, proceedingStateChange, forum } = schema;
+export interface CourtFacts {
+  proceedings: ProceedingFact[];
+  hearings: HearingFact[];
+}
+
+/** The workspace's proceeding and hearing facts in the query's scope. Run it inside the RLS transaction. */
+export async function loadCourtFacts(db: Db, query: CourtInsightsQuery): Promise<CourtFacts> {
+  const { proceeding, listing, hearing, proceedingStateChange } = schema;
   const scope = (filedOn: typeof proceeding.filingDate) =>
     and(
       gte(filedOn, query.from),
@@ -277,7 +286,13 @@ export async function getCourtInsights(db: Db, query: CourtInsightsQuery): Promi
       adjourned: h.adjournmentReason !== null,
     });
   }
+  return { proceedings: proceedingFacts, hearings: hearingFacts };
+}
 
+/** The workspace's court insights. Run it inside the workspace's RLS transaction. */
+export async function getCourtInsights(db: Db, query: CourtInsightsQuery): Promise<CourtInsights> {
+  const { forum } = schema;
+  const { proceedings: proceedingFacts, hearings: hearingFacts } = await loadCourtFacts(db, query);
   const forumIds = [...new Set(proceedingFacts.map((f) => f.forumId))];
   const forumRows =
     forumIds.length === 0

@@ -4,10 +4,11 @@
 // VALIDATION (`denies`), return no text and emit nothing; A's own owner can read the page, so the
 // probe is sound. Kept beside services.test.ts and driven by the same registry
 // (`@causedeck/db/testing/cross-tenant-registry`), like next-date-choice.test.ts.
-import type { Database, Transaction } from '@causedeck/db';
+import { schema, type Database, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
+import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import * as core from '../../index.ts';
@@ -61,6 +62,44 @@ const CASES: Record<string, Case> = {
     );
     expect(preview.page?.text).toBe('Seed page');
   },
+  getDocumentPageImage: async (f) => {
+    // A's page 1 has a stored preview image.
+    await inWorkspace(f.tx, f.a.id, (s) =>
+      s
+        .update(schema.documentPage)
+        .set({ previewKey: 'blobs/a-page-1-preview' })
+        .where(eq(schema.documentPage.documentId, f.documentId)),
+    );
+    const input = { documentId: f.documentId, pageNo: 1 };
+    const { deps, events } = graphDeps(f.tx);
+    await expectDenied(
+      core.getDocumentPageImage(deps, { userId: f.ub, workspaceId: f.a.id }, input),
+    );
+    await expectDenied(
+      f.asB((s) =>
+        core.getDocumentPageImage({ ...deps, db: s }, { userId: f.ub, workspaceId: f.a.id }, input),
+      ),
+    );
+    await expectDenied(
+      core.getDocumentPageImage(deps, { userId: f.ub, workspaceId: f.b.id }, input),
+    );
+    expect(events).toEqual([]);
+    // A's own owner resolves the key (and the preview names the route): the probe is sound.
+    const image = await core.getDocumentPageImage(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      input,
+    );
+    expect(image).toEqual({ key: 'blobs/a-page-1-preview', mime: 'image/webp' });
+    const preview = await core.getDocumentPreview(
+      deps,
+      { userId: f.ua, workspaceId: f.a.id },
+      input,
+    );
+    expect(preview.pageImage).toEqual({
+      url: `/api/documents/${f.documentId}/pages/1/image?workspaceId=${f.a.id}`,
+    });
+  },
 };
 
 const registered = Object.entries(SERVICE_TESTS)
@@ -70,6 +109,7 @@ const registered = Object.entries(SERVICE_TESTS)
 describe('cross-tenant document preview: ub on workspace B against A (#393)', () => {
   it('has a case for every service the registry points here', () => {
     expect(registered).toContain('getDocumentPreview');
+    expect(registered).toContain('getDocumentPageImage');
     expect(registered.filter((name) => !(name in CASES))).toEqual([]);
     expect(Object.keys(CASES).filter((name) => !registered.includes(name))).toEqual([]);
   });

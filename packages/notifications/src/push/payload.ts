@@ -36,6 +36,7 @@ export const GENERIC_PUSH_TITLES: Record<CategoryKey, string> = {
   'reminder.evening': "Tomorrow's court day is ready",
   'reminder.morning': "Today's list has changed",
   'reminder.outcome_missing': "Record today's outcomes",
+  'onboarding.nudge': 'Finish setting up CauseDeck',
   'system.notice': 'New notification',
 };
 

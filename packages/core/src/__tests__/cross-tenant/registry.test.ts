@@ -8,6 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import {
+  ACTIVATION_SERVICE_TESTS,
   BILLING_SERVICE_TESTS,
   NOT_A_SERVICE,
   registeredTestFiles,
@@ -65,6 +66,17 @@ describe('cross-tenant registry: core services', () => {
       'getTrackedCaseCharge',
     ]);
     expect(staleEntries(BILLING_SERVICE_TESTS, names)).toEqual([]);
+  });
+
+  it('registers practice-school progress from @causedeck/core/activation (#703)', async () => {
+    const mod: Record<string, unknown> = await import('@causedeck/core/activation');
+    const names = Object.keys(mod).sort();
+    expect(Object.keys(ACTIVATION_SERVICE_TESTS).sort()).toEqual([
+      'listCompletedLearnModules',
+      'markLearnModuleDone',
+      'unmarkLearnModule',
+    ]);
+    expect(staleEntries(ACTIVATION_SERVICE_TESTS, names)).toEqual([]);
   });
 
   it('points only at test files that exist', () => {

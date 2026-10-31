@@ -9,7 +9,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { closeTestDb, schema, testAppDb, withWorkspace } from '@causedeck/db/testing';
+import { closeTestDb, schema, testAppDb, withUser, withWorkspace } from '@causedeck/db/testing';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -95,6 +95,7 @@ const invite = await import('../app/(public)/invite/[token]/actions.ts');
 const welcome = await import('../app/(app)/w/[slug]/welcome/actions.ts');
 const onboarding = await import('../app/(app)/onboarding/actions.ts');
 const account = await import('../app/(app)/account/actions.ts');
+const learnProgress = await import('../app/(app)/account/learn-progress-actions.ts');
 const notifications = await import('../app/(app)/w/[slug]/notifications/actions.ts');
 const preferences = await import('../app/(app)/w/[slug]/settings/notifications/actions.ts');
 const whatsappLink =
@@ -188,6 +189,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   verifyTwoFactorAction: account,
   deletePasskeyAction: account,
   revokeSessionAction: account,
+  setLearnModuleDoneAction: learnProgress,
   listNotificationsAction: notifications,
   markNotificationReadAction: notifications,
   markAllNotificationsReadAction: notifications,
@@ -2337,6 +2339,39 @@ describe('cross-tenant server actions', () => {
     await action('setLocaleAction')({ locale: 'ta' });
     expect(updateUser).toHaveBeenCalledTimes(1);
     expect(updateUser).toHaveBeenCalledWith(t.ub, { locale: 'ta' });
+  });
+
+  it('setLearnModuleDoneAction (#703) writes only the caller’s own progress and refuses a bad slug', async () => {
+    const db = testAppDb();
+    const rows = (userId: string) =>
+      withUser(db, { userId }, (tx) => tx.select().from(schema.learnProgress));
+    await withUser(db, { userId: t.ua }, (tx) =>
+      tx.insert(schema.learnProgress).values({ userId: t.ua, moduleSlug: 'limitation-basics' }),
+    );
+    const aBefore = await rows(t.ua);
+    expect(aBefore).toHaveLength(1);
+
+    signInAs(t.ub);
+    expect(
+      await action('setLearnModuleDoneAction')({ slug: 'limitation-basics', done: true }),
+    ).toEqual({ ok: true, data: { slug: 'limitation-basics', done: true } });
+    expect(
+      code(await action('setLearnModuleDoneAction')({ slug: 'not-a-module', done: true })),
+    ).toBe('VALIDATION');
+    // B's own row exists; A's row is untouched, and B un-marking leaves it alone.
+    expect((await rows(t.ub)).map((r) => r.moduleSlug)).toEqual(['limitation-basics']);
+    expect(
+      await action('setLearnModuleDoneAction')({ slug: 'limitation-basics', done: false }),
+    ).toMatchObject({ ok: true });
+    expect(await rows(t.ub)).toEqual([]);
+    expect(await rows(t.ua)).toEqual(aBefore);
+
+    // Signed out: no write at all.
+    state.session = null;
+    expect(
+      code(await action('setLearnModuleDoneAction')({ slug: 'using-the-os', done: true })),
+    ).toBe('UNAUTHENTICATED');
+    expect((await rows(t.ua)).map((r) => r.moduleSlug)).toEqual(['limitation-basics']);
   });
 
   it('account actions (#289) never reach ua’s sessions, passkeys or user row', async () => {

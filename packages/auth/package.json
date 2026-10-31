@@ -15,6 +15,7 @@
     "./rate-limit": "./src/rate-limit.ts",
     "./step-up": "./src/step-up.ts",
     "./sso": "./src/sso.ts",
+    "./signup-channel": "./src/signup-channel.ts",
     "./dev-provider": "./src/dev-provider.ts",
     "./demo-provider": "./src/demo-provider.ts",
     "./policy": "./src/policy/index.ts",

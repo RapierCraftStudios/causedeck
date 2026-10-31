@@ -138,3 +138,40 @@ describe('proxy status link page (#88)', () => {
     expect(location('/sign-in').response.headers.get('referrer-policy')).toBeNull();
   });
 });
+
+describe('proxy signup channel cookie (#703)', () => {
+  const channelCookie = (path: string, method = 'GET') =>
+    proxy(new NextRequest(`http://localhost:3000${path}`, { method })).cookies.get('cd_channel');
+
+  it('sets a short-lived httpOnly lax cookie for a known channel on /sign-in', () => {
+    const cookie = channelCookie('/sign-in?channel=education&module=limitation-basics');
+    expect(cookie?.value).toBe('education');
+    expect(cookie?.httpOnly).toBe(true);
+    expect(cookie?.sameSite).toBe('lax');
+    expect(cookie?.maxAge).toBe(3600);
+  });
+
+  it('ignores unknown, empty and repeated-garbage channels', () => {
+    for (const q of [
+      'channel=nope',
+      'channel=',
+      'channel=Education',
+      'channel=education%00',
+      'x=1',
+    ]) {
+      expect(channelCookie(`/sign-in?${q}`)).toBeUndefined();
+    }
+  });
+
+  it('only acts on GET /sign-in', () => {
+    expect(channelCookie('/?channel=education')).toBeUndefined();
+    expect(channelCookie('/sign-in/other?channel=education')).toBeUndefined();
+    expect(channelCookie('/sign-in?channel=education', 'POST')).toBeUndefined();
+  });
+
+  it('keeps ?next= handling on /sign-in untouched', () => {
+    const { response, url } = location('/sign-in?channel=social&next=%2Fw%2Fx');
+    expect(url).toBeNull();
+    expect(response.cookies.get('cd_channel')?.value).toBe('social');
+  });
+});

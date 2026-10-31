@@ -1650,6 +1650,7 @@ export type Messages = {
       nav: {
         profile: string;
         security: string;
+        learn: string;
         danger: string;
       };
       loading: string;
@@ -1686,6 +1687,34 @@ export type Messages = {
       security: {
         title: string;
         description: string;
+      };
+      learn: {
+        title: string;
+        description: string;
+        progress: string;
+        listLabel: string;
+        note: string;
+        status: {
+          done: string;
+          pending: string;
+        };
+        markDone: string;
+        markUndone: string;
+        markDoneLabel: string;
+        markUndoneLabel: string;
+        toast: {
+          done: string;
+          undone: string;
+          failed: string;
+        };
+        modules: {
+          'court-day-practice': string;
+          'reading-cause-lists': string;
+          'listings-and-mentions': string;
+          'filing-and-defect-cures': string;
+          'limitation-basics': string;
+          'using-the-os': string;
+        };
       };
       passkeys: {
         title: string;

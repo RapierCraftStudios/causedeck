@@ -7,6 +7,7 @@ export {
   type ActivationChannel,
   type ActivationStep,
 } from './activation.ts';
+export { learnProgress } from './learn-progress.ts';
 export { adapterHealthSummary, adapterParseRun, adapterVersion } from './adapters.ts';
 export {
   aiCall,

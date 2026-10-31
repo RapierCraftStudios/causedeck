@@ -12,5 +12,5 @@ export const ENRICH_VERSION = 1;
 
 /** The ruleset label stored on statute and citation rows built at `version`. */
 export function rulesetVersion(version: number = ENRICH_VERSION): string {
-  return `enrich-${version}`;
+  return `enrich-${String(version)}`;
 }

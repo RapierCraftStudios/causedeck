@@ -14,7 +14,8 @@ import { corpusMaskRequest, judgment } from './corpus.ts';
 import { MIGRATIONS_FOLDER } from '../migrate.ts';
 
 /** `corpus` rows of `source` inserted by a migration: id, base URL, owner and notes. */
-const CORPUS_SOURCE_ROW = /\('([^']+)', 'corpus', '([^']*)', '((?:[^']|'')*)', '[A-Z0-9]+', '((?:[^']|'')*)'\)/g;
+const CORPUS_SOURCE_ROW =
+  /\('([^']+)', 'corpus', '([^']*)', '((?:[^']|'')*)', '[A-Z0-9]+', '((?:[^']|'')*)'\)/g;
 /** An open licence named in the source notes, or an official (government or court) host. */
 const OPEN_LICENCE = /licence (?:CC-BY(?:-SA)?-\d\.\d|CC0-1\.0|ODbL-1\.0|OGL-3\.0|GODL-India)/i;
 const OFFICIAL_HOST = /^https:\/\/[^/]*\b(?:gov\.in|nic\.in|courts\.in|sci\.gov\.in)\//i;

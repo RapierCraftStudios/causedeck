@@ -107,8 +107,7 @@ export function equivalents(ref: StatuteSection, offenceDate?: string | null): E
       : { statute: oldStatute, section: oldSection };
     out.push({
       ...counterpart,
-      inForce:
-        offenceDate == null ? null : codeInForce(offenceDate) === (isOld ? 'new' : 'old'),
+      inForce: offenceDate == null ? null : codeInForce(offenceDate) === (isOld ? 'new' : 'old'),
     });
   }
   return out;

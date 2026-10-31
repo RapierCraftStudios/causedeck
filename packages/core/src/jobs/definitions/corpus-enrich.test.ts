@@ -96,11 +96,16 @@ describe('runCorpusEnrich', () => {
       ]);
       const resolved = citations.find((c) => c.normalisedCitation === '2020:MHC:99');
       expect(resolved?.citedJudgmentId).toBe(cited);
-      expect(citations.find((c) => c.normalisedCitation === 'AIR 2010 SC 1234')?.citedJudgmentId).toBeNull();
+      expect(
+        citations.find((c) => c.normalisedCitation === 'AIR 2010 SC 1234')?.citedJudgmentId,
+      ).toBeNull();
 
       const j = await judgmentOf(db, id);
       expect(j?.outcome).toBe('dismissed');
-      expect(j?.outcomeAnchor).toEqual({ page: 2, quote: '3. In the result, the appeal is dismissed.' });
+      expect(j?.outcomeAnchor).toEqual({
+        page: 2,
+        quote: '3. In the result, the appeal is dismissed.',
+      });
       expect(j?.courtLevel).toBe('high_court');
       expect(j?.enrichVersion).toBe(ENRICH_VERSION);
       expect(j?.enrichedRedactionVersion).toBe(1);
@@ -115,7 +120,9 @@ describe('runCorpusEnrich', () => {
     await withTestDb(async (tx) => {
       const db = tx as never as Queryable;
       const id = await insert(db, {
-        pages: [{ pageNo: 1, text: '1. The Appellant filed a complaint.\n\n2. We have heard counsel.' }],
+        pages: [
+          { pageNo: 1, text: '1. The Appellant filed a complaint.\n\n2. We have heard counsel.' },
+        ],
       });
       await runCorpusSegment(ctx, { batch: 500 }, { db });
       await runCorpusEnrich(ctx, { batch: 500 }, { db });
@@ -143,17 +150,19 @@ describe('runCorpusEnrich', () => {
       await runCorpusEnrich(ctx, { batch: 500 }, { db, version: 1 });
       const v1 = await statutesOf(db, id);
       expect(v1.length).toBeGreaterThan(0);
-      // Tamper with the v1 row: a v2 run must not touch it.
-      await db
-        .update(schema.judgmentStatuteRef)
-        .set({ page: 2 })
-        .where(eq(schema.judgmentStatuteRef.judgmentId, id));
+      // A v2 run must not touch the v1 rows: they keep their row ids (a delete and re-insert would not).
+      const v1Ids = v1.map((s) => s.id).sort();
 
       const report = await runCorpusEnrich(ctx, { batch: 500 }, { db, version: 2 });
       expect(report.enriched).toBe(1);
       const all = await statutesOf(db, id);
       expect(all.filter((s) => s.rulesetVersion === rulesetVersion(1))).toHaveLength(v1.length);
-      expect(all.filter((s) => s.rulesetVersion === rulesetVersion(1)).every((s) => s.page === 2)).toBe(true);
+      expect(
+        all
+          .filter((s) => s.rulesetVersion === rulesetVersion(1))
+          .map((s) => s.id)
+          .sort(),
+      ).toEqual(v1Ids);
       expect(all.filter((s) => s.rulesetVersion === rulesetVersion(2))).toHaveLength(v1.length);
       expect((await judgmentOf(db, id))?.enrichVersion).toBe(2);
 
@@ -169,18 +178,33 @@ describe('runCorpusEnrich', () => {
       const db = tx as never as Queryable;
       const id = await insert(db);
       await runCorpusSegment(ctx, { batch: 500 }, { db });
-      const bad = { version: 'm-1', classify: async () => ({ nope: true }) };
+      const bad = { version: 'm-1', classify: () => Promise.resolve({ nope: true }) };
       await runCorpusEnrich(ctx, { batch: 500 }, { db, resolver: bad, version: 1 });
-      expect(await db.select().from(schema.judgmentTag).where(eq(schema.judgmentTag.judgmentId, id))).toEqual([]);
+      expect(
+        await db.select().from(schema.judgmentTag).where(eq(schema.judgmentTag.judgmentId, id)),
+      ).toEqual([]);
 
       const good = {
         version: 'm-1',
-        classify: async () => ({ tags: [{ area: 'medical_negligence', confidence: 0.9 }, { area: 'made_up', confidence: 0.9 }] }),
+        classify: () =>
+          Promise.resolve({
+            tags: [
+              { area: 'medical_negligence', confidence: 0.9 },
+              { area: 'made_up', confidence: 0.9 },
+            ],
+          }),
       };
       await runCorpusEnrich(ctx, { batch: 500 }, { db, resolver: good, version: 2 });
-      const tags = await db.select().from(schema.judgmentTag).where(eq(schema.judgmentTag.judgmentId, id));
+      const tags = await db
+        .select()
+        .from(schema.judgmentTag)
+        .where(eq(schema.judgmentTag.judgmentId, id));
       expect(tags).toEqual([
-        expect.objectContaining({ subjectArea: 'medical_negligence', modelVersion: 'm-1', confidence: 0.9 }),
+        expect.objectContaining({
+          subjectArea: 'medical_negligence',
+          modelVersion: 'm-1',
+          confidence: 0.9,
+        }),
       ]);
     });
   });

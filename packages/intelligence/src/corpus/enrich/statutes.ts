@@ -95,7 +95,12 @@ export function extractStatuteRefs(pages: readonly StatutePage[]): StatuteRef[] 
 }
 
 /** True when `refs` answer a facet search for `query`, directly or through the IPC/BNS, CrPC/BNSS, IEA/BSA mapping. */
-export function matchesStatuteFacet(refs: readonly StatuteSection[], query: StatuteSection): boolean {
+export function matchesStatuteFacet(
+  refs: readonly StatuteSection[],
+  query: StatuteSection,
+): boolean {
   const keys = facetKeys({ statute: canonicalStatute(query.statute), section: query.section });
-  return refs.some((r) => keys.some((k) => r.statute === k.statute && sectionWithin(r.section, k.section)));
+  return refs.some((r) =>
+    keys.some((k) => r.statute === k.statute && sectionWithin(r.section, k.section)),
+  );
 }

@@ -34,23 +34,29 @@ const PARSERS: readonly Parser[] = [
   },
   {
     // (2005) 6 SCC 1
-    pattern: new RegExp(`\\(\\s*((?:19|20)\\d{2})\\s*\\)\\s*(\\d{1,3})\\s*(${REPORTERS})\\s*(\\d{1,5})\\b`, 'g'),
-    normalise: (m) => `(${m[1]}) ${m[2]} ${m[3]?.toUpperCase()} ${m[4]}`,
+    pattern: new RegExp(
+      `\\(\\s*((?:19|20)\\d{2})\\s*\\)\\s*(\\d{1,3})\\s*(${REPORTERS})\\s*(\\d{1,5})\\b`,
+      'g',
+    ),
+    normalise: (m) => `(${m[1] ?? ''}) ${m[2] ?? ''} ${(m[3] ?? '').toUpperCase()} ${m[4] ?? ''}`,
   },
   {
     // 2005 (3) MLJ 45
-    pattern: new RegExp(`\\b((?:19|20)\\d{2})\\s*\\(\\s*(\\d{1,3})\\s*\\)\\s*(${REPORTERS})\\s*(\\d{1,5})\\b`, 'g'),
-    normalise: (m) => `(${m[1]}) ${m[2]} ${m[3]?.toUpperCase()} ${m[4]}`,
+    pattern: new RegExp(
+      `\\b((?:19|20)\\d{2})\\s*\\(\\s*(\\d{1,3})\\s*\\)\\s*(${REPORTERS})\\s*(\\d{1,5})\\b`,
+      'g',
+    ),
+    normalise: (m) => `(${m[1] ?? ''}) ${m[2] ?? ''} ${(m[3] ?? '').toUpperCase()} ${m[4] ?? ''}`,
   },
   {
     // 2020 SCC OnLine SC 123
     pattern: /\b((?:19|20)\d{2})\s+SCC\s+OnLine\s+([A-Za-z]{2,5})\s+(\d{1,5})\b/g,
-    normalise: (m) => `${m[1]} SCC OnLine ${m[2]?.toUpperCase()} ${m[3]}`,
+    normalise: (m) => `${m[1] ?? ''} SCC OnLine ${(m[2] ?? '').toUpperCase()} ${m[3] ?? ''}`,
   },
   {
     // AIR 2010 SC 1234
     pattern: new RegExp(`\\bAIR\\s*((?:19|20)\\d{2})\\s+(${COURT_ABBR})\\s*(\\d{1,5})\\b`, 'g'),
-    normalise: (m) => `AIR ${m[1]} ${m[2]?.toUpperCase()} ${m[3]}`,
+    normalise: (m) => `AIR ${m[1] ?? ''} ${(m[2] ?? '').toUpperCase()} ${m[3] ?? ''}`,
   },
 ];
 
@@ -65,16 +71,24 @@ export function extractCitations(pages: readonly CitationPage[]): CitationRef[] 
         found.set(normalised, {
           raw: m[0].replace(/\s+/g, ' '),
           normalised,
-          kind: pattern === PARSERS[0]?.pattern || pattern === PARSERS[1]?.pattern ? 'neutral' : 'reporter',
+          kind:
+            pattern === PARSERS[0]?.pattern || pattern === PARSERS[1]?.pattern
+              ? 'neutral'
+              : 'reporter',
           page: page.pageNo,
         });
       }
     }
   }
-  return [...found.values()].sort((a, b) => a.page - b.page || a.normalised.localeCompare(b.normalised));
+  return [...found.values()].sort(
+    (a, b) => a.page - b.page || a.normalised.localeCompare(b.normalised),
+  );
 }
 
 /** True for a normalised neutral citation, the only kind a corpus row carries. */
 export function isNeutralCitation(normalised: string): boolean {
-  return /^\d{4} INSC \d+$/.test(normalised) || /^\d{4}:[A-Z]+(?:-[A-Z]+)?:\d+(?:-(?:DB|FB))?$/.test(normalised);
+  return (
+    /^\d{4} INSC \d+$/.test(normalised) ||
+    /^\d{4}:[A-Z]+(?:-[A-Z]+)?:\d+(?:-(?:DB|FB))?$/.test(normalised)
+  );
 }

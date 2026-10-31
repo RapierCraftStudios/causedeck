@@ -1,7 +1,8 @@
 // How a judgment ended (#894, ADR 0051 §Enrichment): read from the sentences of the decision segment
 // and anchored to the page and sentence it came from. No decision sentence, or one that cannot be
 // found on a page, means `unknown`: an outcome is never guessed without an anchor.
-export type OutcomeValue = 'allowed' | 'partly_allowed' | 'dismissed' | 'remanded' | 'disposed' | 'unknown';
+export type OutcomeValue =
+  'allowed' | 'partly_allowed' | 'dismissed' | 'remanded' | 'disposed' | 'unknown';
 
 export interface OutcomeSegment {
   role: string;
@@ -24,9 +25,14 @@ const QUOTE_MAX = 240;
 const UNKNOWN: OutcomeResult = { outcome: 'unknown', anchor: null };
 
 const SUBJECT = String.raw`(?:appeals?|petitions?|applications?|writ petitions?|revisions?|suits?|complaints?|claims?|slps?|special leave petitions?|orders?|rule)`;
-const PARTLY = /\b(?:partly|partially|in part)\b[^.]{0,80}\b(?:allowed|accepted|decreed)\b|\b(?:allowed|accepted|decreed)\b[^.]{0,40}\b(?:in part|partly|partially|to the extent)\b/;
-const ALLOWED = new RegExp(String.raw`\b${SUBJECT}\b[^.;]{0,80}\b(?:is|are|stands?|be|hereby)\s+(?:hereby\s+)?(?:allowed|accepted|decreed|made absolute)\b`);
-const DISMISSED = new RegExp(String.raw`\b${SUBJECT}\b[^.;]{0,80}\b(?:is|are|stands?|be|hereby)\s+(?:hereby\s+)?(?:dismissed|rejected)\b`);
+const PARTLY =
+  /\b(?:partly|partially|in part)\b[^.]{0,80}\b(?:allowed|accepted|decreed)\b|\b(?:allowed|accepted|decreed)\b[^.]{0,40}\b(?:in part|partly|partially|to the extent)\b/;
+const ALLOWED = new RegExp(
+  String.raw`\b${SUBJECT}\b[^.;]{0,80}\b(?:is|are|stands?|be|hereby)\s+(?:hereby\s+)?(?:allowed|accepted|decreed|made absolute)\b`,
+);
+const DISMISSED = new RegExp(
+  String.raw`\b${SUBJECT}\b[^.;]{0,80}\b(?:is|are|stands?|be|hereby)\s+(?:hereby\s+)?(?:dismissed|rejected)\b`,
+);
 const REMANDED = /\b(?:remanded|remitted|remand the|remit the)\b/;
 const DISPOSED = /\b(?:disposed of|stands disposed|are disposed|is disposed)\b/;
 
@@ -55,9 +61,16 @@ function classify(sentence: string): Exclude<OutcomeValue, 'unknown'> | null {
 const squash = (text: string) => text.replace(/\s+/g, ' ').trim();
 
 /** The page in `from..to` whose text holds the start of `sentence`, or null. */
-function pageOf(sentence: string, pages: readonly OutcomePage[], from: number, to: number): number | null {
+function pageOf(
+  sentence: string,
+  pages: readonly OutcomePage[],
+  from: number,
+  to: number,
+): number | null {
   const head = squash(sentence).slice(0, 60);
-  const page = pages.find((p) => p.pageNo >= from && p.pageNo <= to && squash(p.text).includes(head));
+  const page = pages.find(
+    (p) => p.pageNo >= from && p.pageNo <= to && squash(p.text).includes(head),
+  );
   return page?.pageNo ?? null;
 }
 
@@ -66,7 +79,8 @@ export function extractOutcome(
   segments: readonly OutcomeSegment[],
   pages: readonly OutcomePage[],
 ): OutcomeResult {
-  let best: { outcome: Exclude<OutcomeValue, 'unknown'>; page: number; quote: string } | null = null;
+  let best: { outcome: Exclude<OutcomeValue, 'unknown'>; page: number; quote: string } | null =
+    null;
   for (const segment of segments) {
     if (segment.role !== 'decision') continue;
     for (const raw of segment.text.split(/(?<=[A-Za-z)][.;])\s+|\n+/)) {
@@ -79,5 +93,7 @@ export function extractOutcome(
       best = { outcome, page, quote: sentence.slice(0, QUOTE_MAX) };
     }
   }
-  return best === null ? UNKNOWN : { outcome: best.outcome, anchor: { page: best.page, quote: best.quote } };
+  return best === null
+    ? UNKNOWN
+    : { outcome: best.outcome, anchor: { page: best.page, quote: best.quote } };
 }

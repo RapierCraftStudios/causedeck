@@ -93,7 +93,9 @@ export async function runCorpusEnrich(
       .orderBy(asc(judgmentSegment.ordinal));
     const statutes = extractStatuteRefs(pages);
     const citations = extractCitations(pages).filter((c) => c.normalised !== row.neutralCitation);
-    const neutral = citations.filter((c) => isNeutralCitation(c.normalised)).map((c) => c.normalised);
+    const neutral = citations
+      .filter((c) => isNeutralCitation(c.normalised))
+      .map((c) => c.normalised);
     const resolved = new Map<string, string>();
     if (neutral.length > 0) {
       const cited = await db
@@ -118,7 +120,10 @@ export async function runCorpusEnrich(
       await tx
         .delete(judgmentStatuteRef)
         .where(
-          and(eq(judgmentStatuteRef.judgmentId, row.id), eq(judgmentStatuteRef.rulesetVersion, ruleset)),
+          and(
+            eq(judgmentStatuteRef.judgmentId, row.id),
+            eq(judgmentStatuteRef.rulesetVersion, ruleset),
+          ),
         );
       if (statutes.length > 0)
         await tx.insert(judgmentStatuteRef).values(
@@ -154,7 +159,10 @@ export async function runCorpusEnrich(
         await tx
           .delete(judgmentTag)
           .where(
-            and(eq(judgmentTag.judgmentId, row.id), eq(judgmentTag.modelVersion, deps.resolver.version)),
+            and(
+              eq(judgmentTag.judgmentId, row.id),
+              eq(judgmentTag.modelVersion, deps.resolver.version),
+            ),
           );
         if (tags.length > 0)
           await tx.insert(judgmentTag).values(

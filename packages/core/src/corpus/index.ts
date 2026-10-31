@@ -6,3 +6,4 @@ export {
   type MaskErrorCode,
   type MaskOutcome,
 } from './masking.ts';
+export { findContributedOrders, type FindContributedOrdersQuery } from './contributed.ts';

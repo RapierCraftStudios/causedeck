@@ -36,6 +36,8 @@ export const ObligationInput = z.strictObject({
 export const ObligationPatch = z
   .strictObject({
     description: text.optional(),
+    /** Marks the description as strategy-bearing: hidden from clerks. Owner or advocate only. */
+    strategy: z.boolean().optional(),
     basis: text.nullable().optional(),
     ownerMemberId: uuid.optional(),
     /** Moving the date is a reschedule: it needs `reason`. */

@@ -515,3 +515,55 @@ describe('reminders', () => {
     });
   });
 });
+
+describe('strategy descriptions (R16)', () => {
+  it('hides a strategy description from a clerk; owner and advocate set the flag, nobody else', async () => {
+    await withTestDb(async (tx) => {
+      const w = await world(tx);
+      const member = async (role: 'advocate' | 'clerk' | 'junior') => ({
+        userId: await addMember(tx, w.workspaceId, role),
+        workspaceId: w.workspaceId,
+      });
+      const advocate = await member('advocate');
+      const clerk = await member('clerk');
+      const junior = await member('junior');
+      const secret = await createObligation(
+        deps(tx),
+        w.owner,
+        task(w, { description: 'Settle at 40' }),
+      );
+      const plain = await createObligation(
+        deps(tx),
+        w.owner,
+        task(w, { description: 'File vakalatnama' }),
+      );
+      const description = async (actor: typeof clerk, id: string) =>
+        Object.values(await queryQueue(deps(tx), actor))
+          .flat()
+          .find((r) => r.id === id)?.description;
+
+      await expect(
+        updateObligation(deps(tx), clerk, secret.id, { strategy: true }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      await expect(
+        updateObligation(deps(tx), junior, secret.id, { strategy: true }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      await updateObligation(deps(tx), w.owner, secret.id, { strategy: true });
+      expect(await description(w.owner, secret.id)).toBe('Settle at 40');
+      expect(await description(advocate, secret.id)).toBe('Settle at 40');
+      // The clerk still sees the task, but not the note; other descriptions are intact.
+      expect(await description(clerk, secret.id)).toBe('');
+      expect(await description(clerk, plain.id)).toBe('File vakalatnama');
+      await updateObligation(deps(tx), advocate, secret.id, { strategy: false });
+      expect(await description(clerk, secret.id)).toBe('Settle at 40');
+      await updateObligation(deps(tx), advocate, secret.id, { strategy: true });
+
+      // A clerk cannot edit a strategy obligation, but still tracks the others.
+      await expect(
+        updateObligation(deps(tx), clerk, secret.id, { basis: 'x' }),
+      ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+      await updateObligation(deps(tx), clerk, plain.id, { basis: 'x' });
+      await createObligation(deps(tx), clerk, task(w));
+    });
+  });
+});

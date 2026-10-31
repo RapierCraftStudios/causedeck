@@ -40,9 +40,10 @@ The obligation service (#67) tracks what a court or a person requires an advocat
 ## Consequences
 
 - Clerk-level writes (`obligation.track`) cover tasks, defects and copies; other sources need `obligation.write`.
-- Strategy-bearing descriptions hidden from clerks (a column-scoped view) are not delivered: the table has no strategy flag yet.
+- Strategy-bearing descriptions are hidden from clerks (#724, R16). `obligation.strategy` is set by an owner or advocate through `updateObligation`. The clerk role has no privilege on `obligation`; it reads `obligation_clerk_v`, a `security_barrier` view of every column with `description` NULL on strategy rows (hand-written instead of `app_clerk_view()`, which drops a column for every row). `queryQueue` reads the view in a clerk-role scope for clerks, and a clerk cannot edit a strategy obligation (the task shows in the queue with an empty description). Clerk writes of other obligations still run in the app role.
+- Other modules that read `obligation.description` directly (briefs, calendar, handover, what-changed, timeline) are not routed through the view yet: they must not run in the clerk role until they are.
 
 ## Revisit when
 
 - Members need their own reminder lead time.
-- A strategy-note flag exists on obligations.
+- Another read path that shows obligation descriptions to clerks is added: route it through `obligation_clerk_v` too.

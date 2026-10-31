@@ -270,7 +270,7 @@ describe('research search (#896)', () => {
   it('returns redacted passages with court, citation and the official link, and no party name', async () => {
     const judgmentId = await seedCorpus();
     const { status, body } = await get(
-      '/v1/research/search?q=quokkafish%20surgery%20consent',
+      '/v1/research/search?q=quokkafish%20written%20consent%20infection',
       keyA,
     );
     expect(status).toBe(200);

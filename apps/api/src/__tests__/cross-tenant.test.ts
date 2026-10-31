@@ -39,6 +39,8 @@ const ROUTES: Record<string, string> = {
   'GET /v1/orders':
     'own case or shared non-personal orders; another workspace’s case gives none (public-api.test.ts)',
   'GET /v1/notices': 'global non-personal notices, no tenant fields (public-api.test.ts)',
+  'GET /v1/research/search':
+    'global anonymised corpus only; a key searches as its own workspace and spends only its usage (public-api.test.ts)',
   'GET /v1/workspaces/:workspaceId/matters/:matterId/bench-card':
     'flag-gated 404 when off; workspace membership checked; reads under the workspace scope (bench-card.test.ts)',
   'POST /v1/webhooks/razorpay':

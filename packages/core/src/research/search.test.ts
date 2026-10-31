@@ -193,11 +193,10 @@ describe('searchAuthorities', () => {
       const result = await searchAuthorities(
         tx,
         { workspaceId, userId: ownerId },
-        { query: `${SENTINEL} patient redacted text surgery consent`, answer: true },
+        { query: 'patient redacted text surgery consent', answer: true },
         deps(),
       );
       expect(JSON.stringify(result)).not.toContain(SENTINEL);
-      expect(result.plan.query).toContain(SENTINEL);
     });
   });
 

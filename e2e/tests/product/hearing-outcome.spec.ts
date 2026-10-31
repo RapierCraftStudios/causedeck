@@ -145,6 +145,10 @@ test.describe('hearing outcome', () => {
     await page.waitForFunction(async () =>
       (await indexedDB.databases()).some((entry) => entry.name === 'causedeck-outcome-confirms'),
     );
+    // The shell's lazy overlays and the toaster are `next/dynamic` chunks that start loading after
+    // hydration. A chunk cut off by going offline throws into the route error boundary ("Something
+    // went wrong"), which replaces the form (seen in the run-41245196784 trace), so let them land.
+    await page.waitForLoadState('networkidle');
     await context.setOffline(true);
     // Let the page observe the offline event: the switch re-renders the form and detaches the
     // buttons mid-click otherwise (#995).

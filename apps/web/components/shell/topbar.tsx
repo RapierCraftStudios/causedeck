@@ -10,6 +10,7 @@ import { Bell } from '../notifications/bell.tsx';
 import { OutboxIndicator } from '../pwa/outbox-indicator.tsx';
 
 import { Breadcrumbs } from './breadcrumbs.tsx';
+import { OverlayBoundary } from './overlay-boundary.tsx';
 import { useCommandPalette } from './use-command-palette.ts';
 import { UserMenu } from './user-menu.tsx';
 import { WorkspaceSwitcher } from './workspace-switcher.tsx';
@@ -75,7 +76,9 @@ export function Topbar({ context, onSearch }: TopbarProps) {
         />
       ) : null}
       <div className="fixed inset-x-4 bottom-20 z-50 flex flex-col gap-2 md:inset-x-auto md:right-6 md:bottom-6 md:w-96">
-        <ShellOverlays viewerId={context.user.id} workspaceId={context.workspace.id} />
+        <OverlayBoundary>
+          <ShellOverlays viewerId={context.user.id} workspaceId={context.workspace.id} />
+        </OverlayBoundary>
       </div>
     </header>
   );

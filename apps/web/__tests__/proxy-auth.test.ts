@@ -141,9 +141,7 @@ describe('proxy status link page (#88)', () => {
 
 describe('proxy signup channel cookie (#703)', () => {
   const channelCookie = (path: string, method = 'GET') =>
-    proxy(
-      new NextRequest(`http://localhost:3000${path}`, { method }),
-    ).cookies.get('cd_channel');
+    proxy(new NextRequest(`http://localhost:3000${path}`, { method })).cookies.get('cd_channel');
 
   it('sets a short-lived httpOnly lax cookie for a known channel on /sign-in', () => {
     const cookie = channelCookie('/sign-in?channel=education&module=limitation-basics');
@@ -154,7 +152,13 @@ describe('proxy signup channel cookie (#703)', () => {
   });
 
   it('ignores unknown, empty and repeated-garbage channels', () => {
-    for (const q of ['channel=nope', 'channel=', 'channel=Education', 'channel=education%00', 'x=1']) {
+    for (const q of [
+      'channel=nope',
+      'channel=',
+      'channel=Education',
+      'channel=education%00',
+      'x=1',
+    ]) {
       expect(channelCookie(`/sign-in?${q}`)).toBeUndefined();
     }
   });

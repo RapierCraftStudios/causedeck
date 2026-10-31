@@ -673,6 +673,7 @@
       "nav": {
         "profile": "Profile",
         "security": "Security",
+        "learn": "Practice school",
         "danger": "Danger zone"
       },
       "loading": "Loading your account",
@@ -709,6 +710,34 @@
       "security": {
         "title": "Security",
         "description": "Passkeys, two-factor authentication, sessions and connected accounts."
+      },
+      "learn": {
+        "title": "Practice school",
+        "description": "Free lessons for juniors and law students. Mark a module done to keep your place; this stays with your account in every workspace.",
+        "progress": "{done} of {total} modules done",
+        "listLabel": "Practice school modules",
+        "note": "Lessons are published on the CauseDeck site once a practising advocate has reviewed and dated them. You can mark a module done now and change it any time.",
+        "status": {
+          "done": "Done",
+          "pending": "Not done"
+        },
+        "markDone": "Mark as done",
+        "markUndone": "Mark as not done",
+        "markDoneLabel": "Mark {title} as done",
+        "markUndoneLabel": "Mark {title} as not done",
+        "toast": {
+          "done": "Marked as done.",
+          "undone": "Marked as not done.",
+          "failed": "Could not save your progress. Try again."
+        },
+        "modules": {
+          "court-day-practice": "Court-day practice",
+          "reading-cause-lists": "Reading cause lists",
+          "listings-and-mentions": "Listings and mentions",
+          "filing-and-defect-cures": "Filing and curing defects",
+          "limitation-basics": "Limitation basics",
+          "using-the-os": "Using CauseDeck as your practice desk"
+        }
       },
       "passkeys": {
         "title": "Passkeys",

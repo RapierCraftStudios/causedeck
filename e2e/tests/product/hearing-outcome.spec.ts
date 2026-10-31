@@ -140,6 +140,11 @@ test.describe('hearing outcome', () => {
   test('offline: Confirm queues on the device', async ({ page, asUser, db, context }) => {
     const { hearingId } = await seedHearing(db.name, { proposals: false });
     await openOutcome(page, asUser, hearingId);
+    // The sealed queue loads lazily (Dexie) once the form mounts online (#730). Wait until its
+    // database exists, so going offline cannot cut the chunk fetch short.
+    await page.waitForFunction(async () =>
+      (await indexedDB.databases()).some((entry) => entry.name === 'causedeck-outcome-confirms'),
+    );
     await context.setOffline(true);
     // Let the page observe the offline event: the switch re-renders the form and detaches the
     // buttons mid-click otherwise (#995).

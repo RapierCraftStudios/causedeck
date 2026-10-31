@@ -114,8 +114,8 @@ describe('embedDueSegments', () => {
     const store = memoryStore(rows);
     const { embedder } = embedderFor();
     const failing: SegmentEmbedder = {
-      modelVersion: embedder.modelVersion,
-      embed: vi.fn().mockRejectedValueOnce(new Error('throttled')),
+      modelVersion: () => embedder.modelVersion(),
+      embed: () => Promise.reject(new Error('throttled')),
     };
     await expect(embedDueSegments(store, failing, { budgetPaise: 1e9 })).rejects.toThrow();
     expect(rows.every((r) => r.embedding === null)).toBe(true);

@@ -999,6 +999,13 @@
     {
       "idx": 142,
       "version": "7",
+      "when": 1793453494159,
+      "tag": "20261031133134_obligation_strategy",
+      "breakpoints": true
+    },
+    {
+      "idx": 143,
+      "version": "7",
       "when": 1793461971260,
       "tag": "20261031155251_activation_counts",
       "breakpoints": true

@@ -23,9 +23,10 @@ const JUDGE = /judge/i;
 const ALLOWED_COLUMNS = ['bench.judges'];
 /**
  * Views the schema may declare, each reviewed for judges: `adapterHealthSummary` (#372) counts parse
- * runs per court adapter and version and reads only `adapter_parse_run`, which has no judge data.
+ * runs per court adapter and version and reads only `adapter_parse_run`, which has no judge data;
+ * `obligationClerkView` (#724) is `obligation` with strategy descriptions blanked, no judge data.
  */
-const ALLOWED_VIEWS = ['adapterHealthSummary'];
+const ALLOWED_VIEWS = ['adapterHealthSummary', 'obligationClerkView'];
 
 /** The roster tables (#384): an entry names a bench; judges live only in `bench.judges`. */
 const ROSTER_TABLES = [benchRoster, benchRosterEntry, benchChangeAlert];

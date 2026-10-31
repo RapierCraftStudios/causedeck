@@ -10,12 +10,18 @@
 //      any network call, then the worker answers 303 -> `/share-target?batch=<id>`.
 // It also runs the outbox on Background Sync, asks a page to prefetch on its own sync tag (#65),
 // applies updates only when the page asks (the court-day update policy lives in the page), and
-// loads the push handlers (#23).
+// loads the push handlers (#23). A page can also hand it local scheduled reminders (#721), used
+// only where the browser supports notification triggers.
 import { CacheFirst, ExpirationPlugin, NetworkFirst, NetworkOnly, Serwist } from 'serwist';
 import type { PrecacheEntry, RuntimeCaching } from 'serwist';
 
 import { isStaticAsset, isTenantRequest, SHARE_PATH } from '../lib/pwa/cache-policy.ts';
 import { courtDayFallback, PREFETCH_SYNC_TAG, requestPrefetch } from '../sw/court-day-cache.ts';
+import {
+  parseReminders,
+  SCHEDULE_LOCAL_REMINDERS,
+  scheduleLocalReminders,
+} from '../sw/local-reminders.ts';
 import { getDeviceKey } from '../lib/pwa/outbox/crypto.ts';
 import { dexieKeyStore, dexieOutboxStore } from '../lib/pwa/outbox/db.ts';
 import { enqueueFiles, notifyOutboxChanged, OutboxCapError } from '../lib/pwa/outbox/queue.ts';
@@ -28,6 +34,7 @@ interface WorkerScope {
   clients: Parameters<typeof requestPrefetch>[0];
   importScripts(...urls: string[]): void;
   skipWaiting(): Promise<void>;
+  registration: Parameters<typeof scheduleLocalReminders>[0];
   addEventListener(type: string, listener: (event: never) => void): void;
 }
 
@@ -41,6 +48,7 @@ interface SyncLike extends Event {
 }
 interface MessageLike extends Event {
   data: unknown;
+  waitUntil(promise: Promise<unknown>): void;
 }
 
 const worker = globalThis as unknown as WorkerScope;
@@ -120,8 +128,13 @@ worker.addEventListener('sync', (event: SyncLike) => {
 });
 
 worker.addEventListener('message', (event: MessageLike) => {
-  const data = event.data as { type?: unknown } | null;
+  const data = event.data as { type?: unknown; reminders?: unknown } | null;
   if (data?.type === 'SKIP_WAITING') void worker.skipWaiting();
+  if (data?.type === SCHEDULE_LOCAL_REMINDERS) {
+    event.waitUntil(
+      scheduleLocalReminders(worker.registration, parseReminders(data.reminders)).catch(() => 0),
+    );
+  }
 });
 
 serwist.addEventListeners();

@@ -33,7 +33,7 @@ import type { certifiedCopy, defect, obligationEvent } from '../../schema/obliga
 import type { outwardDraft, outwardDraftVersion } from '../../schema/outward-draft.ts';
 import type { portfolio, portfolioCase } from '../../schema/portfolio.ts';
 import type { loadPulse, preparednessRating } from '../../schema/proof-of-value.ts';
-import type { proposal } from '../../schema/automation.ts';
+import type { activity, proposal } from '../../schema/automation.ts';
 import type { researchNote } from '../../schema/research-note.ts';
 import type { statusLink } from '../../schema/status-link.ts';
 import type { briefState } from '../../schema/brief.ts';
@@ -87,6 +87,7 @@ export interface DemoModuleRows {
   draftVersions: Insert<typeof draftVersion>[];
   captures: Insert<typeof capture>[];
   proposals: Insert<typeof proposal>[];
+  activities: Insert<typeof activity>[];
   notifications: Insert<typeof notification>[];
   issueTags: Insert<typeof matterIssueTag>[];
   researchNotes: Insert<typeof researchNote>[];
@@ -196,6 +197,7 @@ export function demoModuleRows(
     draftVersions: [],
     captures: [],
     proposals: [],
+    activities: [],
     notifications: [],
     issueTags: [],
     researchNotes: [],
@@ -1053,6 +1055,62 @@ export function demoModuleRows(
         createdAt: at,
       });
     }
+  });
+
+  // Activity feed: automatic changes in each state (undoable, confirmed, by the person). The
+  // demo makes no AI call, so every row is marked synthetic and carries no model.
+  const undoWindow = 7 * 86_400_000;
+  (
+    [
+      [
+        'auto_applied',
+        'L1',
+        'system',
+        'Added the next date from the cause list (synthetic).',
+        false,
+      ],
+      [
+        'auto_applied',
+        'L2',
+        'system',
+        'Linked an uploaded order to its matter (synthetic).',
+        false,
+      ],
+      [
+        'auto_applied',
+        'L2',
+        'system',
+        'Filed a hearing note against the matter (synthetic).',
+        true,
+      ],
+      [
+        'manual_edit',
+        'L1',
+        'user',
+        'Corrected a next date after reading the order (synthetic).',
+        false,
+      ],
+    ] as const
+  ).forEach(([kind, level, actor, summary, confirmed], k) => {
+    const createdAt = new Date(at.getTime() - (k + 1) * 3_600_000);
+    rows.activities.push({
+      id: did(ID_KIND.activity, k + 1),
+      workspaceId: ws.id,
+      proposalId: k === 1 ? did(ID_KIND.proposal, 1) : null,
+      kind,
+      level,
+      actor,
+      actorUserId: actor === 'user' ? advocate.id : null,
+      summary,
+      entityRefs: { matterId: matterAt(k).id },
+      undoPayload: confirmed ? null : { synthetic: true, matterId: matterAt(k).id },
+      undoExpiresAt: new Date(createdAt.getTime() + undoWindow),
+      confirmedAt: confirmed ? at : null,
+      confirmedBy: confirmed ? advocate.id : null,
+      confidence: actor === 'system' ? '0.900' : null,
+      source: { synthetic: true },
+      createdAt,
+    });
   });
 
   // In-app notifications (the bell): the demo never sends email, push or WhatsApp.

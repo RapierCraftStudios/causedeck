@@ -259,6 +259,7 @@ export {
   hearing,
   listing,
   obligation,
+  obligationClerkView,
   order,
   task,
   type ObligationClosedReasonType,

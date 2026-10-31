@@ -995,6 +995,13 @@
       "when": 1793447462538,
       "tag": "20261031115102_learn_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 142,
+      "version": "7",
+      "when": 1793461971260,
+      "tag": "20261031155251_activation_counts",
+      "breakpoints": true
     }
   ]
 }

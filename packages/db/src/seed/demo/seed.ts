@@ -34,7 +34,7 @@ import { certifiedCopy, defect, obligationEvent } from '../../schema/obligation-
 import { outwardDraft, outwardDraftVersion } from '../../schema/outward-draft.ts';
 import { portfolio, portfolioCase } from '../../schema/portfolio.ts';
 import { loadPulse, preparednessRating } from '../../schema/proof-of-value.ts';
-import { proposal } from '../../schema/automation.ts';
+import { activity, proposal } from '../../schema/automation.ts';
 import { researchNote } from '../../schema/research-note.ts';
 import { statusLink } from '../../schema/status-link.ts';
 import type { SeedDb } from '../index.ts';
@@ -84,6 +84,7 @@ async function insertModules(tx: Transaction, m: DemoModuleRows): Promise<void> 
   await put(draftVersion, m.draftVersions);
   await put(capture, m.captures);
   await put(proposal, m.proposals);
+  await put(activity, m.activities);
   await put(notification, m.notifications);
   await put(matterIssueTag, m.issueTags);
   await put(researchNote, m.researchNotes);

@@ -523,6 +523,7 @@ describe('demo seed: every product module (#985)', () => {
     draft_version: 3,
     capture: 6,
     proposal: 3,
+    activity: 4,
     notification: 3,
     matter_issue_tag: 4,
     research_note: 2,

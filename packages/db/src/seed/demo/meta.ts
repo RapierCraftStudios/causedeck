@@ -12,7 +12,7 @@ import { demoModuleRows } from './modules.ts';
 import { seedInstant } from './shared.ts';
 import { DEMO_WORKSPACES, type DemoWorkspaceKey } from './workspaces.ts';
 
-export const DEMO_VERSION = '2026.10.2';
+export const DEMO_VERSION = '2026.10.3';
 
 /** The day the content hash is computed for; the rows of any other day differ only by dates. */
 export const DEMO_HASH_DAY = '2026-01-15';

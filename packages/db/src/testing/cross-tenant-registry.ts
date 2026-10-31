@@ -1319,6 +1319,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // workspace_id, no RLS), whose rows carry no contributor; the ledger linking them is tenant data
   findContributed:
     'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): public text only, no contributor field; the tenant link is `contribution_ledger`',
+  // corpus read path over contributed order copies (#594): the same global table and result as `findContributed`
+  findContributedOrders:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): public order text only, no contributor field; the tenant link is `contribution_ledger`',
+  // contributed cause-list copy parser for the list watcher (#594): text in, rows out, no database
+  createKhcTextListParser: 'pure',
   CONTRIBUTABLE_DOCUMENT_KINDS: 'constant',
   isContributableKind: 'pure',
   ContributionRefused: 'error class',

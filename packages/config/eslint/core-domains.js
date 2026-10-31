@@ -19,8 +19,16 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   shares: Object.freeze(['briefs', 'matter-graph', 'activation', 'workspaces']),
   matters: Object.freeze(['workspaces', 'audit']),
   // Court layer (#34): forum catalogue reads and custom forums; role settings through workspaces.
-  // The KHC cause-list watch (#482) stages proposals through automation and the import matcher.
-  court: Object.freeze(['workspaces', 'automation', 'import', 'matter-graph', 'sources']),
+  // The KHC cause-list watch (#482) stages proposals through automation and the import matcher; while
+  // its source is uncleared it reads contributed copies through network (#594).
+  court: Object.freeze([
+    'workspaces',
+    'automation',
+    'import',
+    'matter-graph',
+    'sources',
+    'network',
+  ]),
   // Court-day display-board tracking (#493): the board source's clearance through sources. The court
   // day (#58) reads roles through workspaces, audits the hall marker through audit and wraps the
   // canonical next-date proposal and conflict view of matter-graph (imports `index.ts` only).
@@ -127,7 +135,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   citations: Object.freeze([]),
   // The judgment corpus masking service (#892, D-053): applying a mask request records
   // `corpus.mask_applied` through audit; the redaction itself lives in `@causedeck/intelligence`.
-  corpus: Object.freeze(['audit']),
+  // Contributed order copies are read through network when no cleared fetch exists (#594).
+  corpus: Object.freeze(['audit', 'network']),
   // The court document network (#485, D-048): contributions need a cleared source through sources and
   // record their events through audit; opt-in, matter and document reads go to the tables directly.
   network: Object.freeze(['audit', 'sources']),

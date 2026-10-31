@@ -5,7 +5,7 @@
 // keeps subscriptions in memory, so before each operation the database row is adopted into it
 // (`adoptSubscription`, a no-op once known): subscriptions seeded straight into the database (the
 // e2e seed's `sub_e2e_<ws>`) become actionable. Razorpay already knows every subscription.
-import type { SubscriptionRow } from '@causedeck/core/billing';
+import type { CompleteMandate, SubscriptionRow } from '@causedeck/core/billing';
 import type {
   BillingProvider,
   MockBillingProvider,
@@ -58,4 +58,30 @@ export async function billingServiceFor(row: SubscriptionRow): Promise<BillingSe
     });
   }
   return createBillingService({ provider: current });
+}
+
+/**
+ * What the owner flows need beyond the service: the provider name stored on the row, and, for the
+ * mock only, the step that completes the UPI Autopay mandate at once (staging has no payer app).
+ * A real provider returns `completeMandate: null`: the owner follows the hosted link and the
+ * webhook reports the result.
+ */
+export async function billingFlowFor(row?: SubscriptionRow): Promise<{
+  service: BillingService;
+  providerName: string;
+  completeMandate: CompleteMandate | null;
+}> {
+  const [current, { createBillingService }] = await Promise.all([
+    provider(),
+    import('@causedeck/billing/service'),
+  ]);
+  if (row) await billingServiceFor(row);
+  return {
+    service: createBillingService({ provider: current }),
+    providerName: current.name,
+    completeMandate:
+      current.name === 'mock'
+        ? (id: string) => (current as MockBillingProvider).confirmPaymentMethod(id)
+        : null,
+  };
 }

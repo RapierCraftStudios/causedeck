@@ -242,6 +242,14 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'An owner changed the plan or seats, or cancelled or resumed the subscription',
   },
+  'billing.checkout_started': {
+    security: true,
+    description: 'An owner started a paid subscription (upgrade from Junior)',
+  },
+  'billing.payment_method_updated': {
+    security: true,
+    description: "An owner restarted the subscription's UPI Autopay mandate",
+  },
   'billing.gstin_updated': {
     security: true,
     description: "An owner saved or cleared the workspace's GSTIN",

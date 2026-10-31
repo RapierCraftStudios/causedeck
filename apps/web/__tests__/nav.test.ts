@@ -99,7 +99,8 @@ describe('flag-gated items', () => {
     expect(visible).not.toContain('invoices');
     expect(visible).not.toContain('limitation');
     expect(visible).not.toContain('insights');
-    expect(visible).toHaveLength(SPIKE_ROUTES.length - 3 + 1);
+    // The spike routes less the three flagged ones, plus the unflagged `import` and `research`.
+    expect(visible).toHaveLength(SPIKE_ROUTES.length - 3 + 2);
   });
 
   it('asks the injected isEnabled about each flag and shows only enabled ones', () => {

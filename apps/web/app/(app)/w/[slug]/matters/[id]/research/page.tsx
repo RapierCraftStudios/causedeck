@@ -13,12 +13,14 @@ import { can } from '../../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../../lib/workspace-loader.ts';
 
 import { LinkOutMenu } from '../../../../../../../components/research/link-out-menu.tsx';
+import { FindAuthoritiesButton } from '../../../../../../../components/research/find-authorities-button.tsx';
 import { NotesList } from '../../../../../../../components/research/notes-list.tsx';
 
 import {
   addAuthorityAction,
   createNoteAction,
   deleteNoteAction,
+  findAuthoritiesAction,
   removeAuthorityAction,
   setAuthorityPinnedAction,
   updateNoteAction,
@@ -97,6 +99,12 @@ export default async function MatterResearchPage({ params }: ResearchPageProps) 
           status: tag.status,
         }))}
         canWrite={can(context.role, 'matter.write')}
+      />
+      <FindAuthoritiesButton
+        workspaceId={context.workspace.id}
+        workspaceSlug={slug}
+        matterId={id}
+        action={findAuthoritiesAction}
       />
       <LinkOutMenu links={uniqueLinks} />
       <div className="flex flex-col gap-2">

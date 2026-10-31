@@ -22,6 +22,7 @@ export const API_KEY_SCOPES = [
   'causelists:read',
   'orders:read',
   'notices:read',
+  'research:read',
   'webhooks:write',
 ] as const;
 

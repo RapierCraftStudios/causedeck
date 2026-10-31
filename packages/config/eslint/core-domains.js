@@ -132,8 +132,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // record their events through audit; opt-in, matter and document reads go to the tables directly.
   network: Object.freeze(['audit', 'sources']),
   // Judgment alerts (#497, D-048): member roles and role settings through workspaces; an alert is
-  // shown only if `verifyCitation` resolves its judgment (D-004), through citations.
-  research: Object.freeze(['workspaces', 'citations']),
+  // shown only if `verifyCitation` resolves its judgment (D-004), through citations. The fact-pattern
+  // search (#896) audits each search through audit, reads the plan's entitlements through billing,
+  // meters `research.searches` through usage and runs its platform-scope models through ai.
+  research: Object.freeze(['workspaces', 'citations', 'audit', 'billing', 'usage', 'ai']),
   // Drafting (#768): roles through workspaces, facts through the matter-graph index, `draft.exported`
   // through audit and the narrative gateway through ai's index.
   drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai']),

@@ -5509,6 +5509,116 @@ export type Messages = {
       pinned: string;
       pinHint: string;
     };
+    search: {
+      metaTitle: string;
+      title: string;
+      intro: string;
+      denied: string;
+      queryLabel: string;
+      queryPlaceholder: string;
+      submit: string;
+      searching: string;
+      error: string;
+      usage: string;
+      usageUnlimited: string;
+      filters: {
+        heading: string;
+        hint: string;
+        none: string;
+        remove: string;
+        statute: string;
+        alsoIn: string;
+        inForce: string;
+        level: string;
+        outcome: string;
+        court: string;
+        from: string;
+        to: string;
+        addHeading: string;
+        choose: string;
+        subjectLabel: string;
+        statuteLabel: string;
+        sectionLabel: string;
+        courtLabel: string;
+        levelLabel: string;
+        outcomeLabel: string;
+        fromLabel: string;
+        toLabel: string;
+        add: string;
+      };
+      levels: {
+        supreme_court: string;
+        high_court: string;
+        other: string;
+      };
+      outcomes: {
+        allowed: string;
+        partly_allowed: string;
+        dismissed: string;
+        remanded: string;
+        disposed: string;
+        unknown: string;
+      };
+      roles: {
+        header: string;
+        facts: string;
+        issues: string;
+        arguments: string;
+        reasoning: string;
+        decision: string;
+        other: string;
+      };
+      results: {
+        heading: string;
+        count: string;
+        empty: string;
+        maskedTitle: string;
+        citedBy: string;
+        notCited: string;
+        page: string;
+        pages: string;
+        openPdf: string;
+        decided: string;
+        outcome: string;
+      };
+      answer: {
+        button: string;
+        working: string;
+        heading: string;
+        none: string;
+        verified: string;
+        unsupported: string;
+        failed: string;
+        hint: string;
+      };
+      matter: {
+        button: string;
+        hint: string;
+        failed: string;
+      };
+      subjects: {
+        medical_negligence: string;
+        consumer: string;
+        rent_control: string;
+        motor_accident_claims: string;
+        ndps: string;
+        bail: string;
+        arbitration: string;
+        ibc: string;
+        service: string;
+        criminal_appeal: string;
+        cheque_dishonour: string;
+        land_acquisition: string;
+        family_matrimonial: string;
+        property_title: string;
+        tax: string;
+        labour_industrial: string;
+        constitutional_writ: string;
+        company: string;
+        intellectual_property: string;
+        environment: string;
+      };
+    };
   };
   settingsResearch: {
     title: string;

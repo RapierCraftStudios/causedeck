@@ -25,6 +25,7 @@ describe('committed openapi/v1.json', () => {
         '/v1/causelists',
         '/v1/orders',
         '/v1/notices',
+        '/v1/research/search',
         '/v1/webhook-endpoints',
       ]),
     );

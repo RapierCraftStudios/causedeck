@@ -17,6 +17,8 @@ export const TASK_IDS = [
   'tag_news',
   'tag_notice',
   'tag_judgment_subject',
+  'plan_research_query',
+  'answer_research_query',
   'extract_issue_tags',
   'draft_narrative',
   'outward_update',

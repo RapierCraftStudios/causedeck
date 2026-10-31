@@ -98,3 +98,19 @@ export function embedCostPaise(model: string, inputTokens: number): number {
   const total = (inputTokens * (EMBED_PRICES[model] ?? 0)) / 1_000_000;
   return Math.ceil(Math.round(total * 1e6) / 1e6);
 }
+
+/**
+ * Rerank models: paise per billed search at the planning rate of INR 84 per USD (#896). Cohere
+ * Rerank 3.5 on Bedrock is USD 2.00 per 1,000 searches (about 17 paise). The self-hosted
+ * bge-reranker has no per-call charge, so it meters at 0.
+ */
+export const RERANK_PRICES: Readonly<Record<string, number>> = {
+  'cohere.rerank-v3-5:0': 17,
+  'bge-reranker-v2-m3': 0,
+  'mock-rerank': 0,
+};
+
+/** Whole paise for `searches` billed searches of a rerank model; an unknown model costs 0. */
+export function rerankCostPaise(model: string, searches: number): number {
+  return searches * (RERANK_PRICES[model] ?? 0);
+}

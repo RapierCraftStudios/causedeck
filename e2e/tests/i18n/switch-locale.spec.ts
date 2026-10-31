@@ -201,8 +201,11 @@ test.describe('locale switcher accessibility', { tag: '@a11y' }, () => {
       await page.keyboard.press('Enter');
       const menu = page.getByRole('menu');
       await expect(menu).toBeVisible();
-      // Keyboard: End reaches the last enabled item (ಕನ್ನಡ; Sign out is disabled), ArrowUp தமிழ்.
+      // Keyboard: End reaches the last item (Sign out, enabled since #1076), ArrowUp ಕನ್ನಡ,
+      // ArrowUp again தமிழ்.
       await page.keyboard.press('End');
+      await expect(menu.getByRole('menuitem', { name: 'Sign out' })).toBeFocused();
+      await page.keyboard.press('ArrowUp');
       await expect(menu.locator('[data-locale-option="kn"]')).toBeFocused();
       await page.keyboard.press('ArrowUp');
       const tamil = menu.locator('[data-locale-option="ta"]');

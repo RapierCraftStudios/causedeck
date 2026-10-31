@@ -163,5 +163,9 @@ export function browserOutcomeConfirmStores(): Promise<OutcomeConfirmStores> {
     };
     return { store, keys: dexieKeyStore() };
   })();
+  // A failed load (the chunk could not be fetched) must not stick: the next call tries again.
+  stores.catch(() => {
+    stores = undefined;
+  });
   return stores;
 }

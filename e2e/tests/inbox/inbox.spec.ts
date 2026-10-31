@@ -88,18 +88,26 @@ test.describe('capture inbox', () => {
 
   test('a confirmed proposal shows in the activity feed (#49)', async ({ page, asUser, db }) => {
     await seedInbox(db.name, { tasks: 1 });
+    // The task handler writes the one-line summary `Added a task` (not the proposal title), and the
+    // worker database may already hold such rows from earlier specs: count them before and after.
+    const added = page.locator('[data-slot="activity-item"]').filter({
+      has: page.locator('[data-slot="activity-summary"]', { hasText: /^Added a task$/ }),
+    });
     await openInbox(page, asUser);
+    await page.goto('/w/chennai-solo/activity');
+    await expect(page.getByRole('heading', { level: 1, name: 'Activity' })).toBeVisible();
+    await expect(page.locator('[data-slot="activity-skeleton"]')).toHaveCount(0);
+    const before = await added.count();
+    await page.goBack();
+    await expect(page.getByRole('heading', { level: 1, name: 'Inbox' })).toBeVisible();
     const card = page.locator('[data-proposal-id]').first();
     await card.focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
     await page.goto('/w/chennai-solo/activity');
     await expect(page.getByRole('heading', { level: 1, name: 'Activity' })).toBeVisible();
-    await expect(
-      page
-        .locator('[data-slot="activity-item"]')
-        .filter({ hasText: /File the counter 1 \(fictional\)/ }),
-    ).toHaveCount(1);
+    await expect(page.locator('[data-slot="activity-skeleton"]')).toHaveCount(0);
+    await expect(added).toHaveCount(before + 1);
   });
 
   test('j and k move between cards; 1, 2 and 3 switch sections; ? opens the sheet', async ({

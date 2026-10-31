@@ -168,7 +168,10 @@ test.describe('billing page', () => {
   });
 
   test('stays readable offline', async ({ page, asUser, db }) => {
+    // The mandate button only shows when the mandate needs attention (failed or pending), so the
+    // grace state is the one where it exists offline too.
     await seedBilling(db.name, 'chennai-solo');
+    await setGrace(db.name, 'chennai-solo', 3);
     await openBilling(page, asUser);
     await page.context().setOffline(true);
     // Two notices: the shell's saved-data banner and the billing page's own "changes unavailable".
@@ -176,7 +179,11 @@ test.describe('billing page', () => {
     await expect(page.getByText(/You are offline\. Billing changes are unavailable/)).toBeVisible();
     await expect(page.locator('[data-slot="billing-plan"]')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Change plan' })).toBeDisabled();
-    await expect(page.getByRole('button', { name: 'Update payment method' })).toBeDisabled();
+    await expect(
+      page
+        .locator('[data-slot="billing-banner"]')
+        .getByRole('button', { name: 'Update payment method' }),
+    ).toBeDisabled();
     await page.context().setOffline(false);
   });
 });

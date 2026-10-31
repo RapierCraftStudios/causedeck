@@ -314,10 +314,21 @@ describe('numerals', () => {
 });
 
 describe('focus, selection and scrollbars', () => {
-  it('draws a 2px ring in --ring with a 2px offset on :focus-visible', () => {
-    expect(declared(base, ':focus-visible', 'outline')).toBe('2px solid var(--ring)');
-    expect(declared(base, ':focus-visible', 'outline-offset')).toBe('2px');
-    expect(declared(base, ':focus:not(:focus-visible)', 'outline')).toBe('none');
+  it('draws a 2px ring in --ring with a 2px offset on :focus-visible, in @layer base', () => {
+    // In the base layer, so component utilities (e.g. `-outline-offset-2`) win over it.
+    const [layer] = atRules(base, 'layer', 'base');
+    if (!layer) throw new Error('base.css has no @layer base');
+    const [ring] = rulesIn(layer, ':focus-visible');
+    expect(ring?.nodes.map((n) => (n.type === 'decl' ? `${n.prop}: ${n.value}` : ''))).toEqual([
+      'outline: 2px solid var(--ring)',
+      'outline-offset: 2px',
+    ]);
+    const [quiet] = rulesIn(layer, ':focus:not(:focus-visible)');
+    expect(quiet?.nodes.map((n) => (n.type === 'decl' ? `${n.prop}: ${n.value}` : ''))).toEqual([
+      'outline: none',
+    ]);
+    // Nothing unlayered sets the ring: it would beat every utility again.
+    expect(declared(base, ':focus-visible', 'outline-offset')).toBeUndefined();
   });
 
   it('never removes the focus-visible ring anywhere', () => {

@@ -1,0 +1,246 @@
+{
+  "adapterId": "in.ka.karnataka-hc.bengaluru",
+  "adapterVersion": "1.1.0",
+  "forumCode": "in.ka.karnataka-hc.bengaluru",
+  "listDate": "2026-10-28",
+  "publishedAt": null,
+  "listType": "supplementary",
+  "source": "text",
+  "status": "ok",
+  "halls": [
+    {
+      "hallNo": "3",
+      "lists": [
+        {
+          "rows": [
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "1. WP No. 9001/2026 Notional Traders vs State of Fictionland",
+                "rowIndex": 0
+              },
+              "confidence": 1,
+              "hallNo": "3",
+              "itemNo": "1",
+              "caseTypeRaw": "WP",
+              "caseType": "WP",
+              "caseNumber": "9001",
+              "caseYear": 2026,
+              "matchKey": "WP/9001/2026",
+              "parties": "Notional Traders vs State of Fictionland",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "HON'BLE MR. JUSTICE G. PRETEND",
+              "listNo": "2",
+              "listType": "supplementary",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "2. CRP No. 15 of 2025 Sham Heirs vs Imaginary Bank",
+                "rowIndex": 1
+              },
+              "confidence": 1,
+              "hallNo": "3",
+              "itemNo": "2",
+              "caseTypeRaw": "CRP",
+              "caseType": "CRP",
+              "caseNumber": "15",
+              "caseYear": 2025,
+              "matchKey": "CRP/15/2025",
+              "parties": "Sham Heirs vs Imaginary Bank",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "HON'BLE MR. JUSTICE G. PRETEND",
+              "listNo": "2",
+              "listType": "supplementary",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "3. IA No. 1/2026 in RFA No. 77/2024 Fake Estates vs Mock Trust",
+                "rowIndex": 2
+              },
+              "confidence": 1,
+              "hallNo": "3",
+              "itemNo": "3",
+              "caseTypeRaw": "RFA",
+              "caseType": "RFA",
+              "caseNumber": "77",
+              "caseYear": 2024,
+              "matchKey": "RFA/77/2024",
+              "parties": "Fake Estates vs Mock Trust",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "children": [
+                {
+                  "caseTypeCode": "IA",
+                  "caseTypeRaw": "IA",
+                  "number": "1",
+                  "year": 2026,
+                  "isMisc": true,
+                  "matchKey": "IA/1/2026",
+                  "parentProceedingKey": "RFA/77/2024"
+                }
+              ],
+              "bench": "HON'BLE MR. JUSTICE G. PRETEND",
+              "listNo": "2",
+              "listType": "supplementary",
+              "registryObjection": null
+            },
+            {
+              "anchor": {
+                "page": 1,
+                "quote": "4. WP No. 9100/2026 (GM-RES) Pretend Union vs Made-up Board",
+                "rowIndex": 3
+              },
+              "confidence": 1,
+              "hallNo": "3",
+              "itemNo": "4",
+              "caseTypeRaw": "WP",
+              "caseType": "WP",
+              "caseNumber": "9100",
+              "caseYear": 2026,
+              "matchKey": "WP/9100/2026",
+              "parties": "Pretend Union vs Made-up Board",
+              "stageRaw": "ADMISSION",
+              "stageNorm": "admission",
+              "advocates": [],
+              "bench": "HON'BLE MR. JUSTICE G. PRETEND",
+              "listNo": "2",
+              "listType": "supplementary",
+              "registryObjection": null,
+              "subCategory": "GM-RES"
+            }
+          ],
+          "listNo": "2"
+        }
+      ],
+      "bench": "HON'BLE MR. JUSTICE G. PRETEND"
+    }
+  ],
+  "rows": [
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "1. WP No. 9001/2026 Notional Traders vs State of Fictionland",
+        "rowIndex": 0
+      },
+      "confidence": 1,
+      "hallNo": "3",
+      "itemNo": "1",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "9001",
+      "caseYear": 2026,
+      "matchKey": "WP/9001/2026",
+      "parties": "Notional Traders vs State of Fictionland",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "HON'BLE MR. JUSTICE G. PRETEND",
+      "listNo": "2",
+      "listType": "supplementary",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "2. CRP No. 15 of 2025 Sham Heirs vs Imaginary Bank",
+        "rowIndex": 1
+      },
+      "confidence": 1,
+      "hallNo": "3",
+      "itemNo": "2",
+      "caseTypeRaw": "CRP",
+      "caseType": "CRP",
+      "caseNumber": "15",
+      "caseYear": 2025,
+      "matchKey": "CRP/15/2025",
+      "parties": "Sham Heirs vs Imaginary Bank",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "HON'BLE MR. JUSTICE G. PRETEND",
+      "listNo": "2",
+      "listType": "supplementary",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "3. IA No. 1/2026 in RFA No. 77/2024 Fake Estates vs Mock Trust",
+        "rowIndex": 2
+      },
+      "confidence": 1,
+      "hallNo": "3",
+      "itemNo": "3",
+      "caseTypeRaw": "RFA",
+      "caseType": "RFA",
+      "caseNumber": "77",
+      "caseYear": 2024,
+      "matchKey": "RFA/77/2024",
+      "parties": "Fake Estates vs Mock Trust",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "children": [
+        {
+          "caseTypeCode": "IA",
+          "caseTypeRaw": "IA",
+          "number": "1",
+          "year": 2026,
+          "isMisc": true,
+          "matchKey": "IA/1/2026",
+          "parentProceedingKey": "RFA/77/2024"
+        }
+      ],
+      "bench": "HON'BLE MR. JUSTICE G. PRETEND",
+      "listNo": "2",
+      "listType": "supplementary",
+      "registryObjection": null
+    },
+    {
+      "anchor": {
+        "page": 1,
+        "quote": "4. WP No. 9100/2026 (GM-RES) Pretend Union vs Made-up Board",
+        "rowIndex": 3
+      },
+      "confidence": 1,
+      "hallNo": "3",
+      "itemNo": "4",
+      "caseTypeRaw": "WP",
+      "caseType": "WP",
+      "caseNumber": "9100",
+      "caseYear": 2026,
+      "matchKey": "WP/9100/2026",
+      "parties": "Pretend Union vs Made-up Board",
+      "stageRaw": "ADMISSION",
+      "stageNorm": "admission",
+      "advocates": [],
+      "bench": "HON'BLE MR. JUSTICE G. PRETEND",
+      "listNo": "2",
+      "listType": "supplementary",
+      "registryObjection": null,
+      "subCategory": "GM-RES"
+    }
+  ],
+  "unparsedRows": [],
+  "diagnostics": {
+    "unmappedHeadings": [],
+    "unknownCaseTypes": [],
+    "rowsSkippedNoAnchor": 0,
+    "hallsSeen": ["3"],
+    "hallsUnreadable": []
+  },
+  "listDateAnchor": {
+    "page": 1,
+    "quote": "SUPPLEMENTARY CAUSE LIST FOR 28-10-2026",
+    "rowIndex": 0
+  }
+}

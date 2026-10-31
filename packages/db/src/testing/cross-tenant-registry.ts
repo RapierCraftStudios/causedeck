@@ -1637,6 +1637,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // deadlines (#494, D-048): court calendars and calendar-aware due dates
   closedReason: 'pure',
   computeDueDate: 'pure',
+  mergeVacations: 'pure',
   DEFAULT_WEEKLY_OFFS: 'constant',
   FORUM_VACATIONS: 'constant',
   deadlineForDirection: 'reads only the calendar of the given workspace (loadCourtCalendar)',

@@ -21,6 +21,7 @@ export {
 } from './tag.ts';
 export {
   effectiveOnFromTitle,
+  vacationRangeFromTitle,
   kindFromTitle,
   parseNoticeTableHtml,
   type NoticeParseResult,
@@ -32,5 +33,11 @@ export {
   parseHolidayListLines,
   parseHolidayListPdf,
   parseHolidayListText,
+  parseVacationRangeLines,
+  parseVacationRangesHtml,
+  parseVacationRangesPdf,
+  parseVacationRangesText,
+  vacationRangeFromLine,
   type HolidayDate,
+  type VacationDates,
 } from './parse-holiday-list.ts';

@@ -1,5 +1,6 @@
 // Writing the demo workspaces (#93): see index.ts for the contract.
 import { isProd } from '@causedeck/config/env';
+import { eq, inArray } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 
 import type { Transaction } from '../../client.ts';
@@ -28,7 +29,10 @@ import {
   payment,
 } from '../../schema/fees.ts';
 import { limitationComputation, limitationRule } from '../../schema/limitation.ts';
-import { matterIssueTag } from '../../schema/matter-issue.ts';
+import { judgmentAlert, matterIssueTag } from '../../schema/matter-issue.ts';
+import { noticeMatch } from '../../schema/notices.ts';
+import { subscription } from '../../schema/billing.ts';
+import { saasInvoice, saasInvoiceLine } from '../../schema/saas-invoice.ts';
 import { notification } from '../../schema/notifications.ts';
 import { certifiedCopy, defect, obligationEvent } from '../../schema/obligation-tracking.ts';
 import { outwardDraft, outwardDraftVersion } from '../../schema/outward-draft.ts';
@@ -39,6 +43,13 @@ import { researchNote } from '../../schema/research-note.ts';
 import { statusLink } from '../../schema/status-link.ts';
 import type { SeedDb } from '../index.ts';
 
+import {
+  existingJudgmentIds,
+  existingPlanIds,
+  existingNoticeIds,
+  refreshDemoCatalogue,
+  seedDemoCatalogue,
+} from './catalogue.ts';
 import { demoCourtRows } from './courts.ts';
 import { demoMatterRows } from './matters.ts';
 import { demoModuleRows, type DemoModuleRows } from './modules.ts';
@@ -48,7 +59,15 @@ import { kolkataToday, seedInstant } from './shared.ts';
 import { DEMO_WORKSPACE_KEYS, demoWorkspace, type DemoWorkspaceKey } from './workspaces.ts';
 
 /** Each non-empty batch is one statement; parents come before children. */
-async function insertModules(tx: Transaction, m: DemoModuleRows): Promise<void> {
+async function insertModules(
+  tx: Transaction,
+  m: DemoModuleRows,
+  present: {
+    judgments: ReadonlySet<string>;
+    notices: ReadonlySet<string>;
+    plans: ReadonlySet<string>;
+  },
+): Promise<void> {
   const put = async <T extends PgTable>(table: T, values: T['$inferInsert'][]) => {
     if (values.length > 0) await tx.insert(table).values(values).onConflictDoNothing();
   };
@@ -87,12 +106,53 @@ async function insertModules(tx: Transaction, m: DemoModuleRows): Promise<void> 
   await put(activity, m.activities);
   await put(notification, m.notifications);
   await put(matterIssueTag, m.issueTags);
+  // The corpus and the notices are global rows the owner-role command writes; a reset on a database
+  // that never had them just leaves the dependants out (the foreign keys would refuse them).
+  await put(
+    judgmentAlert,
+    m.judgmentAlerts.filter((a) => present.judgments.has(a.judgmentId)),
+  );
+  await put(
+    noticeMatch,
+    m.noticeMatches.filter((n) => present.notices.has(n.noticeId)),
+  );
   await put(researchNote, m.researchNotes);
   await put(defect, m.defects);
   await put(certifiedCopy, m.certifiedCopies);
   await put(obligationEvent, m.obligationEvents);
   await put(portfolio, m.portfolios);
   await put(portfolioCase, m.portfolioCases);
+  // Without the plan catalogue (never seeded here) there is no subscription, and so no invoice either.
+  const subscribed = m.billing.subscriptions.filter((s) => present.plans.has(s.planId));
+  await put(subscription, subscribed);
+  if (subscribed.length > 0) await insertSaasInvoices(tx, m);
+}
+
+/**
+ * The SaaS invoices (#1071). An issued invoice is immutable and its lines cannot be added once it is
+ * (trigger `saas_invoice_line_immutable`, which fires before the conflict check), so each new invoice
+ * is written as a draft, given its lines and then moved to its final status; one that exists is left
+ * alone, which keeps a second run and a reset (when the role may not delete invoices) a no-op.
+ */
+async function insertSaasInvoices(tx: Transaction, m: DemoModuleRows): Promise<void> {
+  const ids = m.billing.invoices.map((i) => i.id as string);
+  if (ids.length === 0) return;
+  const existing = new Set(
+    (
+      await tx.select({ id: saasInvoice.id }).from(saasInvoice).where(inArray(saasInvoice.id, ids))
+    ).map((r) => r.id),
+  );
+  for (const invoice of m.billing.invoices) {
+    if (existing.has(invoice.id as string)) continue;
+    await tx.insert(saasInvoice).values({ ...invoice, status: 'draft' });
+    await tx
+      .insert(saasInvoiceLine)
+      .values(m.billing.invoiceLines.filter((l) => l.invoiceId === invoice.id));
+    await tx
+      .update(saasInvoice)
+      .set({ status: invoice.status })
+      .where(eq(saasInvoice.id, invoice.id as string));
+  }
 }
 
 export interface SeedDemoOptions {
@@ -196,6 +256,22 @@ export async function seedDemoWorkspace(
   const graph = demoMatterRows(ws, day, at);
   const mod = demoModuleRows(ws, day, at, graph, courts);
   const users = demoUsers(ws);
+  // Global rows the workspace's alerts and notice matches point at; the news and notice dates follow the day.
+  await refreshDemoCatalogue(db, day);
+  const present = {
+    judgments: await existingJudgmentIds(
+      db,
+      mod.judgmentAlerts.map((a) => a.judgmentId),
+    ),
+    notices: await existingNoticeIds(
+      db,
+      mod.noticeMatches.map((n) => n.noticeId),
+    ),
+    plans: await existingPlanIds(
+      db,
+      mod.billing.subscriptions.map((s) => s.planId),
+    ),
+  };
 
   await db
     .insert(user)
@@ -273,7 +349,7 @@ export async function seedDemoWorkspace(
     await tx.insert(hearing).values(graph.hearings).onConflictDoNothing();
     await tx.insert(obligation).values(graph.obligations).onConflictDoNothing();
     await tx.insert(task).values(graph.tasks).onConflictDoNothing();
-    await insertModules(tx, mod);
+    await insertModules(tx, mod, present);
   });
 }
 
@@ -281,6 +357,8 @@ export async function seedDemoWorkspace(
 export async function seedDemo(db: SeedDb, options: SeedDemoOptions = {}): Promise<void> {
   if (isProd()) throw new DemoSeedInProductionError();
   const day = checkDay(options.today);
+  // The corpus, news and notices are global: written once, before any workspace points at them.
+  await seedDemoCatalogue(db, day);
   for (const key of options.workspaces ?? DEMO_WORKSPACE_KEYS) {
     await seedDemoWorkspace(db, key, { today: day });
   }

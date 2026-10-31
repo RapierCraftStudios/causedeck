@@ -17,6 +17,7 @@ import { SourceNotCleared } from '../sources/index.ts';
 import {
   addCauseListWatch,
   createKhcListParser,
+  createKhcTextListParser,
   getPublicationForRef,
   KHC_CAUSE_LIST_SOURCE_ID,
   listCauseListWatches,
@@ -34,6 +35,7 @@ const FIXTURE_DIR = path.resolve(
 const read = (file: string) => readFileSync(path.join(FIXTURE_DIR, file), 'utf8');
 const DAILY = read('list-01-daily-three-halls-two-lists.input.html');
 const ADVANCE = read('list-03-advance.input.html');
+const TEXT_COPY = read('list-13-text-tabbed-copy.input.txt');
 const NOW = new Date('2026-10-21T04:00:00.000Z');
 
 /** A fetcher serving `pages` by URL suffix, counting provider calls. */
@@ -282,6 +284,51 @@ describe('pollCauseList over contributed copies (#594)', () => {
 
       // The same copy is not matched twice.
       const again = await pollCauseList(deps(tx, fetcher, uncleared));
+      expect(again.unchanged).toBe(1);
+      expect(again.proposals).toBe(0);
+    });
+  });
+
+  it('stages proposals from a contributed text copy through the default text reader (#1065)', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      await addCauseListWatch(
+        { db: tx },
+        { userId: ownerId, workspaceId },
+        { kind: 'name', value: 'R. Pretend' },
+      );
+      const other = await newWorkspace(tx);
+      await addCauseListWatch(
+        { db: tx },
+        { userId: other.ownerId, workspaceId: other.workspaceId },
+        { kind: 'name', value: 'Z. Nobody' },
+      );
+      await copy(tx, { content: TEXT_COPY });
+      const fetcher = fakeFetcher(pages);
+      // No contributedParser override: the production wiring reads text with the KHC adapter.
+      const report = await pollCauseList(
+        deps(tx, fetcher, {
+          policy: uncleared.policy,
+          contributedParser: createKhcTextListParser(),
+        }),
+      );
+
+      expect(report.outcome).toBe('contributed');
+      expect(fetcher.calls).toEqual([]);
+      expect(report.proposals).toBe(1);
+      const rows = await proposalsOf(tx, workspaceId);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.status).toBe('proposed');
+      expect(JSON.stringify(rows[0]?.payload)).toContain('WP/5120/2026');
+      expect(JSON.stringify(rows[0]?.meta)).toContain(PUBLICATION_REF_PREFIX);
+      expect(await proposalsOf(tx, other.workspaceId)).toEqual([]);
+
+      const again = await pollCauseList(
+        deps(tx, fetcher, {
+          policy: uncleared.policy,
+          contributedParser: createKhcTextListParser(),
+        }),
+      );
       expect(again.unchanged).toBe(1);
       expect(again.proposals).toBe(0);
     });

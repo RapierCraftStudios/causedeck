@@ -125,9 +125,20 @@ describe('Karnataka HC adapter (#404)', () => {
     });
     expect(html).toMatchObject({ status: 'ok', source: 'html' });
     expect(html.rows.map((row) => row.matchKey)).toEqual(['WP/1/2026']);
-    // Text and email lists are not read yet: a well-formed empty result.
-    const text = await adapter.parseCauseList({ kind: 'text', text: 'x', meta: input.meta });
-    expect(text).toMatchObject({ status: 'empty', source: 'text', rows: [] });
+    // A text copy is read (#1065); text that is no list is said so, and email is not read yet.
+    const text = await adapter.parseCauseList({
+      kind: 'text',
+      text: 'COURT HALL NO. 1\nSl.No\tCase No\n1\tWP No. 1/2026\n',
+      meta: input.meta,
+    });
+    expect(text).toMatchObject({ status: 'ok', source: 'text' });
+    expect(text.rows.map((row) => row.matchKey)).toEqual(['WP/1/2026']);
+    const junk = await adapter.parseCauseList({ kind: 'text', text: 'x', meta: input.meta });
+    expect(junk).toMatchObject({ status: 'not_a_cause_list', source: 'text', rows: [] });
+    const blank = await adapter.parseCauseList({ kind: 'text', meta: input.meta });
+    expect(blank).toMatchObject({ status: 'failed', source: 'text', rows: [] });
+    const email = await adapter.parseCauseList({ kind: 'email', text: 'x', meta: input.meta });
+    expect(email).toMatchObject({ status: 'empty', source: 'email', rows: [] });
   });
 
   it('reads nothing from an empty order, with the authenticity flag reserved as null', () => {

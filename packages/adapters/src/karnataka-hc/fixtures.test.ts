@@ -72,10 +72,11 @@ function expectVerbatim(input: ParserInput, anchors: readonly Anchor[], file: st
 }
 
 describe('Karnataka HC committed fixtures', () => {
-  it('commits 12 lists, 12 orders and 4 notices, synthetic and FICTIONAL', () => {
+  it('commits 14 lists, 12 orders and 4 notices, synthetic and FICTIONAL', () => {
     expect(manifest.adapter).toBe(KARNATAKA_HC_ADAPTER_ID);
     expect(manifest.classification).toBe('FICTIONAL');
-    expect(lists).toHaveLength(12);
+    expect(lists).toHaveLength(14);
+    expect(lists.filter((entry) => entry.file.endsWith('.txt'))).toHaveLength(2);
     expect(orders).toHaveLength(12);
     expect(notices).toHaveLength(4);
     expect(lists.filter((entry) => entry.file.endsWith('.pdf'))).toHaveLength(1);
@@ -299,5 +300,60 @@ describe('Karnataka HC order and notice fixtures: named cases', () => {
       { n: 7, unit: 'days', basisDate: '2026-10-21', derived: '2026-10-28' },
       { n: 2, unit: 'weeks', basisDate: '2026-10-24', derived: '2026-11-07' },
     ]);
+  });
+});
+
+describe('Karnataka HC text cause lists (#1065)', () => {
+  const textList = (name: string) => {
+    const file = lists.find((entry) => entry.file.startsWith(`${name}.input.`))?.file ?? '';
+    return { file, input: textInput(file) };
+  };
+
+  it.each(['list-13-text-tabbed-copy', 'list-14-text-flattened-copy'])(
+    '%s parses to its expected list with verbatim anchors',
+    async (name) => {
+      const { file, input } = textList(name);
+      const parsed = ParsedCauseListSchema.parse(await adapter.parseCauseList(input));
+      expect(parsed).toEqual(expectedOf(file));
+      expect(parsed).toMatchObject({ status: 'ok', source: 'text' });
+      for (const row of parsed.rows) {
+        const page = (input.text ?? '').split('\f')[row.anchor.page - 1] ?? '';
+        expect(page, row.anchor.quote).toContain(row.anchor.quote);
+      }
+    },
+  );
+
+  it('keeps halls, wrapped parties, advocates and filed-within references from a tabbed copy', async () => {
+    const parsed = await adapter.parseCauseList(textList('list-13-text-tabbed-copy').input);
+    expect(parsed).toMatchObject({ listType: 'daily', listDate: '2026-10-27' });
+    expect(parsed.publishedAt).toBe('2026-10-26T18:30:00+05:30');
+    expect(parsed.halls?.map((hall) => [hall.hallNo, hall.lists[0]?.rows.length])).toEqual([
+      ['7', 3],
+      ['8', 2],
+    ]);
+    const wrapped = parsed.rows.find((row) => row.matchKey === 'WA/88/2026');
+    expect(wrapped?.parties).toBe(
+      'Made-up Cooperative Society vs Union of Fictionland and Another',
+    );
+    expect(parsed.rows.find((row) => row.matchKey === 'MFA/4410/2024')?.children).toHaveLength(1);
+    expect(parsed.rows.find((row) => row.matchKey === 'CRLP/100137/2026')).toMatchObject({
+      hallNo: '8',
+      stageNorm: 'orders',
+      benchNumbering: '100xxx',
+    });
+  });
+
+  it('splits case text from parties on a copy flattened to single spaces', async () => {
+    const parsed = await adapter.parseCauseList(textList('list-14-text-flattened-copy').input);
+    expect(parsed).toMatchObject({ listType: 'supplementary', listDate: '2026-10-28' });
+    expect(parsed.rows.map((row) => [row.itemNo, row.matchKey, row.listNo])).toEqual([
+      ['1', 'WP/9001/2026', '2'],
+      ['2', 'CRP/15/2025', '2'],
+      ['3', 'RFA/77/2024', '2'],
+      ['4', 'WP/9100/2026', '2'],
+    ]);
+    expect(parsed.rows[2]?.children).toHaveLength(1);
+    expect(parsed.rows[3]?.subCategory).toBe('GM-RES');
+    expect(parsed.rows[0]?.parties).toBe('Notional Traders vs State of Fictionland');
   });
 });

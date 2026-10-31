@@ -28,6 +28,7 @@ import { findKarnatakaDirectionCues } from './direction-cues.ts';
 import { parseKarnatakaOrderHeader } from './order-header.ts';
 import { parseKarnatakaCauseListHtml } from './parse-cause-list-html.ts';
 import { parseKarnatakaCauseListPdf } from './parse-cause-list-pdf.ts';
+import { parseKarnatakaCauseListText } from './parse-cause-list-text.ts';
 
 export * from './advocate-keys.ts';
 export * from './case-line.ts';
@@ -44,6 +45,7 @@ export * from './registry-events.ts';
 export { parseKarnatakaCauseListHtml } from './parse-cause-list-html.ts';
 export type { KarnatakaCauseListOptions } from './parse-cause-list-html.ts';
 export { parseKarnatakaCauseListPdf } from './parse-cause-list-pdf.ts';
+export { parseKarnatakaCauseListText } from './parse-cause-list-text.ts';
 
 export const KARNATAKA_HC_ADAPTER_ID = 'in.ka.karnataka-hc.bengaluru';
 export const KARNATAKA_HC_VERSION = '1.1.0';
@@ -129,8 +131,9 @@ function emptyCauseList(version: string, input: ParserInput): ParsedCauseList {
 }
 
 /**
- * A supplied list: HTML through the HTML parser, a PDF layout through the PDF parser. An HTML or
- * PDF input without its content cannot be read (`failed`); text and email lists are not read yet.
+ * A supplied list: HTML through the HTML parser, a PDF layout through the PDF parser, plain text
+ * (a contributed copy, #1065) through the text parser. An HTML, PDF or text input without its
+ * content cannot be read (`failed`); email lists are not read yet.
  */
 export function parseKarnatakaCauseList(
   input: ParserInput,
@@ -139,9 +142,12 @@ export function parseKarnatakaCauseList(
   if (input.kind === 'html' && input.html !== undefined) {
     return parseKarnatakaCauseListHtml(input, options);
   }
+  if (input.kind === 'text' && input.text !== undefined) {
+    return parseKarnatakaCauseListText(input, options);
+  }
   if (input.layout !== undefined) return parseKarnatakaCauseListPdf(input, options);
   const empty = emptyCauseList(options.version, input);
-  return input.kind === 'html' || input.kind === 'layout' ? { ...empty, status: 'failed' } : empty;
+  return input.kind === 'email' ? empty : { ...empty, status: 'failed' };
 }
 
 /** A fresh Karnataka HC adapter over `options.config` (default `KARNATAKA_HC_CONFIG`, 1.1.0). */

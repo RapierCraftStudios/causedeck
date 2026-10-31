@@ -26,6 +26,7 @@ const LEGAL = [
   'intake.enquiry_log',
   'status_links.enabled',
   'bench_facts',
+  'captcha.bulk',
 ];
 
 describe('flag registry', () => {

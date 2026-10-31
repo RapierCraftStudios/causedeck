@@ -1,7 +1,7 @@
 // `pnpm db:seed:demo:content` (#985): the parts of the demo seed that need `@causedeck/storage`.
 // Run it after `pnpm db:seed:demo`: it seals the memory items M1 to M7 under each demo workspace's
 // key and uploads the SYNTHETIC sample order PDFs to the bucket (MinIO from the local stack, `S3_*`
-// env). `--only=memory|files` runs one half, `--workspace=chennai-solo|bengaluru-chamber|all`
+// env), and embeds the synthetic judgment corpus with the mock embedder (#1070). `--only=memory|files|corpus` runs one part, `--workspace=chennai-solo|bengaluru-chamber|all`
 // picks the workspace. Owner role (DATABASE_URL_OWNER). Refuses NODE_ENV=production. Idempotent.
 import { createEnv, isProd, serverEnv } from '@causedeck/config/env';
 import {
@@ -11,7 +11,7 @@ import {
 } from '@causedeck/db/seed/demo';
 import { createObjectStoreFromEnv, EnvKeyProvider } from '@causedeck/storage';
 
-import { seedDemoFiles, seedDemoMemory } from '../src/demo/content.ts';
+import { seedDemoCorpusEmbeddings, seedDemoFiles, seedDemoMemory } from '../src/demo/content.ts';
 import { withOwnerDb } from '../src/support/staff.ts';
 
 if (isProd()) {
@@ -20,8 +20,8 @@ if (isProd()) {
 }
 const args = process.argv.slice(2);
 const only = args.find((a) => a.startsWith('--only='))?.slice('--only='.length);
-if (only !== undefined && only !== 'memory' && only !== 'files') {
-  console.error('--only must be memory or files');
+if (only !== undefined && only !== 'memory' && only !== 'files' && only !== 'corpus') {
+  console.error('--only must be memory, files or corpus');
   process.exit(2);
 }
 const selected =
@@ -40,7 +40,11 @@ if (url === undefined) {
 
 try {
   await withOwnerDb(url, async (db) => {
-    if (only !== 'files') {
+    if (only === undefined || only === 'corpus') {
+      const r = await seedDemoCorpusEmbeddings({ db });
+      console.log(`Corpus: ${String(r.embedded)} demo segments embedded (mock embedder)`);
+    }
+    if (only === undefined || only === 'memory') {
       const keys = EnvKeyProvider.fromEnv(serverEnv());
       for (const key of workspaces) {
         const r = await seedDemoMemory({ db, keys }, key);
@@ -49,7 +53,7 @@ try {
         );
       }
     }
-    if (only !== 'memory') {
+    if (only === undefined || only === 'files') {
       const store = createObjectStoreFromEnv(serverEnv());
       for (const key of workspaces) {
         const r = await seedDemoFiles({ db, store }, key);

@@ -161,6 +161,12 @@ export const FLAGS = {
     true,
     [88, 117],
   ),
+  'captcha.bulk': flag(
+    'captcha.bulk',
+    'Bulk captcha solving for court coverage and the API, per source (counsel approval reference on the registry row required).',
+    true,
+    [492, 118],
+  ),
 } as const;
 
 /** A registered flag key. Anything else is a compile error. */

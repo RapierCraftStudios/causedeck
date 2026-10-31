@@ -30,6 +30,7 @@ export const FLAG_KILL_SWITCHES = [
   'KILL_ADAPTERS_WORKBENCH_FETCH',
   'KILL_GROWTH_ONBOARDING_NUDGE',
   'KILL_GROWTH_FREE_ALERTS',
+  'KILL_CAPTCHA_BULK',
 ] as const;
 
 export type FlagKillSwitch = (typeof FLAG_KILL_SWITCHES)[number];

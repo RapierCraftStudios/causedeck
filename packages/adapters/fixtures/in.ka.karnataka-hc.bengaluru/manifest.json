@@ -1,7 +1,7 @@
 {
   "adapter": "in.ka.karnataka-hc.bengaluru",
   "classification": "FICTIONAL",
-  "note": "Synthetic Karnataka HC cause lists (saved HTML list pages and a consolidated column PDF), orders and FR / scrutiny-objection notices (#408). Every party, advocate and judge is fictional; the list, order and notice layouts are unverified assumptions (ADR 0019) until real fixtures are checked with #119.",
+  "note": "Synthetic Karnataka HC cause lists (saved HTML list pages, a consolidated column PDF and two text copies, #1065), orders and FR / scrutiny-objection notices (#408). Every party, advocate and judge is fictional; the list, order and notice layouts are unverified assumptions (ADR 0019) until real fixtures are checked with #119.",
   "fixtures": [
     {
       "file": "list-01-daily-three-halls-two-lists.input.html",
@@ -71,6 +71,18 @@
     },
     {
       "file": "list-12-empty.input.html",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-13-text-tabbed-copy.input.txt",
+      "kind": "cause_list",
+      "origin": "synthetic",
+      "classification": "FICTIONAL"
+    },
+    {
+      "file": "list-14-text-flattened-copy.input.txt",
       "kind": "cause_list",
       "origin": "synthetic",
       "classification": "FICTIONAL"

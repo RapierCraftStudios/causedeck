@@ -177,6 +177,7 @@ describe('enqueue', () => {
       'system.corpus.bulk-import',
       'system.corpus.redact',
       'system.corpus.segment',
+      'system.corpus.embed',
       'system.corpus.ocr',
       'system.causelist.poll',
       'system.board.poll',

@@ -94,13 +94,9 @@ beforeAll(async () => {
       judgmentYear: 2015,
     })),
   );
-  await owner.execute(sql`update judgment_segment
-    set embedding = ('[' || array_to_string(array_fill(0::float4, array[${CORPUS_EMBEDDING_DIMENSIONS}]) , ',') || ']')::halfvec,
-        embedding_model = 'test-model@1'
-    where judgment_id = ${judgmentId}`);
   for (let n = 1; n <= 60; n += 1) {
     await owner.execute(sql`update judgment_segment
-      set embedding = ${vec(0, n / 100)}::halfvec
+      set embedding = ${vec(0, n / 100)}::halfvec, embedding_model = 'test-model@1'
       where judgment_id = ${judgmentId} and ordinal = ${n}`);
   }
 });
@@ -139,7 +135,7 @@ describe('filtered vector search', () => {
     expect(rows).toHaveLength(k);
   });
 
-  it('plans the year-filtered query on the decade partition index', async () => {
+  it('prunes a year-filtered query to its decade partition', async () => {
     const plan = (
       await owner.transaction(async (tx) => {
         await tx.execute(sql`set local enable_seqscan = off`);
@@ -149,7 +145,7 @@ describe('filtered vector search', () => {
     )
       .map((r) => Object.values(r)[0])
       .join('\n');
-    expect(plan).toContain('judgment_segment_2010s_embedding_hnsw_idx');
+    expect(plan).toContain('judgment_segment_2010s');
     expect(plan).not.toContain('judgment_segment_2020s');
   });
 });

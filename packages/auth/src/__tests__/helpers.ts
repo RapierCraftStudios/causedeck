@@ -78,6 +78,8 @@ export function makeAuth(
     logger?: AuthLogger;
     /** Defaults to the shared app-role client. */
     db?: Database;
+    /** Better Auth's own handle (#805); defaults to `db`. */
+    sessionDb?: Database;
     /** Defaults to the no-op recorder. */
     securityEvents?: SecurityEventRecorder;
   } = {},
@@ -87,6 +89,7 @@ export function makeAuth(
   const db = options.db ?? testAppDb();
   const auth = createAuth({
     db,
+    ...(options.sessionDb ? { sessionDb: options.sessionDb } : {}),
     env: testEnv(options.env),
     mailer,
     ...(options.sms ? { sms: options.sms } : {}),

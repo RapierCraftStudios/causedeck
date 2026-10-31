@@ -223,3 +223,28 @@ const pinAuthority = workspaceAction(
 export async function setAuthorityPinnedAction(raw: unknown): Promise<Result<NoteResult>> {
   return pinAuthority(raw);
 }
+
+const FindAuthorities = WorkspaceScoped.extend({ matterId: z.uuid() });
+
+const findAuthorities = workspaceAction(
+  FindAuthorities,
+  async (input, ctx) => {
+    const { getResearchFacts, researchQueryParts } = await import('@causedeck/core/research');
+    // The facts the actor may see (confirmed statutes and sections, the court, and the lawyer's issue
+    // words only with `strategy.read`): never the matter id, the CNR or a party name. Another
+    // workspace's matter is NOT_FOUND here.
+    const facts = await getResearchFacts(ctx.tx, actorOf(ctx), input.matterId);
+    const query = facts
+      .map((f) => researchQueryParts(f).join(' '))
+      .filter((part) => part !== '')
+      .join('; ')
+      .slice(0, 1000);
+    return { query };
+  },
+  { action: 'matter.read' },
+);
+
+/** The search query seeded from the matter's research facts (#896); the search page runs it on the member's say-so. */
+export async function findAuthoritiesAction(raw: unknown): Promise<Result<{ query: string }>> {
+  return findAuthorities(raw);
+}

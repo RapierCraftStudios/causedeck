@@ -47,10 +47,23 @@ export const workspaceSettings = pgTable(
       .default(false),
     /** Days raw audio is kept before deletion: 7, 14 or 30 (the PRD maximum, and the default). */
     retentionAudioDays: integer('retention_audio_days').notNull().default(30),
+    /** Months a closed enquiry is kept before the retention job deletes it (#87): 1 to 120, default 12. */
+    enquiryRetentionMonths: integer('enquiry_retention_months').notNull().default(12),
     /** Corrections may enter eval sets, with per-item consent (#558). Opt-in; only an owner sets it. */
     allowEvalReuse: boolean('allow_eval_reuse').notNull().default(false),
     /** Days without an event before a matter is flagged as stale (#70, `attention.stale_days`): 7 to 180. */
     attentionStaleDays: integer('attention_stale_days').notNull().default(30),
+    /** The GST state code (two digits) the invoice editor starts from, so it stops asking (#963). */
+    feeSupplierStateCode: text('fee_supplier_state_code'),
+    /** Chamber onboarding (#92): how new appearances are delegated by default (validated in core). */
+    delegationDefaults: jsonb('delegation_defaults')
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    /** Chamber onboarding (#92): the chamber's default brief layout, `short` or `full`. */
+    briefFormat: text('brief_format').notNull().default('full'),
+    /** The seed version (`DEMO_VERSION`) a demo workspace was last restored to (#93); null elsewhere. */
+    demoVersion: text('demo_version'),
     ...timestamps(),
   },
   (t) => [
@@ -60,9 +73,18 @@ export const workspaceSettings = pgTable(
     check('workspace_settings_practice_city_chk', sql`char_length(practice_city) <= 80`),
     check('workspace_settings_retention_audio_days_chk', sql`retention_audio_days in (7, 14, 30)`),
     check(
+      'workspace_settings_enquiry_retention_months_chk',
+      sql`enquiry_retention_months between 1 and 120`,
+    ),
+    check(
+      'workspace_settings_fee_supplier_state_code_chk',
+      sql`fee_supplier_state_code ~ '^[0-9]{2}$'`,
+    ),
+    check(
       'workspace_settings_attention_stale_days_chk',
       sql`attention_stale_days between 7 and 180`,
     ),
+    check('workspace_settings_brief_format_chk', sql`brief_format in ('short', 'full')`),
   ],
 );
 

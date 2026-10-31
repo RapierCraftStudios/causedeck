@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  corpusObjectKey,
   InvalidObjectKeyError,
   isObjectKey,
   objectKey,
   parseObjectKey,
+  publicObjectKey,
   workspacePrefix,
 } from '../keys.ts';
+import { createMemoryObjectStore } from '../memory-provider.ts';
 
 const WS = '0b7f4c1e-8d2a-4f3b-9c6d-1a2b3c4d5e6f';
 const ID = '6f1e2d3c-4b5a-4968-8776-655443322110';
@@ -94,5 +97,37 @@ describe('workspacePrefix', () => {
     expect(workspacePrefix(WS)).toBe(`ws/${WS}/`);
     expect(() => workspacePrefix('')).toThrow(InvalidObjectKeyError);
     expect(() => workspacePrefix('..')).toThrow(InvalidObjectKeyError);
+  });
+});
+
+describe('publicObjectKey (#769)', () => {
+  it('names only the allowlisted public path, which a store can write and read back', async () => {
+    const key = publicObjectKey('status/status.json');
+    expect(key).toBe('status/status.json');
+    const store = createMemoryObjectStore();
+    await store.put({ key, body: new TextEncoder().encode('{}'), contentType: 'application/json' });
+    expect(new TextDecoder().decode((await store.get(key)).body)).toBe('{}');
+  });
+
+  it.each([
+    'status/other.json',
+    '../status/status.json',
+    'status/status.json/',
+    'ws/x/status.json',
+  ])('does not widen parseObjectKey to %j', (raw) => {
+    expect(() => publicObjectKey(raw as 'status/status.json')).toThrow(InvalidObjectKeyError);
+    expect(() => parseObjectKey(raw)).toThrow(InvalidObjectKeyError);
+  });
+});
+
+describe('corpus object keys (#890)', () => {
+  it('accepts only corpus/<sha256>.pdf', async () => {
+    const sha = 'a'.repeat(64);
+    const key = corpusObjectKey(sha);
+    expect(parseObjectKey(key).key).toBe(key);
+    const store = createMemoryObjectStore();
+    await store.put({ key, body: new Uint8Array([1]), contentType: 'application/pdf' });
+    expect(() => corpusObjectKey('abc')).toThrow(InvalidObjectKeyError);
+    expect(() => parseObjectKey('corpus/../x.pdf')).toThrow(InvalidObjectKeyError);
   });
 });

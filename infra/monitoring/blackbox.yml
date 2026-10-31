@@ -1,0 +1,18 @@
+# blackbox_exporter modules (#102). `http_2xx_tls` also yields probe_ssl_earliest_cert_expiry for
+# the certificate-expiry alert.
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      valid_status_codes: [200]
+      method: GET
+      preferred_ip_protocol: ip4
+  http_2xx_tls:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: [200, 301, 302]
+      method: GET
+      fail_if_not_ssl: true
+      preferred_ip_protocol: ip4

@@ -101,17 +101,17 @@ causedeck/
 ```
                         Cloudflare (DNS, WAF, CDN for static)
    causedeck.<tld> ───► Cloudflare Pages (apps/site, static)          [no tenant data]
-   app.<tld> / api.<tld> ─► (DNS-only by default; see §3.3) ─► VPS in India (DigitalOcean BLR1 or Lightsail ap-south-1)
+   app.<tld> / api.<tld> ─► (DNS-only by default; see §3.3) ─► VPS in India (OVH Mumbai, prod on a VPS-3)
                                         │  Caddy (TLS, HTTP/3, security headers, rate limits)
                                         ├── web (Next.js, Node) ×2 containers
                                         ├── api (Hono) ×1
                                         ├── worker (pg-boss) ×2
                                         ├── admin (staff-only, IP-allowlisted / Cloudflare Access)
                                         ├── postgres 17 + pgvector (volume; WAL-G → object storage)
-                                        └── minio (S3) (volume; nightly replicate to second India location)
-   staging: a second smaller VPS with the same compose stack; preview data only
+                                        └── minio (S3) (volume on the Mumbai host; off-host backups to AWS S3 ap-south-2, Hyderabad)
+   staging: its own OVH Mumbai VPS-1 on a separate host, same compose stack; preview data only
 ```
-- **Cost target:** about ₹6–12k per month of infrastructure for staging and prod combined, plus AI usage ([04 §13](../mvp/04-mvp-definition.md)).
+- **Cost target (D-037 amendment 2026-10-27):** OVH India public catalogue, 2026-10-27, ex-GST, 12-month term: VPS-3 (6 vCPU / 12 GB / 100 GB) ₹1,160/mo for prod and VPS-1 (2 vCPU / 4 GB / 40 GB) ₹420/mo for staging, about ₹1,580/mo (about ₹1,865 with 18% GST), plus S3 backups and AI usage ([04 §13](../mvp/04-mvp-definition.md)). Trade-offs: shared vCores, an Asia-Pacific traffic quota (500 GB/month on VPS-1, about 1 TB/month on VPS-3, then 10 Mbps), and the 12-month term for the listed price. Prod and staging stay on separate hosts so staging cannot reach prod data.
 - **Deploys:** GitHub Actions builds images and pushes them to GHCR. Then an SSH deploy runs `docker compose pull && migrate && up -d`, followed by health-gated rollout and automatic rollback.
 - **Court-day change freeze:** deploys are blocked 18:00–23:00 and 07:00–10:30 IST (a workflow guard).
 
@@ -119,8 +119,10 @@ causedeck/
 | Stage | Trigger | Change |
 |---|---|---|
 | A: single VPS | Launch | As above |
-| B: split state | p95 latency > 400 ms, DB CPU > 60%, or > 1k seats | Postgres → **AWS RDS (ap-south-1)** with PITR and a Hyderabad read replica; MinIO → **S3 ap-south-1**; 2+ app VPS behind a Cloudflare Load Balancer (or AWS ALB); workers on their own node |
-| C: orchestrated | > 10k seats or several teams | Containers on **ECS Fargate (ap-south-1)** or k3s; autoscaled workers per queue; Redis (ElastiCache) for rate limits and cache; OpenSearch only if Postgres full-text search proves insufficient; PowerSync for richer offline |
+| B: split state | p95 latency > 400 ms, DB CPU > 60%, or > 1k seats | Postgres on its own OVH Mumbai box (VPS-4 or a dedicated server) with a **streaming replica** and **PgBouncer**; MinIO stays on the Mumbai hosts with off-host backups to S3 ap-south-2; 2+ stateless app VPS behind a Cloudflare Load Balancer or DNS; workers on their own node. AWS RDS/S3/ALB (ap-south-1) remain an optional alternative, see [ADR 0053](../adr/0053-stage-b-c-scale-path.md) |
+| C: orchestrated | > 10k seats or several teams | More nodes under **k3s or Docker Swarm**; autoscaled workers per queue; Redis for rate limits and cache; OpenSearch only if Postgres full-text search proves insufficient; PowerSync for richer offline. ECS Fargate and ElastiCache are optional, not the default |
+
+Residency (D-009) is unchanged: primary DB, documents and logs stay in India. OVH Public Cloud has no Mumbai object storage, so MinIO runs on the host and off-host backups go to AWS S3 ap-south-2 (Hyderabad).
 
 **Day-one rules that keep the scale path open:**
 - Stateless app containers.

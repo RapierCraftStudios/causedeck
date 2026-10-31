@@ -26,8 +26,11 @@ pnpm --filter @causedeck/core exec vitest run src/usage
 ## Keys
 
 `USAGE_KEYS` (`packages/core/src/usage/keys.ts`) lists every metered resource: `ai.spend_paise`,
-`ai.tokens_in`, `ai.tokens_out`, `ocr.pages`, `stt.seconds`, `storage.bytes` and
-`matters.active`. `increment` rejects any other key.
+`ai.tokens_in`, `ai.tokens_out`, `ocr.pages`, `stt.seconds`, `storage.bytes`,
+`matters.active`, `api.calls` and `research.searches` (one counter unit per fact-pattern search over
+the judgment corpus, #896; Junior is capped at 30 a month by `RESEARCH_SEARCH_CAPS` in
+`@causedeck/core/research`, paid plans are not; re-running a search with an edited plan is not
+counted). `increment` rejects any other key.
 
 Each key has a kind in `USAGE_KEY_KINDS`:
 

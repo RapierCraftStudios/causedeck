@@ -5,17 +5,17 @@
 // and are kept, so a fixture keeps the shape of a real list.
 import { createHash } from 'node:crypto';
 
+import { namePattern } from './detect.ts';
 import {
   AADHAAR_PLACEHOLDER,
   AADHAAR_RE,
   EMAIL_PLACEHOLDER,
   EMAIL_RE,
-  namePattern,
   PAN_PLACEHOLDER,
   PAN_RE,
   PHONE_PLACEHOLDER,
   PHONE_RE,
-} from './detect.ts';
+} from './pii-patterns.ts';
 
 const FIRST_NAMES = [
   'Arun',

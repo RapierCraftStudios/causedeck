@@ -25,6 +25,7 @@ import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { RetryableError } from '../errors.ts';
 import { once } from '../idempotency.ts';
+import { DEMO_SKIP_REASON, isDemoWorkspace } from '../../shared/index.ts';
 
 const { webhookDelivery, webhookEndpoint } = schema;
 
@@ -129,6 +130,15 @@ export async function runWebhookDeliver(
     ctx.log.warn({ ...fields, status: attempt.status, error: attempt.error }, 'webhook failed');
     return 'failed';
   };
+
+  if (await isDemoWorkspace(ctx.db, workspaceId)) {
+    // A demo workspace sends nothing outside it (#93); the endpoint's failure streak is untouched.
+    await ctx.db
+      .update(webhookDelivery)
+      .set({ status: 'failed', lastError: DEMO_SKIP_REASON })
+      .where(and(eq(webhookDelivery.workspaceId, workspaceId), eq(webhookDelivery.id, deliveryId)));
+    return 'failed';
+  }
 
   if (!row.active) {
     // Switched off after the event was queued: nothing is sent.

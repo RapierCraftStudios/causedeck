@@ -1,5 +1,6 @@
-// Create a workspace (#179): `/onboarding` is a single card with `Just me` / `A chamber`, a name
-// and `Create workspace`; creating lands on the new workspace's Today with the creator as owner.
+// Create a workspace (#179, #92): `/onboarding` is the path chooser (solo or chamber); the first
+// step of either path names the workspace, and creating it makes the creator its owner and opens the
+// next step of the wizard (`?w=<slug>` carries the workspace, so a refresh resumes).
 import { expect, test } from '../../fixtures/index.ts';
 import { shellReady, switcherList, switcherTrigger } from '../shell/helpers.ts';
 
@@ -13,26 +14,38 @@ test.describe('create workspace', () => {
     await asUser('owner');
     await page.goto('/onboarding');
     await expect(
-      page.getByRole('heading', { level: 1, name: 'Create your workspace' }),
+      page.getByRole('heading', { level: 1, name: 'How do you practise?' }),
     ).toBeVisible();
-    await expect(page.getByRole('radio', { name: 'Just me' })).toBeChecked();
+    await page.getByRole('link', { name: /Set up as a solo advocate/ }).click();
+    await expect(page).toHaveURL(/\/onboarding\/solo\/workspace$/);
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Name your workspace' }),
+    ).toBeVisible();
+    // Before anything is typed, the step says where data lives.
+    await expect(page.getByText(/Your data is stored in India/)).toBeVisible();
 
     await page.getByRole('button', { name: 'Create workspace' }).click();
     const name = page.getByRole('textbox', { name: /Workspace name/ });
     await expect(name).toHaveAttribute('aria-invalid', 'true');
     await expect(page.getByText('Enter a name for the workspace.')).toBeVisible();
-    await expect(page).toHaveURL(/\/onboarding$/);
+    await expect(page).toHaveURL(/\/onboarding\/solo\/workspace$/);
   });
 
-  test('creates a chamber, lands on its Today and lists it as Owner', async ({ page, asUser }) => {
+  test('creates a chamber, opens its invite step and lists it as Owner', async ({
+    page,
+    asUser,
+  }) => {
     await asUser('viewer');
-    await page.goto('/onboarding');
-    await page.getByText('A chamber').click();
-    await expect(page.getByRole('radio', { name: 'A chamber' })).toBeChecked();
+    await page.goto('/onboarding/chamber/workspace');
     await page.getByRole('textbox', { name: /Workspace name/ }).fill('Mylapore Chambers');
     await page.getByRole('button', { name: 'Create workspace' }).click();
 
-    await expect(page).toHaveURL(/\/w\/mylapore-chambers\/today$/);
+    await expect(page).toHaveURL(/\/onboarding\/chamber\/invite\?w=mylapore-chambers$/);
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Invite your chamber' }),
+    ).toBeVisible();
+
+    await page.goto('/w/mylapore-chambers/today');
     await expect(page.locator('main')).toHaveAttribute('data-workspace-slug', 'mylapore-chambers');
     await shellReady(page);
     await switcherTrigger(page).click();
@@ -50,7 +63,7 @@ test.describe('create workspace', () => {
     await page.getByRole('link', { name: 'Create workspace' }).click();
     await expect(page).toHaveURL(/\/onboarding$/);
     await expect(
-      page.getByRole('heading', { level: 1, name: 'Create your workspace' }),
+      page.getByRole('heading', { level: 1, name: 'How do you practise?' }),
     ).toBeVisible();
   });
 });

@@ -1,0 +1,242 @@
+name: Terraform
+
+# Cloudflare and India VPS infrastructure (#99). Pull requests that touch infra/terraform run fmt,
+# validate, tflint, checkov and `terraform test`, then plan staging and prod with the example tfvars
+# (dummy credentials, -backend=false) and post the plan on the PR. Apply is manual
+# (workflow_dispatch) and gated by the GitHub environment terraform-<env> (required reviewers are
+# configured in #116). The Stage B modules (#106) are only validated and planned here (stage-b
+# is not an apply or drift target); the OVH Stage B root (stage-b-ovh, #887) is validated and
+# tested with mocked providers, never planned or applied (a plan would call the OVH order API).
+# A weekly run plans against the real state with -detailed-exitcode: exit 2 (drift) fails the job.
+# Tools run as pinned container images, like lint-workflows.yml.
+
+on:
+  pull_request:
+    paths:
+      - 'infra/terraform/**'
+      - '.github/workflows/terraform.yml'
+  workflow_dispatch:
+    inputs:
+      env:
+        description: Environment to apply
+        type: choice
+        options: [staging, prod]
+        required: true
+  schedule:
+    - cron: '17 3 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-${{ inputs.env }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  TF_IMAGE: hashicorp/terraform:1.10.5
+  TFLINT_IMAGE: ghcr.io/terraform-linters/tflint:v0.55.1
+  CHECKOV_IMAGE: bridgecrew/checkov:3.2.344
+
+jobs:
+  static:
+    name: fmt, validate, tflint, checkov, test
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Policy tests (node)
+        run: node --test infra/terraform/test/policy.test.mjs infra/terraform/test/stage-b-policy.test.mjs
+      - name: terraform fmt
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform
+          "$TF_IMAGE" fmt -check -recursive -diff
+      - name: terraform validate (staging, prod, stage-b, stage-b-ovh)
+        run: |
+          for env in staging prod stage-b stage-b-ovh; do
+            docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/$env" \
+              "$TF_IMAGE" init -backend=false -input=false
+            docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/$env" \
+              "$TF_IMAGE" validate
+          done
+      - name: terraform test (mocked providers)
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/prod
+          "$TF_IMAGE" test
+      - name: terraform test (staging, mocked providers)
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/staging \
+            "$TF_IMAGE" init -backend=false -input=false
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/staging \
+            "$TF_IMAGE" test
+      - name: terraform test (stage-b-ovh, mocked providers)
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/stage-b-ovh \
+            "$TF_IMAGE" init -backend=false -input=false
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/envs/stage-b-ovh \
+            "$TF_IMAGE" test
+      - name: terraform test (cloudflare-zone module, mocked providers)
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/modules/cloudflare-zone \
+            "$TF_IMAGE" init -backend=false -input=false
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform/modules/cloudflare-zone \
+            "$TF_IMAGE" test
+      - name: tflint
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo/infra/terraform
+          "$TFLINT_IMAGE" --recursive
+      - name: checkov
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo
+          "$CHECKOV_IMAGE" -d infra/terraform --framework terraform --quiet --compact
+
+  plan:
+    name: plan (${{ matrix.env }})
+    if: github.event_name == 'pull_request'
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [staging, prod, stage-b]
+    env:
+      DIGITALOCEAN_TOKEN: dummy-token-for-ci-plan-only
+      OVH_ENDPOINT: ovh-eu
+      OVH_APPLICATION_KEY: dummy
+      OVH_APPLICATION_SECRET: dummy
+      OVH_CONSUMER_KEY: dummy
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: terraform init and plan (dummy credentials)
+        run: |
+          run_tf() {
+            docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e TF_IN_AUTOMATION=1 \
+              -e DIGITALOCEAN_TOKEN -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+              -e OVH_ENDPOINT -e OVH_APPLICATION_KEY -e OVH_APPLICATION_SECRET -e OVH_CONSUMER_KEY \
+              -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/${{ matrix.env }}" \
+              "$TF_IMAGE" "$@"
+          }
+          run_tf init -backend=false -input=false
+          run_tf plan -input=false -lock=false -no-color -var-file=terraform.tfvars.example \
+            | tee "$RUNNER_TEMP/plan.txt"
+      - name: Post plan on the PR
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          ENV_NAME: ${{ matrix.env }}
+        run: |
+          {
+            echo "### Terraform plan: $ENV_NAME (dummy credentials, fresh state)"
+            echo '<details><summary>Plan</summary>'
+            echo
+            echo '```'
+            head -c 60000 "$RUNNER_TEMP/plan.txt"
+            echo '```'
+            echo '</details>'
+          } > "$RUNNER_TEMP/comment.md"
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/comment.md"
+
+  drift:
+    name: drift (${{ matrix.env }})
+    if: github.event_name == 'schedule' && vars.TF_BACKEND_CONFIGURED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        env: [staging, prod]
+    environment: terraform-${{ matrix.env }}
+    env:
+      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_domain: ${{ secrets.TF_DOMAIN }}
+      TF_VAR_cloudflare_account_id: ${{ secrets.TF_CLOUDFLARE_ACCOUNT_ID }}
+      TF_VAR_owner: ${{ secrets.TF_OWNER }}
+      TF_VAR_ssh_allowlist: ${{ secrets.TF_SSH_ALLOWLIST }}
+      TF_VAR_deploy_pubkey: ${{ secrets.TF_DEPLOY_PUBKEY }}
+      DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      # Used only when vps_provider = ovh_mumbai (read from the terraform-<env> environment).
+      OVH_ENDPOINT: ${{ secrets.OVH_ENDPOINT }}
+      OVH_APPLICATION_KEY: ${{ secrets.OVH_APPLICATION_KEY }}
+      OVH_APPLICATION_SECRET: ${{ secrets.OVH_APPLICATION_SECRET }}
+      OVH_CONSUMER_KEY: ${{ secrets.OVH_CONSUMER_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: terraform plan -detailed-exitcode
+        run: |
+          cp infra/terraform/backend.tf.example "infra/terraform/envs/${{ matrix.env }}/backend.tf"
+          run_tf() {
+            docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e TF_IN_AUTOMATION=1 \
+              -e TF_VAR_cloudflare_api_token -e TF_VAR_domain -e TF_VAR_cloudflare_account_id \
+              -e TF_VAR_owner -e TF_VAR_ssh_allowlist -e TF_VAR_deploy_pubkey \
+              -e DIGITALOCEAN_TOKEN -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+              -e OVH_ENDPOINT -e OVH_APPLICATION_KEY -e OVH_APPLICATION_SECRET -e OVH_CONSUMER_KEY \
+              -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/${{ matrix.env }}" \
+              "$TF_IMAGE" "$@"
+          }
+          run_tf init -input=false -backend-config="bucket=$TF_STATE_BUCKET" \
+            -backend-config="key=${{ matrix.env }}/terraform.tfstate"
+          set +e
+          run_tf plan -input=false -no-color -detailed-exitcode
+          code=$?
+          if [ "$code" -eq 2 ]; then echo "::error::drift detected in ${{ matrix.env }}"; fi
+          exit "$code"
+
+  apply:
+    name: apply (${{ inputs.env }})
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Required reviewers on this GitHub environment gate the job (configured in #116).
+    environment: terraform-${{ inputs.env }}
+    env:
+      TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_domain: ${{ secrets.TF_DOMAIN }}
+      TF_VAR_cloudflare_account_id: ${{ secrets.TF_CLOUDFLARE_ACCOUNT_ID }}
+      TF_VAR_owner: ${{ secrets.TF_OWNER }}
+      TF_VAR_ssh_allowlist: ${{ secrets.TF_SSH_ALLOWLIST }}
+      TF_VAR_deploy_pubkey: ${{ secrets.TF_DEPLOY_PUBKEY }}
+      DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      # Used only when vps_provider = ovh_mumbai (read from the terraform-<env> environment).
+      OVH_ENDPOINT: ${{ secrets.OVH_ENDPOINT }}
+      OVH_APPLICATION_KEY: ${{ secrets.OVH_APPLICATION_KEY }}
+      OVH_APPLICATION_SECRET: ${{ secrets.OVH_APPLICATION_SECRET }}
+      OVH_CONSUMER_KEY: ${{ secrets.OVH_CONSUMER_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: terraform plan and apply
+        run: |
+          cp infra/terraform/backend.tf.example "infra/terraform/envs/${{ inputs.env }}/backend.tf"
+          run_tf() {
+            docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e TF_IN_AUTOMATION=1 \
+              -e TF_VAR_cloudflare_api_token -e TF_VAR_domain -e TF_VAR_cloudflare_account_id \
+              -e TF_VAR_owner -e TF_VAR_ssh_allowlist -e TF_VAR_deploy_pubkey \
+              -e DIGITALOCEAN_TOKEN -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+              -e OVH_ENDPOINT -e OVH_APPLICATION_KEY -e OVH_APPLICATION_SECRET -e OVH_CONSUMER_KEY \
+              -v "$GITHUB_WORKSPACE:/repo" -w "/repo/infra/terraform/envs/${{ inputs.env }}" \
+              "$TF_IMAGE" "$@"
+          }
+          run_tf init -input=false -backend-config="bucket=$TF_STATE_BUCKET" \
+            -backend-config="key=${{ inputs.env }}/terraform.tfstate"
+          run_tf plan -input=false -no-color -out=tfplan
+          run_tf apply -input=false -no-color tfplan

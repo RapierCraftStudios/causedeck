@@ -35,6 +35,24 @@ themselves:
 withRequestContext({ requestId: job.id, jobId: job.id, workspaceId }, () => run(job));
 ```
 
+Logs also carry the snake_case correlation fields the pipeline indexes: `request_id`, `workspace_id` (id only)
+and, inside an active span, `trace_id` and `span_id`. The camelCase `requestId` and `workspaceId` stay for existing
+readers. Content keys (`title`, `filename`, `email`, `body`, `text`, ...) never reach the log; the OTel Collector
+deletes the same keys again as defense in depth.
+
+### Monitoring stack (#102)
+
+Prometheus, Grafana, Loki, Alertmanager, the OTel Collector, cAdvisor, node_exporter and blackbox run in India from
+[`infra/monitoring/compose.monitoring.yml`](../../infra/monitoring/compose.monitoring.yml). Logs are retained 200 days
+by default and never fewer than 180 (Loki `retention_period` of at least 4320 h, bucket object lock of 180 days).
+Adapter health is exported by `@causedeck/observability/adapter-metrics` (`adapter_parse_success_ratio`,
+`adapter_last_success_timestamp`). Details, alerts and the 1,000-seat storage projection:
+[infra/monitoring/README.md](../../infra/monitoring/README.md); rotation and severities:
+[on-call runbook](../../infra/runbooks/on-call.md).
+
+The stack has two compose profiles (#886): `core` (Prometheus, Alertmanager, cAdvisor, node_exporter, blackbox; 960 MB,
+fits the VPS-1 and VPS-3 budgets, logs archived daily to an India bucket) and `full` (adds Loki, Grafana and the collector).
+
 ### Time and retention (infrastructure obligations)
 
 - **NTP:** every host and container must sync time over NTP. CERT-In directions require logs to

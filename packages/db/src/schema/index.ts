@@ -34,6 +34,8 @@ export {
   scimToken,
   ssoProvider,
 } from './enterprise.ts';
+export { HELP_STATE_KEY_PATTERN, helpState } from './help-state.ts';
+export { ONBOARDING_PATHS, ONBOARDING_STEP_PATTERN, onboardingState } from './onboarding-state.ts';
 export {
   WHATSAPP_E164_PATTERN,
   WHATSAPP_OTP_MAX_ATTEMPTS,
@@ -104,7 +106,30 @@ export {
   type FlagChangeRequestStatus,
 } from './flags.ts';
 export { fetchLog } from './fetch-log.ts';
-export { judgment, type JudgmentPageText, type JudgmentProvenance } from './corpus.ts';
+export {
+  CORPUS_BULK_DATASETS,
+  CORPUS_IMPORT_STATUSES,
+  CORPUS_MASK_REQUEST_STATUSES,
+  JUDGMENT_OUTCOMES,
+  JUDGMENT_SEGMENT_ROLES,
+  corpusImportCursor,
+  corpusMaskRequest,
+  corpusOcrCall,
+  corpusOcrQueue,
+  judgment,
+  judgmentCitationRef,
+  judgmentSegment,
+  judgmentStatuteRef,
+  judgmentTag,
+  type CorpusBulkDataset,
+  type CorpusImportStatus,
+  type CorpusMaskRequestStatus,
+  type JudgmentOutcome,
+  type JudgmentOutcomeAnchor,
+  type JudgmentPageText,
+  type JudgmentProvenance,
+  type JudgmentSegmentRole,
+} from './corpus.ts';
 export {
   NEWS_EXCERPT_MAX,
   NEWS_FORUMS,
@@ -331,6 +356,7 @@ export {
   IMPORT_BATCH_STATUSES,
   importBatch,
   importBatchFile,
+  importColumnMapping,
   importPlan,
   type ImportBatchFileStatus,
   type ImportBatchStatus,
@@ -345,6 +371,14 @@ export {
   type NoticeKind,
   type NoticeMatchReason,
 } from './notices.ts';
+export {
+  INCIDENT_SEVERITIES,
+  INCIDENT_STATES,
+  incident,
+  incidentUpdate,
+  type IncidentSeverity,
+  type IncidentState,
+} from './status.ts';
 export {
   CASE_STATUS_VIA,
   caseStatusSnapshot,
@@ -389,7 +423,18 @@ export {
   type MemoryUsagePurpose,
 } from './memory.ts';
 export { briefState, type BriefCarryEntry } from './brief.ts';
+export { clientContact } from './client-contact.ts';
+export { conflictCheckResult, enquiry, enquiryParty } from './enquiry.ts';
 export { handoverNote, matterView } from './continuity.ts';
+export { clientLedgerEntry, feeAgreement, feeInvoice, feeInvoiceLine, payment } from './fees.ts';
+export { limitationComputation, limitationRule } from './limitation.ts';
 export { briefShare, referral, referralCredit, type SharedBriefSnapshot } from './share.ts';
+export {
+  statusLink,
+  statusLinkAccess,
+  type StatusLinkPayloadJson,
+  type StatusLinkUaClass,
+} from './status-link.ts';
 export { reminderDispatch, REMINDER_KINDS, type ReminderKind } from './reminder.ts';
 export { attentionSnooze, ATTENTION_SNOOZE_RULES, type AttentionSnoozeRule } from './attention.ts';
+export { contextTestResult, loadPulse, povPrefs, preparednessRating } from './proof-of-value.ts';

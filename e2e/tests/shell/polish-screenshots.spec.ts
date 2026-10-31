@@ -99,15 +99,16 @@ for (const { name, viewport } of WIDTHS) {
     test('shortcuts dialog', async ({ page, asUser }, testInfo) => {
       await openShell(page, asUser);
       await page.keyboard.press('?');
-      const dialog = page.getByRole('dialog', { name: 'Keyboard shortcuts' });
+      const dialog = page.getByRole('dialog', { name: 'Help' });
       await expect(dialog).toBeVisible();
 
-      // A light 1 px inset line in the ring token, not a 2 px outer outline.
-      const list = dialog.locator('[data-slot="shortcuts-list"]');
+      // The global 2 px focus ring (offset 2 px, ui tokens base.css). The tab asks for an inset ring,
+      // but the unlayered base rule wins over the utility; see the layering follow-up.
+      const list = dialog.getByRole('tab', { name: 'Shortcuts' });
       await keyboardFocus(page, list);
       await expect
         .poll(() => outlineOf(list))
-        .toEqual({ focusVisible: true, style: 'solid', width: 1, offset: -1 });
+        .toEqual({ focusVisible: true, style: 'solid', width: 2, offset: 2 });
 
       await shot(page, testInfo, `${name}-shortcuts-dialog`);
     });

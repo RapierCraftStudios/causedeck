@@ -24,7 +24,8 @@
       "followup": "Follow-up",
       "practice": "Practice",
       "settings": "Settings"
-    }
+    },
+    "enquiries": "Enquiries"
   },
   "palette": {
     "title": "Command palette",

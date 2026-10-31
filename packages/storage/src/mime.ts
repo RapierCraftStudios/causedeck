@@ -21,9 +21,10 @@ export interface AllowedType {
   sniffed: readonly string[];
 }
 
+const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-/** The upload allow-list: PDF, DOCX, `.ics`, `.txt`, PNG, JPEG, WebP, HEIC, audio and `.zip`. */
+/** The upload allow-list: PDF, DOCX, `.csv`, `.xlsx`, `.ics`, `.txt`, PNG, JPEG, WebP, HEIC, audio and `.zip`. */
 export const ALLOWED_TYPES: readonly AllowedType[] = Object.freeze([
   {
     name: 'pdf',
@@ -56,6 +57,22 @@ export const ALLOWED_TYPES: readonly AllowedType[] = Object.freeze([
     extensions: ['txt'],
     declared: ['text/plain'],
     sniffed: ['text/plain', 'text/calendar'],
+  },
+  {
+    name: 'csv',
+    kind: 'document',
+    mime: 'text/csv',
+    extensions: ['csv'],
+    declared: ['text/csv', 'application/csv'],
+    sniffed: ['text/plain'],
+  },
+  {
+    name: 'xlsx',
+    kind: 'document',
+    mime: XLSX,
+    extensions: ['xlsx'],
+    declared: [XLSX],
+    sniffed: [XLSX],
   },
   {
     name: 'png',

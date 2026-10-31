@@ -16,10 +16,23 @@ export const clientKeys = {
     requiredWhen: 'NODE_ENV=production',
     ownerIssue: 10,
   },
+  NEXT_PUBLIC_SUPPORT_WHATSAPP: {
+    domain: 'client',
+    type: 'string (E.164)',
+    description:
+      'Support WhatsApp number shown in the help Contact tab; unset hides the WhatsApp link.',
+    requiredWhen: 'never',
+    ownerIssue: 94,
+  },
 } satisfies KeyMetaRecord;
 
 export const clientShape = {
   NEXT_PUBLIC_APP_URL: z.url().describe(clientKeys.NEXT_PUBLIC_APP_URL.description),
+  NEXT_PUBLIC_SUPPORT_WHATSAPP: z
+    .string()
+    .regex(/^\+[1-9][0-9]{7,14}$/)
+    .optional()
+    .describe(clientKeys.NEXT_PUBLIC_SUPPORT_WHATSAPP.description),
 };
 
 // Compile-time guard: every client key carries the public prefix.
@@ -35,6 +48,7 @@ function readClientRuntimeEnv(): Record<string, string | undefined> {
   return {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_SUPPORT_WHATSAPP: process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP,
   };
 }
 

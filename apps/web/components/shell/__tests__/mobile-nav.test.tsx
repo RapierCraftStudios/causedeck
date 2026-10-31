@@ -80,7 +80,7 @@ describe('mobile bottom navigation', () => {
     expect(more.getAttribute('aria-haspopup')).toBe('dialog');
     const sheet = openMore();
     expect(more.getAttribute('aria-expanded')).toBe('true');
-    // Flags are off by default, so invoices and limitation stay hidden.
+    // Flags are off by default, so invoices, limitation and insights stay hidden.
     expect(moreIds(sheet)).toEqual([
       'tomorrow',
       'calendar',
@@ -93,7 +93,6 @@ describe('mobile bottom navigation', () => {
       'notices',
       'portfolio',
       'billing',
-      'insights',
       'settings',
     ]);
     for (const link of within(sheet).getAllByRole('link')) {
@@ -124,7 +123,9 @@ describe('mobile bottom navigation', () => {
     expect(ids).not.toContain('limitation');
     cleanup();
     renderWithIntl(<MobileNav slug="demo" role="owner" isEnabled={() => true} />);
-    expect(moreIds(openMore())).toEqual(expect.arrayContaining(['invoices', 'limitation']));
+    expect(moreIds(openMore())).toEqual(
+      expect.arrayContaining(['invoices', 'limitation', 'insights']),
+    );
   });
 
   it('closes the sheet when a destination is chosen', () => {

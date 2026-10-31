@@ -41,7 +41,7 @@ describe('one policy module for web and server', () => {
     const legacy: Record<policy.Role, readonly string[]> = {
       owner: ['billing.read', 'invoices.read', 'limitation.read', 'insights.read', 'settings.read'],
       advocate: ['limitation.read', 'insights.read', 'settings.read'],
-      junior: ['limitation.read', 'settings.read'],
+      junior: ['limitation.read', 'insights.read', 'settings.read'],
       clerk: ['settings.read'],
       viewer: [],
     };

@@ -3,6 +3,7 @@
 import { createServer, type Server } from 'node:http';
 
 import { createHealthHandlers, type HealthCheck } from '@causedeck/observability';
+import { clockDriftCheckFromEnv } from '@causedeck/observability/health';
 
 export interface HealthServerOptions {
   readonly port: number;
@@ -17,10 +18,12 @@ export interface WorkerReadiness {
 }
 
 export function workerChecks(worker: WorkerReadiness): Record<string, HealthCheck> {
+  const clock = clockDriftCheckFromEnv();
   return {
     db: () => worker.ping(),
     handlers: () =>
       worker.isReady() ? Promise.resolve() : Promise.reject(new Error('handlers not registered')),
+    ...(clock !== undefined && { clock }),
   };
 }
 

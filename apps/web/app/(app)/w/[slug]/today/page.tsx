@@ -8,11 +8,13 @@ import {
   BenchNoticeAlerts,
   type BenchNoticeAlertView,
 } from '../../../../../components/courts/bench-notice-alerts.tsx';
+import { SurfaceHelp } from '../../../../../components/help/surface-help.tsx';
 import { LiveHalls } from '../../../../../components/court-day/live-halls.tsx';
 import {
   placeholderPage,
   type WorkspacePageProps,
 } from '../../../../../components/shell/placeholder-page.tsx';
+import { LoadPulseCard } from '../_pov/load-pulse-card.tsx';
 import { renderBoard } from '../_court-day/render-board.tsx';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../src/health.ts';
@@ -55,18 +57,36 @@ async function loadBenchNotices(slug: string): Promise<BenchNoticeAlertView[]> {
   }
 }
 
+/** The weekly pulse is due for this member (#86); a failed read shows no card. */
+async function loadPulseDue(slug: string): Promise<string | null> {
+  try {
+    const context = await getWorkspaceContext(slug);
+    if (!context) return null;
+    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { dueForPulse } = await import('@causedeck/core/pov');
+    const actor = { workspaceId: context.workspace.id, userId: context.user.id };
+    const due = await inWorkspace(actor, (tx) => dueForPulse({ db: tx }, actor));
+    return due ? actor.workspaceId : null;
+  } catch (error) {
+    logger.error({ err: error }, 'today page: could not read the weekly pulse');
+    return null;
+  }
+}
+
 export default async function TodayPage(props: WorkspacePageProps) {
   // The placeholder renders first so its guards (membership, permission, dev states) run unchanged.
   const { base, board } = await renderBoard(props, 'today', Placeholder);
   const { slug } = await props.params;
   const live = await LiveHalls({ halls: await loadHalls(slug) });
   const bench = await loadBenchNotices(slug);
-  if (live === null && bench.length === 0) return board ?? base;
+  const pulse = await loadPulseDue(slug);
   return (
     <div className="flex flex-col gap-6">
+      <SurfaceHelp slug={slug} surface="today" />
       {board ?? base}
       <BenchNoticeAlerts alerts={bench} slug={slug} />
       {live}
+      {pulse === null ? null : <LoadPulseCard workspaceId={pulse} />}
     </div>
   );
 }

@@ -106,6 +106,27 @@ the matrix, before the resource checks below.
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `appearance.assign` | ✓     | ✓        | —      | —     | —      |
 
+## contact
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `contact.read` | ✓     | ✓        | ✓      | ✓     | ✓      |
+| `contact.write` | ✓     | ✓        | —      | —     | —      |
+
+## enquiry
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `enquiry.read` | ✓     | ✓        | —      | —     | —      |
+| `enquiry.write` | ✓     | ✓        | —      | —     | —      |
+
+## fee
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `fee.read` | ✓     | ✓        | —      | —     | —      |
+| `fee.write` | ✓     | ✓        | —      | —     | —      |
+
 ## export
 
 | Action | owner | advocate | junior | clerk | viewer |
@@ -118,12 +139,18 @@ the matrix, before the resource checks below.
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `support.manage` | ✓     | —        | —      | —     | —      |
 
+## limitation
+
+| Action | owner | advocate | junior | clerk | viewer |
+| ------ | ----- | -------- | ------ | ----- | ------ |
+| `limitation.write` | ✓     | ✓        | —      | —     | —      |
+
 ## shell
 
 | Action | owner | advocate | junior | clerk | viewer |
 | ------ | ----- | -------- | ------ | ----- | ------ |
 | `limitation.read` | ✓     | ✓        | ✓      | —     | —      |
-| `insights.read` | ✓     | ✓        | —      | —     | —      |
+| `insights.read` | ✓     | ✓        | ✓      | —     | —      |
 | `settings.read` | ✓     | ✓        | ✓      | ✓     | —      |
 
 ## Settings and resource rules

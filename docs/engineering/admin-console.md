@@ -258,6 +258,22 @@ edits stay on `/sources` (audited as `source.changed`).
 `__tests__/no-content-fields.test.ts` reads fully seeded workspaces through the data layer and the
 pages and fails on any content field or another member's email.
 
+## Status
+
+`/status` (#770, part 2 of #96) is where ops and admin staff run the incidents shown on the public
+status page. The `status` capability is in the `ops` and `admin` rows of the matrix; `support`, and
+anyone who is not enabled staff, gets the generic 404 from `requireStaff('status')`. Staff open an
+incident (title, component, severity), post updates and resolve it (an update to the `resolved`
+state sets `resolved_at`; a resolved incident takes no further updates). The public wording is never
+free text: each message is one of the fixed `INCIDENT_TEMPLATES` (`@causedeck/core/status`) plus an
+optional note of at most 500 characters. Every change is one transaction in core that checks
+`staff_user`, writes `incident` / `incident_update` and records the security audit action
+`incident.changed` (actor kind `staff`, no workspace; metadata `change` = `created`, `updated` or
+`resolved`, with `old_state` and `new_state`). The next `system.status.publish` run (every minute)
+puts the change in the signed snapshot. The page has a loading skeleton (`loading.tsx`), an empty
+state, an error boundary with the request id (`error.tsx`) and an offline notice
+(`offline-banner.tsx`).
+
 ## Server actions are audited
 
 Every admin server action records an audit event with actor kind `staff` (`verifyTwoFactor`:

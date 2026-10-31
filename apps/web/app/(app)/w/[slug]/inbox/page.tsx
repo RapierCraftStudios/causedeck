@@ -8,6 +8,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import { SurfaceHelp } from '../../../../../components/help/surface-help.tsx';
 import { InboxShell } from '../../../../../components/inbox/inbox-shell.tsx';
 import { listReadyItems } from '../../../../../lib/inbox/ready-providers.ts';
 import '../../../../../lib/outward/ready-provider.ts';
@@ -68,5 +69,10 @@ export default async function InboxPage({ params }: InboxPageProps) {
         : { ...item, sourceFetchedAt: publication.fetchedAt.toISOString() };
     }),
   );
-  return <InboxShell view={{ ...view, needsYou }} workspaceId={context.workspace.id} slug={slug} />;
+  return (
+    <div className="flex flex-col gap-4">
+      <SurfaceHelp slug={slug} surface="inbox" />
+      <InboxShell view={{ ...view, needsYou }} workspaceId={context.workspace.id} slug={slug} />
+    </div>
+  );
 }

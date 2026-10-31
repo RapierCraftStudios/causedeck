@@ -1,0 +1,14 @@
+{
+  "_comment": "Applied by archive-logs.sh --init to the lean log archive bucket (mc ilm import). The bucket is created with object lock and a 180-day COMPLIANCE default retention (CERT-In 2022 Directions), so nothing can be deleted earlier; objects expire after 200 days. Region ap-south-2 (Hyderabad) by default, never outside India (D-009).",
+  "region": "ap-south-2",
+  "minimumRetentionDays": 180,
+  "objectLock": { "mode": "COMPLIANCE", "days": 180 },
+  "Rules": [
+    {
+      "ID": "expire-archived-logs-after-200-days",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "docker/" },
+      "Expiration": { "Days": 200 }
+    }
+  ]
+}

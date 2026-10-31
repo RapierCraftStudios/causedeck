@@ -53,6 +53,7 @@ const PRODUCTION = {
   API_URL: 'https://api.causedeck.in',
   NEXT_PUBLIC_APP_URL: 'https://app.causedeck.in',
   BETTER_AUTH_SECRET: 'prod-better-auth-secret-0123456789abcdef',
+  STATUS_SIGNING_KEY: 'prod-status-signing-key-0123456789abcdef',
   KEK_BASE64: Buffer.alloc(32, 7).toString('base64'),
   EMAIL_PROVIDER: 'ses',
   SES_REGION: 'ap-south-1',

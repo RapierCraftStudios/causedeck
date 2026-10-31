@@ -8,6 +8,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import { SurfaceHelp } from '../../../../../components/help/surface-help.tsx';
 import { isDev } from '../../../../../lib/env.ts';
 import { workspaceFlagCheck } from '../../../../../lib/flags.ts';
 import { memoryDeps } from '../../../../../lib/memory/deps.ts';
@@ -82,7 +83,8 @@ export default async function MemoryPage({ params, searchParams }: MemoryPagePro
         seen: typeof p.evidence.count === 'number' ? p.evidence.count : null,
       }));
   return (
-    <>
+    <div className="flex flex-col gap-4">
+      <SurfaceHelp slug={slug} surface="memory" />
       <MemoryScreen
         workspaceId={context.workspace.id}
         slug={slug}
@@ -97,6 +99,6 @@ export default async function MemoryPage({ params, searchParams }: MemoryPagePro
         m5Enabled={m5}
       />
       {tenure === null ? null : <TenurePanel metrics={tenure} />}
-    </>
+    </div>
   );
 }

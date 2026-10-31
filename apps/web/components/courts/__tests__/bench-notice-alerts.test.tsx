@@ -28,15 +28,14 @@ describe('BenchNoticeAlerts (#496)', () => {
     expect(container.querySelector('[data-slot="bench-notice-alerts"]')).toBeNull();
   });
 
-  it('shows the change, dates, source and the official notice as an external link', () => {
+  it('shows the change, dates and the official notice as an external link', () => {
     const { container } = renderWithIntl(<BenchNoticeAlerts alerts={[alert()]} slug="demo" />);
     const row = container.querySelector('[data-bench-alert="n-1:m-1"]');
     expect(row?.textContent).toContain('Special bench');
     expect(row?.textContent).toContain('Special bench for W.P. matters');
     expect(row?.textContent).toContain('2026-11-05, 2026-11-06');
-    expect(row?.querySelector('[data-provenance="source"]')?.textContent).toBe(
-      'Source: Madras High Court',
-    );
+    expect(row?.querySelector('[data-provenance="source"]')).toBeNull();
+    expect(row?.textContent).not.toContain('Madras High Court');
     expect(screen.getByRole('link', { name: 'Rao v State' }).getAttribute('href')).toBe(
       '/w/demo/matters/m-1',
     );

@@ -24,6 +24,10 @@ import { courtDataRetention } from './definitions/court-data-retention.ts';
 import { newsDigest, newsDigestMember, newsDigestSchedule } from './definitions/news-digest.ts';
 import { newsPoll, systemNewsPoll } from './definitions/news-poll.ts';
 import { auditRetention } from './definitions/audit-retention.ts';
+import { backupHealth } from './definitions/backup-health.ts';
+import { enquiryRetention } from './definitions/enquiry-retention.ts';
+import { demoReset } from './definitions/demo-reset.ts';
+import { statusLinkRetention } from './definitions/status-link-retention.ts';
 import { auditVerify, systemAuditVerify } from './definitions/audit-verify.ts';
 import { systemDataOpsEvaluate } from './definitions/data-ops-evaluate.ts';
 import { billingDunningTick } from './definitions/billing-dunning-tick.ts';
@@ -37,6 +41,12 @@ import { coverageWeekly } from './definitions/coverage-weekly.ts';
 import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
+import { corpusBulkImport } from './definitions/corpus-bulk-import.ts';
+import { corpusEnrich } from './definitions/corpus-enrich.ts';
+import { corpusRedact } from './definitions/corpus-redact.ts';
+import { corpusEmbed } from './definitions/corpus-embed.ts';
+import { corpusSegment } from './definitions/corpus-segment.ts';
+import { corpusOcr } from './definitions/corpus-ocr.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
 import { briefRefresh, briefRefreshSweep } from './definitions/brief-refresh.ts';
@@ -57,6 +67,7 @@ import { deletionTick } from './definitions/deletion-tick.ts';
 import { boardPoll } from './definitions/board-poll.ts';
 import { causelistPoll } from './definitions/causelist-poll.ts';
 import { noticesPoll } from './definitions/notices-poll.ts';
+import { statusPublish } from './definitions/status-publish.ts';
 import { draftingCitationsCheck } from './definitions/drafting-citations-check.ts';
 import { draftingConsistencyCheck } from './definitions/drafting-consistency-check.ts';
 import { draftingExport } from './definitions/drafting-export.ts';
@@ -204,6 +215,10 @@ export const registry = createRegistry([
   systemAuditVerify,
   auditVerify,
   auditRetention,
+  backupHealth,
+  enquiryRetention,
+  statusLinkRetention,
+  demoReset,
   exportBuild,
   draftingExport,
   draftingCitationsCheck,
@@ -232,9 +247,16 @@ export const registry = createRegistry([
   importFile,
   systemDataOpsEvaluate,
   corpusPoll,
+  corpusBulkImport,
+  corpusRedact,
+  corpusSegment,
+  corpusEnrich,
+  corpusEmbed,
+  corpusOcr,
   causelistPoll,
   boardPoll,
   noticesPoll,
+  statusPublish,
   judgmentAlertScan,
   portfolioAlertScan,
   statusPoll,
@@ -281,6 +303,10 @@ export type JobMap = RegistryMap<
     typeof systemAuditVerify,
     typeof auditVerify,
     typeof auditRetention,
+    typeof backupHealth,
+    typeof enquiryRetention,
+    typeof statusLinkRetention,
+    typeof demoReset,
     typeof exportBuild,
     typeof draftingExport,
     typeof draftingCitationsCheck,
@@ -309,9 +335,16 @@ export type JobMap = RegistryMap<
     typeof importFile,
     typeof systemDataOpsEvaluate,
     typeof corpusPoll,
+    typeof corpusBulkImport,
+    typeof corpusRedact,
+    typeof corpusSegment,
+    typeof corpusEnrich,
+    typeof corpusEmbed,
+    typeof corpusOcr,
     typeof causelistPoll,
     typeof boardPoll,
     typeof noticesPoll,
+    typeof statusPublish,
     typeof judgmentAlertScan,
     typeof portfolioAlertScan,
     typeof statusPoll,

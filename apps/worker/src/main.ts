@@ -10,7 +10,7 @@ import {
   setStatusFetcherFactory,
   type CauseListFetcherFactory,
 } from '@causedeck/core/jobs';
-import { closeAppDb, db } from '@causedeck/core/runtime';
+import { closeAppDb, db, startDbPoolMetrics } from '@causedeck/core/runtime';
 import { createFetchLogSink, policyFor } from '@causedeck/core/sources';
 import { createFetcher, createProvider } from '@causedeck/fetch';
 import { createLogger, initTelemetry } from '@causedeck/observability';
@@ -27,6 +27,7 @@ import {
 const env = serverEnv();
 const telemetry = initTelemetry({ service: 'worker' });
 const logger = createLogger({ service: 'worker' });
+await startDbPoolMetrics({ auth: false });
 
 const ownerUrl = env.DATABASE_URL_OWNER;
 if (ownerUrl === undefined) {

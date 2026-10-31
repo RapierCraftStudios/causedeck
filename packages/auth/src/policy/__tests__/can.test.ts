@@ -178,11 +178,20 @@ describe('role rules', () => {
     }
   });
 
+  it('limitation.write is owner and advocate only (#940)', () => {
+    for (const role of ['owner', 'advocate'] as const) {
+      expect(can(actor(role), 'limitation.write').allow, role).toBe(true);
+    }
+    for (const role of ['junior', 'clerk', 'viewer'] as const) {
+      expect(reasonOf(can(actor(role), 'limitation.write')), role).toBe('ROLE_DENIED');
+    }
+  });
+
   it('shell permissions match the web stub table (apps/web/lib/workspace-context.ts)', () => {
     const stub = {
       owner: ['billing.read', 'invoices.read', 'limitation.read', 'insights.read', 'settings.read'],
       advocate: ['limitation.read', 'insights.read', 'settings.read'],
-      junior: ['limitation.read', 'settings.read'],
+      junior: ['limitation.read', 'insights.read', 'settings.read'],
       clerk: ['settings.read'],
       viewer: [],
     } as const;

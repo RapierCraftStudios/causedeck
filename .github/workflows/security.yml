@@ -17,7 +17,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Fails on a high or critical advisory in production dependencies.
+  # Fails on a high or critical advisory that has a patched version, unless an unexpired entry in
+  # infra/security/exceptions.yml waives it; an expired entry fails on its own (scripts/audit-gate.mjs).
   audit:
     name: audit
     runs-on: ubuntu-latest
@@ -27,8 +28,10 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/setup
-      - name: pnpm audit (production, high and above)
+      - name: Audit gate (production, high and above with a fix)
         run: pnpm audit:prod
+      - name: Gate tests
+        run: node --test scripts/audit-gate.test.mjs
 
   # The gitleaks CLI image, pinned by digest. gitleaks/gitleaks-action needs a GITLEAKS_LICENSE
   # secret for organisation repositories, which would break secret-free runs.
@@ -46,6 +49,91 @@ jobs:
           docker run --rm -v "$GITHUB_WORKSPACE:/repo" -w /repo
           ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
           git --redact --verbose --exit-code 1 /repo
+      # The scanner must fail on a seeded secret: copy the fixture to a path that is not allow-listed,
+      # replace the placeholder with 36 random characters (nothing is committed) and expect exit 1.
+      - name: Scanner fails on a seeded secret
+        run: |
+          set -euo pipefail
+          scratch="$(mktemp -d)"
+          random="$(head -c 64 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 36)"
+          sed "s/@@RANDOM36@@/$random/" infra/security/gitleaks/fixtures/seeded-secret.txt >"$scratch/seeded.txt"
+          if docker run --rm -v "$scratch:/scan" \
+            ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f \
+            detect --no-git --source /scan --no-banner --redact --exit-code 1; then
+            echo "gitleaks did not flag the seeded secret" >&2
+            exit 1
+          fi
+          echo "gitleaks flagged the seeded secret, as required"
+      - name: Allow-list and hook tests
+        run: node --test infra/security/gitleaks.test.mjs
+
+  # Trivy filesystem scan (lockfile and config misconfiguration): critical with a fix fails.
+  trivy-fs:
+    name: trivy fs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Trivy filesystem scan
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src
+          -v "$GITHUB_WORKSPACE/infra/security/trivy:/trivy:ro"
+          aquasec/trivy:0.58.1@sha256:ab70a02200597efa04748f210f793936eb647cbcdb0ea69cc30b226d6f5a22c7
+          fs --config /trivy/trivy.yaml --ignorefile /trivy/.trivyignore.yaml
+          --scanners vuln,secret --skip-dirs node_modules /src
+      - name: Ignore file and config tests
+        run: node --test infra/security/trivy/trivy.test.mjs
+
+  # No L5 action type exists and nothing auto-sends, files or pays (PRD TR-1, scripts/check-no-l5.ts).
+  no-l5:
+    name: no L5
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - run: pnpm check:no-l5
+
+  # Weekly (and on demand): summary of open vulnerabilities and exceptions in the run summary and in
+  # one tracking issue. The only job with `issues: write`; expired exceptions fail the run.
+  weekly-report:
+    name: weekly report
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Build the report
+        run: |
+          status=0
+          node scripts/audit-gate.mjs --report >"$RUNNER_TEMP/report.md" || status=$?
+          cat "$RUNNER_TEMP/report.md" >>"$GITHUB_STEP_SUMMARY"
+          echo "REPORT_STATUS=$status" >>"$GITHUB_ENV"
+      - name: Update the tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          title='Weekly security report'
+          number="$(gh issue list --state open --search "\"$title\" in:title" --json number,title \
+            --jq "[.[] | select(.title == \"$title\")][0].number // empty")"
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file "$RUNNER_TEMP/report.md"
+          else
+            gh issue create --title "$title" --body-file "$RUNNER_TEMP/report.md"
+          fi
+      - name: Fail on an expired exception
+        run: exit "$REPORT_STATUS"
 
   # Code scanning on a private repository needs GitHub Advanced Security (docs/engineering/ci.md).
   # Opt-in: set the repository variable ENABLE_GHAS=true once GHAS is enabled (D-043).

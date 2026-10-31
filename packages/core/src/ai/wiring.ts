@@ -15,6 +15,7 @@ import { schema, withWorkspace, type Queryable } from '@causedeck/db';
 import { and, eq, gt, lte, sql } from 'drizzle-orm';
 
 import { recordAiCall } from '../audit/index.ts';
+import { assertNotDemoWorkspace } from '../shared/demo-guard.ts';
 import { commit, release, reserve, type Reservation, type UsageContext } from '../usage/index.ts';
 
 const { aiCall, aiCallResult, matter, workspaceSettings } = schema;
@@ -47,6 +48,8 @@ export function createAiPorts(db: Queryable, options: AiPortsOptions = {}): Gate
   return {
     budget: {
       async reserve(workspaceId, estimatedPaise, purpose) {
+        // A demo workspace spends nothing on AI (#93): its content is static fixtures.
+        await withWorkspace(db, { workspaceId }, (tx) => assertNotDemoWorkspace(tx, workspaceId));
         const reservation = await reserve(usageCtx(workspaceId), {
           estimatePaise: estimatedPaise,
           purpose,

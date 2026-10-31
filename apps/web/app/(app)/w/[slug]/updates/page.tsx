@@ -76,7 +76,7 @@ export default async function DraftsPage({ params, searchParams }: DraftsPagePro
                 kind: f.kind,
                 text: f.text,
                 confirmed: f.confirmed,
-                source: `${f.provenance.table} · ${f.provenance.sourceType}`,
+                source: f.provenance.table,
               })),
             }
       }

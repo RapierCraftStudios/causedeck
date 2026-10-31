@@ -24,7 +24,7 @@ import {
 import { notify, type DeliveryJob } from '@causedeck/notifications';
 import { and, desc, eq, gt, isNull, or, sql } from 'drizzle-orm';
 
-import { recordSupportSessionEnded, recordSupportSessionStarted } from '../audit/index.ts';
+import { record, recordSupportSessionEnded, recordSupportSessionStarted } from '../audit/index.ts';
 import {
   conflict,
   forbidden,
@@ -216,6 +216,58 @@ export async function requestSession(
   return row;
 }
 
+export interface MemberSupportRequestInput {
+  reason: string;
+  /** How long the member would grant, 1 to 240; default 60. Applied when they grant it. */
+  minutes?: number;
+}
+
+/**
+ * The owner asks for help (#94): records a pending, metadata-only request with the grant length
+ * they chose and audits it (`support.session_requested`). It names no staff member, so staff see
+ * nothing, and it cannot be granted until a staff member picks it up.
+ */
+export async function requestMemberSupport(
+  ctx: WorkspaceActorContext,
+  { reason, minutes }: MemberSupportRequestInput,
+): Promise<SupportSession> {
+  assertIds(ctx.workspaceId, ctx.userId);
+  const trimmed = reason.trim();
+  if (trimmed === '' || trimmed.length > SUPPORT_REASON_MAX_LENGTH) {
+    throw invalid(`A reason of 1 to ${String(SUPPORT_REASON_MAX_LENGTH)} characters is required`);
+  }
+  const length = validMinutes(minutes);
+  if ((await memberRole(ctx.db, ctx.userId, ctx.workspaceId)) === null) throw notFound();
+  await assertOwner(ctx);
+  return withWorkspace(ctx.db, { workspaceId: ctx.workspaceId, userId: ctx.userId }, async (tx) => {
+    const [row] = await tx
+      .insert(supportSession)
+      .values({
+        workspaceId: ctx.workspaceId,
+        requestedByUser: ctx.userId,
+        requestedMinutes: length,
+        reason: trimmed,
+        scope: 'metadata',
+      })
+      .returning();
+    if (row === undefined) throw new Error('support_session insert returned nothing');
+    await record(
+      {
+        db: tx,
+        workspaceId: ctx.workspaceId,
+        actor: { userId: ctx.userId, kind: 'user' },
+        ...meta(ctx),
+      },
+      {
+        action: 'support.session_requested',
+        target: { kind: 'support_session', id: row.id },
+        metadata: { minutes: length },
+      },
+    );
+    return row;
+  });
+}
+
 async function assertOwner(ctx: WorkspaceActorContext): Promise<void> {
   const role = await memberRole(ctx.db, ctx.userId, ctx.workspaceId);
   if (role !== 'owner') throw forbidden('Only the workspace owner can decide on support sessions');
@@ -261,6 +313,9 @@ export async function grantSession(
     if (current.status !== 'requested') {
       throw conflict('Only a pending request can be granted; staff must request a new session');
     }
+    // A member's own request (#94) names no staff member until one picks it up.
+    const staffUserId = current.requestedByStaff;
+    if (staffUserId === null) throw conflict('No staff member has picked up this request yet');
     const [row] = await tx
       .update(supportSession)
       .set({
@@ -276,7 +331,7 @@ export async function grantSession(
       { db: tx, ...meta(ctx) },
       {
         supportSessionId: row.id,
-        staffUserId: row.requestedByStaff,
+        staffUserId,
         workspaceId: row.workspaceId,
       },
     );
@@ -328,7 +383,7 @@ export async function revokeSession(
       .where(eq(supportSession.id, sessionId))
       .returning();
     if (row === undefined) throw sessionNotFound();
-    if (current.status === 'granted') {
+    if (current.status === 'granted' && row.requestedByStaff !== null) {
       await recordSupportSessionEnded(
         { db: tx, ...meta(ctx) },
         {

@@ -1,0 +1,105 @@
+# OpenTelemetry Collector (#102): OTLP in from the services, Docker JSON logs (services and Caddy)
+# in from the host, defense-in-depth redaction, then Prometheus (metrics) and Loki (logs). Traces
+# become RED metrics via spanmetrics; trace storage is a Stage B decision.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  filelog:
+    include: [/var/lib/docker/containers/*/*-json.log]
+    start_at: end
+    storage: file_storage
+    operators:
+      - type: json_parser
+        id: docker
+        timestamp:
+          parse_from: attributes.time
+          layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+      - type: move
+        from: attributes.log
+        to: body
+      - type: json_parser
+        id: app
+        parse_from: body
+        if: 'body matches "^\\{"'
+        parse_to: attributes
+      - type: trace_parser
+        trace_id:
+          parse_from: attributes.trace_id
+        span_id:
+          parse_from: attributes.span_id
+        if: 'attributes.trace_id != nil'
+
+extensions:
+  file_storage:
+    directory: /var/lib/otelcol
+    create_directory: true
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+processors:
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 200
+  # Mirror of CONTENT_KEYS and the secret keys in packages/observability/src/redact.ts. The services
+  # redact first; these deletes catch anything that slips through. test/config.test.ts keeps both
+  # lists equal.
+  attributes/redact:
+    actions:
+      - { key: content, action: delete }
+      - { key: text, action: delete }
+      - { key: body, action: delete }
+      - { key: quote, action: delete }
+      - { key: prompt, action: delete }
+      - { key: memoryValue, action: delete }
+      - { key: title, action: delete }
+      - { key: filename, action: delete }
+      - { key: email, action: delete }
+      - { key: token, action: delete }
+      - { key: authorization, action: delete }
+      - { key: cookie, action: delete }
+      - { key: password, action: delete }
+      - { key: secret, action: delete }
+  # Caddy access logs: never keep credentials or query strings.
+  attributes/caddy:
+    actions:
+      - { key: request.headers.Authorization, action: delete }
+      - { key: request.headers.Cookie, action: delete }
+      - { key: request.uri, action: hash }
+  resource:
+    attributes:
+      - { key: deployment.region, value: ap-south-1, action: upsert }
+  batch:
+    timeout: 5s
+
+connectors:
+  spanmetrics:
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    resource_to_telemetry_conversion:
+      enabled: true
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+  debug:
+    verbosity: basic
+
+service:
+  extensions: [file_storage, health_check]
+  pipelines:
+    metrics:
+      receivers: [otlp, spanmetrics]
+      processors: [memory_limiter, attributes/redact, resource, batch]
+      exporters: [prometheus]
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/redact, resource, batch]
+      exporters: [spanmetrics, debug]
+    logs:
+      receivers: [otlp, filelog]
+      processors: [memory_limiter, attributes/redact, attributes/caddy, resource, batch]
+      exporters: [otlphttp/loki]

@@ -102,3 +102,54 @@ export function createHealthHandlers(options: CreateHealthHandlersOptions = {}):
     },
   };
 }
+
+/** Readiness fails when the local clock differs from the reference by more than this. */
+export const MAX_CLOCK_DRIFT_MS = 1000;
+
+export interface ClockDriftOptions {
+  /** Reference time in epoch ms from an NTP-synced source. */
+  readonly reference: () => Promise<number>;
+  readonly now?: () => number;
+  readonly maxDriftMs?: number;
+}
+
+/**
+ * Fails readiness when the clock drifts more than `maxDriftMs` (default 1 s) from the reference.
+ * `reference` may be truncated to whole seconds (HTTP `Date`), so up to 1 s of that is not drift.
+ */
+export function createClockDriftCheck(options: ClockDriftOptions): HealthCheck {
+  const now = options.now ?? Date.now;
+  const max = options.maxDriftMs ?? MAX_CLOCK_DRIFT_MS;
+  return async () => {
+    const reference = await options.reference();
+    const delta = now() - reference;
+    const drift = delta >= 0 ? Math.max(0, delta - 1000) : -delta;
+    if (drift > max) throw new Error(`clock drift ${String(drift)} ms exceeds ${String(max)} ms`);
+  };
+}
+
+/** Reference time from the `Date` header of a HEAD request to `url`. */
+export function httpDateReference(
+  url: string,
+  fetchFn: typeof fetch = fetch,
+): () => Promise<number> {
+  return async () => {
+    const response = await fetchFn(url, { method: 'HEAD', signal: AbortSignal.timeout(1500) });
+    const parsed = Date.parse(response.headers.get('date') ?? '');
+    if (Number.isNaN(parsed)) throw new Error('reference has no Date header');
+    return parsed;
+  };
+}
+
+/**
+ * The clock check for `CLOCK_DRIFT_REFERENCE_URL`, or `undefined` when it is unset (dev, tests).
+ * Production sets it so a host with a broken NTP leaves the load balancer rotation.
+ */
+export function clockDriftCheckFromEnv(
+  // eslint-disable-next-line no-process-env -- optional host-level probe, not validated app config.
+  env: Record<string, string | undefined> = process.env,
+): HealthCheck | undefined {
+  const url = env.CLOCK_DRIFT_REFERENCE_URL;
+  if (url === undefined || url === '') return undefined;
+  return createClockDriftCheck({ reference: httpDateReference(url) });
+}

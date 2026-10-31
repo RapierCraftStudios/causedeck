@@ -80,3 +80,37 @@ export function estimatePaise(
     provider === 'sarvam' ? { ...usage, inputTokens: 0, outputTokens: 0 } : { ...usage, chars: 0 };
   return costPaise(provider, model, effective);
 }
+
+/**
+ * Embedding models: paise per million input tokens at the planning rate of INR 84 per USD (#895).
+ * Cohere Embed Multilingual v3 on Bedrock is USD 0.10, Titan Text Embeddings v2 USD 0.02. The
+ * self-hosted bge-m3 has no per-token charge (fixed instance cost), so it meters at 0.
+ */
+export const EMBED_PRICES: Readonly<Record<string, number>> = {
+  'cohere.embed-multilingual-v3': 840,
+  'amazon.titan-embed-text-v2:0': 168,
+  'bge-m3': 0,
+  'mock-embed': 0,
+};
+
+/** Whole paise for `inputTokens` of an embedding model, rounded up; an unknown model costs 0. */
+export function embedCostPaise(model: string, inputTokens: number): number {
+  const total = (inputTokens * (EMBED_PRICES[model] ?? 0)) / 1_000_000;
+  return Math.ceil(Math.round(total * 1e6) / 1e6);
+}
+
+/**
+ * Rerank models: paise per billed search at the planning rate of INR 84 per USD (#896). Cohere
+ * Rerank 3.5 on Bedrock is USD 2.00 per 1,000 searches (about 17 paise). The self-hosted
+ * bge-reranker has no per-call charge, so it meters at 0.
+ */
+export const RERANK_PRICES: Readonly<Record<string, number>> = {
+  'cohere.rerank-v3-5:0': 17,
+  'bge-reranker-v2-m3': 0,
+  'mock-rerank': 0,
+};
+
+/** Whole paise for `searches` billed searches of a rerank model; an unknown model costs 0. */
+export function rerankCostPaise(model: string, searches: number): number {
+  return searches * (RERANK_PRICES[model] ?? 0);
+}

@@ -29,6 +29,7 @@ import {
 import { and, desc, eq, gt, inArray, isNull, lte, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { isDemoWorkspace } from '../../shared/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob, workspaceIdSchema } from '../define.ts';
 import { once } from '../idempotency.ts';
@@ -213,8 +214,11 @@ export async function runNotificationDigest(
     failed: 0,
   };
 
+  // A demo workspace sends nothing outside it (#93).
+  const demo = await isDemoWorkspace(ctx.db, workspaceId);
   for (const m of members) {
     const outcome = await ctx.db.transaction(async (sp): Promise<MemberOutcome> => {
+      if (demo) return 'skippedDisabled';
       const scoped = { ...ctx, db: sp };
       const prefs = await getPreferences({ db: sp, workspaceId }, { userId: m.userId });
       const digestPref = prefs.find((p) => p.category === 'digest.daily' && p.channel === 'email');

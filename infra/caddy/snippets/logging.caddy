@@ -1,0 +1,28 @@
+# Structured JSON access log on stdout (#98): collected from the container by the log pipeline
+# (#102) and read by fail2ban (fail2ban/). Bodies are never logged; cookies are dropped and
+# Authorization and token-like query parameters are redacted.
+(access_log) {
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				request>headers>Cookie delete
+				request>headers>Authorization replace REDACTED
+				request>headers>X-Api-Key replace REDACTED
+				resp_headers>Set-Cookie delete
+				request>uri query {
+					replace token REDACTED
+					replace access_token REDACTED
+					replace code REDACTED
+					replace key REDACTED
+					replace secret REDACTED
+					replace signature REDACTED
+					replace X-Amz-Signature REDACTED
+					replace X-Amz-Credential REDACTED
+					replace X-Amz-Security-Token REDACTED
+				}
+			}
+		}
+	}
+}

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CauseDeck API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Public REST API. Errors are RFC 9457 problem+json; see docs/engineering/api.md."
   },
   "servers": [
@@ -611,37 +611,18 @@
                           "summary": {
                             "type": ["string", "null"]
                           },
-                          "url": {
+                          "official_url": {
                             "type": ["string", "null"]
                           }
                         },
-                        "required": ["date", "number", "summary", "url"]
+                        "required": ["date", "number", "summary", "official_url"]
                       }
                     },
-                    "provenance": {
-                      "type": "object",
-                      "properties": {
-                        "source_id": {
-                          "type": "string"
-                        },
-                        "kind": {
-                          "type": "string",
-                          "enum": ["fetched", "contributed"]
-                        },
-                        "ref": {
-                          "type": ["string", "null"]
-                        },
-                        "captured_at": {
-                          "type": "string"
-                        },
-                        "confidence": {
-                          "type": ["number", "null"]
-                        }
-                      },
-                      "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
-                    },
-                    "source_license": {
+                    "as_of": {
                       "type": "string"
+                    },
+                    "official_url": {
+                      "type": ["string", "null"]
                     }
                   },
                   "required": [
@@ -653,8 +634,8 @@
                     "bench",
                     "fetched_at",
                     "orders",
-                    "provenance",
-                    "source_license"
+                    "as_of",
+                    "official_url"
                   ]
                 }
               }
@@ -792,30 +773,11 @@
                           "content": {
                             "type": "string"
                           },
-                          "provenance": {
-                            "type": "object",
-                            "properties": {
-                              "source_id": {
-                                "type": "string"
-                              },
-                              "kind": {
-                                "type": "string",
-                                "enum": ["fetched", "contributed"]
-                              },
-                              "ref": {
-                                "type": ["string", "null"]
-                              },
-                              "captured_at": {
-                                "type": "string"
-                              },
-                              "confidence": {
-                                "type": ["number", "null"]
-                              }
-                            },
-                            "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
-                          },
-                          "source_license": {
+                          "as_of": {
                             "type": "string"
+                          },
+                          "official_url": {
+                            "type": ["string", "null"]
                           }
                         },
                         "required": [
@@ -823,8 +785,8 @@
                           "forum",
                           "listing_date",
                           "content",
-                          "provenance",
-                          "source_license"
+                          "as_of",
+                          "official_url"
                         ]
                       }
                     }
@@ -939,39 +901,17 @@
                           "summary": {
                             "type": ["string", "null"]
                           },
-                          "url": {
-                            "type": ["string", "null"]
-                          },
                           "content": {
                             "type": ["string", "null"]
                           },
                           "forum": {
                             "type": ["string", "null"]
                           },
-                          "provenance": {
-                            "type": "object",
-                            "properties": {
-                              "source_id": {
-                                "type": "string"
-                              },
-                              "kind": {
-                                "type": "string",
-                                "enum": ["fetched", "contributed"]
-                              },
-                              "ref": {
-                                "type": ["string", "null"]
-                              },
-                              "captured_at": {
-                                "type": "string"
-                              },
-                              "confidence": {
-                                "type": ["number", "null"]
-                              }
-                            },
-                            "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
-                          },
-                          "source_license": {
+                          "as_of": {
                             "type": "string"
+                          },
+                          "official_url": {
+                            "type": ["string", "null"]
                           }
                         },
                         "required": [
@@ -980,11 +920,10 @@
                           "date",
                           "number",
                           "summary",
-                          "url",
                           "content",
                           "forum",
-                          "provenance",
-                          "source_license"
+                          "as_of",
+                          "official_url"
                         ]
                       }
                     }
@@ -1100,39 +1039,17 @@
                           "effective_on": {
                             "type": ["string", "null"]
                           },
-                          "url": {
-                            "type": "string"
-                          },
                           "forum_codes": {
                             "type": "array",
                             "items": {
                               "type": "string"
                             }
                           },
-                          "provenance": {
-                            "type": "object",
-                            "properties": {
-                              "source_id": {
-                                "type": "string"
-                              },
-                              "kind": {
-                                "type": "string",
-                                "enum": ["fetched", "contributed"]
-                              },
-                              "ref": {
-                                "type": ["string", "null"]
-                              },
-                              "captured_at": {
-                                "type": "string"
-                              },
-                              "confidence": {
-                                "type": ["number", "null"]
-                              }
-                            },
-                            "required": ["source_id", "kind", "ref", "captured_at", "confidence"]
-                          },
-                          "source_license": {
+                          "as_of": {
                             "type": "string"
+                          },
+                          "official_url": {
+                            "type": ["string", "null"]
                           }
                         },
                         "required": [
@@ -1141,15 +1058,231 @@
                           "kind",
                           "issued_on",
                           "effective_on",
-                          "url",
                           "forum_codes",
-                          "provenance",
-                          "source_license"
+                          "as_of",
+                          "official_url"
                         ]
                       }
                     }
                   },
                   "required": ["data"]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/research/search": {
+      "get": {
+        "operationId": "searchPublicResearch",
+        "tags": ["Public API"],
+        "summary": "Fact-pattern search over anonymised judgments, grouped by judgment",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "bearerToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            },
+            "required": true,
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Judgments with their matching passages, best first; empty when nothing matches",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "court": {
+                            "type": "string"
+                          },
+                          "court_level": {
+                            "type": ["string", "null"]
+                          },
+                          "date": {
+                            "type": ["string", "null"]
+                          },
+                          "neutral_citation": {
+                            "type": ["string", "null"]
+                          },
+                          "title": {
+                            "type": ["string", "null"]
+                          },
+                          "title_masked": {
+                            "type": "boolean"
+                          },
+                          "outcome": {
+                            "type": "string"
+                          },
+                          "cited_by": {
+                            "type": "integer"
+                          },
+                          "official_url": {
+                            "type": ["string", "null"]
+                          },
+                          "score": {
+                            "type": "number"
+                          },
+                          "segments": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "role": {
+                                  "type": "string"
+                                },
+                                "page_from": {
+                                  "type": "integer"
+                                },
+                                "page_to": {
+                                  "type": "integer"
+                                },
+                                "text": {
+                                  "type": "string"
+                                },
+                                "score": {
+                                  "type": "number"
+                                }
+                              },
+                              "required": ["id", "role", "page_from", "page_to", "text", "score"]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "court",
+                          "court_level",
+                          "date",
+                          "neutral_citation",
+                          "title",
+                          "title_masked",
+                          "outcome",
+                          "cited_by",
+                          "official_url",
+                          "score",
+                          "segments"
+                        ]
+                      }
+                    },
+                    "filters": {
+                      "type": "object",
+                      "properties": {
+                        "subject_areas": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "statutes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "statute": {
+                                "type": "string"
+                              },
+                              "section": {
+                                "type": "string"
+                              }
+                            },
+                            "required": ["statute", "section"]
+                          }
+                        },
+                        "courts": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "court_level": {
+                          "type": ["string", "null"]
+                        },
+                        "date_from": {
+                          "type": ["string", "null"]
+                        },
+                        "date_to": {
+                          "type": ["string", "null"]
+                        },
+                        "outcome": {
+                          "type": ["string", "null"]
+                        }
+                      },
+                      "required": [
+                        "subject_areas",
+                        "statutes",
+                        "courts",
+                        "court_level",
+                        "date_from",
+                        "date_to",
+                        "outcome"
+                      ]
+                    }
+                  },
+                  "required": ["data", "filters"]
                 }
               }
             }
@@ -1851,6 +1984,50 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload too large",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/csp-report": {
+      "post": {
+        "operationId": "receiveCspReport",
+        "tags": ["Security"],
+        "summary": "CSP violation report (`application/csp-report` or `application/reports+json`, 8 KB maximum)",
+        "security": [],
+        "x-public": true,
+        "responses": {
+          "204": {
+            "description": "Accepted: logged and counted, nothing stored"
           },
           "400": {
             "description": "Error",

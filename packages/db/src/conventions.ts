@@ -42,6 +42,7 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * `board_observation` (#493) is the global, content-free hall display-board history (hall, item, state); the app role may SELECT and INSERT it.
  * `bench_sitting_fact` (#521, D-050) is the global, staff-only bench-facts store (neutral counts and pace per hall and day); the app and clerk roles have no table grants and reach it only through the owner-defined `app_bench_*` functions.
  * `notice` (#584, D-048) is the global official notices feed read from cleared sources; the app role may SELECT, INSERT and UPDATE it (no DELETE).
+ * `incident` and `incident_update` (#769) are the platform incident log behind the public status page: public text only, no workspace data.
  * `notice_holiday` (#628) holds the dates named by a holiday-list notice; the app role may SELECT and INSERT it.
  */
 export const GLOBAL_TABLES: readonly string[] = [
@@ -76,9 +77,19 @@ export const GLOBAL_TABLES: readonly string[] = [
   'data_ops_alert',
   'data_ops_oncall',
   'judgment',
+  'judgment_segment',
+  'judgment_statute_ref',
+  'judgment_citation_ref',
+  'judgment_tag',
+  'corpus_import_cursor',
+  'corpus_ocr_call',
+  'corpus_ocr_queue',
+  'corpus_mask_request',
   'cause_list_publication',
   'board_observation',
   'notice',
+  'incident',
+  'incident_update',
   'notice_holiday',
   'review_item',
   'bench_sitting_fact',
@@ -108,6 +119,7 @@ export const GLOBAL_OR_WORKSPACE_TABLES: readonly string[] = [
   'court_hall',
   'bench',
   'template',
+  'limitation_rule',
 ];
 
 export const WORKSPACE_COLUMN = 'workspace_id';

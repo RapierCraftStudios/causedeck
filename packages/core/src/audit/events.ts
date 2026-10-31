@@ -38,6 +38,27 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'Staff created or changed an external data source or flipped its kill switch',
   },
+  // The bulk judgment import (#890, D-053). Metadata holds the dataset, court and year range only.
+  'corpus.bulk_import_started': {
+    security: false,
+    description: 'Staff started the bulk import of an open judgment dataset',
+  },
+  // A court order or request to mask a judgment was applied (#892). Metadata holds ids, status and the legal basis, never text.
+  'corpus.mask_applied': {
+    security: true,
+    description:
+      'Staff applied a mask request to a judgment: title masked, text re-redacted, caches cleared',
+  },
+  // A fact-pattern search over the judgment corpus (#896). Metadata holds ids, hashes and counts, never the query text.
+  'research.searched': {
+    security: false,
+    description: 'A member searched the judgment corpus: plan and retrieval set recorded as ids',
+  },
+  // The public status page's incident log (#770). Metadata holds the change and the old and new state.
+  'incident.changed': {
+    security: true,
+    description: 'Staff opened, updated or resolved a public status incident',
+  },
   // The court document network (#485, D-048). Metadata holds ids and counts only, never content.
   'network.contributed': {
     security: false,
@@ -62,6 +83,71 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'A member checked new matter parties for a conflict of interest',
   },
+  // The inbound enquiry log (#87, ADR 0047). Metadata holds ids and counts only, never names or
+  // enquiry text.
+  'enquiry.logged': { security: false, description: 'A member logged an inbound enquiry' },
+  'enquiry.updated': { security: false, description: 'A member changed an inbound enquiry' },
+  'enquiry.closed': { security: false, description: 'A member closed an inbound enquiry' },
+  'enquiry.accepted': {
+    security: false,
+    description: 'A member accepted an enquiry as a matter, through a proposal',
+  },
+  'enquiry.retention_swept': {
+    security: false,
+    description: 'The retention job deleted closed enquiries past the workspace retention',
+  },
+  // Client status links (#88, ADR 0050). Metadata holds ids, language and expiry days, never the note.
+  'status_link.created': {
+    security: false,
+    description: 'An advocate created a client status link',
+  },
+  'status_link.revoked': {
+    security: false,
+    description: 'An advocate revoked a client status link',
+  },
+  'status_link.extended': {
+    security: false,
+    description: 'An advocate extended a client status link',
+  },
+  'status_link.purged': {
+    security: false,
+    description: 'The retention job cleared the payload of long-expired status links',
+  },
+  // Fees (#83, ADR 0048). Metadata holds ids, counts and enum values only, never amounts' text,
+  // notes or ledger descriptions.
+  'fee.agreement_created': { security: false, description: 'A member created a fee agreement' },
+  'fee.agreement_updated': { security: false, description: 'A member changed a fee agreement' },
+  'fee.agreement_status_changed': {
+    security: false,
+    description: 'A member activated or ended a fee agreement',
+  },
+  'fee.invoice_drafted': { security: false, description: 'A member saved a draft fee invoice' },
+  'fee.invoice_discarded': {
+    security: false,
+    description: 'A member discarded a draft fee invoice',
+  },
+  'fee.invoice_issued': { security: false, description: 'A member issued a fee invoice' },
+  'fee.gst_unreviewed_acknowledged': {
+    security: false,
+    description: 'An owner issued a fee invoice acknowledging the GST rates are unreviewed',
+  },
+  'fee.payment_recorded': {
+    security: false,
+    description: 'A member recorded a payment received against a fee invoice',
+  },
+  'fee.credit_note_issued': { security: false, description: 'A member issued a credit note' },
+  'fee.ledger_entry_recorded': {
+    security: false,
+    description: 'A member recorded an entry in a client ledger',
+  },
+  'fee.ledger_anonymised': {
+    security: false,
+    description: 'Erasure cleared the free text of a client ledger, keeping the amounts',
+  },
+  'fee.supplier_state_set': {
+    security: false,
+    description: 'A member set the state code invoices are issued from',
+  },
   'auth.sign_in': { security: true, description: 'A user signed in' },
   'auth.sign_in_failed': { security: true, description: 'A sign-in attempt failed' },
   'auth.magic_link_requested': { security: true, description: 'A magic link was requested' },
@@ -76,6 +162,10 @@ export const AUDIT_ACTIONS = {
     description: 'Two-factor authentication was disabled',
   },
   'auth.session_revoked': { security: true, description: 'A session was revoked' },
+  'support.session_requested': {
+    security: true,
+    description: 'A member asked for a support session',
+  },
   'support.session_started': { security: true, description: 'A support session started' },
   'support.session_ended': { security: true, description: 'A support session ended' },
   // Fail-closed: a support read whose audit event cannot be written is not served (#308).
@@ -221,6 +311,12 @@ export const AUDIT_ACTIONS = {
   'workspace.deletion_started': {
     security: true,
     description: 'The cooling-off ended and erasure of the workspace started',
+  },
+  // A demo workspace was restored to the seed (#93). Metadata holds the seed version, counts and the
+  // elapsed milliseconds only.
+  'demo.reset': {
+    security: false,
+    description: 'A demo workspace was restored to its seed version',
   },
   // Metadata names the changed fields only, never their values (#284).
   'workspace.profile_updated': {
@@ -400,6 +496,16 @@ export const AUDIT_ACTIONS = {
   'attention.threshold_changed': {
     security: false,
     description: 'The workspace stale-matter threshold was changed',
+  },
+  // Limitation tracker (#84, #940). Ids and counts only, never rule text or dates.
+  'limitation.rules_imported': {
+    security: false,
+    description: 'A member imported a limitation rule table as an unreviewed draft',
+  },
+  'limitation.computed': { security: false, description: 'A limitation date was computed' },
+  'limitation.confirmed': {
+    security: false,
+    description: 'A member confirmed a limitation date as an obligation',
   },
   // Obligation service (#67). Ids and flags only, never the description.
   'obligation.created': { security: false, description: 'An obligation was created' },

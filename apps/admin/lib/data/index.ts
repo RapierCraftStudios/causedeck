@@ -12,6 +12,7 @@ import {
   type CostBreach,
   type PlanReport,
 } from '@causedeck/core/business';
+import { listRules, type LimitationDeps, type RuleView } from '@causedeck/core/limitation';
 import {
   findMigrationOwner,
   getMigrationProgress,
@@ -24,14 +25,18 @@ import {
 } from '@causedeck/core/migration';
 import {
   coverageReport,
+  listBulkImports,
   listSources,
+  ocrQueueStats,
   sourceFetchLogs,
   sourceOpsOverview,
   staffConflictRate,
   staffCoverageInputs,
   staffParseYield,
+  type BulkImportProgress,
   type CoverageChange,
   type CoverageGap,
+  type OcrQueueStats,
   type ForumCoverage,
   type SourceFetchLogEntry,
   type SourceOpsRow,
@@ -60,6 +65,7 @@ import {
   type StaffWorkspaceMetadata,
   type StaffWorkspaceUsage,
 } from '@causedeck/core/support';
+import { listIncidents, type IncidentRecord } from '@causedeck/core/status';
 import type { Database } from '@causedeck/db';
 import { listAccessModeRegistry, type AccessModeRegistryEntry } from '@causedeck/flags';
 
@@ -243,6 +249,20 @@ export function sourceRegistry(staff: StaffActor, db?: Database): Promise<Source
   );
 }
 
+/** Every incident with its updates, for the Status page (#770). */
+export function incidentConsole(staff: StaffActor, db?: Database): Promise<IncidentRecord[]> {
+  return staffQuery(
+    staff,
+    {
+      purpose: 'status.incidents',
+      capability: 'status',
+      tables: ['incident', 'incident_update'],
+    },
+    (tx) => listIncidents(tx),
+    db,
+  );
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
@@ -276,6 +296,33 @@ export async function dataOpsOverview(
     { purpose: 'data_ops.overview', capability: 'data-ops', tables: ['fetch_log', 'source'] },
     (tx) =>
       sourceOpsOverview(tx, now, { day, week }, sourceId, { day: conflictDay, week: conflictWeek }),
+    db,
+  );
+}
+
+/** Progress of the bulk judgment import per dataset archive (#890): counts and years only. */
+export function bulkImportOverview(
+  staff: StaffActor,
+  db?: Database,
+): Promise<BulkImportProgress[]> {
+  return staffQuery(
+    staff,
+    {
+      purpose: 'data_ops.bulk_import',
+      capability: 'data-ops',
+      tables: ['corpus_import_cursor'],
+    },
+    (tx) => listBulkImports(tx),
+    db,
+  );
+}
+
+/** Corpus OCR queue depth and parked failures (#1030): counts, ids and error codes only. */
+export function ocrQueueOverview(staff: StaffActor, db?: Database): Promise<OcrQueueStats> {
+  return staffQuery(
+    staff,
+    { purpose: 'data_ops.ocr_queue', capability: 'data-ops', tables: ['corpus_ocr_queue'] },
+    (tx) => ocrQueueStats(tx),
     db,
   );
 }
@@ -388,6 +435,53 @@ export async function migrationRunReport(
     'migrations.report',
     workspaceId,
     (deps, actor) => getMigrationReport(deps, actor, { runId }).catch(() => null),
+    db,
+  );
+}
+
+export type { RuleView };
+
+/**
+ * Run `fn` as the owner of `workspaceId` for the limitation rules console (#942), after recording
+ * `staff.read` (actor kind `staff`, purpose and capability only). `null` when the workspace has no
+ * active owner. Core keeps every read and write to the workspace and checks the legal-gated
+ * `limitation.enabled` flag; no matter content is reachable from here.
+ */
+export function asLimitationOwner<T>(
+  staff: StaffActor,
+  purpose: string,
+  workspaceId: string,
+  fn: (deps: LimitationDeps, actor: { workspaceId: string; userId: string }) => Promise<T>,
+  db?: Database,
+): Promise<T | null> {
+  return staffCall(
+    staff,
+    { purpose, capability: 'limitation-rules', functions: [] },
+    async (handle) => {
+      const userId = await findMigrationOwner(
+        { db: handle, events: { emit: () => undefined } },
+        workspaceId,
+      );
+      return userId === null ? null : fn({ db: handle }, { workspaceId, userId });
+    },
+    db,
+  );
+}
+
+/**
+ * A workspace's rules with their review status (`draft` until counsel signs a rule off): codes,
+ * versions and periods only. `null` when the workspace has no owner to read them as.
+ */
+export function workspaceLimitationRules(
+  staff: StaffActor,
+  workspaceId: string,
+  db?: Database,
+): Promise<RuleView[] | null> {
+  return asLimitationOwner(
+    staff,
+    'limitation_rules.list',
+    workspaceId,
+    (deps, actor) => listRules(deps, actor),
     db,
   );
 }

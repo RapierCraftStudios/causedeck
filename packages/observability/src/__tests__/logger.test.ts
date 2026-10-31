@@ -1,3 +1,5 @@
+import { context, trace } from '@opentelemetry/api';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { describe, expect, it } from 'vitest';
 
 import { withRequestContext } from '../context.ts';
@@ -35,6 +37,35 @@ describe('createLogger', () => {
     });
 
     expect(lines()[0]).toMatchObject({ requestId: 'req-1', workspaceId: 'ws-1', userId: 'u-1' });
+  });
+
+  it('adds snake_case request_id and workspace_id for the log pipeline', () => {
+    const { logger, lines } = captureLogger();
+
+    withRequestContext({ requestId: 'req-2', workspaceId: 'ws-2' }, () => {
+      logger.info('inside');
+    });
+
+    expect(lines()[0]).toMatchObject({ request_id: 'req-2', workspace_id: 'ws-2' });
+  });
+
+  it('adds trace_id and span_id inside an active span', async () => {
+    const provider = new NodeTracerProvider();
+    provider.register();
+    const tracer = trace.getTracer('test');
+    const { logger, lines } = captureLogger();
+
+    await tracer.startActiveSpan('op', (span) => {
+      logger.info('traced');
+      span.end();
+      return Promise.resolve();
+    });
+
+    expect(lines()[0]?.trace_id).toMatch(/^[0-9a-f]{32}$/);
+    expect(lines()[0]?.span_id).toMatch(/^[0-9a-f]{16}$/);
+    await provider.shutdown();
+    trace.disable();
+    context.disable();
   });
 
   it('redacts child logger bindings', () => {

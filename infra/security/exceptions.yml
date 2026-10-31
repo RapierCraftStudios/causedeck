@@ -1,0 +1,10 @@
+# Reviewed exceptions to the dependency audit gate (scripts/audit-gate.mjs, docs: infra/runbooks/vuln-triage.md).
+# One entry per accepted advisory. Every field is required; `expires` is a date no more than 90 days
+# ahead, and an expired entry fails the build (it is not silently ignored).
+#
+#   - id: GHSA-xxxx-xxxx-xxxx   # GitHub advisory id, CVE id or the numeric audit id
+#     package: example-package
+#     reason: why it is not exploitable here, and what the plan is
+#     owner: github-login
+#     expires: 2026-12-31
+exceptions: []

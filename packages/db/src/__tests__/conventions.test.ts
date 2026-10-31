@@ -114,7 +114,13 @@ describe('checkSchemaConventions', () => {
       'gw_court:workspace-not-null',
       'gw_listing:cross-workspace-fk',
     ]);
-    expect(GLOBAL_OR_WORKSPACE_TABLES).toEqual(['forum', 'court_hall', 'bench', 'template']);
+    expect(GLOBAL_OR_WORKSPACE_TABLES).toEqual([
+      'forum',
+      'court_hall',
+      'bench',
+      'template',
+      'limitation_rule',
+    ]);
   });
 
   it('fails a single-column FK from a tenant table to another tenant table', () => {

@@ -369,7 +369,11 @@
         "export": "Export",
         "support": "Support",
         "shell": "Workspace areas",
-        "appearance": "Appearances"
+        "appearance": "Appearances",
+        "contact": "Client contacts",
+        "enquiry": "Enquiry log",
+        "limitation": "Limitation tracker",
+        "fee": "Fees and invoices"
       },
       "actions": {
         "workspace": {
@@ -432,7 +436,8 @@
           "manage": "Allow and end support access"
         },
         "limitation": {
-          "read": "See limitation dates"
+          "read": "See limitation dates",
+          "write": "Compute and confirm limitation dates"
         },
         "insights": {
           "read": "See practice insights"
@@ -445,6 +450,18 @@
         },
         "appearance": {
           "assign": "Assign appearances to members"
+        },
+        "contact": {
+          "read": "Read client contacts",
+          "write": "Manage client contacts"
+        },
+        "enquiry": {
+          "read": "Read the enquiry log",
+          "write": "Manage the enquiry log"
+        },
+        "fee": {
+          "read": "See fee agreements, invoices and the ledger",
+          "write": "Manage fee agreements, invoices and the ledger"
         }
       },
       "settings": {

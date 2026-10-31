@@ -358,10 +358,11 @@ test.describe('members page', () => {
 
   test('empty state for a new workspace', { tag: '@a11y' }, async ({ page, asUser }) => {
     await asUser('viewer');
-    await page.goto('/onboarding');
+    await page.goto('/onboarding/solo/workspace');
     await page.getByRole('textbox', { name: /Workspace name/ }).fill('Solo Members Check');
     await page.getByRole('button', { name: 'Create workspace' }).click();
-    await expect(page).toHaveURL(/\/w\/solo-members-check\/today$/);
+    // The wizard opens its next step with the new workspace in `?w=`.
+    await expect(page).toHaveURL(/\/onboarding\/solo\/profile\?w=solo-members-check$/);
     await page.goto(`/w/solo-members-check/${PATH}`);
     // The creator owns the workspace, so the Settings nav has an active indicator to wait on. Before
     // hydration settles, the streamed list and its client render can both be in the DOM for a

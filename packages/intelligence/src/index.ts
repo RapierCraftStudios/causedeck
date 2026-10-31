@@ -149,5 +149,15 @@ export {
 } from './transcribe/transcribe.ts';
 export * from './generic-a0/index.ts';
 export * from './corpus/index.ts';
+export * from './research/index.ts';
 export * from './notices/index.ts';
 export * from './issues/index.ts';
+export {
+  DEFAULT_OCR_DRAIN_BUDGET,
+  OCR_MAX_ATTEMPTS,
+  drainOcrQueue,
+  ocrBackoffMs,
+  type OcrDrainBudget,
+  type OcrDrainDeps,
+  type OcrDrainReport,
+} from './corpus/ocr-drain.ts';

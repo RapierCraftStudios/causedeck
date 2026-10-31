@@ -66,6 +66,7 @@ vi.mock('@causedeck/core/review', () => {
     },
   };
 });
+vi.mock('@causedeck/core/jobs', () => ({ enqueue: () => Promise.resolve('job') }));
 vi.mock('@causedeck/core/runtime', () => ({
   db: {},
   requestSupportSessionFor: async (ctx: { staffUserId: string }) => {
@@ -99,6 +100,8 @@ vi.mock('@causedeck/core/sources', () => {
     SourceAdminError: class SourceAdminError extends Error {},
     asSourceStaff: (userId: string) => ({ userId }),
     listSources: () => Promise.resolve([]),
+    listBulkImports: () => Promise.resolve([]),
+    ocrQueueStats: () => Promise.resolve({ depth: 0, parked: 0, failures: [] }),
     sourceFetchLogs: () => Promise.resolve([]),
     sourceOpsOverview: () => Promise.resolve([]),
     staffParseYield: () => Promise.resolve([]),
@@ -108,6 +111,24 @@ vi.mock('@causedeck/core/sources', () => {
     createSource: audited,
     updateSource: audited,
     setSourceKillSwitch: audited,
+  };
+});
+// Incident changes audit `incident.changed` in their own transaction with the staff actor (#770).
+vi.mock('@causedeck/core/status', () => {
+  const audited = (_db: unknown, actor: { userId: string }) =>
+    mocks.record(
+      { actor: { userId: actor.userId, kind: 'staff' } },
+      { action: 'incident.changed' },
+    );
+  return {
+    COMPONENT_IDS: ['database', 'storage', 'court'],
+    INCIDENT_SEVERITIES: ['degraded', 'down'],
+    INCIDENT_TEMPLATES: { investigating: {}, identified: {}, monitoring: {}, resolved: {} },
+    IncidentAdminError: class IncidentAdminError extends Error {},
+    asIncidentStaff: (userId: string) => ({ userId }),
+    listIncidents: () => Promise.resolve([]),
+    createIncident: audited,
+    addIncidentUpdate: audited,
   };
 });
 vi.mock('@causedeck/core/business', async (importOriginal) => ({
@@ -155,6 +176,11 @@ vi.mock('@causedeck/core/migration', () => {
       Promise.resolve({ ...progress, issueCounts: {}, issues: [], missingColumns: [] }),
   };
 });
+vi.mock('@causedeck/core/limitation', () => ({
+  listRules: () => Promise.resolve([]),
+  loadRuleTable: () =>
+    Promise.resolve({ version: 'SYNTHETIC-1', imported: 1, skipped: 0, draft: true }),
+}));
 vi.mock('@causedeck/core/activation', () => ({
   ACTIVATION_CHANNELS: [],
   ACTIVATION_STEPS: [],
@@ -336,6 +362,24 @@ const ACTIONS: Record<string, () => Promise<unknown>> = {
     const { endSupportSessionAction } = await import('../app/(console)/support/actions.ts');
     return endSupportSessionAction(form({ sessionId: SUPPORT_SESSION_ID }));
   },
+  'app/(console)/status/actions.ts#createIncidentAction': async () => {
+    const { createIncidentAction } = await import('../app/(console)/status/actions.ts');
+    return createIncidentAction(
+      form({
+        title: 'Court lookups are slow',
+        severity: 'degraded',
+        component: 'court',
+        template: 'investigating',
+        note: '',
+      }),
+    );
+  },
+  'app/(console)/status/actions.ts#updateIncidentAction': async () => {
+    const { updateIncidentAction } = await import('../app/(console)/status/actions.ts');
+    return updateIncidentAction(
+      form({ id: '3f9c1c1e-6a49-4d0e-8a77-0c5f0d6a1b11', template: 'resolved', note: '' }),
+    );
+  },
   'app/(console)/sources/actions.ts#saveSourceAction': async () => {
     const { saveSourceAction } = await import('../app/(console)/sources/actions.ts');
     return saveSourceAction(
@@ -361,6 +405,21 @@ const ACTIONS: Record<string, () => Promise<unknown>> = {
   'app/(console)/sources/actions.ts#setSourceKillSwitchAction': async () => {
     const { setSourceKillSwitchAction } = await import('../app/(console)/sources/actions.ts');
     return setSourceKillSwitchAction(form({ id: 'in.nclt.bengaluru', killSwitch: 'true' }));
+  },
+  'app/(console)/data-ops/actions.ts#startBulkImportAction': async () => {
+    const { startBulkImportAction } = await import('../app/(console)/data-ops/actions.ts');
+    return startBulkImportAction(
+      form({ dataset: 'hc', court: '33_10', yearFrom: '2020', yearTo: '2021' }),
+    );
+  },
+  'app/(console)/limitation-rules/actions.ts#importRuleTableAction': async () => {
+    const { importRuleTableAction } = await import('../app/(console)/limitation-rules/actions.ts');
+    return importRuleTableAction(
+      form({
+        workspaceId: WORKSPACE_ID,
+        table: JSON.stringify({ version: 'SYNTHETIC-1', rules: [] }),
+      }),
+    );
   },
   'app/verify-2fa/actions.ts#verifyTwoFactor': async () => {
     const { verifyTwoFactor } = await import('../app/verify-2fa/actions.ts');
@@ -467,11 +526,14 @@ describe('admin data layer reads', () => {
     activeStaffCount: (d) => d.activeStaffCount(staff),
     adapterRegistry: (d) => d.adapterRegistry(staff),
     sourceRegistry: (d) => d.sourceRegistry(staff),
+    incidentConsole: (d) => d.incidentConsole(staff),
     searchWorkspaces: (d) => d.searchWorkspaces(staff, 'chambers'),
     workspaceMetadata: (d) => d.workspaceMetadata(staff, STAFF_ID),
     staffAuditLog: (d) => d.staffAuditLog(staff),
     workspaceUsage: (d) => d.workspaceUsage(staff, WORKSPACE_ID),
     dataOpsOverview: (d) => d.dataOpsOverview(staff),
+    bulkImportOverview: (d) => d.bulkImportOverview(staff),
+    ocrQueueOverview: (d) => d.ocrQueueOverview(staff),
     dataOpsFetchLogs: (d) => d.dataOpsFetchLogs(staff, 'court.test'),
     coverageOverview: (d) => d.coverageOverview(staff),
     businessMetrics: (d) =>
@@ -485,6 +547,7 @@ describe('admin data layer reads', () => {
     workspaceMigrationRuns: (d) => d.workspaceMigrationRuns(staff, WORKSPACE_ID),
     migrationRunProgress: (d) => d.migrationRunProgress(staff, WORKSPACE_ID, MIGRATION_RUN_ID),
     migrationRunReport: (d) => d.migrationRunReport(staff, WORKSPACE_ID, MIGRATION_RUN_ID),
+    workspaceLimitationRules: (d) => d.workspaceLimitationRules(staff, WORKSPACE_ID),
   };
   // Reads made of more than one audited step: parse yield (definer function), then the tables.
   const READ_EVENTS: Record<string, number> = { dataOpsOverview: 2 };
@@ -493,6 +556,7 @@ describe('admin data layer reads', () => {
     'staffCall',
     'staffQuery',
     'asMigrationOwner',
+    'asLimitationOwner',
     'StaffQueryDeniedError',
     'businessConfigFromEnv',
     'ACTIVATION_CHANNELS',

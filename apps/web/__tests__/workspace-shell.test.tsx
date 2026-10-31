@@ -50,6 +50,8 @@ vi.mock('next/navigation', () => ({
 vi.mock('next-intl/server', () => ({
   getTranslations: (namespace?: string) => fakeGetTranslations(state.locale)(namespace),
 }));
+// An async server component cannot render inside jsdom's client render (#94); its own tests cover it.
+vi.mock('../components/help/surface-help.tsx', () => ({ SurfaceHelp: () => null }));
 vi.mock('../lib/env.ts', () => ({
   isDev: () => state.dev,
   serverEnv: () => ({ APP_URL: 'http://localhost:3000' }),
@@ -159,8 +161,12 @@ type PlaceholderId = PlaceholderRoute;
 /** Routes whose page is no longer a placeholder; each has its own page test. */
 const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'billing',
+  // Its own page test since #871 (invoices-page.test.tsx).
+  'invoices',
   'activity',
   'settings',
+  // Its own page and action tests since #848 (people-actions.test.ts).
+  'people',
   // Its own page test since #399 (courts-page.test.tsx).
   'courts',
   // Its own page test since #588 (components/notices/__tests__/notice-list.test.tsx).
@@ -183,6 +189,8 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'tomorrow',
   // Its own component test since #66 (calendar/_components/calendar-view.test.tsx).
   'calendar',
+  // The practice insights dashboard since #85 (insights-page.test.tsx).
+  'insights',
 ]);
 const PLACEHOLDER_ROUTES: readonly PlaceholderId[] = WORKSPACE_ROUTES.filter(
   (route) => !REAL_PAGES.has(route),
@@ -441,7 +449,7 @@ describe('workspace layout', () => {
     deletion.active = null;
   });
 
-  it('shows the demo-data banner in the demo workspace only, to every member (#182)', async () => {
+  it('shows the demo banner in the demo workspaces only, to every member (#182, #93)', async () => {
     const banner = async (slug: string) => {
       cleanup();
       withIntl(
@@ -450,7 +458,7 @@ describe('workspace layout', () => {
       return document.querySelector('[data-slot="demo-banner"]');
     };
     const demo = await banner('demo');
-    expect(demo?.textContent).toContain('Demo data — fictional');
+    expect(demo?.textContent).toContain('Demo workspace, sample data');
     expect(demo?.getAttribute('role')).toBe('status');
     // Above the page content, outside main#main.
     expect(document.getElementById('main')?.contains(demo ?? null)).toBe(false);
@@ -468,7 +476,7 @@ describe('workspace layout', () => {
     expect(document.querySelector('[data-shell]')?.getAttribute('data-sidebar')).toBe('collapsed');
   });
 
-  it('hides the invoices and limitation nav items while their flags are off', async () => {
+  it('hides the invoices, limitation and insights nav items while their flags are off', async () => {
     const navHrefs = async () => {
       cleanup();
       withIntl(
@@ -481,11 +489,13 @@ describe('workspace layout', () => {
     expect(off).toContain('/w/demo/today');
     expect(off).not.toContain('/w/demo/invoices');
     expect(off).not.toContain('/w/demo/limitation');
+    expect(off).not.toContain('/w/demo/insights');
 
-    state.flagsOn = ['invoices.enabled', 'limitation.enabled'];
+    state.flagsOn = ['invoices.enabled', 'limitation.enabled', 'insights.enabled'];
     const on = await navHrefs();
     expect(on).toContain('/w/demo/invoices');
     expect(on).toContain('/w/demo/limitation');
+    expect(on).toContain('/w/demo/insights');
   });
 
   it('placeholder pages refuse a non-member workspace on their own', async () => {
@@ -563,6 +573,8 @@ describe('placeholder pages', () => {
   it.each(['invoices', 'limitation', 'insights'] as const)(
     '%s renders permission-denied when the stub role lacks permission',
     async (route) => {
+      // `insights` is a real page behind its own flag (#966); the others are rebuilt with theirs on.
+      state.flagsOn = ['insights.enabled'];
       withIntl(await pageFor(route)(props('clerk-desk')));
       const denied = document.querySelector('[data-pattern-state="permission-denied"]');
       expect(denied?.textContent).toContain('You do not have access to this area.');
@@ -581,13 +593,12 @@ describe('placeholder pages', () => {
   it('keeps flagged pages behind notFound while the flag is off (the default)', async () => {
     await expect(PAGES.invoices(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
     await expect(PAGES.limitation(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
+    await expect(PAGES.insights(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
   it('serves flagged pages once the server evaluates their flag on', async () => {
-    state.flagsOn = ['invoices.enabled'];
-    withIntl(await PAGES.invoices(props('demo')));
-    expect(document.querySelector('[data-route="invoices"]')).not.toBeNull();
-    await expect(PAGES.limitation(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
+    state.flagsOn = ['limitation.enabled'];
+    await expect(PAGES.invoices(props('demo'))).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
   it('shows the offline banner only while navigator.onLine is false', async () => {
@@ -709,6 +720,7 @@ describe('localised strings', () => {
 
   it('permission-denied and error screens render ta strings', async () => {
     state.locale = 'ta';
+    state.flagsOn = ['insights.enabled'];
     withIntl(await pageFor('insights')(props('clerk-desk')), 'ta');
     withIntl(<WorkspaceError error={new Error('x')} reset={() => undefined} />, 'ta');
     const text = document.body.textContent;

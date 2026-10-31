@@ -1,0 +1,71 @@
+name: Freeze warning
+
+# Court-day freeze planning (#100): hourly, comment a warning (once per freeze window) on every open
+# PR labelled `deploy:prod` when the freeze is active or starts within WARN_HOURS, so a merge that
+# would deploy into a court-day window is visible. Uses the same freeze.ts as the deploy guard.
+
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: freeze-warning
+  cancel-in-progress: false
+
+jobs:
+  warn:
+    name: Warn deploy:prod PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      WARN_HOURS: '2'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Evaluate freeze
+        id: freeze
+        run: |
+          set -euo pipefail
+          node --experimental-strip-types --no-warnings --input-type=module -e "
+            import { evaluateFreeze } from './.github/actions/freeze-guard/freeze.ts';
+            const r = evaluateFreeze(new Date());
+            const soon = r.secondsUntilFreeze <= Number(process.env.WARN_HOURS) * 3600;
+            const at = r.frozen ? r.nextOpenAtIst : r.nextFreezeAtIst;
+            const out = [
+              'warn=' + String(r.frozen || soon),
+              'frozen=' + String(r.frozen),
+              'window=' + (r.frozen ? r.windowName : ''),
+              'at=' + at,
+            ];
+            console.log(out.join('\n'));
+          " >>"$GITHUB_OUTPUT"
+      - name: Comment on labelled PRs
+        if: ${{ steps.freeze.outputs.warn == 'true' }}
+        env:
+          FROZEN: ${{ steps.freeze.outputs.frozen }}
+          WINDOW: ${{ steps.freeze.outputs.window }}
+          AT: ${{ steps.freeze.outputs.at }}
+        run: |
+          set -euo pipefail
+          marker="<!-- freeze-warning:${FROZEN}:${AT} -->"
+          if [ "$FROZEN" = true ]; then
+            text="Court-day freeze is active ($WINDOW). A merge now would not deploy to production before **$AT**."
+          else
+            text="The court-day freeze starts at **$AT**. A merge after that time will not deploy to production until the window ends."
+          fi
+          for pr in $(gh pr list --repo "$GITHUB_REPOSITORY" --label 'deploy:prod' --state open --json number --jq '.[].number'); do
+            if gh api "repos/$GITHUB_REPOSITORY/issues/$pr/comments" --paginate --jq '.[].body' | grep -qF "$marker"; then
+              continue
+            fi
+            gh pr comment "$pr" --repo "$GITHUB_REPOSITORY" --body "$marker
+          :warning: $text P0 incidents use the hotfix workflow; see infra/runbooks/court-day-freeze.md."
+          done

@@ -12,6 +12,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { APIError, createAuthMiddleware, getSessionFromCtx, isAPIError } from 'better-auth/api';
 import { magicLink, organization, phoneNumber, twoFactor } from 'better-auth/plugins';
 
+import { DEMO_SIGN_IN_LIMIT, DEMO_SIGN_IN_PATH, demoSignIn, type DemoEntry } from './demo-provider';
 import { DEV_SIGN_IN_PATH, devSignIn } from './dev-provider';
 import { consoleLogger, type AuthLogger, type Mailer } from './mailer';
 import { AUTH_EMAIL_KEYS, toAuthLocale } from './messages';
@@ -110,6 +111,12 @@ export const noopSecurityEventRecorder: SecurityEventRecorder = {
 
 export interface CreateAuthDeps {
   db: Database;
+  /**
+   * The handle Better Auth's own adapter reads and writes sessions, users and accounts through
+   * (#805). Pass the small dedicated pool (`authDb`) so `getSession` is not queued behind a page-load
+   * burst on `db`; defaults to `db`. Everything else (security events, SSO, rate limits) uses `db`.
+   */
+  sessionDb?: Database;
   env: AuthEnv;
   mailer: Mailer;
   /** Delivers phone sign-in OTPs. Without it the phone sign-in endpoints are not mounted. */
@@ -124,6 +131,8 @@ export interface CreateAuthDeps {
   sessionExpiresInSeconds?: number;
   /** When true, magic-link sign-in never creates a user (the admin console, #309). */
   disableSignUp?: boolean;
+  /** Mounts `POST /demo/sign-in` (#93): a session for an ephemeral demo-workspace visitor. */
+  demo?: DemoEntry;
 }
 
 /** Refresh age for a session lifetime: a day, or a quarter of a shorter lifetime. */
@@ -336,6 +345,7 @@ function phoneOtpPlugin(sms: SmsSender, logger: AuthLogger, disableSignUp: boole
 
 export function createAuth({
   db,
+  sessionDb = db,
   env,
   mailer,
   sms,
@@ -343,6 +353,7 @@ export function createAuth({
   securityEvents = noopSecurityEventRecorder,
   sessionExpiresInSeconds = SESSION_EXPIRES_IN_SECONDS,
   disableSignUp = false,
+  demo,
 }: CreateAuthDeps) {
   const appUrl = new URL(env.APP_URL);
   const isProduction = env.NODE_ENV === 'production';
@@ -428,9 +439,9 @@ export function createAuth({
     secret: env.BETTER_AUTH_SECRET.reveal(),
     trustedOrigins: [appUrl.origin],
     database: withSsoProviderLookup(
-      db,
+      sessionDb,
       env.BETTER_AUTH_SECRET.reveal(),
-      drizzleAdapter(db, { provider: 'pg', schema }),
+      drizzleAdapter(sessionDb, { provider: 'pg', schema }),
     ),
     emailAndPassword: { enabled: false },
     socialProviders: env.AUTH_GOOGLE_ENABLED
@@ -493,6 +504,14 @@ export function createAuth({
       enabled: true,
       storage: 'database',
       customRules: {
+        ...(demo
+          ? {
+              [DEMO_SIGN_IN_PATH]: {
+                window: DEMO_SIGN_IN_LIMIT.windowSeconds,
+                max: DEMO_SIGN_IN_LIMIT.max,
+              },
+            }
+          : {}),
         [MAGIC_LINK_PATH]: {
           window: MAGIC_LINK_IP_LIMIT.windowSeconds,
           max: MAGIC_LINK_IP_LIMIT.max,
@@ -667,7 +686,7 @@ export function createAuth({
         },
       },
     },
-    plugins: [...plugins, ...devPlugins],
+    plugins: [...plugins, ...devPlugins, ...(demo ? [demoSignIn(demo)] : [])],
   });
 }
 

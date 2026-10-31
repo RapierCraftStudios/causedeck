@@ -216,7 +216,12 @@ export async function runNewsDigestMember(
   deps: NewsDigestMemberDeps = notificationJobDeps(ctx.log),
 ): Promise<NewsDigestOutcome> {
   const [row] = await ctx.db
-    .select({ email: user.email, locale: user.locale, slug: organization.slug })
+    .select({
+      email: user.email,
+      locale: user.locale,
+      slug: organization.slug,
+      isDemo: organization.isDemo,
+    })
     .from(member)
     .innerJoin(user, eq(user.id, member.userId))
     .innerJoin(organization, eq(organization.id, member.organizationId))
@@ -229,6 +234,8 @@ export async function runNewsDigestMember(
       ),
     );
   if (row === undefined) return 'skippedNotMember';
+  // A demo workspace sends nothing outside it (#93).
+  if (row.isDemo) return 'skippedNoPreference';
 
   const newsCtx = { db: ctx.db, workspaceId };
   const pref = await getNewsPref(newsCtx, { userId });

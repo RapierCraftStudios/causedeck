@@ -99,6 +99,7 @@ const CATEGORY_MESSAGE = {
   'digest.daily': 'digestDaily',
   'digest.end_of_day': 'digestEndOfDay',
   'digest.news': 'digestNews',
+  'onboarding.nudge': 'onboardingNudge',
   'system.notice': 'systemNotice',
 } as const satisfies Record<Exclude<CategoryKey, CardCategory>, string>;
 

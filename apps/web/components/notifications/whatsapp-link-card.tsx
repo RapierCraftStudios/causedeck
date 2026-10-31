@@ -36,6 +36,7 @@ const CATEGORY_MESSAGE = {
   'court.board': 'courtBoard',
   'status.order': 'statusOrder',
   'digest.end_of_day': 'digestEndOfDay',
+  'onboarding.nudge': 'onboardingNudge',
 } as const satisfies Record<WhatsAppCategory, string>;
 
 type Notice =

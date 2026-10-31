@@ -33,7 +33,7 @@
     },
     "upload": {
       "target": "filesystem",
-      "outputDir": ".lighthouseci/matters"
+      "outputDir": ".lighthouseci/inbox"
     }
   }
 }

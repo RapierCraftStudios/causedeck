@@ -1,0 +1,7 @@
+{
+  "inbox-visual-baselines": {
+    "run": "test -n \"$(find e2e/__screenshots__ -path '*inbox*' -name 'inbox-*.png' 2>/dev/null | head -n 1)\"",
+    "pass": "exit 0",
+    "timeout": 30
+  }
+}

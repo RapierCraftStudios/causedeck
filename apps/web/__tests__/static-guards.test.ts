@@ -98,12 +98,13 @@ describe('apps/web static guards', () => {
     expect(pkg.dependencies).toHaveProperty('pdfjs-dist');
   });
 
-  it('has no API routes besides Better Auth, Web Push, SCIM, the activity, audit and workspace exports, uploads, captures and the private calendar feed (webhooks live in apps/api)', () => {
+  it('has no API routes besides Better Auth, Web Push, SCIM, the activity, audit and workspace exports, uploads, captures, document page images and the private calendar feed (webhooks live in apps/api)', () => {
     expect(readdirSync(path.join(appDir, 'app/api')).sort()).toEqual([
       'activity',
       'audit',
       'auth',
       'captures',
+      'documents',
       'exports',
       'ics',
       'push',
@@ -123,6 +124,8 @@ describe('apps/web static guards', () => {
     ]);
     // The streamed audit log download (#229), behind a short-lived signed token.
     expect(readdirSync(path.join(appDir, 'app/api/audit')).sort()).toEqual(['__tests__', 'export']);
+    // The private document page image behind a source preview (#489).
+    expect(readdirSync(path.join(appDir, 'app/api/documents'))).toEqual(['[id]']);
     // Workspace-scoped upload intents, finalize and download URLs (#217, spike §1).
     expect(readdirSync(path.join(appDir, 'app/api/uploads')).sort()).toEqual([
       '__tests__',

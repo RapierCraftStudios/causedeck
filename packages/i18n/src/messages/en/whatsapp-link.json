@@ -14,7 +14,8 @@
     "categories": {
       "courtBoard": "Court board alerts",
       "statusOrder": "New order alerts",
-      "digestEndOfDay": "Evening court-day summary"
+      "digestEndOfDay": "Evening court-day summary",
+      "onboardingNudge": "Setup reminders"
     },
     "unlink": "Unlink WhatsApp",
     "unlinked": "WhatsApp unlinked. No more messages will be sent.",

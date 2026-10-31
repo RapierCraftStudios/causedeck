@@ -119,6 +119,12 @@ export const FLAGS = {
     false,
     [598],
   ),
+  'growth.onboarding-nudge': flag(
+    'growth.onboarding-nudge',
+    'Onboarding nudges for unfinished setup steps, in the app and on WhatsApp (opt-in).',
+    false,
+    [601],
+  ),
   'workspace.export': flag(
     'workspace.export',
     'Workspace data export (ZIP) from settings.',

@@ -40,6 +40,7 @@ import {
   ssoEmailAllowed,
   withSsoProviderLookup,
 } from './sso';
+import { signupChannelFromCookieHeader } from './signup-channel';
 import { type SmsSender } from './sms';
 import { markStepUp } from './step-up';
 
@@ -653,13 +654,18 @@ export function createAuth({
             }
             return undefined;
           },
-          // The funnel's first step and cohort anchor (#509): the user id only, never the email.
-          // Measurement must not fail a sign-up.
-          after: async (user) => {
+          // The funnel's first step and cohort anchor (#509): the user id and, when the sign-in
+          // page was opened with a known `?channel=` (#703), that closed-list channel carried by
+          // the `cd_channel` cookie; never the email. Measurement must not fail a sign-up.
+          after: async (user, ctx) => {
             try {
+              const headers =
+                (ctx as RequestLike | null | undefined)?.headers ??
+                (ctx as RequestLike | null | undefined)?.request?.headers;
+              const channel = signupChannelFromCookieHeader(headers?.get('cookie'));
               await db
                 .insert(schema.activationEvent)
-                .values({ userId: user.id, step: 'signed_up' })
+                .values({ userId: user.id, step: 'signed_up', channel })
                 .onConflictDoNothing();
             } catch (error) {
               logger.warn(

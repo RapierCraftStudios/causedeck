@@ -314,6 +314,27 @@ describe('row-level security catalog', () => {
     ]);
   });
 
+  it('keeps learn_progress global but under FORCE RLS keyed on the acting user (#703)', async () => {
+    const [row] = await owner.execute<{
+      enabled: boolean;
+      forced: boolean;
+      app: string;
+      clerk: boolean;
+    }>(sql`
+      select c.relrowsecurity as enabled, c.relforcerowsecurity as forced,
+             (select string_agg(p, ',' order by p) from unnest(array['SELECT','INSERT','UPDATE','DELETE']) p
+               where has_table_privilege('causedeck_app', c.oid, p)) as app,
+             has_table_privilege('causedeck_clerk', c.oid, 'select, insert, update, delete') as clerk
+      from pg_class c where c.relname = 'learn_progress'`);
+    expect(row).toEqual({ enabled: true, forced: true, app: 'DELETE,INSERT,SELECT', clerk: false });
+    const policies = await owner.execute<{ policyname: string; qual: string }>(sql`
+      select policyname::text, qual from pg_policies where tablename = 'learn_progress'`);
+    expect(policies).toHaveLength(1);
+    expect(policies[0]?.policyname).toBe('user_isolation');
+    expect(policies[0]?.qual).toContain('app.user_id');
+    expect(GLOBAL_TABLES).toContain('learn_progress');
+  });
+
   it('keeps api_idempotency_key global (allow-listed, no RLS)', async () => {
     const [row] = await owner.execute<{ enabled: boolean }>(
       sql`select relrowsecurity as enabled from pg_class where relname = 'api_idempotency_key'`,

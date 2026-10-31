@@ -9,11 +9,15 @@ import { Writable } from 'node:stream';
 
 import type { Mailer } from '@causedeck/auth/mailer';
 import { Secret } from '@causedeck/config/env';
-import { schema, TenancyError, type Database, type Transaction } from '@causedeck/db';
+import { schema, TenancyError, withUser, type Database, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { seedForumCatalogue } from '@causedeck/db/seed/forum-catalogue';
 import { createDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
-import { BILLING_SERVICE_TESTS, SERVICE_TESTS } from '@causedeck/db/testing/cross-tenant-registry';
+import {
+  ACTIVATION_SERVICE_TESTS,
+  BILLING_SERVICE_TESTS,
+  SERVICE_TESTS,
+} from '@causedeck/db/testing/cross-tenant-registry';
 import { buildHearing } from '@causedeck/db/testing/matter-graph-fixtures';
 import { seedTwoTenants, type TwoTenants } from '@causedeck/db/testing/two-tenants';
 import { createLogger } from '@causedeck/observability';
@@ -25,6 +29,11 @@ import { z } from 'zod';
 import { captureConfigFromProcess } from '../../capture/index.ts';
 import { TRACKED_CASE_PRICE_PAISE } from '@causedeck/billing/plans';
 
+import {
+  listCompletedLearnModules,
+  markLearnModuleDone,
+  unmarkLearnModule,
+} from '../../activation/index.ts';
 import {
   countTrackedCases,
   getTrackedCaseCharge,
@@ -4978,6 +4987,51 @@ describe('cross-tenant tracked-case metering: ub on workspace B against A', () =
       expect(naming.chargePaise).toBe(0);
       // A is untouched and still counts its own.
       expect(await inWorkspace(tx, aId, (s) => countTrackedCases(s, aId))).toBe(aSeeded + 5);
+    });
+  });
+});
+
+// Practice-school progress (#703) lives in the `@causedeck/core/activation` subpath; it is
+// registered in ACTIVATION_SERVICE_TESTS. `learn_progress` is keyed by user (FORCE RLS on
+// app.user_id), so user B sees and changes nothing of user A's progress.
+describe('cross-tenant practice-school progress: ub against ua', () => {
+  it('has a registry entry for each service tested here', () => {
+    expect(Object.keys(ACTIVATION_SERVICE_TESTS).sort()).toEqual([
+      'listCompletedLearnModules',
+      'markLearnModuleDone',
+      'unmarkLearnModule',
+    ]);
+  });
+
+  it("lists, marks and un-marks only the caller's own progress, and A is unchanged", async () => {
+    await withTestDb(async (tx) => {
+      const seeded = await seedTwoTenants(tx);
+      const a = { userId: seeded.ua };
+      const b = { userId: seeded.ub };
+      await markLearnModuleDone(tx, { ...a, slug: 'limitation-basics' });
+      await markLearnModuleDone(tx, { ...a, slug: 'court-day-practice' });
+      const before = await listCompletedLearnModules(tx, a);
+      expect(before.map((e) => e.slug)).toEqual(['court-day-practice', 'limitation-basics']);
+
+      // B sees nothing of A's, and writing B's own rows leaves A's list alone.
+      expect(await listCompletedLearnModules(tx, b)).toEqual([]);
+      expect(await markLearnModuleDone(tx, { ...b, slug: 'limitation-basics' })).toBe(true);
+      expect((await listCompletedLearnModules(tx, b)).map((e) => e.slug)).toEqual([
+        'limitation-basics',
+      ]);
+      // Un-marking as B removes only B's row; A still has hers.
+      expect(await unmarkLearnModule(tx, { ...b, slug: 'limitation-basics' })).toBe(true);
+      expect(await unmarkLearnModule(tx, { ...b, slug: 'court-day-practice' })).toBe(false);
+      expect(await listCompletedLearnModules(tx, a)).toEqual(before);
+
+      // Inside B's scope the table itself shows no row of A's, and a row for A cannot be forged.
+      const seen = await withUser(tx, b, (s) => s.select().from(schema.learnProgress));
+      expect(seen.some((row) => row.userId === seeded.ua)).toBe(false);
+      await expect(
+        withUser(tx, b, (s) =>
+          s.insert(schema.learnProgress).values({ userId: seeded.ua, moduleSlug: 'using-the-os' }),
+        ),
+      ).rejects.toBeDefined();
     });
   });
 });

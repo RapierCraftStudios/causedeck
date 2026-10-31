@@ -2,6 +2,11 @@
 // shared with the renderer via `x-nonce`, a default `NEXT_LOCALE` cookie, and the signed-out
 // redirect for protected routes (#153). The proxy only checks that a session cookie is present;
 // the session itself is validated in server components (`app/(app)/layout.tsx`).
+import {
+  parseSignupChannel,
+  SIGNUP_CHANNEL_COOKIE,
+  SIGNUP_CHANNEL_MAX_AGE_SECONDS,
+} from '@causedeck/auth/signup-channel';
 import { getSessionCookie } from 'better-auth/cookies';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -105,6 +110,22 @@ export function proxy(request: NextRequest): NextResponse {
     // The signed-out client status page (#88): never indexed, never leaks the token in a referrer.
     response.headers.set('Referrer-Policy', 'no-referrer');
     response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  }
+
+  // Education and tagged links (#703): remember a known `?channel=` across the sign-in round trip
+  // so the user.create hook can record it. Only a closed-list value is stored; anything else
+  // (including a stale cookie from an earlier link) is left alone or ignored.
+  if (request.method === 'GET' && request.nextUrl.pathname === '/sign-in') {
+    const channel = parseSignupChannel(request.nextUrl.searchParams.get('channel'));
+    if (channel !== null) {
+      response.cookies.set(SIGNUP_CHANNEL_COOKIE, channel, {
+        path: '/',
+        maxAge: SIGNUP_CHANNEL_MAX_AGE_SECONDS,
+        sameSite: 'lax',
+        httpOnly: true,
+        secure: request.nextUrl.protocol === 'https:',
+      });
+    }
   }
 
   if (!request.cookies.has(LOCALE_COOKIE)) {

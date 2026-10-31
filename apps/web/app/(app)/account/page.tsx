@@ -30,6 +30,7 @@ import { DeleteAccount } from './danger/delete-account.tsx';
 import { AccountError } from './error.tsx';
 import { AccountProfileForm, AccountSkeleton } from './profile/profile-form.tsx';
 import { ConnectedAccountsSection, loadConnectedAccounts } from './security/connected-accounts.tsx';
+import { LearnProgressSection, loadLearnProgress } from './learn/learn-progress.tsx';
 import { loadPasskeys, PasskeysSection } from './security/passkeys.tsx';
 import { AddEmailSection, LinkGoogleSection } from './security/link-methods.tsx';
 import { loadSessions, SessionsSection } from './security/sessions.tsx';
@@ -50,6 +51,7 @@ function devState(searchParams: SearchParams): string | undefined {
 }
 
 interface AccountUser {
+  id: string;
   name: string;
   email: string;
   twoFactorEnabled: boolean;
@@ -60,6 +62,7 @@ async function loadUser(): Promise<AccountUser | null> {
   const session = await getAuth().api.getSession({ headers: await headers() });
   if (!session) return null;
   return {
+    id: session.user.id,
     name: session.user.name,
     email: session.user.email,
     // Added by the two-factor plugin; not in the base user type.
@@ -72,10 +75,18 @@ async function loadUser(): Promise<AccountUser | null> {
 async function AccountSections({ state }: { state: string | undefined }) {
   let user: AccountUser | null;
   let data: Awaited<ReturnType<typeof loadSecurity>> | null;
+  let learn: Awaited<ReturnType<typeof loadLearnProgress>> | null;
   try {
     if (state === 'error') throw new Error('Account error state (dev toggle)');
     user = await loadUser();
     data = user ? await loadSecurity(user.sessionId) : null;
+    // Progress is a side feature: if it cannot load, the rest of the account still shows.
+    learn = user
+      ? await loadLearnProgress(user.id).catch((error: unknown) => {
+          logger.warn({ err: error }, 'account page: could not load practice-school progress');
+          return null;
+        })
+      : null;
   } catch (error) {
     if (state !== 'error') logger.error({ err: error }, 'account page: could not load account');
     return <AccountError />;
@@ -103,6 +114,11 @@ async function AccountSections({ state }: { state: string | undefined }) {
           <LinkGoogleSection />
         ) : null}
       </div>
+      {learn ? (
+        <div id="learn" className="scroll-mt-4">
+          <LearnProgressSection modules={learn} />
+        </div>
+      ) : null}
       <div id="danger" className="scroll-mt-4">
         <DeleteAccount
           email={user.email}

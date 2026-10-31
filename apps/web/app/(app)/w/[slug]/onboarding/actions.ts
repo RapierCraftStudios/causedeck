@@ -26,7 +26,7 @@ const Discover = WorkspaceScoped.extend({
 const Progress = WorkspaceScoped.extend({ batchId: z.uuid() }).strict();
 const Step = WorkspaceScoped.extend({
   step: z.enum(['confirm_grid_done', 'first_court_day_view']),
-  /** Matters discovered and matters confirmed, for the discovered-against-confirmed log. */
+  /** Matters discovered and matters confirmed, logged and recorded with the step (#699). */
   discovered: z.number().int().min(0).max(100000).optional(),
   confirmed: z.number().int().min(0).max(100000).optional(),
 }).strict();
@@ -42,13 +42,14 @@ export interface DiscoveryProgressView {
 async function record(
   userId: string,
   step: 'identifiers_entered' | 'discovery_found' | 'confirm_grid_done' | 'first_court_day_view',
+  counts: { discovered?: number; confirmed?: number } = {},
 ): Promise<void> {
   try {
     const [{ db }, { recordActivation }] = await Promise.all([
       import('@causedeck/core/runtime'),
       import('@causedeck/core/activation'),
     ]);
-    await recordActivation(db, { userId, step });
+    await recordActivation(db, { userId, step, ...counts });
   } catch {
     // dropped: the member proceeds
   }
@@ -79,7 +80,9 @@ const discover = workspaceAction(
           : { confirmedMatchKeys: input.confirmedMatchKeys }),
       },
     );
-    if (outcome.status !== 'nothing_found') await record(ctx.userId, 'discovery_found');
+    if (outcome.status !== 'nothing_found') {
+      await record(ctx.userId, 'discovery_found', { discovered: outcome.counts.listings });
+    }
     revalidatePath('/w/[slug]/onboarding', 'page');
     return outcome;
   },
@@ -106,7 +109,10 @@ const step = workspaceAction(
     if (discovered !== undefined && confirmed !== undefined) {
       logger.info({ discovered, confirmed }, 'onboarding.discovered_vs_confirmed');
     }
-    await record(ctx.userId, name);
+    await record(ctx.userId, name, {
+      ...(discovered === undefined ? {} : { discovered }),
+      ...(confirmed === undefined ? {} : { confirmed }),
+    });
     return { recorded: true };
   },
   { action: 'matter.read' },

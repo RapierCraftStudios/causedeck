@@ -60,7 +60,7 @@ export default async function GrowthPage({
 }) {
   const staff = await requireStaff('growth');
   const channel = channelOf((await searchParams).channel);
-  const { cohorts, timeToFirstCourtDay } = await growthFunnel(
+  const { cohorts, timeToFirstCourtDay, discoveredVsConfirmed } = await growthFunnel(
     staff,
     channel === undefined ? {} : { channel },
   );
@@ -150,6 +150,45 @@ export default async function GrowthPage({
           </tbody>
         </table>
       )}
+      <section aria-labelledby="discovered-title" className="grid gap-2">
+        <h2 id="discovered-title" className="text-sm font-medium">
+          Matters discovered against confirmed
+        </h2>
+        <p className="text-ink-muted text-sm">
+          Per cohort week, summed over the users who confirmed their grid with both counts recorded.
+          The ratio is matters confirmed over matters discovered.
+        </p>
+        {discoveredVsConfirmed.length === 0 ? (
+          <p className="text-ink-muted text-sm">No confirmed grids with counts yet.</p>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="text-ink-muted">
+              <tr>
+                <th className="py-1 font-medium">Cohort week</th>
+                <th className="py-1 font-medium">Users</th>
+                <th className="py-1 font-medium">Discovered</th>
+                <th className="py-1 font-medium">Confirmed</th>
+                <th className="py-1 font-medium">Confirmed / discovered</th>
+              </tr>
+            </thead>
+            <tbody className="tabular-nums">
+              {discoveredVsConfirmed.map((row) => (
+                <tr key={row.week} data-testid="discovered-row" className="border-line border-t">
+                  <td className="py-1 font-mono text-xs">{row.week}</td>
+                  <td className="py-1">{String(row.users)}</td>
+                  <td className="py-1" data-testid="discovered-total">
+                    {String(row.discovered)}
+                  </td>
+                  <td className="py-1" data-testid="confirmed-total">
+                    {String(row.confirmed)}
+                  </td>
+                  <td className="py-1">{percent(row.ratio)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
     </section>
   );
 }

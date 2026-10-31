@@ -80,6 +80,9 @@ function funnel() {
     timeToFirstCourtDay: [
       { week: '2031-03-03', reached: 2, medianSeconds: 5 * 3600, p90Seconds: 26 * 3600 },
     ],
+    discoveredVsConfirmed: [
+      { week: '2031-03-03', users: 2, discovered: 16, confirmed: 10, ratio: 0.625 },
+    ],
   };
 }
 
@@ -107,6 +110,19 @@ describe('GrowthPage', () => {
     expect(html).toContain('Time to first court-day view (median / p90)');
   });
 
+  it('shows matters discovered against matters confirmed per cohort week (#699)', async () => {
+    const html = await render();
+    expect(html).toContain('Matters discovered against confirmed');
+    expect(html).toContain('data-testid="discovered-row"');
+    expect(html).toContain('data-testid="discovered-total">16<');
+    expect(html).toContain('data-testid="confirmed-total">10<');
+    expect(html).toContain('63%');
+    const none = funnel();
+    none.discoveredVsConfirmed = [];
+    state.growthFunnel.mockResolvedValue(none);
+    expect(await render()).toContain('No confirmed grids with counts yet.');
+  });
+
   it('shows the referral funnel counts', async () => {
     const html = await render();
     expect(html).toContain('data-testid="referral-sent">5<');
@@ -123,7 +139,11 @@ describe('GrowthPage', () => {
   });
 
   it('renders an empty state and a dash when nobody has reached the court-day view', async () => {
-    state.growthFunnel.mockResolvedValue({ cohorts: [], timeToFirstCourtDay: [] });
+    state.growthFunnel.mockResolvedValue({
+      cohorts: [],
+      timeToFirstCourtDay: [],
+      discoveredVsConfirmed: [],
+    });
     expect(await render()).toContain('No sign-ups yet.');
     const f = funnel();
     f.timeToFirstCourtDay = [];

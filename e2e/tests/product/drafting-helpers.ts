@@ -4,7 +4,7 @@
 // straight into the worker database, as factcheck-helpers.ts does. Fictional data only.
 import { createHash } from 'node:crypto';
 
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import postgres from 'postgres';
 
 import { COURTS_WORKSPACE_ID } from '../../fixtures/courts-data.ts';
@@ -47,6 +47,13 @@ export const citationPanel = (page: Page) => page.locator('[data-slot="citation-
 
 /** Run `Check citations` and wait until the not-found result is listed. */
 export async function checkCitations(page: Page): Promise<void> {
-  await citationPanel(page).getByRole('button', { name: 'Check citations' }).click();
-  await citationPanel(page).getByText('Not found', { exact: true }).first().waitFor();
+  const panel = citationPanel(page);
+  const check = panel.getByRole('button', { name: 'Check citations' });
+  // Cold first render: the studio can take well over a click's wait to hydrate, and a click before
+  // hydration is lost. Wait for the panel, then retry the click until the result is listed.
+  await panel.waitFor({ state: 'visible', timeout: 20_000 });
+  await expect(async () => {
+    if (await check.isEnabled()) await check.click({ timeout: 2_000 });
+    await panel.getByText('Not found', { exact: true }).first().waitFor({ timeout: 3_000 });
+  }).toPass({ timeout: 25_000 });
 }

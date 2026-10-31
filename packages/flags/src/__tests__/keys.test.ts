@@ -46,6 +46,7 @@ describe('flag registry', () => {
         'insights.enabled',
         'workspace.export',
         'm5_playbooks',
+        'adapters.workbench-fetch',
         'growth.onboarding-nudge',
       ].sort(),
     );

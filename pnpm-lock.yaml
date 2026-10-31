@@ -503,6 +503,9 @@ importers:
       '@causedeck/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@causedeck/fetch':
+        specifier: workspace:*
+        version: link:../../packages/fetch
       '@causedeck/flags':
         specifier: workspace:*
         version: link:../../packages/flags

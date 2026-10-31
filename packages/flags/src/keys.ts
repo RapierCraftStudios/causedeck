@@ -113,6 +113,12 @@ export const FLAGS = {
     false,
     [81, 901],
   ),
+  'adapters.workbench-fetch': flag(
+    'adapters.workbench-fetch',
+    'Governed one-off fetch of a registered source URL into the fixture workbench (mock provider until the AlterLab key is set).',
+    false,
+    [598],
+  ),
   'growth.onboarding-nudge': flag(
     'growth.onboarding-nudge',
     'Onboarding nudges for unfinished setup steps, in the app and on WhatsApp (opt-in).',

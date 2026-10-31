@@ -29,7 +29,14 @@ function Alert({ message }: { message: string | undefined }) {
   );
 }
 
-export function FixtureWorkbenchForm({ adapterIds }: { adapterIds: readonly string[] }) {
+export function FixtureWorkbenchForm({
+  adapterIds,
+  fetchEnabled = false,
+}: {
+  adapterIds: readonly string[];
+  /** The governed one-off fetch input (#598), offered while `adapters.workbench-fetch` is on. */
+  fetchEnabled?: boolean;
+}) {
   const [previewState, preview, previewing] = useActionState(previewFixtureAction, INITIAL);
   const [buildState, build, building] = useActionState(buildFixtureAction, INITIAL);
   const rows = previewState.preview;
@@ -70,6 +77,25 @@ export function FixtureWorkbenchForm({ adapterIds }: { adapterIds: readonly stri
           <Textarea id="document" name="document" rows={10} />
           <Input id="file" name="file" type="file" aria-label="Document file" />
         </div>
+        {fetchEnabled ? (
+          <fieldset className="border-line grid gap-2 rounded border p-3">
+            <legend className="text-ink-muted text-xs">
+              Or fetch a public document (only when the box above and the file are empty)
+            </legend>
+            <div className="grid gap-1">
+              <Label htmlFor="fetchSourceId">Registered source id</Label>
+              <Input
+                id="fetchSourceId"
+                name="fetchSourceId"
+                placeholder="in.ka.karnataka-hc.bengaluru:cause_list"
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label htmlFor="fetchUrl">URL on that source</Label>
+              <Input id="fetchUrl" name="fetchUrl" type="url" placeholder="https://" />
+            </div>
+          </fieldset>
+        ) : null}
         <div className="grid gap-1">
           <Label htmlFor="extraNames">Other names to replace (one per line)</Label>
           <Textarea id="extraNames" name="extraNames" rows={3} />

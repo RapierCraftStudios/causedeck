@@ -30,6 +30,7 @@ Every flag is off by default and ships dark. ⚖ marks a legal-gated flag. A leg
 | `bench_facts` | ⚖ yes | `KILL_BENCH_FACTS` | #521 factual bench card (D-050), off until counsel clears it, #118 counsel clearance |
 | `growth.onboarding-nudge` | no | `KILL_GROWTH_ONBOARDING_NUDGE` | #601 `system.onboarding.nudge` job: in-app and opt-in WhatsApp reminders for unfinished setup steps; WhatsApp runs on the mock sender until the provider approves the template |
 | `m5_playbooks` | no | `KILL_M5_PLAYBOOKS` | #81 M5 playbooks and precedent bank, #901 backend (confirmed passages only; on for the demo workspace) |
+| `adapters.workbench-fetch` | no | `KILL_ADAPTERS_WORKBENCH_FETCH` | #598 governed one-off fetch into the fixture workbench (staff-only, audited, body in memory only); mock provider until `ALTERLAB_API_KEY` is set, so enabling it plus the key is the live switch |
 
 ## Evaluation
 

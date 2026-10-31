@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "eval": "vitest run src/extract/eval.test.ts",
-    "research-eval": "node src/research/eval/cli.ts"
+    "research-eval": "node src/research/eval/cli.ts",
+    "bench:pipeline": "tsx src/bench/cli.ts"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
@@ -25,6 +26,7 @@
     "eslint": "catalog:",
     "pdf-lib": "catalog:",
     "regenerator-runtime": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

@@ -2073,6 +2073,29 @@ export const BILLING_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   },
 };
 
+/**
+ * Practice-school progress (#703) lives in the `@causedeck/core/activation` subpath, which the
+ * root index does not re-export. `learn_progress` is a user-keyed global table under FORCE RLS on
+ * `app.user_id`, so the cases are "user B sees nothing of user A's progress, and A is unchanged".
+ */
+export const ACTIVATION_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
+  markLearnModuleDone: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'opens withUser for the given user and writes only that user row; B marking a module never touches A rows (RLS WITH CHECK on app.user_id)',
+  },
+  unmarkLearnModule: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'deletes only the given user own row; B un-marking a module leaves A progress unchanged',
+  },
+  listCompletedLearnModules: {
+    test: CORE_SERVICES_TEST,
+    kind: 'rls-empty',
+    note: 'reads under withUser: B lists only B completed modules and never sees an A row',
+  },
+};
+
 /** The storage presign cross-tenant test (#21). */
 export const STORAGE_PRESIGN_TEST = 'packages/storage/src/__tests__/cross-tenant-presign.test.ts';
 
@@ -2118,6 +2141,7 @@ export function registeredTestFiles(): string[] {
       ...Object.values(NOTIFICATION_SERVICE_TESTS).map((entry) => entry.test),
       ...Object.values(RUNTIME_SERVICE_TESTS).map((entry) => entry.test),
       ...Object.values(BILLING_SERVICE_TESTS).map((entry) => entry.test),
+      ...Object.values(ACTIVATION_SERVICE_TESTS).map((entry) => entry.test),
       STORAGE_PRESIGN_TEST,
     ]),
   ].sort();

@@ -43,6 +43,7 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * `bench_sitting_fact` (#521, D-050) is the global, staff-only bench-facts store (neutral counts and pace per hall and day); the app and clerk roles have no table grants and reach it only through the owner-defined `app_bench_*` functions.
  * `notice` (#584, D-048) is the global official notices feed read from cleared sources; the app role may SELECT, INSERT and UPDATE it (no DELETE).
  * `incident` and `incident_update` (#769) are the platform incident log behind the public status page: public text only, no workspace data.
+ * `learn_progress` (#703) is the per-user practice-school progress (user id, module slug, time); it has no workspace column and is under FORCE RLS on `app.user_id` (`withUser`).
  * `notice_holiday` (#628) holds the dates named by a holiday-list notice; the app role may SELECT and INSERT it.
  */
 export const GLOBAL_TABLES: readonly string[] = [
@@ -96,6 +97,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'activation_event',
   'referral',
   'referral_credit',
+  'learn_progress',
 ];
 
 /**

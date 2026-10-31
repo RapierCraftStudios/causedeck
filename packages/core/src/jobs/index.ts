@@ -148,6 +148,22 @@ export {
 } from './definitions/notification-digest.ts';
 export { courtDataRetention } from './definitions/court-data-retention.ts';
 export {
+  CAPTCHA_BULK_FLAG,
+  CAPTCHA_BULK_TICK_CRON,
+  DEFAULT_CAPTCHA_DAILY_CAP_DOLLARS,
+  buildCaptchaBulkTicker,
+  captchaBulkFlagOn,
+  captchaBulkTick,
+  listBulkFeed,
+  runCaptchaBulkTick,
+  setCaptchaBulkWiring,
+  type BuildTickerDeps,
+  type CaptchaBulkTickDeps,
+  type CaptchaBulkTickReport,
+  type CaptchaBulkTicker,
+  type CaptchaBulkWiring,
+} from './definitions/captcha-bulk-tick.ts';
+export {
   BOARD_POLL_CRON,
   boardPoll,
   runBoardPoll,

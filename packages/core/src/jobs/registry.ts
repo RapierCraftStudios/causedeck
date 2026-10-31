@@ -10,6 +10,7 @@ import {
   activityDigestSchedule,
 } from './definitions/activity-digest.ts';
 import { onboardingNudge } from './definitions/onboarding-nudge.ts';
+import { captchaBulkTick } from './definitions/captcha-bulk-tick.ts';
 import {
   obligationReminders,
   obligationRemindersSchedule,
@@ -275,6 +276,7 @@ export const registry = createRegistry([
   reminderMorning,
   reminderOutcomeMissing,
   onboardingNudge,
+  captchaBulkTick,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -364,6 +366,7 @@ export type JobMap = RegistryMap<
     typeof reminderMorning,
     typeof reminderOutcomeMissing,
     typeof onboardingNudge,
+    typeof captchaBulkTick,
   ]
 >;
 export type JobName = keyof JobMap;

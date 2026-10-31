@@ -62,6 +62,7 @@ describe('registerSchedules', () => {
       'system.brief.refresh-sweep',
       'system.reminder.schedule',
       'system.onboarding.nudge',
+      'system.captcha-bulk.tick',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -145,6 +146,8 @@ describe('registerSchedules', () => {
       ['system.notices.poll', '0 * * * *', '2026-10-18T00:30:00.000Z'],
       // Status publish (#769): every minute.
       ['system.status.publish', '* * * * *', '2026-10-18T00:01:00.000Z'],
+      // Bulk captcha tick (#1078): every minute (dark behind `captcha.bulk`).
+      ['system.captcha-bulk.tick', '* * * * *', '2026-10-18T00:01:00.000Z'],
       // Obligation reminders (#67): daily 07:00 IST; 07:00 IST is 01:30 UTC.
       ['system.obligation.reminders', '0 7 * * *', '2026-10-18T01:30:00.000Z'],
     ] as const;

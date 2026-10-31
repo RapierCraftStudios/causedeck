@@ -30,7 +30,7 @@ function Bars({
   label,
 }: {
   rows: SourceOpsRow[];
-  pick: 'fetches' | 'costDollars';
+  pick: 'fetches' | 'costDollars' | 'captchaCostDollars';
   label: string;
 }) {
   const peak = Math.max(0, ...rows.flatMap((r) => r.daily.map((d) => d[pick])));
@@ -251,6 +251,43 @@ export default async function DataOpsPage() {
       <div className="grid gap-2">
         <h2 className="font-medium">Daily cost per source and court (7 days, UTC)</h2>
         <Bars rows={rows} pick="costDollars" label="Daily cost" />
+      </div>
+      <div className="grid gap-2">
+        <h2 className="font-medium">Captcha solving cost per court per day (7 days, UTC)</h2>
+        <p className="text-ink-muted text-sm">
+          Paid solves only, the part of the daily cost spent on the captcha tier. Local solves cost
+          nothing. Bulk solving is off until counsel clears a source.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">Captcha solving cost per court per day</caption>
+            <thead>
+              <tr>
+                <th scope="col">Court</th>
+                {rows[0]?.daily.map((d) => (
+                  <th key={d.day} scope="col">
+                    {d.day}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows
+                .filter((r) => r.daily.some((d) => d.captchaCostDollars > 0))
+                .map((r) => (
+                  <tr key={r.id}>
+                    <th scope="row">{r.id}</th>
+                    {r.daily.map((d) => (
+                      <td key={d.day}>{dollars(d.captchaCostDollars)}</td>
+                    ))}
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+          {rows.every((r) => r.daily.every((d) => d.captchaCostDollars === 0)) ? (
+            <p className="text-ink-muted text-sm">No captcha spend in the last 7 days.</p>
+          ) : null}
+        </div>
       </div>
     </section>
   );

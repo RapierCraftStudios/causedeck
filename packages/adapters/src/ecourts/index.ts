@@ -5,3 +5,4 @@ export * from './cause-list.ts';
 export * from './codes.ts';
 export * from './options.ts';
 export * from './orders.ts';
+export * from './captcha.ts';

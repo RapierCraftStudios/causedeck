@@ -30,7 +30,9 @@ pnpm --filter @causedeck/core exec vitest run src/usage
 `matters.active`, `api.calls` and `research.searches` (one counter unit per fact-pattern search over
 the judgment corpus, #896; Junior is capped at 30 a month by `RESEARCH_SEARCH_CAPS` in
 `@causedeck/core/research`, paid plans are not; re-running a search with an edited plan is not
-counted). `increment` rejects any other key.
+counted), and `fetch.cost_micros` (delegated fetch spend in micro-dollars, #506; the free
+alerts tier's cap `FREE_ALERTS_LIMITS` in `@causedeck/billing` reads it, paid plans are not capped).
+`increment` rejects any other key.
 
 Each key has a kind in `USAGE_KEY_KINDS`:
 

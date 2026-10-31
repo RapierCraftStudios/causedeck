@@ -8,10 +8,16 @@
 import type { Database, Transaction } from '@causedeck/db';
 import { sql } from 'drizzle-orm';
 
+import type { GraphActor } from '../matter-graph/index.ts';
 import { SourceNotCleared } from '../sources/index.ts';
 
 import { notifyStatusChanges, type StatusAlertDeps } from './alerts.ts';
-import { runCaseStatusLookup, touchWatchPolled, type CaseStatusLookupDeps } from './lookup.ts';
+import {
+  runCaseStatusLookup,
+  touchWatchPolled,
+  type CaseStatusLookupDeps,
+  type StatusFetcher,
+} from './lookup.ts';
 
 type Db = Database | Transaction;
 
@@ -41,6 +47,15 @@ export interface PollCaseWatchesDeps
    * errors are swallowed) with the ids and kinds of change; the job wires webhooks here (#626).
    */
   onChange?: (change: StatusChangeEvent) => Promise<unknown>;
+  /**
+   * Asked before each lookup (#506): false defers the watch to its next cadence without a fetch (a
+   * free workspace at its fetch cost cap). Absent means every watch is admitted.
+   */
+  admit?: (watch: DueWatch) => Promise<boolean>;
+  /** The fetcher one advocate's lookup uses (#506: counts the cost of a free workspace's fetches). */
+  fetcherFor?: (actor: GraphActor) => StatusFetcher;
+  /** A line appended to the order alert's body (#506: the free tier's upgrade prompt), or null. */
+  alertNote?: (actor: GraphActor) => Promise<string | null>;
 }
 
 export interface StatusChangeEvent {
@@ -63,6 +78,8 @@ export interface PollCaseWatchesReport {
   deferred: number;
   /** Not looked up because the source is uncleared or killed. */
   skipped: number;
+  /** Not looked up because the workspace is at its fetch cost cap (#506); they wait for the next cadence. */
+  capped: number;
   failed: number;
   alerts: number;
 }
@@ -105,6 +122,7 @@ export async function pollCaseWatches(deps: PollCaseWatchesDeps): Promise<PollCa
     unchanged: 0,
     deferred: 0,
     skipped: 0,
+    capped: 0,
     failed: 0,
     alerts: 0,
   };
@@ -129,17 +147,29 @@ export async function pollCaseWatches(deps: PollCaseWatchesDeps): Promise<PollCa
       report.deferred += 1;
       continue;
     }
-    bySource.set(watch.sourceId, (bySource.get(watch.sourceId) ?? 0) + 1);
-    byAdvocate.set(advocateKey, (byAdvocate.get(advocateKey) ?? 0) + 1);
     // The advocate's own watch only: the actor is the watch's advocate in its workspace.
     const actor = { userId: watch.advocateUserId, workspaceId: watch.workspaceId };
+    if (deps.admit !== undefined) {
+      const admitted = await deps.admit(watch).catch(() => false);
+      if (!admitted) {
+        // At the cap: wait for the next cadence so it does not hold a slot in every run.
+        report.capped += 1;
+        await touchWatchPolled(deps.db, actor, watch.watchId, now()).catch(() => undefined);
+        continue;
+      }
+    }
+    bySource.set(watch.sourceId, (bySource.get(watch.sourceId) ?? 0) + 1);
+    byAdvocate.set(advocateKey, (byAdvocate.get(advocateKey) ?? 0) + 1);
     try {
-      const done = await runCaseStatusLookup(deps, actor, { watchId: watch.watchId });
+      const lookupDeps = deps.fetcherFor ? { ...deps, fetcher: deps.fetcherFor(actor) } : deps;
+      const done = await runCaseStatusLookup(lookupDeps, actor, { watchId: watch.watchId });
       report.polled += 1;
       if (done.outcome === 'changed') {
         report.changed += 1;
         if (done.snapshotId !== null && done.changes !== null && done.matterId !== null) {
+          const note = await deps.alertNote?.(actor).catch(() => null);
           report.alerts += await notifyStatusChanges(deps, actor, {
+            ...(note ? { orderNote: note } : {}),
             snapshotId: done.snapshotId,
             matterId: done.matterId,
             changes: done.changes,

@@ -16,6 +16,7 @@ import {
   type PollCaseWatchesReport,
   type StatusFetcher,
 } from '../../case-watch/index.ts';
+import { createFreeAlertsPollGuard } from '../../free-alerts/index.ts';
 import { emitWebhookEvent } from '../../webhooks/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
@@ -62,7 +63,10 @@ export type StatusPollDeps = Partial<
   Pick<
     PollCaseWatchesDeps,
     'fetcher' | 'policy' | 'listDue' | 'caps' | 'now' | 'enqueueDelivery' | 'onChange'
-  >
+  > & {
+    /** Replaces the free tier's guard (tests); by default it is built on the usage meter. */
+    freeAlerts?: Pick<PollCaseWatchesDeps, 'admit' | 'fetcherFor' | 'alertNote'>;
+  }
 >;
 
 /** The job body. Exported for tests. */
@@ -70,9 +74,20 @@ export async function runStatusPoll(
   ctx: Pick<JobContext, 'db' | 'log'>,
   deps: StatusPollDeps = {},
 ): Promise<PollCaseWatchesReport> {
+  const fetcher = deps.fetcher ?? fetcherFactory?.(ctx.db) ?? unwiredFetcher;
+  // The free tier's fetch cost cap (#506): a no-op for paid workspaces and while its flag is off.
+  const guard =
+    deps.freeAlerts ??
+    createFreeAlertsPollGuard(
+      { db: ctx.db, ...(deps.now === undefined ? {} : { now: deps.now }) },
+      fetcher,
+    );
   const report = await pollCaseWatches({
     db: ctx.db,
-    fetcher: deps.fetcher ?? fetcherFactory?.(ctx.db) ?? unwiredFetcher,
+    fetcher,
+    ...(guard.admit === undefined ? {} : { admit: guard.admit }),
+    ...(guard.fetcherFor === undefined ? {} : { fetcherFor: guard.fetcherFor }),
+    ...(guard.alertNote === undefined ? {} : { alertNote: guard.alertNote }),
     enqueueDelivery: deps.enqueueDelivery ?? enqueueDelivery,
     onChange: (change) =>
       emitWebhookEvent(

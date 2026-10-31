@@ -34,6 +34,7 @@ export {
   createKeyLineCapture,
   deleteRecording,
   discardCapture,
+  handCaptureToListImport,
   keepCaptureAsAttachment,
   pinCapture,
 } from './manage.ts';

@@ -384,6 +384,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   undoActivityAction: inbox,
   reassignCaptureAction: inbox,
   keepAsAttachmentAction: inbox,
+  handToListImportAction: inbox,
   assignAppearanceAction: planActions,
   acceptSuggestionAction: planActions,
   acceptAllSuggestionsAction: planActions,
@@ -967,6 +968,7 @@ function inputs(workspaceId: string): Record<string, unknown> {
       matterId: t.a.rows.matter?.matterId,
     },
     keepAsAttachmentAction: { workspaceId, captureId: t.a.rows.capture?.id },
+    handToListImportAction: { workspaceId, captureId: t.a.rows.capture?.id },
     typeKeyLineAction: { workspaceId, captureId: t.a.rows.capture?.id, text: 'Probe line' },
     markSentAction: { workspaceId, providerId: 'xt-probe', itemId: 'xt-probe' },
     // Stale-matter attention (#70): ub may not list, snooze, dismiss or lift on A's matters.

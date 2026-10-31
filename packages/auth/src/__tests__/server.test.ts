@@ -51,6 +51,47 @@ async function findUser(email: string) {
   return row;
 }
 
+async function signUpViaMagicLink(cookie?: string): Promise<string> {
+  const { auth, mailer } = makeAuth();
+  const email = uniqueEmail('channel');
+  await requestLink(auth, email);
+  await vi.waitFor(() => {
+    expect(mailer.sent).toHaveLength(1);
+  });
+  const verify = await authRequest(auth, mailer.sent[0]?.url ?? '', {
+    method: 'GET',
+    ...(cookie === undefined ? {} : { cookie }),
+  });
+  expect(verify.status).toBe(302);
+  const user = await findUser(email);
+  if (!user) throw new Error('user was not created');
+  return user.id;
+}
+
+async function signedUpEvent(userId: string) {
+  const [row] = await testAppDb()
+    .select()
+    .from(schema.activationEvent)
+    .where(eq(schema.activationEvent.userId, userId));
+  return row;
+}
+
+describe('signup channel (#703)', () => {
+  it('records the channel carried by cd_channel on the signed_up event', async () => {
+    const event = await signedUpEvent(await signUpViaMagicLink('cd_channel=education'));
+    expect(event?.step).toBe('signed_up');
+    expect(event?.channel).toBe('education');
+  });
+
+  it('records no channel when the cookie is absent or not a closed-list value', async () => {
+    for (const cookie of [undefined, 'cd_channel=evil', 'cd_channel=education%20x', 'other=direct']) {
+      const event = await signedUpEvent(await signUpViaMagicLink(cookie));
+      expect(event?.step).toBe('signed_up');
+      expect(event?.channel).toBeNull();
+    }
+  });
+});
+
 describe('magic link', () => {
   it('creates the user on first use and signs them in via the console mailer flow', async () => {
     const { auth, mailer } = makeAuth();

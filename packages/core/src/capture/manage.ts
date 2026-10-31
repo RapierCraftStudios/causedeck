@@ -102,6 +102,37 @@ export function keepCaptureAsAttachment(
 }
 
 /**
+ * Hand a photographed cause list to list import (#1073): `needs_you -> ready`, so the item leaves
+ * the unreadable state, with the audit event recording the hand-off. Only a `camera` capture the
+ * pipeline routed to `cause_list` qualifies. The caller links it to an import batch in the same
+ * transaction (`startImportFromCapture`); nothing is read or guessed here.
+ */
+export function handCaptureToListImport(
+  ctx: CaptureCtx,
+  captureId: string,
+): Promise<CaptureRecord> {
+  const now = ctx.now?.() ?? new Date();
+  return withWorkspace(ctx.db, scope(ctx), async (tx) => {
+    const row = await requireCapture(tx, ctx.workspaceId, captureId);
+    await ownOrManage(ctx, row);
+    if (row.channel !== 'camera' || row.sourceMeta['cameraRoute'] !== 'cause_list') {
+      throw conflict('Only a photographed cause list can be handed to list import');
+    }
+    if (row.status === 'ready') return row;
+    if (row.status !== 'needs_you') throw conflict('This capture cannot be handed to list import');
+    const updated = await moveCapture(tx, row, 'ready', now);
+    await auditCapture(
+      ctx,
+      tx,
+      'capture.completed',
+      { kind: 'capture', id: row.id },
+      { channel: row.channel, handedToListImport: true },
+    );
+    return updated;
+  });
+}
+
+/**
  * Type the key line of an unreadable capture (#48): a manual (L0) capture linked to the original
  * through `source_meta.linkedCaptureId`, with the original's matter hint. The typed text is stored
  * as written; nothing is inferred from the unreadable file.

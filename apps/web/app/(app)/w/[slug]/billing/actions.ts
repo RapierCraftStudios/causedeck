@@ -26,10 +26,11 @@ const ChangeSeats = WorkspaceScoped.extend({ slug: z.string().min(1), ...SeatCou
 const ChangePlan = ChangeSeats.extend({ planId: z.string().min(1).max(64) });
 const Quote = WorkspaceScoped.extend({ planId: z.string().min(1).max(64), ...SeatCounts });
 const SlugOnly = WorkspaceScoped.extend({ slug: z.string().min(1) });
+const Checkout = SlugOnly.extend({ planId: z.string().min(1).max(64), seats: SeatCounts.seats });
 const SaveGstin = SlugOnly.extend({ gstin: z.string().max(32) });
 
 export type BillingActionError =
-  'invalidGstinFormat' | 'invalidGstinChecksum' | 'invalid' | 'notAllowed' | 'unsupported';
+  'invalidGstinFormat' | 'invalidGstinChecksum' | 'invalid' | 'notAllowed' | 'unsupported' | 'demo';
 
 export type BillingActionOutcome<T = object> =
   ({ error?: undefined } & T) | { error: BillingActionError };
@@ -66,6 +67,14 @@ async function toOutcome(error: unknown, gstin?: string): Promise<{ error: Billi
     }
     case 'BillingServiceError':
       return { error: 'invalid' };
+    // The demo-workspace guard (`FORBIDDEN`): billing never reaches the provider from a demo.
+    case 'WorkspaceError': {
+      const code = (error as { code?: unknown }).code;
+      if (code === 'FORBIDDEN') return { error: 'demo' };
+      if (code === 'VALIDATION') return { error: 'invalid' };
+      if (code === 'NOT_FOUND') return { error: 'notAllowed' };
+      throw error;
+    }
     case 'IllegalTransitionError':
       return { error: 'notAllowed' };
     case 'BillingProviderError': {
@@ -225,3 +234,66 @@ export const saveGstin: (
   },
   { action: 'billing.manage' },
 );
+
+/** The mandate step's result: `mandateUrl` is the hosted link to follow, null when already done. */
+export type MandateOutcome = BillingActionOutcome<{ mandateUrl: string | null }>;
+
+/**
+ * Upgrade a Junior workspace to a paid plan (#1072): the provider customer, subscription and UPI
+ * Autopay mandate. On the mock provider the mandate completes at once, so the page comes back on
+ * the new plan; on Razorpay the owner follows `mandateUrl`.
+ */
+export const startCheckout: (raw: unknown) => Promise<Result<MandateOutcome>> = workspaceAction(
+  Checkout,
+  async (input, ctx) => {
+    const { startSubscriptionCheckout } = await import('@causedeck/core/billing');
+    const { billingFlowFor } = await import('../../../../../lib/billing-provider.ts');
+    const flow = await billingFlowFor();
+    const email = ctx.session.user.email;
+    try {
+      const result = await startSubscriptionCheckout(
+        {
+          tx: ctx.tx,
+          workspaceId: ctx.workspaceId,
+          actorUserId: ctx.userId,
+          billingEmail: email,
+          ...(ctx.session.user.name ? { customerName: ctx.session.user.name } : {}),
+          providerName: flow.providerName,
+          service: () => flow.service,
+          completeMandate: flow.completeMandate,
+        },
+        { planId: input.planId, seats: input.seats, clerkSeats: 0 },
+      );
+      refresh(input.slug);
+      return { mandateUrl: result.mandateUrl };
+    } catch (error) {
+      return toOutcome(error);
+    }
+  },
+  { action: 'billing.manage' },
+);
+
+/** Restart the UPI Autopay mandate (`Update payment method`). */
+export const updatePaymentMethod: (raw: unknown) => Promise<Result<MandateOutcome>> =
+  workspaceAction(
+    SlugOnly,
+    async (input, ctx) => {
+      const { updateSubscriptionPaymentMethod } = await import('@causedeck/core/billing');
+      const { billingFlowFor } = await import('../../../../../lib/billing-provider.ts');
+      const flow = await billingFlowFor();
+      try {
+        const result = await updateSubscriptionPaymentMethod({
+          tx: ctx.tx,
+          workspaceId: ctx.workspaceId,
+          actorUserId: ctx.userId,
+          service: async (row) => (await billingFlowFor(row)).service,
+          completeMandate: flow.completeMandate,
+        });
+        refresh(input.slug);
+        return { mandateUrl: result.mandateUrl };
+      } catch (error) {
+        return toOutcome(error);
+      }
+    },
+    { action: 'billing.manage' },
+  );

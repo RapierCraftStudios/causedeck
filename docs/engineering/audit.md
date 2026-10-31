@@ -69,6 +69,8 @@ Each action is either **security** or **informational**:
 | `webhook_endpoint.created` | security | `createWebhookEndpoint` (`@causedeck/core/webhooks`, #626); metadata `events` |
 | `webhook_endpoint.deleted` | security | `deleteWebhookEndpoint` (#626) |
 | `billing.subscription_changed`        | security      | owner billing actions (`changeSubscription`, #257)                                                                         |
+| `billing.checkout_started` | security      | `startSubscriptionCheckout` (#1072) |
+| `billing.payment_method_updated` | security      | `updateSubscriptionPaymentMethod` (#1072) |
 | `billing.gstin_updated`               | security      | `setSubscriptionGstin` (#257)                                                                                              |
 | `billing.invoice_downloaded`          | security      | `openSaasInvoicePdf`, before the first byte (#258)                                                                         |
 | `workspace.role_settings_updated`     | security      | `updateRoleSettings` (#285)                                                                                                |

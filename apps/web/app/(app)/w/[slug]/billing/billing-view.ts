@@ -87,6 +87,8 @@ export interface PaidPlanView {
 
 export interface UpgradeOption {
   kind: 'advocate' | 'chamber';
+  /** The catalogue plan the upgrade starts (the cheapest monthly plan of the kind). */
+  planId: string;
   fromPrice: string;
   minSeats: number;
 }
@@ -229,7 +231,14 @@ function upgrades(plans: readonly Plan[]): UpgradeOption[] {
     const monthly = plans.filter((p) => p.active && p.kind === kind && p.interval === 'month');
     if (monthly.length === 0) return [];
     const cheapest = monthly.reduce((a, b) => (b.pricePaise < a.pricePaise ? b : a));
-    return [{ kind, fromPrice: formatInr(cheapest.pricePaise), minSeats: cheapest.minSeats }];
+    return [
+      {
+        kind,
+        planId: cheapest.id,
+        fromPrice: formatInr(cheapest.pricePaise),
+        minSeats: cheapest.minSeats,
+      },
+    ];
   });
 }
 

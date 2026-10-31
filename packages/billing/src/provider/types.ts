@@ -145,6 +145,11 @@ export interface BillingProvider {
   fetchSubscription(subscriptionId: string): Promise<BillingSubscription>;
   createMandateLink(subscriptionId: string): Promise<MandateLink>;
   /**
+   * Start a fresh UPI Autopay authorisation on a live subscription (update payment method). The
+   * returned link restarts the mandate; the subscription's state still moves only by webhook.
+   */
+  updatePaymentMethod(subscriptionId: string): Promise<MandateLink>;
+  /**
    * Retry a failed subscription charge (dunning, #205). The subscription's state still changes
    * only through webhooks (`subscription.charged` / `payment.failed`), never from this result.
    */

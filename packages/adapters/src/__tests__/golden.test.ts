@@ -93,13 +93,14 @@ describe('runGolden on the committed Madras HC fixtures (#396)', () => {
 });
 
 describe('runGolden on the committed Karnataka HC fixtures (#408)', () => {
-  it('passes all 12 lists (HTML and a consolidated PDF) with precision and recall 1', async () => {
+  it('passes all 14 lists (HTML, a consolidated PDF and text copies) with precision and recall 1', async () => {
     const report = await runGolden(KARNATAKA_HC_ADAPTER_ID, {
       adapter: createKarnatakaHcAdapter(),
       privateFixturesDir: null,
     });
-    expect(report.public.cases).toHaveLength(12);
+    expect(report.public.cases).toHaveLength(14);
     expect(report.public.cases.filter((c) => c.file.endsWith('.pdf'))).toHaveLength(1);
+    expect(report.public.cases.filter((c) => c.file.endsWith('.txt'))).toHaveLength(2);
     for (const c of report.public.cases) {
       expect(c, c.file).toMatchObject({ passed: true, diff: [], anchorViolations: [] });
     }

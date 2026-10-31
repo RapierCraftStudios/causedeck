@@ -30,7 +30,7 @@ public paths in this document.
 
 ## Research search
 
-`GET /v1/research/search?q=<facts>` searches anonymised public judgments by a description of the
+`GET /v1/research/search` with a `q` parameter (the facts) searches anonymised public judgments by a description of the
 facts (for example, "medical negligence with a post-operative infection and no consent"). It
 returns judgments grouped, best first, each with its court, date, neutral citation, title (masked
 where the law requires), outcome, how many corpus judgments cite it, a link to the court's own copy

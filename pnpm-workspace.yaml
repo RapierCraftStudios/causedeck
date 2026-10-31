@@ -35,10 +35,12 @@ ignoredBuiltDependencies:
 # eslint-plugin-boundaries) takes the 4.7.10 patch. tinypool (vitest 3, pulled into the web graph as
 # better-auth's optional `vitest` peer) takes the 2.1.2 patch; 2.x only drops Node 18 (.nvmrc is 22).
 # systeminformation (via @opentelemetry/host-metrics in auto-instrumentations) takes the 5.33.16 patch.
+# follow-redirects takes the 1.16.2 patch (GHSA-mrwp-f3q8-3g9p).
 overrides:
   handlebars@<4.7.10: 4.7.10
   vitest>tinypool: ^2.1.2
   systeminformation@<5.33.16: '>=5.33.16'
+  follow-redirects@<1.16.2: '>=1.16.2'
 
 # No patched braces release exists for GHSA-vfj7-8cjw-p6xm (stack-exhaustion DoS on deeply nested
 # patterns). Its only production path is next-intl > @parcel/watcher > micromatch, which only gets

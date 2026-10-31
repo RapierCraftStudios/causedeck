@@ -1,6 +1,6 @@
 'use client';
 
-import { Mic, Paperclip, Plus, type LucideIcon } from 'lucide-react';
+import { ClipboardPaste, Mic, Paperclip, Plus, type LucideIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -55,19 +55,23 @@ export function useCapture(): CaptureApi {
 }
 
 interface CaptureAction {
-  id: 'voice' | 'file';
+  id: 'voice' | 'file' | 'paste';
   icon: LucideIcon;
 }
 
 const ACTIONS: readonly CaptureAction[] = [
   { id: 'voice', icon: Mic },
   { id: 'file', icon: Paperclip },
+  { id: 'paste', icon: ClipboardPaste },
 ];
+
+/** The `?capture=` value each action opens. */
+const TARGET = { voice: 'voice', file: 'camera', paste: 'paste' } as const;
 
 /**
  * The bottom nav's centre slot: a 52 px accent circle raised 16 px above the bar, labelled
  * `Capture`. The circle ends at 36 px and the 12 px label sits at 42-54 px of the 56 px slot, so
- * the two never overlap. It opens a bottom sheet with the three capture actions.
+ * the two never overlap. It opens a bottom sheet with the capture actions: voice note, photo or file, paste text.
  */
 export function CaptureFab() {
   const t = useTranslations('shell');
@@ -133,9 +137,9 @@ export function CaptureFab() {
                   setOpen(false);
                   // Same addresses as voiceHref() and the camera command; inlined so the shell does
                   // not pull the command registry in. `file` opens the camera sheet, which also
-                  // takes photos and files from the gallery.
+                  // takes photos and files from the gallery; `paste` opens the paste-text sheet.
                   const params = new URLSearchParams(window.location.search);
-                  params.set('capture', id === 'voice' ? 'voice' : 'camera');
+                  params.set('capture', TARGET[id]);
                   router.push(`${pathname}?${params.toString()}`);
                 }}
                 className="text-ink flex min-h-11 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium disabled:opacity-60"

@@ -2,12 +2,13 @@
 
 import { initials } from '@causedeck/ui/avatar';
 import { Badge } from '@causedeck/ui/badge';
-import { Check, ChevronsUpDown, Plus } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useId, useState, type KeyboardEvent } from 'react';
+import { useId, useState, type KeyboardEvent, type SyntheticEvent } from 'react';
 
+import { invitePath, inviteTokenFrom } from '../../lib/capture/paste/invite-input.ts';
 import type { Membership, Workspace } from '../../lib/workspace-context.ts';
 
 import { railHidden } from './sidebar-collapse.tsx';
@@ -205,6 +206,10 @@ export function WorkspaceSwitcher({ current, memberships, variant }: WorkspaceSw
       onCreate={() => {
         setOpen(false);
       }}
+      onJoin={(token) => {
+        setOpen(false);
+        router.push(invitePath(token));
+      }}
     />
   );
 
@@ -272,6 +277,8 @@ interface SwitcherPanelProps {
   onSelect: (membership: Membership) => void;
   /** Closes the panel as `Create workspace` navigates to `/onboarding`. */
   onCreate: () => void;
+  /** Opens `/invite/<token>` (#1074): the invitation page previews it and accepts it. */
+  onJoin: (token: string) => void;
 }
 
 /** Filter, membership listbox and footer: shared by the sidebar popover and the phone sheet. */
@@ -287,8 +294,23 @@ function SwitcherPanel({
   onHover,
   onSelect,
   onCreate,
+  onJoin,
 }: SwitcherPanelProps) {
   const t = useTranslations('shell');
+  const joinId = useId();
+  const [joining, setJoining] = useState(false);
+  const [invite, setInvite] = useState('');
+  const [invalid, setInvalid] = useState(false);
+
+  const submitInvite = (event: SyntheticEvent) => {
+    event.preventDefault();
+    const token = inviteTokenFrom(invite);
+    if (token === null) {
+      setInvalid(true);
+      return;
+    }
+    onJoin(token);
+  };
   return (
     <>
       <input
@@ -355,6 +377,57 @@ function SwitcherPanel({
           <Plus aria-hidden="true" className="size-4" />
           {t('switcher.create')}
         </Link>
+        {joining ? (
+          <form
+            onSubmit={submitInvite}
+            data-switcher-join-form=""
+            className="flex flex-col gap-1.5 p-2"
+          >
+            <label htmlFor={joinId} className="text-sm font-medium">
+              {t('switcher.joinLabel')}
+            </label>
+            <input
+              id={joinId}
+              type="text"
+              value={invite}
+              autoFocus
+              autoComplete="off"
+              spellCheck={false}
+              placeholder={t('switcher.joinPlaceholder')}
+              aria-invalid={invalid || undefined}
+              aria-describedby={invalid ? `${joinId}-error` : undefined}
+              onChange={(event) => {
+                setInvite(event.target.value);
+                setInvalid(false);
+              }}
+              className="border-line-control bg-surface focus-visible:outline-ring h-9 rounded-md border px-2.5 text-sm outline-none focus-visible:outline-2"
+            />
+            {invalid ? (
+              <p id={`${joinId}-error`} role="alert" className="text-danger text-xs">
+                {t('switcher.joinInvalid')}
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={invite.trim() === ''}
+              className="bg-accent text-accent-ink focus-visible:outline-ring h-9 self-start rounded-md px-3 text-sm font-medium outline-none focus-visible:outline-2 disabled:opacity-60"
+            >
+              {t('switcher.joinSubmit')}
+            </button>
+          </form>
+        ) : (
+          <button
+            type="button"
+            data-switcher-join=""
+            onClick={() => {
+              setJoining(true);
+            }}
+            className="text-ink hover:bg-accent-soft/60 focus-visible:outline-ring flex h-9 items-center gap-2 rounded-md px-2 text-left text-sm outline-none focus-visible:outline-2"
+          >
+            <Ticket aria-hidden="true" className="size-4" />
+            {t('switcher.join')}
+          </button>
+        )}
       </div>
     </>
   );

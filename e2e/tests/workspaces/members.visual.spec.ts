@@ -37,7 +37,11 @@ interface Shot {
 
 async function openMembers(page: Page, asUser: AsUser) {
   await asUser('owner', { path: 'settings/members' });
-  await expect(page.getByRole('heading', { level: 1, name: 'Members' })).toBeVisible();
+  // The first render after a cold sign-in can take longer than the 5 s default on a loaded runner
+  // (#1085, #1076 left the heading unchanged: it failed only as "not found yet", then passed).
+  await expect(page.getByRole('heading', { level: 1, name: 'Members' })).toBeVisible({
+    timeout: 20_000,
+  });
   await shellReady(page);
 }
 

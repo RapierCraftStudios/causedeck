@@ -106,7 +106,13 @@ for (const theme of ['light', 'dark'] as const) {
         await page.emulateMedia({ colorScheme: theme });
         await asUser('owner', { path: PATH });
         await shellReady(page);
-        await expect(page.locator(SHEET)).toHaveScreenshot(name);
+        // Chromium's fake camera paints a moving pattern with a running clock: mask the live video
+        // so only the chrome around it is compared.
+        await expect(page.locator(SHEET)).toHaveScreenshot(name, {
+          animations: 'disabled',
+          caret: 'hide',
+          mask: [page.locator('[data-slot="camera-video"]')],
+        });
       },
     );
   }

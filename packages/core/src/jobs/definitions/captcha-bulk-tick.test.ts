@@ -1,11 +1,11 @@
 // The bulk captcha tick (#1078): feed and tick, the solver chain behind an eCourts challenge page,
 // the alert sink and the paid-spend ledger. Mock fetcher, mock OCR and mock paid tier: no network,
 // no key, no database.
-import type { EcourtsChallengeIo } from '@causedeck/adapters';
 import {
   createMockOcrEngine,
   type BulkAlert,
   type BulkKillSwitches,
+  type EcourtsChallengeIo,
   type FetchPolicy,
   type Fetcher,
 } from '@causedeck/fetch';

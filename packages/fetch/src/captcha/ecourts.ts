@@ -1,4 +1,4 @@
-// eCourts captcha challenge (#1078, part of #492; dark behind `captcha.bulk`). An eCourts search
+// eCourts captcha challenge (#1078, part of #492; moved from adapters, which stay parse-only; dark behind `captcha.bulk`). An eCourts search
 // page asks for the characters of a captcha image before it answers. This module finds that
 // challenge in a page and answers it through an injected solver chain (local OCR first, the paid
 // tier only inside its cost cap). Nothing here touches the network: the image read and the form

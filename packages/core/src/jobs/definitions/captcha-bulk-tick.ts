@@ -12,11 +12,6 @@
 // source row carries counsel's clearance and approval reference.
 import { killSwitch, serverEnv } from '@causedeck/config/env';
 import { schema, type Queryable } from '@causedeck/db';
-import {
-  withEcourtsCaptcha,
-  type EcourtsChallengeIo,
-  type EcourtsSolveEvent,
-} from '@causedeck/adapters';
 import { FLAGS, resolveFlag } from '@causedeck/flags';
 import {
   createBulkScheduler,
@@ -28,10 +23,13 @@ import {
   KILL_CAPTCHA_BULK,
   killSwitchesFromMap,
   pageSourceFromFetcher,
+  withEcourtsCaptcha,
   type BulkAlertSink,
   type BulkJob,
   type BulkKillSwitches,
   type BulkSchedulerConfig,
+  type EcourtsChallengeIo,
+  type EcourtsSolveEvent,
   type FetchRegistry,
   type Fetcher,
   type OcrEngine,

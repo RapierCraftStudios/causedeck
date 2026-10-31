@@ -1426,6 +1426,9 @@ importers:
       alterlab:
         specifier: 'catalog:'
         version: 2.4.0
+      parse5:
+        specifier: 'catalog:'
+        version: 8.0.1
     devDependencies:
       '@causedeck/config':
         specifier: workspace:*

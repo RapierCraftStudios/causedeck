@@ -9,7 +9,7 @@ import {
   type CaptchaSolveChain,
   type EcourtsChallengeIo,
   type EcourtsPageResponse,
-} from './index.ts';
+} from '../captcha/ecourts.ts';
 
 const CHALLENGE = `<form action="/cases/search" method="POST">
   <img id="captcha_image" src="/securimage/show.png"><input type="text" id="captcha" name="captcha_code">

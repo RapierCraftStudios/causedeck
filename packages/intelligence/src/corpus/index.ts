@@ -8,6 +8,17 @@ export {
   type JudgmentHeader,
 } from './header.ts';
 export * from './bulk/index.ts';
+export {
+  drizzleSegmentStore,
+  embedDueSegments,
+  EMBED_BATCH_SIZE,
+  EMBEDDED_ROLES,
+  type DueSegment,
+  type EmbedRunOptions,
+  type EmbedRunReport,
+  type SegmentEmbedder,
+  type SegmentEmbedStore,
+} from './embed.ts';
 export * from './redact/index.ts';
 export {
   classifyParagraphs,

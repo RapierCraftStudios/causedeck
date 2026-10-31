@@ -80,3 +80,21 @@ export function estimatePaise(
     provider === 'sarvam' ? { ...usage, inputTokens: 0, outputTokens: 0 } : { ...usage, chars: 0 };
   return costPaise(provider, model, effective);
 }
+
+/**
+ * Embedding models: paise per million input tokens at the planning rate of INR 84 per USD (#895).
+ * Cohere Embed Multilingual v3 on Bedrock is USD 0.10, Titan Text Embeddings v2 USD 0.02. The
+ * self-hosted bge-m3 has no per-token charge (fixed instance cost), so it meters at 0.
+ */
+export const EMBED_PRICES: Readonly<Record<string, number>> = {
+  'cohere.embed-multilingual-v3': 840,
+  'amazon.titan-embed-text-v2:0': 168,
+  'bge-m3': 0,
+  'mock-embed': 0,
+};
+
+/** Whole paise for `inputTokens` of an embedding model, rounded up; an unknown model costs 0. */
+export function embedCostPaise(model: string, inputTokens: number): number {
+  const total = (inputTokens * (EMBED_PRICES[model] ?? 0)) / 1_000_000;
+  return Math.ceil(Math.round(total * 1e6) / 1e6);
+}

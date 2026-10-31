@@ -15,6 +15,7 @@ import { structureDiary } from './structure-diary.ts';
 import { structureHearing } from './structure-hearing.ts';
 import { summarise } from './summarise.ts';
 import { tagNews } from './tag-news.ts';
+import { tagJudgmentSubject } from './tag-judgment-subject.ts';
 import { tagNotice } from './tag-notice.ts';
 import { transcribe } from './transcribe.ts';
 import { translate } from './translate.ts';
@@ -33,6 +34,7 @@ export const TASKS: Readonly<Record<TaskId, TaskDef>> = {
   summarise: summarise,
   tag_news: tagNews,
   tag_notice: tagNotice,
+  tag_judgment_subject: tagJudgmentSubject,
   extract_issue_tags: extractIssueTags,
   draft_narrative: draftNarrative,
   outward_update: outwardUpdate,

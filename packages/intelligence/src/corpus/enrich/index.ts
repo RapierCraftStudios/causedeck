@@ -3,6 +3,7 @@
 // rules or model that produced it.
 export * from './citations.ts';
 export * from './code-map.ts';
+export * from './gateway-subjects.ts';
 export * from './outcome.ts';
 export * from './statutes.ts';
 export * from './subjects.ts';

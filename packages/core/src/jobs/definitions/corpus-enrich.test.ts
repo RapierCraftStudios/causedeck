@@ -6,10 +6,16 @@ import { randomUUID } from 'node:crypto';
 
 import { schema, type Queryable } from '@causedeck/db';
 import { closeTestDb, withTestDb } from '@causedeck/db/testing';
-import { ENRICH_VERSION, matchesStatuteFacet, rulesetVersion } from '@causedeck/intelligence';
+import {
+  createGatewaySubjectResolver,
+  ENRICH_VERSION,
+  matchesStatuteFacet,
+  rulesetVersion,
+} from '@causedeck/intelligence';
 import { asc, eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
+import { createPlatformAiGateway, PLATFORM_AI_SCOPE } from '../../ai/index.ts';
 import { runCorpusEnrich } from './corpus-enrich.ts';
 import { runCorpusSegment } from './corpus-segment.ts';
 
@@ -206,6 +212,56 @@ describe('runCorpusEnrich', () => {
           confidence: 0.9,
         }),
       ]);
+    });
+  });
+
+  it('classifies through the platform gateway on the mock provider, metered in corpus_ocr_call', async () => {
+    await withTestDb(async (tx) => {
+      const db = tx as never as Queryable;
+      const id = await insert(db);
+      await runCorpusSegment(ctx, { batch: 500 }, { db });
+      const before = await db.select().from(schema.corpusOcrCall);
+      const resolver = createGatewaySubjectResolver({
+        gateway: createPlatformAiGateway(db),
+        scope: { workspaceId: PLATFORM_AI_SCOPE },
+      });
+      const report = await runCorpusEnrich(ctx, { batch: 500 }, { db, resolver });
+      expect(report.enriched).toBeGreaterThanOrEqual(1);
+      const calls = (await db.select().from(schema.corpusOcrCall)).filter(
+        (c) => c.purpose === 'corpus.subjects',
+      );
+      expect(calls.length).toBeGreaterThan(
+        before.filter((c) => c.purpose === 'corpus.subjects').length,
+      );
+      expect(calls.every((c) => c.provider === 'mock' && c.task === 'tag_judgment_subject')).toBe(
+        true,
+      );
+      // Every stored tag is inside the vocabulary and carries the resolver version.
+      const tags = await db
+        .select()
+        .from(schema.judgmentTag)
+        .where(eq(schema.judgmentTag.judgmentId, id));
+      expect(tags.every((t) => t.modelVersion === resolver.version)).toBe(true);
+    });
+  });
+
+  it('stops asking the model for the rest of the run once the platform budget is spent', async () => {
+    await withTestDb(async (tx) => {
+      const db = tx as never as Queryable;
+      await insert(db);
+      await insert(db);
+      await runCorpusSegment(ctx, { batch: 500 }, { db });
+      let asked = 0;
+      const spent = {
+        version: 'm-1',
+        classify: () => {
+          asked += 1;
+          return Promise.reject(Object.assign(new Error('spent'), { code: 'BUDGET_EXCEEDED' }));
+        },
+      };
+      const report = await runCorpusEnrich(ctx, { batch: 500 }, { db, resolver: spent });
+      expect(report.enriched).toBeGreaterThanOrEqual(2);
+      expect(asked).toBe(1);
     });
   });
 });

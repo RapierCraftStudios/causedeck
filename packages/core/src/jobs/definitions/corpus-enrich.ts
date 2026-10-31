@@ -5,8 +5,10 @@
 // once redacted and segmented, until `enrich_version` reaches the version being run or a re-redaction
 // lands. A run replaces only the rows of its own version (`ruleset_version`, `model_version`), in one
 // transaction per judgment, so a new version can be run beside the old. Only ids and counts are logged.
+import { serverEnv } from '@causedeck/config/env';
 import { db as rootDb, schema, type Queryable } from '@causedeck/db';
 import {
+  createGatewaySubjectResolver,
   ENRICH_VERSION,
   extractCitations,
   extractOutcome,
@@ -20,6 +22,11 @@ import {
 import { and, asc, eq, gt, inArray, isNotNull, lt, ne, or } from 'drizzle-orm';
 import { z } from 'zod';
 
+import {
+  createPlatformAiGateway,
+  DEFAULT_PLATFORM_OCR_DAILY_PAISE,
+  PLATFORM_AI_SCOPE,
+} from '../../ai/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 
@@ -42,6 +49,25 @@ export interface CorpusEnrichReport {
   tags: number;
   remaining: boolean;
 }
+
+/**
+ * The subject resolver of the job: the AI gateway at platform scope (no workspace; spend metered in
+ * `corpus_ocr_call` under the platform daily budget). Without provider credentials the gateway
+ * serves the deterministic mock provider, so staging and CI never call a model.
+ */
+export function platformSubjectResolver(db: Queryable): SubjectResolver {
+  return createGatewaySubjectResolver({
+    gateway: createPlatformAiGateway(db, {
+      dailyPaise: serverEnv().CORPUS_OCR_DAILY_PAISE ?? DEFAULT_PLATFORM_OCR_DAILY_PAISE,
+    }),
+    scope: { workspaceId: PLATFORM_AI_SCOPE },
+  });
+}
+
+const isBudgetError = (error: unknown): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  (error as { code?: unknown }).code === 'BUDGET_EXCEEDED';
 
 /** The job body. Exported for tests. */
 export async function runCorpusEnrich(
@@ -78,6 +104,8 @@ export async function runCorpusEnrich(
     .orderBy(asc(judgment.createdAt), asc(judgment.id))
     .limit(limit);
 
+  // The platform AI budget being spent ends the subject calls for this run, not the run itself.
+  const budget = { spent: false };
   const totals = { statuteRefs: 0, citations: 0, tags: 0 };
   for (const row of rows) {
     const pages = row.redactedText ?? [];
@@ -112,9 +140,12 @@ export async function runCorpusEnrich(
       .join('\n\n')
       .slice(0, SUBJECT_TEXT_CHARS);
     const tags =
-      deps.resolver === undefined || subjectText === ''
+      deps.resolver === undefined || subjectText === '' || budget.spent
         ? null
-        : await tagSubjects(subjectText, deps.resolver).catch(() => null);
+        : await tagSubjects(subjectText, deps.resolver).catch((error: unknown) => {
+            if (isBudgetError(error)) budget.spent = true;
+            return null;
+          });
 
     await db.transaction(async (tx) => {
       await tx
@@ -203,6 +234,6 @@ export const corpusEnrich = defineJob({
   schedule: { cron: '5-59/10 * * * *', payload: {} },
   timeoutSec: 1800,
   handler: async (ctx, payload) => {
-    await runCorpusEnrich(ctx, payload);
+    await runCorpusEnrich(ctx, payload, { resolver: platformSubjectResolver(rootDb) });
   },
 });

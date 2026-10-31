@@ -1,7 +1,8 @@
 // Accuracy of the enrichment on labelled sets (#894): citation precision and recall, and subject-tag
 // macro-F1 over the vocabulary, each reported. The subject resolver here is a stand-in for the AI
-// gateway: it scores the validation, vocabulary filter and ranking, not a model; the gateway-backed
-// score is measured when the resolver is wired.
+// gateway: it scores the validation, vocabulary filter and ranking, not a model. The gateway-backed
+// resolver (`createGatewaySubjectResolver`) runs on the mock provider in CI and staging, which has no
+// labelled output to score; its model F1 is measured on a labelled set against a real provider.
 import { describe, expect, it } from 'vitest';
 
 import {

@@ -9,6 +9,7 @@ Verification of the budgets in the technical spike (§3.2 Stage B triggers, §10
 | p95 server action                                    | under 300 ms            | k6 threshold, group `action`                         |
 | p95 any read route                                   | under 400 ms            | k6 threshold, group `read`                           |
 | Court-day board data from the cache path, p95        | under 300 ms            | k6 threshold, group `court_day_cache`                |
+| Inbox route server render with 200 items, p95        | under 300 ms            | k6 threshold, group `inbox`                          |
 | Brief assembly per listing, p95                      | under 5 s               | k6 threshold, group `brief_assembly`                 |
 | Error rate                                           | under 0.5%              | k6 `http_req_failed`                                 |
 | Readiness flaps (a failed `/readyz` poll in the run) | none                    | k6 counter `readiness_flaps`                         |
@@ -24,7 +25,7 @@ Lighthouse key pages: sign-in, today, brief sheet, obligations (signed in as the
 
 `e2e/perf/k6/scenarios/` (k6 1.x runs TypeScript directly):
 
-- `evening-prepare.ts`: the 18:00 to 23:00 IST peak (briefs, obligations, board, memory), compressed to minutes.
+- `evening-prepare.ts`: the 18:00 to 23:00 IST peak (briefs, obligations, board, memory, inbox), compressed to minutes.
 - `morning-court.ts`: the 07:00 to 10:30 IST peak (board, offline cache sync, hearings).
 - `uploads.ts`: bursts of document uploads.
 - `mixed-soak.ts`: 60 minutes of all of them plus a readiness poll every 5 s.

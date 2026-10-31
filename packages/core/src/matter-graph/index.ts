@@ -8,7 +8,9 @@
 // a document for the preview sheet (#393). See docs/engineering/core-domains.md.
 export type { GraphActor, MatterGraphDeps } from './context.ts';
 export {
+  getDocumentPageImage,
   getDocumentPreview,
+  type DocumentPageImage,
   type DocumentPreview,
   type DocumentPreviewPage,
 } from './document-preview.ts';

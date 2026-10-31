@@ -759,6 +759,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   archiveContact: denies,
   // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
   getDocumentPreview: documentPreviewDenies,
+  // document page image (#489): A's page image from B, or ub claiming A, is NOT_FOUND
+  getDocumentPageImage: documentPreviewDenies,
   // business dashboard (#519): a non-staff user is refused by app_staff_business_snapshot
   staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
@@ -2006,6 +2008,8 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   requestExportFor: runtimeDenies,
   issueExportDownloadFor: runtimeDenies,
   openExportDownloadFor: runtimeDenies,
+  // document page image (#489): A's page from B, or ub claiming A, is NOT_FOUND before any byte
+  openDocumentPageImageFor: runtimeDenies,
   listExportJobsFor: runtimeEmpty,
   requestWorkspaceDeletionFor: runtimeDenies,
   cancelWorkspaceDeletionFor: runtimeDenies,

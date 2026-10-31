@@ -424,7 +424,7 @@ export function InboxShell({ view, workspaceId, slug }: InboxShellProps) {
             <ProcessingList rows={processing} locale={locale} />
           )}
         </div>
-        <SourcePreview item={selected} slug={slug} />
+        <SourcePreview item={selected} slug={slug} workspaceId={workspaceId} />
       </div>
       <ShortcutsDialog
         shortcuts={shortcutList}

@@ -130,15 +130,55 @@ describe('workspace switcher', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
-  it('links Create workspace to /onboarding and closes; no dead join button', () => {
+  it('links Create workspace to /onboarding and closes', () => {
     renderSwitcher();
     open();
     const create = screen.getByRole('link', { name: 'Create workspace' });
     expect(create.getAttribute('href')).toBe('/onboarding');
     expect(screen.queryByRole('button', { name: 'Create workspace' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Join with invite' })).toBeNull();
     fireEvent.click(create);
     expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  describe('Join with invite (#1074)', () => {
+    const TOKEN = 'Zm9vYmFyYmF6cXV4MTIzNDU2Nzg5MC1fQUJDREVGRw';
+
+    const openJoin = () => {
+      renderSwitcher();
+      open();
+      fireEvent.click(screen.getByRole('button', { name: 'Join with invite' }));
+      return screen.getByRole('textbox', { name: 'Invite link or code' });
+    };
+
+    it('routes a pasted invite link to /invite/[token] and closes', () => {
+      const field = openJoin();
+      fireEvent.change(field, {
+        target: { value: ` https://app.causedeck.test/invite/${TOKEN}?utm=mail ` },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Open invitation' }));
+      expect(router.push).toHaveBeenCalledWith(`/invite/${TOKEN}`);
+      expect(screen.queryByRole('listbox')).toBeNull();
+    });
+
+    it('routes a bare code the same way', () => {
+      const field = openJoin();
+      fireEvent.change(field, { target: { value: TOKEN } });
+      fireEvent.submit(field.closest('form') as HTMLFormElement);
+      expect(router.push).toHaveBeenCalledWith(`/invite/${TOKEN}`);
+    });
+
+    it('says so, and goes nowhere, for something that is not an invite', () => {
+      const field = openJoin();
+      expect(screen.getByRole('button', { name: 'Open invitation' }).hasAttribute('disabled')).toBe(
+        true,
+      );
+      fireEvent.change(field, { target: { value: 'hello there' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Open invitation' }));
+      expect(screen.getByRole('alert').textContent).toContain('does not look like an invite');
+      expect(router.push).not.toHaveBeenCalled();
+      fireEvent.change(field, { target: { value: 'hello there!' } });
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
   });
 
   it('shows the workspace name in the topbar variant', () => {

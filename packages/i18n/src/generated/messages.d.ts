@@ -231,6 +231,11 @@ export type Messages = {
       current: string;
       create: string;
       switching: string;
+      join: string;
+      joinLabel: string;
+      joinPlaceholder: string;
+      joinSubmit: string;
+      joinInvalid: string;
     };
     userMenu: {
       label: string;
@@ -261,6 +266,7 @@ export type Messages = {
       voice: string;
       file: string;
       hint: string;
+      paste: string;
     };
     sheet: {
       close: string;
@@ -294,6 +300,25 @@ export type Messages = {
       error: string;
       busy: string;
       back: string;
+    };
+    pasteText: {
+      title: string;
+      description: string;
+      label: string;
+      placeholder: string;
+      save: string;
+      saved: string;
+      another: string;
+      done: string;
+      close: string;
+      offline: string;
+      privacy: string;
+      errors: {
+        forbidden: string;
+        channelOff: string;
+        tooLong: string;
+        generic: string;
+      };
     };
   };
   auth: {

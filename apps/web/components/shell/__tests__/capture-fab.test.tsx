@@ -57,13 +57,13 @@ describe('capture button', () => {
     expect(button.querySelector('[data-capture-label]')?.className).toMatch(/\bleading-3\b/);
   });
 
-  it('opens a bottom sheet with Voice note and Photo or file, both live', () => {
+  it('opens a bottom sheet with Voice note, Photo or file and Paste text, all live', () => {
     renderWithIntl(<CaptureFab />);
     const button = trigger();
     fireEvent.click(button);
     const sheet = screen.getByRole('dialog', { name: 'Capture' });
     expect(sheet.getAttribute('data-side')).toBe('bottom');
-    expect(actions(sheet)).toEqual(['Voice note', 'Photo or file']);
+    expect(actions(sheet)).toEqual(['Voice note', 'Photo or file', 'Paste text']);
     for (const action of sheet.querySelectorAll<HTMLElement>('[data-capture-action]')) {
       expect(action.hasAttribute('disabled')).toBe(false);
       expect(action.className).toMatch(/\bmin-h-11\b/);
@@ -87,6 +87,14 @@ describe('capture button', () => {
     expect(push).toHaveBeenCalledWith('/w/demo/today?capture=voice');
   });
 
+  it('opens the paste-text sheet from the Paste text action (#1074)', () => {
+    push.mockClear();
+    renderWithIntl(<CaptureFab />);
+    fireEvent.click(trigger());
+    fireEvent.click(screen.getByRole('button', { name: 'Paste text' }));
+    expect(push).toHaveBeenCalledWith('/w/demo/today?capture=paste');
+  });
+
   it('opens from useCapture().openCapture() inside the provider', () => {
     renderWithIntl(
       <CaptureProvider>
@@ -96,7 +104,7 @@ describe('capture button', () => {
     );
     expect(screen.queryByRole('dialog')).toBeNull();
     fireEvent.click(document.querySelector('[data-probe="capture"]') as HTMLElement);
-    expect(actions(screen.getByRole('dialog', { name: 'Capture' }))).toHaveLength(2);
+    expect(actions(screen.getByRole('dialog', { name: 'Capture' }))).toHaveLength(3);
   });
 
   it('closes on Esc and returns focus to the button', async () => {

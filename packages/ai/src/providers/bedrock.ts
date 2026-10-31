@@ -23,6 +23,7 @@ export const BEDROCK_TASKS: readonly TaskId[] = [
   'summarise',
   'tag_news',
   'tag_notice',
+  'tag_judgment_subject',
   'extract_issue_tags',
   'draft_narrative',
   'outward_update',

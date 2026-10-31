@@ -2,137 +2,130 @@
  "requirements": [
   {
    "id": "R1",
-   "quote": "`packages/ai` gateway: an `embed` port with providers:",
+   "quote": "Fact-pattern and statute searches need facets: statutes and sections, cited cases, subject area, court level and outcome.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R2",
-   "quote": "Bedrock Cohere Embed Multilingual;",
+   "quote": "`judgment_statute_ref`: judgment, normalised statute, section, page.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R3",
-   "quote": "Bedrock Titan Text Embeddings v2;",
+   "quote": "`judgment_citation_ref`: judgment, raw citation, normalised citation, `cited_judgment_id` (nullable), page.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R4",
-   "quote": "a self-hosted bge-m3 HTTP provider;",
+   "quote": "`judgment_tag`: judgment, subject area, confidence, model version.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R5",
-   "quote": "the existing mock.",
+   "quote": "`judgment` gains `outcome` and `court_level`.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R6",
-   "quote": "India-only mode, no training, cost metering (ADR 0007, ADR 0022).",
+   "quote": "**Statute refs:** reuse the #497 section parser (`match.ts`, `issues/` normalisers).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R7",
-   "quote": "Embed only `facts`, `issues`, `reasoning` and `decision` segments.",
+   "quote": "**Criminal-code mapping:** an offence-date-aware IPC↔BNS, CrPC↔BNSS and IEA↔BSA mapping table, built from the public BPR&D correspondence tables. It is a versioned data file with a source note, so a search for BNS 106 also finds IPC 304A and the reverse.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R8",
-   "quote": "Batch calls, and retry idempotently by segment id and model version.",
+   "quote": "**Citation extraction:** neutral citations, SCC/AIR/SCR/MLJ/KLJ-style reporter citations parsed into normalised form, and resolution to corpus rows. Only the citation string is stored, never reporter page text.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R9",
-   "quote": "Store the model version per segment.",
+   "quote": "**Subject areas:** a controlled vocabulary (medical negligence, consumer, rent control, motor accident claims, NDPS, bail, arbitration, IBC, service and so on) assigned through the gateway with schema-validated output.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R10",
-   "quote": "`apps/worker`: a `corpus.embed` job with a per-run cost budget and backfill. Register it in the worker registry tests.",
+   "quote": "**Outcome:** taken from the decision segment, with anchors (ADR 0028 style).",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R11",
-   "quote": "Per-partition HNSW indexes on `judgment_segment.embedding` (`halfvec_cosine_ops`, m=16, ef_construction=64), built after backfill.",
+   "quote": "`packages/intelligence/src/corpus/enrich/`, with every output carrying a ruleset or model version:",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R12",
-   "quote": "A model-choice report, `docs/engineering/corpus-embedding-model.md`: nDCG@10 and recall@50 per model on #891, cost per million tokens in INR, and the chosen model and dimensions.",
+   "quote": "`apps/worker`: a `corpus.enrich` job, re-runnable by version. Register it in the worker registry tests.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R13",
-   "quote": "Default to the cheapest model within 2 nDCG@10 points of the best.",
+   "quote": "Update the #484 static editorial test (D-053): assert that every corpus source in the registry is official or open-licence, instead of banning column names.",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R14",
-   "quote": "The model-choice report is committed, with numbers from #891. `CORPUS_EMBEDDING_DIMENSIONS` is set to the chosen width. [type:docs]",
+   "quote": "On fixtures, statute refs are found with their page, and an IPC 304A judgment is retrievable by the BNS 106 facet. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R15",
-   "quote": "Re-embedding with the same model version is a no-op, and changing the version re-embeds through the job. [type:integration]",
+   "quote": "Citation extraction precision is at least 0.95 and recall at least 0.9 on a labelled set; resolved citations link to existing rows. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R16",
-   "quote": "The job stops at its cost budget and resumes on the next run. [type:integration]",
+   "quote": "Subject-tag macro-F1 is at least 0.8 on the 15 most common areas, reported. [type:integration]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R17",
-   "quote": "A filtered vector query (court and year) with `hnsw.iterative_scan = relaxed_order` returns a full top-k on fixtures. [type:integration]",
+   "quote": "Outcome is extracted with an anchor, or set to `unknown`. It is never guessed without an anchor. [type:unit]",
    "disposition": "deliver",
    "verify": "in_lane"
   },
   {
    "id": "R18",
-   "quote": "(Post-deploy, needs credentials #112; not required for merge) Real-provider throughput and cost for 10k segments is recorded on this issue. [type:manual]",
-   "disposition": "defer",
-   "why": "Needs Bedrock credentials (#112) and a deployed stack; an agent cannot take that action. The same run also yields the real-provider nDCG numbers the model-choice report marks as pending.",
-   "bucket": "owner:run the 10k-segment embed on real providers after #112 credentials exist and record throughput, cost and nDCG on #895"
+   "quote": "Re-running with a new version replaces only that version's rows. [type:integration]",
+   "disposition": "deliver",
+   "verify": "in_lane"
   }
  ],
  "deliverables": [
   {
    "id": "D1",
-   "path": "packages/ai/src/embed/types.ts",
-   "change": "EmbedProvider port (id, region, dataResidency, model, modelVersion, dimensions, embed(texts[]) returning vectors and token usage) and an EmbedGateway result with costPaise.",
+   "path": "packages/db/src/schema/corpus.ts",
+   "change": "Add judgment_statute_ref, judgment_citation_ref, judgment_tag tables (version column on each; unique/index keys; outcome, outcome_anchor, court_level, enrich_version on judgment).",
    "requirements": [
-    "R1",
-    "R6"
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R17"
    ]
   },
   {
    "id": "D2",
-   "path": "packages/ai/src/embed/gateway.ts",
-   "change": "createEmbedGateway: enforces India-only via isIndiaRegion before any text is sent (refusal never carries text), validates vector width, meters cost in paise, falls back across providers, no training client.",
-   "requirements": [
-    "R1",
-    "R6"
-   ]
-  },
-  {
-   "id": "D3",
-   "path": "packages/ai/src/embed/providers.ts",
-   "change": "Providers: Bedrock Cohere Embed Multilingual and Titan Text Embeddings v2 (InvokeModel via the existing sigv4 helper), self-hosted bge-m3 HTTP, and a deterministic mock (reuse the hashing approach of createMockEmbedder).",
+   "path": "packages/db/migrations/20261031000000_corpus_enrich.sql",
+   "change": "Hand-written migration: new tables and judgment columns (next free number on the base; renumber if taken). Plus meta/_journal.json entry and 20261031000000_snapshot.json.",
    "requirements": [
     "R2",
     "R3",
@@ -141,261 +134,238 @@
    ]
   },
   {
-   "id": "D4",
-   "path": "packages/ai/src/pricing.ts",
-   "change": "Add INR-paise per million token rates for the embedding models (source and USD rate noted in a comment).",
+   "id": "D3",
+   "path": "packages/db/src/conventions.ts",
+   "change": "Add the 3 new tables to GLOBAL_TABLES.",
    "requirements": [
-    "R6",
-    "R12"
+    "R2",
+    "R3",
+    "R4"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add the 3 tables to the root table list.",
+   "requirements": [
+    "R2",
+    "R3",
+    "R4"
    ]
   },
   {
    "id": "D5",
-   "path": "packages/ai/src/index.ts",
-   "change": "Export the embed port, gateway and providers.",
+   "path": "packages/db/src/schema/corpus.test.ts",
+   "change": "Replace the EDITORIAL column-name test with an assertion that every corpus source in the registry is official or open-licence (D-053).",
    "requirements": [
-    "R1"
+    "R13"
    ]
   },
   {
    "id": "D6",
-   "path": "packages/ai/src/embed/embed.test.ts",
-   "change": "Tests: each provider's request/response shape with injected fetch, India-only refusal for a non-India region without sending text, width validation, cost metering, mock determinism.",
+   "path": "packages/db/src/__tests__/corpus-enrich.test.ts",
+   "change": "New schema/migration test for the new tables and columns.",
    "requirements": [
-    "R1",
     "R2",
     "R3",
     "R4",
-    "R5",
-    "R6"
+    "R5"
    ]
   },
   {
    "id": "D7",
-   "path": "packages/db/src/schema/corpus.ts",
-   "change": "Add nullable embedding_model text column to judgmentSegment.",
+   "path": "packages/intelligence/src/corpus/match.ts",
+   "change": "Export the SECTION_REF section parser for reuse (no behaviour change).",
    "requirements": [
-    "R9"
+    "R6"
    ]
   },
   {
    "id": "D8",
-   "path": "packages/db/migrations/20261031000000_corpus_segment_embeddings.sql",
-   "change": "Hand-written: ADD COLUMN embedding_model; CREATE INDEX ... USING hnsw (embedding halfvec_cosine_ops) WITH (m=16, ef_construction=64) on each judgment_segment_* partition (named, hand-written because drizzle does not model partitions); GRANT UPDATE (embedding, embedding_model) ON judgment_segment TO causedeck_app. Use the next free timestamp-style number on the milestone branch. Regenerate the drizzle snapshot/journal consistently with the existing migrations.",
+   "path": "packages/intelligence/src/corpus/enrich/statutes.ts",
+   "change": "Statute ref extraction with page, reusing the parser and issues/ normalisers.",
    "requirements": [
-    "R9",
-    "R11"
+    "R6",
+    "R14"
    ]
   },
   {
    "id": "D9",
-   "path": "packages/db/src/vector.ts",
-   "change": "Set CORPUS_EMBEDDING_DIMENSIONS to the width chosen in the report (1024 unless the report shows otherwise) with a comment pointing to the report; if it changes, the migration must alter halfvec width.",
+   "path": "packages/intelligence/src/corpus/enrich/code-map.ts",
+   "change": "Offence-date-aware IPC\u003c->BNS, CrPC\u003c->BNSS, IEA\u003c->BSA mapping as versioned data with source note, plus lookup both ways.",
    "requirements": [
+    "R7",
     "R14"
    ]
   },
   {
    "id": "D10",
-   "path": "packages/db/src/index.test.ts",
-   "change": "Update any expectations touched by the new column/indexes (judgment_segment is already in the root table list).",
+   "path": "packages/intelligence/src/corpus/enrich/citations.ts",
+   "change": "Neutral and SCC/AIR/SCR/MLJ/KLJ citation parse, normalise, resolve to corpus rows; store citation string only.",
    "requirements": [
-    "R9",
-    "R11"
+    "R8",
+    "R15"
    ]
   },
   {
    "id": "D11",
-   "path": "packages/db/src/__tests__/corpus-segment-embeddings.test.ts",
-   "change": "Integration test (testcontainers like corpus-segments.test.ts): HNSW index exists on each partition with the stated opclass and options; with SET hnsw.iterative_scan = relaxed_order a court+year filtered ORDER BY embedding \u003c=> $1 LIMIT k returns k rows on fixtures where the filter is selective.",
+   "path": "packages/intelligence/src/corpus/enrich/subjects.ts",
+   "change": "Controlled vocabulary and resolver-port gateway tagging with zod-validated output, model version.",
    "requirements": [
-    "R11",
-    "R17"
+    "R9",
+    "R16"
    ]
   },
   {
    "id": "D12",
-   "path": "packages/intelligence/src/corpus/embed.ts",
-   "change": "Embedding logic behind a port: select only facts/issues/reasoning/decision segments whose embedding is null or embedding_model differs from the current model version, batch, update by (id, judgment_year) storing embedding_model, stop at a per-run cost budget and report remaining; same version is a no-op.",
+   "path": "packages/intelligence/src/corpus/enrich/outcome.ts",
+   "change": "Outcome from the decision segment with anchor, else 'unknown'.",
    "requirements": [
-    "R7",
-    "R8",
-    "R9",
     "R10",
-    "R15",
-    "R16"
+    "R17"
    ]
   },
   {
    "id": "D13",
-   "path": "packages/intelligence/src/corpus/index.ts",
-   "change": "Export the embed module.",
+   "path": "packages/intelligence/src/corpus/enrich/index.ts",
+   "change": "Barrel and ENRICH_VERSION; export from corpus/index.ts.",
    "requirements": [
-    "R7"
+    "R11"
    ]
   },
   {
    "id": "D14",
-   "path": "packages/intelligence/src/corpus/embed.test.ts",
-   "change": "DB-backed tests with the mock provider: only the four roles embedded; rerun with same version makes no provider call; new version re-embeds; budget stops the run and the next run resumes; retried batch is idempotent.",
+   "path": "packages/intelligence/src/corpus/index.ts",
+   "change": "Re-export enrich.",
    "requirements": [
-    "R7",
-    "R8",
-    "R15",
-    "R16"
+    "R11"
    ]
   },
   {
    "id": "D15",
-   "path": "packages/intelligence/src/research/eval/embedding-ranker.ts",
-   "change": "Async-precomputed embedding Ranker for the #891 harness plus a per-model comparison entry point (nDCG@10, recall@50). Do not alter baseline.json or the BM25 baseline gate.",
+   "path": "packages/intelligence/src/corpus/enrich/enrich.test.ts",
+   "change": "Fixture and labelled-set tests: statute page, BNS 106 finds IPC 304A, citation precision>=0.95/recall>=0.9, subject macro-F1>=0.8 reported, outcome anchor/unknown.",
    "requirements": [
-    "R12",
-    "R13"
+    "R14",
+    "R15",
+    "R16",
+    "R17"
    ]
   },
   {
    "id": "D16",
-   "path": "packages/intelligence/src/research/eval/embedding-ranker.test.ts",
-   "change": "Test that the embedding ranker runs on the synthetic set and the selection rule picks the cheapest model within 2 nDCG@10 points of the best.",
+   "path": "packages/core/src/jobs/definitions/corpus-enrich.ts",
+   "change": "system.corpus.enrich job modelled on corpus-segment.ts: version-based due selection, per-judgment transaction deleting and inserting only rows of the current version, sets judgment.outcome/court_level (reuse courtLevelOf).",
    "requirements": [
     "R12",
-    "R13"
+    "R18",
+    "R5"
    ]
   },
   {
    "id": "D17",
-   "path": "packages/core/src/jobs/definitions/corpus-embed.ts",
-   "change": "system.corpus.embed job (defineJob, concurrency 1, stately singleton, schedule like corpus-segment, runCorpusEmbed exported with injected db and provider) using the embed gateway with the platform scope and a per-run paise budget; re-queues while work remains. Logs ids and counts only.",
+   "path": "packages/core/src/jobs/definitions/corpus-enrich.test.ts",
+   "change": "Job tests incl. re-run with new version replaces only that version's rows.",
    "requirements": [
-    "R10",
-    "R16"
+    "R18"
    ]
   },
   {
    "id": "D18",
-   "path": "packages/core/src/jobs/definitions/corpus-embed.test.ts",
-   "change": "Job test: backfill, budget stop and resume, same version no-op.",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Register corpusEnrich.",
    "requirements": [
-    "R10",
-    "R15",
-    "R16"
+    "R12"
    ]
   },
   {
    "id": "D19",
-   "path": "packages/core/src/jobs/registry.ts",
-   "change": "Register corpusEmbed in the job list and type tuple.",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "NOT_A_SERVICE entries for new core runtime exports (global tables, no tenant data), if any are exported from core.",
    "requirements": [
-    "R10"
+    "R12"
    ]
   },
   {
    "id": "D20",
-   "path": "packages/db/src/testing/cross-tenant-registry.ts",
-   "change": "NOT_A_SERVICE entries (reason: global corpus job, no tenant data) for new @causedeck/core runtime exports (corpusEmbed, corpusEmbedSchema, runCorpusEmbed, and any constant).",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add system.corpus.enrich.",
    "requirements": [
-    "R10"
+    "R12"
    ]
   },
   {
    "id": "D21",
-   "path": "apps/worker/src/__tests__/registry.test.ts",
-   "change": "Add 'system.corpus.embed' to the expected job names.",
-   "requirements": [
-    "R10"
-   ]
-  },
-  {
-   "id": "D22",
    "path": "apps/worker/src/__tests__/schedules.test.ts",
-   "change": "Add the system.corpus.embed schedule.",
+   "change": "Add system.corpus.enrich schedule.",
    "requirements": [
-    "R10"
-   ]
-  },
-  {
-   "id": "D23",
-   "path": "docs/engineering/corpus-embedding-model.md",
-   "change": "Model-choice report: nDCG@10 and recall@50 per model on the #891 synthetic set (mock embedder measured; real providers marked pending #112), cost per million tokens in INR, selection rule, chosen model and dimensions (1024; Matryoshka 512 unproven), and the HNSW and cost-budget notes.",
-   "requirements": [
-    "R12",
-    "R13",
-    "R14"
+    "R12"
    ]
   }
  ],
  "preserve": [
   {
    "id": "P1",
-   "what": "The existing memory Embedder API and EMBEDDING_DIMENSIONS in packages/ai/src/embeddings.ts and packages/core/src/memory/embedding.ts (and tests in packages/ai/src/__tests__/embeddings.test.ts)."
+   "what": "matchJudgmentToTags behaviour in packages/intelligence/src/corpus/match.ts and its tests in match.test.ts (#497)"
   },
   {
    "id": "P2",
-   "what": "The #891 research-eval gate: fixtures/research-eval/baseline.json and the BM25 baseline run by .github/workflows/research-eval.yml must stay unchanged and passing."
+   "what": "corpus-segment job and judgment_segment schema (packages/core/src/jobs/definitions/corpus-segment.ts, packages/db/src/schema/corpus.ts); courtLevelOf signature"
   },
   {
    "id": "P3",
-   "what": "packages/core/src/jobs/definitions/corpus-segment.ts and masking (packages/core/src/corpus/masking.ts): segment rebuild and mask clearing must keep working; a re-segmented judgment gets a null embedding and is re-embedded."
+   "what": "Existing migrations and snapshots are untouched; only a new migration is added"
   },
   {
    "id": "P4",
-   "what": "The existing judgment_segment migration 20261030211330_corpus_segments.sql is not edited; changes are additive in a new migration."
-  },
-  {
-   "id": "P5",
-   "what": "The AI gateway task/Provider interface (packages/ai/src/types.ts, gateway.ts) keeps its shape; embed is a separate port."
+   "what": "Only the citation string is stored in judgment_citation_ref, never reporter page text"
   }
  ],
  "validate": [
   {
    "id": "V1",
-   "command": "pnpm --filter @causedeck/ai exec vitest run src/embed src/__tests__/embeddings.test.ts src/__tests__/pricing.test.ts src/__tests__/static-checks.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/corpus/enrich src/corpus/match.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V2",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/db exec vitest run src/index.test.ts src/__tests__/corpus-segments.test.ts src/__tests__/corpus-segment-embeddings.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-enrich.test.ts src/jobs/definitions/corpus-segment.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V3",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/intelligence exec vitest run src/corpus/embed.test.ts src/corpus/segment.test.ts src/research/eval --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/db exec vitest run src/schema/corpus.test.ts src/__tests__/corpus-enrich.test.ts src/__tests__/corpus-segments.test.ts src/index.test.ts src/__tests__/conventions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V4",
-   "command": "TESTCONTAINERS_RYUK_DISABLED=true pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-embed.test.ts src/jobs/definitions/corpus-segment.test.ts src/jobs/registry.test.ts src/__tests__/cross-tenant/services.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
   },
   {
    "id": "V5",
-   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-1}"
-  },
-  {
-   "id": "V6",
-   "command": "pnpm --filter @causedeck/intelligence research-eval --out \"$TMPDIR/research-eval\""
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network  # then run the scoped typecheck/lint/test commands it prints"
   }
  ],
  "decisions": [
   {
    "id": "K1",
-   "choice": "embed is a separate batch port in packages/ai, not a new TASK_ID on the JSON-task Provider interface.",
-   "justification": "TaskDef/Provider.call return parsed JSON (packages/ai/src/types.ts:20-60); embeddings return float vectors in batches. The India-only guard reuses isIndiaRegion from packages/ai/src/policy/residency.ts as embeddings.ts does.",
+   "choice": "Subject tagging uses a resolver port, not a direct gateway import, in packages/intelligence",
+   "justification": "packages/intelligence/src/corpus/redact/gateway.ts:1-20 and RoleResolver in segment.ts use the same pattern",
    "source": "precedent"
   },
   {
    "id": "K2",
-   "choice": "Per-run cost budget is enforced inside the job from the gateway's costPaise, and spend is logged; no new audit or budget table.",
-   "justification": "Platform ports are OCR-specific (packages/core/src/ai/platform-ports.ts, corpus_ocr_call); a new global table would add RLS-catalog and registry work beyond this issue. ADR 0051 §Vectors only requires metering through the gateway.",
-   "source": "doc"
+   "choice": "Re-runs are keyed by a version column per row; delete where version = current, then insert",
+   "justification": "corpus-segment.ts header (version-based due selection, per-judgment transaction) and the issue's 're-runnable by version'",
+   "source": "precedent"
   },
   {
    "id": "K3",
-   "choice": "HNSW indexes are created in the migration on the (empty) partitions rather than in a post-backfill step.",
-   "justification": "Hand-written partition DDL is already the pattern (migration 20261030211330_corpus_segments.sql); the indexes exist for the EXPLAIN/iterative-scan test, and incremental inserts into them are acceptable at current volume. The issue's 'after backfill' wording is noted as a tradeoff in the report.",
+   "choice": "New tables are global (no workspace_id, no RLS), added to GLOBAL_TABLES",
+   "justification": "packages/db/src/conventions.ts:80 lists judgment_segment the same way",
    "source": "precedent"
   },
   {
    "id": "K4",
-   "choice": "Model-choice report states measured mock-embedder numbers and marks real-provider numbers pending; dimensions stay at 1024.",
-   "justification": "No provider credentials are available (#112); all three candidate models support 1024 (ADR 0051 §Vectors, docs/adr/0051-corpus-storage-enrichment-and-retrieval.md:118); the real run is the deferred R18.",
+   "choice": "Migration number is the next free one on milestone/court-data-network (after 20261030211330)",
+   "justification": "CLAUDE.md registries table, migration row",
    "source": "doc"
   }
  ]

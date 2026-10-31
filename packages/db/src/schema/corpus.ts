@@ -16,6 +16,7 @@ import {
   jsonb,
   pgTable,
   primaryKey,
+  real,
   text,
   timestamp,
   uniqueIndex,
@@ -43,6 +44,23 @@ export interface JudgmentProvenance {
   costDollars: number;
   /** The licence the source publishes under (open datasets, #890), e.g. `CC-BY-4.0`. */
   licence?: string;
+}
+
+/** How a judgment disposed of the matter (#894); `unknown` whenever no decision sentence says so. */
+export const JUDGMENT_OUTCOMES = [
+  'allowed',
+  'partly_allowed',
+  'dismissed',
+  'remanded',
+  'disposed',
+  'unknown',
+] as const;
+export type JudgmentOutcome = (typeof JUDGMENT_OUTCOMES)[number];
+
+/** Where an outcome was read: a page of the redacted text and the sentence on it. */
+export interface JudgmentOutcomeAnchor {
+  page: number;
+  quote: string;
 }
 
 export const judgment = pgTable(
@@ -86,6 +104,16 @@ export const judgment = pgTable(
     segmentVersion: integer('segment_version').notNull().default(0),
     /** The `redaction_version` the current segments were built from. */
     segmentedRedactionVersion: integer('segmented_redaction_version').notNull().default(0),
+    /** `supreme_court`, `high_court` or `other`; null until enriched (#894). */
+    courtLevel: text('court_level'),
+    /** How the matter ended, read from the decision segment; `unknown` unless `outcome_anchor` backs it (#894). */
+    outcome: text('outcome').$type<JudgmentOutcome>().notNull().default('unknown'),
+    /** The page and sentence the outcome was read from; null exactly when the outcome is `unknown`. */
+    outcomeAnchor: jsonb('outcome_anchor').$type<JudgmentOutcomeAnchor>(),
+    /** The `ENRICH_VERSION` of the facet rows built for this judgment; 0 means not yet enriched (#894). */
+    enrichVersion: integer('enrich_version').notNull().default(0),
+    /** The `redaction_version` the facets were built from. */
+    enrichedRedactionVersion: integer('enriched_redaction_version').notNull().default(0),
     /** Retrieval embedding; null until an ADR picks the model and a job fills it. */
     embedding: embedding(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -94,6 +122,10 @@ export const judgment = pgTable(
     uniqueIndex('judgment_sha256_uq').on(t.sha256),
     index('judgment_neutral_citation_idx').on(t.neutralCitation),
     index('judgment_embedding_hnsw_idx').using('hnsw', t.embedding.op('vector_cosine_ops')),
+    check(
+      'judgment_outcome_check',
+      sql`${t.outcome} in ('allowed','partly_allowed','dismissed','remanded','disposed','unknown')`,
+    ),
   ],
 );
 
@@ -269,5 +301,79 @@ export const judgmentSegment = pgTable(
       sql`${t.role} in ('header','facts','issues','arguments','reasoning','decision','other')`,
     ),
     check('judgment_segment_pages_check', sql`${t.pageFrom} >= 1 and ${t.pageTo} >= ${t.pageFrom}`),
+  ],
+);
+
+/**
+ * A statute section a judgment cites (#894, ADR 0051 §Enrichment), with the page it is cited on.
+ * `statute` and `section` are the `normaliseStatute` and `normaliseSection` keys. Global table, no
+ * RLS. `ruleset_version` names the rules that produced the row; a re-run replaces only the rows of
+ * its own version.
+ */
+export const judgmentStatuteRef = pgTable(
+  'judgment_statute_ref',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    judgmentId: uuid('judgment_id')
+      .notNull()
+      .references(() => judgment.id, { onDelete: 'cascade' }),
+    statute: text('statute').notNull(),
+    section: text('section').notNull(),
+    page: integer('page').notNull(),
+    rulesetVersion: text('ruleset_version').notNull(),
+  },
+  (t) => [
+    uniqueIndex('judgment_statute_ref_uq').on(t.judgmentId, t.rulesetVersion, t.statute, t.section),
+    index('judgment_statute_ref_facet_idx').on(t.statute, t.section),
+    check('judgment_statute_ref_page_check', sql`${t.page} >= 1`),
+  ],
+);
+
+/**
+ * A case a judgment cites (#894). Only the citation string is stored, never reporter text.
+ * `cited_judgment_id` is set when the normalised citation is a neutral citation of a corpus row.
+ */
+export const judgmentCitationRef = pgTable(
+  'judgment_citation_ref',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    judgmentId: uuid('judgment_id')
+      .notNull()
+      .references(() => judgment.id, { onDelete: 'cascade' }),
+    rawCitation: text('raw_citation').notNull(),
+    normalisedCitation: text('normalised_citation').notNull(),
+    citedJudgmentId: uuid('cited_judgment_id').references(() => judgment.id, {
+      onDelete: 'set null',
+    }),
+    page: integer('page').notNull(),
+    rulesetVersion: text('ruleset_version').notNull(),
+  },
+  (t) => [
+    uniqueIndex('judgment_citation_ref_uq').on(
+      t.judgmentId,
+      t.rulesetVersion,
+      t.normalisedCitation,
+    ),
+    index('judgment_citation_ref_cited_idx').on(t.citedJudgmentId),
+    check('judgment_citation_ref_page_check', sql`${t.page} >= 1`),
+  ],
+);
+
+/** A subject area the gateway assigned to a judgment (#894), with its confidence and model version. */
+export const judgmentTag = pgTable(
+  'judgment_tag',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    judgmentId: uuid('judgment_id')
+      .notNull()
+      .references(() => judgment.id, { onDelete: 'cascade' }),
+    subjectArea: text('subject_area').notNull(),
+    confidence: real('confidence').notNull(),
+    modelVersion: text('model_version').notNull(),
+  },
+  (t) => [
+    uniqueIndex('judgment_tag_uq').on(t.judgmentId, t.modelVersion, t.subjectArea),
+    index('judgment_tag_area_idx').on(t.subjectArea),
+    check('judgment_tag_confidence_check', sql`${t.confidence} >= 0 and ${t.confidence} <= 1`),
   ],
 );

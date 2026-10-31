@@ -456,7 +456,8 @@
     "limitation.shortcuts.propose",
     "limitation.shortcuts.confirm",
     "limitation.shortcuts.close",
-    "onboarding.invite.emailPlaceholder"
+    "onboarding.invite.emailPlaceholder",
+    "courtInsights.timeline.proceeding"
   ],
   "ta": {
     "auth.checkEmail.body": "draft",
@@ -5981,7 +5982,15 @@
     "settings.account.learn.modules.listings-and-mentions": "draft",
     "settings.account.learn.modules.filing-and-defect-cures": "draft",
     "settings.account.learn.modules.limitation-basics": "draft",
-    "settings.account.learn.modules.using-the-os": "draft"
+    "settings.account.learn.modules.using-the-os": "draft",
+    "courtInsights.timeline.title": "draft",
+    "courtInsights.timeline.hint": "draft",
+    "courtInsights.timeline.proceeding": "draft",
+    "courtInsights.timeline.listingDelay": "draft",
+    "courtInsights.timeline.disposalTime": "draft",
+    "courtInsights.timeline.basedOn": "draft",
+    "courtInsights.timeline.narrowedToStage": "draft",
+    "courtInsights.timeline.minimum": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -11506,6 +11515,14 @@
     "settings.account.learn.modules.listings-and-mentions": "draft",
     "settings.account.learn.modules.filing-and-defect-cures": "draft",
     "settings.account.learn.modules.limitation-basics": "draft",
-    "settings.account.learn.modules.using-the-os": "draft"
+    "settings.account.learn.modules.using-the-os": "draft",
+    "courtInsights.timeline.title": "draft",
+    "courtInsights.timeline.hint": "draft",
+    "courtInsights.timeline.proceeding": "draft",
+    "courtInsights.timeline.listingDelay": "draft",
+    "courtInsights.timeline.disposalTime": "draft",
+    "courtInsights.timeline.basedOn": "draft",
+    "courtInsights.timeline.narrowedToStage": "draft",
+    "courtInsights.timeline.minimum": "draft"
   }
 }

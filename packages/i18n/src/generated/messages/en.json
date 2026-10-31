@@ -5097,6 +5097,7 @@
       "submit": "Save key line",
       "saved": "Saved. We will read what you typed.",
       "kept": "Kept as an attachment, unread.",
+      "handedToImport": "Handed to list import. Opening it now.",
       "unrecognisedSender": "Unrecognised sender: review",
       "unrecognisedSenderCopy": "This email came from a sender you have not allowed, so nothing in it was read. Review it, then add the sender to your allow-list if you trust it."
     },
@@ -6378,8 +6379,7 @@
     "causeList": {
       "title": "This looks like a cause list",
       "copy": "Printed cause lists are read by list import, not as a diary page.",
-      "action": "Hand to list import",
-      "soon": "List import arrives soon"
+      "action": "Hand to list import"
     },
     "receipt": {
       "title": "Kept as an attachment",

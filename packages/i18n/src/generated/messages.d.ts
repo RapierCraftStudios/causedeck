@@ -5098,6 +5098,7 @@ export type Messages = {
       submit: string;
       saved: string;
       kept: string;
+      handedToImport: string;
       unrecognisedSender: string;
       unrecognisedSenderCopy: string;
     };
@@ -6380,7 +6381,6 @@ export type Messages = {
       title: string;
       copy: string;
       action: string;
-      soon: string;
     };
     receipt: {
       title: string;

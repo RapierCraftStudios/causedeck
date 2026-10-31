@@ -16,6 +16,7 @@ export {
   NEEDS_DEDICATED_ADAPTER,
   OVER_OCR_CAP,
   processImportFile,
+  startImportFromCapture,
   startImportProcessing,
   type FinishImportOutcome,
   type ImportBatchDeps,

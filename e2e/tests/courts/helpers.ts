@@ -25,7 +25,7 @@ export async function openCourts(
     role = 'owner',
     path = courtsPath(),
     workspace = COURTS_WORKSPACE,
-  }: { role?: E2eRole; path?: string; workspace?: string } = {},
+  }: { role?: E2eRole; path?: string; workspace?: keyof typeof E2E_WORKSPACES } = {},
 ): Promise<void> {
   await asUser(role, { workspace, path });
   await expect(page.locator('main').getByRole('heading', { level: 1 })).toBeVisible();

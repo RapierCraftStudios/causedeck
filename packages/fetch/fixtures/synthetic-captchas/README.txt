@@ -1,0 +1,1 @@
+Synthetic sample for the accuracy harness: not real captchas. A `.captcha` file is the header line `SYNTHETIC-CAPTCHA` plus the text a mock engine "reads"; two are misread on purpose and one is unreadable, so the sample scores 6/9. The 500+ real labelled set is a human deliverable (#492).

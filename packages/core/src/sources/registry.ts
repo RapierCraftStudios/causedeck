@@ -72,6 +72,8 @@ export interface SourcePolicy {
   maxCostDollars: number;
   /** Counsel has cleared bulk captcha solving for this source (D-048); read-only here, set by staff in SQL. */
   captchaBulkCleared: boolean;
+  /** The approval reference recorded with the clearance (#492); bulk solving needs it as well. */
+  captchaBulkApprovalRef: string | null;
   /** The registry row's version (`updated_at`, ISO), recorded in fetch provenance. */
   version: string;
 }
@@ -139,6 +141,7 @@ export async function policyFor(
     maxTier: row.maxTier,
     maxCostDollars: Number(row.maxCostDollars),
     captchaBulkCleared: row.captchaBulkCleared,
+    captchaBulkApprovalRef: row.captchaBulkApprovalRef,
     version: row.updatedAt.toISOString(),
   };
 }
@@ -170,6 +173,7 @@ function toRecord(row: typeof source.$inferSelect): SourceRecord {
     maxTier: row.maxTier,
     maxCostDollars: Number(row.maxCostDollars),
     captchaBulkCleared: row.captchaBulkCleared,
+    captchaBulkApprovalRef: row.captchaBulkApprovalRef,
     killSwitch: row.killSwitch,
     notes: row.notes,
     updatedAt: row.updatedAt,

@@ -66,6 +66,15 @@ export {
   type MemberDigestOutcome,
 } from './definitions/activity-digest.ts';
 export {
+  nextUnfinishedStep,
+  NUDGE_STEPS,
+  onboardingNudge,
+  ONBOARDING_NUDGE_FLAG,
+  runOnboardingNudge,
+  type OnboardingNudgeDeps,
+  type OnboardingNudgeReport,
+} from './definitions/onboarding-nudge.ts';
+export {
   newsDigest,
   newsDigestMember,
   newsDigestMemberSchema,

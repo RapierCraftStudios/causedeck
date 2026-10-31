@@ -9,6 +9,7 @@ import {
   activityDigestMember,
   activityDigestSchedule,
 } from './definitions/activity-digest.ts';
+import { onboardingNudge } from './definitions/onboarding-nudge.ts';
 import {
   obligationReminders,
   obligationRemindersSchedule,
@@ -273,6 +274,7 @@ export const registry = createRegistry([
   reminderEvening,
   reminderMorning,
   reminderOutcomeMissing,
+  onboardingNudge,
 ] as const);
 
 export type JobMap = RegistryMap<
@@ -361,6 +363,7 @@ export type JobMap = RegistryMap<
     typeof reminderEvening,
     typeof reminderMorning,
     typeof reminderOutcomeMissing,
+    typeof onboardingNudge,
   ]
 >;
 export type JobName = keyof JobMap;

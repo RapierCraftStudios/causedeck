@@ -902,6 +902,10 @@ export type Messages = {
           label: string;
           description: string;
         };
+        onboardingNudge: {
+          label: string;
+          description: string;
+        };
       };
       mandatory: string;
       lockedLabel: string;
@@ -5386,6 +5390,7 @@ export type Messages = {
       courtBoard: string;
       statusOrder: string;
       digestEndOfDay: string;
+      onboardingNudge: string;
     };
     unlink: string;
     unlinked: string;

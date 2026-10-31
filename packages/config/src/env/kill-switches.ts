@@ -27,6 +27,7 @@ export const FLAG_KILL_SWITCHES = [
   'KILL_STATUS_LINKS_ENABLED',
   'KILL_BENCH_FACTS',
   'KILL_M5_PLAYBOOKS',
+  'KILL_GROWTH_ONBOARDING_NUDGE',
 ] as const;
 
 export type FlagKillSwitch = (typeof FLAG_KILL_SWITCHES)[number];

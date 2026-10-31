@@ -1,6 +1,7 @@
 // Outbound channels beyond email and web push: WhatsApp Business (#679).
 export {
   buildTemplateBody,
+  createMockWhatsAppSender,
   createWhatsAppSender,
   hasWhatsAppTemplate,
   whatsappConfig,

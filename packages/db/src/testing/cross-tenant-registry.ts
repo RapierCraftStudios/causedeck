@@ -1726,6 +1726,12 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   activityDigestMember: 'job definition (handler is runActivityDigestMember)',
   activityDigestSchedule: 'job definition (handler is runActivityDigestSchedule)',
   activityDigestSchema: 'zod schema',
+  onboardingNudge: 'job definition (handler is runOnboardingNudge)',
+  runOnboardingNudge:
+    'system job: reads global activation_event, then opens withUser and withWorkspace per user; RLS keeps each user to their own membership and workspace',
+  nextUnfinishedStep: 'pure',
+  NUDGE_STEPS: 'constant',
+  ONBOARDING_NUDGE_FLAG: 'constant',
   activityDigestMemberSchema: 'zod schema',
   DELIVERY_CHANNELS: 'constant',
   DIGEST_LOCAL_TIME: 'constant',

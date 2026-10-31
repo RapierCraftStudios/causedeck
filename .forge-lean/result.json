@@ -154,6 +154,16 @@
    "kind": "add-deliverable",
    "path": "packages/db/migrations/20261031002026_corpus_enrich.sql",
    "why": "The generator assigned this number; the contract's 20261031000000 name was a placeholder. The journal and snapshot carry the same number."
+  },
+  {
+   "kind": "scope-note",
+   "requirement": "R9",
+   "why": "No AI-gateway client exists in packages/core for corpus jobs (corpus-segment's RoleResolver is likewise injected, never wired). runCorpusEnrich accepts the SubjectResolver port and the job writes tags once a gateway-backed resolver is passed; wiring the gateway belongs with that client, not this ingest-enrichment change."
+  },
+  {
+   "kind": "scope-note",
+   "requirement": "R16",
+   "why": "Eval now scores the 15 most common areas (first 15 of the ordered vocabulary). It uses a keyword stand-in resolver because model scoring needs a live gateway, which CI and this host cannot call; the same harness scores a gateway resolver when wired."
   }
  ],
  "not_members": [

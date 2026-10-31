@@ -77,21 +77,22 @@ const standIn: SubjectResolver = {
     }),
 };
 
-const LABELLED_SUBJECTS: { text: string; areas: SubjectArea[] }[] = SUBJECT_AREAS.flatMap(
-  (area, i) => {
-    const next = SUBJECT_AREAS[(i + 1) % SUBJECT_AREAS.length] as SubjectArea;
-    return [
-      { text: `A matter of ${area.replace(/_/g, ' ')}.`, areas: [area] },
-      {
-        text: `Concerns ${area.replace(/_/g, ' ')} and ${next.replace(/_/g, ' ')}.`,
-        areas: [area, next],
-      },
-    ];
-  },
-);
+// The vocabulary is ordered most common first; the F1 is scored on the 15 most common areas.
+const TOP_AREAS = SUBJECT_AREAS.slice(0, 15);
+
+const LABELLED_SUBJECTS: { text: string; areas: SubjectArea[] }[] = TOP_AREAS.flatMap((area, i) => {
+  const next = TOP_AREAS[(i + 1) % TOP_AREAS.length] as SubjectArea;
+  return [
+    { text: `A matter of ${area.replace(/_/g, ' ')}.`, areas: [area] },
+    {
+      text: `Concerns ${area.replace(/_/g, ' ')} and ${next.replace(/_/g, ' ')}.`,
+      areas: [area, next],
+    },
+  ];
+});
 
 describe('subject tags', () => {
-  it('reports macro-F1 of at least 0.8 over the vocabulary', async () => {
+  it('reports macro-F1 of at least 0.8 over the 15 most common areas', async () => {
     const tp = new Map<string, number>();
     const fp = new Map<string, number>();
     const fn = new Map<string, number>();
@@ -104,14 +105,14 @@ describe('subject tags', () => {
       for (const a of got) bump(areas.includes(a) ? tp : fp, a);
       for (const a of areas) if (!got.includes(a)) bump(fn, a);
     }
-    const f1s = SUBJECT_AREAS.map((a) => {
+    const f1s = TOP_AREAS.map((a) => {
       const p = (tp.get(a) ?? 0) / Math.max(1, (tp.get(a) ?? 0) + (fp.get(a) ?? 0));
       const r = (tp.get(a) ?? 0) / Math.max(1, (tp.get(a) ?? 0) + (fn.get(a) ?? 0));
       return p + r === 0 ? 0 : (2 * p * r) / (p + r);
     });
     const macro = f1s.reduce((a, b) => a + b, 0) / f1s.length;
     console.info(
-      `subjects: macro-F1 ${macro.toFixed(3)} over ${String(SUBJECT_AREAS.length)} areas (stand-in resolver)`,
+      `subjects: macro-F1 ${macro.toFixed(3)} over ${String(TOP_AREAS.length)} areas (keyword stand-in; a gateway resolver is scored the same way)`,
     );
     expect(macro).toBeGreaterThanOrEqual(0.8);
   });

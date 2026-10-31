@@ -37,3 +37,6 @@ No env vars. The job runs every 10 minutes (`5-59/10 * * * *`). The subject reso
 ### Stale-list follow-up
 Checked the listed admin/web tests: none enumerate corpus schema exports (their lists are unrelated mocks), so the new symbols are recorded as `not_members` in result.json. No code change.
 - Stale-list check: the new `@causedeck/db` exports (`JUDGMENT_OUTCOMES`, `judgmentCitationRef`, `judgmentStatuteRef`, `judgmentTag`) are not members of the lists in the 8 flagged admin and web tests. Those lists are mock data for other modules, so each is recorded in `result.json` `not_members` with a reason.
+
+## Review fix
+R16 eval scores the 15 most common areas (vocabulary ordered by commonness). R9 gateway wiring and model-based F1 recorded as amendments: no gateway client exists for corpus jobs; the resolver port is ready.

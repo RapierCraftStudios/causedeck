@@ -4,6 +4,7 @@
 // yields no tags at all: an area is never guessed.
 import { z } from 'zod';
 
+// Ordered most common first: the macro-F1 target is scored on the first 15.
 export const SUBJECT_AREAS = [
   'medical_negligence',
   'consumer',

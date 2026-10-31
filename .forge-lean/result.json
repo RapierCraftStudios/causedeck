@@ -1,0 +1,321 @@
+{
+ "status": "fixed",
+ "summary": "Corpus enrichment: facet tables, extractors, versioned system.corpus.enrich job",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/db/src/schema/corpus.ts"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "packages/db/src/schema/corpus.ts"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/db/src/schema/corpus.ts"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "packages/db/src/schema/corpus.ts"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "packages/db/src/schema/corpus.ts"
+  },
+  {
+   "id": "R6",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/enrich/statutes.ts"
+  },
+  {
+   "id": "R7",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/enrich/code-map.ts"
+  },
+  {
+   "id": "R8",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/enrich/citations.ts"
+  },
+  {
+   "id": "R9",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/enrich/subjects.ts"
+  },
+  {
+   "id": "R10",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/enrich/outcome.ts"
+  },
+  {
+   "id": "R11",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/enrich/index.ts"
+  },
+  {
+   "id": "R12",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/corpus-enrich.ts"
+  },
+  {
+   "id": "R13",
+   "status": "implemented",
+   "evidence": "packages/db/src/schema/corpus.test.ts"
+  },
+  {
+   "id": "R14",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/corpus-enrich.test.ts"
+  },
+  {
+   "id": "R15",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/enrich/enrich-eval.test.ts"
+  },
+  {
+   "id": "R16",
+   "status": "implemented",
+   "evidence": "packages/intelligence/src/corpus/enrich/enrich-eval.test.ts"
+  },
+  {
+   "id": "R17",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/corpus-enrich.test.ts"
+  },
+  {
+   "id": "R18",
+   "status": "implemented",
+   "evidence": "packages/core/src/jobs/definitions/corpus-enrich.test.ts"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "intelligence vitest",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "core vitest",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "db vitest",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "worker vitest",
+   "exit": 0
+  },
+  {
+   "id": "V5",
+   "command": "checks.mjs",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "core corpus-enrich.test.ts",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R18 implemented, tests pass"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "corpus-segment and match tests pass (V1, V2)"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "V1-V5 pass; migration named by generator, see amendment"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "only deliverable paths and tests changed"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "packages/db/migrations/20261031002026_corpus_enrich.sql",
+   "why": "The generator assigned this number; the contract's 20261031000000 name was a placeholder. The journal and snapshot carry the same number."
+  }
+ ],
+ "not_members": [
+  {
+   "symbol": "JUDGMENT_OUTCOMES",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "its list is the activation steps and channels mocked from ../lib/data/index.ts, not exports of @causedeck/db"
+  },
+  {
+   "symbol": "judgmentCitationRef",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "its list is the activation steps and channels mocked from ../lib/data/index.ts, not exports of @causedeck/db"
+  },
+  {
+   "symbol": "judgmentStatuteRef",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "its list is the activation steps and channels mocked from ../lib/data/index.ts, not exports of @causedeck/db"
+  },
+  {
+   "symbol": "judgmentTag",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "its list is the activation steps and channels mocked from ../lib/data/index.ts, not exports of @causedeck/db"
+  },
+  {
+   "symbol": "JUDGMENT_OUTCOMES",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "it mocks auth and session state; it holds no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentCitationRef",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "it mocks auth and session state; it holds no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentStatuteRef",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "it mocks auth and session state; it holds no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentTag",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "it mocks auth and session state; it holds no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "JUDGMENT_OUTCOMES",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its list is the review module mock (@causedeck/core/review), not the db schema"
+  },
+  {
+   "symbol": "judgmentCitationRef",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its list is the review module mock (@causedeck/core/review), not the db schema"
+  },
+  {
+   "symbol": "judgmentStatuteRef",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its list is the review module mock (@causedeck/core/review), not the db schema"
+  },
+  {
+   "symbol": "judgmentTag",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "its list is the review module mock (@causedeck/core/review), not the db schema"
+  },
+  {
+   "symbol": "JUDGMENT_OUTCOMES",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "its list is the source kinds and access modes mocked from @causedeck/core/sources, not the db schema"
+  },
+  {
+   "symbol": "judgmentCitationRef",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "its list is the source kinds and access modes mocked from @causedeck/core/sources, not the db schema"
+  },
+  {
+   "symbol": "judgmentStatuteRef",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "its list is the source kinds and access modes mocked from @causedeck/core/sources, not the db schema"
+  },
+  {
+   "symbol": "judgmentTag",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "its list is the source kinds and access modes mocked from @causedeck/core/sources, not the db schema"
+  },
+  {
+   "symbol": "JUDGMENT_OUTCOMES",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "it holds session and guard test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentCitationRef",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "it holds session and guard test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentStatuteRef",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "it holds session and guard test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentTag",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "it holds session and guard test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "JUDGMENT_OUTCOMES",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "it mocks @causedeck/db as { db, withWorkspace } only; no schema list"
+  },
+  {
+   "symbol": "judgmentCitationRef",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "it mocks @causedeck/db as { db, withWorkspace } only; no schema list"
+  },
+  {
+   "symbol": "judgmentStatuteRef",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "it mocks @causedeck/db as { db, withWorkspace } only; no schema list"
+  },
+  {
+   "symbol": "judgmentTag",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "it mocks @causedeck/db as { db, withWorkspace } only; no schema list"
+  },
+  {
+   "symbol": "JUDGMENT_OUTCOMES",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "it holds session and flag test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentCitationRef",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "it holds session and flag test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentStatuteRef",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "it holds session and flag test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentTag",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "it holds session and flag test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "JUDGMENT_OUTCOMES",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "it holds session and flag test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentCitationRef",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "it holds session and flag test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentStatuteRef",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "it holds session and flag test state; no list of @causedeck/db exports"
+  },
+  {
+   "symbol": "judgmentTag",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "it holds session and flag test state; no list of @causedeck/db exports"
+  }
+ ]
+}

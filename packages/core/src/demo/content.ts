@@ -6,9 +6,17 @@
 // ignored) and deterministic apart from the ciphertext nonce. Run by `pnpm db:seed:demo:content`
 // and by the nightly reset (`system.demo.reset`), which wipes memory with the rest of the workspace.
 // Not exported from the package index: it is seed tooling, not a service.
+import { createMockEmbedProvider } from '@causedeck/ai';
 import { schema, withWorkspace, type Queryable } from '@causedeck/db';
-import { eq } from 'drizzle-orm';
 import {
+  drizzleSegmentStore,
+  embedDueSegments,
+  type EMBEDDED_ROLES,
+  type SegmentEmbedStore,
+} from '@causedeck/intelligence';
+import { and, asc, eq, inArray, isNull, ne, or } from 'drizzle-orm';
+import {
+  DEMO_JUDGMENTS,
   demoDocumentPdfs,
   demoMemory,
   demoMember,
@@ -27,7 +35,7 @@ import {
   type ObjectStore,
 } from '@causedeck/storage';
 
-const { memoryItem, memoryProposal, memoryUsage, blob } = schema;
+const { memoryItem, memoryProposal, memoryUsage, blob, judgmentSegment } = schema;
 
 export interface DemoContentDeps {
   db: Queryable;
@@ -173,4 +181,61 @@ export async function seedDemoFiles(
     }
   });
   return { files: pdfs.length };
+}
+
+export interface DemoCorpusEmbedDeps {
+  db: Queryable;
+}
+
+/**
+ * Embed the segments of the synthetic demo corpus (#1070) with the mock embedder, the model
+ * `searchAuthorities` queries with when no provider is configured (`createMockEmbedProvider`:
+ * deterministic, 1024 dimensions). `@causedeck/db` writes the rows but cannot import the embedder, so
+ * this is the second half of the corpus seed. It only touches the demo judgments (not a real corpus
+ * row), embeds the same roles `system.corpus.embed` does, and is a no-op once every demo segment
+ * carries the current model version. Returns how many segments it embedded.
+ */
+export async function seedDemoCorpusEmbeddings({ db }: DemoCorpusEmbedDeps): Promise<{
+  embedded: number;
+}> {
+  const provider = createMockEmbedProvider();
+  const demoIds = DEMO_JUDGMENTS.map((j) => j.id);
+  const all = drizzleSegmentStore(db);
+  // `save` is the shared store's; `due` is limited to the demo judgments (never a real corpus row).
+  const store: SegmentEmbedStore = {
+    due: (roles, modelVersion, limit) =>
+      db
+        .select({
+          id: judgmentSegment.id,
+          judgmentYear: judgmentSegment.judgmentYear,
+          text: judgmentSegment.text,
+        })
+        .from(judgmentSegment)
+        .where(
+          and(
+            inArray(judgmentSegment.judgmentId, demoIds),
+            inArray(judgmentSegment.role, [...roles] as (typeof EMBEDDED_ROLES)[number][]),
+            or(
+              isNull(judgmentSegment.embedding),
+              isNull(judgmentSegment.embeddingModel),
+              ne(judgmentSegment.embeddingModel, modelVersion),
+            ),
+          ),
+        )
+        .orderBy(asc(judgmentSegment.judgmentYear), asc(judgmentSegment.id))
+        .limit(limit),
+    save: (rows, modelVersion) => all.save(rows, modelVersion),
+  };
+  const report = await embedDueSegments(
+    store,
+    {
+      modelVersion: () => provider.modelVersion,
+      embed: async (texts) => {
+        const batch = await provider.embed(texts);
+        return { vectors: batch.vectors, costPaise: 0 };
+      },
+    },
+    { budgetPaise: 1 },
+  );
+  return { embedded: report.embedded };
 }

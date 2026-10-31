@@ -21,7 +21,7 @@ import {
 } from '../../schema/corpus.ts';
 import { newsItem, type NewsTags } from '../../schema/news.ts';
 import { plan } from '../../schema/billing.ts';
-import { notice, type NoticeKind } from '../../schema/notices.ts';
+import { notice, noticeVacation, type NoticeKind } from '../../schema/notices.ts';
 import { source } from '../../schema/source-registry.ts';
 import type { SeedDb } from '../index.ts';
 import { seedPlans } from '../plans.ts';
@@ -200,6 +200,8 @@ export interface NoticeSpec {
   /** Days before the seed day it was issued, and days after it takes effect (null: no date). */
   ago: number;
   effectiveIn: number | null;
+  /** A closed range stated by the notice (#650): first and last day, in days after the seed day. */
+  vacation?: { startIn: number; endIn: number };
 }
 
 export const NOTICES: readonly NoticeSpec[] = [
@@ -293,7 +295,44 @@ export const NOTICES: readonly NoticeSpec[] = [
     ago: 7,
     effectiveIn: 10,
   },
+  {
+    n: 11,
+    source: 'demo.notice.karnataka-registry',
+    forums: ['mayo'],
+    kind: 'holiday',
+    title: 'SYNTHETIC: Vacation notice for the city courts (demo)',
+    ago: 2,
+    effectiveIn: null,
+    // Starts in five days and runs for fifteen: the court calendar shows a closed band and a due
+    // date that lands inside it rolls to the first sitting day after it (#650).
+    vacation: { startIn: 5, endIn: 19 },
+  },
 ];
+
+/** The vacation ranges the demo notices state, dated from `today` (#650). */
+export function demoNoticeVacationRows(today: string) {
+  const at = seedInstant(today);
+  return NOTICES.flatMap((s) =>
+    s.vacation === undefined
+      ? []
+      : [
+          {
+            // One row per calendar month: the app role may not update or delete `notice_vacation`,
+            // so a later seed month adds a fresh range and the earlier ones are simply in the past.
+            id: demoId(
+              ID_KIND.noticeVacation,
+              Number(today.slice(0, 4)) * 100 + Number(today.slice(5, 7)),
+            ),
+            noticeId: demoId(ID_KIND.notice, s.n),
+            fromOn: addDays(today, s.vacation.startIn),
+            toOn: addDays(today, s.vacation.endIn),
+            name: 'SYNTHETIC: Court vacation (demo)',
+            createdAt: at,
+            updatedAt: at,
+          },
+        ],
+  );
+}
 
 /** The notice rows for `today` (provenance is the seed's, like every demo fact). */
 export function demoNoticeRows(today: string) {
@@ -339,6 +378,7 @@ export async function seedDemoCatalogue(db: SeedDb, today: string): Promise<void
   await db.insert(judgmentCitationRef).values(corpus.citationRefs).onConflictDoNothing();
   await db.insert(newsItem).values(demoNewsRows(today)).onConflictDoNothing();
   await db.insert(notice).values(demoNoticeRows(today)).onConflictDoNothing();
+  await db.insert(noticeVacation).values(demoNoticeVacationRows(today)).onConflictDoNothing();
 }
 
 /**

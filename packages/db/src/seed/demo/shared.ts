@@ -77,6 +77,7 @@ export const ID_KIND = {
   subscription: 0xeb,
   saasInvoice: 0xec,
   saasInvoiceLine: 0xed,
+  noticeVacation: 0xee,
 } as const;
 
 /** Each demo workspace owns a block of this many numbers per row kind (the ids never collide). */

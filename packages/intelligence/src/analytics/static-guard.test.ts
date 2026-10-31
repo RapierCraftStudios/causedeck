@@ -15,6 +15,8 @@ const INTERNAL_STORES =
 
 const FILES = [
   'packages/intelligence/src/analytics/index.ts',
+  'packages/intelligence/src/analytics/timeline.ts',
+  'apps/web/components/matters/expected-timeline-card.tsx',
   'apps/web/app/(app)/w/[slug]/courts/insights/page.tsx',
   'apps/web/components/courts/court-insights.tsx',
   'packages/i18n/src/messages/en/court-insights.json',

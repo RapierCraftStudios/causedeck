@@ -3048,6 +3048,16 @@ export type Messages = {
       title: string;
       hint: string;
     };
+    timeline: {
+      title: string;
+      hint: string;
+      proceeding: string;
+      listingDelay: string;
+      disposalTime: string;
+      basedOn: string;
+      narrowedToStage: string;
+      minimum: string;
+    };
   };
   matters: {
     metaTitle: string;

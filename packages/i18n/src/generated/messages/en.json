@@ -3046,6 +3046,16 @@
     "empty": {
       "title": "No figures yet",
       "hint": "Figures appear once matters in this workspace have filing dates, listings and hearings."
+    },
+    "timeline": {
+      "title": "Expected timeline",
+      "hint": "From this workspace's own matters in the same forum and case type. An estimate, not a promise.",
+      "proceeding": "{court}, {caseType}",
+      "listingDelay": "Median time to first listing",
+      "disposalTime": "Median time to disposal",
+      "basedOn": "Based on {count, plural, one {# matter} other {# matters}}",
+      "narrowedToStage": "Matters first listed at the same stage.",
+      "minimum": "Figures from fewer than {min} matters are withheld."
     }
   },
   "matters": {

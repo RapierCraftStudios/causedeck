@@ -17,8 +17,11 @@ import { and, asc, count, eq, gt, gte, isNull, lt, lte, ne, or, sql, type SQL } 
 import { localDay, weekEnd } from './due.ts';
 import {
   inObligationScope,
+  readableObligation,
   parseObligationInput,
+  readObligations,
   visibleMatters,
+  visibleRow,
   type ObligationActor,
   type ObligationDeps,
   type ObligationRow,
@@ -38,47 +41,51 @@ export async function queryQueue(
   return inObligationScope(deps, actor, async (scope) => {
     if (!roleCanRead(scope)) return emptyQueue();
     const today = localDay(scope.now);
+    const ob = readableObligation(scope);
     const base: SQL[] = [
-      eq(obligation.workspaceId, scope.actor.workspaceId),
-      eq(obligation.status, 'open'),
+      eq(ob.workspaceId, scope.actor.workspaceId),
+      eq(ob.status, 'open'),
       visibleMatters(scope),
     ];
-    if (q.matterId !== undefined) base.push(eq(obligation.matterId, q.matterId));
-    if (q.ownerMemberId !== undefined) base.push(eq(obligation.ownerMemberId, q.ownerMemberId));
-    if (q.source !== undefined) base.push(eq(obligation.source, q.source));
-    if (q.sourceType !== undefined) base.push(eq(obligation.sourceType, q.sourceType));
+    if (q.matterId !== undefined) base.push(eq(ob.matterId, q.matterId));
+    if (q.ownerMemberId !== undefined) base.push(eq(ob.ownerMemberId, q.ownerMemberId));
+    if (q.source !== undefined) base.push(eq(ob.source, q.source));
+    if (q.sourceType !== undefined) base.push(eq(ob.sourceType, q.sourceType));
     const dueFilter: Record<QueueGroup, SQL> = {
-      overdue: lt(obligation.dueDate, today),
-      today: eq(obligation.dueDate, today),
-      this_week: and(gt(obligation.dueDate, today), lte(obligation.dueDate, weekEnd(today))) as SQL,
-      later: gt(obligation.dueDate, weekEnd(today)),
-      undated: isNull(obligation.dueDate),
+      overdue: lt(ob.dueDate, today),
+      today: eq(ob.dueDate, today),
+      this_week: and(gt(ob.dueDate, today), lte(ob.dueDate, weekEnd(today))) as SQL,
+      later: gt(ob.dueDate, weekEnd(today)),
+      undated: isNull(ob.dueDate),
     };
     const out = emptyQueue();
-    for (const group of QUEUE_GROUPS) {
-      const rows = await scope.tx
-        .select({ row: obligation })
-        .from(obligation)
-        .innerJoin(
-          matter,
-          and(eq(matter.workspaceId, obligation.workspaceId), eq(matter.id, obligation.matterId)),
-        )
-        .leftJoin(
-          member,
-          and(eq(member.organizationId, matter.workspaceId), eq(member.id, matter.ownerMemberId)),
-        )
-        .leftJoin(
-          matterRestriction,
-          and(
-            eq(matterRestriction.workspaceId, matter.workspaceId),
-            eq(matterRestriction.matterId, matter.id),
-          ),
-        )
-        .where(and(...base, dueFilter[group]))
-        .orderBy(asc(obligation.dueDate), asc(obligation.createdAt), asc(obligation.id))
-        .limit(q.limit);
-      out[group] = rows.map((r) => r.row);
-    }
+    // A clerk reads the column-scoped view in a clerk-role scope: strategy descriptions come back NULL.
+    await readObligations(scope, async (tx) => {
+      for (const group of QUEUE_GROUPS) {
+        const rows = await tx
+          .select({ row: ob })
+          .from(ob)
+          .innerJoin(
+            matter,
+            and(eq(matter.workspaceId, ob.workspaceId), eq(matter.id, ob.matterId)),
+          )
+          .leftJoin(
+            member,
+            and(eq(member.organizationId, matter.workspaceId), eq(member.id, matter.ownerMemberId)),
+          )
+          .leftJoin(
+            matterRestriction,
+            and(
+              eq(matterRestriction.workspaceId, matter.workspaceId),
+              eq(matterRestriction.matterId, matter.id),
+            ),
+          )
+          .where(and(...base, dueFilter[group]))
+          .orderBy(asc(ob.dueDate), asc(ob.createdAt), asc(ob.id))
+          .limit(q.limit);
+        out[group] = rows.map((r) => visibleRow(r.row));
+      }
+    });
     return out;
   });
 }

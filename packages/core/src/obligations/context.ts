@@ -26,7 +26,8 @@ import { forbidden, invalid, notFound } from '../shared/errors.ts';
 import { activeMember } from '../shared/membership.ts';
 import { getRoleSettings, memberRole, toPolicySettings } from '../workspaces/index.ts';
 
-const { matter, matterRestriction, member, obligation, obligationEvent } = schema;
+const { matter, matterRestriction, member, obligation, obligationClerkView, obligationEvent } =
+  schema;
 
 export type ObligationRow = typeof obligation.$inferSelect;
 
@@ -169,6 +170,9 @@ export async function loadObligation(
     .limit(1)
     .for('update');
   if (row === undefined) throw notFoundObligation();
+  // A clerk reads a strategy obligation's task only through `obligation_clerk_v`, never to change it.
+  if (row.strategy && scope.actor.role === 'clerk')
+    throw forbidden('You cannot change this obligation');
   try {
     await requireMatterFor(scope, row.matterId, action);
   } catch (error) {
@@ -177,6 +181,33 @@ export async function loadObligation(
   }
   return row;
 }
+
+/**
+ * The obligation source a read in `scope` selects from: the table, or for a clerk the column-scoped
+ * view (the clerk role has no privilege on the table). The view has the table's columns, so it is
+ * typed as the table; its `description` is NULL on strategy rows (see `visibleDescription`).
+ */
+export const readableObligation = (scope: ObligationScope): typeof obligation =>
+  (scope.actor.role === 'clerk' ? obligationClerkView : obligation) as unknown as typeof obligation;
+
+/**
+ * Run a read that selects from `readableObligation(scope)`: for a clerk in a nested clerk-role scope
+ * (restored afterwards), so the table stays out of reach even through a bug.
+ */
+export function readObligations<T>(
+  scope: ObligationScope,
+  fn: (tx: Transaction) => Promise<T>,
+): Promise<T> {
+  if (scope.actor.role !== 'clerk') return fn(scope.tx);
+  const { workspaceId, userId } = scope.actor;
+  return withWorkspace(scope.tx, { workspaceId, userId, dbRole: 'clerk' }, fn);
+}
+
+/** The row as the actor may see it: a hidden (NULL) description reads as an empty string. */
+export const visibleRow = (row: ObligationRow): ObligationRow => ({
+  ...row,
+  description: row.description ?? '',
+});
 
 /** The action a write of an obligation of `source` needs: clerks track tasks and copies only. */
 export const writeActionFor = (source: ObligationRow['source']): Action =>

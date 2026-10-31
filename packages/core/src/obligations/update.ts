@@ -5,7 +5,7 @@ import { ObligationPatch } from '@causedeck/validators/obligation';
 import { schema } from '@causedeck/db';
 import { and, eq } from 'drizzle-orm';
 
-import { conflict, invalid } from '../shared/errors.ts';
+import { conflict, forbidden, invalid } from '../shared/errors.ts';
 
 import {
   addEvent,
@@ -22,6 +22,9 @@ import {
 
 const { obligation } = schema;
 
+/** Roles that may set `strategy`: the lawyers of the chamber, never a clerk or junior. */
+const STRATEGY_ROLES: readonly string[] = ['owner', 'advocate'];
+
 export async function updateObligation(
   deps: ObligationDeps,
   actor: ObligationActor,
@@ -30,6 +33,9 @@ export async function updateObligation(
 ): Promise<ObligationRow> {
   const patch = parseObligationInput(ObligationPatch, input);
   return inObligationScope(deps, actor, async (scope) => {
+    if (patch.strategy !== undefined && !STRATEGY_ROLES.includes(scope.actor.role)) {
+      throw forbidden('Only an owner or advocate can mark an obligation as strategy');
+    }
     const current = await loadObligation(scope, obligationId, 'obligation.read');
     await loadObligation(scope, obligationId, writeActionFor(current.source));
     if (current.status !== 'open')
@@ -45,6 +51,7 @@ export async function updateObligation(
       .update(obligation)
       .set({
         ...(patch.description === undefined ? {} : { description: patch.description }),
+        ...(patch.strategy === undefined ? {} : { strategy: patch.strategy }),
         ...(patch.basis === undefined ? {} : { basis: patch.basis }),
         ...(patch.ownerMemberId === undefined ? {} : { ownerMemberId: patch.ownerMemberId }),
         ...(patch.dueDate === undefined ? {} : { dueDate: patch.dueDate }),
@@ -57,6 +64,7 @@ export async function updateObligation(
     if (row === undefined) throw new Error('updateObligation: update returned no row');
     const edited =
       patch.description !== undefined ||
+      patch.strategy !== undefined ||
       patch.basis !== undefined ||
       patch.ownerMemberId !== undefined;
     if (edited) await addEvent(scope, row.id, { kind: 'updated' });

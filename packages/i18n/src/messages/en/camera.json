@@ -65,8 +65,7 @@
     "causeList": {
       "title": "This looks like a cause list",
       "copy": "Printed cause lists are read by list import, not as a diary page.",
-      "action": "Hand to list import",
-      "soon": "List import arrives soon"
+      "action": "Hand to list import"
     },
     "receipt": {
       "title": "Kept as an attachment",

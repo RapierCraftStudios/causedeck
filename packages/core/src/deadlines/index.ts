@@ -5,6 +5,7 @@ export {
   DEFAULT_WEEKLY_OFFS,
   FORUM_VACATIONS,
   loadCourtCalendar,
+  mergeVacations,
   type CourtCalendar,
   type LoadCourtCalendarInput,
   type VacationRange,

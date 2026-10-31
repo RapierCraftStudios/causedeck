@@ -847,6 +847,18 @@ describe('demo seed: corpus, news, notices and billing (#1070, #1071)', () => {
     expect(
       await countIn(key, `select 1 from notice where source_id like 'demo.notice.%'`),
     ).toBeGreaterThanOrEqual(8);
+    // #650: one synthetic vacation notice states a future range, matched to its forum.
+    const vacations = await rowsIn<{ from_on: string; to_on: string; matched: number }>(
+      key,
+      `select v.from_on::text, v.to_on::text,
+              (select count(*)::int from notice_match m where m.notice_id = v.notice_id) as matched
+         from notice_vacation v join notice n on n.id = v.notice_id
+        where n.source_id like 'demo.notice.%'`,
+    );
+    expect(vacations).toHaveLength(1);
+    const [vacation] = vacations;
+    expect((vacation?.from_on ?? '') <= (vacation?.to_on ?? '')).toBe(true);
+    expect(vacation?.matched).toBeGreaterThanOrEqual(1);
     for (const k of DEMO_WORKSPACE_KEYS) {
       expect(
         await countIn(k, `select 1 from notice_match where matter_id is null`),

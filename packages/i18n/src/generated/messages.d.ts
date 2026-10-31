@@ -990,7 +990,6 @@ export type Messages = {
     title: string;
     description: string;
     loading: string;
-    comingSoon: string;
     permissionDenied: string;
     error: {
       title: string;
@@ -1133,6 +1132,7 @@ export type Messages = {
       unsupported: string;
       forbidden: string;
       offline: string;
+      demo: string;
       generic: string;
     };
   };
@@ -5098,6 +5098,7 @@ export type Messages = {
       submit: string;
       saved: string;
       kept: string;
+      handedToImport: string;
       unrecognisedSender: string;
       unrecognisedSenderCopy: string;
     };
@@ -6380,7 +6381,6 @@ export type Messages = {
       title: string;
       copy: string;
       action: string;
-      soon: string;
     };
     receipt: {
       title: string;

@@ -10,6 +10,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { catalogs } from '../../../__tests__/helpers/intl.ts';
 import type { InboxItemView, InboxView } from '../../../lib/inbox/view.ts';
 import { mockMatchMedia, stubResizeObserver } from '../../shell/__tests__/helpers.tsx';
+import {
+  handToListImportAction,
+  keepAsAttachmentAction,
+} from '../../../app/(app)/w/[slug]/inbox/actions.ts';
 import { InboxShell } from '../inbox-shell.tsx';
 
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }));
@@ -19,6 +23,7 @@ vi.mock('../../../app/(app)/w/[slug]/inbox/actions.ts', () => ({
   deleteRecordingAction: vi.fn(),
   dismissProposalAction: vi.fn(),
   editAcceptProposalAction: vi.fn(),
+  handToListImportAction: vi.fn(),
   keepAsAttachmentAction: vi.fn(),
   markSentAction: vi.fn(),
   reassignCaptureAction: vi.fn(),
@@ -197,6 +202,73 @@ describe('InboxShell', () => {
   it('shows no actions to a viewer', () => {
     renderInbox(view({ canAct: false }));
     expect(screen.queryByRole('button', { name: 'Confirm' })).toBeNull();
+  });
+});
+
+describe('hand a photographed cause list to list import (#1073)', () => {
+  const causeList = item(5, {
+    type: 'unreadable',
+    kind: null,
+    proposalId: null,
+    captureId: ID(55),
+    matterId: null,
+    matterTitle: null,
+    proceedingId: null,
+    caseNumber: null,
+    payload: null,
+    confidence: null,
+    needsYouReason: 'cause_list',
+    canKeep: true,
+  });
+  const BATCH = '00000000-0000-4000-8000-0000000000b1';
+  const catalog = catalogs.en.camera.causeList;
+
+  beforeEach(() => {
+    // jsdom has no `CSS.escape`, which the card collapse uses to move focus.
+    vi.stubGlobal('CSS', { escape: (value: string) => value });
+  });
+
+  it('offers a live hand-off, no placeholder, and keeps the attachment fallback', () => {
+    renderInbox(view({ needsYou: [causeList] }));
+    const hand = screen.getByRole('button', { name: catalog.action });
+    expect(hand.hasAttribute('disabled')).toBe(false);
+    expect(screen.getByRole('button', { name: t.unreadable.keep })).toBeTruthy();
+    expect(JSON.stringify(catalogs.en.camera)).not.toContain('arrives soon');
+  });
+
+  it('hands the capture over and opens list import on the new batch', async () => {
+    vi.mocked(handToListImportAction).mockResolvedValue({
+      ok: true,
+      data: { captureId: ID(55), batchId: BATCH },
+    });
+    renderInbox(view({ needsYou: [causeList] }));
+    fireEvent.click(screen.getByRole('button', { name: catalog.action }));
+    await vi.waitFor(() => {
+      expect(router.push).toHaveBeenCalledWith(`/w/demo/import?batch=${BATCH}`);
+    });
+    expect(handToListImportAction).toHaveBeenCalledWith({
+      workspaceId: ID(99),
+      captureId: ID(55),
+    });
+  });
+
+  it('says so and stays put when the hand-off fails, and Keep as attachment still works', async () => {
+    vi.mocked(handToListImportAction).mockResolvedValue({
+      ok: false,
+      error: { code: 'CONFLICT', message: 'refused' },
+    });
+    renderInbox(view({ needsYou: [causeList] }));
+    fireEvent.click(screen.getByRole('button', { name: catalog.action }));
+    expect(await screen.findByText(t.card.failed)).toBeTruthy();
+    expect(router.push).not.toHaveBeenCalled();
+    vi.mocked(keepAsAttachmentAction).mockResolvedValue({
+      ok: true,
+      data: { captureId: ID(55), status: 'ready', pinned: false },
+    });
+    fireEvent.click(screen.getByRole('button', { name: t.unreadable.keep }));
+    await vi.waitFor(() => {
+      expect(keepAsAttachmentAction).toHaveBeenCalled();
+    });
   });
 });
 

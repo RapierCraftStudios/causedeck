@@ -308,6 +308,23 @@ describe('withdrawCancellation (#257)', () => {
   });
 });
 
+describe('updatePaymentMethod (#1072)', () => {
+  it('returns the link that restarts the mandate of a live subscription', async () => {
+    const { service, provider, now } = setup();
+    const s = await activeChamber(provider, service, now);
+    const { mandateUrl } = await service.updatePaymentMethod(s);
+    expect(mandateUrl).toBe(`${MOCK_MANDATE_BASE_URL}${s.providerSubscriptionId ?? ''}`);
+  });
+
+  it('refuses a subscription the provider does not know', async () => {
+    const { service, provider, now } = setup();
+    const s = await activeChamber(provider, service, now);
+    await expect(
+      service.updatePaymentMethod({ ...s, providerSubscriptionId: null }),
+    ).rejects.toBeInstanceOf(BillingServiceError);
+  });
+});
+
 describe('quoteChange (#257)', () => {
   const seat1 = getPlan('chamber-seat-1');
   const seat2 = getPlan('chamber-seat-2');

@@ -51,6 +51,7 @@ const handlers: CardHandlers = {
   dismiss: fn(() => Promise.resolve()),
   chooseDate: fn(() => Promise.resolve()),
   keepAttachment: fn(() => Promise.resolve()),
+  handToImport: fn(() => Promise.resolve()),
   keyLine: fn(() => Promise.resolve()),
   reassign: fn(() => Promise.resolve()),
   searchMatters: fn(() => Promise.resolve([{ id: ID(72), title: 'Another matter (fictional)' }])),

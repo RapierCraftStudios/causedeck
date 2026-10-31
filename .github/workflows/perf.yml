@@ -51,6 +51,41 @@ jobs:
             exit 1
           fi
 
+  # Pipeline p95 harness (#561): the voice-note path (transcribe, structure, match, draft) on the mock
+  # providers, forced with --provider mock so no credential is ever read. It asserts the harness runs
+  # and writes a report; mock timings are only sanity-checked (docs/benchmarks/pipeline-p95.md). The
+  # real <20 s p95 measurement needs Bedrock and Sarvam keys and is run by hand on staging.
+  pipeline-p95-harness:
+    name: pipeline p95 harness (mock providers)
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Run the benchmark on mocks
+        run: |
+          pnpm --filter @causedeck/intelligence bench:pipeline --provider mock --iterations 30 \
+            --out "$GITHUB_WORKSPACE/pipeline-p95-report"
+      - name: Assert the report exists and is complete
+        run: |
+          test -s pipeline-p95-report/report.md
+          node -e "
+            const r = JSON.parse(require('node:fs').readFileSync('pipeline-p95-report/report.json', 'utf8'));
+            if (r.mode !== 'mock' || r.runs.length !== 30 || r.failures !== 0 || !Number.isFinite(r.endToEnd.p99Ms)) {
+              throw new Error('pipeline p95 report is incomplete: ' + JSON.stringify({ mode: r.mode, runs: r.runs.length, failures: r.failures }));
+            }"
+          cat pipeline-p95-report/report.md >>"$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() }}
+        with:
+          name: pipeline-p95-report
+          path: pipeline-p95-report
+          if-no-files-found: ignore
+          retention-days: 30
+
   perf:
     name: k6, bundle budget and Lighthouse
     if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'perf') }}

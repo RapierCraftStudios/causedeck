@@ -1591,6 +1591,9 @@ importers:
       regenerator-runtime:
         specifier: 'catalog:'
         version: 0.14.1
+      tsx:
+        specifier: 'catalog:'
+        version: 4.23.15
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

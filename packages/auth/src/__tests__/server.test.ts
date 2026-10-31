@@ -84,7 +84,12 @@ describe('signup channel (#703)', () => {
   });
 
   it('records no channel when the cookie is absent or not a closed-list value', async () => {
-    for (const cookie of [undefined, 'cd_channel=evil', 'cd_channel=education%20x', 'other=direct']) {
+    for (const cookie of [
+      undefined,
+      'cd_channel=evil',
+      'cd_channel=education%20x',
+      'other=direct',
+    ]) {
       const event = await signedUpEvent(await signUpViaMagicLink(cookie));
       expect(event?.step).toBe('signed_up');
       expect(event?.channel).toBeNull();

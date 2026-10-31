@@ -659,7 +659,8 @@ export function createAuth({
           // the `cd_channel` cookie; never the email. Measurement must not fail a sign-up.
           after: async (user, ctx) => {
             try {
-              const headers = (ctx as RequestLike | null | undefined)?.headers ??
+              const headers =
+                (ctx as RequestLike | null | undefined)?.headers ??
                 (ctx as RequestLike | null | undefined)?.request?.headers;
               const channel = signupChannelFromCookieHeader(headers?.get('cookie'));
               await db

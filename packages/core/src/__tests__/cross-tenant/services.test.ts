@@ -9,13 +9,7 @@ import { Writable } from 'node:stream';
 
 import type { Mailer } from '@causedeck/auth/mailer';
 import { Secret } from '@causedeck/config/env';
-import {
-  schema,
-  TenancyError,
-  withUser,
-  type Database,
-  type Transaction,
-} from '@causedeck/db';
+import { schema, TenancyError, withUser, type Database, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { seedForumCatalogue } from '@causedeck/db/seed/forum-catalogue';
 import { createDb, inWorkspace, testDatabaseUrls, withTestDb } from '@causedeck/db/testing';
@@ -5035,9 +5029,7 @@ describe('cross-tenant practice-school progress: ub against ua', () => {
       expect(seen.some((row) => row.userId === seeded.ua)).toBe(false);
       await expect(
         withUser(tx, b, (s) =>
-          s
-            .insert(schema.learnProgress)
-            .values({ userId: seeded.ua, moduleSlug: 'using-the-os' }),
+          s.insert(schema.learnProgress).values({ userId: seeded.ua, moduleSlug: 'using-the-os' }),
         ),
       ).rejects.toBeDefined();
     });

@@ -17,7 +17,7 @@ import {
   type Database,
   type Transaction,
 } from '@causedeck/db';
-import { and, eq, sql, type SQL } from 'drizzle-orm';
+import { and, eq, getTableColumns, sql, type SQL } from 'drizzle-orm';
 import type { z } from 'zod';
 
 import { record, type AuditAction, type AuditMetadataValue } from '../audit/index.ts';
@@ -203,8 +203,19 @@ export function readObligations<T>(
   return withWorkspace(scope.tx, { workspaceId, userId, dbRole: 'clerk' }, fn);
 }
 
+/** The columns of `source` (the table or the clerk view) as a select list: drizzle expands a table, not a view. */
+export const obligationColumns = (source: typeof obligation): typeof obligation._.columns =>
+  Object.fromEntries(
+    Object.keys(getTableColumns(obligation)).map((k) => [
+      k,
+      (source as unknown as Record<string, unknown>)[k],
+    ]),
+  ) as typeof obligation._.columns;
+
 /** The row as the actor may see it: a hidden (NULL) description reads as an empty string. */
-export const visibleRow = (row: ObligationRow): ObligationRow => ({
+export const visibleRow = (
+  row: Omit<ObligationRow, 'description'> & { description: string | null },
+): ObligationRow => ({
   ...row,
   description: row.description ?? '',
 });

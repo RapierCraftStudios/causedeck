@@ -17,6 +17,7 @@ import { and, asc, count, eq, gt, gte, isNull, lt, lte, ne, or, sql, type SQL } 
 import { localDay, weekEnd } from './due.ts';
 import {
   inObligationScope,
+  obligationColumns,
   readableObligation,
   parseObligationInput,
   readObligations,
@@ -63,7 +64,7 @@ export async function queryQueue(
     await readObligations(scope, async (tx) => {
       for (const group of QUEUE_GROUPS) {
         const rows = await tx
-          .select({ row: ob })
+          .select(obligationColumns(ob))
           .from(ob)
           .innerJoin(
             matter,
@@ -83,7 +84,7 @@ export async function queryQueue(
           .where(and(...base, dueFilter[group]))
           .orderBy(asc(ob.dueDate), asc(ob.createdAt), asc(ob.id))
           .limit(q.limit);
-        out[group] = rows.map((r) => visibleRow(r.row));
+        out[group] = rows.map((r) => visibleRow(r));
       }
     });
     return out;

@@ -133,6 +133,19 @@
       "request": "அணுகல் கோரு",
       "back": "சுருக்கங்களுக்குத் திரும்பு"
     },
-    "loading": "சுருக்கம் ஏற்றப்படுகிறது"
+    "loading": "சுருக்கம் ஏற்றப்படுகிறது",
+    "index": {
+      "title": "Briefs",
+      "description": "Preparation briefs for the listings in the next three court days.",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "dayAfter": "Day after tomorrow",
+      "noListings": "Nothing listed on this day.",
+      "allEmpty": "No listings in the next three court days.",
+      "allEmptyHint": "Briefs are built per listing. Open the calendar to look further ahead.",
+      "openCalendar": "Open the calendar",
+      "itemLabel": "Item {item}",
+      "hallLabel": "Court {hall}"
+    }
   }
 }

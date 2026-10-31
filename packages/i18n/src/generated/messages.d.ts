@@ -48,6 +48,7 @@ export type Messages = {
     };
     enquiries: string;
     import: string;
+    research: string;
   };
   palette: {
     title: string;
@@ -199,8 +200,7 @@ export type Messages = {
     permissionDenied: {
       title: string;
       message: string;
-      requestAccess: string;
-      requestAccessSoon: string;
+      askOwner: string;
     };
     permission: {
       ownersOnly: string;
@@ -230,7 +230,6 @@ export type Messages = {
       noMatches: string;
       current: string;
       create: string;
-      join: string;
       switching: string;
     };
     userMenu: {
@@ -261,8 +260,7 @@ export type Messages = {
       title: string;
       voice: string;
       file: string;
-      paste: string;
-      soon: string;
+      hint: string;
     };
     sheet: {
       close: string;
@@ -7258,6 +7256,19 @@ export type Messages = {
       back: string;
     };
     loading: string;
+    index: {
+      title: string;
+      description: string;
+      today: string;
+      tomorrow: string;
+      dayAfter: string;
+      noListings: string;
+      allEmpty: string;
+      allEmptyHint: string;
+      openCalendar: string;
+      itemLabel: string;
+      hallLabel: string;
+    };
   };
   continuity: {
     handover: {

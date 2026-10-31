@@ -130,15 +130,13 @@ describe('workspace switcher', () => {
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 
-  it('links Create workspace to /onboarding and closes; join stays disabled (#180)', () => {
+  it('links Create workspace to /onboarding and closes; no dead join button', () => {
     renderSwitcher();
     open();
     const create = screen.getByRole('link', { name: 'Create workspace' });
     expect(create.getAttribute('href')).toBe('/onboarding');
     expect(screen.queryByRole('button', { name: 'Create workspace' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Join with invite' }).hasAttribute('disabled')).toBe(
-      true,
-    );
+    expect(screen.queryByRole('button', { name: 'Join with invite' })).toBeNull();
     fireEvent.click(create);
     expect(screen.queryByRole('listbox')).toBeNull();
   });

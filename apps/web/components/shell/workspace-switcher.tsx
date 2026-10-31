@@ -2,7 +2,7 @@
 
 import { initials } from '@causedeck/ui/avatar';
 import { Badge } from '@causedeck/ui/badge';
-import { Check, ChevronsUpDown, Plus, UserPlus } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -355,15 +355,6 @@ function SwitcherPanel({
           <Plus aria-hidden="true" className="size-4" />
           {t('switcher.create')}
         </Link>
-        {/* TODO(#180): joining with an invite link. */}
-        <button
-          type="button"
-          disabled
-          className="text-ink-muted flex h-9 items-center gap-2 rounded-md px-2 text-sm disabled:opacity-60"
-        >
-          <UserPlus aria-hidden="true" className="size-4" />
-          {t('switcher.join')}
-        </button>
       </div>
     </>
   );

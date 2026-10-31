@@ -46,7 +46,8 @@
       "settings": "அமைப்புகள்"
     },
     "enquiries": "Enquiries",
-    "import": "இறக்குமதி"
+    "import": "இறக்குமதி",
+    "research": "Research"
   },
   "palette": {
     "title": "கட்டளைத் தட்டு",
@@ -177,8 +178,8 @@
       },
       "settings": {
         "description": "பணியிட சுயவிவரம், உறுப்பினர்கள், பங்குகள் மற்றும் தனியுரிமை.",
-        "empty": "அமைப்புகள் விரைவில் வரும்.",
-        "hint": "பணியிட சுயவிவரம், உறுப்பினர்கள், பங்குகள் மற்றும் தனியுரிமை அமைப்புகள் விரைவில் வரும்."
+        "empty": "அமைப்புகள் பட்டியலில் ஒரு பிரிவைத் தேர்ந்தெடுக்கவும்.",
+        "hint": "பணியிட சுயவிவரம், உறுப்பினர்கள், பங்குகள் மற்றும் தனியுரிமை அமைப்புகள் பட்டியலில் உள்ளன."
       },
       "goTo": "{destination} பக்கத்துக்குச் செல்"
     },
@@ -198,8 +199,7 @@
     "permissionDenied": {
       "title": "அணுகல் இல்லை",
       "message": "இந்தப் பகுதிக்கான அணுகல் உங்களுக்கு இல்லை.",
-      "requestAccess": "அணுகலைக் கோரு",
-      "requestAccessSoon": "அணுகல் கோரிக்கைகள் விரைவில் வரும்."
+      "askOwner": "இது தேவைப்பட்டால், உங்கள் பங்கை மாற்றும்படி பணியிட உரிமையாளரிடம் கேளுங்கள்."
     },
     "permission": {
       "ownersOnly": "உரிமையாளர்கள் மட்டுமே இதைச் செய்ய முடியும்",
@@ -229,7 +229,6 @@
       "noMatches": "பொருந்தும் பணியிடம் இல்லை.",
       "current": "தற்போதைய பணியிடம்",
       "create": "பணியிடத்தை உருவாக்கு",
-      "join": "அழைப்பின் மூலம் சேர்",
       "switching": "பணியிடம் மாறுகிறது"
     },
     "userMenu": {
@@ -260,8 +259,7 @@
       "title": "பதிவு",
       "voice": "குரல் குறிப்பு",
       "file": "புகைப்படம் அல்லது கோப்பு",
-      "paste": "உரையை ஒட்டு",
-      "soon": "பதிவு வசதியுடன் கிடைக்கும்."
+      "hint": "எப்படிப் பதிவு செய்வது என்பதைத் தேர்ந்தெடுக்கவும்."
     },
     "sheet": {
       "close": "மூடு"
@@ -7256,7 +7254,20 @@
       "request": "அணுகல் கோரு",
       "back": "சுருக்கங்களுக்குத் திரும்பு"
     },
-    "loading": "சுருக்கம் ஏற்றப்படுகிறது"
+    "loading": "சுருக்கம் ஏற்றப்படுகிறது",
+    "index": {
+      "title": "Briefs",
+      "description": "Preparation briefs for the listings in the next three court days.",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "dayAfter": "Day after tomorrow",
+      "noListings": "Nothing listed on this day.",
+      "allEmpty": "No listings in the next three court days.",
+      "allEmptyHint": "Briefs are built per listing. Open the calendar to look further ahead.",
+      "openCalendar": "Open the calendar",
+      "itemLabel": "Item {item}",
+      "hallLabel": "Court {hall}"
+    }
   },
   "continuity": {
     "handover": {

@@ -41,7 +41,10 @@ export function resolveWhatsAppMedia(mime: string, filename: string): WhatsAppMe
   for (const candidate of candidates) {
     if (candidate === '') continue;
     try {
-      return { type: resolveAllowedType(candidate, declared), filename: candidate };
+      const type = resolveAllowedType(candidate, declared);
+      // Inert HTML (#567) is an import type; forwarded WhatsApp media never carries markup.
+      if (type.allowMarkup === true) continue;
+      return { type, filename: candidate };
     } catch (error) {
       if (!(error instanceof UnsupportedTypeError)) throw error;
     }

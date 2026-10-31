@@ -10,6 +10,7 @@ import {
   CalendarClock,
   ClipboardCheck,
   FilePen,
+  FileUp,
   Hourglass,
   Inbox,
   MessageSquarePlus,
@@ -51,7 +52,7 @@ export const WORKSPACE_ROUTES = [
 export type WorkspaceRoute = (typeof WORKSPACE_ROUTES)[number];
 
 /** A nav destination below a workspace route: its own item, flag-gated, under `path`. */
-export type NavSubRoute = 'enquiries';
+export type NavSubRoute = 'enquiries' | 'import';
 export type NavItemId = WorkspaceRoute | NavSubRoute;
 
 export type NavGroup = 'work' | 'followup' | 'practice' | 'settings';
@@ -110,6 +111,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
     requires: 'enquiry.read',
     flag: 'intake.enquiry_log',
   }),
+  item('import', FileUp, 'practice', { requires: 'matter.write' }),
   item('courts', Landmark, 'practice'),
   item('notices', BookOpen, 'practice'),
   item('portfolio', Briefcase, 'practice'),

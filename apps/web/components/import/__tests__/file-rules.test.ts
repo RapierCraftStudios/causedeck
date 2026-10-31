@@ -1,5 +1,6 @@
 // The drop zone rules of the bootstrap import (#552): 200-file cap, allow-list and size caps,
 // de-duplication by hash.
+import { ALLOWED_TYPES, DEFAULT_SIZE_CAPS_BYTES } from '@causedeck/capture';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -7,6 +8,7 @@ import {
   classifyFile,
   MAX_IMPORT_FILES,
   type Candidate,
+  IMPORT_FILE_TYPES,
   type ImportEntry,
 } from '../../../lib/import/file-rules.ts';
 
@@ -20,6 +22,16 @@ const candidate = (n: number, over: Partial<Candidate> = {}): Candidate => ({
   ...over,
 });
 
+describe('IMPORT_FILE_TYPES', () => {
+  it('mirrors the capture allow-list names, extensions and size caps', () => {
+    for (const type of IMPORT_FILE_TYPES) {
+      const server = ALLOWED_TYPES.find((entry) => entry.name === type.name);
+      expect(server?.extensions, type.name).toEqual(type.extensions);
+      expect(DEFAULT_SIZE_CAPS_BYTES[type.name], type.name).toBe(type.capBytes);
+    }
+  });
+});
+
 describe('classifyFile', () => {
   it('accepts the documents and pictures of the capture allow-list', () => {
     for (const name of [
@@ -27,6 +39,9 @@ describe('classifyFile', () => {
       'a.DOCX',
       'a.ics',
       'a.txt',
+      'a.eml',
+      'a.html',
+      'a.HTM',
       'a.png',
       'a.jpg',
       'a.webp',

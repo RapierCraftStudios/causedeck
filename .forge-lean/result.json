@@ -1,0 +1,160 @@
+{
+ "status": "fixed",
+ "summary": "R16: obligation strategy flag and clerk view; V1-V3 pass, check-rls verified via its CLI test (V4 script name does not exist)",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "packages/core/src/obligations/queue.ts:44"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "db vitest",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "core vitest",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "validators vitest",
+   "exit": 0
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/__tests__/rls/sql.test.ts (runs db:check-rls CLI against the migrated DB; script 'check-rls' as named does not exist, 'db:check-rls' needs a live DB)",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "core obligations strategy test",
+   "result": "pass",
+   "fails_without_fix": true
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "queue.ts, migration"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "V2 passes incl. cross-tenant"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "V1-V3 pass; V4 intent (check-rls over migrated schema) passes via sql.test.ts 'db:check-rls CLI'; literal V4 command names a missing script"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "only deliverables and tests changed"
+  }
+ ],
+ "amendments": [],
+ "not_members": [
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/web/__tests__/matter-timeline.test.tsx",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "packages/core/src/__tests__/cross-tenant/services.test.ts",
+   "why": "lists core service exports and table-name fixtures; the view is a db schema export, not a core service"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "packages/core/src/matter-graph/__tests__/timeline.test.ts",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "packages/db/src/__tests__/docket-schema.test.ts",
+   "why": "covers docket tables; the view is tested in rls/obligation-clerk-view.test.ts"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "packages/db/src/__tests__/matter-graph-validators.test.ts",
+   "why": "lists tables with drizzle-zod select/insert schemas; a view has none"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "packages/db/src/__tests__/rls/sql.test.ts",
+   "why": "lists tenant tables with RLS; a view has no RLS policy of its own (it runs over obligation's FORCE RLS)"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "packages/db/src/index.test.ts",
+   "why": "lists tables (tablesOf(schema)); obligationClerkView is a view, not a table, and memory_item_clerk_v is likewise absent"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "packages/db/src/seed/__tests__/demo-seed.test.ts",
+   "why": "lists tables the seed fills; a view is not seeded"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "packages/validators/src/matter-graph-inputs.test.ts",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/admin/__tests__/growth-page.test.tsx",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/admin/__tests__/headers.test.ts",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/admin/__tests__/server-actions-audit.test.ts",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/admin/__tests__/sources-actions.test.ts",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/web/__tests__/activity-export-route.test.ts",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/web/__tests__/billing-actions.test.ts",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/web/__tests__/case-watch-actions.test.ts",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/web/__tests__/conflicts-action.test.ts",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/web/__tests__/cross-tenant-actions.test.ts",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  },
+  {
+   "symbol": "obligationClerkView",
+   "test": "apps/web/__tests__/document-preview-sheet.test.tsx",
+   "why": "unrelated to the schema exports: the match is the word 'obligation' in a fixture/mock/row shape or a hoisted mock of another module; the view is not a member of this list"
+  }
+ ]
+}

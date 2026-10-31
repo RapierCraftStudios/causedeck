@@ -38,6 +38,22 @@ export const AUDIT_ACTIONS = {
     security: true,
     description: 'Staff created or changed an external data source or flipped its kill switch',
   },
+  // The bulk judgment import (#890, D-053). Metadata holds the dataset, court and year range only.
+  'corpus.bulk_import_started': {
+    security: false,
+    description: 'Staff started the bulk import of an open judgment dataset',
+  },
+  // A court order or request to mask a judgment was applied (#892). Metadata holds ids, status and the legal basis, never text.
+  'corpus.mask_applied': {
+    security: true,
+    description:
+      'Staff applied a mask request to a judgment: title masked, text re-redacted, caches cleared',
+  },
+  // A fact-pattern search over the judgment corpus (#896). Metadata holds ids, hashes and counts, never the query text.
+  'research.searched': {
+    security: false,
+    description: 'A member searched the judgment corpus: plan and retrieval set recorded as ids',
+  },
   // The public status page's incident log (#770). Metadata holds the change and the old and new state.
   'incident.changed': {
     security: true,

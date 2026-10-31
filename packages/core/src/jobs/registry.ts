@@ -41,6 +41,12 @@ import { coverageWeekly } from './definitions/coverage-weekly.ts';
 import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
+import { corpusBulkImport } from './definitions/corpus-bulk-import.ts';
+import { corpusEnrich } from './definitions/corpus-enrich.ts';
+import { corpusRedact } from './definitions/corpus-redact.ts';
+import { corpusEmbed } from './definitions/corpus-embed.ts';
+import { corpusSegment } from './definitions/corpus-segment.ts';
+import { corpusOcr } from './definitions/corpus-ocr.ts';
 import { corpusPoll } from './definitions/corpus-poll.ts';
 import { judgmentAlertScan } from './definitions/judgment-alert-scan.ts';
 import { briefRefresh, briefRefreshSweep } from './definitions/brief-refresh.ts';
@@ -241,6 +247,12 @@ export const registry = createRegistry([
   importFile,
   systemDataOpsEvaluate,
   corpusPoll,
+  corpusBulkImport,
+  corpusRedact,
+  corpusSegment,
+  corpusEnrich,
+  corpusEmbed,
+  corpusOcr,
   causelistPoll,
   boardPoll,
   noticesPoll,
@@ -323,6 +335,12 @@ export type JobMap = RegistryMap<
     typeof importFile,
     typeof systemDataOpsEvaluate,
     typeof corpusPoll,
+    typeof corpusBulkImport,
+    typeof corpusRedact,
+    typeof corpusSegment,
+    typeof corpusEnrich,
+    typeof corpusEmbed,
+    typeof corpusOcr,
     typeof causelistPoll,
     typeof boardPoll,
     typeof noticesPoll,

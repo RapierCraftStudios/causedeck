@@ -22,7 +22,7 @@ import {
   saveVersion,
 } from '../index.ts';
 
-const SECRET_TEXT = 'Privileged fact 7f3a about the client.';
+const SECRET_TEXT = 'Privileged fact zz-secret-marker about the client.';
 const TEXT = `${SECRET_TEXT} The court held in 2099 INSC 999 that the notice stands.`;
 const content = (text: string) => [{ type: 'paragraph', id: 'p1', text }];
 
@@ -128,7 +128,7 @@ describe('fact-check service', () => {
       );
       expect(audit).toHaveLength(1);
       expect(audit[0]?.actorUserId).toBe(actor.userId);
-      expect(JSON.stringify(audit)).not.toContain('7f3a');
+      expect(JSON.stringify(audit)).not.toContain('zz-secret-marker');
     });
   });
 
@@ -154,7 +154,7 @@ describe('fact-check service', () => {
       );
       expect(rows.length).toBe(claimKeys.length);
       expect(rows.every((r) => r.userId === actor.userId)).toBe(true);
-      expect(JSON.stringify(rows)).not.toContain('7f3a');
+      expect(JSON.stringify(rows)).not.toContain('zz-secret-marker');
     });
   });
 

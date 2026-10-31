@@ -36,7 +36,7 @@ export interface AppEnv {
 export type AppRouter = OpenAPIHono<AppEnv>;
 
 export const API_VERSION = 'v1';
-export const OPENAPI_INFO = { title: 'CauseDeck API', version: '1.0.0' } as const;
+export const OPENAPI_INFO = { title: 'CauseDeck API', version: '1.1.0' } as const;
 
 export const SECURITY_SCHEMES = {
   sessionCookie: { type: 'apiKey', in: 'cookie', name: 'better-auth.session_token' },

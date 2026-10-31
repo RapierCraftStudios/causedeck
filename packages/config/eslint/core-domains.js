@@ -125,12 +125,17 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Citation verification (#484, D-004): resolves a neutral citation against the global `judgment`
   // corpus; reads tables and `@causedeck/intelligence` only, no other domain.
   citations: Object.freeze([]),
+  // The judgment corpus masking service (#892, D-053): applying a mask request records
+  // `corpus.mask_applied` through audit; the redaction itself lives in `@causedeck/intelligence`.
+  corpus: Object.freeze(['audit']),
   // The court document network (#485, D-048): contributions need a cleared source through sources and
   // record their events through audit; opt-in, matter and document reads go to the tables directly.
   network: Object.freeze(['audit', 'sources']),
   // Judgment alerts (#497, D-048): member roles and role settings through workspaces; an alert is
-  // shown only if `verifyCitation` resolves its judgment (D-004), through citations.
-  research: Object.freeze(['workspaces', 'citations']),
+  // shown only if `verifyCitation` resolves its judgment (D-004), through citations. The fact-pattern
+  // search (#896) audits each search through audit, reads the plan's entitlements through billing,
+  // meters `research.searches` through usage and runs its platform-scope models through ai.
+  research: Object.freeze(['workspaces', 'citations', 'audit', 'billing', 'usage', 'ai']),
   // Drafting (#768): roles through workspaces, facts through the matter-graph index, `draft.exported`
   // through audit and the narrative gateway through ai's index.
   drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai']),

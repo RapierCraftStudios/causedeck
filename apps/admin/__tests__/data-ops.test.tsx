@@ -134,6 +134,71 @@ describe('Data Ops console', () => {
     });
   });
 
+  it('shows bulk import progress: rows added, duplicates skipped, failures and storage used (#890)', async () => {
+    await withTestDb(async (tx) => {
+      state.tx = tx;
+      await tx.insert(schema.corpusImportCursor).values({
+        sourceId: 'aws-open-data-hc',
+        dataset: 'hc',
+        court: '33_10',
+        year: 2021,
+        archiveKey: 'data/tar/year=2021/court=33_10/pdfs.tar',
+        position: 7,
+        status: 'running',
+        rowsAdded: 5,
+        duplicatesSkipped: 2,
+        failures: 1,
+        bytesStored: 3 * 1024 * 1024,
+      });
+      const page = await html(DataOpsPage());
+      for (const label of [
+        'Bulk judgment import',
+        'Rows added',
+        'Duplicates skipped',
+        'Storage used',
+      ]) {
+        expect(page).toContain(label);
+      }
+      expect(page).toContain('33_10');
+      expect(page).toContain('3.0 MB');
+      expect(page).not.toContain('pdfs.tar');
+    });
+  });
+  it('shows the OCR queue depth and parked failures (#1030)', async () => {
+    await withTestDb(async (tx) => {
+      state.tx = tx;
+      const [j] = await tx
+        .insert(schema.judgment)
+        .values({
+          sourceId: 'aws-open-data-sc',
+          court: 'Supreme Court of India',
+          caseNumbers: [],
+          bench: [],
+          sha256: 'a'.repeat(64),
+          provenance: {
+            url: 'https://example.test/x',
+            fetchedAt: '2026-10-01T00:00:00Z',
+            sha256: 'a'.repeat(64),
+            sourceId: 'aws-open-data-sc',
+            sourceVersion: '1',
+            tierUsed: 'http',
+            costDollars: 0,
+          },
+          pageText: [],
+        })
+        .returning({ id: schema.judgment.id });
+      const judgmentId = (j as { id: string }).id;
+      await tx.insert(schema.corpusOcrQueue).values([
+        { judgmentId, pageNo: 1 },
+        { judgmentId, pageNo: 2, attempts: 5, lastError: 'PROVIDER_DOWN', parkedAt: new Date() },
+      ]);
+      const page = await html(DataOpsPage());
+      expect(page).toContain('OCR queue');
+      expect(page).toContain('Queue depth: 1');
+      expect(page).toContain('Parked failures: 1');
+      expect(page).toContain('PROVIDER_DOWN');
+    });
+  });
   it('drills down to recent fetch logs without content', async () => {
     await withTestDb(async (tx) => {
       state.tx = tx;

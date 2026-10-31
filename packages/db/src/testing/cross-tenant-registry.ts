@@ -1051,6 +1051,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmTag: denies,
   dismissTag: denies,
   listRelevantJudgments: denies,
+  // fact-pattern search (#896): B naming A's workspace is denied; A's research usage is unchanged.
+  searchAuthorities: denies,
+  rerunAuthoritySearch: denies,
   // drafts (#768): B on A's draft, version or export is denied; A's rows are unchanged.
   createDraft: denies,
   renderDraft: denies,
@@ -1215,6 +1218,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   providerFromTemplate: 'pure function over a template row',
   BUILT_IN_PROVIDERS: 'constant',
   QUERY_PLACEHOLDER: 'constant',
+  // fact-pattern search (#896): constants of the search service
+  RESEARCH_QUERY_MAX_CHARS: 'constant',
+  RESEARCH_SEARCH_CAPS: 'constant',
+  RESEARCH_SEARCH_KEY: 'constant',
+  RESEARCH_SUBJECT_AREAS: 'constant',
   // briefs (#60): pure scoring, the empty memory port, and the system sweep
   computeReadiness: 'pure',
   emptyMemoryProvider: 'constant: the default memory port returns nothing',
@@ -1294,6 +1302,17 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
   setSourceKillSwitch:
     'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): holds platform policy, never tenant data; writes need an enabled ops or admin staff_user',
+  // bulk corpus import (#890): progress of the open-data importer, read by the admin console
+  listBulkImports:
+    'global table `corpus_import_cursor` (GLOBAL_TABLES, no workspace_id, no RLS): per-archive import progress of public datasets, never tenant data',
+  // corpus masking (#892): staff apply a mask request to the global corpus
+  applyMaskRequest:
+    'global tables `judgment` and `corpus_mask_request` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments and takedown requests, never tenant data; needs an enabled ops or admin staff_user',
+  MaskRequestError: 'error class',
+  MASK_PURGE_DEADLINE_HOURS: 'constant',
+  // corpus OCR drain (#1030): queue depth and parked pages of the global `corpus_ocr_queue`
+  ocrQueueStats:
+    'global table `corpus_ocr_queue` (GLOBAL_TABLES, no workspace_id, no RLS): judgment page ids and error codes of the public corpus, never tenant data',
   // court document network (#485): `findContributed` reads the global `contributed_document` table (no
   // workspace_id, no RLS), whose rows carry no contributor; the ledger linking them is tenant data
   findContributed:

@@ -9,6 +9,7 @@ import type { CourtAdapter } from '../types.ts';
 
 export * from './build-fixture.ts';
 export * from './detect.ts';
+export * from './pii-patterns.ts';
 export * from './redact.ts';
 
 /** The adapters whose fixtures the workbench can build and the regression runner covers. */

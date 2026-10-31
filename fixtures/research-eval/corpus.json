@@ -1,0 +1,213 @@
+{
+  "judgments": [
+    {
+      "id": "J01",
+      "title": "Meera Rao v. Sunrise Nursing Home",
+      "court": "Madras High Court",
+      "segments": [
+        {
+          "id": "J01-p1",
+          "page": 1,
+          "text": "The appellant underwent a hysterectomy at the respondent nursing home. No written consent was taken for the procedure, and the patient was not told of the risk of infection."
+        },
+        {
+          "id": "J01-p2",
+          "page": 2,
+          "text": "A post-operative infection set in within three days. The hospital delayed antibiotics and discharged the patient while the wound was still discharging pus. This amounts to medical negligence."
+        },
+        {
+          "id": "J01-p3",
+          "page": 3,
+          "text": "Compensation of Rs 8 lakh is awarded for negligence, absence of informed consent and the post-operative infection that followed."
+        }
+      ]
+    },
+    {
+      "id": "J02",
+      "title": "Karthik v. Lakeview Hospital",
+      "court": "Karnataka High Court",
+      "segments": [
+        {
+          "id": "J02-p1",
+          "page": 1,
+          "text": "A surgery was done on the patient without his informed consent. The doctor did not explain the alternatives to surgery."
+        },
+        {
+          "id": "J02-p2",
+          "page": 2,
+          "text": "The failure to obtain consent is a breach of duty of care. The consumer commission rightly awarded damages for medical negligence."
+        }
+      ]
+    },
+    {
+      "id": "J03",
+      "title": "Anand Traders v. Dr. Selvi",
+      "court": "Madras High Court",
+      "segments": [
+        {
+          "id": "J03-p1",
+          "page": 1,
+          "text": "The patient was administered the wrong drug by a junior nurse. The doctor on duty failed to supervise the dosage."
+        },
+        {
+          "id": "J03-p2",
+          "page": 2,
+          "text": "Medical negligence is made out under the Bolam test. The hospital is vicariously liable for the nurse and the doctor."
+        }
+      ]
+    },
+    {
+      "id": "J04",
+      "title": "Union Narcotics Cell v. Ravi Kumar",
+      "court": "Madras High Court",
+      "segments": [
+        {
+          "id": "J04-p1",
+          "page": 1,
+          "text": "The accused is charged under the NDPS Act with possession of a commercial quantity of heroin. Section 37 bars bail unless two conditions are met."
+        },
+        {
+          "id": "J04-p2",
+          "page": 2,
+          "text": "The court must be satisfied that there are reasonable grounds for believing that the accused is not guilty and is not likely to commit an offence while on bail. Bail is refused for a commercial quantity."
+        }
+      ]
+    },
+    {
+      "id": "J05",
+      "title": "Narcotics Control v. Hari Prasad",
+      "court": "Karnataka High Court",
+      "segments": [
+        {
+          "id": "J05-p1",
+          "page": 1,
+          "text": "The recovery was of a small quantity of ganja. Section 37 of the NDPS Act does not apply to a small quantity, and bail is governed by the ordinary rules of the Code of Criminal Procedure."
+        },
+        {
+          "id": "J05-p2",
+          "page": 2,
+          "text": "The accused has been in custody for eight months and the trial has not begun. Bail is granted on conditions."
+        }
+      ]
+    },
+    {
+      "id": "J06",
+      "title": "Mohan v. Ramesh Finance",
+      "court": "Madras High Court",
+      "segments": [
+        {
+          "id": "J06-p1",
+          "page": 1,
+          "text": "A cheque of Rs 5 lakh was dishonoured for insufficient funds. The complaint under section 138 of the Negotiable Instruments Act was filed within one month of the cause of action."
+        },
+        {
+          "id": "J06-p2",
+          "page": 2,
+          "text": "The statutory demand notice was served within thirty days of the bank memo. The presumption under section 139 applies and the accused failed to rebut it."
+        }
+      ]
+    },
+    {
+      "id": "J07",
+      "title": "Gowda v. Prime Credit",
+      "court": "Karnataka High Court",
+      "segments": [
+        {
+          "id": "J07-p1",
+          "page": 1,
+          "text": "The complaint for cheque dishonour was dismissed as time barred because the demand notice was sent after thirty days of the return memo."
+        },
+        {
+          "id": "J07-p2",
+          "page": 2,
+          "text": "The notice period under section 138 is mandatory. A delayed demand notice defeats the complaint."
+        }
+      ]
+    },
+    {
+      "id": "J08",
+      "title": "Sheela v. State",
+      "court": "Madras High Court",
+      "segments": [
+        {
+          "id": "J08-p1",
+          "page": 1,
+          "text": "The applicant seeks anticipatory bail under section 438 in a bank fraud case involving an economic offence of large magnitude."
+        },
+        {
+          "id": "J08-p2",
+          "page": 2,
+          "text": "Economic offences form a separate class. Custodial interrogation is needed to trace the money, and anticipatory bail is declined."
+        }
+      ]
+    },
+    {
+      "id": "J09",
+      "title": "Lakshmi Ammal v. Sundaram",
+      "court": "Madras High Court",
+      "segments": [
+        {
+          "id": "J09-p1",
+          "page": 1,
+          "text": "The landlord seeks eviction of the tenant on the ground of bona fide need for his own occupation. The tenant has paid rent regularly."
+        },
+        {
+          "id": "J09-p2",
+          "page": 2,
+          "text": "The landlord has proved genuine requirement for a residence for his son. Eviction is ordered with six months to vacate."
+        }
+      ]
+    },
+    {
+      "id": "J10",
+      "title": "Bharat Insurance v. Devi",
+      "court": "Karnataka High Court",
+      "segments": [
+        {
+          "id": "J10-p1",
+          "page": 1,
+          "text": "The claimants are the dependants of a deceased motorcyclist killed in a road accident. The tribunal applied the multiplier for his age."
+        },
+        {
+          "id": "J10-p2",
+          "page": 2,
+          "text": "Compensation is enhanced under future prospects, loss of dependency and funeral expenses. The insurer is liable to pay with interest."
+        }
+      ]
+    },
+    {
+      "id": "J11",
+      "title": "Raman v. State Transport Corporation",
+      "court": "Madras High Court",
+      "segments": [
+        {
+          "id": "J11-p1",
+          "page": 1,
+          "text": "The employee was dismissed from service without a show cause notice or a domestic enquiry. This violates the principles of natural justice."
+        },
+        {
+          "id": "J11-p2",
+          "page": 2,
+          "text": "The order of dismissal is quashed and the employee is reinstated with back wages."
+        }
+      ]
+    },
+    {
+      "id": "J12",
+      "title": "Prabhu v. Land Acquisition Officer",
+      "court": "Karnataka High Court",
+      "segments": [
+        {
+          "id": "J12-p1",
+          "page": 1,
+          "text": "The reference court fixed the market value of acquired agricultural land on the basis of sale deeds of comparable lands."
+        },
+        {
+          "id": "J12-p2",
+          "page": 2,
+          "text": "Solatium and interest are added to the market value. The landowners are entitled to enhanced compensation for the acquisition."
+        }
+      ]
+    }
+  ]
+}

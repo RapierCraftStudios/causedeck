@@ -1,6 +1,6 @@
 // The public v1 data routes (#625, #487 part 2) through the real app: a key without the route's
 // scope gets 403; only cleared sources are served, shared records only from non-personal ones;
-// every record carries provenance and `source_license`; another workspace's case is invisible; no
+// every record carries `as_of` and `official_url` and no source name or licence (D-053); another workspace's case is invisible; no
 // response holds a judge rating, ranking or prediction (D-048, D-050).
 import { randomUUID } from 'node:crypto';
 
@@ -93,6 +93,7 @@ beforeAll(async () => {
     'causelists:read',
     'orders:read',
     'notices:read',
+    'research:read',
   ]);
   keyB = await keyFor(t.b.id, t.ub, ['cases:read', 'orders:read']);
   keyNoScopes = await keyFor(t.a.id, t.ua, ['webhooks:write']);
@@ -103,7 +104,16 @@ const get = async (path: string, bearer: string) => {
   return { status: response.status, body: (await response.json()) as Record<string, unknown> };
 };
 
-const ROUTES = [`/v1/cases/${CASE_CNR}`, '/v1/causelists', '/v1/orders', '/v1/notices'];
+/** Keys that would name a source, aggregator, fetch route or licence (D-053 item 4). */
+const FORBIDDEN_KEYS = ['source_id', 'source_license', 'provenance', 'ref', 'url'];
+
+const ROUTES = [
+  `/v1/cases/${CASE_CNR}`,
+  '/v1/causelists',
+  '/v1/orders',
+  '/v1/notices',
+  '/v1/research/search?q=surgery',
+];
 
 describe('public API scopes', () => {
   it.each(ROUTES)('answers 403 on %s for a key without the scope', async (path) => {
@@ -117,7 +127,7 @@ describe('public API scopes', () => {
 });
 
 describe('notices, cause lists and orders', () => {
-  it('serves only cleared non-personal sources, with provenance and source_license', async () => {
+  it('serves only cleared non-personal sources, with as_of and official_url and no source fields', async () => {
     for (const path of [
       `/v1/notices?forum=pa-${tag}`,
       `/v1/causelists?forum=PA%20${tag}`,
@@ -125,18 +135,41 @@ describe('notices, cause lists and orders', () => {
     ]) {
       const { status, body } = await get(path, keyA);
       expect(status).toBe(200);
-      const data = (
-        body.data as { provenance: { source_id: string }; source_license: string }[]
-      ).filter((r) => r.provenance.source_id.startsWith(`pa.${tag}`));
-      expect(
-        data.map((r) => r.provenance.source_id),
-        path,
-      ).toEqual([ids.open]);
+      // The seeded text carries its source id, so it identifies which sources were served.
+      const data = (body.data as Record<string, unknown>[]).filter((r) =>
+        JSON.stringify(r).includes(`pa.${tag}`),
+      );
+      expect(data, path).toHaveLength(1);
+      expect(JSON.stringify(data[0])).toContain(ids.open);
       for (const record of data) {
-        expect(record.source_license).not.toBe('');
-        expect(record.provenance).toMatchObject({ source_id: ids.open });
+        expect(Number.isNaN(Date.parse(String(record.as_of)))).toBe(false);
+        expect(record).toHaveProperty('official_url');
+        expect(FORBIDDEN_KEYS.filter((k) => k in record)).toEqual([]);
       }
     }
+  });
+
+  it('keeps official_url only for a link on the court’s own host', async () => {
+    const { body } = await get(`/v1/notices?forum=pa-${tag}`, keyA);
+    const open = (body.data as { title: string; official_url: string | null }[]).find((r) =>
+      r.title.includes(ids.open),
+    );
+    expect(open?.official_url).toMatch(/^https:\/\/pa\.example\.test\//);
+  });
+
+  it('declares no source field in any v1 response schema', async () => {
+    const response = await call(app, '/openapi.json', {});
+    const { paths } = (await response.json()) as { paths: Record<string, unknown> };
+    const spec = JSON.stringify(
+      Object.entries(paths).filter(([route]) =>
+        ['/v1/cases/', '/v1/causelists', '/v1/orders', '/v1/notices'].some((p) =>
+          route.startsWith(p),
+        ),
+      ),
+    );
+    const keys = [...spec.matchAll(/"([a-z_]+)":\{"type"/g)].map((m) => m[1] ?? '');
+    expect(keys.length).toBeGreaterThan(0);
+    expect(FORBIDDEN_KEYS.filter((k) => keys.includes(k))).toEqual([]);
   });
 
   it('never narrows shared text by advocate unless the workspace watches that name', async () => {
@@ -146,14 +179,13 @@ describe('notices, cause lists and orders', () => {
 });
 
 describe('cases', () => {
-  it('serves the caller’s own case with provenance and source_license', async () => {
+  it('serves the caller’s own case with as_of and no source fields', async () => {
     const { status, body } = await get(`/v1/cases/${CASE_CNR}`, keyA);
     expect(status).toBe(200);
-    expect(body).toMatchObject({
-      cnr: CASE_CNR,
-      provenance: { source_id: ids.personal, kind: 'fetched' },
-    });
-    expect(String(body.source_license)).not.toBe('');
+    expect(body).toMatchObject({ cnr: CASE_CNR });
+    expect(Number.isNaN(Date.parse(String(body.as_of)))).toBe(false);
+    expect(FORBIDDEN_KEYS.filter((k) => k in body)).toEqual([]);
+    expect(JSON.stringify(body)).not.toContain(ids.personal);
     const orders = await get(`/v1/orders?case=${CASE_CNR}`, keyA);
     expect(orders.status).toBe(200);
   });
@@ -185,5 +217,78 @@ describe('what responses never hold', () => {
     for (const text of bodies) {
       expect(text).not.toMatch(/rating|ranking|rank"|predict|contributor|workspace/i);
     }
+  });
+});
+
+describe('research search (#896)', () => {
+  const SENTINEL = 'Zorblax Industries';
+
+  async function seedCorpus(): Promise<string> {
+    const db = testAppDb();
+    const sha256 = randomUUID().replaceAll('-', '');
+    const [row] = await db
+      .insert(schema.judgment)
+      .values({
+        sourceId: 'in.mhc.judgments',
+        court: 'MHC',
+        sha256,
+        neutralCitation: `2019:MHC:${sha256.slice(0, 5)}`,
+        judgmentDate: '2019-03-04',
+        provenance: {
+          url: `https://court.example/${sha256}.pdf`,
+          fetchedAt: '2026-10-23T00:00:00.000Z',
+          sha256,
+          sourceId: 'in.mhc.judgments',
+          sourceVersion: 'v1',
+          tierUsed: 'http',
+          costDollars: 0,
+        },
+        pageText: [{ pageNo: 1, text: `${SENTINEL} v. the patient.` }],
+        redactedText: [{ pageNo: 1, text: '[PARTY] v. [PARTY].' }],
+        redactionVersion: 1,
+        segmentVersion: 1,
+        segmentedRedactionVersion: 1,
+        caseTitle: 'A v. B',
+        courtLevel: 'high_court',
+      })
+      .returning({ id: schema.judgment.id });
+    const judgmentId = row?.id ?? '';
+    await db.insert(schema.judgmentSegment).values({
+      judgmentId,
+      ordinal: 1,
+      role: 'facts',
+      pageFrom: 1,
+      pageTo: 1,
+      text: 'Quokkafish surgery was done without written consent and an infection followed.',
+      court: 'MHC',
+      courtLevel: 'high_court',
+      judgmentYear: 2019,
+    });
+    return judgmentId;
+  }
+
+  it('returns redacted passages with court, citation and the official link, and no party name', async () => {
+    const judgmentId = await seedCorpus();
+    const { status, body } = await get(
+      '/v1/research/search?q=quokkafish%20written%20consent%20infection',
+      keyA,
+    );
+    expect(status).toBe(200);
+    const data = body.data as {
+      id: string;
+      neutral_citation: string;
+      segments: { role: string; text: string }[];
+    }[];
+    const hit = data.find((r) => r.id === judgmentId);
+    expect(hit).toMatchObject({ court: 'MHC' });
+    expect(hit?.neutral_citation).toMatch(/^2019:MHC:/);
+    expect(hit?.segments[0]?.role).toBe('facts');
+    expect(JSON.stringify(body)).not.toContain(SENTINEL);
+    expect(JSON.stringify(body)).not.toMatch(/source_id|licen[cs]e|provenance|rating|predict/i);
+  });
+
+  it('asks for a query and refuses a key without the scope', async () => {
+    expect((await get('/v1/research/search', keyA)).status).toBe(422);
+    expect((await get('/v1/research/search?q=surgery', keyB)).status).toBe(403);
   });
 });

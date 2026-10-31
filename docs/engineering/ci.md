@@ -8,8 +8,11 @@ CI is GitHub Actions. It gates every pull request, and the ForgeDock pipeline me
 |---|---|---|---|
 | CI | `.github/workflows/ci.yml` | `pull_request`, `push` to `main`, `staging` and ForgeDock lane branches `feat/issue-*-lean`, `merge_group` | `lint`, `typecheck`, `test`, `build`, `tenancy` |
 | Security | `.github/workflows/security.yml` | `pull_request`, `push` to `main`, `staging`, `milestone/**`, weekly cron (Mon 02:30 UTC), manual | `audit`, `gitleaks`, `codeql`, `dependency-review` (PRs only) |
+| Research eval | `.github/workflows/research-eval.yml` | `pull_request` touching `packages/intelligence/src/research/**`, `packages/intelligence/src/corpus/**` or `fixtures/research-eval/**` | `research-eval` |
 | Lint workflows | `.github/workflows/lint-workflows.yml` | `pull_request` and `push` touching `.github/**` | `actionlint` |
 | Dependabot | `.github/dependabot.yml` | weekly | npm (one grouped `catalog` PR), github-actions (workflows and `.github/actions/*`) |
+
+`research-eval` (#891, ADR 0051 §Evaluation) runs the BM25 baseline ranker on the pinned synthetic set in `fixtures/research-eval/` (`pnpm --filter @causedeck/intelligence research-eval`), uploads `report.json` and `report.md`, and fails when nDCG@10 drops more than 2 points below `fixtures/research-eval/baseline.json`. `manifest.json` pins the sha256 of `corpus.json` and `queries.json`. After changing either file or improving the ranker, run the command with `--update-baseline` and commit the result. `RESEARCH_EVAL_PRIVATE_DIR` (a directory with `corpus.json` and `queries.json`) adds an advocate-written set that is reported separately and never gates CI.
 
 Every job bootstraps with the composite action `.github/actions/setup` (pnpm from `packageManager`, Node from `.nvmrc` with the pnpm store cache, a Turborepo cache chosen by its `turbo-cache` input, `pnpm install --frozen-lockfile`). Later workflows (e2e #16, Storybook #8, deploys) reuse it after `actions/checkout`.
 

@@ -21,7 +21,6 @@ const OrderSchema = z.object({
   date: z.string().nullable(),
   number: z.string().nullable(),
   summary: z.string().nullable(),
-  url: z.string().nullable(),
   content: z.string().nullable(),
   forum: z.string().nullable(),
   ...recordShape,
@@ -64,9 +63,15 @@ export function ordersRouter(db: Database): AppRouter {
     });
     return c.json(
       {
-        data: orders.map(({ provenance, sourceLicense, ...rest }) => ({
-          ...rest,
-          ...recordOf({ provenance, sourceLicense }),
+        data: orders.map((o) => ({
+          id: o.id,
+          case: o.case,
+          date: o.date,
+          number: o.number,
+          summary: o.summary,
+          content: o.content,
+          forum: o.forum,
+          ...recordOf(o),
         })),
       },
       200,

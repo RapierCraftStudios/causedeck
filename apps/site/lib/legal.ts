@@ -12,7 +12,14 @@ import { CONTENT_DIR, loadMdxFile, type MdxPage } from './mdx.ts';
 import { pageMetadata, canonicalUrl } from './seo.ts';
 import { siteEnv } from './env.ts';
 
-export const LEGAL_SLUGS = ['terms', 'privacy', 'dpa', 'ai-disclosure', 'sub-processors'] as const;
+export const LEGAL_SLUGS = [
+  'terms',
+  'privacy',
+  'dpa',
+  'ai-disclosure',
+  'sub-processors',
+  'data-sources',
+] as const;
 export type LegalSlug = (typeof LEGAL_SLUGS)[number];
 
 export const LEGAL_DIR = path.join(CONTENT_DIR, 'legal');

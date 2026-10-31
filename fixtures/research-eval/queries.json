@@ -1,0 +1,170 @@
+{
+  "queries": [
+    {
+      "id": "Q01",
+      "text": "medical negligence with post-operative infection and no consent for the surgery",
+      "facets": {
+        "kind": "fact-pattern"
+      },
+      "judgments": {
+        "J01": 3,
+        "J02": 2,
+        "J03": 1
+      }
+    },
+    {
+      "id": "Q02",
+      "text": "hospital performed surgery without informed consent of patient",
+      "facets": {
+        "kind": "fact-pattern"
+      },
+      "judgments": {
+        "J02": 3,
+        "J01": 2
+      }
+    },
+    {
+      "id": "Q03",
+      "text": "nurse gave wrong drug dosage doctor failed to supervise negligence",
+      "facets": {
+        "kind": "fact-pattern"
+      },
+      "judgments": {
+        "J03": 3
+      }
+    },
+    {
+      "id": "Q04",
+      "text": "section 37 NDPS bail commercial quantity",
+      "facets": {
+        "kind": "statute",
+        "statute": "NDPS s.37"
+      },
+      "judgments": {
+        "J04": 3,
+        "J05": 1
+      }
+    },
+    {
+      "id": "Q05",
+      "text": "bail for small quantity ganja NDPS long custody",
+      "facets": {
+        "kind": "fact-pattern"
+      },
+      "judgments": {
+        "J05": 3,
+        "J04": 1
+      }
+    },
+    {
+      "id": "Q06",
+      "text": "dishonour of cheque section 138 complaint within limitation",
+      "facets": {
+        "kind": "statute",
+        "statute": "NI Act s.138"
+      },
+      "judgments": {
+        "J06": 3,
+        "J07": 2
+      }
+    },
+    {
+      "id": "Q07",
+      "text": "demand notice sent after thirty days cheque complaint time barred",
+      "facets": {
+        "kind": "fact-pattern",
+        "court": "Karnataka High Court"
+      },
+      "judgments": {
+        "J07": 3,
+        "J06": 1
+      }
+    },
+    {
+      "id": "Q08",
+      "text": "anticipatory bail section 438 economic offence bank fraud",
+      "facets": {
+        "kind": "statute",
+        "statute": "CrPC s.438"
+      },
+      "judgments": {
+        "J08": 3
+      }
+    },
+    {
+      "id": "Q09",
+      "text": "eviction of tenant landlord bona fide need own occupation",
+      "facets": {
+        "kind": "fact-pattern"
+      },
+      "judgments": {
+        "J09": 3
+      }
+    },
+    {
+      "id": "Q10",
+      "text": "motor accident compensation deceased motorcyclist dependants multiplier",
+      "facets": {
+        "kind": "fact-pattern"
+      },
+      "judgments": {
+        "J10": 3
+      }
+    },
+    {
+      "id": "Q11",
+      "text": "dismissal from service without enquiry violation of natural justice",
+      "facets": {
+        "kind": "fact-pattern"
+      },
+      "judgments": {
+        "J11": 3
+      }
+    },
+    {
+      "id": "Q12",
+      "text": "enhanced compensation for acquired agricultural land market value",
+      "facets": {
+        "kind": "fact-pattern"
+      },
+      "judgments": {
+        "J12": 3
+      }
+    },
+    {
+      "id": "Q13",
+      "text": "duty of care breach doctor failed to explain risks",
+      "facets": {
+        "kind": "fact-pattern",
+        "court": "Madras High Court"
+      },
+      "judgments": {
+        "J01": 3,
+        "J02": 2,
+        "J03": 1
+      }
+    },
+    {
+      "id": "Q14",
+      "text": "presumption section 139 rebut accused cheque",
+      "facets": {
+        "kind": "statute",
+        "statute": "NI Act s.139"
+      },
+      "judgments": {
+        "J06": 3,
+        "J07": 1
+      }
+    },
+    {
+      "id": "Q15",
+      "text": "insurer liable to pay compensation with interest road accident",
+      "facets": {
+        "kind": "fact-pattern"
+      },
+      "judgments": {
+        "J10": 3
+      }
+    }
+  ]
+}

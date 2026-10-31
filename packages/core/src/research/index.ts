@@ -43,3 +43,19 @@ export {
   type ProviderTemplateRow,
   type ResearchNoteRow,
 } from './notes-service.ts';
+// Fact-pattern search over the judgment corpus (#896, ADR 0051): plan, retrieve, fuse, rerank, group
+// and a verified answer, metered per workspace and audited as ids.
+export {
+  rerunAuthoritySearch,
+  RESEARCH_QUERY_MAX_CHARS,
+  RESEARCH_SEARCH_CAPS,
+  RESEARCH_SEARCH_KEY,
+  RESEARCH_SUBJECT_AREAS,
+  searchAuthorities,
+  type AuthoritySearchResult,
+  type ResearchRerunInput,
+  type ResearchSearchActor,
+  type ResearchSearchDeps,
+  type ResearchSearchInput,
+  type ResearchUsage,
+} from './search.ts';

@@ -31,7 +31,7 @@ const QUOTE_MAX = 240;
 const STATUTE_WINDOW = 120;
 
 // `section 34`, `s. 34(2)(a)`, `Sections 11 (6)`: the number and its sub-clauses.
-const SECTION_REF =
+export const SECTION_REF =
   /\b(?:sections?|secs?\.?|ss?\.)\s*(\d+[a-z]{0,2}(?:\s*\(\s*[0-9a-z]{1,4}\s*\))*)/gi;
 
 function citesStatute(window: string, statute: string): boolean {

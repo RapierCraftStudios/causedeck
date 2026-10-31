@@ -32,6 +32,10 @@ export interface GatewayOcrOptions {
   /** Workspace, capture, matter and user the calls are charged and audited to. */
   scope: Pick<RunContext, 'workspaceId' | 'captureId' | 'matterId' | 'userId'>;
   pipelineVersion: string;
+  /** Gateway purpose; defaults to `capture.ocr`. The corpus drain uses `corpus.ocr` (#1030). */
+  purpose?: string;
+  /** Idempotency key prefix; defaults to `capture-ocr`. */
+  idempotencyPrefix?: string;
 }
 
 interface OcrOutput {
@@ -46,6 +50,8 @@ interface OcrOutput {
 
 export function createGatewayOcr(options: GatewayOcrOptions): OcrPort {
   const { gateway, scope, pipelineVersion } = options;
+  const purpose = options.purpose ?? 'capture.ocr';
+  const prefix = options.idempotencyPrefix ?? 'capture-ocr';
   return {
     async ocrPage({ pageNo, png, language }) {
       const result = await gateway.run<OcrOutput>(
@@ -58,8 +64,8 @@ export function createGatewayOcr(options: GatewayOcrOptions): OcrPort {
         },
         {
           ...scope,
-          purpose: 'capture.ocr',
-          idempotencyKey: `capture-ocr:${scope.captureId ?? 'none'}:${pipelineVersion}:${String(pageNo)}`,
+          purpose,
+          idempotencyKey: `${prefix}:${scope.captureId ?? 'none'}:${pipelineVersion}:${String(pageNo)}`,
         },
       );
       const [page] = result.output.pages;

@@ -381,6 +381,31 @@ export const serverKeys = {
     requiredWhen: 'never',
     ownerIssue: 371,
   },
+  RESEARCH_EVAL_PRIVATE_DIR: {
+    domain: 'server',
+    type: 'path',
+    description:
+      'Directory with an advocate-written research evaluation set (corpus.json, queries.json). Never committed; reported separately and unset in CI.',
+    requiredWhen: 'never',
+    ownerIssue: 899,
+  },
+  CORPUS_OCR_ENABLED: {
+    domain: 'server',
+    type: 'boolean',
+    description:
+      'Run the corpus OCR job (system.corpus.ocr), which drains the queue of judgment pages without a text layer through the platform AI scope.',
+    default: 'false',
+    requiredWhen: 'never (off unless set)',
+    ownerIssue: 1030,
+  },
+  CORPUS_OCR_DAILY_PAISE: {
+    domain: 'server',
+    type: 'integer (1-100000000)',
+    description: 'Daily platform AI budget for corpus OCR, in paise.',
+    default: '500000',
+    requiredWhen: 'never (defaults to 500000)',
+    ownerIssue: 1030,
+  },
   ALTERLAB_API_KEY: {
     domain: 'server',
     type: 'secret',
@@ -601,6 +626,21 @@ export const serverShape = {
     .min(1)
     .optional()
     .describe(d(serverKeys.ADAPTER_PRIVATE_FIXTURES_DIR)),
+  // Advocate-written research eval set (#899); the eval CLI skips the private set when unset.
+  RESEARCH_EVAL_PRIVATE_DIR: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(d(serverKeys.RESEARCH_EVAL_PRIVATE_DIR)),
+  // Corpus OCR drain (#1030): off unless CORPUS_OCR_ENABLED is true.
+  CORPUS_OCR_ENABLED: z.stringbool().optional().describe(d(serverKeys.CORPUS_OCR_ENABLED)),
+  CORPUS_OCR_DAILY_PAISE: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100_000_000)
+    .optional()
+    .describe(d(serverKeys.CORPUS_OCR_DAILY_PAISE)),
   // The governed fetch layer (#479, D-048): no key means the mock provider.
   ALTERLAB_API_KEY: secret(z.string().min(1)).optional().describe(d(serverKeys.ALTERLAB_API_KEY)),
   // Data-ops alert routing (#515, D-049): both unset means alerts are logged.

@@ -3,3 +3,4 @@ export * from './registry.ts';
 export * from './fetch-log.ts';
 export * from './ops.ts';
 export * from './coverage.ts';
+export * from './bulk-import.ts';

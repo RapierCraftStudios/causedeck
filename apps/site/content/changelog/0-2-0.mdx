@@ -1,0 +1,15 @@
+---
+title: 0.2.0, public API 1.1.0 no longer names data sources
+description: The public API drops provenance and source_license from responses, and a new page lists the attribution our data sources require.
+date: 2026-10-30
+version: 0.2.0
+---
+
+### Changed
+
+- Public API 1.1.0: records no longer carry `provenance` or `source_license`. They carry `as_of` and `official_url`, a link to the court's own copy or `null`.
+- The order `url` and the notice `url` fields are replaced by `official_url`.
+
+### Added
+
+- A [Data sources and licences](/legal/data-sources/) page with the attribution each source licence requires.

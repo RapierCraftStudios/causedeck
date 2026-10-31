@@ -3,23 +3,23 @@
 // Personal data is found by shape (email, Indian mobile number, Aadhaar, PAN). The placeholders
 // the redactor writes are skipped, so redacted output scans clean.
 
+// Shared by the leak detector and the corpus redaction pipeline (#892).
+import {
+  AADHAAR_RE,
+  EMAIL_PLACEHOLDER,
+  EMAIL_RE,
+  PAN_PLACEHOLDER,
+  PAN_RE,
+  PHONE_PLACEHOLDER,
+  PHONE_RE,
+} from './pii-patterns.ts';
+
 export type LeakKind = 'name' | 'email' | 'phone' | 'aadhaar' | 'pan';
 
 export interface Leak {
   kind: LeakKind;
   value: string;
 }
-
-export const EMAIL_PLACEHOLDER = 'redacted@example.invalid';
-export const PHONE_PLACEHOLDER = '9000000000';
-export const AADHAAR_PLACEHOLDER = '0000 0000 0000';
-export const PAN_PLACEHOLDER = 'AAAAA0000A';
-
-export const EMAIL_RE = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
-export const PHONE_RE = /(?<!\d)(?:\+91[\s-]?|0)?[6-9]\d{9}(?!\d)/g;
-// Real Aadhaar numbers never start with 0 or 1, which keeps the placeholder out of the match.
-export const AADHAAR_RE = /(?<!\d)[2-9]\d{3}\s?\d{4}\s?\d{4}(?!\d)/g;
-export const PAN_RE = /\b[A-Z]{5}\d{4}[A-Z]\b/g;
 
 const WORD_EDGE_BEFORE = '(?<![\\p{L}\\p{N}])';
 const WORD_EDGE_AFTER = '(?![\\p{L}\\p{N}])';

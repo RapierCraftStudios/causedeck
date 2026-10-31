@@ -1,6 +1,7 @@
 // The deterministic mock provider (dev and CI; no network). A response is keyed by
 // `(task, sha256(normalised input))`: a fixture file `fixtures/mock/<task>/<hash>.json` with
-// `{ "output": ..., "usage"?: ... }` wins, otherwise a schema-valid synthetic value is returned.
+// `{ "output": ..., "usage"?: ... }` wins, otherwise a deterministic reply for the research tasks
+// (`mock-responders.ts`) or a schema-valid synthetic value is returned.
 // `withRecording` wraps a real provider to capture responses into fixtures, only for inputs the
 // caller marks synthetic, so customer content never reaches the repository.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -15,6 +16,7 @@ import {
   type ProviderResult,
   type TaskDef,
 } from '../types.ts';
+import { mockResponse } from './mock-responders.ts';
 import { synthesise } from './synthetic.ts';
 
 export const DEFAULT_FIXTURES_DIR = path.resolve(
@@ -55,7 +57,9 @@ export function createMockProvider({
         output = fixture.output;
         usage = fixture.usage ?? usage;
       } else {
-        output = synthesise(task.output);
+        output =
+          (opts.repair === undefined ? mockResponse(task, input) : undefined) ??
+          synthesise(task.output);
       }
       return Promise.resolve({ output, usage, model: 'mock', modelVersion: 'mock-1' });
     },

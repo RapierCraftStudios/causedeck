@@ -1,0 +1,372 @@
+{
+ "requirements": [
+  {
+   "id": "R1",
+   "quote": "Fact-pattern and statute searches need facets: statutes and sections, cited cases, subject area, court level and outcome.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R2",
+   "quote": "`judgment_statute_ref`: judgment, normalised statute, section, page.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R3",
+   "quote": "`judgment_citation_ref`: judgment, raw citation, normalised citation, `cited_judgment_id` (nullable), page.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R4",
+   "quote": "`judgment_tag`: judgment, subject area, confidence, model version.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R5",
+   "quote": "`judgment` gains `outcome` and `court_level`.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R6",
+   "quote": "**Statute refs:** reuse the #497 section parser (`match.ts`, `issues/` normalisers).",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R7",
+   "quote": "**Criminal-code mapping:** an offence-date-aware IPC↔BNS, CrPC↔BNSS and IEA↔BSA mapping table, built from the public BPR&D correspondence tables. It is a versioned data file with a source note, so a search for BNS 106 also finds IPC 304A and the reverse.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R8",
+   "quote": "**Citation extraction:** neutral citations, SCC/AIR/SCR/MLJ/KLJ-style reporter citations parsed into normalised form, and resolution to corpus rows. Only the citation string is stored, never reporter page text.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R9",
+   "quote": "**Subject areas:** a controlled vocabulary (medical negligence, consumer, rent control, motor accident claims, NDPS, bail, arbitration, IBC, service and so on) assigned through the gateway with schema-validated output.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R10",
+   "quote": "**Outcome:** taken from the decision segment, with anchors (ADR 0028 style).",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R11",
+   "quote": "`packages/intelligence/src/corpus/enrich/`, with every output carrying a ruleset or model version:",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R12",
+   "quote": "`apps/worker`: a `corpus.enrich` job, re-runnable by version. Register it in the worker registry tests.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R13",
+   "quote": "Update the #484 static editorial test (D-053): assert that every corpus source in the registry is official or open-licence, instead of banning column names.",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R14",
+   "quote": "On fixtures, statute refs are found with their page, and an IPC 304A judgment is retrievable by the BNS 106 facet. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R15",
+   "quote": "Citation extraction precision is at least 0.95 and recall at least 0.9 on a labelled set; resolved citations link to existing rows. [type:integration]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R16",
+   "quote": "Subject-tag macro-F1 is at least 0.8 on the 15 most common areas, reported. [type:integration]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R17",
+   "quote": "Outcome is extracted with an anchor, or set to `unknown`. It is never guessed without an anchor. [type:unit]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  },
+  {
+   "id": "R18",
+   "quote": "Re-running with a new version replaces only that version's rows. [type:integration]",
+   "disposition": "deliver",
+   "verify": "in_lane"
+  }
+ ],
+ "deliverables": [
+  {
+   "id": "D1",
+   "path": "packages/db/src/schema/corpus.ts",
+   "change": "Add judgment_statute_ref, judgment_citation_ref, judgment_tag tables (version column on each; unique/index keys; outcome, outcome_anchor, court_level, enrich_version on judgment).",
+   "requirements": [
+    "R2",
+    "R3",
+    "R4",
+    "R5",
+    "R17"
+   ]
+  },
+  {
+   "id": "D2",
+   "path": "packages/db/migrations/20261031000000_corpus_enrich.sql",
+   "change": "Hand-written migration: new tables and judgment columns (next free number on the base; renumber if taken). Plus meta/_journal.json entry and 20261031000000_snapshot.json.",
+   "requirements": [
+    "R2",
+    "R3",
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D3",
+   "path": "packages/db/src/conventions.ts",
+   "change": "Add the 3 new tables to GLOBAL_TABLES.",
+   "requirements": [
+    "R2",
+    "R3",
+    "R4"
+   ]
+  },
+  {
+   "id": "D4",
+   "path": "packages/db/src/index.test.ts",
+   "change": "Add the 3 tables to the root table list.",
+   "requirements": [
+    "R2",
+    "R3",
+    "R4"
+   ]
+  },
+  {
+   "id": "D5",
+   "path": "packages/db/src/schema/corpus.test.ts",
+   "change": "Replace the EDITORIAL column-name test with an assertion that every corpus source in the registry is official or open-licence (D-053).",
+   "requirements": [
+    "R13"
+   ]
+  },
+  {
+   "id": "D6",
+   "path": "packages/db/src/__tests__/corpus-enrich.test.ts",
+   "change": "New schema/migration test for the new tables and columns.",
+   "requirements": [
+    "R2",
+    "R3",
+    "R4",
+    "R5"
+   ]
+  },
+  {
+   "id": "D7",
+   "path": "packages/intelligence/src/corpus/match.ts",
+   "change": "Export the SECTION_REF section parser for reuse (no behaviour change).",
+   "requirements": [
+    "R6"
+   ]
+  },
+  {
+   "id": "D8",
+   "path": "packages/intelligence/src/corpus/enrich/statutes.ts",
+   "change": "Statute ref extraction with page, reusing the parser and issues/ normalisers.",
+   "requirements": [
+    "R6",
+    "R14"
+   ]
+  },
+  {
+   "id": "D9",
+   "path": "packages/intelligence/src/corpus/enrich/code-map.ts",
+   "change": "Offence-date-aware IPC\u003c->BNS, CrPC\u003c->BNSS, IEA\u003c->BSA mapping as versioned data with source note, plus lookup both ways.",
+   "requirements": [
+    "R7",
+    "R14"
+   ]
+  },
+  {
+   "id": "D10",
+   "path": "packages/intelligence/src/corpus/enrich/citations.ts",
+   "change": "Neutral and SCC/AIR/SCR/MLJ/KLJ citation parse, normalise, resolve to corpus rows; store citation string only.",
+   "requirements": [
+    "R8",
+    "R15"
+   ]
+  },
+  {
+   "id": "D11",
+   "path": "packages/intelligence/src/corpus/enrich/subjects.ts",
+   "change": "Controlled vocabulary and resolver-port gateway tagging with zod-validated output, model version.",
+   "requirements": [
+    "R9",
+    "R16"
+   ]
+  },
+  {
+   "id": "D12",
+   "path": "packages/intelligence/src/corpus/enrich/outcome.ts",
+   "change": "Outcome from the decision segment with anchor, else 'unknown'.",
+   "requirements": [
+    "R10",
+    "R17"
+   ]
+  },
+  {
+   "id": "D13",
+   "path": "packages/intelligence/src/corpus/enrich/index.ts",
+   "change": "Barrel and ENRICH_VERSION; export from corpus/index.ts.",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D14",
+   "path": "packages/intelligence/src/corpus/index.ts",
+   "change": "Re-export enrich.",
+   "requirements": [
+    "R11"
+   ]
+  },
+  {
+   "id": "D15",
+   "path": "packages/intelligence/src/corpus/enrich/enrich.test.ts",
+   "change": "Fixture and labelled-set tests: statute page, BNS 106 finds IPC 304A, citation precision>=0.95/recall>=0.9, subject macro-F1>=0.8 reported, outcome anchor/unknown.",
+   "requirements": [
+    "R14",
+    "R15",
+    "R16",
+    "R17"
+   ]
+  },
+  {
+   "id": "D16",
+   "path": "packages/core/src/jobs/definitions/corpus-enrich.ts",
+   "change": "system.corpus.enrich job modelled on corpus-segment.ts: version-based due selection, per-judgment transaction deleting and inserting only rows of the current version, sets judgment.outcome/court_level (reuse courtLevelOf).",
+   "requirements": [
+    "R12",
+    "R18",
+    "R5"
+   ]
+  },
+  {
+   "id": "D17",
+   "path": "packages/core/src/jobs/definitions/corpus-enrich.test.ts",
+   "change": "Job tests incl. re-run with new version replaces only that version's rows.",
+   "requirements": [
+    "R18"
+   ]
+  },
+  {
+   "id": "D18",
+   "path": "packages/core/src/jobs/registry.ts",
+   "change": "Register corpusEnrich.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D19",
+   "path": "packages/db/src/testing/cross-tenant-registry.ts",
+   "change": "NOT_A_SERVICE entries for new core runtime exports (global tables, no tenant data), if any are exported from core.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D20",
+   "path": "apps/worker/src/__tests__/registry.test.ts",
+   "change": "Add system.corpus.enrich.",
+   "requirements": [
+    "R12"
+   ]
+  },
+  {
+   "id": "D21",
+   "path": "apps/worker/src/__tests__/schedules.test.ts",
+   "change": "Add system.corpus.enrich schedule.",
+   "requirements": [
+    "R12"
+   ]
+  }
+ ],
+ "preserve": [
+  {
+   "id": "P1",
+   "what": "matchJudgmentToTags behaviour in packages/intelligence/src/corpus/match.ts and its tests in match.test.ts (#497)"
+  },
+  {
+   "id": "P2",
+   "what": "corpus-segment job and judgment_segment schema (packages/core/src/jobs/definitions/corpus-segment.ts, packages/db/src/schema/corpus.ts); courtLevelOf signature"
+  },
+  {
+   "id": "P3",
+   "what": "Existing migrations and snapshots are untouched; only a new migration is added"
+  },
+  {
+   "id": "P4",
+   "what": "Only the citation string is stored in judgment_citation_ref, never reporter page text"
+  }
+ ],
+ "validate": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/intelligence exec vitest run src/corpus/enrich src/corpus/match.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/jobs/definitions/corpus-enrich.test.ts src/jobs/definitions/corpus-segment.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/schema/corpus.test.ts src/__tests__/corpus-enrich.test.ts src/__tests__/corpus-segments.test.ts src/index.test.ts src/__tests__/conventions.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V4",
+   "command": "pnpm --filter @causedeck/worker exec vitest run src/__tests__/registry.test.ts src/__tests__/schedules.test.ts --maxWorkers=${FORGE_HOST_PARALLELISM:-2}"
+  },
+  {
+   "id": "V5",
+   "command": "node /opt/node/lib/node_modules/forgedock/bin/lean/checks.mjs --base origin/milestone/court-data-network  # then run the scoped typecheck/lint/test commands it prints"
+  }
+ ],
+ "decisions": [
+  {
+   "id": "K1",
+   "choice": "Subject tagging uses a resolver port, not a direct gateway import, in packages/intelligence",
+   "justification": "packages/intelligence/src/corpus/redact/gateway.ts:1-20 and RoleResolver in segment.ts use the same pattern",
+   "source": "precedent"
+  },
+  {
+   "id": "K2",
+   "choice": "Re-runs are keyed by a version column per row; delete where version = current, then insert",
+   "justification": "corpus-segment.ts header (version-based due selection, per-judgment transaction) and the issue's 're-runnable by version'",
+   "source": "precedent"
+  },
+  {
+   "id": "K3",
+   "choice": "New tables are global (no workspace_id, no RLS), added to GLOBAL_TABLES",
+   "justification": "packages/db/src/conventions.ts:80 lists judgment_segment the same way",
+   "source": "precedent"
+  },
+  {
+   "id": "K4",
+   "choice": "Migration number is the next free one on milestone/court-data-network (after 20261030211330)",
+   "justification": "CLAUDE.md registries table, migration row",
+   "source": "doc"
+  }
+ ]
+}

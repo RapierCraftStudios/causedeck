@@ -368,6 +368,7 @@ export {
   NOTICE_MATCH_REASONS,
   notice,
   noticeHoliday,
+  noticeVacation,
   noticeKind,
   noticeMatch,
   type NoticeKind,

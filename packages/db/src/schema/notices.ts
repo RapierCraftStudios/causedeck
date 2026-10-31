@@ -139,3 +139,31 @@ export const noticeHoliday = pgTable(
     check('notice_holiday_name_chk', sql`btrim(name) <> ''`),
   ],
 );
+
+/**
+ * One vacation range named by a notice (#650): a vacation notice carries a from/to range, which
+ * `notice.effective_on` (one date) and `notice_holiday` (single days) cannot hold. Global like
+ * `notice` (GLOBAL_TABLES): the app role may SELECT and INSERT, never UPDATE or DELETE. The ranges are
+ * merged with the static per-forum vacation table when a court calendar is loaded.
+ */
+export const noticeVacation = pgTable(
+  'notice_vacation',
+  {
+    id: id(),
+    noticeId: uuid('notice_id')
+      .notNull()
+      .references(() => notice.id, { onDelete: 'cascade' }),
+    /** First closed day, inclusive. */
+    fromOn: date('from_on').notNull(),
+    /** Last closed day, inclusive. */
+    toOn: date('to_on').notNull(),
+    name: text('name').notNull(),
+    ...timestamps(),
+  },
+  (t) => [
+    unique('notice_vacation_notice_range_uq').on(t.noticeId, t.fromOn, t.toOn),
+    index('notice_vacation_range_idx').on(t.fromOn, t.toOn),
+    check('notice_vacation_name_chk', sql`btrim(name) <> ''`),
+    check('notice_vacation_range_chk', sql`to_on >= from_on`),
+  ],
+);

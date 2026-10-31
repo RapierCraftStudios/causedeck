@@ -10,6 +10,10 @@ import {
   parseHolidayListHtml,
   parseHolidayListPdf,
   parseHolidayListText,
+  parseVacationRangesHtml,
+  parseVacationRangesPdf,
+  parseVacationRangesText,
+  type VacationDates,
   parseKarnatakaHcNotices,
   parseMadrasHcNotices,
   KARNATAKA_HC_NOTICES_SOURCE_ID,
@@ -25,7 +29,7 @@ import { policyFor, SourceNotCleared } from '../sources/index.ts';
 import { notifyNoticeMatches } from './alerts.ts';
 import { matchNotices, type MatchedNotice } from './match.ts';
 
-const { notice, noticeHoliday, source } = schema;
+const { notice, noticeHoliday, noticeVacation, source } = schema;
 
 /** Structurally the `Fetcher` of `@causedeck/fetch`, which this module does not import. */
 export interface NoticeFetcher {
@@ -100,6 +104,8 @@ export interface PollNoticesReport {
   holidayDates: number;
   /** Holiday-list documents that could not be fetched or read. */
   holidayFailed: number;
+  /** `notice_vacation` ranges stored from notice titles and documents (#650). */
+  vacationRanges: number;
 }
 
 /** Fetch, store and match the notices of every cleared `notice` source. */
@@ -118,6 +124,7 @@ export async function pollNotices(deps: PollNoticesDeps): Promise<PollNoticesRep
     alerts: 0,
     holidayDates: 0,
     holidayFailed: 0,
+    vacationRanges: 0,
   };
   const ids =
     deps.sourceId !== undefined
@@ -181,9 +188,19 @@ export async function pollNotices(deps: PollNoticesDeps): Promise<PollNoticesRep
         id: notice.id,
         forumCodes: notice.forumCodes,
         kind: notice.kind,
+        title: notice.title,
         url: notice.url,
       });
     report.inserted += inserted.length;
+    // A range the title itself states (#650) needs no document.
+    const titleRanges = new Map(parsed.notices.map((n) => [n.url, n.vacationRange]));
+    for (const row of inserted) {
+      const range = titleRanges.get(row.url);
+      if (range === null || range === undefined) continue;
+      report.vacationRanges += await storeVacationRanges(deps, row.id, [
+        { ...range, name: row.title },
+      ]);
+    }
     report.duplicates += parsed.notices.length - inserted.length;
     if (deps.documentFetcher !== undefined) {
       for (const row of inserted) {
@@ -193,7 +210,8 @@ export async function pollNotices(deps: PollNoticesDeps): Promise<PollNoticesRep
           report.holidayFailed += 1;
           log('holiday list unreadable', { sourceId });
         } else {
-          report.holidayDates += stored;
+          report.holidayDates += stored.dates;
+          report.vacationRanges += stored.ranges;
         }
       }
     }
@@ -219,28 +237,62 @@ export async function pollNotices(deps: PollNoticesDeps): Promise<PollNoticesRep
   return report;
 }
 
-/** The dates of one holiday notice's document stored; null when it could not be fetched or read. */
+/** Vacation ranges stored for one notice; a range already stored is not stored twice. */
+async function storeVacationRanges(
+  deps: PollNoticesDeps,
+  noticeId: string,
+  ranges: readonly VacationDates[],
+): Promise<number> {
+  if (ranges.length === 0) return 0;
+  const stored = await deps.db
+    .insert(noticeVacation)
+    .values(ranges.map((r) => ({ noticeId, fromOn: r.from, toOn: r.to, name: r.name })))
+    .onConflictDoNothing({
+      target: [noticeVacation.noticeId, noticeVacation.fromOn, noticeVacation.toOn],
+    })
+    .returning({ id: noticeVacation.id });
+  return stored.length;
+}
+
+/**
+ * The holiday dates and vacation ranges of one holiday notice's document stored; null when it could
+ * not be fetched or named neither. A line stating a range is a vacation, never a holiday date (#650).
+ */
 async function storeHolidayDates(
   deps: PollNoticesDeps,
   fetchDocument: NoticeDocumentFetcher,
   sourceId: string,
-  row: { id: string; url: string },
-): Promise<number | null> {
+  row: { id: string; url: string; title: string },
+): Promise<{ dates: number; ranges: number } | null> {
   try {
     const document = await fetchDocument(sourceId, row.url);
-    const dates =
+    const assumeVacation = /\b(?:vacations?|recess)\b/i.test(row.title);
+    const [dates, ranges] =
       document.bytes !== undefined
-        ? await parseHolidayListPdf(document.bytes)
+        ? await Promise.all([
+            parseHolidayListPdf(document.bytes),
+            parseVacationRangesPdf(document.bytes, { assumeVacation }),
+          ])
         : /html/i.test(document.contentType)
-          ? parseHolidayListHtml(document.text ?? '')
-          : parseHolidayListText(document.text ?? '');
-    if (dates.length === 0) return null;
-    const stored = await deps.db
-      .insert(noticeHoliday)
-      .values(dates.map((d) => ({ noticeId: row.id, holidayOn: d.date, name: d.name })))
-      .onConflictDoNothing({ target: [noticeHoliday.noticeId, noticeHoliday.holidayOn] })
-      .returning({ id: noticeHoliday.id });
-    return stored.length;
+          ? [
+              parseHolidayListHtml(document.text ?? ''),
+              parseVacationRangesHtml(document.text ?? '', { assumeVacation }),
+            ]
+          : [
+              parseHolidayListText(document.text ?? ''),
+              parseVacationRangesText(document.text ?? '', { assumeVacation }),
+            ];
+    if (dates.length === 0 && ranges.length === 0) return null;
+    let storedDates = 0;
+    if (dates.length > 0) {
+      const stored = await deps.db
+        .insert(noticeHoliday)
+        .values(dates.map((d) => ({ noticeId: row.id, holidayOn: d.date, name: d.name })))
+        .onConflictDoNothing({ target: [noticeHoliday.noticeId, noticeHoliday.holidayOn] })
+        .returning({ id: noticeHoliday.id });
+      storedDates = stored.length;
+    }
+    return { dates: storedDates, ranges: await storeVacationRanges(deps, row.id, ranges) };
   } catch {
     return null;
   }

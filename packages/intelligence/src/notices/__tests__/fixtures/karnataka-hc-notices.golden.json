@@ -5,6 +5,7 @@
       "title": "Circular: Dharwad Bench - Lok Adalat on 13.09.2026",
       "issuedOn": "2026-09-05",
       "effectiveOn": null,
+      "vacationRange": null,
       "url": "https://karnatakajudiciary.example/notice/881.pdf",
       "kindHint": "circular",
       "forumCodes": ["in.ka.karnataka-hc.dharwad"]
@@ -13,6 +14,7 @@
       "title": "Bar Council of Karnataka election notice",
       "issuedOn": "2026-09-01",
       "effectiveOn": null,
+      "vacationRange": null,
       "url": "https://karnatakajudiciary.example/notice/882.pdf",
       "kindHint": "bar_council",
       "forumCodes": [
@@ -25,6 +27,7 @@
       "title": "Gazette notification on rules amendment",
       "issuedOn": "2026-08-28",
       "effectiveOn": null,
+      "vacationRange": null,
       "url": "https://karnatakajudiciary.example/notice/883.pdf",
       "kindHint": "gazette",
       "forumCodes": [
@@ -37,6 +40,7 @@
       "title": "Meeting regarding stationery",
       "issuedOn": "2026-08-20",
       "effectiveOn": null,
+      "vacationRange": null,
       "url": "https://karnatakajudiciary.example/notice/884.pdf",
       "kindHint": null,
       "forumCodes": [

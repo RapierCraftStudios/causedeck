@@ -82,6 +82,8 @@ export interface BillingService {
   resume(snapshot: SubscriptionSnapshot): Promise<BillingOperationResult>;
   /** Keep a subscription that was set to cancel at period end (#257). */
   withdrawCancellation(snapshot: SubscriptionSnapshot): Promise<BillingOperationResult>;
+  /** Restart the UPI Autopay mandate of a live subscription; the link to authorise it (#1072). */
+  updatePaymentMethod(snapshot: SubscriptionSnapshot): Promise<{ mandateUrl: string }>;
 }
 
 /** Seat counts, plus the tracked cases a per-tracked-case plan (#664) is billed on. */
@@ -398,6 +400,11 @@ export function createBillingService(options: BillingServiceOptions): BillingSer
       const subscription = transition(snapshot, { type: 'cancel_withdrawn' }, now());
       const result = await provider.withdrawCancellation(id);
       return { subscription, charge: null, provider: result };
+    },
+
+    async updatePaymentMethod(snapshot) {
+      const link = await provider.updatePaymentMethod(providerId(snapshot));
+      return { mandateUrl: link.url };
     },
   };
 }

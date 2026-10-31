@@ -230,6 +230,14 @@ const applyPlan = workspaceAction(
       batchId,
       ...(decisions === undefined ? {} : { decisions: toDecisions(decisions) }),
     });
+    // Free alerts (#506): the confirmed cases are watched with no further setup (dark behind
+    // `growth.free-alerts`, free plan only). Enrolment never fails the confirm.
+    try {
+      const { enrollFreeAlerts } = await import('@causedeck/core/free-alerts');
+      await enrollFreeAlerts({ db: ctx.tx }, actorOf(ctx));
+    } catch {
+      // Watches are added again the next time cases are confirmed.
+    }
     revalidatePath('/w/[slug]/import', 'page');
     revalidatePath('/w/[slug]/matters', 'page');
     return {

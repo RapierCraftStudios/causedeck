@@ -43,6 +43,7 @@ export type BillingErrorKey =
   | 'notAllowed'
   | 'unsupported'
   | 'forbidden'
+  | 'demo'
   | 'generic';
 
 /** A billing action's failure as a `billing.errors.*` key; null on success. */

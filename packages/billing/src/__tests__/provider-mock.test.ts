@@ -385,3 +385,38 @@ describe('plan changes, cancellation withdrawal and adoption (#257)', () => {
     expect((await provider.withdrawCancellation('sub_e2e_ws')).cancelAtCycleEnd).toBe(false);
   });
 });
+
+describe('update payment method (#1072)', () => {
+  it('restarts the mandate of a failed subscription and charges it once confirmed', async () => {
+    const provider = createMockBillingProvider();
+    const id = await active(provider);
+    await provider.simulate(id, 'payment.failed');
+    const link = await provider.updatePaymentMethod(id);
+    expect(link).toEqual({
+      subscriptionId: id,
+      url: `${MOCK_MANDATE_BASE_URL}${id}`,
+      status: 'created',
+    });
+    const charged = await provider.confirmPaymentMethod(id);
+    expect(charged?.event).toBe('subscription.charged');
+    const after = await provider.fetchSubscription(id);
+    expect(after.status).toBe('active');
+    expect(after.mandate?.state).toBe('active');
+  });
+
+  it('activates a checkout that was never authorised, and charges nothing on an active one', async () => {
+    const provider = createMockBillingProvider();
+    const created = await subscribed(provider);
+    expect((await provider.confirmPaymentMethod(created.id))?.event).toBe('subscription.activated');
+    expect(await provider.confirmPaymentMethod(created.id)).toBeNull();
+  });
+
+  it('refuses a cancelled subscription', async () => {
+    const provider = createMockBillingProvider();
+    const id = await active(provider);
+    await provider.cancelSubscription(id, { atCycleEnd: false });
+    await expect(provider.updatePaymentMethod(id)).rejects.toMatchObject({
+      code: 'invalid_state',
+    });
+  });
+});

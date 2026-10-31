@@ -85,6 +85,9 @@ export function BootstrapImport({
   const [busy, setBusy] = useState(false);
   const files = useRef(new Map<string, File>());
   const added = useRef(new Set<string>());
+  // A batch opened with `?batch=` that was never planned (handed over from the inbox, #1073) is
+  // planned once, which also asks for the member's identifiers when none are saved.
+  const planRequested = useRef(false);
   const entriesRef = useRef(entries);
   useEffect(() => {
     entriesRef.current = entries;
@@ -259,11 +262,25 @@ export function BootstrapImport({
   useEffect(() => {
     if (phase !== 'processing' || batchId === null || finished) return;
     let stopped = false;
+    const isStopped = () => stopped;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const poll = async () => {
       const result = await importProgressAction({ workspaceId, batchId }).catch(() => null);
       if (stopped) return;
       if (result?.ok === true) setProgress(result.data);
+      if (
+        result?.ok === true &&
+        result.data.status === 'pending' &&
+        resumeId !== null &&
+        !planRequested.current
+      ) {
+        planRequested.current = true;
+        await plan(batchId).catch(() => {
+          setFailed(true);
+          setPhase('select');
+        });
+        if (isStopped()) return;
+      }
       if (
         result?.ok === true &&
         (result.data.status === 'ready' || result.data.status === 'failed')

@@ -52,6 +52,8 @@ The same workflow's `budgets` job (nightly and manual dispatch) runs the wall-cl
 
 ## Mapping to the Stage A to B trigger
 
+The `pipeline-p95-harness` job (same triggers) runs the voice-note pipeline benchmark on mock providers and asserts that it produces a complete report; mock timings are only sanity-checked. The real p95 under 20 s check needs Bedrock and Sarvam credentials and is a manual run: [pipeline-p95 runbook](../benchmarks/pipeline-p95.md).
+
 Spike §3.2 moves to Stage B when **any** of these holds: p95 latency above 400 ms, DB CPU above 60%, or more than 1,000 seats. The soak samples DB CPU, connection count and queue lag every 10 s; `stageBSummary` takes the peak of each and lists which triggers are breached (`p95`, `db_cpu`, `seats`). A breach in one nightly is a warning; the same breach in three consecutive nightlies, or one on staging at real seat counts, is the evidence for the Stage B decision. **The decision is the founder's**, advised by the engineering lead, recorded as an ADR or an amendment to ADR 0053 (the scale path); the runbooks for the move are in `infra/runbooks`.
 
 ## Known gaps

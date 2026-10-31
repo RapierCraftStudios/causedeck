@@ -239,6 +239,49 @@ export async function addImportFiles(
   });
 }
 
+/**
+ * Hand a photographed cause list from the capture inbox to list import (#1073): a new batch holding
+ * that one capture, which the list reader then treats like an uploaded list. Only a `camera`
+ * capture the pipeline routed to `cause_list` (`source_meta.cameraRoute`) and that is waiting for
+ * the member (`needs_you`) or already `ready` qualifies; anything else, and an id of another
+ * workspace (not visible under RLS), is refused. Building the plan is the caller's next step.
+ */
+export async function startImportFromCapture(
+  deps: ImportBatchDeps,
+  actor: GraphActor,
+  input: { captureId: string },
+): Promise<{ batchId: string }> {
+  const { importBatch, importBatchFile, capture } = schema;
+  const { workspaceId } = actor;
+  return withWorkspace(deps.db, actor, async (tx) => {
+    const [cap] = await tx
+      .select({
+        channel: capture.channel,
+        status: capture.status,
+        sourceMeta: capture.sourceMeta,
+      })
+      .from(capture)
+      .where(and(eq(capture.workspaceId, workspaceId), eq(capture.id, input.captureId)));
+    if (cap === undefined) throw notFound('Capture not found');
+    const route = (cap.sourceMeta as Record<string, unknown> | null)?.['cameraRoute'];
+    if (cap.channel !== 'camera' || route !== 'cause_list') {
+      throw conflict('Only a photographed cause list can be handed to list import');
+    }
+    if (cap.status !== 'needs_you' && cap.status !== 'ready') {
+      throw conflict('This capture cannot be handed to list import');
+    }
+    const [batch] = await tx
+      .insert(importBatch)
+      .values({ workspaceId, createdBy: actor.userId, fileCount: 1 })
+      .returning({ id: importBatch.id });
+    if (batch === undefined) throw new Error('import batch insert returned no row');
+    await tx
+      .insert(importBatchFile)
+      .values({ workspaceId, batchId: batch.id, captureId: input.captureId });
+    return { batchId: batch.id };
+  });
+}
+
 export interface ImportProgress {
   batchId: string;
   status: ImportBatchStatus;
@@ -564,8 +607,11 @@ export async function processImportFile(
 
     // A diary photo and an order are structured by their own pipeline steps, which stage proposals
     // for the capture; the plan reads them from there.
-    if (cap.channel === 'camera' || doc.kind === 'order' || doc.kind === 'judgment') {
-      const adapterId = cap.channel === 'camera' ? 'diary' : 'extraction';
+    // A camera photo the pipeline classed as a cause list (handed over from the inbox, #1073) is
+    // read as a list below, not as a diary page.
+    const photographedDiary = cap.channel === 'camera' && doc.kind !== 'cause_list';
+    if (photographedDiary || doc.kind === 'order' || doc.kind === 'judgment') {
+      const adapterId = photographedDiary ? 'diary' : 'extraction';
       await setFile(tx, where, { status: 'parsed', adapterId });
       return { outcome: 'parsed', adapterId, rows: 0 };
     }

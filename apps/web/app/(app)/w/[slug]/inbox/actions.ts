@@ -271,6 +271,29 @@ const pasteText = workspaceAction(
   { action: 'document.write' },
 );
 
+/**
+ * Hand a photographed cause list to list import (#1073): a new import batch holding the capture,
+ * and the capture leaves the unreadable state (`ready`). The caller opens `/import?batch=<id>`,
+ * which builds the plan. Needs `matter.write` (import) and `document.write` (the capture).
+ */
+const handToListImport = workspaceAction(
+  CaptureTarget,
+  async ({ captureId }, ctx): Promise<{ captureId: string; batchId: string }> => {
+    assertCan(ctx.actor, 'document.write');
+    const [{ startImportFromCapture }, { handCaptureToListImport }] = [
+      await import('@causedeck/core/import'),
+      await import('@causedeck/core/capture'),
+    ];
+    // Both run on the action's transaction: if either refuses, neither takes effect.
+    const { batchId } = await startImportFromCapture({ db: ctx.tx }, actorOf(ctx), { captureId });
+    await handCaptureToListImport(await captureCtx(ctx), captureId);
+    revalidatePath('/w/[slug]/inbox', 'page');
+    revalidatePath('/w/[slug]/import', 'page');
+    return { captureId, batchId };
+  },
+  { action: 'matter.write' },
+);
+
 const typeKeyLine = workspaceAction(
   KeyLine,
   async ({ captureId, text }, ctx) => {
@@ -323,6 +346,12 @@ export async function pasteTextCaptureAction(
   raw: unknown,
 ): Promise<Result<{ captureId: string; error?: undefined } | { error: PasteTextError }>> {
   return pasteText(raw);
+}
+
+export async function handToListImportAction(
+  raw: unknown,
+): Promise<Result<{ captureId: string; batchId: string }>> {
+  return handToListImport(raw);
 }
 
 export async function typeKeyLineAction(

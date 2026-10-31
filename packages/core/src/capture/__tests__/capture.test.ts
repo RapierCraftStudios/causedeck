@@ -26,6 +26,7 @@ import {
   disableChannel,
   discardCapture,
   enableChannel,
+  handCaptureToListImport,
   listChannels,
   markCaptureFailed,
   pinCapture,
@@ -751,6 +752,54 @@ describe('discard, pin and retention', () => {
         IllegalTransitionError,
       );
       expect(first.captureId).toBeTruthy();
+    });
+  });
+
+  it('hands a photographed cause list to list import: needs_you -> ready, audited, anything else refused (#1073)', async () => {
+    await withTestDb(async (tx) => {
+      const { a, b, ua, ub } = await seedTwoTenants(tx);
+      const h = harness(tx, a.id, ua);
+      const seed = (
+        channel: 'camera' | 'upload',
+        route: string | null,
+        status: 'needs_you' | 'ready' = 'needs_you',
+      ) =>
+        inWorkspace(tx, a.id, async (s) => {
+          const [row] = await s
+            .insert(schema.capture)
+            .values({
+              workspaceId: a.id,
+              channel,
+              status,
+              mime: 'image/jpeg',
+              sizeBytes: 10,
+              createdBy: ua,
+              sourceMeta: route === null ? {} : { cameraRoute: route },
+            })
+            .returning({ id: schema.capture.id });
+          if (!row) throw new Error('capture insert failed');
+          return row.id;
+        });
+      const list = await seed('camera', 'cause_list');
+      const moved = await handCaptureToListImport(h.ctx, list);
+      expect(moved.status).toBe('ready');
+      expect(await auditActions(tx, a.id)).toContain('capture.completed');
+      // Idempotent once ready.
+      expect((await handCaptureToListImport(h.ctx, list)).status).toBe('ready');
+
+      for (const id of [await seed('camera', null), await seed('upload', 'cause_list')]) {
+        await expect(handCaptureToListImport(h.ctx, id)).rejects.toMatchObject({
+          code: 'CONFLICT',
+        });
+      }
+      const receipt = await seed('camera', 'receipt');
+      await expect(handCaptureToListImport(h.ctx, receipt)).rejects.toMatchObject({
+        code: 'CONFLICT',
+      });
+      // Another workspace's member cannot see it.
+      await expect(handCaptureToListImport(harness(tx, b.id, ub).ctx, list)).rejects.toMatchObject({
+        code: 'NOT_FOUND',
+      });
     });
   });
 

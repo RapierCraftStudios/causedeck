@@ -27,6 +27,8 @@ export interface StatusAlertInput {
   changes: StatusChanges;
   /** The snapshot is the watch's first: nothing to alert on. */
   firstSnapshot: boolean;
+  /** A line appended to the new-order alert (#506: the free tier's upgrade prompt); never blocks it. */
+  orderNote?: string;
 }
 
 type AlertKind = 'next_date' | 'order' | 'stage';
@@ -92,7 +94,7 @@ export async function notifyStatusChanges(
         userId: actor.userId,
         category: alert.category,
         title: alert.title,
-        body: alert.body,
+        body: kind === 'order' && input.orderNote ? `${alert.body} ${input.orderNote}` : alert.body,
         href: `/w/${target.slug}/matters/${input.matterId}`,
         dedupeKey: `status:${input.snapshotId}:${kind}`,
       });

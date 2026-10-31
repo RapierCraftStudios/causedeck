@@ -8,7 +8,7 @@ export function embedding(name = 'embedding') {
   return vector(name, { dimensions: EMBEDDING_DIMENSIONS });
 }
 
-/** Embedding width of `judgment_segment.embedding` (ADR 0051 §Vectors); the model is chosen by the evaluation set. */
+/** Embedding width of `judgment_segment.embedding` (ADR 0051 §Vectors); the width is chosen in docs/engineering/corpus-embedding-model.md. */
 export const CORPUS_EMBEDDING_DIMENSIONS = 1024;
 
 /** A pgvector `halfvec` column sized to `CORPUS_EMBEDDING_DIMENSIONS` (2 bytes a dimension). */

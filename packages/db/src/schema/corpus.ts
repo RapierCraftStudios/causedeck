@@ -289,6 +289,8 @@ export const judgmentSegment = pgTable(
     ),
     /** Filled by the embedding job; null until then. */
     embedding: halfvecEmbedding(),
+    /** The model version that produced `embedding` (#895); a different current version re-embeds. */
+    embeddingModel: text('embedding_model'),
   },
   (t) => [
     primaryKey({ columns: [t.id, t.judgmentYear] }),

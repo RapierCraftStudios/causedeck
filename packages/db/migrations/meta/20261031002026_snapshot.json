@@ -1,6 +1,6 @@
 {
   "id": "53354f88-c7ea-4ad3-ad94-1c68becbd367",
-  "prevId": "069e9f7f-76a0-4043-91b3-1afe28a229f4",
+  "prevId": "b0db7abd-7c69-44b2-bb7c-9c908269b2d6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -14217,137 +14217,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.judgment_citation_ref": {
-      "name": "judgment_citation_ref",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "judgment_id": {
-          "name": "judgment_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "raw_citation": {
-          "name": "raw_citation",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "normalised_citation": {
-          "name": "normalised_citation",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cited_judgment_id": {
-          "name": "cited_judgment_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "page": {
-          "name": "page",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ruleset_version": {
-          "name": "ruleset_version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "judgment_citation_ref_uq": {
-          "name": "judgment_citation_ref_uq",
-          "columns": [
-            {
-              "expression": "judgment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "ruleset_version",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "normalised_citation",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "judgment_citation_ref_cited_idx": {
-          "name": "judgment_citation_ref_cited_idx",
-          "columns": [
-            {
-              "expression": "cited_judgment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "judgment_citation_ref_judgment_id_judgment_id_fk": {
-          "name": "judgment_citation_ref_judgment_id_judgment_id_fk",
-          "tableFrom": "judgment_citation_ref",
-          "tableTo": "judgment",
-          "columnsFrom": [
-            "judgment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "judgment_citation_ref_cited_judgment_id_judgment_id_fk": {
-          "name": "judgment_citation_ref_cited_judgment_id_judgment_id_fk",
-          "tableFrom": "judgment_citation_ref",
-          "tableTo": "judgment",
-          "columnsFrom": [
-            "cited_judgment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "judgment_citation_ref_page_check": {
-          "name": "judgment_citation_ref_page_check",
-          "value": "\"judgment_citation_ref\".\"page\" >= 1"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.judgment_segment": {
       "name": "judgment_segment",
       "schema": "",
@@ -14426,6 +14295,12 @@
         "embedding": {
           "name": "embedding",
           "type": "halfvec(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding_model": {
+          "name": "embedding_model",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         }
@@ -14508,236 +14383,6 @@
         "judgment_segment_pages_check": {
           "name": "judgment_segment_pages_check",
           "value": "\"judgment_segment\".\"page_from\" >= 1 and \"judgment_segment\".\"page_to\" >= \"judgment_segment\".\"page_from\""
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.judgment_statute_ref": {
-      "name": "judgment_statute_ref",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "judgment_id": {
-          "name": "judgment_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "statute": {
-          "name": "statute",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "section": {
-          "name": "section",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "page": {
-          "name": "page",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ruleset_version": {
-          "name": "ruleset_version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "judgment_statute_ref_uq": {
-          "name": "judgment_statute_ref_uq",
-          "columns": [
-            {
-              "expression": "judgment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "ruleset_version",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "statute",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "section",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "judgment_statute_ref_facet_idx": {
-          "name": "judgment_statute_ref_facet_idx",
-          "columns": [
-            {
-              "expression": "statute",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "section",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "judgment_statute_ref_judgment_id_judgment_id_fk": {
-          "name": "judgment_statute_ref_judgment_id_judgment_id_fk",
-          "tableFrom": "judgment_statute_ref",
-          "tableTo": "judgment",
-          "columnsFrom": [
-            "judgment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "judgment_statute_ref_page_check": {
-          "name": "judgment_statute_ref_page_check",
-          "value": "\"judgment_statute_ref\".\"page\" >= 1"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.judgment_tag": {
-      "name": "judgment_tag",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "judgment_id": {
-          "name": "judgment_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "subject_area": {
-          "name": "subject_area",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "confidence": {
-          "name": "confidence",
-          "type": "real",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "model_version": {
-          "name": "model_version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "judgment_tag_uq": {
-          "name": "judgment_tag_uq",
-          "columns": [
-            {
-              "expression": "judgment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "model_version",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "subject_area",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "judgment_tag_area_idx": {
-          "name": "judgment_tag_area_idx",
-          "columns": [
-            {
-              "expression": "subject_area",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "judgment_tag_judgment_id_judgment_id_fk": {
-          "name": "judgment_tag_judgment_id_judgment_id_fk",
-          "tableFrom": "judgment_tag",
-          "tableTo": "judgment",
-          "columnsFrom": [
-            "judgment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "judgment_tag_confidence_check": {
-          "name": "judgment_tag_confidence_check",
-          "value": "\"judgment_tag\".\"confidence\" >= 0 and \"judgment_tag\".\"confidence\" <= 1"
         }
       },
       "isRLSEnabled": false
@@ -29705,6 +29350,367 @@
       },
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.judgment_citation_ref": {
+      "name": "judgment_citation_ref",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "judgment_id": {
+          "name": "judgment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_citation": {
+          "name": "raw_citation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalised_citation": {
+          "name": "normalised_citation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cited_judgment_id": {
+          "name": "cited_judgment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "page": {
+          "name": "page",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ruleset_version": {
+          "name": "ruleset_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "judgment_citation_ref_uq": {
+          "name": "judgment_citation_ref_uq",
+          "columns": [
+            {
+              "expression": "judgment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ruleset_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "normalised_citation",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "judgment_citation_ref_cited_idx": {
+          "name": "judgment_citation_ref_cited_idx",
+          "columns": [
+            {
+              "expression": "cited_judgment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "judgment_citation_ref_judgment_id_judgment_id_fk": {
+          "name": "judgment_citation_ref_judgment_id_judgment_id_fk",
+          "tableFrom": "judgment_citation_ref",
+          "tableTo": "judgment",
+          "columnsFrom": [
+            "judgment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "judgment_citation_ref_cited_judgment_id_judgment_id_fk": {
+          "name": "judgment_citation_ref_cited_judgment_id_judgment_id_fk",
+          "tableFrom": "judgment_citation_ref",
+          "tableTo": "judgment",
+          "columnsFrom": [
+            "cited_judgment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "judgment_citation_ref_page_check": {
+          "name": "judgment_citation_ref_page_check",
+          "value": "\"judgment_citation_ref\".\"page\" >= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.judgment_tag": {
+      "name": "judgment_tag",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "judgment_id": {
+          "name": "judgment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject_area": {
+          "name": "subject_area",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model_version": {
+          "name": "model_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "judgment_tag_uq": {
+          "name": "judgment_tag_uq",
+          "columns": [
+            {
+              "expression": "judgment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "model_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "subject_area",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "judgment_tag_area_idx": {
+          "name": "judgment_tag_area_idx",
+          "columns": [
+            {
+              "expression": "subject_area",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "judgment_tag_judgment_id_judgment_id_fk": {
+          "name": "judgment_tag_judgment_id_judgment_id_fk",
+          "tableFrom": "judgment_tag",
+          "tableTo": "judgment",
+          "columnsFrom": [
+            "judgment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "judgment_tag_confidence_check": {
+          "name": "judgment_tag_confidence_check",
+          "value": "\"judgment_tag\".\"confidence\" >= 0 and \"judgment_tag\".\"confidence\" <= 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.judgment_statute_ref": {
+      "name": "judgment_statute_ref",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "judgment_id": {
+          "name": "judgment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "statute": {
+          "name": "statute",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "section": {
+          "name": "section",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "page": {
+          "name": "page",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ruleset_version": {
+          "name": "ruleset_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "judgment_statute_ref_uq": {
+          "name": "judgment_statute_ref_uq",
+          "columns": [
+            {
+              "expression": "judgment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ruleset_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "statute",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "section",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "judgment_statute_ref_facet_idx": {
+          "name": "judgment_statute_ref_facet_idx",
+          "columns": [
+            {
+              "expression": "statute",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "section",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "judgment_statute_ref_judgment_id_judgment_id_fk": {
+          "name": "judgment_statute_ref_judgment_id_judgment_id_fk",
+          "tableFrom": "judgment_statute_ref",
+          "tableTo": "judgment",
+          "columnsFrom": [
+            "judgment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "judgment_statute_ref_page_check": {
+          "name": "judgment_statute_ref_page_check",
+          "value": "\"judgment_statute_ref\".\"page\" >= 1"
+        }
+      },
       "isRLSEnabled": false
     }
   },

@@ -47,9 +47,23 @@ A reviewer can use the whole app hands-on. Each module below is seeded in both w
 | Portfolio                                    | a recovery panel over six proceedings                                                                                   |
 | Activity feed                                | four rows: two automatic and undoable, one automatic and confirmed (no longer undoable), one by the advocate; no AI, source marked synthetic |
 | Notifications (bell)                         | three in-app rows; the demo sends no email, push or WhatsApp                                                            |
-| Help, settings, news, notices               | no seeded data needed (static articles, the member's own settings). Notices and bench facts are global tables: seed them with the catalogue |
+| Research (`/research`, matter research tab, judgment alerts) | a synthetic corpus of 24 judgments (global, no workspace): five segments each, 21 subject areas with at least two judgments each, statute and citation references, masked titles; three judgment alerts per confirmed issue tag on the first matters (#1070) |
+| News                                         | ten `SYNTHETIC:` items from two fictional publishers over the last eight days, tagged to practice areas and forums (#1071)  |
+| Notices                                      | ten `SYNTHETIC:` official notices (circular, practice direction, roster, holiday, registry) for the demo forums, matched to the workspace's forums and to matters before them, so the matter notice cards have content (#1071) |
+| Billing (`/billing`)                         | an active subscription on the mock provider (Chennai: Advocate 2, one seat; Bengaluru: Chamber 1, three seats and a clerk seat), renewing in 20 days, and three paid SaaS invoices (series `DEM`, unregistered fictional parties); billing actions stay blocked by the demo guard (#1071) |
+| Help, settings                               | no seeded data needed (static articles, the member's own settings). Bench facts are a global table: seed them with the catalogue |
 
 Flags: `m5_playbooks` and `insights.enabled` are on in both workspaces. Fees, limitation, the conflict check, the enquiry log, status links and bench facts are legal-gated (counsel sign-off); a workspace row never turns those on alone. On a local or review database, `pnpm db:seed:demo -- --enable-gated-flags` writes the global and workspace rows with the note "Demo environment only: not a counsel sign-off". It refuses production. Without it those nav items stay hidden.
+
+### Corpus, news and notices (#1070, #1071)
+
+The research corpus, the news items, the notices and their registry sources are global rows (no `workspace_id`), written once by `seedDemo` with the owner role (`seedDemoCatalogue`, `catalogue.ts` and `corpus.ts`); the workspace rows that point at them (judgment alerts, notice matches) are written with each workspace and left out when the global row is missing, so the nightly reset works on any role.
+
+- **Corpus.** `DEMO_JUDGMENTS` (24 judgments, High Court of Madras and Karnataka codes) with fixed ids and dates. Every page opens `SYNTHETIC - DEMO DATA - FICTIONAL` and the text is template prose, not court text. The hard lines hold: titles are masked (`[name withheld] v. <institution> (fictional)`), the matrimonial judgments carry the sensitive category, no bench is stored (no judge names, no ratings), no reporter (SCC) text, and the neutral citations are in the 9xxxxx range of each court's sequence. Tags use the corpus vocabulary (`SUBJECT_AREAS`), statute references use normalised keys, and each judgment cites two others, resolved to corpus rows. `DEMO_CORPUS_VERSIONS` mirrors the redaction, segment and enrich versions (a core test pins them).
+- **Embeddings.** `@causedeck/db` cannot import the embedder, so the segments are written without vectors and `pnpm db:seed:demo:content` (`--only=corpus` for just this) embeds them with the mock embedder (`seedDemoCorpusEmbeddings`, model `mock-embed@1`, the one `searchAuthorities` queries with), only for demo judgments and only for the roles `system.corpus.embed` embeds. Without that step the lexical arm still answers; the vector arm needs it.
+- **Issue tags** of the first four active matters name sections the corpus cites (the first is a proposed AI tag, the other three are confirmed), so `listRelevantJudgments` shows judgments on those matters.
+- **News and notices** are re-dated on every workspace seed and reset (`refreshDemoCatalogue`), so the lists stay current. Their sources (`demo.news.*`, `demo.notice.*`) are not cleared and carry the kill switch: no poll job ever calls them.
+- **Billing.** `demoBillingRows` (`billing.ts`). Invoices are written draft, then lines, then paid (an issued invoice is immutable and its lines cannot be added), and an existing invoice is never touched. Numbers are `DEM/<fy>/<n>`, never taken from the real `invoice_counter`.
 
 The demo status link token is `demo-status-link-synthetic-0001:<workspace key>` hashed; the page cannot be opened from the seed (the token is not stored), which is intended.
 
@@ -97,7 +111,7 @@ Every new outward channel must call the guard and add a case to `packages/core/s
 - `resetDemo` deletes every row of the workspace (the seed's and anything a visitor added; found in the catalogue and deleted children first, except append-only tables and tables the role may not delete from) and its visitors, writes the seed again and records `demo.reset` in the audit log. The `system.demo.reset` job runs it nightly at 03:10 IST and removes visitors older than 4 hours. A reset takes well under the 30 s budget (the test asserts it).
 - `app_demo_workspaces()` (owner-defined, ids and slugs only) is the one cross-workspace read: a visitor and the nightly job have no workspace yet.
 
-## Memory and the sample PDFs (`db:seed:demo:content`)
+## Memory, the sample PDFs and the corpus vectors (`db:seed:demo:content`)
 
 `@causedeck/db` cannot import `@causedeck/storage`, so the parts that need it live in `@causedeck/core` (`src/demo/content.ts`, script `packages/core/scripts/seed-demo-content.ts`):
 
@@ -107,7 +121,7 @@ pnpm db:seed:demo:files                                     # only the PDFs
 pnpm db:seed:demo:content -- --only=memory --workspace=bengaluru-chamber
 ```
 
-Run it after `pnpm db:seed:demo`, with `DATABASE_URL_OWNER`, `KEK_BASE64` and the `S3_*` env of the local stack (MinIO). `seedDemoMemory` seals each value of `demoMemory` (db seed, plain) with the workspace key (`encryptField`, AAD = workspace id) and writes `memory_item`, `memory_proposal` and `memory_usage` with fixed ids. `seedDemoFiles` regenerates the SYNTHETIC PDFs (`demoDocumentPdfs`), puts each at the key its `document` row names and inserts a finalized `blob` row (id = document id, scan `skipped`). Both are idempotent and refuse `NODE_ENV=production`. The nightly `system.demo.reset` job runs both again after the reset (the reset deletes memory and blob rows with the rest of the workspace); a deployment without a key or bucket keeps the rest of the reset and logs a warning.
+Run it after `pnpm db:seed:demo` (it also embeds the demo research corpus, #1070), with `DATABASE_URL_OWNER`, `KEK_BASE64` and the `S3_*` env of the local stack (MinIO). `seedDemoMemory` seals each value of `demoMemory` (db seed, plain) with the workspace key (`encryptField`, AAD = workspace id) and writes `memory_item`, `memory_proposal` and `memory_usage` with fixed ids. `seedDemoFiles` regenerates the SYNTHETIC PDFs (`demoDocumentPdfs`), puts each at the key its `document` row names and inserts a finalized `blob` row (id = document id, scan `skipped`). Both are idempotent and refuse `NODE_ENV=production`. The nightly `system.demo.reset` job runs both again after the reset (the reset deletes memory and blob rows with the rest of the workspace); a deployment without a key or bucket keeps the rest of the reset and logs a warning.
 
 ## Demo seed and onboarding
 
@@ -115,4 +129,4 @@ The first-day screen of the onboarding wizard (#92) links "Try the demo workspac
 
 ## Not done
 
-e2e, visual baselines and axe for the demo banner and `/demo` (#985 last item), and real fixtures from lawyers (#119). The load-test harness is #105. Notices and bench facts are global catalogue tables, not per workspace.
+e2e, visual baselines and axe for the demo banner and `/demo` (#985 last item), and real fixtures from lawyers (#119). The load-test harness is #105. Bench facts are a global catalogue table, not per workspace; the demo's corpus, news and notices are global too (above).

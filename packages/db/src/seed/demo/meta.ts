@@ -5,6 +5,8 @@
 // by the test that pins the hash.
 import { createHash } from 'node:crypto';
 
+import { demoNewsRows, demoNoticeRows } from './catalogue.ts';
+import { demoCorpusRows } from './corpus.ts';
 import { demoCourtRows } from './courts.ts';
 import { demoMatterRows } from './matters.ts';
 import { demoMemory } from './memory.ts';
@@ -12,7 +14,7 @@ import { demoModuleRows } from './modules.ts';
 import { seedInstant } from './shared.ts';
 import { DEMO_WORKSPACES, type DemoWorkspaceKey } from './workspaces.ts';
 
-export const DEMO_VERSION = '2026.10.3';
+export const DEMO_VERSION = '2026.10.4';
 
 /** The day the content hash is computed for; the rows of any other day differ only by dates. */
 export const DEMO_HASH_DAY = '2026-01-15';
@@ -28,7 +30,7 @@ function canonical(value: unknown): string {
   });
 }
 
-/** SHA-256 of the demo workspace's seeded rows (courts and matter graph) for `HASH_DAY`. */
+/** SHA-256 of the demo workspace's seeded rows (courts, matter graph, modules, memory, corpus, news and notices) for `HASH_DAY`. */
 export function demoContentHash(key: DemoWorkspaceKey): string {
   const ws = DEMO_WORKSPACES[key];
   const at = seedInstant(DEMO_HASH_DAY);
@@ -39,6 +41,9 @@ export function demoContentHash(key: DemoWorkspaceKey): string {
     graph,
     modules: demoModuleRows(ws, DEMO_HASH_DAY, at, graph, courts),
     memory: demoMemory(ws, DEMO_HASH_DAY),
+    corpus: demoCorpusRows(),
+    news: demoNewsRows(DEMO_HASH_DAY),
+    notices: demoNoticeRows(DEMO_HASH_DAY),
   };
   return createHash('sha256').update(canonical(rows)).digest('hex');
 }

@@ -3,6 +3,7 @@
 import { schema, type Queryable } from '@causedeck/db';
 
 export * from './alerts.ts';
+export * from './bulk-alerts.ts';
 export * from './detectors.ts';
 export * from './response.ts';
 export * from './routing.ts';

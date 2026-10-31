@@ -201,6 +201,7 @@ describe('enqueue', () => {
       'reminder.morning',
       'reminder.outcome-missing',
       'system.onboarding.nudge',
+      'system.captcha-bulk.tick',
     ]);
   });
 });

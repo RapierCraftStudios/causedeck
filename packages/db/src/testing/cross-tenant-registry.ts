@@ -1531,6 +1531,21 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'system job body: no workspace; reads watches only through the owner-defined app_cause_list_watch_targets and writes proposals under each watching workspace scope; covered by list-watch.test.ts',
   CAUSELIST_POLL_CRON: 'constant',
   causelistPoll: 'job definition (handler is runCauselistPoll)',
+  // bulk captcha tick (#1078): system job over the global `source` and `fetch_log` tables, no workspace
+  captchaBulkTick: 'job definition (handler is runCaptchaBulkTick)',
+  runCaptchaBulkTick:
+    'system job body: reads the global tables `source` and `feature_flag` rows (GLOBAL_TABLES, no workspace_id, no RLS) and drives the in-memory bulk scheduler; no tenant data',
+  listBulkFeed:
+    'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): the cleared sources and their base URLs, never tenant data',
+  captchaBulkFlagOn:
+    'global `feature_flag` rows (GLOBAL_TABLES, no workspace_id, no RLS): the platform-wide flag, no workspace scope',
+  buildCaptchaBulkTicker:
+    'composition of the governed fetcher, the solver chain and the scheduler; writes only the global content-free `fetch_log`',
+  setCaptchaBulkWiring:
+    'wiring setter for the governed fetcher and solver ports: no database access',
+  CAPTCHA_BULK_FLAG: 'constant',
+  CAPTCHA_BULK_TICK_CRON: 'constant',
+  DEFAULT_CAPTCHA_DAILY_CAP_DOLLARS: 'constant',
   runCauselistPoll: 'system job body: see pollCauseList',
   // court day: display-board tracking and the call-time estimate (#493)
   COURT_LIVE_TRACKING_FLAG: 'constant',

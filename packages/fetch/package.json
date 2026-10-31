@@ -14,7 +14,8 @@
     "captcha:accuracy": "tsx scripts/captcha-accuracy.ts"
   },
   "dependencies": {
-    "alterlab": "catalog:"
+    "alterlab": "catalog:",
+    "parse5": "catalog:"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",

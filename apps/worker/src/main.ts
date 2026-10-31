@@ -5,6 +5,7 @@ import {
   registry,
   setBoardFetcherFactory,
   setCauseListFetcherFactory,
+  setCaptchaBulkWiring,
   setNewsFetcherFactory,
   setNoticeFetcherFactory,
   setStatusFetcherFactory,
@@ -54,6 +55,11 @@ setBoardFetcherFactory(governedFetcher);
 setNoticeFetcherFactory(governedFetcher);
 // The news digest (#481, D-048): feeds of cleared `news` or `licensed` sources only, through the same fetcher.
 setNewsFetcherFactory(governedFetcher);
+
+// The bulk captcha tick (#1078, dark behind `captcha.bulk`): the governed fetcher only. No OCR
+// engine, paid key or challenge transport is wired, so a challenge page is not answered and nothing
+// is spent until a person wires them after counsel clears a source (#492, #118).
+setCaptchaBulkWiring({ fetcher: governedFetcher });
 
 // The same governed fetcher for `system.status.poll` (#592): delegated case-status lookups only.
 setStatusFetcherFactory((jobDb) =>

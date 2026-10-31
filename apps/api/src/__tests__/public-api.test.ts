@@ -93,6 +93,7 @@ beforeAll(async () => {
     'causelists:read',
     'orders:read',
     'notices:read',
+    'research:read',
   ]);
   keyB = await keyFor(t.b.id, t.ub, ['cases:read', 'orders:read']);
   keyNoScopes = await keyFor(t.a.id, t.ua, ['webhooks:write']);
@@ -106,7 +107,13 @@ const get = async (path: string, bearer: string) => {
 /** Keys that would name a source, aggregator, fetch route or licence (D-053 item 4). */
 const FORBIDDEN_KEYS = ['source_id', 'source_license', 'provenance', 'ref', 'url'];
 
-const ROUTES = [`/v1/cases/${CASE_CNR}`, '/v1/causelists', '/v1/orders', '/v1/notices'];
+const ROUTES = [
+  `/v1/cases/${CASE_CNR}`,
+  '/v1/causelists',
+  '/v1/orders',
+  '/v1/notices',
+  '/v1/research/search?q=surgery',
+];
 
 describe('public API scopes', () => {
   it.each(ROUTES)('answers 403 on %s for a key without the scope', async (path) => {
@@ -210,5 +217,78 @@ describe('what responses never hold', () => {
     for (const text of bodies) {
       expect(text).not.toMatch(/rating|ranking|rank"|predict|contributor|workspace/i);
     }
+  });
+});
+
+describe('research search (#896)', () => {
+  const SENTINEL = 'Zorblax Industries';
+
+  async function seedCorpus(): Promise<string> {
+    const db = testAppDb();
+    const sha256 = randomUUID().replaceAll('-', '');
+    const [row] = await db
+      .insert(schema.judgment)
+      .values({
+        sourceId: 'in.mhc.judgments',
+        court: 'MHC',
+        sha256,
+        neutralCitation: `2019:MHC:${sha256.slice(0, 5)}`,
+        judgmentDate: '2019-03-04',
+        provenance: {
+          url: `https://court.example/${sha256}.pdf`,
+          fetchedAt: '2026-10-23T00:00:00.000Z',
+          sha256,
+          sourceId: 'in.mhc.judgments',
+          sourceVersion: 'v1',
+          tierUsed: 'http',
+          costDollars: 0,
+        },
+        pageText: [{ pageNo: 1, text: `${SENTINEL} v. the patient.` }],
+        redactedText: [{ pageNo: 1, text: '[PARTY] v. [PARTY].' }],
+        redactionVersion: 1,
+        segmentVersion: 1,
+        segmentedRedactionVersion: 1,
+        caseTitle: 'A v. B',
+        courtLevel: 'high_court',
+      })
+      .returning({ id: schema.judgment.id });
+    const judgmentId = row?.id ?? '';
+    await db.insert(schema.judgmentSegment).values({
+      judgmentId,
+      ordinal: 1,
+      role: 'facts',
+      pageFrom: 1,
+      pageTo: 1,
+      text: 'Quokkafish surgery was done without written consent and an infection followed.',
+      court: 'MHC',
+      courtLevel: 'high_court',
+      judgmentYear: 2019,
+    });
+    return judgmentId;
+  }
+
+  it('returns redacted passages with court, citation and the official link, and no party name', async () => {
+    const judgmentId = await seedCorpus();
+    const { status, body } = await get(
+      '/v1/research/search?q=quokkafish%20written%20consent%20infection',
+      keyA,
+    );
+    expect(status).toBe(200);
+    const data = body.data as {
+      id: string;
+      neutral_citation: string;
+      segments: { role: string; text: string }[];
+    }[];
+    const hit = data.find((r) => r.id === judgmentId);
+    expect(hit).toMatchObject({ court: 'MHC' });
+    expect(hit?.neutral_citation).toMatch(/^2019:MHC:/);
+    expect(hit?.segments[0]?.role).toBe('facts');
+    expect(JSON.stringify(body)).not.toContain(SENTINEL);
+    expect(JSON.stringify(body)).not.toMatch(/source_id|licen[cs]e|provenance|rating|predict/i);
+  });
+
+  it('asks for a query and refuses a key without the scope', async () => {
+    expect((await get('/v1/research/search', keyA)).status).toBe(422);
+    expect((await get('/v1/research/search?q=surgery', keyB)).status).toBe(403);
   });
 });

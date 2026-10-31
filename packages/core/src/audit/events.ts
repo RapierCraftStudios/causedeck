@@ -49,6 +49,11 @@ export const AUDIT_ACTIONS = {
     description:
       'Staff applied a mask request to a judgment: title masked, text re-redacted, caches cleared',
   },
+  // A fact-pattern search over the judgment corpus (#896). Metadata holds ids, hashes and counts, never the query text.
+  'research.searched': {
+    security: false,
+    description: 'A member searched the judgment corpus: plan and retrieval set recorded as ids',
+  },
   // The public status page's incident log (#770). Metadata holds the change and the old and new state.
   'incident.changed': {
     security: true,

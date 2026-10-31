@@ -29,6 +29,22 @@ export {
   type MockEmbedConfig,
 } from './embed/providers.ts';
 export type * from './embed/types.ts';
+export {
+  createRerankGateway,
+  type RerankGateway,
+  type RerankGatewayConfig,
+} from './rerank/gateway.ts';
+export {
+  BGE_RERANKER_MODEL,
+  COHERE_RERANK_MODEL,
+  createBgeRerankProvider,
+  createCohereRerankProvider,
+  createMockRerankProvider,
+  MOCK_RERANK_MODEL,
+  type BedrockRerankConfig,
+  type BgeRerankerConfig,
+} from './rerank/providers.ts';
+export type * from './rerank/types.ts';
 export { createGateway, type AiGateway, type GatewayConfig } from './gateway.ts';
 export { inputHash, normalise } from './hash.ts';
 export type * from './ports.ts';
@@ -36,6 +52,8 @@ export {
   costPaise,
   embedCostPaise,
   EMBED_PRICES,
+  rerankCostPaise,
+  RERANK_PRICES,
   estimatePaise,
   estimateUsage,
   PRICES,

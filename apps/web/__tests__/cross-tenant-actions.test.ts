@@ -129,6 +129,7 @@ const limitation = await import('../app/(app)/w/[slug]/limitation/actions.ts');
 const feeActions = await import('../app/(app)/w/[slug]/invoices/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
+const researchSearch = await import('../app/(app)/w/[slug]/research/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
 const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actions.ts');
 const draftPrecedents = await import('../app/(app)/w/[slug]/drafts/[id]/precedent-actions.ts');
@@ -286,6 +287,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   searchPrecedentsForBlockAction: draftPrecedents,
   proposePrecedentAction: draftPrecedents,
   addTagAction: research,
+  findAuthoritiesAction: research,
+  searchAuthoritiesAction: researchSearch,
+  rerunAuthoritySearchAction: researchSearch,
   confirmOutcomeAction: hearingOutcome,
   markPreparedAction: briefSheet,
   generateHandoverAction: continuityActions,
@@ -1247,6 +1251,27 @@ function inputs(workspaceId: string): Record<string, unknown> {
       matterId: t.a.rows.matter_issue_tag?.matterId,
       tagId: t.a.rows.matter_issue_tag?.id,
     },
+    // Fact-pattern search (#896): ub may not search, re-run or seed a search in A's workspace, and
+    // A's research usage is unchanged.
+    searchAuthoritiesAction: { workspaceId, query: 'surgery without written consent' },
+    rerunAuthoritySearchAction: {
+      workspaceId,
+      plan: {
+        query: 'surgery without written consent',
+        factDescription: 'surgery without written consent',
+        keywords: ['surgery'],
+        subjectAreas: [],
+        statutes: [],
+        courts: [],
+        courtLevel: null,
+        dateFrom: null,
+        dateTo: null,
+        outcome: null,
+        offenceDate: null,
+        planner: 'heuristic',
+      },
+    },
+    findAuthoritiesAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId },
     // Research notes and provider templates (#80): ub may not write A's notes or A's templates.
     createNoteAction: { workspaceId, matterId: t.a.rows.research_note?.matterId, title: 'x' },
     updateNoteAction: {

@@ -4246,6 +4246,36 @@ const CASES: Record<string, Case> = {
       f.asB((s) => core.listRelevantJudgments(s, { workspaceId: f.b.id, userId: f.ub }, matterId)),
     );
   },
+  // fact-pattern search (#896): B naming A's workspace is denied and spends none of A's searches.
+  searchAuthorities: async (f) => {
+    await expectDenied(
+      f.asB((s) => core.searchAuthorities(s, bActsOnA(f), { query: 'surgery without consent' })),
+    );
+    expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'research.searches')).toBe(0);
+  },
+  rerunAuthoritySearch: async (f) => {
+    await expectDenied(
+      f.asB((s) =>
+        core.rerunAuthoritySearch(s, bActsOnA(f), {
+          plan: {
+            query: 'surgery without consent',
+            factDescription: 'surgery without consent',
+            keywords: ['surgery'],
+            subjectAreas: [],
+            statutes: [],
+            courts: [],
+            courtLevel: null,
+            dateFrom: null,
+            dateTo: null,
+            outcome: null,
+            offenceDate: null,
+            planner: 'heuristic',
+          },
+        }),
+      ),
+    );
+    expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'research.searches')).toBe(0);
+  },
   // research notes and provider templates (#80): B on A's matter or workspace is denied; A's rows are unchanged.
   listNotes: async (f) => {
     await expectDenied(f.asB((s) => core.listNotes(s, bActsOnA(f), aNote(f).matterId)));

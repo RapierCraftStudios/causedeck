@@ -22,6 +22,7 @@ export const API_KEY_ROUTE_PREFIXES = [
   '/v1/causelists',
   '/v1/orders',
   '/v1/notices',
+  '/v1/research',
   '/v1/webhook-endpoints',
 ] as const;
 

@@ -21,11 +21,24 @@ rejected.
 | `causelists:read` | `GET /v1/causelists`             |
 | `orders:read`     | `GET /v1/orders`                 |
 | `notices:read`    | `GET /v1/notices`                |
+| `research:read`   | `GET /v1/research/search`        |
 | `webhooks:write`  | `/v1/webhook-endpoints` (manage) |
 
 Each call is metered against the key's monthly quota. Responses carry `x-quota-used`; when the quota
 is used up the API answers `429` with `x-quota-limit` and `x-quota-used`. Keys can only call the
 public paths in this document.
+
+## Research search
+
+`GET /v1/research/search` with a `q` parameter (the facts) searches anonymised public judgments by a description of the
+facts (for example, "medical negligence with a post-operative infection and no consent"). It
+returns judgments grouped, best first, each with its court, date, neutral citation, title (masked
+where the law requires), outcome, how many corpus judgments cite it, a link to the court's own copy
+and the matching passages with their role (facts, reasoning, decision) and page. `filters` echoes
+the statutes, subject areas and courts the query was understood as; a search for BNS 106 also finds
+judgments citing IPC 304A. Passages are anonymised text: party names from the original are never
+returned. The list is empty when nothing matches. Each search also counts against the workspace's
+monthly search allowance and answers `429` when the plan's allowance is used up.
 
 ## Errors
 

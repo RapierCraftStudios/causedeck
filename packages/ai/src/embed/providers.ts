@@ -29,7 +29,7 @@ export interface BedrockEmbedConfig {
   now?: () => Date;
 }
 
-async function post(
+export async function post(
   provider: string,
   doFetch: typeof fetch,
   url: string,
@@ -51,7 +51,7 @@ async function post(
   return response.json();
 }
 
-function invokeBedrock(config: BedrockEmbedConfig, id: string, model: string) {
+export function invokeBedrock(config: BedrockEmbedConfig, id: string, model: string) {
   const doFetch = config.fetch ?? fetch;
   const now = config.now ?? (() => new Date());
   const host = `bedrock-runtime.${config.region}.amazonaws.com`;

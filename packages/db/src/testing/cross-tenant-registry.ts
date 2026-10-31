@@ -1051,6 +1051,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   confirmTag: denies,
   dismissTag: denies,
   listRelevantJudgments: denies,
+  // fact-pattern search (#896): B naming A's workspace is denied; A's research usage is unchanged.
+  searchAuthorities: denies,
+  rerunAuthoritySearch: denies,
   // drafts (#768): B on A's draft, version or export is denied; A's rows are unchanged.
   createDraft: denies,
   renderDraft: denies,
@@ -1215,6 +1218,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   providerFromTemplate: 'pure function over a template row',
   BUILT_IN_PROVIDERS: 'constant',
   QUERY_PLACEHOLDER: 'constant',
+  // fact-pattern search (#896): constants of the search service
+  RESEARCH_QUERY_MAX_CHARS: 'constant',
+  RESEARCH_SEARCH_CAPS: 'constant',
+  RESEARCH_SEARCH_KEY: 'constant',
+  RESEARCH_SUBJECT_AREAS: 'constant',
   // briefs (#60): pure scoring, the empty memory port, and the system sweep
   computeReadiness: 'pure',
   emptyMemoryProvider: 'constant: the default memory port returns nothing',

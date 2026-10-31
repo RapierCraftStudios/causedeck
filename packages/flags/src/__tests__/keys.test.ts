@@ -46,6 +46,7 @@ describe('flag registry', () => {
         'insights.enabled',
         'workspace.export',
         'm5_playbooks',
+        'growth.onboarding-nudge',
       ].sort(),
     );
     for (const key of FLAG_KEYS) {

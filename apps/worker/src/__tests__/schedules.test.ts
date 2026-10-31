@@ -61,6 +61,7 @@ describe('registerSchedules', () => {
       'system.attention.scan',
       'system.brief.refresh-sweep',
       'system.reminder.schedule',
+      'system.onboarding.nudge',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -104,6 +105,8 @@ describe('registerSchedules', () => {
       ['system.activity.digest', '0,30 18-23 * * *', '2026-10-18T12:30:00.000Z'],
       // Court-day reminders (#64): every half hour from 07:00 to 23:30 IST; 07:00 IST is 01:30 UTC.
       ['system.reminder.schedule', '0,30 7-23 * * *', '2026-10-18T01:30:00.000Z'],
+      // Onboarding nudges (#601): daily 09:30 IST, which is 04:00 UTC.
+      ['system.onboarding.nudge', '30 9 * * *', '2026-10-18T04:00:00.000Z'],
       // News digest scheduler (#481): every half hour, like the notification digest; 06:00 IST is 00:30 UTC.
       ['system.news.digest', '0,30 * * * *', '2026-10-18T00:30:00.000Z'],
       // News poll fan-out (#481): hourly at :10 IST, which is :40 UTC.

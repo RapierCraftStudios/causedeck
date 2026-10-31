@@ -200,6 +200,7 @@ describe('enqueue', () => {
       'reminder.evening',
       'reminder.morning',
       'reminder.outcome-missing',
+      'system.onboarding.nudge',
     ]);
   });
 });

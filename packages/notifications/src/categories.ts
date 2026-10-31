@@ -88,6 +88,9 @@ export const CATEGORIES = {
     mandatory: false,
     lockedChannels: [],
   },
+  // Onboarding nudges (#601): a reminder for the next unfinished setup step, in the app by default;
+  // WhatsApp is opt-in through the member's WhatsApp link (the template carries a link only).
+  'onboarding.nudge': { defaultChannels: ['in_app'], mandatory: false, lockedChannels: [] },
   'system.notice': { defaultChannels: ['in_app'], mandatory: false, lockedChannels: [] },
 } as const satisfies Record<string, CategoryDefinition>;
 

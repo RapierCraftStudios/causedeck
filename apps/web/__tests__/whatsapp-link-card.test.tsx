@@ -101,7 +101,7 @@ describe('unlinked', () => {
 describe('linked', () => {
   it('offers only the categories with an approved template and saves a change', async () => {
     const actions = show(LINK);
-    expect(screen.getAllByRole('checkbox')).toHaveLength(3);
+    expect(screen.getAllByRole('checkbox')).toHaveLength(4);
     fireEvent.click(screen.getByLabelText(t.categories.statusOrder));
     await waitFor(() => {
       expect(actions.setCategories).toHaveBeenCalledWith({

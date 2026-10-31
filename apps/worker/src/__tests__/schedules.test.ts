@@ -181,13 +181,26 @@ describe('registerSchedules', () => {
     expect(schedules).toHaveLength(1);
     expect(schedules[0]?.timezone).toBe('Asia/Kolkata');
 
-    // Wait for the next minute's occurrence, then give both replicas several more cron passes.
+    // Wait for the first occurrence, then give both replicas several more cron passes.
     await waitFor(() => runs > 0, { timeoutMs: 75_000, intervalMs: 250 });
     await sleep(3000);
-    const jobs = await a.boss.findJobs(def.name);
-    const minutes = new Set(jobs.map((j) => Math.floor(j.createdOn.getTime() / 60_000)));
-    expect(jobs.length).toBe(minutes.size);
-    expect(runs).toBe(jobs.length);
+    // Freeze the schedule before counting. Sampling `runs` and the job rows while cron keeps
+    // firing races a minute boundary: an occurrence inserted and handled between the two reads
+    // gave "expected 2 to be 1" / "expected 1 to be 2". Once unscheduled and the passes in flight
+    // have landed, the job set is fixed and every job is handled, so the counts are exact.
     await a.boss.unschedule(def.name);
+    await sleep(2500);
+    const jobs = await waitFor(
+      async () => {
+        const all = await a.boss.findJobs(def.name);
+        return all.every((j) => j.state === 'completed') ? all : undefined;
+      },
+      { timeoutMs: 15_000, intervalMs: 250 },
+    );
+    // One job per occurrence slot: a duplicate send by either replica would repeat a slot.
+    const slots = new Set(jobs.map((j) => (j.singletonOn ?? j.createdOn).getTime()));
+    expect(jobs.length).toBeGreaterThan(0);
+    expect(jobs.length).toBe(slots.size);
+    expect(runs).toBe(jobs.length);
   }, 120_000);
 });

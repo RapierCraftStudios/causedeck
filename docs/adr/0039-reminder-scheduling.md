@@ -31,7 +31,7 @@ A lawyer wants an evening brief of tomorrow's court day, a morning note when tod
 ## Decision
 
 - `system.reminder.schedule` runs `0,30 7-23 * * *` in Asia/Kolkata. For each member whose local time matches a preference it enqueues `reminder.evening` (for tomorrow), `reminder.morning` (for today) or `reminder.outcome-missing`. The scheduler lists targets through an owner-defined SQL function, as the digest does, because tenant tables are FORCE RLS.
-- The evening slot is limited to 18:00-23:00 and the morning job is 07:00, the window already kept clear of change freezes. Enforcement in deploy tooling is out of scope here.
+- The evening slot is limited to 18:00-23:00 and the morning job is 07:00, the window already kept clear of change freezes. Deploy tooling enforces the freeze: `.github/actions/freeze-guard/freeze.ts` blocks production deploys in 07:00-10:30 and 18:00-23:00 IST (`deploy-prod`, `deploy-staging` records it, `hotfix-prod` overrides it), so no deploy lands while a reminder is being sent.
 - The evening job sends only when tomorrow has a listing; the morning job only when today's list diff is non-empty; nothing is sent on a holiday with no listings.
 - Each channel claims its `reminder_dispatch` row before sending and releases it on failure, so a retry sends only what has not gone out.
 - Push carries counts and a generic title, never party names. Email uses the console transport in dev and CI and SES when configured; push uses VAPID web push.
@@ -42,8 +42,8 @@ A lawyer wants an evening brief of tomorrow's court day, a morning note when tod
 ## Consequences
 
 - Failures retry with backoff and dead-letter through the registry, and show in the admin health feed.
-- Local scheduled notifications on mobile remain a follow-up; server push is the backup path.
+- Local scheduled notifications (#721): the service worker schedules reminders with Notification Triggers (`showTrigger`) when the browser supports them (`apps/web/sw/local-reminders.ts`, fed by `lib/pwa/local-reminders.ts`). Support is narrow, so it is feature-detected and server push remains the backup path; the local notification shares the push `tag`, so a push replaces it. Wiring a reminder source to the page helper is still to do.
 
 ## Revisit when
 
-- A mobile client ships local scheduled notifications, or per-member quiet hours replace the fixed freeze-safe evening window.
+- A reminder source is wired to local scheduling, or per-member quiet hours replace the fixed freeze-safe evening window.

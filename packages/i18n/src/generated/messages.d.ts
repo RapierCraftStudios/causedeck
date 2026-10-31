@@ -47,6 +47,7 @@ export type Messages = {
       settings: string;
     };
     enquiries: string;
+    import: string;
   };
   palette: {
     title: string;

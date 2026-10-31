@@ -21,6 +21,8 @@ export const IMPORT_FILE_TYPES: readonly ImportFileType[] = [
   { name: 'docx', extensions: ['docx'], capBytes: 25 * MB },
   { name: 'ics', extensions: ['ics'], capBytes: 1 * MB },
   { name: 'txt', extensions: ['txt'], capBytes: 5 * MB },
+  { name: 'eml', extensions: ['eml'], capBytes: 25 * MB },
+  { name: 'html', extensions: ['html', 'htm'], capBytes: 5 * MB },
   { name: 'png', extensions: ['png'], capBytes: 20 * MB },
   { name: 'jpeg', extensions: ['jpg', 'jpeg'], capBytes: 20 * MB },
   { name: 'webp', extensions: ['webp'], capBytes: 20 * MB },

@@ -38,8 +38,9 @@ const ids = (items: readonly { id: string }[]) => items.map((entry) => entry.id)
 describe('navigation manifest', () => {
   it('covers exactly the spike §8 workspace routes, once each', () => {
     expect([...WORKSPACE_ROUTES].sort()).toEqual([...SPIKE_ROUTES].sort());
-    // `enquiries` is a flag-gated destination below People (`people/enquiries`), not a spike route.
-    expect(ids(NAV_ITEMS)).toEqual([...WORKSPACE_ROUTES, 'enquiries'].sort());
+    // `enquiries` is a flag-gated destination below People (`people/enquiries`) and `import` the
+    // bootstrap import (#567); neither is a spike route.
+    expect(ids(NAV_ITEMS)).toEqual([...WORKSPACE_ROUTES, 'enquiries', 'import'].sort());
     expect(new Set(NAV_ITEMS.map((entry) => entry.id)).size).toBe(NAV_ITEMS.length);
   });
 
@@ -95,7 +96,7 @@ describe('flag-gated items', () => {
     expect(visible).not.toContain('invoices');
     expect(visible).not.toContain('limitation');
     expect(visible).not.toContain('insights');
-    expect(visible).toHaveLength(SPIKE_ROUTES.length - 3);
+    expect(visible).toHaveLength(SPIKE_ROUTES.length - 3 + 1);
   });
 
   it('asks the injected isEnabled about each flag and shows only enabled ones', () => {
@@ -114,7 +115,7 @@ describe('flag-gated items', () => {
       'limitation.enabled',
     ]);
     expect(ids(visibleNavItems({ isEnabled: () => true }))).toEqual(
-      [...SPIKE_ROUTES, 'enquiries'].sort(),
+      [...SPIKE_ROUTES, 'enquiries', 'import'].sort(),
     );
     expect(ids(visibleNavItems({ isEnabled: () => false }))).toEqual(ids(visibleNavItems()));
   });
@@ -123,10 +124,12 @@ describe('flag-gated items', () => {
 describe('permission-gated items', () => {
   it('hides items the role lacks permission for', () => {
     const owner = ids(visibleNavItems({ role: 'owner', isEnabled: () => true }));
-    expect(owner).toEqual([...SPIKE_ROUTES, 'enquiries'].sort());
+    expect(owner).toEqual([...SPIKE_ROUTES, 'enquiries', 'import'].sort());
     const clerk = ids(visibleNavItems({ role: 'clerk', isEnabled: () => true }));
     expect(clerk).not.toContain('billing');
     expect(clerk).not.toContain('invoices');
     expect(clerk).toContain('today');
+    expect(clerk).not.toContain('import');
+    expect(getNavItem('import').href('demo')).toBe('/w/demo/import');
   });
 });

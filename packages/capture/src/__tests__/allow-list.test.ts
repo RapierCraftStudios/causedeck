@@ -40,7 +40,9 @@ describe('allow-list', () => {
 
   it.each([
     ['setup.exe', 'application/x-msdownload'],
-    ['page.html', 'text/html'],
+    ['page.svg', 'image/svg+xml'],
+    ['page.html.exe', 'text/html'],
+    ['mail.eml', 'text/html'],
     ['brief.pdf.exe', 'application/pdf'],
     ['sheet.xlsx', 'application/vnd.ms-excel'],
     ['README', 'text/plain'],
@@ -60,6 +62,28 @@ describe('allow-list', () => {
     }
     const mislabelled = new Uint8Array(readFileSync(join(HERE, '../../fixtures/mislabelled.pdf')));
     await expect(assertBytesMatch(pdf, mislabelled)).rejects.toBeInstanceOf(UnsupportedTypeError);
+  });
+
+  it('accepts .eml and inert HTML, storing HTML as text/plain', async () => {
+    const eml = resolveAllowedType('mail.eml', 'message/rfc822');
+    expect(eml.name).toBe('eml');
+    expect(await assertBytesMatch(eml, SAMPLES.eml)).toBe('message/rfc822');
+    const html = resolveAllowedType('page.html', 'text/html');
+    expect(html.name).toBe('html');
+    expect(await assertBytesMatch(html, SAMPLES.html)).toBe('text/plain');
+    await expect(assertBytesMatch(html, SAMPLES.png)).rejects.toMatchObject({
+      reason: 'content_mismatch',
+    });
+    await expect(assertBytesMatch(eml, SAMPLES.png)).rejects.toMatchObject({
+      reason: 'content_mismatch',
+    });
+    expect(() => {
+      assertWithinCap(html, 5 * MB);
+      assertWithinCap(eml, 25 * MB);
+    }).not.toThrow();
+    expect(() => {
+      assertWithinCap(html, 5 * MB + 1);
+    }).toThrow(CaptureTooLargeError);
   });
 
   it('carries a user-safe message', () => {
@@ -85,6 +109,8 @@ describe('size caps', () => {
       docx: 25 * MB,
       ics: 1 * MB,
       txt: 5 * MB,
+      eml: 25 * MB,
+      html: 5 * MB,
       zip: 100 * MB,
     });
   });

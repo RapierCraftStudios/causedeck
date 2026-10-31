@@ -45,6 +45,7 @@ describe('registerSchedules', () => {
       'system.data-ops.evaluate',
       'system.corpus.poll',
       'system.corpus.segment',
+      'system.corpus.enrich',
       'system.corpus.ocr',
       'system.causelist.poll',
       'system.board.poll',

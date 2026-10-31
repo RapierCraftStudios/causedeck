@@ -21,9 +21,13 @@ export function courtsPath(code?: string, tab: ForumTab = 'halls'): string {
 export async function openCourts(
   page: Page,
   asUser: AsUser,
-  { role = 'owner', path = courtsPath() }: { role?: E2eRole; path?: string } = {},
+  {
+    role = 'owner',
+    path = courtsPath(),
+    workspace = COURTS_WORKSPACE,
+  }: { role?: E2eRole; path?: string; workspace?: string } = {},
 ): Promise<void> {
-  await asUser(role, { workspace: COURTS_WORKSPACE, path });
+  await asUser(role, { workspace, path });
   await expect(page.locator('main').getByRole('heading', { level: 1 })).toBeVisible();
   await shellReady(page);
 }

@@ -40,7 +40,7 @@ const SHOTS: readonly Shot[] = [
     name: 'courts-degraded-card.png',
     setUp: async (page, asUser) => {
       await openCourts(page, asUser);
-      return page.locator(`[data-forum-card="${DEGRADED_FORUM}"]`);
+      return page.locator('main').locator(`[data-forum-card="${DEGRADED_FORUM}"]`);
     },
   },
   {

@@ -235,6 +235,19 @@ describe('Razorpay adapter: request mapping', () => {
     });
   });
 
+  it('sends a payment-method update to the hosted link, or reports it unsupported without one', async () => {
+    const client = fakeClient({ fetch: vi.fn(() => Promise.resolve(createdFixture)) });
+    expect(await provider(client).updatePaymentMethod('sub_FIXTURE0000001')).toMatchObject({
+      url: 'https://rzp.io/i/FIXTURE01',
+    });
+    const bare = fakeClient({
+      fetch: vi.fn(() => Promise.resolve({ ...createdFixture, short_url: null })),
+    });
+    await expect(provider(bare).updatePaymentMethod('sub_FIXTURE0000001')).rejects.toMatchObject({
+      code: 'unsupported',
+    });
+  });
+
   it('retries a payment without any write call: Razorpay retries pending charges itself', async () => {
     const client = fakeClient({
       fetch: vi.fn(() => Promise.resolve({ ...fetchFixture, status: 'pending' })),

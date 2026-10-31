@@ -2,8 +2,7 @@
 // Autopay state, grace banners and invoices, read on the workspace-scoped transaction
 // (`withWorkspace`). Owners only (`billing.read`); other roles see `Only workspace owners can manage
 // billing.` With `billing.manage` (#257) the cards host the owner actions: change plan, seats,
-// cancel or resume, and the GSTIN; without it they are read-only. The payment method update
-// arrives later. Invoice PDFs download through `invoices/[id]/pdf/route.ts` (#258).
+// cancel or resume, and the GSTIN; without it they are read-only. Invoice PDFs download through `invoices/[id]/pdf/route.ts` (#258).
 //
 // States: loading (skeleton cards and rows while billing streams in), error (`Could not load
 // billing.` with `Try again`), empty invoices, offline (the shell banner; every action is disabled
@@ -87,24 +86,34 @@ async function BillingSection({
     return <BillingError />;
   }
 
+  const canManage = can(context.role, 'billing.manage');
   if (view.kind === 'junior') {
     return (
       <div data-billing="junior" className="flex flex-col gap-6">
-        <JuniorPlanCard upgrades={view.upgrades} />
+        <JuniorPlanCard
+          upgrades={view.upgrades}
+          manage={
+            canManage
+              ? { workspaceId: context.workspace.id, slug: context.workspace.slug }
+              : undefined
+          }
+        />
         <InvoiceTable invoices={view.invoices} />
       </div>
     );
   }
-  const manage = can(context.role, 'billing.manage')
+  const manage = canManage
     ? { workspaceId: context.workspace.id, slug: context.workspace.slug, view: view.manage }
     : undefined;
   return (
     <div data-billing="paid" className="flex flex-col gap-6">
-      {view.banner === null ? null : <BillingBanner banner={view.banner} />}
+      {view.banner === null ? null : <BillingBanner banner={view.banner} manage={manage} />}
       {/* 360: stacked. 768: Plan and Seats left, Payment right. 1280: one summary row. */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <PlanCard plan={view.plan} status={view.status} renewal={view.renewal} manage={manage} />
-        {view.paymentMethod === null ? null : <PaymentMethodCard state={view.paymentMethod} />}
+        {view.paymentMethod === null ? null : (
+          <PaymentMethodCard state={view.paymentMethod} manage={manage} />
+        )}
         <SeatSummary seats={view.seats} manage={manage} />
       </div>
       {manage ? (

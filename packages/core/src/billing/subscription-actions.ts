@@ -12,8 +12,14 @@
 // The GSTIN only changes `subscription.gstin`: invoices copy the recipient GSTIN when they are
 // issued (`createInvoiceStore().loadRecipient`), and issued invoices are immutable (trigger in
 // migration 0017), so a new GSTIN applies to future invoices only.
-import { fromSubscriptionRow, normalizeGstin, toSubscriptionStatus } from '@causedeck/billing';
+import {
+  applyProviderEvent,
+  fromSubscriptionRow,
+  normalizeGstin,
+  toSubscriptionStatus,
+} from '@causedeck/billing';
 import { getPlan, SUBSCRIPTION_STATUSES, type SubscriptionStatus } from '@causedeck/billing/plans';
+import type { RazorpayWebhookEvent } from '@causedeck/billing/provider';
 import type { ProrationResult } from '@causedeck/billing/proration';
 import { quoteChange, type BillingService, type ChangeQuote } from '@causedeck/billing/service';
 import type { SeatCounts, SubscriptionSnapshot } from '@causedeck/billing/state-machine';
@@ -200,4 +206,191 @@ export async function setSubscriptionGstin(
     },
   );
   return gstin;
+}
+
+/** The mandate step the provider completes on its own (the mock; Razorpay uses the hosted link). */
+export type CompleteMandate = (
+  providerSubscriptionId: string,
+) => Promise<RazorpayWebhookEvent | null>;
+
+export interface StartCheckoutContext {
+  tx: Transaction;
+  workspaceId: string;
+  actorUserId: string;
+  /** The billing contact the provider customer is created with (the owner's email). */
+  billingEmail: string;
+  customerName?: string;
+  /** The `subscription.provider` value (`mock` or `razorpay`). */
+  providerName: string;
+  service: () => Promise<BillingService> | BillingService;
+  /** The mock provider authorises the UPI Autopay mandate at once; a real provider leaves it null. */
+  completeMandate?: CompleteMandate | null;
+  now?: () => Date;
+}
+
+export interface CheckoutResult {
+  subscription: SubscriptionSnapshot;
+  /** The hosted authorisation link to send the owner to; null once the mandate is complete. */
+  mandateUrl: string | null;
+  /** Whether the subscription is already active (the mock provider completes the mandate). */
+  activated: boolean;
+}
+
+/** Write a snapshot onto its row (the columns the webhook job writes). */
+async function persistSnapshot(
+  tx: Transaction,
+  row: SubscriptionRow,
+  next: SubscriptionSnapshot,
+): Promise<void> {
+  const inDunning = next.state === 'past_due' || next.state === 'grace';
+  await tx
+    .update(subscription)
+    .set({
+      status: toSubscriptionStatus(next.state),
+      planId: next.planId,
+      seats: next.seats,
+      clerkSeats: next.clerkSeats,
+      currentPeriodStart: next.currentPeriodStart,
+      currentPeriodEnd: next.currentPeriodEnd,
+      graceUntil: next.graceUntil,
+      cancelAtPeriodEnd: next.cancelAtPeriodEnd,
+      ...(inDunning ? {} : { dunningStartedAt: null, dunningAttempts: 0 }),
+    })
+    .where(eq(subscription.id, row.id));
+}
+
+/**
+ * Upgrade a Junior workspace (no paid subscription) to a paid plan (#1072): creates the provider
+ * customer and subscription through the billing service, stores the row as `trialing` (pending
+ * mandate) and, when the provider completes the mandate itself (the mock), applies the activation
+ * so the owner returns to a billing page on the new plan. A row left pending by an abandoned
+ * checkout is restarted. Authorization (`billing.manage`) is the caller's job.
+ */
+export async function startSubscriptionCheckout(
+  ctx: StartCheckoutContext,
+  input: { planId: string } & SeatCounts,
+): Promise<CheckoutResult> {
+  const { tx, workspaceId } = ctx;
+  const now = ctx.now ?? (() => new Date());
+  await assertNotDemoWorkspace(tx, workspaceId);
+  const [existing] = await tx
+    .select()
+    .from(subscription)
+    .where(
+      and(
+        eq(subscription.workspaceId, workspaceId),
+        notInArray(subscription.status, [...LIVE_EXCLUDED]),
+      ),
+    )
+    .for('update');
+  if (existing && existing.planId !== 'junior' && existing.status !== 'trialing') {
+    throw invalid('The workspace already has a paid subscription');
+  }
+  const service = await ctx.service();
+  const started = await service.startSubscription({
+    planId: input.planId,
+    seats: input.seats,
+    clerkSeats: input.clerkSeats,
+    billingEmail: ctx.billingEmail,
+    ...(ctx.customerName === undefined ? {} : { customerName: ctx.customerName }),
+    notes: { workspaceId },
+  });
+  const created = started.subscription;
+  const values = {
+    planId: created.planId,
+    status: toSubscriptionStatus(created.state),
+    seats: created.seats,
+    clerkSeats: created.clerkSeats,
+    provider: ctx.providerName,
+    providerSubscriptionId: created.providerSubscriptionId,
+    providerCustomerId: created.providerCustomerId,
+    currentPeriodStart: created.currentPeriodStart,
+    currentPeriodEnd: created.currentPeriodEnd,
+    graceUntil: null,
+    cancelAtPeriodEnd: false,
+    billingEmail: ctx.billingEmail,
+  };
+  const [row] = existing
+    ? await tx.update(subscription).set(values).where(eq(subscription.id, existing.id)).returning()
+    : await tx
+        .insert(subscription)
+        .values({ workspaceId, ...values })
+        .returning();
+  if (!row) throw notFound('Subscription was not saved');
+
+  let snapshot: SubscriptionSnapshot = created;
+  let activated = false;
+  const event =
+    ctx.completeMandate && created.providerSubscriptionId
+      ? await ctx.completeMandate(created.providerSubscriptionId)
+      : null;
+  if (event) {
+    snapshot = applyProviderEvent(created, event, now());
+    await persistSnapshot(tx, row, snapshot);
+    activated = snapshot.state === 'active';
+  }
+  await record(
+    { db: tx, workspaceId, actor: { userId: ctx.actorUserId, kind: 'user' } },
+    {
+      action: 'billing.checkout_started',
+      target: { kind: 'subscription', id: row.id },
+      metadata: {
+        planId: created.planId,
+        seats: created.seats,
+        clerkSeats: created.clerkSeats,
+        provider: ctx.providerName,
+        activated,
+      },
+    },
+  );
+  invalidateEntitlements(workspaceId);
+  return { subscription: snapshot, mandateUrl: activated ? null : started.mandateUrl, activated };
+}
+
+export interface UpdatePaymentMethodContext extends BillingActionContext {
+  completeMandate?: CompleteMandate | null;
+}
+
+export interface UpdatePaymentMethodResult {
+  /** The hosted link to re-authorise the mandate; null once the provider completed it. */
+  mandateUrl: string | null;
+  completed: boolean;
+  subscription: SubscriptionSnapshot;
+}
+
+/**
+ * Restart the UPI Autopay mandate of the live subscription (#1072). With a provider that
+ * completes the mandate itself (the mock) the new mandate is active at once and a failed payment
+ * is charged, so the page shows the recovered state; otherwise the owner is sent to the link and
+ * the webhook reports the result.
+ */
+export async function updateSubscriptionPaymentMethod(
+  ctx: UpdatePaymentMethodContext,
+): Promise<UpdatePaymentMethodResult> {
+  const { tx, workspaceId } = ctx;
+  const now = ctx.now ?? (() => new Date());
+  await assertNotDemoWorkspace(tx, workspaceId);
+  const { row, snapshot } = await lockLiveSubscription(tx, workspaceId);
+  const service = await ctx.service(row);
+  const { mandateUrl } = await service.updatePaymentMethod(snapshot);
+  const event =
+    ctx.completeMandate && row.providerSubscriptionId
+      ? await ctx.completeMandate(row.providerSubscriptionId)
+      : null;
+  let next = snapshot;
+  if (event) {
+    next = applyProviderEvent(snapshot, event, now());
+    if (next !== snapshot) await persistSnapshot(tx, row, next);
+  }
+  const completed = ctx.completeMandate != null;
+  await record(
+    { db: tx, workspaceId, actor: { userId: ctx.actorUserId, kind: 'user' } },
+    {
+      action: 'billing.payment_method_updated',
+      target: { kind: 'subscription', id: row.id },
+      metadata: { completed, state: next.state },
+    },
+  );
+  invalidateEntitlements(workspaceId);
+  return { mandateUrl: completed ? null : mandateUrl, completed, subscription: next };
 }

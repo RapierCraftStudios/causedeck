@@ -195,6 +195,25 @@ export function createRazorpayProvider(options: RazorpayProviderOptions): Billin
       });
     },
 
+    updatePaymentMethod(subscriptionId) {
+      // Razorpay re-authorises through the subscription's hosted link; the new mandate is reported
+      // by webhook. A subscription without a link cannot be updated from here.
+      return call(async () => {
+        const subscription = toSubscription(await client.subscriptions.fetch(subscriptionId));
+        if (subscription.shortUrl === null) {
+          throw new BillingProviderError(
+            'unsupported',
+            `Subscription ${subscriptionId} has no authorisation link to update`,
+          );
+        }
+        return {
+          subscriptionId,
+          url: subscription.shortUrl,
+          status: subscription.mandate?.state ?? 'created',
+        };
+      });
+    },
+
     retryPayment(subscriptionId) {
       // Razorpay has no merchant API to retry a subscription charge: it retries a `pending`
       // subscription itself and reports the result by webhook. So this makes no write call and

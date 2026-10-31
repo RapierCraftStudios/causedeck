@@ -989,7 +989,6 @@
     "title": "Billing",
     "description": "Your plan, seats, payment method and invoices for {workspace}.",
     "loading": "Loading billing",
-    "comingSoon": "Available soon",
     "permissionDenied": "Only workspace owners can manage billing.",
     "error": {
       "title": "Could not load billing.",
@@ -1132,6 +1131,7 @@
       "unsupported": "Your payment provider cannot undo a scheduled cancellation. Subscribe again after the plan ends.",
       "forbidden": "Only workspace owners can manage billing.",
       "offline": "You are offline. Billing changes are unavailable until you reconnect.",
+      "demo": "Billing changes are not available in a demo workspace. Nothing here reaches a payment provider.",
       "generic": "Something went wrong. Try again."
     }
   },

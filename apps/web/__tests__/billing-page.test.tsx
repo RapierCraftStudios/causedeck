@@ -3,7 +3,7 @@
 // Autopay state, grace countdown, Junior) and the server page with every design-spec state:
 // loading, error, empty invoices, permission-denied, payment-failed, Junior and ta. Every string
 // comes from the catalogs.
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement, ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -79,6 +79,8 @@ const billingActions = vi.hoisted(() => ({
   cancelAtPeriodEnd: vi.fn(),
   resumeSubscription: vi.fn(),
   saveGstin: vi.fn(),
+  startCheckout: vi.fn(),
+  updatePaymentMethod: vi.fn(),
 }));
 vi.mock('../app/(app)/w/[slug]/billing/actions.ts', () => billingActions);
 
@@ -217,8 +219,8 @@ describe('billing view model', () => {
       expect(result.kind).toBe('junior');
       if (result.kind !== 'junior') return;
       expect(result.upgrades).toEqual([
-        { kind: 'advocate', fromPrice: '₹499.00', minSeats: 1 },
-        { kind: 'chamber', fromPrice: '₹499.00', minSeats: 3 },
+        { kind: 'advocate', planId: 'advocate-monthly-1', fromPrice: '₹499.00', minSeats: 1 },
+        { kind: 'chamber', planId: 'chamber-seat-1', fromPrice: '₹499.00', minSeats: 3 },
       ]);
     }
   });
@@ -456,11 +458,41 @@ describe('billing page (server)', () => {
     expect(alert.textContent).toContain(en.banner.graceTitle);
     expect(alert.textContent).toMatch(/Access continues until \d{2} \w{3} \d{4} \(3 days left\)/);
     const update = within(alert).getByRole('button', { name: en.paymentMethod.update });
-    expect(update.hasAttribute('disabled')).toBe(true);
+    expect(update.hasAttribute('disabled')).toBe(false);
     expect(screen.getByText(en.paymentMethod.failed)).toBeTruthy();
     expect(document.querySelector('[data-status="grace"]')?.textContent).toMatch(
       /^Past due: grace until \d{2} \w{3} \d{4}$/,
     );
+  });
+
+  it('updates the payment method through the action and refreshes the page (#1072)', async () => {
+    page.subscription = subscriptionRow({
+      status: 'past_due',
+      dunningStartedAt: new Date(),
+      graceUntil: null,
+    });
+    billingActions.updatePaymentMethod.mockResolvedValue({ ok: true, data: { mandateUrl: null } });
+    await renderPage();
+    const alert = screen.getByRole('alert');
+    fireEvent.click(within(alert).getByRole('button', { name: en.paymentMethod.update }));
+    await waitFor(() => {
+      expect(router.refresh).toHaveBeenCalled();
+    });
+    expect(billingActions.updatePaymentMethod).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE.id,
+      slug: WORKSPACE.slug,
+    });
+  });
+
+  it('shows the demo message when the payment method cannot be updated (#1072)', async () => {
+    page.subscription = subscriptionRow({ status: 'past_due', dunningStartedAt: new Date() });
+    billingActions.updatePaymentMethod.mockResolvedValue({ ok: true, data: { error: 'demo' } });
+    await renderPage();
+    fireEvent.click(
+      within(screen.getByRole('alert')).getByRole('button', { name: en.paymentMethod.update }),
+    );
+    expect((await screen.findAllByText(en.errors.demo)).length).toBeGreaterThan(0);
+    expect(router.refresh).not.toHaveBeenCalled();
   });
 
   it('shows UPI Autopay pending before the mandate is approved', async () => {
@@ -482,6 +514,46 @@ describe('billing page (server)', () => {
     expect(screen.getByRole('button', { name: 'Upgrade to Advocate' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Upgrade to Chamber' })).toBeTruthy();
     expect(screen.queryByText(en.paymentMethod.active)).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Upgrade to Advocate' }).hasAttribute('disabled'),
+    ).toBe(false);
+    expect(document.body.textContent).not.toContain('Available soon');
+  });
+
+  it('upgrades from Junior through startCheckout and refreshes on the new plan (#1072)', async () => {
+    page.subscription = null;
+    page.invoices = [];
+    billingActions.startCheckout.mockResolvedValue({ ok: true, data: { mandateUrl: null } });
+    await renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'Upgrade to Chamber' }));
+    await waitFor(() => {
+      expect(router.refresh).toHaveBeenCalled();
+    });
+    expect(billingActions.startCheckout).toHaveBeenCalledWith({
+      workspaceId: WORKSPACE.id,
+      slug: WORKSPACE.slug,
+      planId: 'chamber-seat-1',
+      seats: 3,
+    });
+  });
+
+  it('shows the error when the Junior upgrade fails in a demo workspace (#1072)', async () => {
+    page.subscription = null;
+    page.invoices = [];
+    billingActions.startCheckout.mockResolvedValue({ ok: true, data: { error: 'demo' } });
+    await renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'Upgrade to Advocate' }));
+    expect(await screen.findByText(en.errors.demo)).toBeTruthy();
+    expect(router.refresh).not.toHaveBeenCalled();
+  });
+
+  it('disables the Junior upgrade without billing.manage (#1072)', async () => {
+    page.subscription = null;
+    page.invoices = [];
+    if (page.context) page.context = { ...page.context, role: 'advocate' };
+    await renderPage();
+    const button = screen.queryByRole('button', { name: 'Upgrade to Advocate' });
+    if (button) expect(button.hasAttribute('disabled')).toBe(true);
   });
 
   it('renders ta strings under the ta locale', async () => {

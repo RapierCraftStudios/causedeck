@@ -13,6 +13,10 @@ test('sign-in', { tag: '@visual' }, async ({ page }, testInfo) => {
   );
   await page.goto('/sign-in');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  // From 1024 px the email field takes focus after hydration; the baselines hold its ring.
+  if ((page.viewportSize()?.width ?? 0) >= 1024) {
+    await expect(page.locator('input[type="email"]')).toBeFocused();
+  }
   await expect(page).toHaveScreenshot('sign-in.png', {
     fullPage: true,
     mask: [page.locator('[data-testid="dynamic"]')],

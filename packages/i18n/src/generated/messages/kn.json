@@ -46,7 +46,8 @@
       "settings": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು"
     },
     "enquiries": "Enquiries",
-    "import": "ಆಮದು"
+    "import": "ಆಮದು",
+    "research": "Research"
   },
   "palette": {
     "title": "ಕಮಾಂಡ್ ಪ್ಯಾಲೆಟ್",
@@ -177,8 +178,8 @@
       },
       "settings": {
         "description": "ಕಾರ್ಯಸ್ಥಳದ ಪ್ರೊಫೈಲ್, ಸದಸ್ಯರು, ಪಾತ್ರಗಳು ಮತ್ತು ಗೌಪ್ಯತೆ.",
-        "empty": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿವೆ.",
-        "hint": "ಕಾರ್ಯಸ್ಥಳದ ಪ್ರೊಫೈಲ್, ಸದಸ್ಯರು, ಪಾತ್ರಗಳು ಮತ್ತು ಗೌಪ್ಯತೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿವೆ."
+        "empty": "ಸೆಟ್ಟಿಂಗ್‌ಗಳ ಪಟ್ಟಿಯಲ್ಲಿ ಒಂದು ವಿಭಾಗವನ್ನು ಆರಿಸಿ.",
+        "hint": "ವರ್ಕ್‌ಸ್ಪೇಸ್ ಪ್ರೊಫೈಲ್, ಸದಸ್ಯರು, ಪಾತ್ರಗಳು ಮತ್ತು ಗೌಪ್ಯತೆ ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಪಟ್ಟಿಯಲ್ಲಿವೆ."
       },
       "goTo": "{destination} ಗೆ ಹೋಗಿ"
     },
@@ -198,8 +199,7 @@
     "permissionDenied": {
       "title": "ಪ್ರವೇಶವಿಲ್ಲ",
       "message": "ಈ ವಿಭಾಗಕ್ಕೆ ನಿಮಗೆ ಪ್ರವೇಶವಿಲ್ಲ.",
-      "requestAccess": "ಪ್ರವೇಶ ಕೋರಿ",
-      "requestAccessSoon": "ಪ್ರವೇಶ ಕೋರಿಕೆಗಳು ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿವೆ."
+      "askOwner": "ಇದು ಬೇಕಿದ್ದರೆ ನಿಮ್ಮ ಪಾತ್ರವನ್ನು ಬದಲಾಯಿಸಲು ವರ್ಕ್‌ಸ್ಪೇಸ್ ಮಾಲೀಕರನ್ನು ಕೇಳಿ."
     },
     "permission": {
       "ownersOnly": "ಮಾಲೀಕರು ಮಾತ್ರ ಇದನ್ನು ಮಾಡಬಹುದು",
@@ -229,7 +229,6 @@
       "noMatches": "ಹೊಂದುವ ಕಾರ್ಯಕ್ಷೇತ್ರ ಇಲ್ಲ.",
       "current": "ಪ್ರಸ್ತುತ ಕಾರ್ಯಕ್ಷೇತ್ರ",
       "create": "ಕಾರ್ಯಕ್ಷೇತ್ರ ರಚಿಸಿ",
-      "join": "ಆಹ್ವಾನದಿಂದ ಸೇರಿ",
       "switching": "ಕಾರ್ಯಕ್ಷೇತ್ರ ಬದಲಾಗುತ್ತಿದೆ"
     },
     "userMenu": {
@@ -260,8 +259,7 @@
       "title": "ಸೆರೆಹಿಡಿ",
       "voice": "ಧ್ವನಿ ಟಿಪ್ಪಣಿ",
       "file": "ಫೋಟೋ ಅಥವಾ ಫೈಲ್",
-      "paste": "ಪಠ್ಯವನ್ನು ಅಂಟಿಸಿ",
-      "soon": "ಸೆರೆಹಿಡಿಯುವಿಕೆಯೊಂದಿಗೆ ಲಭ್ಯ."
+      "hint": "ಹೇಗೆ ಸೆರೆಹಿಡಿಯಬೇಕು ಎಂಬುದನ್ನು ಆರಿಸಿ."
     },
     "sheet": {
       "close": "ಮುಚ್ಚಿ"
@@ -7256,7 +7254,20 @@
       "request": "ಪ್ರವೇಶ ವಿನಂತಿಸಿ",
       "back": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿಗಳಿಗೆ ಹಿಂತಿರುಗಿ"
     },
-    "loading": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ"
+    "loading": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ",
+    "index": {
+      "title": "Briefs",
+      "description": "Preparation briefs for the listings in the next three court days.",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "dayAfter": "Day after tomorrow",
+      "noListings": "Nothing listed on this day.",
+      "allEmpty": "No listings in the next three court days.",
+      "allEmptyHint": "Briefs are built per listing. Open the calendar to look further ahead.",
+      "openCalendar": "Open the calendar",
+      "itemLabel": "Item {item}",
+      "hallLabel": "Court {hall}"
+    }
   },
   "continuity": {
     "handover": {

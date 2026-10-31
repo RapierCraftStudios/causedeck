@@ -26,7 +26,8 @@
       "settings": "Settings"
     },
     "enquiries": "Enquiries",
-    "import": "Import"
+    "import": "Import",
+    "research": "Research"
   },
   "palette": {
     "title": "Command palette",

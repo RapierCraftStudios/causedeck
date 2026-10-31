@@ -97,7 +97,8 @@ test.describe('placeholder page states', () => {
       const main = page.locator('main');
       await expect(main.getByRole('heading', { level: 1 }), route).toHaveText('No access');
       await expect(main).toContainText('You do not have access to this area.');
-      await expect(main.getByRole('button', { name: 'Request access' })).toBeDisabled();
+      await expect(main.getByRole('button', { name: 'Request access' })).toHaveCount(0);
+      await expect(main).toContainText('Ask a workspace owner');
       await expect(page.locator(`[data-route="${route}"]`)).toHaveCount(0);
       // The dev toggle never bypasses the permission check.
       await page.goto(url(route, 'loading', CLERK_WORKSPACE));

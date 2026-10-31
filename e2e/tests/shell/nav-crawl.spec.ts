@@ -107,14 +107,15 @@ test.describe('shell nav crawl', () => {
     await expectRealPage(page, `/w/${SHELL_WORKSPACE}/settings/profile`);
   });
 
-  test('empty-state actions lead to real pages', async ({ page, asUser }) => {
-    // `today` is the Court-Day Board (#59) and `matters` a real page (#388); `briefs` is still a
-    // placeholder (obligations became the queue in #68), and its action is Matters.
+  test('the briefs index is a real page with a way on', async ({ page, asUser }) => {
+    // `briefs` lists the next three court days' listings (each links to its Brief Sheet); with none
+    // it offers the calendar. Either way no placeholder dead end.
     await openShell(page, asUser, { path: 'briefs' });
-    const action = page.locator('[data-route="briefs"] [data-empty-action]');
-    await expect(action).toBeVisible();
-    await action.click();
-    await expect(page).toHaveURL(new RegExp(`/w/${SHELL_WORKSPACE}/matters$`));
-    await expectRealPage(page, `/w/${SHELL_WORKSPACE}/matters`);
+    const content = page.locator('[data-route="briefs"]');
+    await expect(content.getByRole('heading', { level: 1 })).toHaveText('Briefs');
+    const ways = content.locator(
+      `a[href^="/w/${SHELL_WORKSPACE}/briefs/"], a[href="/w/${SHELL_WORKSPACE}/calendar"]`,
+    );
+    await expect(ways.first()).toBeVisible();
   });
 });

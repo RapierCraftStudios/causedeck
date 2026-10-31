@@ -163,6 +163,8 @@ const REAL_PAGES: ReadonlySet<PlaceholderId> = new Set<PlaceholderId>([
   'billing',
   // Its own page test since #871 (invoices-page.test.tsx).
   'invoices',
+  // The briefs index since the review-ready sweep (briefs-index-page.test.tsx).
+  'briefs',
   'activity',
   'settings',
   // Its own page and action tests since #848 (people-actions.test.ts).
@@ -578,7 +580,8 @@ describe('placeholder pages', () => {
       withIntl(await pageFor(route)(props('clerk-desk')));
       const denied = document.querySelector('[data-pattern-state="permission-denied"]');
       expect(denied?.textContent).toContain('You do not have access to this area.');
-      expect(screen.getByRole('button', { name: 'Request access' })).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Request access' })).toBeNull();
+      expect(screen.getByText(/Ask a workspace owner/)).toBeTruthy();
       expect(document.querySelector('[data-pattern-state="empty"]')).toBeNull();
     },
   );
@@ -603,7 +606,7 @@ describe('placeholder pages', () => {
 
   it('shows the offline banner only while navigator.onLine is false', async () => {
     online = false;
-    withIntl(await PAGES[OFFLINE_ROUTE](props('demo')));
+    withIntl(await placeholderPage(OFFLINE_ROUTE)(props('demo')));
     const banner = () => document.querySelector('[data-pattern-state="offline"]');
     expect(banner()?.textContent).toContain('You are offline.');
 
@@ -621,7 +624,7 @@ describe('placeholder pages', () => {
   });
 
   it('renders no offline banner when online', async () => {
-    withIntl(await PAGES[OFFLINE_ROUTE](props('demo')));
+    withIntl(await placeholderPage(OFFLINE_ROUTE)(props('demo')));
     expect(document.querySelector('[data-pattern-state="offline"]')).toBeNull();
   });
 });

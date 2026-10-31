@@ -46,7 +46,8 @@
       "settings": "Settings"
     },
     "enquiries": "Enquiries",
-    "import": "Import"
+    "import": "Import",
+    "research": "Research"
   },
   "palette": {
     "title": "Command palette",
@@ -177,8 +178,8 @@
       },
       "settings": {
         "description": "Workspace profile, members, roles and privacy.",
-        "empty": "Settings are coming soon.",
-        "hint": "Workspace profile, members, roles and privacy settings are on the way."
+        "empty": "Pick a section in the settings list.",
+        "hint": "Workspace profile, members, roles and privacy settings are in the list."
       },
       "goTo": "Go to {destination}"
     },
@@ -198,8 +199,7 @@
     "permissionDenied": {
       "title": "No access",
       "message": "You do not have access to this area.",
-      "requestAccess": "Request access",
-      "requestAccessSoon": "Access requests are coming soon."
+      "askOwner": "Ask a workspace owner to change your role if you need this."
     },
     "permission": {
       "ownersOnly": "Only owners can do this",
@@ -229,7 +229,6 @@
       "noMatches": "No workspaces match.",
       "current": "Current workspace",
       "create": "Create workspace",
-      "join": "Join with invite",
       "switching": "Switching workspace"
     },
     "userMenu": {
@@ -260,8 +259,7 @@
       "title": "Capture",
       "voice": "Voice note",
       "file": "Photo or file",
-      "paste": "Paste text",
-      "soon": "Available with Capture."
+      "hint": "Choose how to capture."
     },
     "sheet": {
       "close": "Close"
@@ -7256,7 +7254,20 @@
       "request": "Request access",
       "back": "Back to briefs"
     },
-    "loading": "Loading brief"
+    "loading": "Loading brief",
+    "index": {
+      "title": "Briefs",
+      "description": "Preparation briefs for the listings in the next three court days.",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "dayAfter": "Day after tomorrow",
+      "noListings": "Nothing listed on this day.",
+      "allEmpty": "No listings in the next three court days.",
+      "allEmptyHint": "Briefs are built per listing. Open the calendar to look further ahead.",
+      "openCalendar": "Open the calendar",
+      "itemLabel": "Item {item}",
+      "hallLabel": "Court {hall}"
+    }
   },
   "continuity": {
     "handover": {

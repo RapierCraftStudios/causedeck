@@ -57,19 +57,26 @@ describe('capture button', () => {
     expect(button.querySelector('[data-capture-label]')?.className).toMatch(/\bleading-3\b/);
   });
 
-  it('opens a bottom sheet with Voice note, Photo or file and Paste text as stubs', () => {
+  it('opens a bottom sheet with Voice note and Photo or file, both live', () => {
     renderWithIntl(<CaptureFab />);
     const button = trigger();
     fireEvent.click(button);
     const sheet = screen.getByRole('dialog', { name: 'Capture' });
     expect(sheet.getAttribute('data-side')).toBe('bottom');
-    expect(actions(sheet)).toEqual(['Voice note', 'Photo or file', 'Paste text']);
+    expect(actions(sheet)).toEqual(['Voice note', 'Photo or file']);
     for (const action of sheet.querySelectorAll<HTMLElement>('[data-capture-action]')) {
-      // Voice note (#543) is live; the other two stay stubs.
-      expect(action.hasAttribute('disabled')).toBe(action.dataset['captureAction'] !== 'voice');
+      expect(action.hasAttribute('disabled')).toBe(false);
       expect(action.className).toMatch(/\bmin-h-11\b/);
     }
     expect(button.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('opens the camera sheet from the Photo or file action', () => {
+    push.mockClear();
+    renderWithIntl(<CaptureFab />);
+    fireEvent.click(trigger());
+    fireEvent.click(screen.getByRole('button', { name: 'Photo or file' }));
+    expect(push).toHaveBeenCalledWith('/w/demo/today?capture=camera');
   });
 
   it('opens the voice recorder from the Voice note action', () => {
@@ -89,7 +96,7 @@ describe('capture button', () => {
     );
     expect(screen.queryByRole('dialog')).toBeNull();
     fireEvent.click(document.querySelector('[data-probe="capture"]') as HTMLElement);
-    expect(actions(screen.getByRole('dialog', { name: 'Capture' }))).toHaveLength(3);
+    expect(actions(screen.getByRole('dialog', { name: 'Capture' }))).toHaveLength(2);
   });
 
   it('closes on Esc and returns focus to the button', async () => {

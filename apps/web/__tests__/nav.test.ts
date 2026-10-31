@@ -33,14 +33,17 @@ const SPIKE_ROUTES = [
   'settings',
 ];
 
+/** Nav destinations below a route or outside the spike route map. */
+const EXTRA_ITEMS = ['enquiries', 'import', 'research'];
+
 const ids = (items: readonly { id: string }[]) => items.map((entry) => entry.id).sort();
 
 describe('navigation manifest', () => {
   it('covers exactly the spike §8 workspace routes, once each', () => {
     expect([...WORKSPACE_ROUTES].sort()).toEqual([...SPIKE_ROUTES].sort());
-    // `enquiries` is a flag-gated destination below People (`people/enquiries`) and `import` the
-    // bootstrap import (#567); neither is a spike route.
-    expect(ids(NAV_ITEMS)).toEqual([...WORKSPACE_ROUTES, 'enquiries', 'import'].sort());
+    // `enquiries` is a flag-gated destination below People (`people/enquiries`), `import` the
+    // bootstrap import (#567) and `research` (#896) sits outside the spike route map: none is a spike route.
+    expect(ids(NAV_ITEMS)).toEqual([...WORKSPACE_ROUTES, ...EXTRA_ITEMS].sort());
     expect(new Set(NAV_ITEMS.map((entry) => entry.id)).size).toBe(NAV_ITEMS.length);
   });
 
@@ -115,16 +118,28 @@ describe('flag-gated items', () => {
       'limitation.enabled',
     ]);
     expect(ids(visibleNavItems({ isEnabled: () => true }))).toEqual(
-      [...SPIKE_ROUTES, 'enquiries', 'import'].sort(),
+      [...SPIKE_ROUTES, ...EXTRA_ITEMS].sort(),
     );
     expect(ids(visibleNavItems({ isEnabled: () => false }))).toEqual(ids(visibleNavItems()));
+  });
+});
+
+describe('research item', () => {
+  it('sits in the work group, needs matter.read (as its page does) and is not flagged', () => {
+    const research = getNavItem('research');
+    expect(research.group).toBe('work');
+    expect(research.requires).toBe('matter.read');
+    expect(research.flag).toBeUndefined();
+    expect(research.href('demo')).toBe('/w/demo/research');
+    for (const role of ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const)
+      expect(visibleNavItems({ role }).map((entry) => entry.id)).toContain('research');
   });
 });
 
 describe('permission-gated items', () => {
   it('hides items the role lacks permission for', () => {
     const owner = ids(visibleNavItems({ role: 'owner', isEnabled: () => true }));
-    expect(owner).toEqual([...SPIKE_ROUTES, 'enquiries', 'import'].sort());
+    expect(owner).toEqual([...SPIKE_ROUTES, ...EXTRA_ITEMS].sort());
     const clerk = ids(visibleNavItems({ role: 'clerk', isEnabled: () => true }));
     expect(clerk).not.toContain('billing');
     expect(clerk).not.toContain('invoices');

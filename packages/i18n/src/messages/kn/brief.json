@@ -133,6 +133,19 @@
       "request": "ಪ್ರವೇಶ ವಿನಂತಿಸಿ",
       "back": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿಗಳಿಗೆ ಹಿಂತಿರುಗಿ"
     },
-    "loading": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ"
+    "loading": "ಸಂಕ್ಷಿಪ್ತ ಟಿಪ್ಪಣಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ",
+    "index": {
+      "title": "Briefs",
+      "description": "Preparation briefs for the listings in the next three court days.",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "dayAfter": "Day after tomorrow",
+      "noListings": "Nothing listed on this day.",
+      "allEmpty": "No listings in the next three court days.",
+      "allEmptyHint": "Briefs are built per listing. Open the calendar to look further ahead.",
+      "openCalendar": "Open the calendar",
+      "itemLabel": "Item {item}",
+      "hallLabel": "Court {hall}"
+    }
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { ClipboardPaste, Mic, Paperclip, Plus, type LucideIcon } from 'lucide-react';
+import { Mic, Paperclip, Plus, type LucideIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -55,14 +55,13 @@ export function useCapture(): CaptureApi {
 }
 
 interface CaptureAction {
-  id: 'voice' | 'file' | 'paste';
+  id: 'voice' | 'file';
   icon: LucideIcon;
 }
 
 const ACTIONS: readonly CaptureAction[] = [
   { id: 'voice', icon: Mic },
   { id: 'file', icon: Paperclip },
-  { id: 'paste', icon: ClipboardPaste },
 ];
 
 /**
@@ -122,27 +121,23 @@ export function CaptureFab() {
       <SheetContent side="bottom" data-capture-sheet="" labels={{ close: t('sheet.close') }}>
         <SheetHeader>
           <SheetTitle>{t('capture.title')}</SheetTitle>
-          <SheetDescription>{t('capture.soon')}</SheetDescription>
+          <SheetDescription>{t('capture.hint')}</SheetDescription>
         </SheetHeader>
         <ul className="flex flex-col gap-1">
           {ACTIONS.map(({ id, icon: Icon }) => (
             <li key={id}>
-              {/* TODO(capture): file and paste capture arrive with the Capture milestone. */}
               <button
                 type="button"
-                disabled={id !== 'voice'}
                 data-capture-action={id}
-                onClick={
-                  id === 'voice'
-                    ? () => {
-                        setOpen(false);
-                        // Same address as voiceHref(); inlined so the shell does not pull the command registry in.
-                        const params = new URLSearchParams(window.location.search);
-                        params.set('capture', 'voice');
-                        router.push(`${pathname}?${params.toString()}`);
-                      }
-                    : undefined
-                }
+                onClick={() => {
+                  setOpen(false);
+                  // Same addresses as voiceHref() and the camera command; inlined so the shell does
+                  // not pull the command registry in. `file` opens the camera sheet, which also
+                  // takes photos and files from the gallery.
+                  const params = new URLSearchParams(window.location.search);
+                  params.set('capture', id === 'voice' ? 'voice' : 'camera');
+                  router.push(`${pathname}?${params.toString()}`);
+                }}
                 className="text-ink flex min-h-11 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium disabled:opacity-60"
               >
                 <Icon aria-hidden="true" className="size-[18px] shrink-0" strokeWidth={1.5} />

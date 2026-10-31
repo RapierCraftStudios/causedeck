@@ -85,6 +85,7 @@ describe('mobile bottom navigation', () => {
       'tomorrow',
       'calendar',
       'briefs',
+      'research',
       'drafts',
       'memory',
       'activity',

@@ -22,6 +22,24 @@ export interface UserMenuProps {
 }
 
 /**
+ * Ends the Better Auth session, clears this browser's encrypted offline caches (the next person on
+ * a shared device must not read them) and lands on `/sign-in`. The auth client loads on click to
+ * stay out of first-load JS; the redirect runs even if the call fails, as the invite page's does.
+ */
+async function signOut(): Promise<void> {
+  try {
+    const [{ authClient }, { deleteAllOfflineDbs }] = await Promise.all([
+      import('../../lib/auth-client.ts'),
+      import('../../lib/offline/db.ts'),
+    ]);
+    await authClient.signOut();
+    await deleteAllOfflineDbs().catch(() => undefined);
+  } finally {
+    window.location.assign('/sign-in');
+  }
+}
+
+/**
  * Avatar menu button: who is signed in, account and workspace settings, theme, language and sign
  * out.
  */
@@ -113,8 +131,12 @@ export function UserMenu({ user, role, slug }: UserMenuProps) {
           menu={{ RadioGroup: DropdownMenuRadioGroup, RadioItem: DropdownMenuRadioItem }}
         />
         <DropdownMenuSeparator />
-        {/* TODO(#12/#152): sign out once Better Auth sessions land. */}
-        <DropdownMenuItem disabled>
+        <DropdownMenuItem
+          onSelect={() => {
+            void signOut();
+          }}
+          data-user-menu-sign-out=""
+        >
           <LogOut aria-hidden="true" />
           {t('shell.userMenu.signOut')}
         </DropdownMenuItem>

@@ -36,7 +36,7 @@ export default async function ResearchPage({ params, searchParams }: ResearchPag
   const seed = [query.q].flat()[0] ?? '';
 
   return (
-    <section className="flex flex-col gap-6" aria-labelledby="research-search-title">
+    <section data-route="research" className="flex flex-col gap-6" aria-labelledby="research-search-title">
       <header className="flex flex-col gap-1">
         <h1 id="research-search-title" className="font-serif text-2xl font-medium">
           {t('title')}

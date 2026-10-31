@@ -19,15 +19,15 @@ export const CLERK_WORKSPACE = 'bengaluru-chamber';
  * tests/product/outward-drafts). `settings` redirects to its profile section since
  * #284 (tests/settings).
  */
-export const PLACEHOLDER_ROUTES = [
+export const PLACEHOLDER_ROUTES: readonly string[] = [
   // `today` and `tomorrow` are the Court-Day Board (#59) and `calendar` is real (#66): their
   // states are covered in tests/product/court-day-board.spec.ts and tests/calendar.
   // `matters` is a real page since #388 (its own states are covered in tests/matters), and so are
   // `obligations` (#68, tests/obligations) and `memory` (#73, tests/memory).
-  'briefs',
+  // `briefs` is the briefs index since the review-ready sweep (tests/product/brief-sheet.spec.ts).
   // `people` is a real page since #848 (its own specs are in tests/people), and `insights` since
   // #85 (its own specs are in tests/product/insights.spec.ts).
-] as const;
+];
 
 export type PlaceholderRoute = (typeof PLACEHOLDER_ROUTES)[number];
 

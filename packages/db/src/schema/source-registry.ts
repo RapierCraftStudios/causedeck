@@ -68,6 +68,8 @@ export const source = pgTable(
     maxCostDollars: numeric('max_cost_dollars', { precision: 10, scale: 4 }).notNull().default('0'),
     /** Counsel has cleared bulk captcha solving for this source (D-048); the raised tier is computed in code, never stored. */
     captchaBulkCleared: boolean('captcha_bulk_cleared').notNull().default(false),
+    /** The counsel or founder approval reference behind `captcha_bulk_cleared` (#492); bulk solving needs both. */
+    captchaBulkApprovalRef: text('captcha_bulk_approval_ref'),
     killSwitch: boolean('kill_switch').notNull().default(false),
     /** SLOs (#515); null means no objective, so the detector for it skips this source. */
     sloFreshnessMinutes: integer('slo_freshness_minutes'),

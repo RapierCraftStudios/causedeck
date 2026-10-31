@@ -19,3 +19,4 @@ export {
   tierFromSdk,
   type AlterlabClient,
 } from './providers/alterlab.ts';
+export * from './captcha/index.ts';

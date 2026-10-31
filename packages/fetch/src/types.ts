@@ -21,6 +21,8 @@ export interface FetchPolicy {
   maxCostDollars: number;
   /** Counsel has cleared bulk captcha solving for this source (D-048). */
   captchaBulkCleared: boolean;
+  /** The approval reference recorded with the clearance (#492); the bulk scheduler also needs it. */
+  captchaBulkApprovalRef?: string | null;
   /** Version of the registry row (`source.updated_at`, ISO). */
   version: string;
 }

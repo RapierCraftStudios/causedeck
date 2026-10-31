@@ -3,6 +3,7 @@ export const packageName: string = '@causedeck/billing';
 
 export * from './dunning';
 export * from './entitlements';
+export * from './free-alerts';
 export * from './gst/calc';
 export * from './gst/sac';
 export * from './gst/state-codes';

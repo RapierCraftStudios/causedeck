@@ -265,11 +265,16 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'portfolio',
     'business',
     'case-watch',
+    'free-alerts',
     'webhooks',
     'status',
     'status-links',
     'demo',
   ]),
+  // The free court-day alerts tier (#506): its fetch budget reads entitlements through billing and the
+  // `fetch.cost_micros` counter through usage; enrolment adds watches through case-watch and types the
+  // actor through matter-graph.
+  'free-alerts': Object.freeze(['billing', 'usage', 'case-watch', 'matter-graph']),
   // Support wrappers (#313): the owner's settings page, the shell banner and the staff request.
   // Court wrappers (#434): the roster preview from an upload and confirm-then-detect.
   runtime: Object.freeze([

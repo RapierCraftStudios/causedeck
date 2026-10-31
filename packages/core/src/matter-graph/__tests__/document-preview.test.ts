@@ -6,9 +6,11 @@ import { randomUUID } from 'node:crypto';
 import { schema, type Transaction } from '@causedeck/db';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
 import { buildDocument, buildMatter } from '@causedeck/db/testing/matter-graph-fixtures';
+import { and, eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import {
+  getDocumentPageImage,
   getDocumentPreview,
   restrictMatter,
   WorkspaceError,
@@ -160,6 +162,39 @@ describe('getDocumentPreview (#393)', () => {
       );
       expect(await codeOf(read(advocate))).toBe('NOT_FOUND');
       expect(w.events).toEqual([]);
+    });
+  });
+});
+
+describe('page images (#489)', () => {
+  it('names the image route for a page with a stored image and resolves its key', async () => {
+    await withTestDb(async (tx) => {
+      const w = await world(tx);
+      const actor = { userId: w.ownerId, workspaceId: w.workspaceId };
+      await w.run((s) =>
+        s
+          .update(schema.documentPage)
+          .set({ imageKey: 'blobs/thumb-2', previewKey: 'blobs/preview-2' })
+          .where(
+            and(eq(schema.documentPage.documentId, w.firstId), eq(schema.documentPage.pageNo, 2)),
+          ),
+      );
+      const withImage = await getDocumentPreview(w.deps, actor, {
+        documentId: w.firstId,
+        pageNo: 2,
+      });
+      expect(withImage.pageImage).toEqual({
+        url: `/api/documents/${w.firstId}/pages/2/image?workspaceId=${w.workspaceId}`,
+      });
+      await expect(
+        getDocumentPageImage(w.deps, actor, { documentId: w.firstId, pageNo: 2 }),
+      ).resolves.toEqual({ key: 'blobs/preview-2', mime: 'image/webp' });
+      // A page without an image has neither.
+      const without = await getDocumentPreview(w.deps, actor, { documentId: w.firstId, pageNo: 1 });
+      expect(without.pageImage).toBeNull();
+      expect(
+        await codeOf(getDocumentPageImage(w.deps, actor, { documentId: w.firstId, pageNo: 1 })),
+      ).toBe('NOT_FOUND');
     });
   });
 });

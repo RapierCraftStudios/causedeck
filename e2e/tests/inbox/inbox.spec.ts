@@ -86,6 +86,22 @@ test.describe('capture inbox', () => {
     await expect(cards.first()).toBeFocused();
   });
 
+  test('a confirmed proposal shows in the activity feed (#49)', async ({ page, asUser, db }) => {
+    await seedInbox(db.name, { tasks: 1 });
+    await openInbox(page, asUser);
+    const card = page.locator('[data-proposal-id]').first();
+    await card.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('button', { name: 'Undo' })).toBeVisible();
+    await page.goto('/w/chennai-solo/activity');
+    await expect(page.getByRole('heading', { level: 1, name: 'Activity' })).toBeVisible();
+    await expect(
+      page
+        .locator('[data-slot="activity-item"]')
+        .filter({ hasText: /File the counter 1 \(fictional\)/ }),
+    ).toHaveCount(1);
+  });
+
   test('j and k move between cards; 1, 2 and 3 switch sections; ? opens the sheet', async ({
     page,
     asUser,
@@ -175,7 +191,7 @@ function skipWithoutBaseline(testInfo: TestInfo, name: string) {
   );
 }
 
-test.describe('capture inbox visual baselines', () => {
+test.describe('capture inbox visual baselines', { tag: '@visual' }, () => {
   for (const [name, seed] of [
     ['populated', { tasks: 2, captures: ['processing', 'needs_you'] }],
     ['empty', {}],

@@ -12,7 +12,7 @@ import {
   checkMockProviders,
   PerfTargetError,
 } from '../guard.ts';
-import { planScale, scaleSlug } from '../seed-scale.ts';
+import { INBOX_WORKSPACE_SLUGS, planScale, scaleSlug } from '../seed-scale.ts';
 import {
   ANDROID_PROFILE_FLAGS,
   BUDGETS,
@@ -30,6 +30,7 @@ describe('thresholds', () => {
     expect(t['http_req_duration{group:action}']).toEqual(['p(95)<300']);
     expect(t['http_req_duration{group:read}']).toEqual(['p(95)<400']);
     expect(t['http_req_duration{group:court_day_cache}']).toEqual(['p(95)<300']);
+    expect(t['http_req_duration{group:inbox}']).toEqual(['p(95)<300']);
     expect(t['http_req_duration{group:brief_assembly}']).toEqual(['p(95)<5000']);
     expect(t.http_req_failed).toEqual(['rate<0.005']);
     expect(t.readiness_flaps).toEqual(['count<1']);
@@ -130,6 +131,8 @@ describe('scaled seed', () => {
     expect(plan.solo + plan.chambers).toBe(plan.workspaces);
     expect(plan.matters).toBe(plan.workspaces * 40);
     expect(plan.listings).toBeGreaterThan(plan.matters);
+    expect(plan.inboxItems).toBe(200);
+    expect(INBOX_WORKSPACE_SLUGS).toEqual(['demo-chennai-solo', 'demo-bengaluru-chamber']);
     expect(() => planScale(0)).toThrow(RangeError);
     expect(scaleSlug(7)).toBe('demo-scale-0007');
   });

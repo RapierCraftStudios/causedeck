@@ -229,5 +229,11 @@ export const ReadyToSend: Story = {
 };
 
 export const PreviewPane: Story = {
-  render: () => <SourcePreview item={base} slug="chennai-chambers" />,
+  render: () => (
+    <SourcePreview
+      item={base}
+      slug="chennai-chambers"
+      workspaceId="00000000-0000-4000-8000-000000000001"
+    />
+  ),
 };

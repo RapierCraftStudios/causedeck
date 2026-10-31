@@ -18,7 +18,7 @@ import {
   type Transaction,
 } from '@causedeck/db';
 import type { FlagListener } from '@causedeck/flags';
-import type { ObjectKey, ObjectStore, StorageCtx } from '@causedeck/storage';
+import type { KeyProvider, ObjectKey, ObjectStore, StorageCtx } from '@causedeck/storage';
 import type { ConfirmRosterImportInput } from '@causedeck/validators/roster';
 import { and, eq, isNotNull, isNull, ne } from 'drizzle-orm';
 
@@ -454,6 +454,31 @@ export async function openExportDownloadFor(
 ): Promise<ExportDownload> {
   const { openExportDownload } = await import('../lifecycle/index.ts');
   return openExportDownload({ db, ...ctx }, jobId, token, deps);
+}
+
+/** A page image of a document, decrypted for the workspace, ready to stream. */
+export interface DocumentPageImageDownload {
+  body: AsyncIterable<Uint8Array>;
+  mime: string;
+}
+
+/**
+ * The stored image of one page of a document the actor may read (`getDocumentPageImage` decides,
+ * NOT_FOUND otherwise), decrypted with the workspace key. The transaction ends before the first
+ * byte is read.
+ */
+export async function openDocumentPageImageFor(
+  scope: RuntimeScope,
+  input: { documentId: string; pageNo: number },
+  deps: { store: ObjectStore; keys: KeyProvider },
+): Promise<DocumentPageImageDownload> {
+  const { getDocumentPageImage } = await import('../matter-graph/index.ts');
+  const { decryptForWorkspace } = await import('@causedeck/storage');
+  const image = await inWorkspace(scope, (tx) =>
+    getDocumentPageImage({ db: tx, events: { emit() {} } }, scope, input),
+  );
+  const { body } = await deps.store.getStream(image.key as ObjectKey);
+  return { body: decryptForWorkspace(db, deps.keys, scope.workspaceId, body), mime: image.mime };
 }
 
 // lifecycle: workspace deletion (#302, wired in #305)

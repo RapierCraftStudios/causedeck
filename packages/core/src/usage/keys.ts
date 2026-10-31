@@ -11,6 +11,7 @@ export const USAGE_KEYS = [
   'matters.active',
   'api.calls',
   'research.searches',
+  'fetch.cost_micros',
 ] as const;
 
 export type UsageKey = (typeof USAGE_KEYS)[number];
@@ -29,6 +30,8 @@ export const USAGE_KEY_KINDS: Readonly<Record<UsageKey, 'counter' | 'gauge'>> = 
   'matters.active': 'gauge',
   'api.calls': 'counter',
   'research.searches': 'counter',
+  // Delegated fetch spend in micro-dollars (#506): the free alerts tier's cost cap reads it.
+  'fetch.cost_micros': 'counter',
 };
 
 export function isUsageKey(value: string): value is UsageKey {

@@ -125,6 +125,12 @@ export const FLAGS = {
     false,
     [601],
   ),
+  'growth.free-alerts': flag(
+    'growth.free-alerts',
+    "Free court-day alerts tier: discovered cases are watched automatically and each free workspace's fetch spend is capped (mock providers until the sources are cleared).",
+    false,
+    [506],
+  ),
   'workspace.export': flag(
     'workspace.export',
     'Workspace data export (ZIP) from settings.',

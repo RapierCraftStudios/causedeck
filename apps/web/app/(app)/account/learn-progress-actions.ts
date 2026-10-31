@@ -26,7 +26,7 @@ const setLearnModuleDone = safeAction(
   SetLearnModuleDoneInput,
   async ({ slug, done }, ctx): Promise<LearnModuleOutcome> => {
     if (!ctx.session) throw new UnauthenticatedError();
-    const { db } = await import('@causedeck/db');
+    const { db } = await import('@causedeck/core/runtime');
     const progress = await import('@causedeck/core/activation');
     const userId = ctx.session.user.id;
     if (done) await progress.markLearnModuleDone(db, { userId, slug });

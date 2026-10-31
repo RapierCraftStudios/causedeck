@@ -8,7 +8,7 @@ import { SettingSection } from '../../../../components/settings/setting-section.
 import { setLearnModuleDoneAction } from '../learn-progress-actions.ts';
 
 export async function loadLearnProgress(userId: string) {
-  const { db } = await import('@causedeck/db');
+  const { db } = await import('@causedeck/core/runtime');
   const { LEARN_MODULE_SLUGS, listCompletedLearnModules } =
     await import('@causedeck/core/activation');
   const done = new Set((await listCompletedLearnModules(db, { userId })).map((e) => e.slug));

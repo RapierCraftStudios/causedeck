@@ -45,8 +45,9 @@ A reviewer can use the whole app hands-on. Each module below is seeded in both w
 | Status links                                 | one expiring client link (token below)                                                                                  |
 | Insights, proof-of-value                     | derived from hearings and obligations; preparedness ratings and weekly pulse rows                                       |
 | Portfolio                                    | a recovery panel over six proceedings                                                                                   |
+| Activity feed                                | four rows: two automatic and undoable, one automatic and confirmed (no longer undoable), one by the advocate; no AI, source marked synthetic |
 | Notifications (bell)                         | three in-app rows; the demo sends no email, push or WhatsApp                                                            |
-| Help, settings, activity, news, notices      | no seeded data needed (static articles, the member's own settings, the audit log written by use). Notices and bench facts are global tables: seed them with the catalogue |
+| Help, settings, news, notices               | no seeded data needed (static articles, the member's own settings). Notices and bench facts are global tables: seed them with the catalogue |
 
 Flags: `m5_playbooks` and `insights.enabled` are on in both workspaces. Fees, limitation, the conflict check, the enquiry log, status links and bench facts are legal-gated (counsel sign-off); a workspace row never turns those on alone. On a local or review database, `pnpm db:seed:demo -- --enable-gated-flags` writes the global and workspace rows with the note "Demo environment only: not a counsel sign-off". It refuses production. Without it those nav items stay hidden.
 

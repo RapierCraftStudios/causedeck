@@ -55,6 +55,7 @@ export const ID_KIND = {
   notification: 0xc2,
   issueTag: 0xc3,
   researchNote: 0xc4,
+  activity: 0xc5,
   rating: 0xd0,
   pulse: 0xd1,
   portfolio: 0xe0,

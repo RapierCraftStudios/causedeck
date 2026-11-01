@@ -57,9 +57,15 @@ export function layoutOf(page: Page): Layout {
  * for a moment after hydration client-renders the boundary, the same content exists twice in the
  * document (one copy under `[hidden]`), so a strict locator on it throws (#1094). The reveal moves
  * the nodes and removes the segment: an `[id^="S:"]` left in the document means "still streaming".
+ * A boundary that ends in a client-rendered fallback (a denied or not-found page) can leave its
+ * segment behind for good, so the wait is bounded: the strict assertions that follow still decide.
  */
 export async function streamSettled(page: Page): Promise<void> {
-  await page.waitForFunction(() => document.querySelector('div[hidden][id^="S:"]') === null);
+  await page
+    .waitForFunction(() => document.querySelector('div[hidden][id^="S:"]') === null, null, {
+      timeout: 5_000,
+    })
+    .catch(() => undefined);
 }
 
 /**

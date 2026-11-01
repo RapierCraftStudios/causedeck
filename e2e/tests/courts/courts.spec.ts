@@ -85,9 +85,7 @@ test.describe('courts index', () => {
     asUser,
   }) => {
     await openCourts(page, asUser, { workspace: 'bengaluru-chamber' });
-    // Scoped to `main`: React's streamed Suspense segment (`[id="S:n"]`) can leave a hidden copy of
-    // the list outside it, which made a page-wide locator match twice (strict mode).
-    const card = page.locator('main').locator(`[data-forum-card="${DEGRADED_FORUM}"]`);
+    const card = page.locator(`[data-forum-card="${DEGRADED_FORUM}"]`);
     await expect(card.locator('[data-forum-status="none"]')).toBeVisible();
     await expect(page.locator('[data-forum-banner]')).toHaveCount(0);
   });
@@ -225,7 +223,7 @@ test.describe('add forum', () => {
     await dialog.getByLabel('Forum code').fill('ws.tambaram.fictional-court');
     await dialog.getByRole('button', { name: 'Add forum' }).click();
     await expect(dialog).toBeHidden();
-    const card = page.locator('main [data-forum-card="ws.tambaram.fictional-court"]');
+    const card = page.locator('[data-forum-card="ws.tambaram.fictional-court"]');
     await expect(card).toContainText('Tambaram Fictional Court');
     await expect(card).toContainText('Your forum');
     await expect(card.locator('[data-adapter-level="A0"]')).toBeVisible();
@@ -298,7 +296,7 @@ test.describe('courts keyboard', () => {
     await page.keyboard.press('/');
     await expect(search).toBeFocused();
     await page.keyboard.type('Madras');
-    await expect(page.locator('main [data-forum-card]')).toHaveCount(2);
+    await expect(page.locator('[data-forum-card]')).toHaveCount(2);
     await expect(page.locator(`[data-planned-forum="${PLANNED_FORUM}"]`)).toBeVisible();
     await search.fill('zz-no-such-forum');
     await expect(page.locator('[data-forum-no-match]')).toContainText('zz-no-such-forum');

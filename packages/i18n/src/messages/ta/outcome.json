@@ -21,6 +21,7 @@
     "offline": {
       "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
       "queued": "Saved on this device. It will be applied when you are back online.",
+      "queueFailed": "Could not save this on the device, so it is not queued. Stay on this page and try again, or confirm once you are back online.",
       "conflict": {
         "title": "The next date changed while you were offline",
         "server": "On file now",

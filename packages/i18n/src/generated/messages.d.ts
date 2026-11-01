@@ -7062,6 +7062,7 @@ export type Messages = {
     offline: {
       banner: string;
       queued: string;
+      queueFailed: string;
       conflict: {
         title: string;
         server: string;

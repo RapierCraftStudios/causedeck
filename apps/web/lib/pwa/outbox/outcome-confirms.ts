@@ -146,6 +146,11 @@ export interface OutcomeConfirmStores {
 
 let stores: Promise<OutcomeConfirmStores> | undefined;
 
+/** Forget the cached stores, so the next call opens fresh connections (after a failed write). */
+export function resetOutcomeConfirmStores(): void {
+  stores = undefined;
+}
+
 /** The IndexedDB-backed store and the outbox's device key store; Dexie loads on first call. */
 export function browserOutcomeConfirmStores(): Promise<OutcomeConfirmStores> {
   stores ??= (async () => {

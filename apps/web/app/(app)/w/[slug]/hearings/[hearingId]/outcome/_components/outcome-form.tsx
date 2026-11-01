@@ -14,6 +14,7 @@ import {
   browserOutcomeConfirmStores,
   flushOutcomeConfirms,
   queueOutcomeConfirm,
+  resetOutcomeConfirmStores,
 } from '../../../../../../../../lib/pwa/outbox/outcome-confirms.ts';
 import { confirmOutcomeAction, recordManualOutcomeAction } from '../actions.ts';
 
@@ -129,17 +130,28 @@ export function OutcomeForm({
     if (blocked !== null || readOnly || pending) return;
     const payload = toConfirmation(proposal, draft);
     if (!navigator.onLine) {
-      try {
+      const queue = async () => {
         const { store, keys } = await browserOutcomeConfirmStores();
         await queueOutcomeConfirm(store, keys, {
           workspaceId,
           hearingId: proposal.hearingId,
           payload,
         });
-      } catch {
-        // Nothing is stored in plaintext as a fallback: the person is told and can retry.
-        setFailure(t('failed'));
-        setStatus(t('failed'));
+      };
+      try {
+        try {
+          await queue();
+        } catch {
+          // A stale connection or a chunk that failed to load: open fresh stores and try once more.
+          resetOutcomeConfirmStores();
+          await queue();
+        }
+      } catch (error) {
+        // Nothing is stored in plaintext as a fallback. Say plainly that it was NOT queued (the
+        // generic "try again" reads as if it went to the server), and leave the cause in the console.
+        console.error('[outcome-confirm] could not queue the confirm on this device', error);
+        setFailure(t('offline.queueFailed'));
+        setStatus(t('offline.queueFailed'));
         return;
       }
       if (resolution.kind === 'value') {

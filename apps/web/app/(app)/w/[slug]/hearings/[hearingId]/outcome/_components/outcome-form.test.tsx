@@ -14,7 +14,11 @@ vi.mock('../../../../../../../../lib/offline/use-outbox.ts', () => ({
 }));
 const queueOutcomeConfirm = vi.fn(() => Promise.resolve());
 const flushOutcomeConfirms = vi.fn(() => Promise.resolve({ sent: 0, conflicts: 0, failed: 0 }));
+const resetOutcomeConfirmStores = vi.fn();
 vi.mock('../../../../../../../../lib/pwa/outbox/outcome-confirms.ts', () => ({
+  resetOutcomeConfirmStores: () => {
+    resetOutcomeConfirmStores();
+  },
   browserOutcomeConfirmStores: () => Promise.resolve({ store: {}, keys: {} }),
   queueOutcomeConfirm: (...args: unknown[]) =>
     (queueOutcomeConfirm as (...a: unknown[]) => unknown)(...args),
@@ -35,7 +39,9 @@ let stored: string | null = null;
 
 beforeEach(() => {
   stored = null;
-  queueOutcomeConfirm.mockClear();
+  queueOutcomeConfirm.mockReset();
+  queueOutcomeConfirm.mockImplementation(() => Promise.resolve());
+  resetOutcomeConfirmStores.mockClear();
   flushOutcomeConfirms.mockClear();
   setItem.mockClear();
   removeItem.mockClear();
@@ -118,6 +124,46 @@ describe('OutcomeForm offline confirm queue (#730)', () => {
     expect(call[2].hearingId).toBe(UUID);
     expect(call[2].payload.outcome).toBe('Adjourned for arguments');
     expect(setItem).not.toHaveBeenCalled();
+  });
+
+  const confirmOffline = async () => {
+    goOffline();
+    renderForm(false, false);
+    fireEvent.change(screen.getByLabelText('What happened'), { target: { value: 'Adjourned' } });
+    fireEvent.click(screen.getByRole('button', { name: 'No next date / disposed' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Confirm outcome' }));
+      await Promise.resolve();
+    });
+  };
+
+  it('shows the saved-on-device note once the sealed queue took the confirm', async () => {
+    await confirmOffline();
+    await waitFor(() => {
+      expect(screen.getAllByText(/Saved on this device/).length).toBeGreaterThan(0);
+    });
+  });
+
+  it('opens fresh stores and tries once more when the first write fails', async () => {
+    queueOutcomeConfirm.mockImplementationOnce(() => Promise.reject(new Error('closed')));
+    await confirmOffline();
+    await waitFor(() => {
+      expect(screen.getAllByText(/Saved on this device/).length).toBeGreaterThan(0);
+    });
+    expect(resetOutcomeConfirmStores).toHaveBeenCalledTimes(1);
+    expect(queueOutcomeConfirm).toHaveBeenCalledTimes(2);
+  });
+
+  it('says plainly that nothing was queued when the device cannot store it, and logs why', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    queueOutcomeConfirm.mockImplementation(() => Promise.reject(new Error('quota')));
+    await confirmOffline();
+    await waitFor(() => {
+      expect(screen.getAllByText(/Could not save this on the device/).length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText(/Saved on this device/)).toBeNull();
+    expect(setItem).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalled();
   });
 
   it('moves a decision an older build left in localStorage into the sealed queue and wipes it', async () => {

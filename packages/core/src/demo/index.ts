@@ -14,9 +14,11 @@ export {
   type EnteredDemo,
 } from './mode.ts';
 export {
+  seedDemoCorpusEmbeddings,
   seedDemoFiles,
   seedDemoMemory,
   type DemoContentDeps,
+  type DemoCorpusEmbedDeps,
   type DemoContentResult,
   type DemoFilesDeps,
 } from './content.ts';

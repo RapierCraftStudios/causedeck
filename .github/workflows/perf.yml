@@ -19,6 +19,73 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Wall-clock budgets that run only when PERF_GATE=1 (#975, #995): the 20 s render of a 20-page text
+  # PDF (intelligence pipeline.test.ts) and the 200 ms render of a 500-event ICS feed (capture
+  # export.test.ts). Shared PR runners measure the runner, not the work, so they stay off there; this
+  # nightly job enforces them (#983). Each file runs PERF_RUNS times and any run over budget fails
+  # the job; with 5 runs the pass criterion is the worst run, a conservative stand-in for p95.
+  budgets:
+    name: wall-clock budgets (PERF_GATE=1)
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PERF_GATE: '1'
+      PERF_RUNS: '5'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: PDF render and ICS render budgets, repeated
+        run: |
+          failed=0
+          for i in $(seq "$PERF_RUNS"); do
+            echo "::group::run $i of $PERF_RUNS"
+            pnpm --filter @causedeck/intelligence exec vitest run src/pipeline/pipeline.test.ts || failed=1
+            pnpm --filter @causedeck/capture exec vitest run src/ics/export.test.ts || failed=1
+            echo "::endgroup::"
+          done
+          if [ "$failed" -ne 0 ]; then
+            echo "::error::A wall-clock budget was exceeded in at least one of $PERF_RUNS runs (see docs/engineering/performance-budgets.md)"
+            exit 1
+          fi
+
+  # Pipeline p95 harness (#561): the voice-note path (transcribe, structure, match, draft) on the mock
+  # providers, forced with --provider mock so no credential is ever read. It asserts the harness runs
+  # and writes a report; mock timings are only sanity-checked (docs/benchmarks/pipeline-p95.md). The
+  # real <20 s p95 measurement needs Bedrock and Sarvam keys and is run by hand on staging.
+  pipeline-p95-harness:
+    name: pipeline p95 harness (mock providers)
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+      - name: Run the benchmark on mocks
+        run: |
+          pnpm --filter @causedeck/intelligence bench:pipeline --provider mock --iterations 30 \
+            --out "$GITHUB_WORKSPACE/pipeline-p95-report"
+      - name: Assert the report exists and is complete
+        run: |
+          test -s pipeline-p95-report/report.md
+          node -e "
+            const r = JSON.parse(require('node:fs').readFileSync('pipeline-p95-report/report.json', 'utf8'));
+            if (r.mode !== 'mock' || r.runs.length !== 30 || r.failures !== 0 || !Number.isFinite(r.endToEnd.p99Ms)) {
+              throw new Error('pipeline p95 report is incomplete: ' + JSON.stringify({ mode: r.mode, runs: r.runs.length, failures: r.failures }));
+            }"
+          cat pipeline-p95-report/report.md >>"$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ always() }}
+        with:
+          name: pipeline-p95-report
+          path: pipeline-p95-report
+          if-no-files-found: ignore
+          retention-days: 30
+
   perf:
     name: k6, bundle budget and Lighthouse
     if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'perf') }}

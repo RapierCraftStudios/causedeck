@@ -47,6 +47,8 @@ export type Messages = {
       settings: string;
     };
     enquiries: string;
+    import: string;
+    research: string;
   };
   palette: {
     title: string;
@@ -198,8 +200,7 @@ export type Messages = {
     permissionDenied: {
       title: string;
       message: string;
-      requestAccess: string;
-      requestAccessSoon: string;
+      askOwner: string;
     };
     permission: {
       ownersOnly: string;
@@ -229,8 +230,12 @@ export type Messages = {
       noMatches: string;
       current: string;
       create: string;
-      join: string;
       switching: string;
+      join: string;
+      joinLabel: string;
+      joinPlaceholder: string;
+      joinSubmit: string;
+      joinInvalid: string;
     };
     userMenu: {
       label: string;
@@ -260,8 +265,8 @@ export type Messages = {
       title: string;
       voice: string;
       file: string;
+      hint: string;
       paste: string;
-      soon: string;
     };
     sheet: {
       close: string;
@@ -295,6 +300,25 @@ export type Messages = {
       error: string;
       busy: string;
       back: string;
+    };
+    pasteText: {
+      title: string;
+      description: string;
+      label: string;
+      placeholder: string;
+      save: string;
+      saved: string;
+      another: string;
+      done: string;
+      close: string;
+      offline: string;
+      privacy: string;
+      errors: {
+        forbidden: string;
+        channelOff: string;
+        tooLong: string;
+        generic: string;
+      };
     };
   };
   auth: {
@@ -902,6 +926,10 @@ export type Messages = {
           label: string;
           description: string;
         };
+        onboardingNudge: {
+          label: string;
+          description: string;
+        };
       };
       mandatory: string;
       lockedLabel: string;
@@ -987,7 +1015,6 @@ export type Messages = {
     title: string;
     description: string;
     loading: string;
-    comingSoon: string;
     permissionDenied: string;
     error: {
       title: string;
@@ -1130,6 +1157,7 @@ export type Messages = {
       unsupported: string;
       forbidden: string;
       offline: string;
+      demo: string;
       generic: string;
     };
   };
@@ -3043,6 +3071,16 @@ export type Messages = {
     empty: {
       title: string;
       hint: string;
+    };
+    timeline: {
+      title: string;
+      hint: string;
+      proceeding: string;
+      listingDelay: string;
+      disposalTime: string;
+      basedOn: string;
+      narrowedToStage: string;
+      minimum: string;
     };
   };
   matters: {
@@ -5085,6 +5123,7 @@ export type Messages = {
       submit: string;
       saved: string;
       kept: string;
+      handedToImport: string;
       unrecognisedSender: string;
       unrecognisedSenderCopy: string;
     };
@@ -5386,6 +5425,7 @@ export type Messages = {
       courtBoard: string;
       statusOrder: string;
       digestEndOfDay: string;
+      onboardingNudge: string;
     };
     unlink: string;
     unlinked: string;
@@ -6366,7 +6406,6 @@ export type Messages = {
       title: string;
       copy: string;
       action: string;
-      soon: string;
     };
     receipt: {
       title: string;
@@ -7023,6 +7062,7 @@ export type Messages = {
     offline: {
       banner: string;
       queued: string;
+      queueFailed: string;
       conflict: {
         title: string;
         server: string;
@@ -7242,6 +7282,19 @@ export type Messages = {
       back: string;
     };
     loading: string;
+    index: {
+      title: string;
+      description: string;
+      today: string;
+      tomorrow: string;
+      dayAfter: string;
+      noListings: string;
+      allEmpty: string;
+      allEmptyHint: string;
+      openCalendar: string;
+      itemLabel: string;
+      hallLabel: string;
+    };
   };
   continuity: {
     handover: {

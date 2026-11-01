@@ -2,6 +2,7 @@
 // publication is fetched once however many workspaces watch it; matches become L2 proposals that
 // name the publication and are never applied; a repeat poll of the same bytes does nothing; other
 // advocates' rows are never stored; the committed golden HTML parses as it does in the adapter.
+import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -16,6 +17,7 @@ import { SourceNotCleared } from '../sources/index.ts';
 import {
   addCauseListWatch,
   createKhcListParser,
+  createKhcTextListParser,
   getPublicationForRef,
   KHC_CAUSE_LIST_SOURCE_ID,
   listCauseListWatches,
@@ -33,6 +35,7 @@ const FIXTURE_DIR = path.resolve(
 const read = (file: string) => readFileSync(path.join(FIXTURE_DIR, file), 'utf8');
 const DAILY = read('list-01-daily-three-halls-two-lists.input.html');
 const ADVANCE = read('list-03-advance.input.html');
+const TEXT_COPY = read('list-13-text-tabbed-copy.input.txt');
 const NOW = new Date('2026-10-21T04:00:00.000Z');
 
 /** A fetcher serving `pages` by URL suffix, counting provider calls. */
@@ -218,6 +221,156 @@ describe('pollCauseList', () => {
         .from(schema.causeListPublication)
         .where(eq(schema.causeListPublication.sourceId, KHC_CAUSE_LIST_SOURCE_ID));
       expect(rows).toHaveLength(2);
+    });
+  });
+});
+
+describe('pollCauseList over contributed copies (#594)', () => {
+  const uncleared = {
+    policy: () => Promise.reject(new SourceNotCleared('uncleared', KHC_CAUSE_LIST_SOURCE_ID)),
+    // Contributed copies are text; the golden fixture is HTML, so read it with the HTML parser.
+    contributedParser: createKhcListParser(),
+  } satisfies Partial<PollCauseListDeps>;
+
+  async function copy(
+    tx: Transaction,
+    over: Partial<typeof schema.contributedDocument.$inferInsert> = {},
+  ) {
+    const content = over.content === undefined ? DAILY : over.content;
+    const [row] = await tx
+      .insert(schema.contributedDocument)
+      .values({
+        sourceId: KHC_CAUSE_LIST_SOURCE_ID,
+        kind: 'cause_list',
+        listingDate: '2026-10-21',
+        content,
+        sha256: createHash('sha256')
+          .update(content ?? `blank-${randomUUID()}`)
+          .digest('hex'),
+        retentionUntil: new Date(NOW.getTime() + 86_400_000),
+        ...over,
+      })
+      .returning();
+    return row;
+  }
+
+  it('matches a live contributed copy while the source is uncleared, without fetching', async () => {
+    await withTestDb(async (tx) => {
+      const a = await watcher(tx);
+      const other = await watcher(tx, 'KAR/9999/1999');
+      await copy(tx);
+      const fetcher = fakeFetcher(pages);
+      const report = await pollCauseList(deps(tx, fetcher, uncleared));
+
+      expect(report.outcome).toBe('contributed');
+      expect(report.fetched).toBe(0);
+      expect(fetcher.calls).toEqual([]);
+      expect(report.proposals).toBeGreaterThan(0);
+      const rows = await proposalsOf(tx, a.workspaceId);
+      expect(rows.length).toBeGreaterThan(0);
+      for (const row of rows) {
+        expect(row.status).toBe('proposed');
+        expect(JSON.stringify(row.meta)).toContain(PUBLICATION_REF_PREFIX);
+      }
+      expect(await proposalsOf(tx, other.workspaceId)).toEqual([]);
+
+      const publications = await tx
+        .select()
+        .from(schema.causeListPublication)
+        .where(eq(schema.causeListPublication.sourceId, KHC_CAUSE_LIST_SOURCE_ID));
+      expect(publications).toHaveLength(1);
+      expect(publications[0]?.url).toMatch(/^contributed:/);
+      expect(publications[0]?.completedAt).not.toBeNull();
+
+      // The same copy is not matched twice.
+      const again = await pollCauseList(deps(tx, fetcher, uncleared));
+      expect(again.unchanged).toBe(1);
+      expect(again.proposals).toBe(0);
+    });
+  });
+
+  it('stages proposals from a contributed text copy through the default text reader (#1065)', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      await addCauseListWatch(
+        { db: tx },
+        { userId: ownerId, workspaceId },
+        { kind: 'name', value: 'R. Pretend' },
+      );
+      const other = await newWorkspace(tx);
+      await addCauseListWatch(
+        { db: tx },
+        { userId: other.ownerId, workspaceId: other.workspaceId },
+        { kind: 'name', value: 'Z. Nobody' },
+      );
+      await copy(tx, { content: TEXT_COPY });
+      const fetcher = fakeFetcher(pages);
+      // No contributedParser override: the production wiring reads text with the KHC adapter.
+      const report = await pollCauseList(
+        deps(tx, fetcher, {
+          policy: uncleared.policy,
+          contributedParser: createKhcTextListParser(),
+        }),
+      );
+
+      expect(report.outcome).toBe('contributed');
+      expect(fetcher.calls).toEqual([]);
+      expect(report.proposals).toBe(1);
+      const rows = await proposalsOf(tx, workspaceId);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.status).toBe('proposed');
+      expect(JSON.stringify(rows[0]?.payload)).toContain('WP/5120/2026');
+      expect(JSON.stringify(rows[0]?.meta)).toContain(PUBLICATION_REF_PREFIX);
+      expect(await proposalsOf(tx, other.workspaceId)).toEqual([]);
+
+      const again = await pollCauseList(
+        deps(tx, fetcher, {
+          policy: uncleared.policy,
+          contributedParser: createKhcTextListParser(),
+        }),
+      );
+      expect(again.unchanged).toBe(1);
+      expect(again.proposals).toBe(0);
+    });
+  });
+
+  it('never prefers a contributed copy over a cleared fetch', async () => {
+    await withTestDb(async (tx) => {
+      await watcher(tx);
+      await copy(tx);
+      const fetcher = fakeFetcher(pages);
+      const report = await pollCauseList(deps(tx, fetcher));
+      expect(report.outcome).toBe('ok');
+      expect(fetcher.calls).toHaveLength(2);
+      const urls = (await tx.select().from(schema.causeListPublication)).map((p) => p.url);
+      expect(urls.some((u) => u.startsWith('contributed:'))).toBe(false);
+    });
+  });
+
+  it('ignores withdrawn, expired and other-day copies', async () => {
+    await withTestDb(async (tx) => {
+      await watcher(tx);
+      await copy(tx, { content: null, withdrawnAt: NOW });
+      await copy(tx, {
+        content: `${DAILY}<!-- expired -->`,
+        retentionUntil: new Date(NOW.getTime() - 1),
+      });
+      await copy(tx, { content: `${DAILY}<!-- other day -->`, listingDate: '2026-10-20' });
+      const report = await pollCauseList(deps(tx, fakeFetcher(pages), uncleared));
+      expect(report.outcome).toBe('source_not_cleared');
+      expect(report.proposals).toBe(0);
+    });
+  });
+
+  it('stays closed when the flag is off or nobody watches, even with a copy', async () => {
+    await withTestDb(async (tx) => {
+      await watcher(tx);
+      await copy(tx);
+      const off = await pollCauseList(
+        deps(tx, fakeFetcher(pages), { ...uncleared, flagEnabled: () => Promise.resolve(false) }),
+      );
+      expect(off.outcome).toBe('source_not_cleared');
+      expect(await tx.select().from(schema.causeListPublication)).toEqual([]);
     });
   });
 });

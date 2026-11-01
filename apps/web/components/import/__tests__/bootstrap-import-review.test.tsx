@@ -16,6 +16,7 @@ const state = vi.hoisted(() => ({ search: '' }));
 const actions = vi.hoisted(() => ({
   importProgressAction: vi.fn(),
   getImportPlanAction: vi.fn(),
+  buildImportPlanAction: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -27,7 +28,6 @@ vi.mock('../../../app/(app)/w/[slug]/import/actions.ts', () => ({
   ...actions,
   addImportFilesAction: vi.fn(),
   applyImportPlanAction: vi.fn(),
-  buildImportPlanAction: vi.fn(),
   saveImportPlanEditsAction: vi.fn(),
   startImportBatchAction: vi.fn(),
   undoImportBatchAction: vi.fn(),
@@ -88,6 +88,49 @@ describe('BootstrapImport review', () => {
       expect(onPlanReady).toHaveBeenCalledWith(BATCH);
     });
     expect(actions.getImportPlanAction).not.toHaveBeenCalled();
+  });
+
+  it('plans a resumed batch that was never planned, once (handed over from the inbox, #1073)', async () => {
+    state.search = `batch=${BATCH}`;
+    actions.importProgressAction.mockResolvedValue({
+      ok: true,
+      data: { ...ready, status: 'pending', files: { ...ready.files, pending: 1, parsed: 0 } },
+    });
+    actions.buildImportPlanAction.mockResolvedValue({ ok: true, data: { status: 'processing' } });
+    show();
+    await waitFor(() => {
+      expect(actions.buildImportPlanAction).toHaveBeenCalledWith({
+        workspaceId: 'w',
+        batchId: BATCH,
+      });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(actions.buildImportPlanAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks for the identifiers of a handed-over batch when none are saved', async () => {
+    state.search = `batch=${BATCH}`;
+    actions.importProgressAction.mockResolvedValue({
+      ok: true,
+      data: { ...ready, status: 'pending', needsIdentifiers: true },
+    });
+    actions.buildImportPlanAction.mockResolvedValue({
+      ok: true,
+      data: { status: 'needs_identifiers' },
+    });
+    show();
+    await waitFor(() => {
+      expect(actions.buildImportPlanAction).toHaveBeenCalled();
+    });
+    expect(await screen.findByLabelText(/enrolment/i)).toBeTruthy();
+  });
+
+  it('does not plan a resumed batch that is already read', async () => {
+    state.search = `batch=${BATCH}`;
+    actions.importProgressAction.mockResolvedValue({ ok: true, data: ready });
+    show();
+    await screen.findByRole('button', { name: 'Review the plan' });
+    expect(actions.buildImportPlanAction).not.toHaveBeenCalled();
   });
 
   it('ignores a malformed batch id', () => {

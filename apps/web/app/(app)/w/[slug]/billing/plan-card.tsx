@@ -4,10 +4,8 @@
 // in serif 3xl with `/ month` muted, a calm status badge, the renewal date and the GST note. The
 // Junior variant offers the Advocate and Chamber plans instead. With `billing.manage` (`manage`)
 // the card hosts `Change plan` and `Cancel plan` / `Resume plan` (#257); without it the card is
-// read-only. The Junior upgrade buttons stay disabled: Junior has no subscription to change, and
-// starting one needs the UPI Autopay mandate flow.
+// read-only. The Junior upgrade buttons start the checkout and UPI Autopay mandate (#1072).
 import { Badge, type BadgeTone } from '@causedeck/ui/badge';
-import { Button } from '@causedeck/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@causedeck/ui/card';
 import {
   Ban,
@@ -28,6 +26,7 @@ import type {
   UpgradeOption,
 } from './billing-view.ts';
 import { CancelDialog } from './cancel-dialog.tsx';
+import { UpgradeButton, type MandateScope } from './mandate-buttons.tsx';
 import { ChangePlanDialog } from './change-plan-dialog.tsx';
 
 const STATUS_STYLE: Record<PlanStatus['key'], { tone: BadgeTone; icon: LucideIcon }> = {
@@ -112,7 +111,14 @@ export function PlanCard({ plan, status, renewal, manage, className }: PlanCardP
   );
 }
 
-export function JuniorPlanCard({ upgrades }: { upgrades: readonly UpgradeOption[] }) {
+export function JuniorPlanCard({
+  upgrades,
+  manage,
+}: {
+  upgrades: readonly UpgradeOption[];
+  /** Present only with `billing.manage`; without it the upgrade buttons are disabled. */
+  manage?: MandateScope | undefined;
+}) {
   const t = useTranslations('billing');
   return (
     <section data-slot="billing-junior" className="flex flex-col gap-4">
@@ -154,9 +160,13 @@ export function JuniorPlanCard({ upgrades }: { upgrades: readonly UpgradeOption[
                 <p className="text-ink-muted text-sm">{t('plan.gstNote')}</p>
               </CardContent>
               <CardFooter>
-                <Button variant="primary" disabled title={t('comingSoon')}>
+                <UpgradeButton
+                  planId={upgrade.planId}
+                  seats={Math.max(1, upgrade.minSeats)}
+                  manage={manage}
+                >
                   {t('junior.upgrade', { plan: name })}
-                </Button>
+                </UpgradeButton>
               </CardFooter>
             </Card>
           );

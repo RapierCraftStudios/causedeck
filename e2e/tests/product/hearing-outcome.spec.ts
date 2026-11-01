@@ -140,9 +140,27 @@ test.describe('hearing outcome', () => {
   test('offline: Confirm queues on the device', async ({ page, asUser, db, context }) => {
     const { hearingId } = await seedHearing(db.name, { proposals: false });
     await openOutcome(page, asUser, hearingId);
+    // The sealed queue loads lazily (Dexie) once the form mounts online (#730). Wait until its
+    // database exists, so going offline cannot cut the chunk fetch short.
+    await page.waitForFunction(async () =>
+      (await indexedDB.databases()).some((entry) => entry.name === 'causedeck-outcome-confirms'),
+    );
+    // The shell's lazy overlays and the toaster are `next/dynamic` chunks that start loading after
+    // hydration. A chunk cut off by going offline throws into the route error boundary ("Something
+    // went wrong"), which replaces the form (seen in the run-41245196784 trace), so let them land.
+    await page.waitForLoadState('networkidle');
     await context.setOffline(true);
+    // Let the page observe the offline event: the switch re-renders the form and detaches the
+    // buttons mid-click otherwise (#995).
+    await page.waitForFunction(() => !navigator.onLine);
     await page.getByLabel('What happened').fill('Adjourned');
-    await page.getByRole('button', { name: 'No next date / disposed' }).click();
+    // A re-render can still land after the event; retry the pick until the choice has stuck.
+    await expect(async () => {
+      await page.getByRole('button', { name: 'No next date / disposed' }).click({ timeout: 2000 });
+      await expect(page.getByRole('button', { name: 'Confirm outcome' })).toBeEnabled({
+        timeout: 1000,
+      });
+    }).toPass({ timeout: 15_000 });
     await page.getByRole('button', { name: 'Confirm outcome' }).click();
     await expect(page.getByText('Saved on this device').first()).toBeVisible();
   });

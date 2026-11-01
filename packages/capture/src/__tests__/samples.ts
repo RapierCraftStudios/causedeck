@@ -11,6 +11,11 @@ export const SAMPLES = {
   pdf: new Uint8Array(Buffer.from('%PDF-1.7\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n')),
   ics: new Uint8Array(Buffer.from('BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n')),
   txt: new Uint8Array(Buffer.from('[12/10/26, 10:01] Client: hearing moved to Monday\n')),
+  eml: new Uint8Array(
+    Buffer.from(
+      'From: client@example.com\r\nTo: adv@example.com\r\nSubject: Hearing\r\n\r\nMonday\r\n',
+    ),
+  ),
   png: padded('89504e470d0a1a0a0000000d49484452'),
   jpeg: padded('ffd8ffe000104a46494600'),
   webp: padded(Buffer.from('RIFF'), '24000000', Buffer.from('WEBPVP8 ')),
@@ -32,6 +37,7 @@ export const UPLOADS: Record<
   pdf: { filename: 'Order 12.10.2026.pdf', mime: 'application/pdf' },
   ics: { filename: 'hearing.ics', mime: 'text/calendar' },
   txt: { filename: 'WhatsApp Chat.txt', mime: 'text/plain' },
+  eml: { filename: 'mail.eml', mime: 'message/rfc822' },
   png: { filename: 'scan.png', mime: 'image/png' },
   jpeg: { filename: 'photo.JPG', mime: 'image/jpeg' },
   webp: { filename: 'photo.webp', mime: 'image/webp' },

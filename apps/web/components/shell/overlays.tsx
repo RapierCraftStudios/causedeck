@@ -17,18 +17,25 @@ const VoiceHost = dynamic(
   { ssr: false },
 );
 
+// The paste-text sheet (#1074) opens on `?capture=paste`, a chunk of its own as well.
+const PasteHost = dynamic(
+  () => import('../capture/paste/paste-text-sheet.tsx').then((m) => m.PasteHost),
+  { ssr: false },
+);
+
 export interface ShellOverlaysProps {
   viewerId: string;
   workspaceId: string;
 }
 
-/** The topbar's floating stack: update toast (#50), camera sheet (#52), voice recorder (#543) and install banner (#50). */
+/** The topbar's floating stack: update toast (#50), camera sheet (#52), voice recorder (#543), paste-text sheet (#1074) and install banner (#50). */
 export function ShellOverlays({ viewerId, workspaceId }: ShellOverlaysProps) {
   return (
     <>
       <UpdateToast />
       <CameraHost workspaceId={workspaceId} />
       <VoiceHost workspaceId={workspaceId} />
+      <PasteHost workspaceId={workspaceId} />
       <InstallBanner viewerId={viewerId} workspaceId={workspaceId} />
     </>
   );

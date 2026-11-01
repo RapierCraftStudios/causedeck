@@ -183,8 +183,10 @@ Every service opens `withWorkspace` and first checks that the user is an active 
 Outbound WhatsApp goes to the member only, through `notification.deliver` (channel `whatsapp`) and the
 end-of-day digest. It is opt-in: no category has `whatsapp` in its defaults, the member turns the
 preference on and links a number (#678). Three categories have an approved template
-(`WHATSAPP_TEMPLATES`): `court.board`, `status.order` and `digest.end_of_day`. A template carries a
-link, or counts and a link, never a title, body or party name.
+(`WHATSAPP_TEMPLATES`): `court.board`, `status.order` and `digest.end_of_day`. A fourth,
+`onboarding.nudge` (#601), is registered but its template is not yet approved by the provider (see
+"Onboarding nudges" below). A template carries a link, or counts and a link, never a title, body or
+party name.
 
 - The destination is only ever `getWhatsAppSendTarget` (`@causedeck/core/whatsapp-link`): the owner's
   verified number, when they chose the category. The sender takes that target as an argument and
@@ -203,3 +205,21 @@ link, or counts and a link, never a title, body or party name.
   the template (a human step, #708, #488). Without it: the console sender outside production (logs
   the masked number, never the code) and a refusal in production, so the member sees an error.
   Sends are limited per number (5/hour) and per member (10/hour) plus a 60 second resend cooldown.
+
+### Onboarding nudges (#601)
+
+`system.onboarding.nudge` runs daily at 09:30 IST and reminds a user of the next setup step they have
+not reached (`activation_event`, #509; steps in `NUDGE_STEPS`). Category `onboarding.nudge`: in-app by
+default, not in the preference matrix's WhatsApp column. Dark behind the `growth.onboarding-nudge` flag
+(kill switch `KILL_GROWTH_ONBOARDING_NUDGE`), judged on the workspace that hosts the nudge: the user's
+first active, non-demo membership.
+
+- Who: signed up 2 to 30 days ago, at most one nudge per user per 3 days, and one per step ever. The
+  in-app `notify` dedupe key `onboarding:<step>` is the record, so there is no table.
+- WhatsApp: only when the member chose `onboarding.nudge` on their WhatsApp link
+  (`getWhatsAppSendTarget`), never inside court hours, template `causedeck_onboarding_nudge` with a
+  link as its only parameter. A failure is logged and never retried.
+- Mock: without the provider env the job uses `createMockWhatsAppSender` (logs the template name only),
+  so staging runs end to end.
+- Owner remainder: register and get `causedeck_onboarding_nudge` approved with the provider (a paid
+  service), set the provider env, then turn the flag on. Until then live sends do not happen.

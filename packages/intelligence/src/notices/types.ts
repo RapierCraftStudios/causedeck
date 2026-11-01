@@ -4,12 +4,16 @@
 import { normaliseDate } from '@causedeck/adapters';
 import type { NoticeKind } from '@causedeck/db/schema';
 
+import { vacationRangeFromLine } from './parse-holiday-list.ts';
+
 export interface ParsedNotice {
   title: string;
   /** ISO date printed on the row. */
   issuedOn: string;
   /** ISO date of a "with effect from" phrase in the title, else null. */
   effectiveOn: string | null;
+  /** `from`/`to` of a vacation range stated in the title (#650), else null. */
+  vacationRange: { from: string; to: string } | null;
   /** Absolute http(s) URL of the notice document. */
   url: string;
   /** Kind read from title keywords, null when the title does not say. */
@@ -57,6 +61,15 @@ export function effectiveOnFromTitle(title: string): string | null {
   return tail === null ? null : normaliseDate(tail[1] ?? '');
 }
 
+/**
+ * The vacation range a title states, e.g. "Summer vacation 2026 from 01.06.2026 to 30.06.2026", or
+ * null. Only a title that says vacation or recess is read, so a holiday notice never yields a range.
+ */
+export function vacationRangeFromTitle(title: string): { from: string; to: string } | null {
+  const range = vacationRangeFromLine(title);
+  return range === null ? null : { from: range.from, to: range.to };
+}
+
 /** Forum codes a title names, else the court's defaults. */
 export function forumCodesFor(title: string, config: NoticeSourceConfig): string[] {
   const lower = title.toLowerCase();
@@ -87,6 +100,7 @@ export function buildNotice(
     title,
     issuedOn: parts.issuedOn,
     effectiveOn: effectiveOnFromTitle(title),
+    vacationRange: vacationRangeFromTitle(title),
     url: parts.url,
     kindHint: kindFromTitle(title),
     forumCodes: forumCodesFor(title, config),

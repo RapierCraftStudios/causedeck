@@ -8,7 +8,12 @@
 // unasked; the proposal's source ref names the publication for the "Fetched from the KHC public
 // list" chip. Nothing is fetched while the flag `court.khc-a2` is off or the source is uncleared.
 // Watches are read across workspaces only through `app_cause_list_watch_targets` (0068). Counts only
-// are logged.
+// are logged. While the source is uncleared nothing is fetched, but a live contributed copy of
+// today's list (#485, `findContributed`) is matched the same way (#594); a cleared source always
+// takes the fetch path and a copy never shadows it. A copy carries no contributor, so none is stored
+// or logged.
+import { createHash } from 'node:crypto';
+
 import {
   createKarnatakaHcAdapter,
   extractBarRegistrationNo,
@@ -23,6 +28,7 @@ import { and, asc, eq, sql } from 'drizzle-orm';
 import { submitProposals } from '../automation/index.ts';
 import type { GraphActor, MatterGraphDeps } from '../matter-graph/index.ts';
 import { filterMatchedRows, getAdvocateIdentifiers, listRowPayloads } from '../import/index.ts';
+import { findContributed } from '../network/index.ts';
 import { invalid, notFound } from '../shared/errors.ts';
 import { policyFor, SourceNotCleared } from '../sources/index.ts';
 
@@ -201,11 +207,27 @@ export function createKhcListParser(): ListHtmlParser {
     });
 }
 
+/** Parses the plain text of a contributed list (copies are text, not HTML). */
+export type ListTextParser = (text: string, receivedAt: string) => Promise<ParsedCauseList>;
+
+/** The KHC adapter over a contributed copy's text. */
+export function createKhcTextListParser(): ListTextParser {
+  const adapter = createKarnatakaHcAdapter();
+  return (text, receivedAt) =>
+    adapter.parseCauseList({
+      kind: 'text',
+      text,
+      meta: { receivedAt, forumCode: KARNATAKA_HC_FORUM_CODES[0] },
+    });
+}
+
 export interface PollCauseListDeps {
   db: Db;
   fetcher: ListFetcher;
   /** Defaults to the KHC adapter. */
   parser?: ListHtmlParser;
+  /** Parser for contributed copies (text); defaults to the KHC adapter's text reader. */
+  contributedParser?: ListTextParser;
   clock?: { now(): Date };
   /** Whether the flag is on for the workspace; defaults to the flag service. */
   flagEnabled?: (workspaceId: string) => Promise<boolean>;
@@ -230,8 +252,8 @@ export interface CauseListMatchEvent {
 }
 
 export interface PollCauseListReport {
-  outcome: 'ok' | 'source_not_cleared' | 'no_watchers' | 'flag_off';
-  /** Provider calls made. */
+  outcome: 'ok' | 'contributed' | 'source_not_cleared' | 'no_watchers' | 'flag_off';
+  /** Provider calls made (always 0 for outcome `contributed`). */
   fetched: number;
   /** Publications already matched, skipped. */
   unchanged: number;
@@ -263,12 +285,13 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
   const policy = deps.policy ?? ((id: string) => policyFor(id, { db: deps.db }));
   const sourceId = deps.sourceId ?? KHC_CAUSE_LIST_SOURCE_ID;
 
-  let baseUrl: string;
+  // Null while the source is uncleared: only contributed copies may then be read.
+  let baseUrl: string | null;
   try {
     baseUrl = (await policy(sourceId)).baseUrl;
   } catch (error) {
-    if (error instanceof SourceNotCleared) return { ...report, outcome: 'source_not_cleared' };
-    throw error;
+    if (!(error instanceof SourceNotCleared)) throw error;
+    baseUrl = null;
   }
 
   const rows = await deps.db.execute<{
@@ -279,7 +302,9 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
   }>(
     sql`select workspace_id::text, user_id::text, kind, value from app_cause_list_watch_targets(${sourceId})`,
   );
-  if (rows.length === 0) return { ...report, outcome: 'no_watchers' };
+  if (rows.length === 0) {
+    return { ...report, outcome: baseUrl === null ? 'source_not_cleared' : 'no_watchers' };
+  }
 
   const flag = deps.flagEnabled ?? ((workspaceId) => isEnabled(COURT_KHC_A2_FLAG, { workspaceId }));
   const enabled = new Map<string, boolean>();
@@ -299,7 +324,9 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
       });
     }
   }
-  if (targets.length === 0) return { ...report, outcome: 'flag_off' };
+  if (targets.length === 0) {
+    return { ...report, outcome: baseUrl === null ? 'source_not_cleared' : 'flag_off' };
+  }
 
   // One member's identifiers: their name and BRN watches.
   const members = new Map<string, { actor: GraphActor; names: string[]; brns: string[] }>();
@@ -314,22 +341,20 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
     members.set(key, member);
   }
 
-  const parse = deps.parser ?? createKhcListParser();
-  for (const type of Object.keys(KHC_LIST_PATHS) as KhcListType[]) {
-    const url = new URL(KHC_LIST_PATHS[type], baseUrl).toString();
-    const fetched = await deps.fetcher.fetchSource(sourceId, url);
-    report.fetched += 1;
-    const { sha256 } = fetched.provenance;
-    const fetchedAt = new Date(fetched.provenance.fetchedAt);
-
+  /** One publication: dedupe by sha256, parse in memory, stage per member, mark complete. */
+  const matchPublication = async (
+    publication: { listKey: string; url: string; sha256: string; fetchedAt: Date },
+    parse: (receivedAt: string) => Promise<ParsedCauseList>,
+  ): Promise<void> => {
+    const { sha256 } = publication;
     const [inserted] = await deps.db
       .insert(causeListPublication)
       .values({
-        sourceId: sourceId,
-        listKey: `${type}:${istDate(now)}`,
-        url: fetched.provenance.url,
+        sourceId,
+        listKey: publication.listKey,
+        url: publication.url,
         sha256,
-        fetchedAt,
+        fetchedAt: publication.fetchedAt,
       })
       .onConflictDoNothing()
       .returning({ id: causeListPublication.id });
@@ -347,11 +372,11 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
     if (existing === undefined) throw new Error('cause list publication row is missing');
     if (existing.completedAt !== null) {
       report.unchanged += 1;
-      continue;
+      return;
     }
 
-    const list = await parse(fetched.body, now.toISOString());
-    // `fetched.body` goes out of scope here: only the metadata above is ever stored.
+    const list = await parse(now.toISOString());
+    // The body goes out of scope here: only the metadata above is ever stored.
     let unmatched = 0;
     const matchedByWorkspace = new Map<string, number>();
     for (const { actor, names, brns } of members.values()) {
@@ -398,6 +423,47 @@ export async function pollCauseList(deps: PollCauseListDeps): Promise<PollCauseL
       unmatched,
       members: members.size,
     });
+  };
+
+  if (baseUrl === null) {
+    // Uncleared: no fetch. Read today's live contributed copies instead (never a contributor).
+    const parseText = deps.contributedParser ?? createKhcTextListParser();
+    const copies = await findContributed(deps.db, {
+      sourceId,
+      kind: 'cause_list',
+      listingDate: istDate(now),
+      now,
+    });
+    if (copies.length === 0) return { ...report, outcome: 'source_not_cleared' };
+    report.outcome = 'contributed';
+    for (const copy of copies) {
+      await matchPublication(
+        {
+          listKey: `contributed:${istDate(now)}`,
+          // Names the copy, never its contributor.
+          url: `contributed:${copy.id}`,
+          sha256: createHash('sha256').update(copy.content).digest('hex'),
+          fetchedAt: copy.contributedAt,
+        },
+        (receivedAt) => parseText(copy.content, receivedAt),
+      );
+    }
+  } else {
+    const parse = deps.parser ?? createKhcListParser();
+    for (const type of Object.keys(KHC_LIST_PATHS) as KhcListType[]) {
+      const url = new URL(KHC_LIST_PATHS[type], baseUrl).toString();
+      const fetched = await deps.fetcher.fetchSource(sourceId, url);
+      report.fetched += 1;
+      await matchPublication(
+        {
+          listKey: `${type}:${istDate(now)}`,
+          url: fetched.provenance.url,
+          sha256: fetched.provenance.sha256,
+          fetchedAt: new Date(fetched.provenance.fetchedAt),
+        },
+        (receivedAt) => parse(fetched.body, receivedAt),
+      );
+    }
   }
   log('causelist.poll', {
     fetched: report.fetched,

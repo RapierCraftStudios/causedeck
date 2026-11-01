@@ -45,7 +45,9 @@
       "practice": "Practice",
       "settings": "Settings"
     },
-    "enquiries": "Enquiries"
+    "enquiries": "Enquiries",
+    "import": "Import",
+    "research": "Research"
   },
   "palette": {
     "title": "Command palette",
@@ -176,8 +178,8 @@
       },
       "settings": {
         "description": "Workspace profile, members, roles and privacy.",
-        "empty": "Settings are coming soon.",
-        "hint": "Workspace profile, members, roles and privacy settings are on the way."
+        "empty": "Pick a section in the settings list.",
+        "hint": "Workspace profile, members, roles and privacy settings are in the list."
       },
       "goTo": "Go to {destination}"
     },
@@ -197,8 +199,7 @@
     "permissionDenied": {
       "title": "No access",
       "message": "You do not have access to this area.",
-      "requestAccess": "Request access",
-      "requestAccessSoon": "Access requests are coming soon."
+      "askOwner": "Ask a workspace owner to change your role if you need this."
     },
     "permission": {
       "ownersOnly": "Only owners can do this",
@@ -228,8 +229,12 @@
       "noMatches": "No workspaces match.",
       "current": "Current workspace",
       "create": "Create workspace",
+      "switching": "Switching workspace",
       "join": "Join with invite",
-      "switching": "Switching workspace"
+      "joinLabel": "Invite link or code",
+      "joinPlaceholder": "Paste the invite link or code",
+      "joinSubmit": "Open invitation",
+      "joinInvalid": "That does not look like an invite link or code. Paste the link from the invitation email."
     },
     "userMenu": {
       "label": "Account menu",
@@ -259,8 +264,8 @@
       "title": "Capture",
       "voice": "Voice note",
       "file": "Photo or file",
-      "paste": "Paste text",
-      "soon": "Available with Capture."
+      "hint": "Choose how to capture.",
+      "paste": "Paste text"
     },
     "sheet": {
       "close": "Close"
@@ -294,6 +299,25 @@
       "error": "We could not start the demo. Please try again.",
       "busy": "Too many demos were started from this network. Please try again in an hour.",
       "back": "Back to sign in"
+    },
+    "pasteText": {
+      "title": "Paste text",
+      "description": "Paste an order, a message or your own note. CauseDeck reads it like any other capture and puts what it finds in your inbox.",
+      "label": "Text to capture",
+      "placeholder": "Paste or type here",
+      "save": "Save capture",
+      "saved": "Saved. It is being read; anything found will appear in your inbox for you to confirm.",
+      "another": "Paste more",
+      "done": "Done",
+      "close": "Close",
+      "offline": "You are offline. Pasted text is saved when you reconnect, so Save stays off until then.",
+      "privacy": "Nothing is sent or filed. You confirm every proposal in the inbox.",
+      "errors": {
+        "forbidden": "You do not have permission to add captures here.",
+        "channelOff": "Typed and pasted notes are switched off for this workspace.",
+        "tooLong": "That text is too long. Paste it in smaller parts.",
+        "generic": "Could not save that. Nothing changed. Try again."
+      }
     }
   },
   "auth": {
@@ -900,6 +924,10 @@
         "digestNews": {
           "label": "Legal news digest",
           "description": "One daily digest of legal news, with the items for your practice areas and forums first."
+        },
+        "onboardingNudge": {
+          "label": "Setup reminders",
+          "description": "A nudge for the next setup step you have not finished."
         }
       },
       "mandatory": "Security alerts are always sent in the app and by email so you never miss a sign-in or account change.",
@@ -986,7 +1014,6 @@
     "title": "Billing",
     "description": "Your plan, seats, payment method and invoices for {workspace}.",
     "loading": "Loading billing",
-    "comingSoon": "Available soon",
     "permissionDenied": "Only workspace owners can manage billing.",
     "error": {
       "title": "Could not load billing.",
@@ -1129,6 +1156,7 @@
       "unsupported": "Your payment provider cannot undo a scheduled cancellation. Subscribe again after the plan ends.",
       "forbidden": "Only workspace owners can manage billing.",
       "offline": "You are offline. Billing changes are unavailable until you reconnect.",
+      "demo": "Billing changes are not available in a demo workspace. Nothing here reaches a payment provider.",
       "generic": "Something went wrong. Try again."
     }
   },
@@ -3042,6 +3070,16 @@
     "empty": {
       "title": "No figures yet",
       "hint": "Figures appear once matters in this workspace have filing dates, listings and hearings."
+    },
+    "timeline": {
+      "title": "Expected timeline",
+      "hint": "From this workspace's own matters in the same forum and case type. An estimate, not a promise.",
+      "proceeding": "{court}, {caseType}",
+      "listingDelay": "Median time to first listing",
+      "disposalTime": "Median time to disposal",
+      "basedOn": "Based on {count, plural, one {# matter} other {# matters}}",
+      "narrowedToStage": "Matters first listed at the same stage.",
+      "minimum": "Figures from fewer than {min} matters are withheld."
     }
   },
   "matters": {
@@ -5084,6 +5122,7 @@
       "submit": "Save key line",
       "saved": "Saved. We will read what you typed.",
       "kept": "Kept as an attachment, unread.",
+      "handedToImport": "Handed to list import. Opening it now.",
       "unrecognisedSender": "Unrecognised sender: review",
       "unrecognisedSenderCopy": "This email came from a sender you have not allowed, so nothing in it was read. Review it, then add the sender to your allow-list if you trust it."
     },
@@ -5384,7 +5423,8 @@
     "categories": {
       "courtBoard": "Court board alerts",
       "statusOrder": "New order alerts",
-      "digestEndOfDay": "Evening court-day summary"
+      "digestEndOfDay": "Evening court-day summary",
+      "onboardingNudge": "Setup reminders"
     },
     "unlink": "Unlink WhatsApp",
     "unlinked": "WhatsApp unlinked. No more messages will be sent.",
@@ -6364,8 +6404,7 @@
     "causeList": {
       "title": "This looks like a cause list",
       "copy": "Printed cause lists are read by list import, not as a diary page.",
-      "action": "Hand to list import",
-      "soon": "List import arrives soon"
+      "action": "Hand to list import"
     },
     "receipt": {
       "title": "Kept as an attachment",
@@ -7022,6 +7061,7 @@
     "offline": {
       "banner": "You're offline. Confirm saves on this device and is applied when you reconnect. It never overwrites a date you confirmed.",
       "queued": "Saved on this device. It will be applied when you are back online.",
+      "queueFailed": "Could not save this on the device, so it is not queued. Stay on this page and try again, or confirm once you are back online.",
       "conflict": {
         "title": "The next date changed while you were offline",
         "server": "On file now",
@@ -7240,7 +7280,20 @@
       "request": "Request access",
       "back": "Back to briefs"
     },
-    "loading": "Loading brief"
+    "loading": "Loading brief",
+    "index": {
+      "title": "Briefs",
+      "description": "Preparation briefs for the listings in the next three court days.",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "dayAfter": "Day after tomorrow",
+      "noListings": "Nothing listed on this day.",
+      "allEmpty": "No listings in the next three court days.",
+      "allEmptyHint": "Briefs are built per listing. Open the calendar to look further ahead.",
+      "openCalendar": "Open the calendar",
+      "itemLabel": "Item {item}",
+      "hallLabel": "Court {hall}"
+    }
   },
   "continuity": {
     "handover": {

@@ -61,6 +61,8 @@ describe('registerSchedules', () => {
       'system.attention.scan',
       'system.brief.refresh-sweep',
       'system.reminder.schedule',
+      'system.onboarding.nudge',
+      'system.captcha-bulk.tick',
     ]);
 
     const schedule = await worker.boss.getSchedule('system.retention.sweep');
@@ -104,6 +106,8 @@ describe('registerSchedules', () => {
       ['system.activity.digest', '0,30 18-23 * * *', '2026-10-18T12:30:00.000Z'],
       // Court-day reminders (#64): every half hour from 07:00 to 23:30 IST; 07:00 IST is 01:30 UTC.
       ['system.reminder.schedule', '0,30 7-23 * * *', '2026-10-18T01:30:00.000Z'],
+      // Onboarding nudges (#601): daily 09:30 IST, which is 04:00 UTC.
+      ['system.onboarding.nudge', '30 9 * * *', '2026-10-18T04:00:00.000Z'],
       // News digest scheduler (#481): every half hour, like the notification digest; 06:00 IST is 00:30 UTC.
       ['system.news.digest', '0,30 * * * *', '2026-10-18T00:30:00.000Z'],
       // News poll fan-out (#481): hourly at :10 IST, which is :40 UTC.
@@ -142,6 +146,8 @@ describe('registerSchedules', () => {
       ['system.notices.poll', '0 * * * *', '2026-10-18T00:30:00.000Z'],
       // Status publish (#769): every minute.
       ['system.status.publish', '* * * * *', '2026-10-18T00:01:00.000Z'],
+      // Bulk captcha tick (#1078): every minute (dark behind `captcha.bulk`).
+      ['system.captcha-bulk.tick', '* * * * *', '2026-10-18T00:01:00.000Z'],
       // Obligation reminders (#67): daily 07:00 IST; 07:00 IST is 01:30 UTC.
       ['system.obligation.reminders', '0 7 * * *', '2026-10-18T01:30:00.000Z'],
     ] as const;
@@ -181,13 +187,26 @@ describe('registerSchedules', () => {
     expect(schedules).toHaveLength(1);
     expect(schedules[0]?.timezone).toBe('Asia/Kolkata');
 
-    // Wait for the next minute's occurrence, then give both replicas several more cron passes.
+    // Wait for the first occurrence, then give both replicas several more cron passes.
     await waitFor(() => runs > 0, { timeoutMs: 75_000, intervalMs: 250 });
     await sleep(3000);
-    const jobs = await a.boss.findJobs(def.name);
-    const minutes = new Set(jobs.map((j) => Math.floor(j.createdOn.getTime() / 60_000)));
-    expect(jobs.length).toBe(minutes.size);
-    expect(runs).toBe(jobs.length);
+    // Freeze the schedule before counting. Sampling `runs` and the job rows while cron keeps
+    // firing races a minute boundary: an occurrence inserted and handled between the two reads
+    // gave "expected 2 to be 1" / "expected 1 to be 2". Once unscheduled and the passes in flight
+    // have landed, the job set is fixed and every job is handled, so the counts are exact.
     await a.boss.unschedule(def.name);
+    await sleep(2500);
+    const jobs = await waitFor(
+      async () => {
+        const all = await a.boss.findJobs(def.name);
+        return all.every((j) => j.state === 'completed') ? all : undefined;
+      },
+      { timeoutMs: 15_000, intervalMs: 250 },
+    );
+    // One job per occurrence slot: a duplicate send by either replica would repeat a slot.
+    const slots = new Set(jobs.map((j) => (j.singletonOn ?? j.createdOn).getTime()));
+    expect(jobs.length).toBeGreaterThan(0);
+    expect(jobs.length).toBe(slots.size);
+    expect(runs).toBe(jobs.length);
   }, 120_000);
 });

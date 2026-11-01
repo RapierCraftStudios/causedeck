@@ -26,6 +26,7 @@ const LEGAL = [
   'intake.enquiry_log',
   'status_links.enabled',
   'bench_facts',
+  'captcha.bulk',
 ];
 
 describe('flag registry', () => {
@@ -46,6 +47,9 @@ describe('flag registry', () => {
         'insights.enabled',
         'workspace.export',
         'm5_playbooks',
+        'adapters.workbench-fetch',
+        'growth.onboarding-nudge',
+        'growth.free-alerts',
       ].sort(),
     );
     for (const key of FLAG_KEYS) {

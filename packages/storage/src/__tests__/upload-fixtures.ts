@@ -76,7 +76,13 @@ export const SAMPLES = {
   ogg: padded(Buffer.from('OggS'), Buffer.alloc(24), Buffer.from('OpusHead')),
   webm: padded('1a45dfa39f4286810142f7810142f2810442f381084282847765626d'),
   zip: zipOf([['chat.txt', 'exported chat']]),
+  eml: new Uint8Array(
+    Buffer.from(
+      'From: client@example.com\r\nTo: adv@example.com\r\nSubject: Hearing\r\n\r\nMoved to Monday\r\n',
+    ),
+  ),
   html: new Uint8Array(Buffer.from('<!DOCTYPE html><html><script>alert(1)</script></html>')),
+  svg: new Uint8Array(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>')),
   exe: padded('4d5a90000300000004000000ffff0000'),
 } as const;
 

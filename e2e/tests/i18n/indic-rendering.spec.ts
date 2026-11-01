@@ -364,6 +364,12 @@ for (const locale of INDIC) {
       skipWithoutBaseline(testInfo, name);
       await openSignIn(page, locale);
       await indicFontReady(page, locale);
+      // From 1024 px the email field takes focus once the page has hydrated (magic-link-form.tsx),
+      // so the ring is part of the settled page. Wait for it: a shot taken before it (the first
+      // sign-in-ta baseline) differs from every later run.
+      if ((page.viewportSize()?.width ?? 0) >= 1024) {
+        await expect(page.locator('input[type="email"]')).toBeFocused();
+      }
       await expect(page).toHaveScreenshot(name, {
         fullPage: true,
         mask: [page.locator('[data-testid="dynamic"]')],

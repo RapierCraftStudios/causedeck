@@ -12,6 +12,7 @@ import { OfflineBanner } from '@causedeck/ui/patterns';
 import { ShortcutsDialog } from '@causedeck/ui/shortcuts-dialog';
 import { toast } from '@causedeck/ui/sonner';
 import { Keyboard } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -19,6 +20,7 @@ import {
   acceptProposalAction,
   dismissProposalAction,
   editAcceptProposalAction,
+  handToListImportAction,
   keepAsAttachmentAction,
   markSentAction,
   reassignCaptureAction,
@@ -78,6 +80,7 @@ export function InboxShell({ view, workspaceId, slug }: InboxShellProps) {
   const requested = useLocale();
   const locale = isLocale(requested) ? requested : DEFAULT_LOCALE;
   const { openCapture } = useCapture();
+  const router = useRouter();
   const [section, setSection] = useState<InboxSection>('needsYou');
   const [helpOpen, setHelpOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -271,6 +274,16 @@ export function InboxShell({ view, workspaceId, slug }: InboxShellProps) {
         collapseOut(item);
         refresh();
       },
+      handToImport: async (item) => {
+        if (item.captureId === null) return;
+        const { batchId } = unwrap(
+          await handToListImportAction({ workspaceId, captureId: item.captureId }),
+        );
+        announce(t('unreadable.handedToImport'));
+        collapseOut(item);
+        refresh();
+        router.push(`/w/${encodeURIComponent(slug)}/import?batch=${batchId}`);
+      },
       keyLine: async (item, text) => {
         if (item.captureId === null) return;
         unwrap(await typeKeyLineAction({ workspaceId, captureId: item.captureId, text }));
@@ -298,7 +311,7 @@ export function InboxShell({ view, workspaceId, slug }: InboxShellProps) {
         })),
       retake: openCapture,
     }),
-    [workspaceId, afterApplied, collapseOut, refresh, announce, openCapture, t],
+    [workspaceId, slug, router, afterApplied, collapseOut, refresh, announce, openCapture, t],
   );
 
   // `u`, `1`/`2`/`3` and `?`. Capture phase so that `?` is this sheet and not the shell's.
@@ -424,7 +437,7 @@ export function InboxShell({ view, workspaceId, slug }: InboxShellProps) {
             <ProcessingList rows={processing} locale={locale} />
           )}
         </div>
-        <SourcePreview item={selected} slug={slug} />
+        <SourcePreview item={selected} slug={slug} workspaceId={workspaceId} />
       </div>
       <ShortcutsDialog
         shortcuts={shortcutList}

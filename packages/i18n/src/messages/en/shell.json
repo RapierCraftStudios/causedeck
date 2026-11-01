@@ -93,8 +93,8 @@
       },
       "settings": {
         "description": "Workspace profile, members, roles and privacy.",
-        "empty": "Settings are coming soon.",
-        "hint": "Workspace profile, members, roles and privacy settings are on the way."
+        "empty": "Pick a section in the settings list.",
+        "hint": "Workspace profile, members, roles and privacy settings are in the list."
       },
       "goTo": "Go to {destination}"
     },
@@ -114,8 +114,7 @@
     "permissionDenied": {
       "title": "No access",
       "message": "You do not have access to this area.",
-      "requestAccess": "Request access",
-      "requestAccessSoon": "Access requests are coming soon."
+      "askOwner": "Ask a workspace owner to change your role if you need this."
     },
     "permission": {
       "ownersOnly": "Only owners can do this",
@@ -145,8 +144,12 @@
       "noMatches": "No workspaces match.",
       "current": "Current workspace",
       "create": "Create workspace",
+      "switching": "Switching workspace",
       "join": "Join with invite",
-      "switching": "Switching workspace"
+      "joinLabel": "Invite link or code",
+      "joinPlaceholder": "Paste the invite link or code",
+      "joinSubmit": "Open invitation",
+      "joinInvalid": "That does not look like an invite link or code. Paste the link from the invitation email."
     },
     "userMenu": {
       "label": "Account menu",
@@ -176,8 +179,8 @@
       "title": "Capture",
       "voice": "Voice note",
       "file": "Photo or file",
-      "paste": "Paste text",
-      "soon": "Available with Capture."
+      "hint": "Choose how to capture.",
+      "paste": "Paste text"
     },
     "sheet": {
       "close": "Close"
@@ -211,6 +214,25 @@
       "error": "We could not start the demo. Please try again.",
       "busy": "Too many demos were started from this network. Please try again in an hour.",
       "back": "Back to sign in"
+    },
+    "pasteText": {
+      "title": "Paste text",
+      "description": "Paste an order, a message or your own note. CauseDeck reads it like any other capture and puts what it finds in your inbox.",
+      "label": "Text to capture",
+      "placeholder": "Paste or type here",
+      "save": "Save capture",
+      "saved": "Saved. It is being read; anything found will appear in your inbox for you to confirm.",
+      "another": "Paste more",
+      "done": "Done",
+      "close": "Close",
+      "offline": "You are offline. Pasted text is saved when you reconnect, so Save stays off until then.",
+      "privacy": "Nothing is sent or filed. You confirm every proposal in the inbox.",
+      "errors": {
+        "forbidden": "You do not have permission to add captures here.",
+        "channelOff": "Typed and pasted notes are switched off for this workspace.",
+        "tooLong": "That text is too long. Paste it in smaller parts.",
+        "generic": "Could not save that. Nothing changed. Try again."
+      }
     }
   }
 }

@@ -37,9 +37,21 @@ export interface TimeToValue {
   p90Seconds: number | null;
 }
 
+/** Matters discovered against matters confirmed, per weekly cohort (#699). */
+export interface DiscoveredVsConfirmed {
+  week: string;
+  /** Users in the cohort who confirmed their grid and had both counts recorded. */
+  users: number;
+  discovered: number;
+  confirmed: number;
+  /** Confirmed over discovered, 0 to 1 (0 when nothing was discovered). */
+  ratio: number;
+}
+
 export interface Funnel {
   cohorts: FunnelCohort[];
   timeToFirstCourtDay: TimeToValue[];
+  discoveredVsConfirmed: DiscoveredVsConfirmed[];
 }
 
 function cohortFilter({ since, channel }: FunnelOptions) {
@@ -112,7 +124,44 @@ export async function timeToFirstCourtDay(
   }));
 }
 
-/** Both reads, for the admin Growth page. */
+/**
+ * Matters discovered against matters confirmed, per weekly cohort (#699): the counts recorded with
+ * `confirm_grid_done`, summed over the users who have both. Counts only; no user id leaves here.
+ */
+export async function discoveredVsConfirmed(
+  db: Queryable,
+  options: FunnelOptions = {},
+): Promise<DiscoveredVsConfirmed[]> {
+  const rows = await db.execute<{
+    week: string;
+    users: string | number;
+    discovered: string | number;
+    confirmed: string | number;
+  }>(sql`
+    select ${WEEK} as week,
+      count(*) as users,
+      coalesce(sum(e.matters_discovered), 0) as discovered,
+      coalesce(sum(e.matters_confirmed), 0) as confirmed
+    from activation_event s
+    join activation_event e on e.user_id = s.user_id and e.step = 'confirm_grid_done'
+    where ${cohortFilter(options)}
+      and e.matters_discovered is not null and e.matters_confirmed is not null
+    group by 1
+    order by 1`);
+  return rows.map((row) => {
+    const discovered = Number(row.discovered);
+    const confirmed = Number(row.confirmed);
+    return {
+      week: row.week,
+      users: Number(row.users),
+      discovered,
+      confirmed,
+      ratio: discovered === 0 ? 0 : confirmed / discovered,
+    };
+  });
+}
+
+/** The reads for the admin Growth page. */
 export async function activationFunnel(
   db: Queryable,
   options: FunnelOptions = {},
@@ -120,6 +169,7 @@ export async function activationFunnel(
   return {
     cohorts: await funnelByCohort(db, options),
     timeToFirstCourtDay: await timeToFirstCourtDay(db, options),
+    discoveredVsConfirmed: await discoveredVsConfirmed(db, options),
   };
 }
 

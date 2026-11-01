@@ -128,6 +128,9 @@ describe('Data Ops console', () => {
       expect(page).toContain('50.0% / 33.3%');
       expect(page).toContain('90.0% / 90.0%');
       expect(page).toContain('Top failing sources');
+      // Captcha cost per court per day (#1078): the seeded captcha-tier row costs $0.25.
+      expect(page).toContain('Captcha solving cost per court per day');
+      expect(page).toContain('<td>$0.2500</td>');
       const rows = await dataOpsOverview(state.staff as never, active);
       expect(rows[0]?.week.fetches).toBe(3);
       expect(rows[0]?.day.costDollars).toBeCloseTo(0.5);

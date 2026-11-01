@@ -78,6 +78,11 @@ export function forumId(ws: DemoWorkspaceSpec, key: DemoForumKey): string {
   return demoId(ID_KIND.forum, FORUMS[key].n, ws.index);
 }
 
+/** The forum's catalogue code, which the demo notices name in `notice.forum_codes`. */
+export function forumCode(key: DemoForumKey): string {
+  return FORUMS[key].code;
+}
+
 /** The forum's court name, for the matters of the demo. */
 export function forumCourt(key: DemoForumKey): string {
   return FORUMS[key].court;

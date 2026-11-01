@@ -24,6 +24,8 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
+  pgView,
   text,
   timestamp,
   unique,
@@ -31,7 +33,14 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-import { id, provenance, provenanceCheck, timestamps } from '../columns.ts';
+import {
+  confirmationState,
+  id,
+  provenance,
+  provenanceCheck,
+  sourceType,
+  timestamps,
+} from '../columns.ts';
 import { tenantTable } from '../schema-helpers/tenant-table.ts';
 
 import { inList, member, organization } from './auth.ts';
@@ -254,6 +263,8 @@ export const obligation = tenantTable(
     proceedingId: uuid('proceeding_id'),
     source: obligationSource('source').notNull(),
     description: text('description').notNull(),
+    /** A strategy-bearing description: owner/advocate set it, clerks never read it (`obligation_clerk_v`). */
+    strategy: boolean('strategy').notNull().default(false),
     dueDate: date('due_date'),
     basis: text('basis'),
     /** Null once the owner's membership is gone (account deletion). */
@@ -320,6 +331,38 @@ export const obligation = tenantTable(
     ),
   ],
 );
+
+/**
+ * The clerk column-scoped view (R16 of #67, migration 20261031..._obligation_strategy): every column
+ * of `obligation`, with `description` NULL on strategy rows. The clerk role has no privilege on the
+ * table, so a clerk reads obligations only here. Created by hand in the migration (`.existing()`).
+ */
+export const obligationClerkView = pgView('obligation_clerk_v', {
+  id: id(),
+  workspaceId: uuid('workspace_id').notNull(),
+  matterId: uuid('matter_id').notNull(),
+  proceedingId: uuid('proceeding_id'),
+  source: obligationSource('source').notNull(),
+  description: text('description'),
+  strategy: boolean('strategy').notNull(),
+  dueDate: date('due_date'),
+  basis: text('basis'),
+  ownerMemberId: uuid('owner_member_id'),
+  status: obligationStatus('status').notNull(),
+  closedReasonType: text('closed_reason_type').$type<ObligationClosedReasonType>(),
+  closedBy: uuid('closed_by'),
+  closedAt: timestamp('closed_at', { withTimezone: true }),
+  closedNote: text('closed_note'),
+  sourceOrderId: uuid('source_order_id'),
+  sourceType: sourceType('source_type').notNull(),
+  sourceRef: text('source_ref'),
+  anchorId: uuid('anchor_id'),
+  confidence: numeric('confidence', { precision: 4, scale: 3 }),
+  confirmationState: confirmationState('confirmation_state').notNull(),
+  capturedAt: timestamp('captured_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+}).existing();
 
 export const TASK_STATUSES = ['open', 'done', 'cancelled'] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];

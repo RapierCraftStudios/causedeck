@@ -1018,14 +1018,25 @@ const CASES: Record<string, Case> = {
       holidayOn: '2026-12-26',
       name: 'XT listed holiday',
     });
+    // A vacation range the notice states (#650): B sees it, A does not.
+    await f.tx.insert(schema.noticeVacation).values({
+      noticeId: noticeRow?.id ?? '',
+      fromOn: '2026-12-28',
+      toOn: '2027-01-02',
+      name: 'XT winter vacation',
+    });
     const range = { forumCode, from: '2026-12-01', to: '2026-12-31' };
     const own = await core.loadCourtCalendar(f.tx, f.b.id, range);
+    expect(own.vacations).toEqual([
+      { from: '2026-12-28', to: '2027-01-02', name: 'XT winter vacation' },
+    ]);
     expect([...own.holidays]).toEqual([
       ['2026-12-25', 'XT calendar holiday'],
       ['2026-12-26', 'XT listed holiday'],
     ]);
     const other = await core.loadCourtCalendar(f.tx, f.a.id, range);
     expect([...other.holidays]).toEqual([]);
+    expect(other.vacations).toEqual([]);
   },
   pollOrders: async (f) => {
     // A watch that is not A's own (here B's) yields nothing in A: no fetch, no capture.

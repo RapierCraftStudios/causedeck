@@ -1,8 +1,22 @@
 // Help journeys (#94): the `?` shortcut sheet, article search (English, tag filter, empty state),
 // contextual tips, coachmark dismissal, the Contact tab and its states. CI only; `@a11y` runs axe
 // with zero serious violations. Fictional data only.
+import type { Page } from '@playwright/test';
+
 import { expect, test } from '../../fixtures/index.ts';
 import { contentReady } from '../shell/helpers.ts';
+
+/**
+ * Open the `?` sheet. The shell binds the key after hydration and loads the sheet as its own chunk,
+ * so a press that lands first is lost: press again until the dialog shows (`?` toggles, so only
+ * press while it is closed).
+ */
+async function openHelpSheet(page: Page): Promise<void> {
+  await expect(async () => {
+    if ((await page.getByRole('dialog').count()) === 0) await page.keyboard.press('?');
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 20_000 });
+}
 
 test.describe('help', () => {
   test(
@@ -11,8 +25,7 @@ test.describe('help', () => {
     async ({ page, asUser }) => {
       await asUser('owner', { path: 'today' });
       await contentReady(page);
-      await page.keyboard.press('?');
-      await expect(page.getByRole('dialog')).toBeVisible();
+      await openHelpSheet(page);
       // Left open, so the automatic axe run after the test covers the sheet (1280 light and dark
       // in the full matrix; both schemes are also checked explicitly below).
       await page.getByRole('tab', { name: /shortcuts/i }).click();
@@ -23,8 +36,7 @@ test.describe('help', () => {
   test('Escape closes the sheet', async ({ page, asUser }) => {
     await asUser('owner', { path: 'today' });
     await contentReady(page);
-    await page.keyboard.press('?');
-    await expect(page.getByRole('dialog')).toBeVisible();
+    await openHelpSheet(page);
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
   });
@@ -38,9 +50,8 @@ test.describe('help', () => {
           await page.emulateMedia({ colorScheme: scheme });
           await asUser('owner', { path: 'today' });
           await contentReady(page);
-          await page.keyboard.press('?');
+          await openHelpSheet(page);
           const sheet = page.getByRole('dialog');
-          await expect(sheet).toBeVisible();
           await page.getByRole('tab', { name: new RegExp(tab, 'i') }).click();
           if (tab === 'shortcuts') {
             await expect(sheet.getByRole('table')).toHaveAccessibleName(/.+/);
@@ -85,9 +96,8 @@ test.describe('help', () => {
     test('replaces the key table with the gestures list', async ({ page, asUser }) => {
       await asUser('owner', { path: 'today' });
       await contentReady(page);
-      await page.keyboard.press('?');
+      await openHelpSheet(page);
       const sheet = page.getByRole('dialog');
-      await expect(sheet).toBeVisible();
       await page.getByRole('tab', { name: /shortcuts/i }).click();
       await expect(sheet.getByRole('heading', { name: 'Gestures' })).toBeVisible();
       await expect(sheet.getByRole('listitem')).toHaveCount(4);
@@ -102,7 +112,7 @@ test.describe('help', () => {
         await page.emulateMedia({ colorScheme: 'dark' });
         await asUser('owner', { path: 'today' });
         await contentReady(page);
-        await page.keyboard.press('?');
+        await openHelpSheet(page);
         await page.getByRole('tab', { name: /shortcuts/i }).click();
         await expect(page.getByRole('heading', { name: 'Gestures' })).toBeVisible();
       },
@@ -147,7 +157,7 @@ test.describe('help', () => {
   test('the Contact tab shows a way to reach support', async ({ page, asUser }) => {
     await asUser('owner', { path: 'today' });
     await contentReady(page);
-    await page.keyboard.press('?');
+    await openHelpSheet(page);
     await page.getByRole('tab', { name: /contact/i }).click();
     await expect(page.getByRole('link', { name: /whatsapp|support@/i })).toBeVisible();
   });

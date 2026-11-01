@@ -113,6 +113,24 @@ export const FLAGS = {
     false,
     [81, 901],
   ),
+  'adapters.workbench-fetch': flag(
+    'adapters.workbench-fetch',
+    'Governed one-off fetch of a registered source URL into the fixture workbench (mock provider until the AlterLab key is set).',
+    false,
+    [598],
+  ),
+  'growth.onboarding-nudge': flag(
+    'growth.onboarding-nudge',
+    'Onboarding nudges for unfinished setup steps, in the app and on WhatsApp (opt-in).',
+    false,
+    [601],
+  ),
+  'growth.free-alerts': flag(
+    'growth.free-alerts',
+    "Free court-day alerts tier: discovered cases are watched automatically and each free workspace's fetch spend is capped (mock providers until the sources are cleared).",
+    false,
+    [506],
+  ),
   'workspace.export': flag(
     'workspace.export',
     'Workspace data export (ZIP) from settings.',
@@ -142,6 +160,12 @@ export const FLAGS = {
     'Advocate-authored expiring client status links (counsel wording and Rule 36 review required).',
     true,
     [88, 117],
+  ),
+  'captcha.bulk': flag(
+    'captcha.bulk',
+    'Bulk captcha solving for court coverage and the API, per source (counsel approval reference on the registry row required).',
+    true,
+    [492, 118],
   ),
 } as const;
 

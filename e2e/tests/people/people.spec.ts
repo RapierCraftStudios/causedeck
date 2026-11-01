@@ -4,6 +4,7 @@
 // tests.
 import { MATTERS_WORKSPACE } from '../../fixtures/matters-data.ts';
 import { expect, test } from '../../fixtures/index.ts';
+import { streamSettled } from '../shell/helpers.ts';
 
 import {
   CONTACTS,
@@ -98,6 +99,7 @@ test.describe('people contacts', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(CONTACTS.linked.name);
     await expect(page.locator('[data-linked-matters="list"] a')).toHaveCount(1);
     await page.goto(url(peoplePath(CONTACTS.unlinked.id)));
+    await streamSettled(page);
     await expect(page.locator('[data-linked-matters="empty"]')).toBeVisible();
   });
 

@@ -60,3 +60,6 @@ ef57d9a422daa9e3f9942b18a6d63253a492b344:packages/core/src/status/status.test.ts
 f894bc0fa59be794a15ac28456a26fa0f469c144:.forge-lean/contract.json:generic-api-key:155
 # Test fixture key in the automation handler validation test (not a credential).
 f0d4e871d81af87606a5badef683c627b57338ab:packages/core/src/automation/__tests__/handlers.test.ts:generic-api-key:293
+# Fictional invite token in the paste/join-with-invite tests (#1074, base64 of a placeholder string; not a credential).
+3b3f4f9c1277d583cad5e1e4cd90935d9a591eb0:apps/web/__tests__/invite-input.test.ts:generic-api-key:7
+3b3f4f9c1277d583cad5e1e4cd90935d9a591eb0:apps/web/components/shell/__tests__/workspace-switcher.test.tsx:generic-api-key:144

@@ -15,6 +15,7 @@
     "lhci:courts": "node support/lighthouse-courts.mjs",
     "lhci:calendar": "node support/lighthouse-courts.mjs lighthouserc.calendar.json",
     "lhci:court-day": "node support/lighthouse-courts.mjs lighthouserc.court-day.json /w/chennai-solo/today",
+    "lhci:inbox": "node support/lighthouse-courts.mjs lighthouserc.inbox.json /w/chennai-solo/inbox",
     "lhci:matters": "node --experimental-strip-types --no-warnings support/lighthouse-matters.mjs",
     "perf:test": "vitest run",
     "perf:seed": "node --experimental-strip-types --no-warnings perf/seed-scale.ts",

@@ -39,8 +39,16 @@ const billing = vi.hoisted(() => ({
   cancelSubscriptionAtPeriodEnd: vi.fn(() => Promise.resolve({ subscription: {}, charge: null })),
   resumeSubscription: vi.fn(() => Promise.resolve({ subscription: {}, charge: null })),
   setSubscriptionGstin: vi.fn(),
+  startSubscriptionCheckout: vi.fn(),
+  updateSubscriptionPaymentMethod: vi.fn(),
 }));
 const billingServiceFor = vi.hoisted(() => vi.fn());
+const completeMandate = vi.hoisted(() => vi.fn());
+const billingFlowFor = vi.hoisted(() =>
+  vi.fn(() =>
+    Promise.resolve({ service: { fake: 'service' }, providerName: 'mock', completeMandate }),
+  ),
+);
 const withWorkspace = vi.hoisted(() =>
   vi.fn((_db: unknown, _scope: unknown, fn: (tx: unknown) => Promise<unknown>) => fn(TX)),
 );
@@ -52,7 +60,7 @@ vi.mock('../lib/auth.ts', () => ({
       ? Promise.resolve(state.session)
       : Promise.reject(Object.assign(new Error('signed out'), { code: 'UNAUTHENTICATED' })),
 }));
-vi.mock('../lib/billing-provider.ts', () => ({ billingServiceFor }));
+vi.mock('../lib/billing-provider.ts', () => ({ billingServiceFor, billingFlowFor }));
 vi.mock('../src/health.ts', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
@@ -82,6 +90,9 @@ const calls = {
   cancelAtPeriodEnd: () => actions.cancelAtPeriodEnd({ workspaceId: WS, slug: SLUG }),
   resumeSubscription: () => actions.resumeSubscription({ workspaceId: WS, slug: SLUG }),
   saveGstin: () => actions.saveGstin({ workspaceId: WS, slug: SLUG, gstin: GSTIN }),
+  startCheckout: () =>
+    actions.startCheckout({ workspaceId: WS, slug: SLUG, planId: 'advocate-monthly-1', seats: 1 }),
+  updatePaymentMethod: () => actions.updatePaymentMethod({ workspaceId: WS, slug: SLUG }),
 };
 
 beforeEach(() => {
@@ -240,5 +251,69 @@ describe('saveGstin', () => {
     const result = await actions.saveGstin({ workspaceId: WS, slug: SLUG, gstin });
     expect(result).toEqual({ ok: true, data: { error } });
     expect(revalidatePath).not.toHaveBeenCalled();
+  });
+});
+
+describe('startCheckout and updatePaymentMethod (#1072)', () => {
+  it('starts the checkout on the workspace transaction with the owner as billing contact', async () => {
+    billing.startSubscriptionCheckout.mockResolvedValue({ mandateUrl: null, activated: true });
+    expect(await calls.startCheckout()).toEqual({ ok: true, data: { mandateUrl: null } });
+    expect(billing.startSubscriptionCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tx: TX,
+        workspaceId: WS,
+        actorUserId: USER,
+        billingEmail: 'm@x.test',
+        providerName: 'mock',
+        completeMandate,
+      }),
+      { planId: 'advocate-monthly-1', seats: 1, clerkSeats: 0 },
+    );
+    expect(revalidatePath).toHaveBeenCalledWith(`/w/${SLUG}/billing`);
+  });
+
+  it('returns the hosted mandate link for a provider that does not complete it', async () => {
+    billing.startSubscriptionCheckout.mockResolvedValue({
+      mandateUrl: 'https://rzp.io/i/x',
+      activated: false,
+    });
+    expect(await calls.startCheckout()).toEqual({
+      ok: true,
+      data: { mandateUrl: 'https://rzp.io/i/x' },
+    });
+  });
+
+  it('updates the payment method on the workspace transaction', async () => {
+    billing.updateSubscriptionPaymentMethod.mockResolvedValue({
+      mandateUrl: null,
+      completed: true,
+    });
+    expect(await calls.updatePaymentMethod()).toEqual({ ok: true, data: { mandateUrl: null } });
+    expect(billing.updateSubscriptionPaymentMethod).toHaveBeenCalledWith(
+      expect.objectContaining({ tx: TX, workspaceId: WS, actorUserId: USER, completeMandate }),
+    );
+  });
+
+  it('answers a demo workspace (FORBIDDEN from the guard) with the demo error as data', async () => {
+    billing.startSubscriptionCheckout.mockRejectedValueOnce(
+      new NamedError('WorkspaceError', { code: 'FORBIDDEN' }),
+    );
+    expect(await calls.startCheckout()).toEqual({ ok: true, data: { error: 'demo' } });
+    billing.updateSubscriptionPaymentMethod.mockRejectedValueOnce(
+      new NamedError('WorkspaceError', { code: 'FORBIDDEN' }),
+    );
+    expect(await calls.updatePaymentMethod()).toEqual({ ok: true, data: { error: 'demo' } });
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it('maps an existing subscription and an unsupported provider to typed errors', async () => {
+    billing.startSubscriptionCheckout.mockRejectedValueOnce(
+      new NamedError('WorkspaceError', { code: 'VALIDATION' }),
+    );
+    expect(await calls.startCheckout()).toEqual({ ok: true, data: { error: 'invalid' } });
+    billing.updateSubscriptionPaymentMethod.mockRejectedValueOnce(
+      new NamedError('BillingProviderError', { code: 'unsupported' }),
+    );
+    expect(await calls.updatePaymentMethod()).toEqual({ ok: true, data: { error: 'unsupported' } });
   });
 });

@@ -6,10 +6,16 @@ import { SourceCompare, StageBadge, type Resolution } from '@causedeck/ui/patter
 import type { OutcomeProposal } from '@causedeck/validators/hearing-outcome';
 import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { PreparednessTap } from '../../../../_pov/preparedness-tap.tsx';
 import { useOfflineEdits } from '../../../../../../../../lib/offline/use-outbox.ts';
+import {
+  browserOutcomeConfirmStores,
+  flushOutcomeConfirms,
+  queueOutcomeConfirm,
+  resetOutcomeConfirmStores,
+} from '../../../../../../../../lib/pwa/outbox/outcome-confirms.ts';
 import { confirmOutcomeAction, recordManualOutcomeAction } from '../actions.ts';
 
 import { ConfirmBar } from './confirm-bar.tsx';
@@ -34,7 +40,30 @@ interface OutcomeFormProps {
   askPreparedness: boolean;
 }
 
-const queueKey = (hearingId: string) => `outcome-queue:${hearingId}`;
+/** The plaintext key older builds used; its content is moved into the sealed queue, then removed. */
+const legacyQueueKey = (hearingId: string) => `outcome-queue:${hearingId}`;
+
+/** Moves a decision an older build left in localStorage into the sealed queue and wipes it. */
+async function adoptLegacyQueue(workspaceId: string, hearingId: string): Promise<void> {
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(legacyQueueKey(hearingId));
+  } catch {
+    return;
+  }
+  if (stored === null) return;
+  try {
+    const { store, keys } = await browserOutcomeConfirmStores();
+    await queueOutcomeConfirm(store, keys, {
+      workspaceId,
+      hearingId,
+      payload: JSON.parse(stored) as unknown,
+    });
+  } catch {
+    // Unreadable or unsealable: it must not stay in plaintext either.
+  }
+  localStorage.removeItem(legacyQueueKey(hearingId));
+}
 
 /**
  * The confirmation screen (#62). Nothing is pre-decided: the next date, a conflict and each
@@ -101,7 +130,30 @@ export function OutcomeForm({
     if (blocked !== null || readOnly || pending) return;
     const payload = toConfirmation(proposal, draft);
     if (!navigator.onLine) {
-      localStorage.setItem(queueKey(proposal.hearingId), JSON.stringify(payload));
+      const queue = async () => {
+        const { store, keys } = await browserOutcomeConfirmStores();
+        await queueOutcomeConfirm(store, keys, {
+          workspaceId,
+          hearingId: proposal.hearingId,
+          payload,
+        });
+      };
+      try {
+        try {
+          await queue();
+        } catch {
+          // A stale connection or a chunk that failed to load: open fresh stores and try once more.
+          resetOutcomeConfirmStores();
+          await queue();
+        }
+      } catch (error) {
+        // Nothing is stored in plaintext as a fallback. Say plainly that it was NOT queued (the
+        // generic "try again" reads as if it went to the server), and leave the cause in the console.
+        console.error('[outcome-confirm] could not queue the confirm on this device', error);
+        setFailure(t('offline.queueFailed'));
+        setStatus(t('offline.queueFailed'));
+        return;
+      }
       if (resolution.kind === 'value') {
         await enqueue({
           kind: 'next_date',
@@ -131,6 +183,7 @@ export function OutcomeForm({
     readOnly,
     pending,
     proposal,
+    workspaceId,
     summary,
     reason,
     stage,
@@ -143,22 +196,41 @@ export function OutcomeForm({
     t,
   ]);
 
+  const flushing = useRef(false);
+
   useEffect(() => {
-    const sync = () => {
-      setOnline(navigator.onLine);
-      if (!navigator.onLine) return;
-      const stored = localStorage.getItem(queueKey(proposal.hearingId));
-      if (stored === null) return;
-      localStorage.removeItem(queueKey(proposal.hearingId));
-      setQueued(false);
-      void send(JSON.parse(stored) as ReturnType<typeof toConfirmation>).then((result) => {
-        if (result.ok) {
+    const flush = async () => {
+      if (flushing.current) return;
+      flushing.current = true;
+      try {
+        await adoptLegacyQueue(workspaceId, proposal.hearingId);
+        const { store, keys } = await browserOutcomeConfirmStores();
+        const result = await flushOutcomeConfirms<ReturnType<typeof toConfirmation>>(
+          store,
+          keys,
+          async ({ payload }) => {
+            const outcome = await send(payload);
+            if (outcome.ok) return { ok: true };
+            return { ok: false, code: outcome.error.code };
+          },
+          { workspaceId, hearingId: proposal.hearingId },
+        );
+        if (result.sent > 0) {
+          setQueued(false);
           setDone(true);
           setStatus(t('done'));
-        } else {
+        } else if (result.conflicts + result.failed > 0) {
           setFailure(t('failed'));
         }
-      });
+      } catch {
+        setFailure(t('failed'));
+      } finally {
+        flushing.current = false;
+      }
+    };
+    const sync = () => {
+      setOnline(navigator.onLine);
+      if (navigator.onLine) void flush();
     };
     sync();
     window.addEventListener('online', sync);
@@ -167,7 +239,7 @@ export function OutcomeForm({
       window.removeEventListener('online', sync);
       window.removeEventListener('offline', sync);
     };
-  }, [proposal.hearingId, send, t]);
+  }, [workspaceId, proposal.hearingId, send, t]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

@@ -2,7 +2,8 @@
 // The unreadable-capture card (#48): the exact recovery copy and three ways out, none of which
 // guesses content. `Retake` opens the capture sheet (camera or upload); `Type the key line` opens
 // an inline textarea that creates a manual (L0) capture linked to the original; `Keep as
-// attachment` marks the capture ready as an unprocessed document.
+// attachment` marks the capture ready as an unprocessed document. A photographed cause list gets
+// `Hand to list import` (#1073): a batch holding the capture, opened in list import.
 import { Button } from '@causedeck/ui/button';
 import { Textarea } from '@causedeck/ui/textarea';
 import { FileQuestion } from 'lucide-react';
@@ -19,6 +20,7 @@ export interface UnreadableCaptureProps {
   error?: string | undefined;
   onRetake: () => void;
   onKeep: () => void;
+  onHandToImport: () => void;
   onKeyLine: (text: string) => void;
 }
 
@@ -30,6 +32,7 @@ export function UnreadableCapture({
   error,
   onRetake,
   onKeep,
+  onHandToImport,
   onKeyLine,
 }: UnreadableCaptureProps) {
   const t = useTranslations('inbox');
@@ -89,8 +92,12 @@ export function UnreadableCapture({
         <p className="text-ink-muted text-xs">{t('readOnly')}</p>
       ) : route === 'cause_list' ? (
         <div className="flex flex-wrap gap-2">
-          {/* The hand-off to list import arrives with #57. */}
-          <Button variant="secondary" disabled title={tc('causeList.soon')}>
+          <Button
+            variant="secondary"
+            disabled={disabled}
+            title={disabledReason}
+            onClick={onHandToImport}
+          >
             {tc('causeList.action')}
           </Button>
           {item.canKeep ? (

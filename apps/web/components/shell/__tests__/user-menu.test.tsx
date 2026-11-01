@@ -46,6 +46,28 @@ function openMenu() {
   return screen.getByRole('menu');
 }
 
+describe('user menu sign out', () => {
+  it('is enabled and signs out through the auth client, then lands on /sign-in', async () => {
+    const signOut = vi.fn(() => Promise.resolve());
+    const assign = vi.fn();
+    vi.doMock('../../../lib/auth-client.ts', () => ({ authClient: { signOut } }));
+    vi.doMock('../../../lib/offline/db.ts', () => ({
+      deleteAllOfflineDbs: () => Promise.resolve(),
+    }));
+    vi.stubGlobal('location', { assign });
+    const menu = openMenu();
+    const item = within(menu).getByRole('menuitem', { name: 'Sign out' });
+    expect(item.hasAttribute('data-disabled')).toBe(false);
+    fireEvent.click(item);
+    await vi.waitFor(() => {
+      expect(assign).toHaveBeenCalledWith('/sign-in');
+    });
+    expect(signOut).toHaveBeenCalledTimes(1);
+    vi.doUnmock('../../../lib/auth-client.ts');
+    vi.doUnmock('../../../lib/offline/db.ts');
+  });
+});
+
 describe('user menu language group (#175)', () => {
   it('lists each language in its own script with the active one checked', () => {
     const menu = openMenu();

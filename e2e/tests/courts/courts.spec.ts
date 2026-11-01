@@ -84,7 +84,7 @@ test.describe('courts index', () => {
     page,
     asUser,
   }) => {
-    await asUser('owner', { workspace: 'bengaluru-chamber', path: courtsPath() });
+    await openCourts(page, asUser, { workspace: 'bengaluru-chamber' });
     const card = page.locator(`[data-forum-card="${DEGRADED_FORUM}"]`);
     await expect(card.locator('[data-forum-status="none"]')).toBeVisible();
     await expect(page.locator('[data-forum-banner]')).toHaveCount(0);

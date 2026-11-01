@@ -115,7 +115,8 @@ test.describe('billing page', () => {
       await expect(banner).toContainText(
         /Access continues until \d{2} \w{3} \d{4} \(3 days left\)/,
       );
-      await expect(banner.getByRole('button', { name: 'Update payment method' })).toBeDisabled();
+      // The owner can restart the UPI Autopay mandate from the banner (#1072).
+      await expect(banner.getByRole('button', { name: 'Update payment method' })).toBeEnabled();
       await expect(page.locator('[data-slot="billing-plan"] [data-status="grace"]')).toHaveText(
         /^Past due: grace until \d{2} \w{3} \d{4}$/,
       );
@@ -137,8 +138,9 @@ test.describe('billing page', () => {
       const upgrades = page.locator('[data-slot="billing-upgrade"]');
       await expect(upgrades).toHaveCount(2);
       await expect(upgrades.first()).toContainText('From ₹499.00');
-      await expect(page.getByRole('button', { name: 'Upgrade to Advocate' })).toBeDisabled();
-      await expect(page.getByRole('button', { name: 'Upgrade to Chamber' })).toBeDisabled();
+      // The owner can start a checkout from either card (#1072).
+      await expect(page.getByRole('button', { name: 'Upgrade to Advocate' })).toBeEnabled();
+      await expect(page.getByRole('button', { name: 'Upgrade to Chamber' })).toBeEnabled();
       await expect(page.locator('[data-slot="billing-payment-method"]')).toHaveCount(0);
     },
   );
@@ -166,7 +168,10 @@ test.describe('billing page', () => {
   });
 
   test('stays readable offline', async ({ page, asUser, db }) => {
+    // The mandate button only shows when the mandate needs attention (failed or pending), so the
+    // grace state is the one where it exists offline too.
     await seedBilling(db.name, 'chennai-solo');
+    await setGrace(db.name, 'chennai-solo', 3);
     await openBilling(page, asUser);
     await page.context().setOffline(true);
     // Two notices: the shell's saved-data banner and the billing page's own "changes unavailable".
@@ -174,6 +179,11 @@ test.describe('billing page', () => {
     await expect(page.getByText(/You are offline\. Billing changes are unavailable/)).toBeVisible();
     await expect(page.locator('[data-slot="billing-plan"]')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Change plan' })).toBeDisabled();
+    await expect(
+      page
+        .locator('[data-slot="billing-banner"]')
+        .getByRole('button', { name: 'Update payment method' }),
+    ).toBeDisabled();
     await page.context().setOffline(false);
   });
 });

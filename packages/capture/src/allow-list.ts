@@ -8,6 +8,7 @@ import {
   findAllowedType,
   isCompatible,
   sniffMime,
+  storedMime,
   type AllowedType,
 } from '@causedeck/storage';
 
@@ -51,6 +52,8 @@ export const DEFAULT_SIZE_CAPS_BYTES: Readonly<Record<string, number>> = Object.
   docx: 25 * MB,
   ics: 1 * MB,
   txt: 5 * MB,
+  eml: 25 * MB,
+  html: 5 * MB,
   png: 20 * MB,
   jpeg: 20 * MB,
   webp: 20 * MB,
@@ -94,7 +97,7 @@ export function resolveAllowedType(filename: string, declaredMime: string): Allo
 export async function assertBytesMatch(type: AllowedType, bytes: Uint8Array): Promise<string> {
   const sniffed = await sniffMime(bytes);
   if (!isCompatible(type, sniffed)) throw new UnsupportedTypeError('content_mismatch');
-  return sniffed;
+  return storedMime(type, sniffed);
 }
 
 export { ALLOWED_TYPES };

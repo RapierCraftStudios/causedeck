@@ -26,6 +26,7 @@ export function StatusLinkList({ list, canRevoke, onRevoke, onRetry }: StatusLin
       <h3 className="font-medium">{t('title')}</h3>
       {list.state === 'loading' ? (
         <div
+          role="status"
           aria-busy="true"
           aria-label={t('loading')}
           className="bg-muted h-10 animate-pulse rounded"

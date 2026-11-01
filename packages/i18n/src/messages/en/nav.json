@@ -25,7 +25,9 @@
       "practice": "Practice",
       "settings": "Settings"
     },
-    "enquiries": "Enquiries"
+    "enquiries": "Enquiries",
+    "import": "Import",
+    "research": "Research"
   },
   "palette": {
     "title": "Command palette",

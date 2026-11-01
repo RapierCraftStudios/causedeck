@@ -45,6 +45,7 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * `incident` and `incident_update` (#769) are the platform incident log behind the public status page: public text only, no workspace data.
  * `learn_progress` (#703) is the per-user practice-school progress (user id, module slug, time); it has no workspace column and is under FORCE RLS on `app.user_id` (`withUser`).
  * `notice_holiday` (#628) holds the dates named by a holiday-list notice; the app role may SELECT and INSERT it.
+ * `notice_vacation` (#650) holds the vacation ranges named by a notice; the app role may SELECT and INSERT it.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -92,6 +93,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'incident',
   'incident_update',
   'notice_holiday',
+  'notice_vacation',
   'review_item',
   'bench_sitting_fact',
   'activation_event',

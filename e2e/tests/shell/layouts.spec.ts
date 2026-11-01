@@ -110,6 +110,8 @@ test.describe('layouts', () => {
       'today',
       'tomorrow',
       'calendar',
+      'briefs',
+      'research',
       'matters',
       'obligations',
       'drafts',

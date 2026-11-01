@@ -19,15 +19,15 @@ export const CLERK_WORKSPACE = 'bengaluru-chamber';
  * tests/product/outward-drafts). `settings` redirects to its profile section since
  * #284 (tests/settings).
  */
-export const PLACEHOLDER_ROUTES = [
+export const PLACEHOLDER_ROUTES: readonly string[] = [
   // `today` and `tomorrow` are the Court-Day Board (#59) and `calendar` is real (#66): their
   // states are covered in tests/product/court-day-board.spec.ts and tests/calendar.
   // `matters` is a real page since #388 (its own states are covered in tests/matters), and so are
   // `obligations` (#68, tests/obligations) and `memory` (#73, tests/memory).
-  'briefs',
+  // `briefs` is the briefs index since the review-ready sweep (tests/product/brief-sheet.spec.ts).
   // `people` is a real page since #848 (its own specs are in tests/people), and `insights` since
   // #85 (its own specs are in tests/product/insights.spec.ts).
-] as const;
+];
 
 export type PlaceholderRoute = (typeof PLACEHOLDER_ROUTES)[number];
 
@@ -51,11 +51,30 @@ export function layoutOf(page: Page): Layout {
 }
 
 /**
+ * Wait until every streamed Suspense boundary of the page has been revealed. A route with a
+ * `loading.tsx` sends its content in a hidden `<div id="S:n">` and React's reveal script moves it
+ * into place, batched up to ~300 ms apart (react-dom 19.3 `$RV`). While that is pending, and
+ * for a moment after hydration client-renders the boundary, the same content exists twice in the
+ * document (one copy under `[hidden]`), so a strict locator on it throws (#1094). The reveal moves
+ * the nodes and removes the segment: an `[id^="S:"]` left in the document means "still streaming".
+ * A boundary that ends in a client-rendered fallback (a denied or not-found page) can leave its
+ * segment behind for good, so the wait is bounded: the strict assertions that follow still decide.
+ */
+export async function streamSettled(page: Page): Promise<void> {
+  await page
+    .waitForFunction(() => document.querySelector('div[hidden][id^="S:"]') === null, null, {
+      timeout: 5_000,
+    })
+    .catch(() => undefined);
+}
+
+/**
  * Wait until the shell has hydrated and its idle chunk (Radix overlays, animated nav indicator)
  * has arrived, so key presses and clicks reach the final components.
  */
 export async function shellReady(page: Page): Promise<void> {
   await page.locator('[data-active-indicator="animated"]').waitFor({ state: 'attached' });
+  await streamSettled(page);
 }
 
 /**
@@ -68,6 +87,7 @@ export async function contentReady(page: Page): Promise<void> {
     const main = document.querySelector('main');
     return main !== null && Object.keys(main).some((key) => key.startsWith('__reactFiber$'));
   });
+  await streamSettled(page);
 }
 
 export interface OpenShellOptions {

@@ -272,7 +272,8 @@ describe('usage page (server)', () => {
       { workspaceId: WORKSPACE.id, userId: 'u-owner' },
       expect.any(Function),
     );
-    expect(getUsage).toHaveBeenCalledTimes(9);
+    // One read per usage key, including `fetch.cost_micros` (#506), which has no meter card.
+    expect(getUsage).toHaveBeenCalledTimes(10);
 
     // Active matters are unlimited here: no bar, the plain value and `No limit on your plan`.
     const bars = screen.getAllByRole('progressbar');

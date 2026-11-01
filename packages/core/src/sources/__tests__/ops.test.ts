@@ -102,6 +102,9 @@ describe('sourceOpsOverview', () => {
       expect(row?.status).toBe('cleared');
       expect(row?.daily).toHaveLength(7);
       expect(row?.daily.at(-1)?.fetches).toBe(4);
+      // Captcha-tier spend per UTC day (#1078): the three captcha rows, $0.10 each.
+      expect(row?.daily.reduce((n, d) => n + d.captchaCostDollars, 0)).toBeCloseTo(0.3);
+      expect(row?.daily.reduce((n, d) => n + d.costDollars, 0)).toBeCloseTo(0.32);
     });
   });
 

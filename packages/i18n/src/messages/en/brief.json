@@ -133,6 +133,19 @@
       "request": "Request access",
       "back": "Back to briefs"
     },
-    "loading": "Loading brief"
+    "loading": "Loading brief",
+    "index": {
+      "title": "Briefs",
+      "description": "Preparation briefs for the listings in the next three court days.",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "dayAfter": "Day after tomorrow",
+      "noListings": "Nothing listed on this day.",
+      "allEmpty": "No listings in the next three court days.",
+      "allEmptyHint": "Briefs are built per listing. Open the calendar to look further ahead.",
+      "openCalendar": "Open the calendar",
+      "itemLabel": "Item {item}",
+      "hallLabel": "Court {hall}"
+    }
   }
 }

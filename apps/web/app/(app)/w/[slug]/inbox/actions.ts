@@ -241,6 +241,59 @@ const keepAttachment = workspaceAction(
   { action: 'document.write' },
 );
 
+const PasteText = WorkspaceScoped.extend({ text: z.string().trim().min(1).max(20_000) }).strict();
+
+export type PasteTextError = 'channelOff' | 'tooLong';
+
+/**
+ * Capture pasted text (#1074): a `manual` capture through the same pipeline as a typed key line,
+ * queued for processing; what it finds lands in the inbox as proposals. Expected refusals come
+ * back as data: the `manual` channel is switched off, or the text is over the size cap.
+ */
+const pasteText = workspaceAction(
+  PasteText,
+  async (
+    { text },
+    ctx,
+  ): Promise<{ captureId: string; error?: undefined } | { error: PasteTextError }> => {
+    const { createManualCapture } = await import('@causedeck/core/capture');
+    try {
+      const created = await createManualCapture(await captureCtx(ctx), { text });
+      revalidatePath('/w/[slug]/inbox', 'page');
+      return { captureId: created.captureId };
+    } catch (error) {
+      const name = error instanceof Error ? error.name : '';
+      if (name === 'ChannelDisabledError') return { error: 'channelOff' };
+      if (name === 'CaptureTooLargeError') return { error: 'tooLong' };
+      throw error;
+    }
+  },
+  { action: 'document.write' },
+);
+
+/**
+ * Hand a photographed cause list to list import (#1073): a new import batch holding the capture,
+ * and the capture leaves the unreadable state (`ready`). The caller opens `/import?batch=<id>`,
+ * which builds the plan. Needs `matter.write` (import) and `document.write` (the capture).
+ */
+const handToListImport = workspaceAction(
+  CaptureTarget,
+  async ({ captureId }, ctx): Promise<{ captureId: string; batchId: string }> => {
+    assertCan(ctx.actor, 'document.write');
+    const [{ startImportFromCapture }, { handCaptureToListImport }] = [
+      await import('@causedeck/core/import'),
+      await import('@causedeck/core/capture'),
+    ];
+    // Both run on the action's transaction: if either refuses, neither takes effect.
+    const { batchId } = await startImportFromCapture({ db: ctx.tx }, actorOf(ctx), { captureId });
+    await handCaptureToListImport(await captureCtx(ctx), captureId);
+    revalidatePath('/w/[slug]/inbox', 'page');
+    revalidatePath('/w/[slug]/import', 'page');
+    return { captureId, batchId };
+  },
+  { action: 'matter.write' },
+);
+
 const typeKeyLine = workspaceAction(
   KeyLine,
   async ({ captureId, text }, ctx) => {
@@ -287,6 +340,18 @@ export async function reassignCaptureAction(
 
 export async function keepAsAttachmentAction(raw: unknown): Promise<Result<CaptureView>> {
   return keepAttachment(raw);
+}
+
+export async function pasteTextCaptureAction(
+  raw: unknown,
+): Promise<Result<{ captureId: string; error?: undefined } | { error: PasteTextError }>> {
+  return pasteText(raw);
+}
+
+export async function handToListImportAction(
+  raw: unknown,
+): Promise<Result<{ captureId: string; batchId: string }>> {
+  return handToListImport(raw);
 }
 
 export async function typeKeyLineAction(

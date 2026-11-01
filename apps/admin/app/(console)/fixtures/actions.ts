@@ -5,6 +5,9 @@
 // build action returns the redacted bundle alone (`@causedeck/adapters/workbench` refuses to build
 // one that still holds a known party name or personal data); the preview returns the parser's
 // output so the labeler can correct it, to the staff member who supplied the document.
+// The document comes from an upload, pasted text or, while `adapters.workbench-fetch` is on, a
+// governed one-off fetch of a registered source URL (#598): audited as step `fetch`, body held in
+// memory only (`fetch_log` stays body-free), mock provider until the AlterLab key is set.
 import {
   buildFixture,
   correctionsFromEdits,
@@ -18,9 +21,12 @@ import {
 } from '@causedeck/adapters/workbench';
 import { record } from '@causedeck/core/audit';
 import { db } from '@causedeck/core/runtime';
+import { SourceNotCleared } from '@causedeck/core/sources';
+import { FetchDenied, FetchError } from '@causedeck/fetch';
 import { z } from 'zod';
 
 import { requireStaff, type StaffMember } from '../../../lib/staff.ts';
+import { workbenchFetcher, workbenchFetchEnabled } from '../../../lib/workbench-fetcher.ts';
 
 export interface FixtureRowView {
   /** The row as the parser printed it, for the labeler's reference. */
@@ -60,17 +66,66 @@ const text = (formData: FormData, key: string): string => {
   return typeof value === 'string' ? value : '';
 };
 
-/** The document: an uploaded file when one was chosen, else the pasted text. */
-async function documentOf(formData: FormData): Promise<string> {
+/**
+ * A one-off governed fetch of `fetchUrl` on the registered source `fetchSourceId`. The body is
+ * returned to the request and nowhere else; a refusal becomes a message, never the body.
+ */
+async function fetchedDocument(
+  staff: StaffMember,
+  adapterId: string,
+  sourceId: string,
+  url: string,
+): Promise<string> {
+  if (!(await workbenchFetchEnabled(db, staff.userId))) {
+    throw new WorkbenchError('Fetching a document is not enabled.');
+  }
+  // Audited before the call, so a fetch that fails still leaves its trace.
+  await audit(staff, 'fetch', adapterId, { sourceId });
+  try {
+    const result = await workbenchFetcher(db).fetchSource(sourceId, url);
+    if (result.status < 200 || result.status >= 300) {
+      throw new WorkbenchError(`The source answered ${String(result.status)}.`);
+    }
+    return result.body;
+  } catch (error) {
+    if (error instanceof SourceNotCleared) {
+      throw new WorkbenchError('That source is not cleared for fetching.');
+    }
+    if (error instanceof FetchDenied) throw new WorkbenchError(`Fetch refused: ${error.reason}.`);
+    if (error instanceof FetchError) throw new WorkbenchError('The fetch failed.');
+    throw error;
+  }
+}
+
+/** The document: an uploaded file, else the pasted text, else a governed fetch. */
+async function documentOf(
+  formData: FormData,
+  staff: StaffMember,
+  adapterId: string,
+): Promise<string> {
   const file = formData.get('file');
-  const content =
+  let content =
     file instanceof File && file.size > 0 ? await file.text() : text(formData, 'document');
+  const fetchUrl = text(formData, 'fetchUrl').trim();
+  if (content.trim() === '' && fetchUrl !== '') {
+    content = await fetchedDocument(
+      staff,
+      adapterId,
+      text(formData, 'fetchSourceId').trim(),
+      fetchUrl,
+    );
+  }
   if (content.trim() === '') throw new WorkbenchError('Add a document to label.');
   if (content.length > MAX_DOCUMENT_CHARS) throw new WorkbenchError('That document is too large.');
   return content;
 }
 
-async function audit(staff: StaffMember, step: 'preview' | 'build', adapterId: string) {
+async function audit(
+  staff: StaffMember,
+  step: 'preview' | 'build' | 'fetch',
+  adapterId: string,
+  extra: { sourceId?: string } = {},
+) {
   await record(
     {
       db,
@@ -87,6 +142,7 @@ async function audit(staff: StaffMember, step: 'preview' | 'build', adapterId: s
         capability: 'adapters',
         step,
         adapterId,
+        ...extra,
         role: staff.role,
       },
     },
@@ -103,7 +159,7 @@ async function load(staff: StaffMember, step: 'preview' | 'build', formData: For
   await audit(staff, step, input.adapterId);
   const adapter = WORKBENCH_ADAPTERS[input.adapterId]?.();
   if (adapter === undefined) throw new WorkbenchError('Unknown adapter');
-  const document = await documentOf(formData);
+  const document = await documentOf(formData, staff, input.adapterId);
   return { input, adapter, document };
 }
 

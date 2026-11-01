@@ -15,7 +15,10 @@ import { createScratchDatabase, testDatabaseUrls } from '../../testing/index.ts'
 import {
   addDays,
   DEMO_HASH_DAY,
+  DEMO_JUDGMENT_COUNT,
+  DEMO_JUDGMENTS,
   DEMO_MATTERS_PER_WORKSPACE,
+  DEMO_SUBJECT_AREAS,
   DEMO_PDF_HEADING,
   DEMO_PDF_WATERMARK,
   DEMO_VERSION,
@@ -130,6 +133,12 @@ const TABLES = [
   'obligation_event',
   'portfolio',
   'portfolio_case',
+  // Corpus alerts, notices and billing (#1070, #1071).
+  'judgment_alert',
+  'notice_match',
+  'subscription',
+  'saas_invoice',
+  'saas_invoice_line',
 ] as const;
 
 /** The owner role writes (like `pnpm db:seed:demo`); the app role reads, so RLS applies. */
@@ -523,6 +532,7 @@ describe('demo seed: every product module (#985)', () => {
     draft_version: 3,
     capture: 6,
     proposal: 3,
+    activity: 4,
     notification: 3,
     matter_issue_tag: 4,
     research_note: 2,
@@ -531,6 +541,12 @@ describe('demo seed: every product module (#985)', () => {
     obligation_event: 6,
     portfolio: 1,
     portfolio_case: 6,
+    // #1070, #1071: the research tab, the notice cards and /billing.
+    judgment_alert: 3,
+    notice_match: 5,
+    subscription: 1,
+    saas_invoice: 2,
+    saas_invoice_line: 2,
   };
 
   it.each(DEMO_WORKSPACE_KEYS)('%s: no module is an empty page', async (key) => {
@@ -626,7 +642,7 @@ describe('demo seed: every product module (#985)', () => {
     }
   });
 
-  it('writes nothing outward: no email, push, webhook, invitation, share, AI or billing row', async () => {
+  it('writes nothing outward: no email, push, webhook, invitation, share or AI row, and a mock-provider subscription', async () => {
     for (const key of DEMO_WORKSPACE_KEYS) {
       const [org] = await rowsIn<{ is_demo: boolean }>(key, 'select is_demo from organization');
       expect(org?.is_demo).toBe(true);
@@ -639,7 +655,6 @@ describe('demo seed: every product module (#985)', () => {
         'outward_share_log',
         'reminder_dispatch',
         'intake_address',
-        'subscription',
         'ai_call',
         'usage_reservation',
         'brief_share',
@@ -648,6 +663,13 @@ describe('demo seed: every product module (#985)', () => {
       ]) {
         expect(await countIn(key, `select 1 from "${table}"`), table).toBe(0);
       }
+      // Billing is on the mock provider with no real customer or payment id.
+      expect(
+        await countIn(
+          key,
+          `select 1 from subscription where provider <> 'mock' or provider_customer_id not like 'cust_demo_%'`,
+        ),
+      ).toBe(0);
       // Outward drafts are only ever drafted or edited, never shared; the notifications are in-app rows.
       expect(await countIn(key, `select 1 from outward_draft where status = 'shared'`)).toBe(0);
       expect(
@@ -730,6 +752,169 @@ describe('demo seed: every product module (#985)', () => {
       expect(demoContentHash(key)).toBe(demoContentHash(key));
     }
   });
+});
+
+describe('demo seed: corpus, news, notices and billing (#1070, #1071)', () => {
+  const key = 'bengaluru-chamber' as const;
+
+  beforeAll(async () => {
+    await seedDemo(db, { today: TODAY });
+  });
+
+  it('seeds a synthetic judgment corpus with at least two judgments per subject area', async () => {
+    expect(DEMO_JUDGMENT_COUNT).toBeGreaterThanOrEqual(12);
+    expect(
+      await countIn(key, `select 1 from judgment where source_id = 'demo.synthetic.corpus'`),
+    ).toBe(DEMO_JUDGMENT_COUNT);
+    const areas = await rowsIn<{ subject_area: string; n: number }>(
+      key,
+      `select subject_area, count(distinct judgment_id)::int as n from judgment_tag group by subject_area`,
+    );
+    for (const area of DEMO_SUBJECT_AREAS) {
+      expect(areas.find((a) => a.subject_area === area)?.n ?? 0, area).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('keeps the corpus synthetic, masked and ready for the research pipeline', async () => {
+    const rows = await rowsIn<{
+      bench: string[];
+      title_masked: boolean;
+      case_title: string;
+      redaction_version: number;
+      segmented_redaction_version: number;
+      segment_version: number;
+      text: string;
+      segments: number;
+      roles: string;
+    }>(
+      key,
+      `select j.bench, j.title_masked, j.case_title, j.redaction_version, j.segmented_redaction_version,
+              j.segment_version, j.redacted_text::text as text,
+              (select count(*)::int from judgment_segment s where s.judgment_id = j.id) as segments,
+              (select string_agg(s.role, ',' order by s.ordinal) from judgment_segment s where s.judgment_id = j.id) as roles
+       from judgment j where j.source_id = 'demo.synthetic.corpus'`,
+    );
+    expect(rows).toHaveLength(DEMO_JUDGMENT_COUNT);
+    for (const r of rows) {
+      expect(r.bench).toEqual([]); // identity ban: no judge names, no ratings
+      expect(r.title_masked).toBe(true);
+      expect(r.case_title).toMatch(/^\[name withheld\] v\. .+\(fictional\)$/);
+      expect(r.redaction_version).toBeGreaterThan(0);
+      expect(r.segmented_redaction_version).toBe(r.redaction_version);
+      expect(r.segment_version).toBeGreaterThan(0);
+      expect(r.text).toContain('SYNTHETIC - DEMO DATA - FICTIONAL');
+      expect(r.segments).toBe(5);
+      expect(r.roles).toBe('header,facts,issues,reasoning,decision');
+      for (const word of REAL_NAME_BLOCKLIST) expect(r.text.toLowerCase()).not.toContain(word);
+    }
+    // Every citation is in the synthetic range and resolves to another corpus row.
+    for (const j of DEMO_JUDGMENTS) expect(j.citation).toMatch(/^\d{4}:(MHC|KHC):9\d{5}$/);
+    expect(
+      await countIn(key, `select 1 from judgment_citation_ref where cited_judgment_id is null`),
+    ).toBe(0);
+    expect(await countIn(key, `select 1 from judgment_statute_ref`)).toBeGreaterThanOrEqual(
+      DEMO_JUDGMENT_COUNT,
+    );
+  });
+
+  it('leaves the segment embeddings to the content step (the mock embedder)', async () => {
+    expect(await countIn(key, `select 1 from judgment_segment where embedding is not null`)).toBe(
+      0,
+    );
+  });
+
+  it.each(DEMO_WORKSPACE_KEYS)(
+    '%s: shows relevant judgments on a matter research tab',
+    async (k) => {
+      const rows = await rowsIn<{ matter_id: string; n: number }>(
+        k,
+        `select a.matter_id, count(*)::int as n
+       from judgment_alert a
+       join matter_issue_tag t on t.workspace_id = a.workspace_id and t.id = a.tag_id
+       join judgment j on j.id = a.judgment_id
+       where t.status = 'confirmed' and j.neutral_citation is not null
+       group by a.matter_id`,
+      );
+      expect(rows.length).toBeGreaterThanOrEqual(1);
+      expect(Math.max(...rows.map((r) => r.n))).toBeGreaterThanOrEqual(2);
+    },
+  );
+
+  it('seeds news items and notices, matched to the demo forums and matters', async () => {
+    expect(
+      await countIn(key, `select 1 from news_item where source_id like 'demo.news.%'`),
+    ).toBeGreaterThanOrEqual(6);
+    expect(
+      await countIn(key, `select 1 from notice where source_id like 'demo.notice.%'`),
+    ).toBeGreaterThanOrEqual(8);
+    // #650: one synthetic vacation notice states a future range, matched to its forum.
+    const vacations = await rowsIn<{ from_on: string; to_on: string; matched: number }>(
+      key,
+      `select v.from_on::text, v.to_on::text,
+              (select count(*)::int from notice_match m where m.notice_id = v.notice_id) as matched
+         from notice_vacation v join notice n on n.id = v.notice_id
+        where n.source_id like 'demo.notice.%'`,
+    );
+    expect(vacations).toHaveLength(1);
+    const [vacation] = vacations;
+    expect((vacation?.from_on ?? '') <= (vacation?.to_on ?? '')).toBe(true);
+    expect(vacation?.matched).toBeGreaterThanOrEqual(1);
+    for (const k of DEMO_WORKSPACE_KEYS) {
+      expect(
+        await countIn(k, `select 1 from notice_match where matter_id is null`),
+      ).toBeGreaterThanOrEqual(3);
+      expect(
+        await countIn(k, `select 1 from notice_match where matter_id is not null`),
+      ).toBeGreaterThanOrEqual(2);
+      expect(
+        await countIn(
+          k,
+          `select 1 from news_item where title not like 'SYNTHETIC:%' and source_id like 'demo.news.%'`,
+        ),
+      ).toBe(0);
+    }
+    // The demo sources are never polled.
+    expect(
+      await countIn(
+        key,
+        `select 1 from source where id like 'demo.%' and (kill_switch = false or cleared_at is not null)`,
+      ),
+    ).toBe(0);
+  });
+
+  it.each(DEMO_WORKSPACE_KEYS)(
+    '%s: has an active mock subscription with paid invoices',
+    async (k) => {
+      const [sub] = await rowsIn<{
+        plan_id: string;
+        status: string;
+        seats: number;
+        end_after_start: boolean;
+      }>(
+        k,
+        `select plan_id, status, seats, current_period_end > current_period_start as end_after_start from subscription`,
+      );
+      expect(sub).toMatchObject({ status: 'active', end_after_start: true });
+      const invoices = await rowsIn<{ status: string; number: string; total: string; sum: string }>(
+        k,
+        `select i.status, i.number, i.total_paise::text as total,
+              (i.taxable_paise + i.cgst_paise + i.sgst_paise + i.igst_paise)::text as sum
+       from saas_invoice i order by i.number`,
+      );
+      expect(invoices.length).toBeGreaterThanOrEqual(2);
+      for (const inv of invoices) {
+        expect(inv.status).toBe('paid');
+        expect(inv.number).toMatch(/^DEM\/\d{2}-\d{2}\/\d{6}$/);
+        expect(inv.total).toBe(inv.sum);
+      }
+      expect(
+        await countIn(
+          k,
+          `select 1 from saas_invoice i where i.taxable_paise <> (select sum(amount_paise) from saas_invoice_line l where l.invoice_id = i.id)`,
+        ),
+      ).toBe(0);
+    },
+  );
 });
 
 describe('demo reset', () => {

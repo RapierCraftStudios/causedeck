@@ -49,6 +49,8 @@ export interface SourceOpsDay {
   fetches: number;
   errors: number;
   costDollars: number;
+  /** The part of `costDollars` spent on captcha-tier calls (paid solves, #1078). */
+  captchaCostDollars: number;
 }
 
 export interface SourceOpsRow {
@@ -277,7 +279,10 @@ export async function sourceOpsOverview(
     const day = emptyWindow();
     const week = emptyWindow();
     const daily = new Map<string, SourceOpsDay>(
-      days.map((d) => [d, { day: d, fetches: 0, errors: 0, costDollars: 0 }]),
+      days.map((d) => [
+        d,
+        { day: d, fetches: 0, errors: 0, costDollars: 0, captchaCostDollars: 0 },
+      ]),
     );
     const captchaOk = { day: 0, week: 0 };
     for (const b of buckets.filter((x) => x.sourceId === s.id)) {
@@ -303,6 +308,7 @@ export async function sourceOpsOverview(
         point.fetches += b.fetches;
         point.errors += b.errors;
         point.costDollars += cost;
+        if (b.tier === 'captcha') point.captchaCostDollars += cost;
       }
     }
     for (const [w, ok, rows] of [

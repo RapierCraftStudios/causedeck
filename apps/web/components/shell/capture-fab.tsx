@@ -65,10 +65,13 @@ const ACTIONS: readonly CaptureAction[] = [
   { id: 'paste', icon: ClipboardPaste },
 ];
 
+/** The `?capture=` value each action opens. */
+const TARGET = { voice: 'voice', file: 'camera', paste: 'paste' } as const;
+
 /**
  * The bottom nav's centre slot: a 52 px accent circle raised 16 px above the bar, labelled
  * `Capture`. The circle ends at 36 px and the 12 px label sits at 42-54 px of the 56 px slot, so
- * the two never overlap. It opens a bottom sheet with the three capture actions.
+ * the two never overlap. It opens a bottom sheet with the capture actions: voice note, photo or file, paste text.
  */
 export function CaptureFab() {
   const t = useTranslations('shell');
@@ -122,27 +125,23 @@ export function CaptureFab() {
       <SheetContent side="bottom" data-capture-sheet="" labels={{ close: t('sheet.close') }}>
         <SheetHeader>
           <SheetTitle>{t('capture.title')}</SheetTitle>
-          <SheetDescription>{t('capture.soon')}</SheetDescription>
+          <SheetDescription>{t('capture.hint')}</SheetDescription>
         </SheetHeader>
         <ul className="flex flex-col gap-1">
           {ACTIONS.map(({ id, icon: Icon }) => (
             <li key={id}>
-              {/* TODO(capture): file and paste capture arrive with the Capture milestone. */}
               <button
                 type="button"
-                disabled={id !== 'voice'}
                 data-capture-action={id}
-                onClick={
-                  id === 'voice'
-                    ? () => {
-                        setOpen(false);
-                        // Same address as voiceHref(); inlined so the shell does not pull the command registry in.
-                        const params = new URLSearchParams(window.location.search);
-                        params.set('capture', 'voice');
-                        router.push(`${pathname}?${params.toString()}`);
-                      }
-                    : undefined
-                }
+                onClick={() => {
+                  setOpen(false);
+                  // Same addresses as voiceHref() and the camera command; inlined so the shell does
+                  // not pull the command registry in. `file` opens the camera sheet, which also
+                  // takes photos and files from the gallery; `paste` opens the paste-text sheet.
+                  const params = new URLSearchParams(window.location.search);
+                  params.set('capture', TARGET[id]);
+                  router.push(`${pathname}?${params.toString()}`);
+                }}
                 className="text-ink flex min-h-11 w-full items-center gap-3 rounded-md px-2 text-left text-sm font-medium disabled:opacity-60"
               >
                 <Icon aria-hidden="true" className="size-[18px] shrink-0" strokeWidth={1.5} />

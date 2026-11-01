@@ -86,6 +86,12 @@ export interface MockBillingProvider extends BillingProvider {
   adoptSubscription(input: AdoptSubscriptionInput): Promise<BillingSubscription>;
   /** The customer completes the UPI Autopay authorisation: first charge, subscription active. */
   authorizeMandate(subscriptionId: string): Promise<RazorpayWebhookEvent>;
+  /**
+   * The payer finishes the mandate restarted by `updatePaymentMethod`: the mandate is active, a
+   * `created` subscription is activated and a `pending` or `halted` one is charged (the `subscription.charged` webhook body). `null`
+   * when no charge was due.
+   */
+  confirmPaymentMethod(subscriptionId: string): Promise<RazorpayWebhookEvent | null>;
   /** Force a mandate state (for example `failed` or `cancelled` from the payer's UPI app). */
   setMandateState(subscriptionId: string, state: MandateState): Promise<BillingSubscription>;
   /** Raise a provider event, apply it and return the webhook body Razorpay would send. */
@@ -488,6 +494,42 @@ export function createMockBillingProvider(
           url: rec.entity.short_url ?? `${MOCK_MANDATE_BASE_URL}${subscriptionId}`,
           status: rec.mandate,
         };
+      });
+    },
+
+    updatePaymentMethod(subscriptionId): Promise<MandateLink> {
+      return attempt(() => {
+        const rec = record(subscriptionId);
+        assertStatus(
+          rec,
+          ['created', 'authenticated', 'active', 'pending', 'halted', 'paused'],
+          'update the payment method of',
+        );
+        rec.mandate = 'created';
+        return {
+          subscriptionId,
+          url: rec.entity.short_url ?? `${MOCK_MANDATE_BASE_URL}${subscriptionId}`,
+          status: rec.mandate,
+        };
+      });
+    },
+
+    confirmPaymentMethod(subscriptionId) {
+      return attempt(() => {
+        const rec = record(subscriptionId);
+        if (rec.entity.status === 'created') {
+          // First authorisation of a checkout that was not completed yet.
+          rec.entity.auth_attempts += 1;
+          rec.mandate = 'active';
+          rec.entity.status = 'active';
+          startPeriod(rec, rec.entity.start_at ?? seconds());
+          return emit(rec, 'subscription.activated');
+        }
+        rec.mandate = 'active';
+        if (rec.entity.status !== 'pending' && rec.entity.status !== 'halted') return null;
+        rec.entity.status = 'active';
+        startPeriod(rec, rec.entity.current_end ?? seconds());
+        return emit(rec, 'subscription.charged', payment(rec, 'captured'));
       });
     },
 

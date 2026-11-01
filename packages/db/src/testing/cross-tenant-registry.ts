@@ -759,6 +759,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   archiveContact: denies,
   // document preview (#393): A's document from B, or ub claiming A, is NOT_FOUND
   getDocumentPreview: documentPreviewDenies,
+  // document page image (#489): A's page image from B, or ub claiming A, is NOT_FOUND
+  getDocumentPageImage: documentPreviewDenies,
   // business dashboard (#519): a non-staff user is refused by app_staff_business_snapshot
   staffBusinessSnapshot: denies,
   // support sessions (#308): ub (owner of B, not staff) on A's session and workspace
@@ -1317,6 +1319,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // workspace_id, no RLS), whose rows carry no contributor; the ledger linking them is tenant data
   findContributed:
     'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): public text only, no contributor field; the tenant link is `contribution_ledger`',
+  // corpus read path over contributed order copies (#594): the same global table and result as `findContributed`
+  findContributedOrders:
+    'global table `contributed_document` (GLOBAL_TABLES, no workspace_id, no RLS): public order text only, no contributor field; the tenant link is `contribution_ledger`',
+  // contributed cause-list copy parser for the list watcher (#594): text in, rows out, no database
+  createKhcTextListParser: 'pure',
   CONTRIBUTABLE_DOCUMENT_KINDS: 'constant',
   isContributableKind: 'pure',
   ContributionRefused: 'error class',
@@ -1524,6 +1531,21 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'system job body: no workspace; reads watches only through the owner-defined app_cause_list_watch_targets and writes proposals under each watching workspace scope; covered by list-watch.test.ts',
   CAUSELIST_POLL_CRON: 'constant',
   causelistPoll: 'job definition (handler is runCauselistPoll)',
+  // bulk captcha tick (#1078): system job over the global `source` and `fetch_log` tables, no workspace
+  captchaBulkTick: 'job definition (handler is runCaptchaBulkTick)',
+  runCaptchaBulkTick:
+    'system job body: reads the global tables `source` and `feature_flag` rows (GLOBAL_TABLES, no workspace_id, no RLS) and drives the in-memory bulk scheduler; no tenant data',
+  listBulkFeed:
+    'global table `source` (GLOBAL_TABLES, no workspace_id, no RLS): the cleared sources and their base URLs, never tenant data',
+  captchaBulkFlagOn:
+    'global `feature_flag` rows (GLOBAL_TABLES, no workspace_id, no RLS): the platform-wide flag, no workspace scope',
+  buildCaptchaBulkTicker:
+    'composition of the governed fetcher, the solver chain and the scheduler; writes only the global content-free `fetch_log`',
+  setCaptchaBulkWiring:
+    'wiring setter for the governed fetcher and solver ports: no database access',
+  CAPTCHA_BULK_FLAG: 'constant',
+  CAPTCHA_BULK_TICK_CRON: 'constant',
+  DEFAULT_CAPTCHA_DAILY_CAP_DOLLARS: 'constant',
   runCauselistPoll: 'system job body: see pollCauseList',
   // court day: display-board tracking and the call-time estimate (#493)
   COURT_LIVE_TRACKING_FLAG: 'constant',
@@ -1630,6 +1652,7 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   // deadlines (#494, D-048): court calendars and calendar-aware due dates
   closedReason: 'pure',
   computeDueDate: 'pure',
+  mergeVacations: 'pure',
   DEFAULT_WEEKLY_OFFS: 'constant',
   FORUM_VACATIONS: 'constant',
   deadlineForDirection: 'reads only the calendar of the given workspace (loadCourtCalendar)',
@@ -1726,6 +1749,12 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   activityDigestMember: 'job definition (handler is runActivityDigestMember)',
   activityDigestSchedule: 'job definition (handler is runActivityDigestSchedule)',
   activityDigestSchema: 'zod schema',
+  onboardingNudge: 'job definition (handler is runOnboardingNudge)',
+  runOnboardingNudge:
+    'system job: reads global activation_event, then opens withUser and withWorkspace per user; RLS keeps each user to their own membership and workspace',
+  nextUnfinishedStep: 'pure',
+  NUDGE_STEPS: 'constant',
+  ONBOARDING_NUDGE_FLAG: 'constant',
   activityDigestMemberSchema: 'zod schema',
   DELIVERY_CHANNELS: 'constant',
   DIGEST_LOCAL_TIME: 'constant',
@@ -2000,6 +2029,8 @@ export const RUNTIME_SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   requestExportFor: runtimeDenies,
   issueExportDownloadFor: runtimeDenies,
   openExportDownloadFor: runtimeDenies,
+  // document page image (#489): A's page from B, or ub claiming A, is NOT_FOUND before any byte
+  openDocumentPageImageFor: runtimeDenies,
   listExportJobsFor: runtimeEmpty,
   requestWorkspaceDeletionFor: runtimeDenies,
   cancelWorkspaceDeletionFor: runtimeDenies,

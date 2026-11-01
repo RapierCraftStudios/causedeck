@@ -19,6 +19,9 @@ export const WHATSAPP_TEMPLATES = {
   'court.board': 'causedeck_court_board',
   'status.order': 'causedeck_status_order',
   'digest.end_of_day': 'causedeck_end_of_day',
+  // Onboarding nudge (#601): a link only. The provider has not approved it yet (owner action), so
+  // the job runs on `createMockWhatsAppSender` until the real sender is configured.
+  'onboarding.nudge': 'causedeck_onboarding_nudge',
 } as const;
 export type WhatsAppCategory = keyof typeof WHATSAPP_TEMPLATES;
 
@@ -154,6 +157,26 @@ export function createWhatsAppSender({
       } | null;
       const id = body?.messages?.[0]?.id;
       return { messageId: typeof id === 'string' ? id : null };
+    },
+  };
+}
+
+/**
+ * A sender for staging and for a deployment without provider credentials: it sends nothing and
+ * records the template name only, never the number or the parameters. Same shape as the real one.
+ */
+export function createMockWhatsAppSender({
+  log,
+}: {
+  log?: WhatsAppLogger | undefined;
+}): WhatsAppSender {
+  return {
+    send(message, target) {
+      if (!WHATSAPP_E164.test(target.e164)) {
+        return Promise.reject(new WhatsAppDeliveryError(undefined, true));
+      }
+      log?.info({ template: WHATSAPP_TEMPLATES[message.category] }, 'whatsapp mock send');
+      return Promise.resolve({ messageId: null });
     },
   };
 }

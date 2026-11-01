@@ -10,15 +10,18 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "captcha:accuracy": "tsx scripts/captcha-accuracy.ts"
   },
   "dependencies": {
-    "alterlab": "catalog:"
+    "alterlab": "catalog:",
+    "parse5": "catalog:"
   },
   "devDependencies": {
     "@causedeck/config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

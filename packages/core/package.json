@@ -39,6 +39,7 @@
     "./drafting": "./src/drafting/index.ts",
     "./notices": "./src/notices/index.ts",
     "./onboarding": "./src/onboarding/index.ts",
+    "./free-alerts": "./src/free-alerts/index.ts",
     "./conflicts": "./src/conflicts/index.ts",
     "./facts": "./src/facts/index.ts",
     "./matter-graph": "./src/matter-graph/index.ts",

@@ -1,14 +1,17 @@
 import type { Metadata } from 'next';
 
 import { WORKBENCH_ADAPTERS } from '@causedeck/adapters/workbench';
+import { db } from '@causedeck/core/runtime';
 
 import { FixtureWorkbenchForm } from '../../../components/fixture-workbench-form.tsx';
 import { requireStaff } from '../../../lib/staff.ts';
+import { workbenchFetchEnabled } from '../../../lib/workbench-fetcher.ts';
 
 export const metadata: Metadata = { title: 'Fixture workbench' };
 
 export default async function FixturesPage() {
-  await requireStaff('adapters');
+  const staff = await requireStaff('adapters');
+  const fetchEnabled = await workbenchFetchEnabled(db, staff.userId);
   return (
     <section aria-labelledby="page-title" className="grid gap-4">
       <div className="grid gap-1">
@@ -22,7 +25,10 @@ export default async function FixturesPage() {
           <code>pnpm --filter @causedeck/adapters fixtures:export</code> and open a PR.
         </p>
       </div>
-      <FixtureWorkbenchForm adapterIds={Object.keys(WORKBENCH_ADAPTERS).sort()} />
+      <FixtureWorkbenchForm
+        adapterIds={Object.keys(WORKBENCH_ADAPTERS).sort()}
+        fetchEnabled={fetchEnabled}
+      />
     </section>
   );
 }

@@ -55,6 +55,7 @@ export const ID_KIND = {
   notification: 0xc2,
   issueTag: 0xc3,
   researchNote: 0xc4,
+  activity: 0xc5,
   rating: 0xd0,
   pulse: 0xd1,
   portfolio: 0xe0,
@@ -62,6 +63,21 @@ export const ID_KIND = {
   memory: 0xf0,
   memoryProposal: 0xf1,
   memoryUsage: 0xf2,
+  // The global corpus and catalogue rows (workspace index 0; no workspace owns them) and the
+  // workspace rows that point at them (#1070, #1071).
+  judgment: 0xe2,
+  judgmentSegment: 0xe3,
+  judgmentTag: 0xe4,
+  judgmentStatuteRef: 0xe5,
+  judgmentCitationRef: 0xe6,
+  newsItem: 0xe7,
+  notice: 0xe8,
+  noticeMatch: 0xe9,
+  judgmentAlert: 0xea,
+  subscription: 0xeb,
+  saasInvoice: 0xec,
+  saasInvoiceLine: 0xed,
+  noticeVacation: 0xee,
 } as const;
 
 /** Each demo workspace owns a block of this many numbers per row kind (the ids never collide). */

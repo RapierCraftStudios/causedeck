@@ -258,7 +258,7 @@ const newTask = async (s: Transaction, g: Graph, values: Partial<typeof task.$in
   ).id;
 
 describe('docket tables in the catalog (#347)', () => {
-  it('are under FORCE RLS with exactly ws_isolation, and granted to the app and clerk roles', async () => {
+  it('are under FORCE RLS with exactly ws_isolation, and granted to the app and clerk roles (obligation: app only)', async () => {
     for (const table of TABLES) {
       const [row] = await owner.execute<{
         enabled: boolean;
@@ -278,7 +278,8 @@ describe('docket tables in the catalog (#347)', () => {
         // listing also carries the owner-only definer read that app_board_poll_targets (0074, #493) needs.
         policies: table === 'listing' ? ['owner_definer_read', 'ws_isolation'] : ['ws_isolation'],
         app: true,
-        clerk: true,
+        // obligation: clerks read through obligation_clerk_v, which redacts strategy notes (#724)
+        clerk: table !== 'obligation',
       });
     }
   });

@@ -7,7 +7,7 @@ import { seedTwoTenants } from '@causedeck/db/testing/two-tenants';
 import { getTableColumns, sql } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
-import { funnelByCohort, timeToFirstCourtDay } from './funnel.ts';
+import { discoveredVsConfirmed, funnelByCohort, timeToFirstCourtDay } from './funnel.ts';
 import { ACTIVATION_CHANNELS, ACTIVATION_STEPS, recordActivation } from './record.ts';
 
 const SINCE = new Date('2031-01-01T00:00:00Z');
@@ -32,6 +32,53 @@ describe('recordActivation', () => {
         .where(sql`user_id = ${u}`);
       expect(rows).toHaveLength(1);
       expect(rows[0]?.occurredAt).toEqual(MON_1);
+    });
+  });
+
+  it('stores the counts on the first insert and a repeat does not overwrite them (#699)', async () => {
+    await withTestDb(async (tx) => {
+      const [u] = await users(tx);
+      await recordActivation(tx, {
+        userId: u,
+        step: 'confirm_grid_done',
+        discovered: 12,
+        confirmed: 9,
+        at: MON_1,
+      });
+      await recordActivation(tx, {
+        userId: u,
+        step: 'confirm_grid_done',
+        discovered: 99,
+        confirmed: 99,
+        at: MON_2,
+      });
+      const [row] = await tx
+        .select()
+        .from(schema.activationEvent)
+        .where(sql`user_id = ${u} and step = 'confirm_grid_done'`);
+      expect([row?.mattersDiscovered, row?.mattersConfirmed]).toEqual([12, 9]);
+    });
+  });
+
+  it('leaves the counts null when none or an invalid one is passed (#699)', async () => {
+    await withTestDb(async (tx) => {
+      const [u] = await users(tx);
+      await recordActivation(tx, { userId: u, step: 'signed_up', at: MON_1 });
+      await recordActivation(tx, {
+        userId: u,
+        step: 'discovery_found',
+        discovered: -3,
+        confirmed: 1.5,
+        at: MON_1,
+      });
+      const rows = await tx
+        .select()
+        .from(schema.activationEvent)
+        .where(sql`user_id = ${u}`);
+      expect(rows).toHaveLength(2);
+      for (const row of rows) {
+        expect([row.mattersDiscovered, row.mattersConfirmed]).toEqual([null, null]);
+      }
     });
   });
 
@@ -77,10 +124,12 @@ describe('recordActivation', () => {
 });
 
 describe('activation_event carries no content or personal data', () => {
-  it('has only the user id, a step, a channel and a timestamp', () => {
+  it('has only the user id, a step, a channel, a timestamp and two integer counts', () => {
     expect(Object.keys(getTableColumns(schema.activationEvent)).sort()).toEqual([
       'channel',
       'id',
+      'mattersConfirmed',
+      'mattersDiscovered',
       'occurredAt',
       'step',
       'userId',
@@ -167,6 +216,39 @@ describe('funnel by weekly cohort', () => {
     });
   });
 
+  it('sums matters discovered against confirmed per cohort week, over users with both (#699)', async () => {
+    await withTestDb(async (tx) => {
+      const [u1, u2, u3] = await users(tx);
+      for (const [u, at] of [
+        [u1, MON_1],
+        [u2, MON_1],
+        [u3, MON_2],
+      ] as const) {
+        await recordActivation(tx, { userId: u, step: 'signed_up', at });
+      }
+      await recordActivation(tx, {
+        userId: u1,
+        step: 'confirm_grid_done',
+        discovered: 10,
+        confirmed: 8,
+        at: hours(MON_1, 2),
+      });
+      await recordActivation(tx, {
+        userId: u2,
+        step: 'confirm_grid_done',
+        discovered: 6,
+        confirmed: 2,
+        at: hours(MON_1, 3),
+      });
+      // No counts recorded: not part of the aggregate.
+      await recordActivation(tx, { userId: u3, step: 'confirm_grid_done', at: hours(MON_2, 1) });
+
+      expect(await discoveredVsConfirmed(tx, { since: SINCE })).toEqual([
+        { week: '2031-03-03', users: 2, discovered: 16, confirmed: 10, ratio: 10 / 16 },
+      ]);
+    });
+  });
+
   it('returns only counts and durations, never a user id', async () => {
     await withTestDb(async (tx) => {
       const [u1] = await users(tx);
@@ -174,6 +256,7 @@ describe('funnel by weekly cohort', () => {
       const out = JSON.stringify([
         await funnelByCohort(tx, { since: SINCE }),
         await timeToFirstCourtDay(tx, { since: SINCE }),
+        await discoveredVsConfirmed(tx, { since: SINCE }),
       ]);
       expect(out).not.toContain(u1);
     });

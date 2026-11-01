@@ -49,6 +49,7 @@ const run = (
   runStatusPoll(ctx, {
     fetcher,
     enqueueDelivery,
+    freeAlerts: {},
     listDue: () => Promise.resolve(due),
     ...(caps === undefined ? {} : { caps }),
   });

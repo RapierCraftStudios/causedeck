@@ -40,6 +40,8 @@ export interface CardHandlers {
     date?: string,
   ) => Promise<void>;
   keepAttachment: (item: InboxItemView) => Promise<void>;
+  /** Hand a photographed cause list to list import (#1073); resolves once the batch exists. */
+  handToImport: (item: InboxItemView) => Promise<void>;
   keyLine: (item: InboxItemView, text: string) => Promise<void>;
   reassign: (item: InboxItemView, matter: MatterHit) => Promise<void>;
   searchMatters: (query: string) => Promise<MatterHit[]>;
@@ -280,6 +282,7 @@ export function ProposalCardHost({
         error={error}
         onRetake={handlers.retake}
         onKeep={() => void run(() => handlers.keepAttachment(item))}
+        onHandToImport={() => void run(() => handlers.handToImport(item))}
         onKeyLine={(text) => void run(() => handlers.keyLine(item, text))}
       />
     );

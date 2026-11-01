@@ -51,6 +51,7 @@ const handlers: CardHandlers = {
   dismiss: fn(() => Promise.resolve()),
   chooseDate: fn(() => Promise.resolve()),
   keepAttachment: fn(() => Promise.resolve()),
+  handToImport: fn(() => Promise.resolve()),
   keyLine: fn(() => Promise.resolve()),
   reassign: fn(() => Promise.resolve()),
   searchMatters: fn(() => Promise.resolve([{ id: ID(72), title: 'Another matter (fictional)' }])),
@@ -229,5 +230,11 @@ export const ReadyToSend: Story = {
 };
 
 export const PreviewPane: Story = {
-  render: () => <SourcePreview item={base} slug="chennai-chambers" />,
+  render: () => (
+    <SourcePreview
+      item={base}
+      slug="chennai-chambers"
+      workspaceId="00000000-0000-4000-8000-000000000001"
+    />
+  ),
 };

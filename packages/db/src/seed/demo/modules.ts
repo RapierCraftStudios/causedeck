@@ -27,21 +27,29 @@ import type {
 } from '../../schema/fees.ts';
 import type { handoverNote, matterView } from '../../schema/continuity.ts';
 import type { limitationComputation, limitationRule } from '../../schema/limitation.ts';
-import type { matterIssueTag } from '../../schema/matter-issue.ts';
+import type { judgmentAlert, matterIssueTag } from '../../schema/matter-issue.ts';
+import type { noticeMatch } from '../../schema/notices.ts';
 import type { notification } from '../../schema/notifications.ts';
 import type { certifiedCopy, defect, obligationEvent } from '../../schema/obligation-tracking.ts';
 import type { outwardDraft, outwardDraftVersion } from '../../schema/outward-draft.ts';
 import type { portfolio, portfolioCase } from '../../schema/portfolio.ts';
 import type { loadPulse, preparednessRating } from '../../schema/proof-of-value.ts';
-import type { proposal } from '../../schema/automation.ts';
+import type { activity, proposal } from '../../schema/automation.ts';
 import type { researchNote } from '../../schema/research-note.ts';
 import type { statusLink } from '../../schema/status-link.ts';
 import type { briefState } from '../../schema/brief.ts';
 import type { courtDayMarker, listSnapshot } from '../../schema/court-day.ts';
 import type { roleEdge } from '../../schema/people.ts';
 
-import type { DemoCourtRows } from './courts.ts';
-import { demoCourtRows } from './courts.ts';
+import {
+  demoCourtRows,
+  forumId as demoForumId,
+  type DemoCourtRows,
+  type DemoForumKey,
+} from './courts.ts';
+import { demoBillingRows, type DemoBillingRows } from './billing.ts';
+import { NOTICES } from './catalogue.ts';
+import { demoAreaStatute, demoJudgmentsCiting } from './corpus.ts';
 import { demoMatterRows } from './matters.ts';
 import { demoOrderPdf, type DemoPdfInput } from './pdf.ts';
 import { demoMember, fictional } from './people.ts';
@@ -87,6 +95,7 @@ export interface DemoModuleRows {
   draftVersions: Insert<typeof draftVersion>[];
   captures: Insert<typeof capture>[];
   proposals: Insert<typeof proposal>[];
+  activities: Insert<typeof activity>[];
   notifications: Insert<typeof notification>[];
   issueTags: Insert<typeof matterIssueTag>[];
   researchNotes: Insert<typeof researchNote>[];
@@ -95,6 +104,12 @@ export interface DemoModuleRows {
   obligationEvents: Insert<typeof obligationEvent>[];
   portfolios: Insert<typeof portfolio>[];
   portfolioCases: Insert<typeof portfolioCase>[];
+  /** Judgment alerts on the confirmed issue tags (point at the global corpus, #1070). */
+  judgmentAlerts: Insert<typeof judgmentAlert>[];
+  /** The notices (global, #1071) matched to this workspace's forums and matters. */
+  noticeMatches: Insert<typeof noticeMatch>[];
+  /** Subscription and SaaS invoices (#1071). */
+  billing: DemoBillingRows;
 }
 
 /** The fixed token of the demo status link: public by design (it is fictional and expires). */
@@ -196,6 +211,7 @@ export function demoModuleRows(
     draftVersions: [],
     captures: [],
     proposals: [],
+    activities: [],
     notifications: [],
     issueTags: [],
     researchNotes: [],
@@ -204,6 +220,9 @@ export function demoModuleRows(
     obligationEvents: [],
     portfolios: [],
     portfolioCases: [],
+    judgmentAlerts: [],
+    noticeMatches: [],
+    billing: demoBillingRows(ws, today, at),
   };
 
   const mainOf = (matterId: string) =>
@@ -1055,6 +1074,62 @@ export function demoModuleRows(
     }
   });
 
+  // Activity feed: automatic changes in each state (undoable, confirmed, by the person). The
+  // demo makes no AI call, so every row is marked synthetic and carries no model.
+  const undoWindow = 7 * 86_400_000;
+  (
+    [
+      [
+        'auto_applied',
+        'L1',
+        'system',
+        'Added the next date from the cause list (synthetic).',
+        false,
+      ],
+      [
+        'auto_applied',
+        'L2',
+        'system',
+        'Linked an uploaded order to its matter (synthetic).',
+        false,
+      ],
+      [
+        'auto_applied',
+        'L2',
+        'system',
+        'Filed a hearing note against the matter (synthetic).',
+        true,
+      ],
+      [
+        'manual_edit',
+        'L1',
+        'user',
+        'Corrected a next date after reading the order (synthetic).',
+        false,
+      ],
+    ] as const
+  ).forEach(([kind, level, actor, summary, confirmed], k) => {
+    const createdAt = new Date(at.getTime() - (k + 1) * 3_600_000);
+    rows.activities.push({
+      id: did(ID_KIND.activity, k + 1),
+      workspaceId: ws.id,
+      proposalId: k === 1 ? did(ID_KIND.proposal, 1) : null,
+      kind,
+      level,
+      actor,
+      actorUserId: actor === 'user' ? advocate.id : null,
+      summary,
+      entityRefs: { matterId: matterAt(k).id },
+      undoPayload: confirmed ? null : { synthetic: true, matterId: matterAt(k).id },
+      undoExpiresAt: new Date(createdAt.getTime() + undoWindow),
+      confirmedAt: confirmed ? at : null,
+      confirmedBy: confirmed ? advocate.id : null,
+      confidence: actor === 'system' ? '0.900' : null,
+      source: { synthetic: true },
+      createdAt,
+    });
+  });
+
   // In-app notifications (the bell): the demo never sends email, push or WhatsApp.
   [
     [
@@ -1085,19 +1160,39 @@ export function demoModuleRows(
     });
   });
 
-  // Issue tags and research notes on the first matters.
+  // Issue tags and research notes on the first matters. The tags name sections the synthetic corpus
+  // cites (corpus.ts), so the confirmed ones carry judgment alerts and the matter research tab lists them.
+  const TAG_AREAS = ['arbitration', 'cheque_dishonour', 'bail', 'consumer'] as const;
+  let alertN = 0;
   activeIdx.slice(0, 4).forEach((mi, k) => {
+    const { statute, section } = demoAreaStatute(TAG_AREAS[k] as string);
+    const tagId = did(ID_KIND.issueTag, k + 1);
     rows.issueTags.push({
-      id: did(ID_KIND.issueTag, k + 1),
+      id: tagId,
       ...stamp,
       matterId: matterAt(mi).id as string,
-      statute: 'Demo Statute (fictional), 2020',
-      section: String(10 + k),
+      statute,
+      section,
       issue: 'Maintainability and limitation (synthetic tag)',
       status: k === 0 ? 'proposed' : 'confirmed',
       source: k === 0 ? 'ai' : 'manual',
       confidence: k === 0 ? '0.700' : null,
     });
+    if (k > 0) {
+      for (const cite of demoJudgmentsCiting(statute, section)) {
+        alertN += 1;
+        rows.judgmentAlerts.push({
+          id: did(ID_KIND.judgmentAlert, alertN),
+          workspaceId: ws.id,
+          matterId: matterAt(mi).id as string,
+          tagId,
+          judgmentId: cite.judgmentId,
+          pageNo: cite.page,
+          createdAt: new Date(at.getTime() - alertN * 3_600_000),
+          notifiedAt: at,
+        });
+      }
+    }
     if (k < 2) {
       rows.researchNotes.push({
         id: did(ID_KIND.researchNote, k + 1),
@@ -1110,6 +1205,45 @@ export function demoModuleRows(
       });
     }
   });
+
+  // The demo notices (global) matched to this workspace's forums, and to the matters of those forums.
+  let matchN = 0;
+  const forumKeyOf = (id: string): DemoForumKey | undefined =>
+    ws.forums.find((f) => demoForumId(ws, f) === id);
+  for (const spec of NOTICES) {
+    const noticeId = demoId(ID_KIND.notice, spec.n);
+    for (const key of spec.forums.filter((f) => ws.forums.includes(f))) {
+      matchN += 1;
+      rows.noticeMatches.push({
+        id: did(ID_KIND.noticeMatch, matchN),
+        workspaceId: ws.id,
+        noticeId,
+        matterId: null,
+        forumId: demoForumId(ws, key),
+        reason: 'forum',
+        createdAt: at,
+        updatedAt: at,
+      });
+      // Two matters before that forum (rotating by notice) also get a matter-linked card.
+      const matters = graph.proceedings
+        .filter((p) => p.kind === 'main' && forumKeyOf(p.forumId) === key)
+        .map((p) => p.matterId);
+      const linked = [...new Set(matters)].slice(spec.n % 3, (spec.n % 3) + 2);
+      for (const matterId of linked) {
+        matchN += 1;
+        rows.noticeMatches.push({
+          id: did(ID_KIND.noticeMatch, matchN),
+          workspaceId: ws.id,
+          noticeId,
+          matterId,
+          forumId: demoForumId(ws, key),
+          reason: 'matter_forum',
+          createdAt: at,
+          updatedAt: at,
+        });
+      }
+    }
+  }
 
   // Registry defects, certified copies and their audit trail, from the obligations of the graph.
   let ev = 0;

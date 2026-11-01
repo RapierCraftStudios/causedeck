@@ -192,6 +192,10 @@
         "digestNews": {
           "label": "Legal news digest",
           "description": "One daily digest of legal news, with the items for your practice areas and forums first."
+        },
+        "onboardingNudge": {
+          "label": "Setup reminders",
+          "description": "A nudge for the next setup step you have not finished."
         }
       },
       "mandatory": "Security alerts are always sent in the app and by email so you never miss a sign-in or account change.",

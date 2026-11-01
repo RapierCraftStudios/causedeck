@@ -75,6 +75,8 @@ test.describe('calendar', () => {
     async ({ page, asUser }) => {
       await openCalendar(page, asUser, '?view=month');
       const url = page.url();
+      // Warm-up (as matters.perf.spec.ts): the first requests pay for the cold pool and caches.
+      for (let i = 0; i < 5; i += 1) await page.request.get(url);
       const samples: number[] = [];
       for (let i = 0; i < 20; i += 1) {
         const started = performance.now();

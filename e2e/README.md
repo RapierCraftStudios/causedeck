@@ -37,6 +37,10 @@ Tags: `@smoke` (fast, also on WebKit and in the nightly flake job), `@a11y` (axe
    (`packages/db/src/seed/e2e.ts`). It then signs every seeded user in through the dev sign-in
    provider (`POST /api/auth/dev/sign-in`), saves one `storageState` per role in `e2e/.auth/`
    (gitignored), and seals the template.
+   Each worker server is warmed before its first test (`support/warm.ts`: every static workspace
+   page once, as the seeded owner), the database connect timeout is 30 s, and CI fails a shard
+   when more than `E2E_FLAKY_BUDGET` tests pass only on retry (`support/flaky-budget.mjs`, fed by
+   the JSON report from `E2E_JSON_REPORT`). Ratchet the budget in e2e.yml down as flakes fall (#995).
 3. **One database and one server per worker.** Our mechanism for the per-worker `DATABASE_URL`:
    the worker fixture (`fixtures/db.ts`) clones the template with
    `CREATE DATABASE causedeck_e2e_w<N> TEMPLATE causedeck_e2e_template`. It then starts its own

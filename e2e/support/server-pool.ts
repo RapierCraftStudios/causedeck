@@ -108,6 +108,10 @@ export function serverEnv(
     AUTH_GOOGLE_ENABLED: 'false',
     SENTRY_ENABLED: 'false',
     LOG_LEVEL: 'info',
+    // Each test drops and re-clones the worker database, which stalls a shared runner's Postgres
+    // for seconds; the pool's production default (5 s) then fails the next request with
+    // CONNECT_TIMEOUT (#995). A longer wait here only absorbs the stall; no test relies on it.
+    DB_CONNECT_TIMEOUT_SECONDS: '30',
   };
 }
 

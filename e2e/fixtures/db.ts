@@ -6,6 +6,7 @@ import { test as base } from '@playwright/test';
 
 import { resetWorkerDb, workerDbName } from '../support/db-reset.ts';
 import { startServer, workerPort, type RunningServer } from '../support/server-pool.ts';
+import { warmServer } from '../support/warm.ts';
 
 export interface WorkerDb {
   /** Database name (`causedeck_e2e_w<N>`). */
@@ -48,14 +49,17 @@ export const test = base.extend<DbFixtures, WorkerFixtures>({
   ],
   workerServer: [
     async ({ workerDb }, use, workerInfo) => {
-      const server = await startServer(workerPort(workerInfo.parallelIndex), workerDb.url);
+      const port = workerPort(workerInfo.parallelIndex);
+      const server = await startServer(port, workerDb.url);
       try {
+        // Pay the cold first request of every page here, not inside a timed test (#995).
+        await warmServer(port);
         await use(server);
       } finally {
         await server.stop();
       }
     },
-    { scope: 'worker', timeout: 90_000 },
+    { scope: 'worker', timeout: 180_000 },
   ],
   db: [
     async ({ workerDb, workerServer }, use, testInfo) => {

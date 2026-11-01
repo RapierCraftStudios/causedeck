@@ -70,8 +70,16 @@ jobs:
         run: >-
           docker run --rm --network host --ipc host
           -e CI=true -e E2E_ASSERT_RESET_MS=2000 -e E2E_SCOPE -e E2E_PERF=skip
+          -e E2E_JSON_REPORT=test-results-json/shard.json
           -v "$GITHUB_WORKSPACE:/work" -w /work/e2e "$PLAYWRIGHT_IMAGE"
           node support/playwright.mjs --shard="$SHARD/2"
+      # Flaky-count gate (#995): a test that only passes on retry counts against the budget. About 15
+      # per shard before the worker-server warm-up; ratchet E2E_FLAKY_BUDGET down as the rate falls.
+      - name: Flaky test budget (shard ${{ matrix.shard }}/2)
+        if: ${{ !cancelled() && hashFiles('e2e/test-results-json/shard.json') != '' }}
+        env:
+          E2E_FLAKY_BUDGET: ${{ github.event_name == 'pull_request' && '25' || '30' }}
+        run: node e2e/support/flaky-budget.mjs e2e/test-results-json/shard.json
       # The `@perf` timing specs run here, alone, once the shard's tests are done: beside a second
       # worker the matters list p95 roughly doubles (e2e/playwright.config.ts). They reuse the build
       # above, and write to their own results folder so the shard's artifacts are kept.
@@ -119,6 +127,7 @@ jobs:
           path: |
             e2e/test-results
             e2e/test-results-perf
+            e2e/test-results-json
           if-no-files-found: ignore
           retention-days: 14
 

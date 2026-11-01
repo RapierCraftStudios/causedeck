@@ -43,6 +43,9 @@ if (perfMode !== 'with' && perfMode !== 'skip' && perfMode !== 'only') {
   throw new Error(`e2e: E2E_PERF must be "with", "skip" or "only", got "${perfMode}"`);
 }
 
+// eslint-disable-next-line no-process-env -- the JSON report path is read before Playwright loads projects.
+const jsonReport = process.env.E2E_JSON_REPORT;
+
 const chromiumProjects: Project[] = Object.entries(VIEWPORTS).flatMap(([width, viewport]) =>
   THEMES.map((colorScheme) => ({
     name: `chromium-${width}-${colorScheme}`,
@@ -102,6 +105,8 @@ export default defineConfig({
     ['list'],
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
     ...(isCI ? ([['github']] as const) : []),
+    // Machine-readable results for support/flaky-budget.mjs (#995); only when CI asks for them.
+    ...(jsonReport ? ([['json', { outputFile: jsonReport }]] as const) : []),
   ],
   globalSetup: './global-setup.ts',
   globalTeardown: './global-teardown.ts',

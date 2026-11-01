@@ -57,11 +57,7 @@ const SHOTS: readonly Shot[] = [
     name: 'matters-conflict-card.png',
     setUp: async (page, asUser) => {
       await openMatters(page, asUser, { path: matterPath(MATTERS.conflict) });
-      const card = page.locator('[data-slot="date-conflict-card"]');
-      // The first run matched two cards for one conflict (server-rendered `_r_` and client `_R_`
-      // ids) while the page re-rendered; the settled page has one. Wait for it so the shot is strict.
-      await expect(card).toHaveCount(1);
-      return card;
+      return page.locator('[data-slot="date-conflict-card"]');
     },
   },
   {

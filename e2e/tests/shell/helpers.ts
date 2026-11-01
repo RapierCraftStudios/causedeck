@@ -51,11 +51,24 @@ export function layoutOf(page: Page): Layout {
 }
 
 /**
+ * Wait until every streamed Suspense boundary of the page has been revealed. A route with a
+ * `loading.tsx` sends its content in a hidden `<div id="S:n">` and React's reveal script moves it
+ * into place, batched up to ~300 ms apart (react-dom 19.3 `$RV`). While that is pending, and
+ * for a moment after hydration client-renders the boundary, the same content exists twice in the
+ * document (one copy under `[hidden]`), so a strict locator on it throws (#1094). The reveal moves
+ * the nodes and removes the segment: an `[id^="S:"]` left in the document means "still streaming".
+ */
+export async function streamSettled(page: Page): Promise<void> {
+  await page.waitForFunction(() => document.querySelector('div[hidden][id^="S:"]') === null);
+}
+
+/**
  * Wait until the shell has hydrated and its idle chunk (Radix overlays, animated nav indicator)
  * has arrived, so key presses and clicks reach the final components.
  */
 export async function shellReady(page: Page): Promise<void> {
   await page.locator('[data-active-indicator="animated"]').waitFor({ state: 'attached' });
+  await streamSettled(page);
 }
 
 /**
@@ -68,6 +81,7 @@ export async function contentReady(page: Page): Promise<void> {
     const main = document.querySelector('main');
     return main !== null && Object.keys(main).some((key) => key.startsWith('__reactFiber$'));
   });
+  await streamSettled(page);
 }
 
 export interface OpenShellOptions {

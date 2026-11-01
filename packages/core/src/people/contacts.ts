@@ -330,6 +330,9 @@ export async function createContact(
             email: data.email ?? null,
             languagePref: data.languagePref,
             createdBy: scope.actor.userId,
+            // The same clock as `unlinked` (listContacts) and the undo window, not the DB's now().
+            createdAt: scope.now,
+            updatedAt: scope.now,
           })
           .returning(),
       );

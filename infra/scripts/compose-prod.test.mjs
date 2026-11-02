@@ -142,6 +142,26 @@ describe('Dockerfiles', () => {
     for (const name of ['api', 'worker']) assert.match(read(`${name}.Dockerfile`), /--prod deploy/);
   });
 
+  it('api and worker drop the unused optional peers better-auth pulls in (#1104)', () => {
+    const lists = ['api', 'worker'].map((name) => {
+      const file = read(`${name}.Dockerfile`);
+      const m = file.match(/^ARG OPTIONAL_PEERS_UNUSED="([^"]+)"$/m);
+      assert.ok(m, `${name}: OPTIONAL_PEERS_UNUSED is declared`);
+      assert.match(file, /cd \/deploy\/node_modules\/\.pnpm && rm -rf \$OPTIONAL_PEERS_UNUSED/);
+      for (const pkg of [
+        'next@*',
+        '@next+swc-*',
+        'vitest@*',
+        'playwright-core@*',
+        'drizzle-kit@*',
+      ]) {
+        assert.ok(m[1].split(' ').includes(pkg), `${name}: prunes ${pkg}`);
+      }
+      return m[1];
+    });
+    assert.equal(lists[0], lists[1], 'api and worker prune the same list');
+  });
+
   it('the worker image carries the owner-role migration entry', () => {
     assert.match(read('worker.Dockerfile'), /scripts\/migrate\.ts/);
     assert.match(compose, /node_modules\/@causedeck\/db\/scripts\/migrate\.ts/);

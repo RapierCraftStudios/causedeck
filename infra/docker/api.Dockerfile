@@ -14,9 +14,16 @@ WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/api apps/api
 COPY packages packages
+# better-auth declares optional peers (next, vitest, drizzle-kit, ...). With auto-install-peers the
+# workspace resolves them, so `pnpm deploy --prod` copies Next.js + SWC, vitest + Playwright and
+# drizzle-kit into this image (~90 MB compressed, over the 250 MB size gate, #1104). Nothing here
+# imports them at runtime (migrations use drizzle-orm's migrator); drop them after the deploy.
+# Keep this list in sync with the other Node service Dockerfile (api/worker).
+ARG OPTIONAL_PEERS_UNUSED="next@* @next+swc-* @playwright+test@* playwright@* playwright-core@* vitest@* @vitest+* drizzle-kit@* @esbuild-kit+* typescript@*"
 RUN find . -name node_modules -prune -exec rm -rf {} + \
   && pnpm install --frozen-lockfile --ignore-scripts --filter "@causedeck/api..." \
   && pnpm --filter "@causedeck/api" --prod deploy --legacy /deploy \
+  && cd /deploy/node_modules/.pnpm && rm -rf $OPTIONAL_PEERS_UNUSED && cd /repo \
   && pnpm store prune && rm -rf /pnpm/store
 
 FROM ${NODE_IMAGE} AS runtime

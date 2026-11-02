@@ -12,14 +12,16 @@ ARG WALG_SHA256_ARM64
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates curl \
   && rm -rf /var/lib/apt/lists/*
+# Asset choice: v3.0.5 has no 22.04 build for arm64; the only pg arm64 build is the 20.04 one
+# (older glibc target, so it runs on this Debian base). amd64 uses the 22.04 build.
 RUN set -eu; \
   case "${TARGETARCH}" in \
-    amd64) arch=amd64; sha="${WALG_SHA256_AMD64}" ;; \
-    arm64) arch=aarch64; sha="${WALG_SHA256_ARM64}" ;; \
+    amd64) asset=wal-g-pg-ubuntu-22.04-amd64; sha="${WALG_SHA256_AMD64}" ;; \
+    arm64) asset=wal-g-pg-ubuntu-20.04-aarch64; sha="${WALG_SHA256_ARM64}" ;; \
     *) echo "unsupported architecture ${TARGETARCH}" >&2; exit 1 ;; \
   esac; \
   test -n "${sha}" || { echo "WALG_SHA256_${TARGETARCH} build arg is required" >&2; exit 1; }; \
-  curl -fsSL -o /wal-g "https://github.com/wal-g/wal-g/releases/download/${WALG_VERSION}/wal-g-pg-ubuntu-22.04-${arch}"; \
+  curl -fsSL -o /wal-g "https://github.com/wal-g/wal-g/releases/download/${WALG_VERSION}/${asset}"; \
   echo "${sha}  /wal-g" | sha256sum -c -; \
   chmod 0755 /wal-g
 

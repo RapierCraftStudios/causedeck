@@ -177,6 +177,10 @@ describe('postgres image and config', () => {
     assert.match(dockerfile, /sha256sum -c -/);
     assert.match(dockerfile, /WALG_SHA256_AMD64/);
     assert.match(dockerfile, /WALG_SHA256_ARM64/);
+    assert.match(dockerfile, /asset=wal-g-pg-ubuntu-22\.04-amd64;/);
+    assert.match(dockerfile, /asset=wal-g-pg-ubuntu-20\.04-aarch64;/);
+    assert.match(dockerfile, /\/\$\{WALG_VERSION\}\/\$\{asset\}"/);
+    assert.doesNotMatch(dockerfile, /ubuntu-22\.04-(aarch64|\$\{arch\})/);
     assert.match(dockerfile, /postgres\/init \/docker-entrypoint-initdb\.d/);
   });
 });

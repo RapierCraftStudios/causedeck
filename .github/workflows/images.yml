@@ -7,7 +7,7 @@ name: Images
 # Tools run as pinned container images, like lint-workflows.yml, so no third-party action is needed.
 #
 # One-time repository variables (Settings > Variables), from the WAL-G release page:
-#   WALG_SHA256_AMD64, WALG_SHA256_ARM64: sha256 of wal-g-pg-ubuntu-22.04-{amd64,aarch64}.
+#   WALG_SHA256_AMD64, WALG_SHA256_ARM64: sha256 of wal-g-pg-ubuntu-22.04-amd64 and wal-g-pg-ubuntu-20.04-aarch64.
 
 on:
   pull_request:

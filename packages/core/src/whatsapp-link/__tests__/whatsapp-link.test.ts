@@ -24,11 +24,19 @@ const T0 = new Date('2026-11-01T10:00:00Z');
 async function setup(fn: (ctx: Ctx) => Promise<void>): Promise<void> {
   await withTestDb(async (tx) => {
     const seeded = await seedTwoTenants(tx);
-    // The seeders already linked the owners; start each case from a clean slate.
-    await inWorkspace(tx, seeded.a.id, async (s) => {
-      await s.delete(schema.whatsappLink);
-      await s.delete(schema.whatsappOtpChallenge);
-    });
+    // The seeders already linked the owners of both workspaces (with real-clock timestamps); start
+    // each case from a clean slate in both.
+    for (const workspaceId of [seeded.a.id, seeded.b.id]) {
+      await inWorkspace(tx, workspaceId, async (s) => {
+        await s.delete(schema.whatsappLink);
+        await s.delete(schema.whatsappOtpChallenge);
+      });
+      // Root-cause guard: a surviving real-clock row in either workspace would trip the cooldown.
+      await inWorkspace(tx, workspaceId, async (s) => {
+        expect(await s.select().from(schema.whatsappOtpChallenge)).toEqual([]);
+        expect(await s.select().from(schema.whatsappLink)).toEqual([]);
+      });
+    }
     const sent: { e164: string; code: string }[] = [];
     let clock = T0;
     const deps = {

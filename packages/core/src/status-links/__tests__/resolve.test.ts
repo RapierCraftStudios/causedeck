@@ -9,10 +9,10 @@ import { chamber, deps, inWs, input, NOW } from './helpers.ts';
 
 const DAY = 24 * 60 * 60 * 1000;
 
-async function made(tx: Parameters<typeof deps>[0], expiryDays = 7) {
+async function made(tx: Parameters<typeof deps>[0], expiryDays = 7, d = deps(tx)) {
   const c = await chamber(tx);
   const created = await createStatusLink(
-    deps(tx),
+    d,
     c.advocate,
     input(c, { expiryDays, nextDate: '2026-11-20' }),
   );
@@ -22,8 +22,13 @@ async function made(tx: Parameters<typeof deps>[0], expiryDays = 7) {
 describe('resolveStatusLink', () => {
   it('returns only the authored fields and the advocate name, and records a view', async () => {
     await withTestDb(async (tx) => {
-      const { token, id, c } = await made(tx);
-      const result = await resolveStatusLink(deps(tx), {
+      // `app_status_link_record_view` re-checks expiry against the DB's real now(), so a link made on
+      // the fixed NOW would already be expired for it once the real date passes NOW + 7 days. Make and
+      // resolve this link on a clock read from the real time instead.
+      const realNow = new Date();
+      const live = deps(tx, { now: () => realNow });
+      const { token, id, c } = await made(tx, 7, live);
+      const result = await resolveStatusLink(live, {
         token,
         ip: '203.0.113.9',
         userAgent: 'Mozilla/5.0 (iPhone) Mobile',

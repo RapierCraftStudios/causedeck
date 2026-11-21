@@ -17,6 +17,8 @@ import {
 } from '../index.ts';
 
 const NUMBER = '+919812345678';
+// Used by no other test, so the per-number rate_limit key is never shared with a real-clock writer.
+const LIMIT_NUMBER = '+919811071107';
 const CODE = '424242';
 const T0 = new Date('2026-11-01T10:00:00Z');
 
@@ -39,10 +41,15 @@ async function setup(
 ) {
   await withTestDb(async (tx) => {
     const seeded = await seedTwoTenants(tx);
-    await inWorkspace(tx, seeded.a.id, async (s) => {
-      await s.delete(schema.whatsappLink);
-      await s.delete(schema.whatsappOtpChallenge);
-    });
+    // The seeders link both owners and leave a pending challenge stamped with the real DB clock.
+    // This spec drives both workspaces on an injected clock, so start both from a clean slate: a
+    // challenge "created" after the injected now would trip the resend cooldown.
+    for (const workspaceId of [seeded.a.id, seeded.b.id]) {
+      await inWorkspace(tx, workspaceId, async (s) => {
+        await s.delete(schema.whatsappLink);
+        await s.delete(schema.whatsappOtpChallenge);
+      });
+    }
     const mock = mockWhatsAppOtpSender();
     let clock = T0;
     await fn({
@@ -101,14 +108,22 @@ describe('whatsapp link code delivery (#711)', () => {
     }));
 
   it('limits sends per number, across members', () =>
-    setup(async ({ deps, actor, other, advance, mock }) => {
+    setup(async ({ deps, actor, other, advance, mock, tx }) => {
+      expect(
+        await inWorkspace(tx, other.workspaceId, (s) =>
+          s.select().from(schema.whatsappOtpChallenge),
+        ),
+      ).toEqual([]);
       const who = [actor, other];
       for (let i = 0; i < WHATSAPP_OTP_NUMBER_LIMIT.max; i += 1) {
         advance(WHATSAPP_OTP_RESEND_COOLDOWN_MS);
-        await requestWhatsAppOtp(deps, who[i % 2] ?? actor, { e164: NUMBER, consent: true });
+        await requestWhatsAppOtp(deps, who[i % 2] ?? actor, {
+          e164: LIMIT_NUMBER,
+          consent: true,
+        });
       }
       advance(WHATSAPP_OTP_RESEND_COOLDOWN_MS);
-      const e = await fails(requestWhatsAppOtp(deps, actor, { e164: NUMBER, consent: true }));
+      const e = await fails(requestWhatsAppOtp(deps, actor, { e164: LIMIT_NUMBER, consent: true }));
       expect(code(e)).toBe('RATE_LIMITED');
       expect(mock.outbox).toHaveLength(WHATSAPP_OTP_NUMBER_LIMIT.max);
     }));

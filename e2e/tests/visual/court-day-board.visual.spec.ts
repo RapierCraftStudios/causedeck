@@ -7,7 +7,8 @@ import { contentReady } from '../shell/helpers.ts';
 
 // `@visual` runs in every viewport × theme project (360/768/1280, light and dark) with the clock
 // frozen. Baselines are generated only by the e2e workflow's `update_snapshots` dispatch. The board
-// reads the real IST date on the server: the weekly pulse card (Today) is turned off, the date line is pinned (a mask alone does not stop layout shift) and the read time is masked; the day's
+// reads the real IST date on the server: the weekly pulse card (Today) is turned off, the date line
+// is pinned (a mask alone does not stop layout shift) and the read time is masked; the day's
 // listings are the seeded chamber day (fixtures/court-day-data.ts).
 for (const day of ['today', 'tomorrow'] as const) {
   test(`court-day-${day}`, { tag: '@visual' }, async ({ page, asUser, db }, testInfo) => {

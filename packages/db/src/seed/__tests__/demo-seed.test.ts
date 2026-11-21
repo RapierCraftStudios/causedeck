@@ -256,6 +256,7 @@ describe('demo seed: content', () => {
       expect(
         await rowsIn(key, 'select key, enabled from workspace_feature_flag order by key'),
       ).toEqual([
+        { key: 'copilot.enabled', enabled: true },
         { key: 'insights.enabled', enabled: true },
         { key: 'm5_playbooks', enabled: true },
       ]);

@@ -107,6 +107,12 @@ export const FLAGS = {
     [28, 111],
   ),
   'insights.enabled': flag('insights.enabled', 'Practice insights dashboard.', false, [85]),
+  'copilot.enabled': flag(
+    'copilot.enabled',
+    'Grounded matter copilot: questions answered from the matter facts, its documents and the judgment corpus, every claim with a verified quote.',
+    false,
+    [1115],
+  ),
   m5_playbooks: flag(
     'm5_playbooks',
     "M5 playbooks and the precedent bank (confirmed passages from the lawyer's own drafts).",

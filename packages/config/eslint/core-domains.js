@@ -145,6 +145,19 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // search (#896) audits each search through audit, reads the plan's entitlements through billing,
   // meters `research.searches` through usage and runs its platform-scope models through ai.
   research: Object.freeze(['workspaces', 'citations', 'audit', 'billing', 'usage', 'ai']),
+  // The grounded matter copilot (#1115): roles through workspaces, matter facts through the
+  // matter-graph index, the corpus arm through research, `copilot.asked` through audit, the Junior cap
+  // through billing and usage, and the workspace-scope gateway through ai.
+  copilot: Object.freeze([
+    'workspaces',
+    'matter-graph',
+    'research',
+    'citations',
+    'audit',
+    'billing',
+    'usage',
+    'ai',
+  ]),
   // Drafting (#768): roles through workspaces, facts through the matter-graph index, `draft.exported`
   // through audit and the narrative gateway through ai's index.
   drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai']),
@@ -261,6 +274,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'sources',
     'notices',
     'research',
+    'copilot',
     'drafting',
     'portfolio',
     'business',

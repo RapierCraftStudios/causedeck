@@ -18,9 +18,15 @@ interface CopilotPageProps {
   params: Promise<{ slug: string; id: string }>;
 }
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({ params }: CopilotPageProps): Promise<Metadata> {
+  const { slug, id } = await params;
   const t = await getTranslations('research.copilot');
-  return { title: t('metaTitle') };
+  // Authenticated page: canonical points at itself and the page is kept out of search indexes.
+  return {
+    title: t('metaTitle'),
+    alternates: { canonical: `/w/${slug}/matters/${id}/copilot` },
+    robots: { index: false, follow: false },
+  };
 }
 
 export default async function MatterCopilotPage({ params }: CopilotPageProps) {

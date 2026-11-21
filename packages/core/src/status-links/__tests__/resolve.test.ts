@@ -25,7 +25,14 @@ describe('resolveStatusLink', () => {
       // The view row is written by SQL that compares expires_at with the DB now(), so this spec
       // runs on the real clock: a fixed date would expire the link once real time passes it.
       const now = () => new Date();
+      const before = Date.now();
       const { token, id, c } = await made(tx, 7, now);
+      // The link must be seeded from the real clock, not the pinned NOW the SQL now() can overtake.
+      const [row] = await inWs(tx, c.workspaceId, (t) =>
+        t.select().from(schema.statusLink).where(eq(schema.statusLink.id, id)),
+      );
+      expect(row?.expiresAt.getTime()).toBeGreaterThanOrEqual(before + 7 * DAY);
+      expect(row?.expiresAt.getTime()).toBeLessThan(Date.now() + 7 * DAY + 1);
       const result = await resolveStatusLink(deps(tx, { now }), {
         token,
         ip: '203.0.113.9',

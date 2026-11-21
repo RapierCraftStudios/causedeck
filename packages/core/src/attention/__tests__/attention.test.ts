@@ -104,6 +104,13 @@ describe('attention', () => {
   it('applies the threshold, bounded 7 to 180, owner only', async () => {
     await withTestDb(async (tx) => {
       const w = await world(tx);
+      // Staleness must come from the seeds and the injected clock alone: a DB-default opened_at
+      // (the real now()) would make this spec depend on the real date.
+      const [seeded] = await inWorkspace(tx, w.workspaceId, (s) =>
+        s.select().from(schema.matter).where(eq(schema.matter.id, w.matterId)),
+      );
+      expect(seeded?.openedAt.toISOString()).toBe('2026-11-01T00:00:00.000Z');
+      expect(seeded?.updatedAt.toISOString()).toBe('2026-11-01T00:00:00.000Z');
       const junior = await addMember(tx, w.workspaceId, 'junior');
       await setStaleDays(deps(tx), w.owner, { days: 7 });
       const stale = await detectAttention(

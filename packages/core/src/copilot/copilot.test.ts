@@ -8,6 +8,7 @@ import { createMockEmbedProvider } from '@causedeck/ai';
 import { schema, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
+import { buildDocument, buildMatter } from '@causedeck/db/testing/matter-graph-fixtures';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
@@ -71,6 +72,31 @@ async function seedJudgment(tx: Transaction): Promise<void> {
     subjectArea: 'medical_negligence',
     confidence: 0.9,
     modelVersion: 'test',
+  });
+}
+
+/** A matter with one document page carrying `text`, in `workspaceId`. */
+async function matterWithPage(
+  tx: Transaction,
+  workspaceId: string,
+  text: string,
+  sensitive = false,
+): Promise<{ matterId: string; documentId: string }> {
+  return inWorkspace(tx, workspaceId, async (s) => {
+    const matter = await buildMatter(s, workspaceId, {
+      title: 'Copilot matter (fictional)',
+      sensitive,
+    });
+    const doc = await buildDocument(s, workspaceId, { matterId: matter.id, kind: 'pleading' });
+    await s.insert(schema.documentPage).values({
+      workspaceId,
+      documentId: doc.id,
+      pageNo: 2,
+      text,
+      textSource: 'layer',
+      lang: 'en',
+    });
+    return { matterId: matter.id, documentId: doc.id };
   });
 }
 
@@ -215,6 +241,107 @@ describe('askCopilot', () => {
         ),
       ).rejects.toMatchObject({ code: 'RATE_LIMITED' });
       expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(30);
+    });
+  });
+
+  it('blocks a sensitive matter before any provider call and counts nothing', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      await seedJudgment(tx);
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const { matterId } = await matterWithPage(
+        tx,
+        workspaceId,
+        'Written consent was refused.',
+        true,
+      );
+      let called = false;
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION, matterId },
+        {
+          now: () => NOW,
+          answer: () => {
+            called = true;
+            return Promise.resolve({ claims: [] });
+          },
+        },
+      );
+      expect(answer.aiBlocked).toBe(true);
+      expect(called).toBe(false);
+      expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(0);
+      const calls = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.aiCall).where(eq(schema.aiCall.workspaceId, workspaceId)),
+      );
+      expect(calls).toEqual([]);
+    });
+  });
+
+  it("quotes this matter's document page and never another matter's or workspace's", async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const mine = await matterWithPage(
+        tx,
+        workspaceId,
+        'Written consent for surgery was never obtained.',
+      );
+      await matterWithPage(tx, workspaceId, 'OTHERMATTER written consent surgery secret.');
+      const other = await newWorkspace(tx);
+      await matterWithPage(tx, other.workspaceId, 'OTHERTENANT written consent surgery secret.');
+      let shown = '';
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION, matterId: mine.matterId },
+        {
+          now: () => NOW,
+          answer: (input: { sources: { id: string; text: string }[] }) => {
+            shown = JSON.stringify(input.sources);
+            return Promise.resolve({
+              claims: [
+                {
+                  statement: 'Consent was never obtained.',
+                  sourceId: `doc:${mine.documentId}:2`,
+                  quote: 'consent for surgery was never obtained',
+                },
+              ],
+            });
+          },
+        },
+      );
+      expect(shown).toContain('never obtained');
+      expect(shown).not.toContain('OTHERMATTER');
+      expect(shown).not.toContain('OTHERTENANT');
+      expect(answer.claims[0]).toMatchObject({
+        kind: 'doc',
+        documentId: mine.documentId,
+        pinpoint: { page: 2 },
+      });
+    });
+  });
+
+  it('goes through the core gateway and writes an ai_call row, with no source text in audit', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      await seedJudgment(tx);
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION },
+        { now: () => NOW },
+      );
+      expect(answer.claims.length + answer.unsupported.length).toBeGreaterThan(0);
+      const calls = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.aiCall).where(eq(schema.aiCall.workspaceId, workspaceId)),
+      );
+      expect(calls.map((c) => c.task)).toContain('answer_matter_question');
+      const events = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.auditEvent).where(eq(schema.auditEvent.action, 'copilot.asked')),
+      );
+      expect(JSON.stringify(events)).not.toContain('hysterectomy');
     });
   });
 });

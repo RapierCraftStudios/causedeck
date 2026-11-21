@@ -49,6 +49,11 @@ async function setup(
         await s.delete(schema.whatsappLink);
         await s.delete(schema.whatsappOtpChallenge);
       });
+      // Root-cause guard: a surviving real-clock row in either workspace would trip the cooldown.
+      await inWorkspace(tx, workspaceId, async (s) => {
+        expect(await s.select().from(schema.whatsappOtpChallenge)).toEqual([]);
+        expect(await s.select().from(schema.whatsappLink)).toEqual([]);
+      });
     }
     const mock = mockWhatsAppOtpSender();
     let clock = T0;
@@ -114,6 +119,9 @@ describe('whatsapp link code delivery (#711)', () => {
           s.select().from(schema.whatsappOtpChallenge),
         ),
       ).toEqual([]);
+      // No per-number counter exists yet, so no other clock has touched this spec's keys.
+      const counters = await tx.select({ key: schema.rateLimit.key }).from(schema.rateLimit);
+      expect(counters.filter((r) => r.key.startsWith('whatsapp-otp:number:'))).toEqual([]);
       const who = [actor, other];
       for (let i = 0; i < WHATSAPP_OTP_NUMBER_LIMIT.max; i += 1) {
         advance(WHATSAPP_OTP_RESEND_COOLDOWN_MS);

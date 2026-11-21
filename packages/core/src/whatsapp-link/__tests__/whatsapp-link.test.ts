@@ -31,6 +31,11 @@ async function setup(fn: (ctx: Ctx) => Promise<void>): Promise<void> {
         await s.delete(schema.whatsappLink);
         await s.delete(schema.whatsappOtpChallenge);
       });
+      // Root-cause guard: a surviving real-clock row in either workspace would trip the cooldown.
+      await inWorkspace(tx, workspaceId, async (s) => {
+        expect(await s.select().from(schema.whatsappOtpChallenge)).toEqual([]);
+        expect(await s.select().from(schema.whatsappLink)).toEqual([]);
+      });
     }
     const sent: { e164: string; code: string }[] = [];
     let clock = T0;

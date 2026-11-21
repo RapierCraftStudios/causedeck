@@ -96,6 +96,9 @@ has one user per role: `owner`, `advocate`, `junior`, `clerk` and `viewer`. Thei
 - Specs never depend on order or on another spec's writes; the database is reset before each test.
 - Time is frozen for `@visual` tests (automatic); call `clock.freeze()` before `page.goto` anywhere
   else time shows up.
+- The server reads the real clock, so `@visual` specs pin server-rendered dates and times with
+  `pinText` and turn off the weekly pulse card with `disablePrompts`
+  (`fixtures/stable-time.ts`). A mask alone hides pixels but not the layout shift they cause.
 - Motion is off (`reducedMotion: 'reduce'`, `animations: 'disabled'`, caret hidden); fonts are
   self-hosted.
 - Mask anything still dynamic: `toHaveScreenshot({ mask: [page.getByTestId('…')] })`.

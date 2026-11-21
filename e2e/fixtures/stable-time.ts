@@ -3,7 +3,7 @@
 // court-day date line and the feed times change with the day the suite runs. A mask hides those
 // pixels but not the layout shift they cause, so `@visual` specs turn the pulse off with
 // `disablePrompts` and give server-rendered times fixed text with `pinText`.
-import type { Locator } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import postgres from 'postgres';
 
 import { databaseUrl } from '../support/db-reset.ts';
@@ -82,6 +82,6 @@ export const FEED_TIME_FORMAT: Intl.DateTimeFormatOptions = {
 };
 
 /** Pins the court-day date line, the only server-day text on the Today shell. */
-export function pinDayDate(page: import('@playwright/test').Page): Promise<void> {
+export function pinDayDate(page: Page): Promise<void> {
   return pinText(page.locator('[data-day-meta] time'), DAY_DATE_FORMAT);
 }

@@ -11,6 +11,7 @@ import type { Locator, Page, TestInfo } from '@playwright/test';
 
 import type { AsUser } from '../../fixtures/auth.ts';
 import { e2eUser, expect, test, type E2eRole } from '../../fixtures/index.ts';
+import { WEEKDAY_CLOCKS, FEED_TIME_FORMAT, pinText } from '../../fixtures/stable-time.ts';
 import { layoutOf, shellReady } from '../shell/helpers.ts';
 
 import { seedAudit } from './audit-data.ts';
@@ -244,17 +245,30 @@ async function snap(page: Page, name: string) {
     animations: 'disabled',
     caret: 'hide',
     fullPage: true,
-    // Events carry their real insert time.
-    mask: [page.locator('[data-slot="audit-feed"] time')],
   });
+}
+
+// Events carry their real insert time (the audit chain stamps clock_timestamp()). Pinning the text
+// keeps the When column width, and so every column after it, the same on every run (#1106).
+async function pinFeedTimes(page: Page) {
+  await pinText(page.locator('[data-slot="audit-feed"] time'), FEED_TIME_FORMAT);
 }
 
 test.describe('activity visual baselines', () => {
   test('activity-feed', { tag: '@visual' }, async ({ page, asUser, db }, testInfo) => {
     skipWithoutBaseline(testInfo, 'activity-feed.png');
     await seedAudit(db.name, 'chennai-solo');
+    await page.clock.setFixedTime(new Date(WEEKDAY_CLOCKS.monday));
     await openActivity(page, asUser);
     await expect(eventRows(page)).toHaveCount(3);
+    await pinFeedTimes(page);
+    await snap(page, 'activity-feed.png');
+
+    await page.clock.setFixedTime(new Date(WEEKDAY_CLOCKS.sunday));
+    await page.reload();
+    await shellReady(page);
+    await expect(eventRows(page)).toHaveCount(3);
+    await pinFeedTimes(page);
     await snap(page, 'activity-feed.png');
   });
 

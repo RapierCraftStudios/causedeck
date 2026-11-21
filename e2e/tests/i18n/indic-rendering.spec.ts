@@ -14,8 +14,9 @@ import type { Page, TestInfo } from '@playwright/test';
 import postgres from 'postgres';
 
 import { e2eUser, expect, test } from '../../fixtures/index.ts';
+import { WEEKDAY_CLOCKS, disablePrompts, pinDayDate } from '../../fixtures/stable-time.ts';
 import { databaseUrl } from '../../support/db-reset.ts';
-import { openShell } from '../shell/helpers.ts';
+import { openShell, shellReady } from '../shell/helpers.ts';
 
 type IndicLocale = 'ta' | 'kn';
 
@@ -380,8 +381,21 @@ for (const locale of INDIC) {
       const name = `shell-${locale}.png`;
       skipWithoutBaseline(testInfo, name);
       await setOwnerLocale(db.name, locale);
+      // The weekly pulse card and the date line follow the server's real day (#1106): no card,
+      // and the date line pinned to fixed text in the page's language. One baseline must hold
+      // under a Monday and a Sunday browser clock.
+      await disablePrompts(db.name);
+      await page.clock.setFixedTime(new Date(WEEKDAY_CLOCKS.monday));
       await openShell(page, asUser);
       await indicFontReady(page, locale);
+      await pinDayDate(page);
+      await expect(page).toHaveScreenshot(name);
+
+      await page.clock.setFixedTime(new Date(WEEKDAY_CLOCKS.sunday));
+      await page.reload();
+      await shellReady(page);
+      await indicFontReady(page, locale);
+      await pinDayDate(page);
       await expect(page).toHaveScreenshot(name);
     });
   });

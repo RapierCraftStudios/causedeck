@@ -8,6 +8,7 @@ import { existsSync } from 'node:fs';
 import type { Page, TestInfo } from '@playwright/test';
 
 import { expect, test } from '../../fixtures/index.ts';
+import { disablePrompts, pinDayDate } from '../../fixtures/stable-time.ts';
 
 import {
   layoutOf,
@@ -93,11 +94,14 @@ test.describe('shell visual baselines', () => {
     test(
       shot.name.replace(/\.png$/, ''),
       { tag: '@visual' },
-      async ({ page, asUser }, testInfo) => {
+      async ({ page, asUser, db }, testInfo) => {
         test.skip(!shot.layouts.includes(layoutOf(page)), `not a ${layoutOf(page)} state`);
         skipWithoutBaseline(testInfo, shot.name);
+        // The pulse card and the date line follow the server's day (#1106).
+        await disablePrompts(db.name);
         await openShell(page, asUser);
         await shot.setUp(page);
+        await pinDayDate(page);
         await snap(page, shot.name);
       },
     );

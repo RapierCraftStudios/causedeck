@@ -131,6 +131,7 @@ const feeActions = await import('../app/(app)/w/[slug]/invoices/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const researchSearch = await import('../app/(app)/w/[slug]/research/actions.ts');
+const copilotAsk = await import('../app/(app)/w/[slug]/matters/[id]/copilot/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
 const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actions.ts');
 const draftPrecedents = await import('../app/(app)/w/[slug]/drafts/[id]/precedent-actions.ts');
@@ -292,6 +293,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   findAuthoritiesAction: research,
   searchAuthoritiesAction: researchSearch,
   rerunAuthoritySearchAction: researchSearch,
+  askCopilotAction: copilotAsk,
   confirmOutcomeAction: hearingOutcome,
   markPreparedAction: briefSheet,
   generateHandoverAction: continuityActions,
@@ -1260,6 +1262,12 @@ function inputs(workspaceId: string): Record<string, unknown> {
     // Fact-pattern search (#896): ub may not search, re-run or seed a search in A's workspace, and
     // A's research usage is unchanged.
     searchAuthoritiesAction: { workspaceId, query: 'surgery without written consent' },
+    // Grounded copilot (#1115): ub may not ask in A's workspace or matter; A's copilot usage is unchanged.
+    askCopilotAction: {
+      workspaceId,
+      matterId: t.a.rows.matter_issue_tag?.matterId,
+      question: 'surgery without written consent',
+    },
     rerunAuthoritySearchAction: {
       workspaceId,
       plan: {

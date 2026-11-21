@@ -49,6 +49,7 @@ export type Messages = {
     enquiries: string;
     import: string;
     research: string;
+    copilot: string;
   };
   palette: {
     title: string;
@@ -5686,6 +5687,35 @@ export type Messages = {
         company: string;
         intellectual_property: string;
         environment: string;
+      };
+    };
+    copilot: {
+      metaTitle: string;
+      title: string;
+      intro: string;
+      matterIntro: string;
+      denied: string;
+      questionLabel: string;
+      questionPlaceholder: string;
+      submit: string;
+      asking: string;
+      error: string;
+      usage: string;
+      usageUnlimited: string;
+      aiOff: string;
+      noAuthority: string;
+      claimsTitle: string;
+      unsupportedTitle: string;
+      notVerified: string;
+      record: string;
+      kind: {
+        fact: string;
+        doc: string;
+        seg: string;
+      };
+      pinpoint: {
+        page: string;
+        paragraph: string;
       };
     };
   };

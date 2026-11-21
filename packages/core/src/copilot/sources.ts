@@ -38,6 +38,8 @@ export interface JudgmentRef {
   title: string | null;
   court: string;
   neutralCitation: string | null;
+  /** The corpus record the claim links to, from the stored judgment. */
+  sourceUrl: string | null;
 }
 
 export interface GatheredSources {
@@ -79,7 +81,10 @@ export async function factSources(
   ];
   const lead = proceedings.lead;
   if (lead !== null) {
-    const number = lead.number === null ? '' : ` ${lead.number}${lead.year === null ? '' : `/${String(lead.year)}`}`;
+    const number =
+      lead.number === null
+        ? ''
+        : ` ${lead.number}${lead.year === null ? '' : `/${String(lead.year)}`}`;
     facts.push({
       id: 'fact:proceeding',
       page: null,
@@ -163,6 +168,7 @@ export async function corpusSources(
         title: hit.title,
         court: hit.court,
         neutralCitation: hit.neutralCitation,
+        sourceUrl: hit.sourceUrl,
       };
       sources.push({
         id: `seg:${s.segmentId}`,

@@ -4273,6 +4273,28 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'research.searches')).toBe(0);
   },
+  // grounded matter copilot (#1115): B naming A's workspace or matter is denied; A's usage and audit rows are unchanged.
+  askCopilot: async (f) => {
+    const matterId = f.a.rows.judgment_alert?.matterId ?? undefined;
+    const asked = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s
+          .select({ id: schema.auditEvent.id })
+          .from(schema.auditEvent)
+          .where(eq(schema.auditEvent.action, 'copilot.asked')),
+      );
+    const before = await asked();
+    await expectDenied(
+      f.asB((s) =>
+        core.askCopilot(s, bActsOnA(f), {
+          question: 'surgery without consent',
+          ...(matterId === undefined ? {} : { matterId }),
+        }),
+      ),
+    );
+    expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'copilot.questions')).toBe(0);
+    expect(await asked()).toEqual(before);
+  },
   rerunAuthoritySearch: async (f) => {
     await expectDenied(
       f.asB((s) =>

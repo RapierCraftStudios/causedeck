@@ -9,10 +9,10 @@ import { chamber, deps, inWs, input, NOW } from './helpers.ts';
 
 const DAY = 24 * 60 * 60 * 1000;
 
-async function made(tx: Parameters<typeof deps>[0], expiryDays = 7) {
+async function made(tx: Parameters<typeof deps>[0], expiryDays = 7, now?: () => Date) {
   const c = await chamber(tx);
   const created = await createStatusLink(
-    deps(tx),
+    deps(tx, now === undefined ? {} : { now }),
     c.advocate,
     input(c, { expiryDays, nextDate: '2026-11-20' }),
   );
@@ -22,8 +22,11 @@ async function made(tx: Parameters<typeof deps>[0], expiryDays = 7) {
 describe('resolveStatusLink', () => {
   it('returns only the authored fields and the advocate name, and records a view', async () => {
     await withTestDb(async (tx) => {
-      const { token, id, c } = await made(tx);
-      const result = await resolveStatusLink(deps(tx), {
+      // The view row is written by SQL that compares expires_at with the DB now(), so this spec
+      // runs on the real clock: a fixed date would expire the link once real time passes it.
+      const now = () => new Date();
+      const { token, id, c } = await made(tx, 7, now);
+      const result = await resolveStatusLink(deps(tx, { now }), {
         token,
         ip: '203.0.113.9',
         userAgent: 'Mozilla/5.0 (iPhone) Mobile',

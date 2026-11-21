@@ -28,7 +28,11 @@ async function world(tx: Transaction) {
   const { ownerId, workspaceId } = await newWorkspace(tx);
   const forum = await inWorkspace(tx, workspaceId, (s) => buildForum(s, workspaceId));
   const matter = await inWorkspace(tx, workspaceId, (s) =>
-    buildMatter(s, workspaceId, { updatedAt: new Date('2026-11-01T00:00:00Z') }),
+    buildMatter(s, workspaceId, {
+      // opened_at defaults to the DB now(); pin it so the injected clock alone decides staleness.
+      openedAt: new Date('2026-11-01T00:00:00Z'),
+      updatedAt: new Date('2026-11-01T00:00:00Z'),
+    }),
   );
   await inWorkspace(tx, workspaceId, (s) =>
     buildProceeding(s, workspaceId, { matterId: matter.id, forumId: forum.id, state: 'sr_fr' }),

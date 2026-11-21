@@ -13,7 +13,6 @@ import type { Locator, Page, TestInfo } from '@playwright/test';
 
 import type { AsUser } from '../../fixtures/auth.ts';
 import { expect, test, type E2eRole } from '../../fixtures/index.ts';
-import { pinText } from '../../fixtures/stable-time.ts';
 import { shellReady } from '../shell/helpers.ts';
 
 import { activityState, CAPTURE_ID, confirmActivity, seedActivities } from './activity-data.ts';
@@ -288,14 +287,15 @@ function skipWithoutBaseline(testInfo: TestInfo, name: string) {
 }
 
 async function snap(page: Page, name: string) {
-  // Activities carry their real insert time; fixed text keeps the row layout the same every run
-  // (#1106). The countdown ticks on the client, so it stays masked.
-  await pinText(page.locator('[data-slot="activity-item"] time'), 'Mar 12, 2026, 9:30 AM');
   await expect(page).toHaveScreenshot(name, {
     animations: 'disabled',
     caret: 'hide',
     fullPage: true,
-    mask: [page.locator('[data-slot="undo-countdown"]')],
+    // Activities carry their real insert time and countdown.
+    mask: [
+      page.locator('[data-slot="activity-item"] time'),
+      page.locator('[data-slot="undo-countdown"]'),
+    ],
   });
 }
 

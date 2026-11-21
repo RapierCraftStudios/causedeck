@@ -1061,7 +1061,7 @@ export function demoModuleRows(
         // The `next_date` handler's strict payload (packages/core automation/handlers/next-date.ts):
         // the inbox card reads `date`, and Confirm stages it on the matter's main proceeding.
         payload: {
-          proceedingId: mainOf(matterAt(k).id)?.id,
+          proceedingId: mainOf(matterAt(k).id as string)?.id,
           date: addDays(today, 14 + k),
         },
         anchors: [],

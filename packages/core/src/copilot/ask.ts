@@ -160,8 +160,7 @@ export async function askCopilot(
       deps.answer ??
       createGatewayMatterAnswerResolver({
         gateway:
-          deps.gateway ??
-          createCoreAiGateway(db, deps.now === undefined ? {} : { now: deps.now }),
+          deps.gateway ?? createCoreAiGateway(db, deps.now === undefined ? {} : { now: deps.now }),
         scope: {
           workspaceId: actor.workspaceId,
           userId: actor.userId,
@@ -172,7 +171,9 @@ export async function askCopilot(
       });
     const answer = await answerMatterQuestion(question, sources, resolve);
 
-    await increment(ctx, COPILOT_QUESTION_KEY, 1, { idempotencyKey: `copilot-question:${requestId}` });
+    await increment(ctx, COPILOT_QUESTION_KEY, 1, {
+      idempotencyKey: `copilot-question:${requestId}`,
+    });
     await withWorkspace(db, { workspaceId: actor.workspaceId, userId: actor.userId }, (tx) =>
       record(
         {

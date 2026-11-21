@@ -12,7 +12,10 @@ const task = getTask('answer_matter_question');
 const input = {
   question: 'surgery without informed consent',
   sources: [
-    { id: 'doc:d1:2', text: 'The patient was operated. The surgery was done without informed consent.' },
+    {
+      id: 'doc:d1:2',
+      text: 'The patient was operated. The surgery was done without informed consent.',
+    },
     { id: 'fact:f1', text: 'Costs were awarded.' },
   ],
 };

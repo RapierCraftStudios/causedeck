@@ -28,7 +28,12 @@ async function world(tx: Transaction) {
   const { ownerId, workspaceId } = await newWorkspace(tx);
   const forum = await inWorkspace(tx, workspaceId, (s) => buildForum(s, workspaceId));
   const matter = await inWorkspace(tx, workspaceId, (s) =>
-    buildMatter(s, workspaceId, { updatedAt: new Date('2026-11-01T00:00:00Z') }),
+    // `openedAt` is pinned too: its DB default is the real now(), and `lastEventDay` takes the later of
+    // it and the last event, so a real date past the spec clocks would make the matter look fresh.
+    buildMatter(s, workspaceId, {
+      openedAt: new Date('2026-11-01T00:00:00Z'),
+      updatedAt: new Date('2026-11-01T00:00:00Z'),
+    }),
   );
   await inWorkspace(tx, workspaceId, (s) =>
     buildProceeding(s, workspaceId, { matterId: matter.id, forumId: forum.id, state: 'sr_fr' }),

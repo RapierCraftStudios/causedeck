@@ -164,6 +164,12 @@ describe('image', () => {
     assert.match(dockerfile, /ARG RATELIMIT_COMMIT=[0-9a-f]{40}/);
     assert.match(dockerfile, /--with github\.com\/mholt\/caddy-ratelimit@\$\{RATELIMIT_COMMIT\}/);
   });
+
+  it('passes xcaddy a single-v version (#1104)', () => {
+    // The builder image sets ENV CADDY_VERSION=v<ver>, so `v${CADDY_VERSION}` gave vv2.10.2.
+    assert.match(dockerfile, /xcaddy build "v\$\{CADDY_VERSION#v\}"/);
+    assert.doesNotMatch(dockerfile, /xcaddy build v\$\{CADDY_VERSION\}/);
+  });
 });
 
 describe('fail2ban', () => {

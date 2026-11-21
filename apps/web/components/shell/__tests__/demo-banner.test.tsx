@@ -58,8 +58,9 @@ describe('DemoBanner (#182)', () => {
       ['Start your own workspace', 'start'],
     ]);
     // The primary button shows from 768 px; at 360 only the text button.
-    expect(buttons[1]?.className).toContain('hidden');
-    expect(buttons[1]?.className).toContain('md:inline-flex');
+    // The wrapper hides Start below md: on the button itself the variant's `inline-flex` beat `hidden`.
+    expect(buttons[1]?.parentElement?.className).toBe('hidden md:inline-flex');
+    expect(buttons[1]?.className).not.toContain('hidden');
     expect(buttons[0]?.className).not.toContain('hidden');
     // Info colours, never the danger colours.
     expect(banner()?.getAttribute('data-tone')).toBe('info');

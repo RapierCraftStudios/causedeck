@@ -2,13 +2,19 @@
 // with a data table alternative. Counts and rates for this workspace only; there is no comparison
 // with any other workspace. Server-renderable: no state, no script.
 import type { TenureMetrics } from '@causedeck/core/memory';
-import { getTranslations } from 'next-intl/server';
+import { isLocale } from '@causedeck/i18n/locales';
+import { getLocale, getTranslations } from 'next-intl/server';
+
+import { barHeightPercent, formatRate } from '../../../../../../lib/memory/memory-format.ts';
 
 export async function TenurePanel({ metrics }: { metrics: TenureMetrics }) {
   const t = await getTranslations('memory.tenure');
   const weeks = metrics.weeks;
   const { briefs, unedited, rate } = metrics.briefAcceptedUnedited;
-  const pct = (value: number | null) => (value === null ? '–' : t('percent', { value }));
+  const rawLocale = await getLocale();
+  const locale = isLocale(rawLocale) ? rawLocale : 'en';
+  const pct = (value: number | null) => formatRate(value, locale);
+  const maxRate = Math.max(0, ...weeks.map((w) => w.correctionRate ?? 0));
   return (
     <section
       aria-labelledby="memory-tenure-title"
@@ -33,17 +39,23 @@ export async function TenurePanel({ metrics }: { metrics: TenureMetrics }) {
         <>
           <figure>
             <figcaption className="text-sm font-medium">{t('correctionRate')}</figcaption>
-            <ol role="img" aria-label={t('chartLabel')} className="mt-2 flex h-24 items-end gap-1">
+            <ol role="img" aria-label={t('chartLabel')} className="mt-2 flex h-28 items-end gap-2">
               {weeks.map((w) => (
                 <li
                   key={w.week}
-                  className="flex h-full flex-1 flex-col justify-end"
+                  className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1"
                   aria-hidden="true"
                 >
-                  <span
-                    className="bg-ink-muted block min-h-px w-full rounded-t"
-                    style={{ height: `${String(Math.round((w.correctionRate ?? 0) * 100))}%` }}
-                  />
+                  <span className="text-ink-muted text-xs tabular-nums">
+                    {pct(w.correctionRate)}
+                  </span>
+                  <span className="bg-surface-sunken flex h-16 w-full max-w-12 items-end rounded-t">
+                    <span
+                      className="bg-ink-muted block min-h-px w-full rounded-t"
+                      style={{ height: `${String(barHeightPercent(w.correctionRate, maxRate))}%` }}
+                    />
+                  </span>
+                  <span className="text-ink-subtle text-xs">{w.week}</span>
                 </li>
               ))}
             </ol>

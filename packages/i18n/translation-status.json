@@ -66,6 +66,7 @@
     "courtDay.board.marker.failed",
     "courtDay.board.marker.invalid",
     "courtDay.board.marker.label",
+    "courtDay.board.marker.placeholder",
     "courtDay.board.marker.set",
     "courtDay.board.offline",
     "courtDay.board.offlineAt",
@@ -6038,7 +6039,8 @@
     "courtInsights.timeline.disposalTime": "draft",
     "courtInsights.timeline.basedOn": "draft",
     "courtInsights.timeline.narrowedToStage": "draft",
-    "courtInsights.timeline.minimum": "draft"
+    "courtInsights.timeline.minimum": "draft",
+    "courtDay.board.marker.placeholder": "draft"
   },
   "kn": {
     "auth.checkEmail.body": "draft",
@@ -11606,6 +11608,7 @@
     "courtInsights.timeline.disposalTime": "draft",
     "courtInsights.timeline.basedOn": "draft",
     "courtInsights.timeline.narrowedToStage": "draft",
-    "courtInsights.timeline.minimum": "draft"
+    "courtInsights.timeline.minimum": "draft",
+    "courtDay.board.marker.placeholder": "draft"
   }
 }

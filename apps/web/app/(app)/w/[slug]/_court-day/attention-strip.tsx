@@ -74,13 +74,13 @@ export async function AttentionStrip({
         <p
           key={item.proceedingId}
           data-expected-not-listed
-          className="border-border rounded-md border px-3 py-2 text-sm"
+          className="border-line rounded-md border px-3 py-2 text-sm"
         >
           {t('expectedNotListed', { case: item.caseLabel, day: t(`failure.${which}`) })}
         </p>
       ))}
       {changes === 0 ? null : (
-        <div className="border-border flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
+        <div className="border-line flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
           <p role="status" aria-live="polite">
             {t('diff.banner', { count: changes })}
           </p>

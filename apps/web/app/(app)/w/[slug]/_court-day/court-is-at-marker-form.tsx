@@ -63,7 +63,8 @@ export function CourtIsAtMarkerForm({
         id={`court-is-at-${hallId}`}
         data-court-marker-input
         inputMode="numeric"
-        className="border-border bg-surface h-11 w-16 rounded-md border px-2 text-center text-sm"
+        placeholder={t('placeholder')}
+        className="border-line bg-surface h-11 w-16 rounded-md border px-2 text-center text-sm"
         value={value}
         aria-invalid={error !== null}
         onChange={(event) => {

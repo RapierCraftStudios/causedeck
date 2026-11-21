@@ -65,7 +65,7 @@ export async function DayRail({ day, slug }: { day: CourtDay; slug: string }) {
     <>
       <details
         data-day-drawer
-        className="border-border bg-surface z-sticky sticky bottom-0 rounded-t-md border p-3 md:block xl:hidden"
+        className="border-line bg-surface z-sticky sticky bottom-[calc(56px+env(safe-area-inset-bottom))] max-h-[60vh] overflow-y-auto rounded-t-md border p-3 md:bottom-0 md:block xl:hidden"
       >
         <summary className="min-h-11 cursor-pointer text-sm font-medium">
           {t('summary', { carry: carried.length, needs: needs.length })}

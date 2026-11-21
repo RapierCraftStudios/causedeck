@@ -4,8 +4,10 @@
 // keyboard shortcuts t (today), w / m (view), [ and ] (previous and next range). The hrefs are
 // computed by the page so the same links work without script.
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+
+import { formatDay } from '../../../../../../lib/format-day.ts';
 
 export interface ToolbarLinks {
   previous: string;
@@ -33,6 +35,7 @@ export function CalendarToolbar({
   to: string;
 }) {
   const t = useTranslations('calendarView');
+  const locale = useLocale();
   const router = useRouter();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -74,7 +77,9 @@ export function CalendarToolbar({
         {item(links.previous, t('toolbar.previous'))}
         {item(links.today, t('toolbar.today'))}
         {item(links.next, t('toolbar.next'))}
-        <span className="text-sm">{t('toolbar.range', { from, to })}</span>
+        <span className="text-sm">
+          {t('toolbar.range', { from: formatDay(from, locale), to: formatDay(to, locale) })}
+        </span>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <span role="group" aria-label={t('views.label')} className="flex gap-1">

@@ -93,7 +93,9 @@ export interface ProvenanceChipProps extends Omit<
 }
 
 function StateMark({ source }: { source: ProvenanceSource }) {
-  if (source.kind === 'manual' || source.state === 'edited') {
+  // A manual fact's kind icon is already a pencil: a second one beside it would read as a glitch.
+  if (source.kind === 'manual' && source.state !== 'edited') return null;
+  if (source.state === 'edited') {
     return <Pencil aria-hidden="true" data-slot="provenance-pencil" className="text-seal" />;
   }
   if (source.state === 'rejected') {

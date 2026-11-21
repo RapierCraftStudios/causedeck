@@ -18,9 +18,13 @@ function firstGrapheme(word: string): string {
   return '';
 }
 
-/** Up to two initials from a name: first and last word. */
+/** Up to two initials from a name: first and last word that starts with a letter or digit, so a
+ * suffix like "(fictional)" or "-" never becomes an initial. */
 export function initials(name: string): string {
-  const words = name.trim().split(/\s+/u).filter(Boolean);
+  const words = name
+    .trim()
+    .split(/\s+/u)
+    .filter((word) => /^[\p{L}\p{N}]/u.test(word));
   const first = words[0];
   if (first === undefined) return '';
   const last = words.length > 1 ? words[words.length - 1] : undefined;

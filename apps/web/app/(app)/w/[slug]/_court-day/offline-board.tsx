@@ -38,7 +38,7 @@ export function OfflineBoard({ slug, board, savedAt, stale }: OfflineBoardProps)
               <ol className="space-y-1">
                 {hall.lists.flatMap((list) =>
                   list.items.map((item) => (
-                    <li key={item.listingId} className="border-border rounded-md border p-2">
+                    <li key={item.listingId} className="border-line rounded-md border p-2">
                       <Link href={`/w/${slug}/briefs/${item.listingId}`} className="block">
                         <span className="text-ink-muted mr-2 text-sm">{item.itemNo ?? ''}</span>
                         <span className="text-ink font-medium">{item.matterTitle}</span>

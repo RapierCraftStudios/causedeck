@@ -1,8 +1,11 @@
 // Narrative blocks are drafted by the ai gateway through an injected port. The model returns text
 // only (the task defines no tools), the output is schema-validated and capped at the block's
-// maxChars, and calls are India-only unless the caller explicitly overrides it.
+// maxChars, and calls are India-only unless the caller explicitly overrides it. D-004: the model
+// never writes an authority; output containing a citation pattern is rejected (authorities enter a
+// draft only through the verified corpus path).
 import { getTask, type RunContext } from '@causedeck/ai';
 
+import { extractFromText } from './citations/extract';
 import type { NarrativeBlock } from './blocks';
 import { factsForPrompt, type Facts } from './slots';
 import type { NarrativeText } from './render/common';
@@ -48,6 +51,9 @@ export async function draftNarrative(
   if (text.trim() === '') throw new NarrativeOutputError('draft_narrative returned no text');
   if (text.length > block.maxChars) {
     throw new NarrativeOutputError(`draft_narrative text exceeds ${String(block.maxChars)} chars`);
+  }
+  if (extractFromText(text, 'narrative').length > 0) {
+    throw new NarrativeOutputError('draft_narrative output contains a citation');
   }
   return { text, modelDrafted: true, rewritten: false };
 }

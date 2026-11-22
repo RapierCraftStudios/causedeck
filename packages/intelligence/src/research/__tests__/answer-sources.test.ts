@@ -41,6 +41,23 @@ describe('answerMatterQuestion', () => {
     expect(out.answerText).toBe('S1 S2 S3');
   });
 
+  it('pinpoints the numbered paragraph of a judgment segment (#1132)', async () => {
+    const segment: CopilotSource = {
+      id: 'seg:s2',
+      text: '11. Earlier text.\n12. No written consent was taken.\n13. Costs follow.',
+      page: 7,
+      judgmentId: 'j2',
+    };
+    const out = await answerMatterQuestion(
+      'q',
+      [segment],
+      reply([{ statement: 'S', sourceId: 'seg:s2', quote: 'no written consent was taken' }]),
+    );
+    expect(out.claims.map((c) => [c.kind, c.pinpoint])).toEqual([
+      ['seg', { page: 7, paragraph: 12 }],
+    ]);
+  });
+
   it('flags a fabricated source id and an altered quote, never verified, left out of the text', async () => {
     const out = await answerMatterQuestion(
       'q',

@@ -29,6 +29,8 @@ const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.
 const nav = vi.hoisted(() => ({
   pathname: '/w/demo/matters/00000000-0000-4000-8000-000000000001',
 }));
+// The layout reads the workspace's flags for flag-gated tabs (copilot, #1132).
+const flags = vi.hoisted(() => ({ copilot: false }));
 const page = vi.hoisted(() => ({
   context: null as WorkspaceContext | null,
   dev: true,
@@ -94,6 +96,9 @@ vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(page.context),
 }));
 vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
+vi.mock('../lib/flags.ts', () => ({
+  workspaceFlagCheck: () => Promise.resolve((key: string) => key === 'copilot.enabled' && flags.copilot),
+}),);
 vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('../lib/report-error.ts', () => ({ reportError }));
 vi.mock('@causedeck/core/runtime', () => runtime);
@@ -276,6 +281,29 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  flags.copilot = false;
+  nav.pathname = `/w/demo/matters/${MATTER_ID}`;
+});
+
+describe('matter workspace copilot tab (#1132)', () => {
+  it('hides the Copilot tab while copilot.enabled is off', async () => {
+    await renderRoute();
+    const tablist = screen.getByRole('tablist', { name: ws.tabListLabel });
+    expect(within(tablist).queryByRole('tab', { name: ws.tabs.copilot })).toBeNull();
+  });
+
+  it('shows the Copilot tab, selected on its route, while copilot.enabled is on', async () => {
+    flags.copilot = true;
+    nav.pathname = `/w/demo/matters/${MATTER_ID}/copilot`;
+    await renderRoute();
+    const tablist = screen.getByRole('tablist', { name: ws.tabListLabel });
+    const tab = within(tablist).getByRole('tab', { name: ws.tabs.copilot });
+    expect(tab.getAttribute('href')).toBe(`/w/demo/matters/${MATTER_ID}/copilot`);
+    expect(tab.getAttribute('aria-selected')).toBe('true');
+    expect(
+      within(tablist).getByRole('tab', { name: ws.tabs.overview }).getAttribute('aria-selected'),
+    ).toBe('false');
+  });
 });
 
 describe('matter workspace Overview (#390)', () => {

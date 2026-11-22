@@ -156,8 +156,8 @@
       "submit": "Ask",
       "asking": "Asking…",
       "error": "The copilot could not answer. Try again.",
-      "usage": "{used} of {limit} questions used this month",
-      "usageUnlimited": "{used} questions this month",
+      "usage": "{used, plural, one {# of {limit} question used this month} other {# of {limit} questions used this month}}",
+      "usageUnlimited": "{used, plural, one {# question this month} other {# questions this month}}",
       "aiOff": "AI is off for this matter. The copilot does not read it.",
       "noAuthority": "No authority found.",
       "claimsTitle": "Verified claims",
@@ -171,7 +171,7 @@
       },
       "pinpoint": {
         "page": "page {page}",
-        "paragraph": "paragraph {paragraph}"
+        "paragraph": "para {paragraph}"
       }
     },
     "statutes": {

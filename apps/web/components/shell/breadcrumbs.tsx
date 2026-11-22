@@ -11,8 +11,13 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Fragment } from 'react';
+import { Fragment, useSyncExternalStore } from 'react';
 
+import {
+  breadcrumbLabels,
+  serverBreadcrumbLabels,
+  subscribeBreadcrumbLabels,
+} from '../../lib/breadcrumb-labels.ts';
 import { NAV_ITEMS } from '../../lib/nav.ts';
 import type { Workspace } from '../../lib/workspace-context.ts';
 
@@ -29,10 +34,18 @@ function decode(segment: string): string {
   }
 }
 
-/** Workspace, then the current destination, then any deeper segment. The last crumb is the page. */
+/**
+ * Workspace, then the current destination, then any deeper segment. The last crumb is the page. A
+ * segment a route labelled (`<BreadcrumbLabel>`, e.g. a matter id → its title) shows that label.
+ */
 export function Breadcrumbs({ workspace }: { workspace: Workspace }) {
   const t = useTranslations();
   const pathname = usePathname();
+  const labels = useSyncExternalStore(
+    subscribeBreadcrumbLabels,
+    breadcrumbLabels,
+    serverBreadcrumbLabels,
+  );
   const base = `/w/${encodeURIComponent(workspace.slug)}`;
   const rest = pathname.startsWith(`${base}/`)
     ? pathname
@@ -49,8 +62,10 @@ export function Breadcrumbs({ workspace }: { workspace: Workspace }) {
     let href = `${base}/${item.id}`;
     for (const segment of deeper) {
       href = `${href}/${segment}`;
-      const label = decode(segment);
-      crumbs.push({ label: label.charAt(0).toLocaleUpperCase() + label.slice(1), href });
+      const decoded = decode(segment);
+      const label =
+        labels.get(decoded) ?? decoded.charAt(0).toLocaleUpperCase() + decoded.slice(1);
+      crumbs.push({ label, href });
     }
   }
 

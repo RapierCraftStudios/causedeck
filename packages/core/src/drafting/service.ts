@@ -8,6 +8,7 @@
 import { createHash } from 'node:crypto';
 
 import {
+  applyPlaybook,
   draftNarrative,
   getPreset,
   resolveBlocks,
@@ -21,6 +22,7 @@ import {
   type Resolution,
 } from '@causedeck/drafting';
 import { isUuid, schema, type Database, type Queryable, type Transaction } from '@causedeck/db';
+import type { Playbook } from '@causedeck/validators';
 import type { ExportFormat, SlotResolver } from '@causedeck/validators/drafting';
 import { EXPORT_FORMATS } from '@causedeck/validators/drafting';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
@@ -291,6 +293,22 @@ export async function loadDraftFacts(
   actor: DraftActor,
   matterId: string | null,
 ): Promise<Facts> {
+  return (await loadDraftContext(deps, actor, matterId)).facts;
+}
+
+interface DraftContext {
+  facts: Facts;
+  /** The matter is flagged sensitive (CA-10): no AI processing. */
+  sensitive: boolean;
+  /** The lead proceeding's forum id, the court identity a playbook is matched against. */
+  courtId: string | null;
+}
+
+async function loadDraftContext(
+  deps: DraftingDeps & { db: Database | Transaction },
+  actor: DraftActor,
+  matterId: string | null,
+): Promise<DraftContext> {
   const now = deps.now?.() ?? new Date();
   const facts: Facts = { today: IST_DAY.format(now) };
   const { workspaceId, userId } = actor;
@@ -304,7 +322,7 @@ export async function loadDraftFacts(
   });
   if (names.workspace) facts.workspace = { name: names.workspace };
   if (names.advocate) facts.advocate = { name: names.advocate };
-  if (matterId === null) return facts;
+  if (matterId === null) return { facts, sensitive: false, courtId: null };
 
   const graph = { db: deps.db, events: NO_EVENTS, ...(deps.now ? { now: deps.now } : {}) };
   const overview = await getMatterOverview(graph, actor, { matterId });
@@ -324,7 +342,7 @@ export async function loadDraftFacts(
     ...(lead?.respondent ? { respondent: lead.respondent } : {}),
   };
   if (overview.nextDate) facts.hearing = { nextDate: overview.nextDate.date };
-  return facts;
+  return { facts, sensitive: overview.header.sensitive, courtId: lead?.forum.id ?? null };
 }
 
 /** Narrative text per block key through the gateway port; model calls are India-only by default. */
@@ -360,6 +378,11 @@ export interface RenderedDraft {
   narratives: Record<string, NarrativeText>;
   /** The court preset the draft's template names, if the engine has it. */
   presetKey: string | null;
+  /**
+   * True when the matter is sensitive (CA-10): no narrative model call was made, whether or not a
+   * port was given. False otherwise.
+   */
+  aiBlocked: boolean;
 }
 
 /**
@@ -369,7 +392,19 @@ export interface RenderedDraft {
 export async function renderDraft(
   deps: DraftingDeps & { db: Database | Transaction; narrativePort?: NarrativePort },
   actor: DraftActor,
-  input: { draftId: string; versionNo?: number },
+  input: {
+    draftId: string;
+    versionNo?: number;
+    /**
+     * A confirmed playbook applied to the blocks. Only the prayers listed in `confirmedPrayers` (exact
+     * match) are used, and the annexure order only when `confirmAnnexureOrder` is true.
+     */
+    playbook?: {
+      playbook: Playbook;
+      confirmedPrayers: readonly string[];
+      confirmAnnexureOrder?: boolean;
+    };
+  },
 ): Promise<RenderedDraft> {
   const loaded = await asDraftMember(deps.db, actor, async (tx, reader, settings) => {
     const row = await requireDraft(tx, reader, settings, input.draftId, 'draft.read');
@@ -397,15 +432,30 @@ export async function renderDraft(
       .where(eq(template.id, row.templateId));
     return { row, version, courtPreset: tpl?.courtPreset ?? null };
   });
-  const blocks = checkBlocksFor(loaded.version.content);
-  const facts = await loadDraftFacts(deps, actor, loaded.row.matterId);
-  const narratives = deps.narrativePort
-    ? await draftNarratives(deps.narrativePort, blocks, facts, {
-        workspaceId: actor.workspaceId,
-        userId: actor.userId,
-        ...(loaded.row.matterId ? { matterId: loaded.row.matterId } : {}),
-      })
-    : {};
+  const stored = checkBlocksFor(loaded.version.content);
+  const { facts, sensitive, courtId } = await loadDraftContext(deps, actor, loaded.row.matterId);
+  const pb = input.playbook;
+  const blocks = pb
+    ? applyPlaybook(
+        stored,
+        {
+          ...pb.playbook,
+          standardPrayers: pb.playbook.standardPrayers.filter((p) =>
+            pb.confirmedPrayers.includes(p),
+          ),
+          annexureOrder: pb.confirmAnnexureOrder ? pb.playbook.annexureOrder : [],
+        },
+        { courtId },
+      ).blocks
+    : stored;
+  const narratives =
+    deps.narrativePort && !sensitive
+      ? await draftNarratives(deps.narrativePort, blocks, facts, {
+          workspaceId: actor.workspaceId,
+          userId: actor.userId,
+          ...(loaded.row.matterId ? { matterId: loaded.row.matterId } : {}),
+        })
+      : {};
   return {
     draftId: loaded.row.id,
     versionNo: loaded.version.versionNo,
@@ -416,6 +466,7 @@ export async function renderDraft(
     narratives,
     presetKey:
       loaded.courtPreset && getPreset(loaded.courtPreset as never) ? loaded.courtPreset : null,
+    aiBlocked: sensitive,
   };
 }
 

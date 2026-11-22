@@ -1,5 +1,7 @@
-// Acknowledging unverified citations (#77) and the export gate. A draft with a `not_found`
-// citation exports only after a member with `draft.export` acknowledges those citations: the
+// Acknowledging unverified citations (#77, #1136) and the export gate. A draft with a citation that
+// is not `verified` (`not_found`; `unknown`, which covers failed quote and pinpoint checks and the
+// retryable `throttled`/`resolver_unavailable` rows) exports only after a member with `draft.export`
+// acknowledges those citations: the
 // acknowledgement sets `ack_by`/`ack_at` on the rows and writes `draft.citations.acknowledged`
 // (actor, reason, citation ids) in the same transaction. A version whose citations were never
 // checked is also held back. Draft text never reaches a log or the audit row.
@@ -7,7 +9,7 @@ import { extractCitations, type Block } from '@causedeck/drafting';
 import { isUuid, schema, type Queryable, type Transaction } from '@causedeck/db';
 import { AcknowledgeUnverifiedInput } from '@causedeck/validators/citation';
 import { AcknowledgeFactCheckInput } from '@causedeck/validators/factcheck';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, ne } from 'drizzle-orm';
 
 import { record } from '../audit/index.ts';
 import { conflict, invalid, notFound } from '../shared/errors.ts';
@@ -20,7 +22,10 @@ const { authority, draftFactAck, draftVersion } = schema;
 export interface CitationExportGate {
   /** Citations in the version with no stored check yet. */
   unchecked: number;
-  /** `not_found` citations nobody acknowledged (authority ids). */
+  /**
+   * Citations that are not `verified` and nobody acknowledged (authority ids): `not_found`, and
+   * `unknown` including failed quote/pinpoint checks and retryable rows, which stay retryable.
+   */
   unacknowledged: string[];
 }
 
@@ -48,16 +53,16 @@ export async function exportBlockedByCitations(
   return {
     unchecked,
     unacknowledged: rows
-      .filter((r) => r.status === 'not_found' && r.ackAt === null)
+      .filter((r) => r.status !== 'verified' && r.ackAt === null)
       .map((r) => r.id),
   };
 }
 
-/** CONFLICT unless the version has been checked and every `not_found` citation is acknowledged. */
+/** CONFLICT unless the version has been checked and every non-`verified` citation is acknowledged. */
 export function assertCitationsClear(gate: CitationExportGate): void {
   if (gate.unchecked > 0) throw conflict('Check the citations of this draft before exporting');
   if (gate.unacknowledged.length > 0) {
-    throw conflict('Acknowledge the citations that were not found before exporting');
+    throw conflict('Acknowledge the citations that could not be verified before exporting');
   }
 }
 
@@ -66,7 +71,7 @@ export interface AcknowledgeResult {
   acknowledged: string[];
 }
 
-/** Acknowledge `not_found` citations of a version (`draft.export`). */
+/** Acknowledge citations of a version that are not `verified` (`draft.export`, audited). */
 export async function acknowledgeUnverified(
   deps: { db: Queryable; now?: () => Date },
   actor: DraftActor,
@@ -95,13 +100,13 @@ export async function acknowledgeUnverified(
         and(
           eq(authority.workspaceId, reader.workspaceId),
           eq(authority.draftVersionId, draftVersionId),
-          eq(authority.status, 'not_found'),
+          ne(authority.status, 'verified'),
           inArray(authority.id, ids),
         ),
       )
       .returning({ id: authority.id });
     if (updated.length !== ids.length) {
-      throw invalid('Only citations that were not found in this version can be acknowledged');
+      throw invalid('Only citations of this version that are not verified can be acknowledged');
     }
     await record(
       { db: tx, workspaceId: reader.workspaceId, actor: { userId: reader.userId, kind: 'user' } },

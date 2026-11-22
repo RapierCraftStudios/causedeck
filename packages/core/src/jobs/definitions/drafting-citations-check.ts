@@ -6,7 +6,7 @@
 // backoff until its last attempt, which keeps that state and completes. A missing version or a
 // workspace error cannot succeed on retry. Logs carry ids and counts, never draft text.
 import { serverEnv } from '@causedeck/config/env';
-import { db as rootDb, type Database, type Transaction } from '@causedeck/db';
+import { db as rootDb, type Database, type Queryable, type Transaction } from '@causedeck/db';
 import {
   createIndianKanoonResolver,
   createMockResolver,
@@ -17,6 +17,7 @@ import {
 import type { CitationReport } from '@causedeck/validators/citation';
 import { z } from 'zod';
 
+import { createCorpusResolver } from '../../citations/index.ts';
 import { checkDraft } from '../../drafting/index.ts';
 import { WorkspaceError } from '../../shared/errors.ts';
 import type { JobContext } from '../context.ts';
@@ -47,12 +48,20 @@ export interface DraftingCitationsCheckDeps {
 
 let defaultLimiter: RateLimiter | undefined;
 
-/** The mock unless `CITATION_RESOLVER=indian-kanoon` (which needs its token). */
-function resolverFromEnv(): CitationResolver {
+/**
+ * The resolver `CITATION_RESOLVER` selects (#1136): the corpus over `db` by default, the offline
+ * mock for CI, or Indian Kanoon (which needs its token). Exported for tests only; not a core export.
+ */
+export function resolverFromEnv(db: Queryable): CitationResolver {
   const env = serverEnv();
-  return env.CITATION_RESOLVER === 'indian-kanoon'
-    ? createIndianKanoonResolver({ token: env.INDIAN_KANOON_API_TOKEN.reveal() })
-    : createMockResolver();
+  switch (env.CITATION_RESOLVER) {
+    case 'indian-kanoon':
+      return createIndianKanoonResolver({ token: env.INDIAN_KANOON_API_TOKEN.reveal() });
+    case 'mock':
+      return createMockResolver();
+    default:
+      return createCorpusResolver({ db });
+  }
 }
 
 /** The job body. Exported for tests. */
@@ -63,10 +72,11 @@ export async function runDraftingCitationsCheck(
 ): Promise<CitationReport> {
   let report: CitationReport;
   try {
+    const db = deps.db ?? rootDb;
     report = await checkDraft(
       {
-        db: deps.db ?? rootDb,
-        resolver: deps.resolver ?? resolverFromEnv(),
+        db,
+        resolver: deps.resolver ?? resolverFromEnv(db),
         limiter: deps.limiter ?? (defaultLimiter ??= createRateLimiter()),
         dailyBudget: deps.dailyBudget ?? CITATION_DAILY_BUDGET,
         log: ctx.log,

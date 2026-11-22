@@ -198,7 +198,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
           raw: c.raw,
           status: c.status,
           title: c.title,
-          acknowledged: c.status === 'not_found' && !gate.unacknowledged.includes(c.id),
+          acknowledged: c.status !== 'verified' && !gate.unacknowledged.includes(c.id),
         })),
         findings: found,
         checked: report.items.length > 0 || found.length > 0,

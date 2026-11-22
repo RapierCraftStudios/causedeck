@@ -8,7 +8,6 @@
 // writes a claim, proposes a replacement or judges a merit (PX-6). Draft text never reaches a log or
 // an audit row: rows and events hold canonical claim keys, kinds and counts.
 import {
-  createMockResolver,
   extractClaims,
   extractWithPort,
   validateBlockTree,
@@ -33,6 +32,7 @@ import {
 import { and, eq, inArray, isNotNull } from 'drizzle-orm';
 
 import { record } from '../audit/index.ts';
+import { createCorpusResolver } from '../citations/index.ts';
 import {
   getMatterTimeline,
   listMatterProceedingsTree,
@@ -265,7 +265,7 @@ export async function runFactCheck(
   const claims = claimsOf(target.version.content);
   const facts = await loadFactCheckFacts(deps, actor, target.matterId);
   const verdicts = await verify(claims, facts, {
-    resolver: deps.resolver ?? createMockResolver(),
+    resolver: deps.resolver ?? createCorpusResolver({ db: deps.db }),
     workspaceId: actor.workspaceId,
   });
   return asDraftMember(deps.db, actor, async (tx, reader) => {
@@ -495,7 +495,7 @@ export async function checkFactsLive(
   for (const b of blocks) claims.push(...(await extractWithPort(b.text, b.key, port)));
   const facts = await loadFactCheckFacts(deps, actor, input.matterId);
   const verdicts = await verify(claims, facts, {
-    resolver: deps.resolver ?? createMockResolver(),
+    resolver: deps.resolver ?? createCorpusResolver({ db: deps.db }),
     workspaceId: actor.workspaceId,
   });
   const decided = await asDraftMember(deps.db, actor, (tx, reader) =>

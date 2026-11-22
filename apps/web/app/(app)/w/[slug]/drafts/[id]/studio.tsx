@@ -488,7 +488,7 @@ export function DraftStudio(props: StudioProps) {
   const citations = live?.citations ?? checks?.citations ?? [];
   const checkFindings = live?.findings ?? checks?.findings ?? [];
   const unacknowledged = citations.filter(
-    (c) => c.status === 'not_found' && !c.acknowledged,
+    (c) => c.status !== 'verified' && !c.acknowledged,
   ).length;
   const scope = { workspaceId: props.workspaceId, draftVersionId: checks?.versionId ?? '' };
 
@@ -518,7 +518,7 @@ export function DraftStudio(props: StudioProps) {
   async function acknowledge(statement: string) {
     if (checks === undefined) return false;
     const ids = citations
-      .filter((c) => c.status === 'not_found' && !c.acknowledged)
+      .filter((c) => c.status !== 'verified' && !c.acknowledged)
       .map((c) => c.id);
     const result = await checks.actions.acknowledge({
       ...scope,

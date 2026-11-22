@@ -7,7 +7,6 @@
 // strings are logged at debug level only, without matter identifiers.
 import {
   checkCitations,
-  createMockResolver,
   extractCitations,
   validateBlockTree,
   type Block,
@@ -26,6 +25,7 @@ import type {
 import { and, eq, gte, sql } from 'drizzle-orm';
 
 import { record } from '../audit/index.ts';
+import { createCorpusResolver } from '../citations/index.ts';
 import { invalid, notFound } from '../shared/errors.ts';
 
 import { asDraftMember, requireDraft, type DraftActor } from './policy.ts';
@@ -43,7 +43,7 @@ export type CitationActor = DraftActor | { workspaceId: string; system: true };
 
 export interface CheckDraftDeps {
   db: Queryable;
-  /** The mock (offline) resolver when omitted. */
+  /** The corpus resolver (#1136) when omitted; the mock only when a caller passes it. */
   resolver?: CitationResolver;
   limiter?: RateLimiter;
   /** External resolver calls a workspace may make per IST day; unlimited when omitted. */
@@ -166,7 +166,7 @@ export async function checkDraft(
   const { workspaceId } = actor;
   if (!isUuid(workspaceId) || !isUuid(draftVersionId)) throw notFound('Version not found');
   const now = deps.now ?? (() => new Date());
-  const resolver = deps.resolver ?? createMockResolver();
+  const resolver = deps.resolver ?? createCorpusResolver({ db: deps.db });
   const dayStart = new Date(`${IST_DAY.format(now())}T00:00:00+05:30`);
 
   const loaded = isSystem(actor)

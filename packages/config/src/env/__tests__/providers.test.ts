@@ -159,6 +159,29 @@ describe('provider switches', () => {
     expect(() => createEnv({ ...without, NODE_ENV: 'test' })).not.toThrow();
   });
 
+  it('CITATION_RESOLVER (#1136): defaults to the in-process corpus; mock and indian-kanoon stay', () => {
+    expect(createEnv({ NODE_ENV: 'test' }).CITATION_RESOLVER).toBe('corpus');
+    expect(createEnv({ NODE_ENV: 'test', CITATION_RESOLVER: 'corpus' }).CITATION_RESOLVER).toBe(
+      'corpus',
+    );
+    expect(createEnv({ NODE_ENV: 'test', CITATION_RESOLVER: 'mock' }).CITATION_RESOLVER).toBe(
+      'mock',
+    );
+    const kanoon = createEnv({
+      NODE_ENV: 'test',
+      CITATION_RESOLVER: 'indian-kanoon',
+      INDIAN_KANOON_API_TOKEN: 'ik-token-value',
+    });
+    expect(kanoon.CITATION_RESOLVER).toBe('indian-kanoon');
+    expect(
+      (envError({ NODE_ENV: 'test', CITATION_RESOLVER: 'indian-kanoon' }) as EnvValidationError)
+        .keys,
+    ).toContain('INDIAN_KANOON_API_TOKEN');
+    expect(
+      (envError({ NODE_ENV: 'test', CITATION_RESOLVER: 'casemine' }) as EnvValidationError).keys,
+    ).toEqual(['CITATION_RESOLVER']);
+  });
+
   it('the Sarvam key and Bedrock secret never appear in the serialised env (#44)', () => {
     const env = createEnv({
       NODE_ENV: 'test',

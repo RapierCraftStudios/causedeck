@@ -250,6 +250,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   matching: Object.freeze(['memory']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
+  // `drafting.citations.check` builds the default corpus resolver through citations (#1136).
   jobs: Object.freeze([
     'obligations',
     'attention',
@@ -290,6 +291,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'status',
     'status-links',
     'demo',
+    'citations',
   ]),
   // The free court-day alerts tier (#506): its fetch budget reads entitlements through billing and the
   // `fetch.cost_micros` counter through usage; enrolment adds watches through case-watch and types the

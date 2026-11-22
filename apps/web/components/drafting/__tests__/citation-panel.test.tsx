@@ -100,6 +100,11 @@ describe('CitationPanel', () => {
     expect(onAcknowledge).toHaveBeenCalledTimes(1);
   });
 
+  it('offers the acknowledgement for an unknown citation on its own (#1136)', () => {
+    renderPanel([view({ id: '1', status: 'verified' }), view({ id: '2', status: 'unknown' })]);
+    expect(screen.getByRole('button', { name: 'Acknowledge unverified citations' })).toBeTruthy();
+  });
+
   it('does not block when only verified and acknowledged citations remain', () => {
     renderPanel([
       view({ id: '1', status: 'verified' }),

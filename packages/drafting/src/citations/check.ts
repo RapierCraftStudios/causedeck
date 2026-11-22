@@ -23,7 +23,7 @@ export interface CheckOptions {
   titleThreshold?: number;
 }
 
-const CHECKABLE: readonly CitationKind[] = ['neutral', 'reporter'];
+const CHECKABLE: readonly CitationKind[] = ['neutral', 'reporter', 'case_number', 'section'];
 
 export async function checkCitations(
   citations: readonly ExtractedCitation[],
@@ -54,9 +54,14 @@ export async function checkCitations(
     const outcome = await options.resolver.resolve({
       normalized: citation.normalized,
       kind: citation.kind,
+      ...(citation.pinpoint === undefined ? {} : { pinpoint: citation.pinpoint }),
+      ...(citation.quote === undefined ? {} : { quote: citation.quote }),
     });
+    // The quote only goes to the resolver; it is not kept on the checked item.
+    const kept: ExtractedCitation = { ...citation };
+    delete kept.quote;
     out.push({
-      ...citation,
+      ...kept,
       verdict: classify(citation, outcome, {
         ...(options.titleThreshold === undefined ? {} : { titleThreshold: options.titleThreshold }),
       }),

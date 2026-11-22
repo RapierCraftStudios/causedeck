@@ -17,4 +17,5 @@ export { createRateLimiter, type RateLimiter } from './rate-limit';
 export { createIndianKanoonResolver, type IndianKanoonOptions } from './resolvers/indian-kanoon';
 export { createMockResolver, MOCK_AUTHORITIES } from './resolvers/mock';
 export { officialLink, type OfficialLink } from './resolvers/official-links';
+export type { CitationPinpoint } from '@causedeck/validators/citation';
 export type { CitationResolver, ResolveRequest } from './resolvers/types';

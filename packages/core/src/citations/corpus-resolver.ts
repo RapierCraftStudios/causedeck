@@ -78,7 +78,7 @@ async function byCaseNumber(db: Queryable, normalized: string): Promise<StoredJu
     .where(sql`exists (select 1 from unnest(${judgment.caseNumbers}) as n where n ~* ${pattern})`)
     .limit(CASE_NUMBER_CANDIDATES);
   return rows
-    .filter((row) => (row.caseNumbers ?? []).some((n) => normalizeCitation(n) === normalized))
+    .filter((row) => row.caseNumbers.some((n) => normalizeCitation(n) === normalized))
     .map((row) => ({
       id: row.id,
       title: row.caseTitle ?? '',

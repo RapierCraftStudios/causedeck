@@ -133,7 +133,8 @@ test.describe('drafting authority insert', () => {
       await withSql(db.name, async (sql) => {
         await sql`delete from authority where draft_version_id in
           (select id from draft_version where draft_id = ${draftId})`;
-        await sql`delete from draft_version where draft_id = ${draftId}`;
+        // draft_version is immutable (app_draft_version_immutable): only the cascade from deleting its
+        // draft may remove a version, so delete the draft and let the cascade take the versions.
         await sql`delete from draft where id = ${draftId}`;
         await sql`delete from judgment_segment where judgment_id = ${judgmentId}`;
         await sql`delete from judgment where id = ${judgmentId}`;

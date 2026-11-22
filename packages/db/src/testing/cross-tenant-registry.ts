@@ -26,6 +26,7 @@ const CORE_ROSTERS_TEST = 'packages/core/src/__tests__/cross-tenant/rosters.test
 const CORE_NEXT_DATE_CHOICE_TEST =
   'packages/core/src/__tests__/cross-tenant/next-date-choice.test.ts';
 const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-preview.test.ts';
+const CORE_STATUTES_TEST = 'packages/core/src/__tests__/cross-tenant/statutes.test.ts';
 const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
@@ -286,6 +287,7 @@ const rosterSelfScoped = {
 } as const;
 const nextDateChoiceDenies = { test: CORE_NEXT_DATE_CHOICE_TEST, kind: 'denies' } as const;
 const movePreviewDenies = { test: CORE_MOVE_PREVIEW_TEST, kind: 'denies' } as const;
+const statutesDenies = { test: CORE_STATUTES_TEST, kind: 'denies' } as const;
 const documentPreviewDenies = { test: CORE_DOCUMENT_PREVIEW_TEST, kind: 'denies' } as const;
 const memoryDenies = { test: CORE_MEMORY_TEST, kind: 'denies' } as const;
 const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const;
@@ -1058,6 +1060,11 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   rerunAuthoritySearch: denies,
   // grounded matter copilot (#1115): B naming A's workspace or matter is denied; A's copilot usage and audit rows are unchanged.
   askCopilot: denies,
+  // statutes (#1125): B naming A's workspace is denied; global statute tables, nothing of A's written
+  getSection: statutesDenies,
+  listSectionHistory: statutesDenies,
+  searchSections: statutesDenies,
+  topAuthoritiesForSection: statutesDenies,
   // drafts (#768): B on A's draft, version or export is denied; A's rows are unchanged.
   createDraft: denies,
   renderDraft: denies,
@@ -1227,6 +1234,8 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   COPILOT_QUESTION_KEY: 'constant',
   COPILOT_QUESTION_MAX_CHARS: 'constant',
   RESEARCH_QUERY_MAX_CHARS: 'constant',
+  STATUTE_QUERY_MAX_CHARS: 'constant',
+  STATUTE_RESULT_MAX: 'constant',
   RESEARCH_SEARCH_CAPS: 'constant',
   RESEARCH_SEARCH_KEY: 'constant',
   RESEARCH_SUBJECT_AREAS: 'constant',

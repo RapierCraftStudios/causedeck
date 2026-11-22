@@ -37,6 +37,7 @@ export * from './public-api/index.ts';
 export * from './drafting/index.ts';
 export * from './research/index.ts';
 export * from './copilot/index.ts';
+export * from './statutes/index.ts';
 export * from './sources/index.ts';
 export * from './support/index.ts';
 export * from './usage/index.ts';

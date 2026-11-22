@@ -43,7 +43,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Candidates: Story = {};
-export const Idle: Story = { args: { status: 'idle', candidates: [] } };
+export const AwaitingBlock: Story = { args: { status: 'idle', candidates: [] } };
 export const Loading: Story = { args: { status: 'loading', candidates: [] } };
 export const Empty: Story = { args: { status: 'ready', candidates: [] } };
 export const AiBlocked: Story = { args: { status: 'aiBlocked', candidates: [] } };

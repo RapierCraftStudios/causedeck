@@ -21,7 +21,8 @@ interface ResearchPageProps {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('research.search');
-  return { title: t('metaTitle') };
+  // Authenticated workspace route: kept out of search indexes (copilot/page.tsx precedent, K6).
+  return { title: t('metaTitle'), robots: { index: false, follow: false } };
 }
 
 export default async function ResearchPage({ params, searchParams }: ResearchPageProps) {

@@ -104,6 +104,8 @@ export interface SectionAuthority {
   judgmentDate: string | null;
   /** The first page the judgment cites the section (or its counterpart) on. */
   page: number;
+  /** The corpus record's source URL (`judgment.provenance->>'url'`); link it with `#page=<page>`. */
+  sourceUrl: string | null;
   citedStatute: string;
   citedSection: string;
   citedByCount: number;
@@ -338,6 +340,7 @@ export async function topAuthoritiesForSection(
           j.id as "judgmentId", j.case_title as title, j.title_masked as "titleMasked",
           j.neutral_citation as "neutralCitation", j.court as court, j.court_level as "courtLevel",
           j.judgment_date::text as "judgmentDate", r.page as page,
+          j.provenance->>'url' as "sourceUrl",
           r.statute as "citedStatute", r.section as "citedSection",
           (select count(distinct cr.judgment_id)::int from judgment_citation_ref cr
             where cr.cited_judgment_id = j.id) as "citedByCount"

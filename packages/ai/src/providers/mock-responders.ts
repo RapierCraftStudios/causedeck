@@ -76,7 +76,11 @@ export function mockResponse(task: TaskDef, input: unknown): unknown {
       question: string;
       sources: { id: string; text: string }[];
     };
-    const reply = answer({ query: question, segments: sources }) as {
+    // Only sources sharing a word with the question, so the facts listed first do not crowd out the
+    // matching document pages and passages.
+    const terms = new Set(wordsOf(question).filter((w) => w.length > 3 && !STOP.has(w)));
+    const matching = sources.filter((s) => wordsOf(s.text).some((w) => terms.has(w)));
+    const reply = answer({ query: question, segments: matching }) as {
       claims: { statement: string; segmentId: string; quote: string }[];
     };
     return {

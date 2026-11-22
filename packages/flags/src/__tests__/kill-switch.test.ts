@@ -54,6 +54,24 @@ describe('kill switches', () => {
     ).toBe(false);
   });
 
+  it('KILL_COPILOT_ENABLED=1 forces copilot.enabled off over rows that say on (#1115)', async () => {
+    const { killSwitches } = createEnv({ NODE_ENV: 'test', KILL_COPILOT_ENABLED: '1' });
+    expect(killSwitches.KILL_COPILOT_ENABLED).toBe(true);
+    const cache = new FlagCache<FlagRows>();
+    cache.set(WORKSPACE.toLowerCase(), {
+      global: { 'copilot.enabled': { enabled: true, legalAckBy: null } },
+      workspace: { 'copilot.enabled': { enabled: true, legalAckBy: null } },
+    });
+    const ctx = { workspaceId: WORKSPACE };
+    expect(await isEnabled('copilot.enabled', ctx, { db: noDb, killSwitches: {}, cache })).toBe(
+      true,
+    );
+    expect(await isEnabled('copilot.enabled', ctx, { db: noDb, killSwitches, cache })).toBe(false);
+    await expect(
+      requireFlag('copilot.enabled', ctx, { db: noDb, killSwitches, cache }),
+    ).rejects.toThrow(FlagOffError);
+  });
+
   it('reads the process env by default', async () => {
     vi.stubEnv('KILL_INVOICES_ENABLED', '1');
     resetEnvCache();

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { answerMatterQuestion, type CopilotSource } from '../answer-sources.ts';
+import {
+  answerMatterQuestion,
+  createExtractiveMatterAnswerResolver,
+  type CopilotSource,
+} from '../answer-sources.ts';
 
 const sources: CopilotSource[] = [
   { id: 'fact:header', text: 'Matter: Rao v State. Status: open.', page: null },
@@ -96,5 +100,29 @@ describe('answerMatterQuestion', () => {
     await expect(
       answerMatterQuestion('q', sources, () => Promise.resolve({ nope: 1 })),
     ).rejects.toThrow('schema');
+  });
+});
+
+describe('createExtractiveMatterAnswerResolver', () => {
+  it('quotes the best-matching sentences, all verified, with server pinpoints', async () => {
+    const answer = await answerMatterQuestion(
+      'Was notice given to the appellant before the order?',
+      sources,
+      createExtractiveMatterAnswerResolver(),
+    );
+    expect(answer.unsupported).toEqual([]);
+    expect(answer.claims[0]).toMatchObject({
+      sourceId: 'doc:d1:3',
+      kind: 'doc',
+      pinpoint: { page: 3, paragraph: 12 },
+    });
+    expect(answer.claims.map((c) => c.sourceId)).not.toContain('seg:s1');
+  });
+
+  it('claims nothing when no sentence shares a word with the question', async () => {
+    const resolve = createExtractiveMatterAnswerResolver();
+    expect(await resolve({ question: 'zebra', sources })).toEqual({ claims: [] });
+    const answer = await answerMatterQuestion('zebra', sources, resolve);
+    expect(answer.noAuthority).toBe(true);
   });
 });

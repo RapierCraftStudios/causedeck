@@ -95,7 +95,10 @@ export async function factSources(
   return { facts, sensitive: header.sensitive };
 }
 
-/** Pages of this matter's documents that match the question; none without `document.read`. */
+/**
+ * Pages of this matter's documents that match the question; none without `document.read`, and none
+ * of a document whose source capture is `ai_blocked`.
+ */
 export async function documentSources(
   db: Queryable,
   deps: MatterGraphDeps,
@@ -119,8 +122,11 @@ export async function documentSources(
         select dp.document_id::text as document_id, dp.page_no, dp.text
         from document_page dp
         join document d on d.workspace_id = dp.workspace_id and d.id = dp.document_id
+        left join capture c on c.workspace_id = d.workspace_id and c.id = d.source_capture_id
         where dp.workspace_id = ${actor.workspaceId}::uuid
           and d.matter_id = ${matterId}::uuid
+          -- the text of an ai_blocked capture never reaches a provider (CA-10)
+          and coalesce(c.ai_blocked, false) = false
           and dp.search_tsv @@ to_tsquery('simple', ${tsQuery})
         order by ts_rank(dp.search_tsv, to_tsquery('simple', ${tsQuery})) desc, dp.document_id, dp.page_no
         limit ${DOCUMENT_PAGES_MAX}

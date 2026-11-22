@@ -80,6 +80,44 @@ export function createGatewayMatterAnswerResolver(options: {
   };
 }
 
+const STOP_WORDS = new Set([
+  'the', 'and', 'for', 'with', 'was', 'were', 'that', 'this', 'from', 'had', 'not', 'but', 'are',
+  'his', 'her', 'case',
+]);
+const wordsOf = (text: string): string[] => text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+
+/**
+ * A deterministic resolver that calls no model: for the sources sharing the most words with the
+ * question, the best-matching sentence of each, quoted as is (the algorithm of the mock `answer_matter_question`
+ * responder in `@causedeck/ai`). Used where no AI call may be made (a demo workspace, #93); its
+ * claims still go through `answerMatterQuestion`, so nothing is shown unverified.
+ */
+export function createExtractiveMatterAnswerResolver(maxSources = 3): MatterAnswerResolver {
+  return (input) => {
+    const terms = new Set(
+      wordsOf(input.question).filter((w) => w.length > 3 && !STOP_WORDS.has(w)),
+    );
+    const picks: { sourceId: string; sentence: string; hits: number }[] = [];
+    for (const source of input.sources) {
+      let best: { sentence: string; hits: number } | undefined;
+      for (const sentence of source.text.split(/(?<=[.!?])\s+/)) {
+        const hits = wordsOf(sentence).filter((w) => terms.has(w)).length;
+        if (hits > 0 && (best === undefined || hits > best.hits)) best = { sentence, hits };
+      }
+      if (best !== undefined) picks.push({ sourceId: source.id, ...best });
+    }
+    // The best-overlapping sources first; ties keep the order the sources were given in.
+    const claims = picks
+      .sort((a, b) => b.hits - a.hits)
+      .slice(0, maxSources)
+      .map((p) => {
+        const quote = p.sentence.trim().slice(0, 500);
+        return { statement: quote, sourceId: p.sourceId, quote };
+      });
+    return Promise.resolve({ claims });
+  };
+}
+
 const replySchema = z.object({
   claims: z.array(z.object({ statement: z.string(), sourceId: z.string(), quote: z.string() })),
 });

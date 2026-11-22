@@ -4,7 +4,8 @@
 // context (so a sensitive matter never reaches a provider), verifies every claim against the stored
 // text and returns verified claims, unsupported claims and `noAuthority`. One `copilot.questions` unit
 // per new question against the plan's cap (idempotent on `requestId`); audited as `copilot.asked`
-// with hashes and source ids only. A failing model call throws: no answer is invented.
+// with hashes and source ids only. A failing model call throws: no answer is invented. A demo
+// workspace calls no model: its answer is extractive (the best-matching sentences of the sources).
 import { createHash, randomUUID } from 'node:crypto';
 
 import type { AiGateway, EmbedGateway, RerankGateway } from '@causedeck/ai';
@@ -12,6 +13,7 @@ import { isRole } from '@causedeck/auth';
 import { currentScope, isUuid, withWorkspace, type Queryable } from '@causedeck/db';
 import {
   answerMatterQuestion,
+  createExtractiveMatterAnswerResolver,
   createGatewayMatterAnswerResolver,
   type CopilotSource,
   type MatterAnswer,
@@ -22,6 +24,7 @@ import { createCoreAiGateway } from '../ai/index.ts';
 import { record } from '../audit/index.ts';
 import { getWorkspaceEntitlements } from '../billing/index.ts';
 import type { GraphEvents } from '../matter-graph/index.ts';
+import { isDemoWorkspace } from '../shared/demo-guard.ts';
 import { forbidden, invalid, rateLimited } from '../shared/errors.ts';
 import { getUsage, increment, usagePeriod, type UsageContext } from '../usage/index.ts';
 import { memberRole } from '../workspaces/index.ts';
@@ -156,8 +159,14 @@ export async function askCopilot(
     });
     sources.push(...corpus.sources);
 
+    // A demo workspace makes no AI call and spends nothing (#93, the gateway refuses it): it answers
+    // extractively from the same sources, verified the same way, so the demo journey still works.
+    const demo = await withWorkspace(db, { workspaceId: actor.workspaceId }, (tx) =>
+      isDemoWorkspace(tx, actor.workspaceId),
+    );
     const resolve =
       deps.answer ??
+      (demo ? createExtractiveMatterAnswerResolver() : undefined) ??
       createGatewayMatterAnswerResolver({
         gateway:
           deps.gateway ?? createCoreAiGateway(db, deps.now === undefined ? {} : { now: deps.now }),

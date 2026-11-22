@@ -4,7 +4,7 @@
 // database, the mock embedder and reranker, and a stubbed answer model.
 import { randomUUID } from 'node:crypto';
 
-import { createMockEmbedProvider } from '@causedeck/ai';
+import { createMockEmbedProvider, type AiGateway } from '@causedeck/ai';
 import { schema, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
@@ -342,6 +342,109 @@ describe('askCopilot', () => {
         s.select().from(schema.auditEvent).where(eq(schema.auditEvent.action, 'copilot.asked')),
       );
       expect(JSON.stringify(events)).not.toContain('hysterectomy');
+    });
+  });
+  it('answers in a demo matter with verified claims and no model call or AI spend', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      await seedJudgment(tx);
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ isDemo: true })
+          .where(eq(schema.organization.id, workspaceId)),
+      );
+      const { matterId, documentId } = await matterWithPage(
+        tx,
+        workspaceId,
+        'Written consent for surgery was never obtained.',
+      );
+      let called = false;
+      const gateway = {
+        run: () => {
+          called = true;
+          return Promise.reject(new Error('no AI call in a demo workspace'));
+        },
+      } as unknown as AiGateway;
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION, matterId },
+        { now: () => NOW, gateway },
+      );
+      expect(called).toBe(false);
+      expect(answer.noAuthority).toBe(false);
+      expect(answer.unsupported).toEqual([]);
+      expect(answer.claims.map((c) => c.kind).sort()).toEqual(['doc', 'seg']);
+      expect(answer.claims.find((c) => c.kind === 'doc')).toMatchObject({
+        documentId,
+        pinpoint: { page: 2 },
+      });
+      const seg = answer.claims.find((c) => c.kind === 'seg');
+      expect(seg?.pinpoint.page).toBe(1);
+      expect(answer.judgments[seg?.judgmentId ?? '']?.sourceUrl).toMatch(/^https:\/\//);
+      expect(answer.answerText).toContain('never obtained');
+      expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(1);
+      const calls = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.aiCall).where(eq(schema.aiCall.workspaceId, workspaceId)),
+      );
+      expect(calls).toEqual([]);
+    });
+  });
+
+  it("never shows the model a page of an ai_blocked capture's document", async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const { matterId } = await matterWithPage(
+        tx,
+        workspaceId,
+        'Written consent for surgery was recorded.',
+      );
+      await inWorkspace(tx, workspaceId, async (s) => {
+        const [cap] = await s
+          .insert(schema.capture)
+          .values({
+            workspaceId,
+            channel: 'upload',
+            mime: 'application/pdf',
+            sizeBytes: 8,
+            originalFilename: 'blocked.pdf',
+            createdBy: ownerId,
+            status: 'ready',
+            aiBlocked: true,
+          })
+          .returning();
+        const doc = await buildDocument(s, workspaceId, {
+          matterId,
+          kind: 'pleading',
+          sourceCaptureId: cap?.id ?? null,
+        });
+        await s.insert(schema.documentPage).values({
+          workspaceId,
+          documentId: doc.id,
+          pageNo: 1,
+          text: 'BLOCKEDCAPTURE written consent surgery.',
+          textSource: 'layer',
+          lang: 'en',
+        });
+      });
+      let shown = '';
+      await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION, matterId },
+        {
+          now: () => NOW,
+          answer: (input: { sources: { id: string; text: string }[] }) => {
+            shown = JSON.stringify(input.sources);
+            return Promise.resolve({ claims: [] });
+          },
+        },
+      );
+      expect(shown).toContain('was recorded');
+      expect(shown).not.toContain('BLOCKEDCAPTURE');
     });
   });
 });

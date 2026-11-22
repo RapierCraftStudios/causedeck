@@ -5718,6 +5718,54 @@ export type Messages = {
         paragraph: string;
       };
     };
+    statutes: {
+      metaTitle: string;
+      title: string;
+      intro: string;
+      navLink: string;
+      back: string;
+      backToSearch: string;
+      denied: string;
+      queryLabel: string;
+      queryPlaceholder: string;
+      submit: string;
+      prompt: string;
+      error: string;
+      empty: string;
+      resultsHeading: string;
+      resultsCount: string;
+      hit: string;
+      section: {
+        metaTitle: string;
+        title: string;
+        textHeading: string;
+        inForce: string;
+        notInForceSince: string;
+        noText: string;
+        syntheticLabel: string;
+        publicDomainLabel: string;
+      };
+      history: {
+        heading: string;
+        range: string;
+        current: string;
+        amendedBy: string;
+        empty: string;
+      };
+      counterpart: {
+        heading: string;
+        link: string;
+        none: string;
+      };
+      authorities: {
+        heading: string;
+        empty: string;
+        maskedTitle: string;
+        page: string;
+        decided: string;
+        openPdf: string;
+      };
+    };
   };
   settingsResearch: {
     title: string;

@@ -272,6 +272,8 @@ describe('topAuthoritiesForSection (#1125)', () => {
           citedSection: '304a',
           citedByCount: 0,
         });
+        // The corpus record link (#1126): the provenance URL, opened at `page`.
+        expect(mine[0]?.sourceUrl).toMatch(/^https:\/\/court\.example\/[0-9a-f]+\.pdf$/);
         expect(JSON.stringify(result)).not.toContain('Raw page text');
       }
       expect(

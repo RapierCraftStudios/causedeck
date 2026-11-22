@@ -131,6 +131,7 @@ const feeActions = await import('../app/(app)/w/[slug]/invoices/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const researchSearch = await import('../app/(app)/w/[slug]/research/actions.ts');
+const researchStatutes = await import('../app/(app)/w/[slug]/research/statutes/actions.ts');
 const copilotAsk = await import('../app/(app)/w/[slug]/matters/[id]/copilot/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
 const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actions.ts');
@@ -293,6 +294,7 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   findAuthoritiesAction: research,
   searchAuthoritiesAction: researchSearch,
   rerunAuthoritySearchAction: researchSearch,
+  getSectionAction: researchStatutes,
   askCopilotAction: copilotAsk,
   confirmOutcomeAction: hearingOutcome,
   markPreparedAction: briefSheet,
@@ -1286,6 +1288,8 @@ function inputs(workspaceId: string): Record<string, unknown> {
       },
     },
     findAuthoritiesAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId },
+    // Statute section (#1126): ub may not read a section in A's workspace.
+    getSectionAction: { workspaceId, act: 'bnss', section: '483' },
     // Research notes and provider templates (#80): ub may not write A's notes or A's templates.
     createNoteAction: { workspaceId, matterId: t.a.rows.research_note?.matterId, title: 'x' },
     updateNoteAction: {

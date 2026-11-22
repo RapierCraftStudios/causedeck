@@ -4,6 +4,7 @@
 // Search, so a reload never spends a search.
 import { PermissionDenied } from '@causedeck/ui/patterns';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
@@ -30,6 +31,7 @@ export default async function ResearchPage({ params, searchParams }: ResearchPag
   if (!context) notFound();
   const t = await getTranslations('research.search');
   if (!can(context.role, 'matter.read')) return <PermissionDenied message={t('denied')} />;
+  const tStatutes = await getTranslations('research.statutes');
 
   const { RESEARCH_SUBJECT_AREAS, RESEARCH_QUERY_MAX_CHARS } =
     await import('@causedeck/core/research');
@@ -42,6 +44,9 @@ export default async function ResearchPage({ params, searchParams }: ResearchPag
           {t('title')}
         </h1>
         <p className="text-muted-foreground text-sm">{t('intro')}</p>
+        <Link className="text-sm underline" href={`/w/${slug}/research/statutes`}>
+          {tStatutes('navLink')}
+        </Link>
       </header>
       <AuthoritySearch
         workspaceId={context.workspace.id}

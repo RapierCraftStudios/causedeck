@@ -8,5 +8,10 @@
     "run": "pnpm --filter @causedeck/e2e test tests/matters/copilot.spec.ts",
     "pass": "exit 0",
     "timeout": 600
+  },
+  "statutes-section-journey": {
+    "run": "pnpm --filter @causedeck/e2e test tests/research/statutes.spec.ts",
+    "pass": "exit 0",
+    "timeout": 600
   }
 }

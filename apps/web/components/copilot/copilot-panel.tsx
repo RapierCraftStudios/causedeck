@@ -4,11 +4,15 @@
 // server computed from the stored text, with a link to the corpus record for a judgment. A claim the
 // server could not verify is listed apart under "not verified" and is not part of the answer. No hits
 // is "no authority found"; a sensitive matter says AI is off; a failed call is an error, never an
-// invented answer. A retry after a failure reuses the request id, so it counts once.
+// invented answer. A retry after a failure reuses the request id, so it counts once. A claim whose
+// statement is its quote (the extractive demo answer) prints the sentence once, as the quote (#1132).
 import type { CopilotAnswer } from '@causedeck/core/copilot';
 import { Button } from '@causedeck/ui/button';
 import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition, type SyntheticEvent } from 'react';
+
+/** Whitespace-collapsed and lower-cased, as the server compares a quote with its source. */
+const normalise = (text: string): string => text.replace(/\s+/g, ' ').trim().toLowerCase();
 
 type ActionResult = { ok: true; data: CopilotAnswer } | { ok: false; error: { message: string } };
 
@@ -58,7 +62,7 @@ export function CopilotPanel({ workspaceId, matterId, ask, initialAnswer }: Copi
       paragraph === null ? null : t('pinpoint.paragraph', { paragraph }),
     ]
       .filter((part) => part !== null)
-      .join(', ');
+      .join(' · ');
 
   return (
     <div className="flex flex-col gap-6" data-slot="copilot-panel">
@@ -120,13 +124,14 @@ export function CopilotPanel({ workspaceId, matterId, ask, initialAnswer }: Copi
                   const judgment =
                     claim.judgmentId === null ? undefined : answer.judgments[claim.judgmentId];
                   const where = pinpoint(claim.pinpoint.page, claim.pinpoint.paragraph);
+                  const sameText = normalise(claim.statement) === normalise(claim.quote);
                   return (
                     <li
                       key={`${claim.sourceId}:${claim.quote}`}
                       data-slot="copilot-claim"
                       className="flex flex-col gap-1 rounded border p-3 text-sm"
                     >
-                      <p>{claim.statement}</p>
+                      {sameText ? null : <p>{claim.statement}</p>}
                       <blockquote className="text-muted-foreground border-l-2 pl-2">
                         {claim.quote}
                       </blockquote>

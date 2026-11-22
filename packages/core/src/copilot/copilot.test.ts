@@ -22,7 +22,7 @@ const NOW = new Date('2026-10-31T06:30:00.000Z');
 const TEXT =
   'The patient underwent a hysterectomy and no written consent was taken for the surgery.';
 
-async function seedJudgment(tx: Transaction): Promise<void> {
+async function seedJudgment(tx: Transaction, text = TEXT): Promise<void> {
   const sha256 = randomUUID().replaceAll('-', '');
   const [row] = await tx
     .insert(schema.judgment)
@@ -42,7 +42,7 @@ async function seedJudgment(tx: Transaction): Promise<void> {
         costDollars: 0,
       },
       pageText: [{ pageNo: 1, text: 'Raw text.' }],
-      redactedText: [{ pageNo: 1, text: TEXT }],
+      redactedText: [{ pageNo: 1, text }],
       redactionVersion: 1,
       segmentVersion: 1,
       segmentedRedactionVersion: 1,
@@ -53,14 +53,14 @@ async function seedJudgment(tx: Transaction): Promise<void> {
     })
     .returning({ id: schema.judgment.id });
   const embedder = createMockEmbedProvider();
-  const { vectors } = await embedder.embed([TEXT]);
+  const { vectors } = await embedder.embed([text]);
   await tx.insert(schema.judgmentSegment).values({
     judgmentId: row?.id ?? '',
     ordinal: 1,
     role: 'facts',
     pageFrom: 1,
     pageTo: 1,
-    text: TEXT,
+    text,
     court: 'MHC',
     courtLevel: 'high_court',
     judgmentYear: 2019,
@@ -109,6 +109,28 @@ const quoting = (quote: string, sourceId?: string) => (input: { sources: { id: s
   });
 
 describe('askCopilot', () => {
+  // #1132: a judgment segment with the court's numbered paragraphs gives `page N · para M`. The demo
+  // corpus (packages/db/src/seed/demo/corpus.ts, its `Facts. / Issues. / Reasoning.` pages) has no
+  // numbered paragraphs, so on the demo workspace a card correctly shows the page alone.
+  it('pinpoints the numbered paragraph of a judgment segment that holds the quote', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      await seedJudgment(
+        tx,
+        `11. The patient was admitted for surgery.\n12. ${TEXT}\n13. Costs follow.`,
+      );
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION },
+        { now: () => NOW, answer: quoting('no written consent was taken') },
+      );
+      expect(answer.claims).toHaveLength(1);
+      expect(answer.claims[0]).toMatchObject({ kind: 'seg', pinpoint: { page: 1, paragraph: 12 } });
+    });
+  });
+
   it('returns a verified claim with a server-computed pinpoint and the judgment link', async () => {
     await withTestDb(async (tx) => {
       await seedPlans(tx);

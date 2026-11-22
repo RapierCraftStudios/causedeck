@@ -3206,6 +3206,7 @@ export type Messages = {
         people: string;
         documents: string;
         research: string;
+        copilot: string;
         memory: string;
       };
       status: {

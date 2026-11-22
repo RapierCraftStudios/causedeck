@@ -2,10 +2,12 @@
 // The grounded copilot (#1115): with `copilot.enabled` off both routes are a plain 404; the panel shows
 // verified claims with their pinpoint and corpus link, lists a claim the server could not verify
 // apart under "Not verified" (never among the claims or in the answer), says "no authority found",
-// says AI is off for a sensitive matter, and shows a failed call as an error with no claims.
+// says AI is off for a sensitive matter, and shows a failed call as an error with no claims. #1132: a
+// claim whose statement is its quote prints the sentence once, the pinpoint reads `page N · para M`
+// and the usage line has plural forms in en, ta and kn.
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { CopilotAnswer } from '@causedeck/core/copilot';
-import { NextIntlClientProvider } from 'next-intl';
+import { createTranslator, NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -138,13 +140,69 @@ describe('copilot panel', () => {
     const { container } = panel(ANSWER);
     const claims = container.querySelectorAll('[data-slot="copilot-claim"]');
     expect(claims).toHaveLength(1);
-    expect(claims[0]?.textContent).toContain('page 4, paragraph 12');
+    expect(claims[0]?.textContent).toContain('page 4 · para 12');
     expect(claims[0]?.querySelector('a[href^="https://court.example/j1.pdf"]')).not.toBeNull();
     expect(claims[0]?.textContent).not.toContain('struck off');
     const unsupported = container.querySelectorAll('[data-slot="copilot-unsupported"]');
     expect(unsupported).toHaveLength(1);
     expect(unsupported[0]?.textContent).toContain(en.notVerified);
     expect(unsupported[0]?.textContent).toContain('struck off');
+  });
+
+  it('prints a claim whose quote equals its statement once, with its source line', () => {
+    const sentence = 'No written consent was taken for the surgery.';
+    const { container } = panel({
+      ...ANSWER,
+      claims: [
+        {
+          ...(ANSWER.claims[0] as CopilotAnswer['claims'][number]),
+          statement: sentence,
+          quote: ` ${sentence.toLowerCase()} `,
+        },
+      ],
+      unsupported: [],
+    });
+    const claim = container.querySelector('[data-slot="copilot-claim"]');
+    const text = (claim?.textContent ?? '').toLowerCase();
+    expect(text.split(sentence.toLowerCase())).toHaveLength(2);
+    expect(claim?.querySelector('blockquote')).not.toBeNull();
+    expect(claim?.querySelector('[data-slot="copilot-source"]')?.textContent).toContain(
+      'page 4 · para 12',
+    );
+  });
+
+  it('keeps the statement and the quote when they differ', () => {
+    const { container } = panel(ANSWER);
+    const claim = container.querySelector('[data-slot="copilot-claim"]');
+    expect(claim?.textContent).toContain('Consent was never obtained.');
+    expect(claim?.querySelector('blockquote')?.textContent).toBe('no written consent was taken');
+  });
+
+  it('uses plural forms in the usage line', () => {
+    const usage = (used: number, limit: number | null) => {
+      cleanup();
+      const { container } = panel({ ...ANSWER, usage: { used, limit } });
+      return container.querySelector('[data-slot="copilot-usage"]')?.textContent ?? '';
+    };
+    expect(usage(1, 30)).toBe('1 of 30 question used this month');
+    expect(usage(2, 30)).toBe('2 of 30 questions used this month');
+    expect(usage(1, null)).toBe('1 question this month');
+    expect(usage(2, null)).toBe('2 questions this month');
+  });
+
+  it.each([
+    ['ta', 'இந்த மாதம் 1 கேள்வி', 'இந்த மாதம் 2 கேள்விகள்'],
+    ['kn', 'ಈ ತಿಂಗಳು 1 ಪ್ರಶ್ನೆ', 'ಈ ತಿಂಗಳು 2 ಪ್ರಶ್ನೆಗಳು'],
+  ] as const)('has plural usage forms in %s', (locale, one, other) => {
+    const t = createTranslator({
+      locale,
+      messages: catalogs[locale],
+      namespace: 'research.copilot',
+    });
+    expect(t('usageUnlimited', { used: 1 })).toBe(one);
+    expect(t('usageUnlimited', { used: 2 })).toBe(other);
+    expect(t('usage', { used: 1, limit: 30 })).not.toBe(t('usage', { used: 2, limit: 30 }));
+    expect(t('usage', { used: 2, limit: 30 })).toContain('2');
   });
 
   it('says no authority found', () => {

@@ -37,7 +37,7 @@ describe('@causedeck/db root entry point', () => {
     }
   });
 
-  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346), the docket tables (#347), the people tables (#348), the catalogue version table (#34) the adapter tables (#372), the bench roster tables (#384) the automation tables (#47) the activation table (#509) and the enterprise onboarding tables (#682)', () => {
+  it('creates the platform tables, the Better Auth tables (#151), the workspace tables (#177), the billing tables (#200), the audit tables (#226), the notification tables (#194) the usage tables (#218), the flag tables (#22), the SaaS invoice tables (#252) and the upload table (#217), and the matter restriction table (#233), the lifecycle tables (#301), the staff support tables (#308), the legal-hold invoice table (#302), the court reference tables (#344) the matter and document tables (#345), the proceeding tables (#346), the docket tables (#347), the people tables (#348), the catalogue version table (#34) the adapter tables (#372), the bench roster tables (#384) the automation tables (#47) the activation table (#509) the enterprise onboarding tables (#682) and the statute tables (#1123)', () => {
     expect(
       root
         .tablesOf(root.schema)
@@ -217,6 +217,9 @@ describe('@causedeck/db root entry point', () => {
       'staff_user',
       'status_link',
       'status_link_access',
+      'statute_act',
+      'statute_section',
+      'statute_section_version',
       'subscription',
       'support_session',
       'task',

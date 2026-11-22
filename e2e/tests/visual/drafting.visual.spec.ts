@@ -30,7 +30,7 @@ test.describe('drafting visual', { tag: '@visual' }, () => {
     await contentReady(page);
     await checkCitations(page);
     await citationPanel(page)
-      .getByRole('button', { name: 'Acknowledge not-found citations' })
+      .getByRole('button', { name: 'Acknowledge unverified citations' })
       .click();
     const dialog = page.locator('[data-slot="ack-dialog"]');
     await expect(dialog).toBeVisible();

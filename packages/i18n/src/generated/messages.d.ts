@@ -4682,6 +4682,20 @@ export type Messages = {
         jump: string;
         blocked: string;
         acknowledge: string;
+        reason: {
+          unresolved: string;
+          unknown: string;
+          resolver_unavailable: string;
+          throttled: string;
+          ambiguous: string;
+          title_mismatch: string;
+          title_missing: string;
+          unsupported: string;
+          quote_not_found: string;
+          pinpoint_not_found: string;
+          section_not_found: string;
+        };
+        openSource: string;
       };
       consistency: {
         notRun: string;

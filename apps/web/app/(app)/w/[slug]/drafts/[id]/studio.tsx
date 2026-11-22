@@ -16,7 +16,10 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import type { CitationView } from '../../../../../../components/drafting/citation-panel.tsx';
+import {
+  openCitationIds,
+  type CitationView,
+} from '../../../../../../components/drafting/citation-panel.tsx';
 import type { ExportLink } from '../../../../../../components/drafting/export-dialog.tsx';
 import type { PinnedAuthority } from '../../../../../../components/drafting/authorities-panel.tsx';
 import type { DraftFact } from '../../../../../../components/drafting/facts-panel.tsx';
@@ -487,9 +490,7 @@ export function DraftStudio(props: StudioProps) {
   const checks = props.checks;
   const citations = live?.citations ?? checks?.citations ?? [];
   const checkFindings = live?.findings ?? checks?.findings ?? [];
-  const unacknowledged = citations.filter(
-    (c) => c.status === 'not_found' && !c.acknowledged,
-  ).length;
+  const unacknowledged = openCitationIds(citations).length;
   const scope = { workspaceId: props.workspaceId, draftVersionId: checks?.versionId ?? '' };
 
   async function runChecks() {
@@ -509,6 +510,9 @@ export function DraftStudio(props: StudioProps) {
         raw: c.raw,
         status: c.status,
         title: c.title,
+        reason: c.reason,
+        sourceUrl: c.sourceUrl,
+        page: c.pinpoint?.page,
         acknowledged: false,
       })),
       findings: result.data.findings,
@@ -517,9 +521,7 @@ export function DraftStudio(props: StudioProps) {
 
   async function acknowledge(statement: string) {
     if (checks === undefined) return false;
-    const ids = citations
-      .filter((c) => c.status === 'not_found' && !c.acknowledged)
-      .map((c) => c.id);
+    const ids = openCitationIds(citations);
     const result = await checks.actions.acknowledge({
       ...scope,
       citationIds: ids,

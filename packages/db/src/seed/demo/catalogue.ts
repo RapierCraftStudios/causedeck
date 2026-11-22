@@ -10,7 +10,9 @@
 //   `refreshDemoCatalogue` (run by every workspace seed and reset) moves them to the current day.
 // - `seedDemoCatalogue` needs the owner role (the corpus tables and `source` are not app-writable);
 //   `seedDemo` (the command) calls it, `seedDemoWorkspace` (the nightly reset, any role) never does.
-import { eq, inArray } from 'drizzle-orm';
+// - The statute layer (statutes.ts, #1123) is SELECT-only for the app role: `seedDemoCatalogue` writes it
+//   only when the current role may insert (the owner); an app-role seed (core's tests) leaves it out.
+import { eq, inArray, sql } from 'drizzle-orm';
 
 import {
   judgment,
@@ -23,11 +25,13 @@ import { newsItem, type NewsTags } from '../../schema/news.ts';
 import { plan } from '../../schema/billing.ts';
 import { notice, noticeVacation, type NoticeKind } from '../../schema/notices.ts';
 import { source } from '../../schema/source-registry.ts';
+import { statuteAct, statuteSection, statuteSectionVersion } from '../../schema/statutes.ts';
 import type { SeedDb } from '../index.ts';
 import { seedPlans } from '../plans.ts';
 
 import { demoCorpusRows } from './corpus.ts';
 import { forumCode, type DemoForumKey } from './courts.ts';
+import { demoStatuteRows } from './statutes.ts';
 import { addDays, demoId, ID_KIND, seedInstant } from './shared.ts';
 
 const GENERIC_SHA = (n: number): string => n.toString(16).padStart(64, '0');
@@ -379,6 +383,19 @@ export async function seedDemoCatalogue(db: SeedDb, today: string): Promise<void
   await db.insert(newsItem).values(demoNewsRows(today)).onConflictDoNothing();
   await db.insert(notice).values(demoNoticeRows(today)).onConflictDoNothing();
   await db.insert(noticeVacation).values(demoNoticeVacationRows(today)).onConflictDoNothing();
+  await seedDemoStatutes(db);
+}
+
+/** The statute rows (#1123), when the current role may write them (the owner; never the app role). */
+async function seedDemoStatutes(db: SeedDb): Promise<void> {
+  const [grant] = await db.execute<{ allowed: boolean }>(
+    sql`select has_table_privilege('statute_act', 'INSERT') as allowed`,
+  );
+  if (grant?.allowed !== true) return;
+  const statutes = demoStatuteRows();
+  await db.insert(statuteAct).values(statutes.acts).onConflictDoNothing();
+  await db.insert(statuteSection).values(statutes.sections).onConflictDoNothing();
+  await db.insert(statuteSectionVersion).values(statutes.versions).onConflictDoNothing();
 }
 
 /**

@@ -1023,6 +1023,13 @@
       "when": 1793470337913,
       "tag": "20261031181217_notice_vacation",
       "breakpoints": true
+    },
+    {
+      "idx": 146,
+      "version": "7",
+      "when": 1795315456554,
+      "tag": "20261031181218_statutes",
+      "breakpoints": true
     }
   ]
 }

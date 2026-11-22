@@ -3,7 +3,7 @@
 // block's own text and `blockId` is the stable block key from `walkBlocks`, so the same version
 // always yields the same ids. A case name directly in front of a structured citation becomes that
 // citation's title hint instead of an item of its own.
-import type { CitationKind } from '@causedeck/validators/citation';
+import type { CitationKind, CitationPinpoint } from '@causedeck/validators/citation';
 
 import { walkBlocks, type Block } from '../blocks';
 
@@ -19,6 +19,32 @@ export interface ExtractedCitation {
   kind: CitationKind;
   /** The `Party v. Party` name written just before a structured citation, if any. */
   titleHint?: string;
+  /** `para 12`, `paras 12-14` or `at p. 7` written right after a structured citation. */
+  pinpoint?: CitationPinpoint;
+  /** The quoted span right after the citation (or its pinpoint). Used to verify, never stored. */
+  quote?: string;
+  /** For a statute section citation: the statute and the section. */
+  section?: { statute: string; section: string };
+}
+
+const PINPOINT =
+  /^\s*[,;(]?\s*(?:at\s+)?(?:(?:paras?|paragraphs?|¶{1,2})\.?\s*(?<para>\d{1,4})(?:\s*[-–—]\s*(?<end>\d{1,4}))?|(?:pp?|pages?)\.?\s*(?<page>\d{1,5}))(?!\d)\)?/i;
+const QUOTE = /^\s*[,:;]?\s*(?:"(?<straight>[^"]+)"|“(?<curly>[^”]+)”)/;
+
+function pinpointAt(text: string, from: number): { pinpoint?: CitationPinpoint; end: number } {
+  const m = PINPOINT.exec(text.slice(from));
+  if (m?.groups === undefined) return { end: from };
+  const { para, end, page } = m.groups;
+  const pinpoint: CitationPinpoint =
+    page !== undefined ? { page: Number(page) } : { para: Number(para) };
+  if (end !== undefined && Number(end) >= Number(para)) pinpoint.paraEnd = Number(end);
+  return { pinpoint, end: from + m[0].length };
+}
+
+function quoteAt(text: string, from: number): string | undefined {
+  const m = QUOTE.exec(text.slice(from));
+  const quote = (m?.groups?.straight ?? m?.groups?.curly)?.replace(/\s+/g, ' ').trim();
+  return quote === '' ? undefined : quote;
 }
 
 /** Longest gap (`, ` or ` (`) between a case name and the citation it names. */
@@ -36,13 +62,21 @@ export function extractFromText(text: string, blockId: string): ExtractedCitatio
     for (const match of text.matchAll(new RegExp(pattern.regex.source, pattern.regex.flags))) {
       const start = match.index;
       const end = start + match[0].length;
+      const normalized = pattern.normalize(match);
+      if (normalized === '') continue;
+      const pin = pinpointAt(text, end);
+      const quote = quoteAt(text, pin.end);
+      const parts = pattern.parts?.(match);
       items.push({
         id: `${blockId}:${String(start)}-${String(end)}`,
         blockId,
         span: [start, end],
         raw: match[0],
-        normalized: pattern.normalize(match),
+        normalized,
         kind: pattern.kind,
+        ...(pin.pinpoint === undefined ? {} : { pinpoint: pin.pinpoint }),
+        ...(quote === undefined ? {} : { quote }),
+        ...(parts === undefined ? {} : { section: parts }),
       });
     }
   }

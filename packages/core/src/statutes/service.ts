@@ -249,6 +249,35 @@ export async function getSection(
   });
 }
 
+/** The act and heading of a stored section, for a citation check; no text. */
+export interface SectionRefMatch {
+  act: { key: string; title: string; shortName: string | null };
+  section: string;
+  heading: string;
+}
+
+/**
+ * System-safe section lookup for the citation check (#1135): the same `loadSection` path as
+ * `getSection`, without an actor, because the drafting check also runs as a job's system actor.
+ * The tables are global and public law; nothing is audited or logged and no section text returns.
+ * Null when the act or section is not stored, or the reference cannot be read.
+ */
+export async function resolveSectionRef(
+  ref: SectionRef,
+  { db }: { db: Queryable },
+): Promise<SectionRefMatch | null> {
+  let keys: { statute: string; section: string };
+  try {
+    keys = keysOf(ref);
+  } catch {
+    return null;
+  }
+  const loaded = await loadSection(db, keys);
+  if (loaded === null) return null;
+  const { key, title, shortName } = loaded.act;
+  return { act: { key, title, shortName }, section: loaded.section, heading: loaded.heading };
+}
+
 /** Every version of a section, oldest first, with its validity range. Null when not stored. */
 export async function listSectionHistory(
   db: Queryable,

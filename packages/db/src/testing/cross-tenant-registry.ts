@@ -1183,6 +1183,22 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'global table `judgment` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments, the same answer in every workspace; reads nothing tenant-scoped',
   },
+  // The corpus citation resolver (#1135): global corpus and statute reads, one answer everywhere
+  createCorpusResolver: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global tables `judgment` and `statute_*` (no workspace_id, no RLS): the same hits in every workspace; reads nothing tenant-scoped',
+  },
+  verifyPinpoint: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global table `judgment` (redacted_text only): returns a status, the same in every workspace; reads nothing tenant-scoped',
+  },
+  resolveSectionRef: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global tables `statute_act`/`statute_section` (no workspace_id): public law, the same answer in every workspace; no actor needed',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */

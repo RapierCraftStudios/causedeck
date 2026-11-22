@@ -4,6 +4,7 @@
 export {
   getSection,
   listSectionHistory,
+  resolveSectionRef,
   searchSections,
   STATUTE_QUERY_MAX_CHARS,
   STATUTE_RESULT_MAX,
@@ -12,6 +13,7 @@ export {
   type SectionHistoryView,
   type SectionHit,
   type SectionRef,
+  type SectionRefMatch,
   type SectionVersionView,
   type SectionView,
   type StatuteActView,

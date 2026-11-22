@@ -49,6 +49,8 @@ import {
   saveEdit,
 } from '../../outward/index.ts';
 
+import { seedCorpusJudgment, seedStatute } from './corpus-citations.fixture.ts';
+
 const THIS_FILE = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
 const mailer: Mailer = { send: () => Promise.resolve() };
 const APP_URL = 'http://localhost:3000';
@@ -1956,6 +1958,43 @@ const CASES: Record<string, Case> = {
       reason: 'not_in_corpus',
     });
     expect(await aWorkspace(f)).toEqual(before);
+  },
+  // The corpus citation resolver (#1135): global reads, the same answer for A and B.
+  createCorpusResolver: async (f) => {
+    const j = await seedCorpusJudgment(f.tx);
+    const before = await aWorkspace(f);
+    const request = { normalized: j.normalizedCaseNumber, kind: 'case_number' as const };
+    const asA = await inWorkspace(f.tx, f.a.id, (s) =>
+      core.createCorpusResolver({ db: s }).resolve(request),
+    );
+    const asB = await f.asB((s) => core.createCorpusResolver({ db: s }).resolve(request));
+    expect(asA).toMatchObject({ kind: 'hits', hits: [{ sourceUrl: j.sourceUrl }] });
+    expect(asB).toEqual(asA);
+    expect(await aWorkspace(f)).toEqual(before);
+  },
+  verifyPinpoint: async (f) => {
+    const j = await seedCorpusJudgment(f.tx);
+    const before = await aWorkspace(f);
+    const query = { para: 2, quote: j.quote };
+    const asA = await inWorkspace(f.tx, f.a.id, (s) => core.verifyPinpoint(j.id, query, { db: s }));
+    const asB = await f.asB((s) => core.verifyPinpoint(j.id, query, { db: s }));
+    expect(asA).toEqual({ status: 'verified' });
+    expect(asB).toEqual(asA);
+    expect(await aWorkspace(f)).toEqual(before);
+  },
+  resolveSectionRef: async (f) => {
+    const seeded = await seedStatute(owner);
+    try {
+      const before = await aWorkspace(f);
+      const ref = { statute: seeded.statute, section: seeded.section };
+      const asA = await inWorkspace(f.tx, f.a.id, (s) => core.resolveSectionRef(ref, { db: s }));
+      const asB = await f.asB((s) => core.resolveSectionRef(ref, { db: s }));
+      expect(asA).toMatchObject({ section: '106', heading: seeded.heading });
+      expect(asB).toEqual(asA);
+      expect(await aWorkspace(f)).toEqual(before);
+    } finally {
+      await seeded.cleanup();
+    }
   },
   createWorkspace: async (f) => {
     const before = await aMembers(f);

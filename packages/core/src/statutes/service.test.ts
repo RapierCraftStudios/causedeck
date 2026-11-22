@@ -19,6 +19,7 @@ import { setAuditSink } from '../workspaces/index.ts';
 import {
   getSection,
   listSectionHistory,
+  resolveSectionRef,
   searchSections,
   STATUTE_QUERY_MAX_CHARS,
   topAuthoritiesForSection,
@@ -196,6 +197,27 @@ describe('getSection (#1125)', () => {
       await expect(getSection(tx, actor, { ...ref, onDate: '01-01-2010' })).rejects.toMatchObject({
         code: 'VALIDATION',
       });
+    });
+  });
+});
+
+describe('resolveSectionRef (#1135)', () => {
+  it('finds a stored section by abbreviation with no actor, and returns no text', async () => {
+    await withTestDb(async (tx) => {
+      const found = await resolveSectionRef({ statute: 'IPC', section: '304A' }, { db: tx });
+      expect(found).toMatchObject({
+        act: { key: IPC },
+        section: '304a',
+        heading: 'Causing death by negligence',
+      });
+      expect(JSON.stringify(found)).not.toContain(IPC_304A_TEXT);
+    });
+  });
+
+  it('gives null for an unknown section or an unreadable reference', async () => {
+    await withTestDb(async (tx) => {
+      expect(await resolveSectionRef({ statute: 'IPC', section: '9999' }, { db: tx })).toBeNull();
+      expect(await resolveSectionRef({ statute: '', section: '' }, { db: tx })).toBeNull();
     });
   });
 });

@@ -5,7 +5,9 @@
 // the cited page. Axe is clean in every viewport and theme project.
 import { createHash, randomUUID } from 'node:crypto';
 
-import { demoStatuteRows } from '@causedeck/db/seed/demo';
+// The statute rows only: the `seed/demo` index pulls in @causedeck/config's env (TypeScript `declare`
+// fields Playwright's Babel transform cannot load), which crashed every e2e shard on the ship PR.
+import { demoStatuteRows } from '@causedeck/db/seed/demo/statutes';
 
 import { expect, test } from '../../fixtures/index.ts';
 import { MATTERS_WORKSPACE } from '../../fixtures/matters-data.ts';

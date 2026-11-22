@@ -2,8 +2,8 @@
 
 // The studio's Citations panel (#828): every citation found in the draft with its verified, not
 // found or unknown state (`CitationStatus`, glyph plus text), a jump to its span, and `Check
-// citations`. Not-found citations nobody acknowledged block the export; the panel says so and
-// opens the acknowledgement dialog. Nothing here leaves the app.
+// citations`. Citations that are not verified (not found or unknown, #1136) and nobody acknowledged
+// block the export; the panel says so and opens the acknowledgement dialog. Nothing here leaves the app.
 import { Button } from '@causedeck/ui/button';
 import { CitationStatus, type CitationStatusKind } from '@causedeck/ui/patterns';
 import { useTranslations } from 'next-intl';
@@ -15,7 +15,7 @@ export interface CitationView {
   raw: string;
   status: CitationStatusKind;
   title?: string | undefined;
-  /** A not-found citation the lawyer has acknowledged. */
+  /** A citation that is not verified and the lawyer has acknowledged. */
   acknowledged: boolean;
 }
 
@@ -47,7 +47,7 @@ export function CitationPanel({
 }: CitationPanelProps) {
   const t = useTranslations('drafting.panels.citations');
   const tc = useTranslations('drafting.checks.citations');
-  const open = citations.filter((c) => c.status === 'not_found' && !c.acknowledged).length;
+  const open = citations.filter((c) => c.status !== 'verified' && !c.acknowledged).length;
   return (
     <section
       data-slot="citation-panel"

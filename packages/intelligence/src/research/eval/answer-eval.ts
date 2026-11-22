@@ -97,7 +97,7 @@ function hitsOf(judgments: EvalCorpus['judgments']): SearchHit[] {
 /** The outcome of one claim, in a shape common to both verifiers. */
 interface Outcome {
   verified: boolean;
-  reason?: 'unknown_source' | 'quote_not_found';
+  reason?: 'unknown_source' | 'quote_not_found' | undefined;
   pinpoint: Pinpoint | null;
   /** True when the cited id exists in what the case knows and belongs where the claim says. */
   citationBelongs: boolean;
@@ -128,7 +128,13 @@ async function matterOutcomes(c: AnswerCase, query: EvalQuery, corpus: EvalCorpu
     ...relevantJudgments(query, corpus).flatMap((j) =>
       j.segments.map((s) => ({ id: `seg:${s.id}`, text: s.text, page: s.page, judgmentId: j.id })),
     ),
-    ...(c.sources ?? []).map((s) => ({ ...s })),
+    ...(c.sources ?? []).map(
+      ({ documentId, judgmentId, ...s }): CopilotSource => ({
+        ...s,
+        ...(documentId === undefined ? {} : { documentId }),
+        ...(judgmentId === undefined ? {} : { judgmentId }),
+      }),
+    ),
   ];
   const byId = new Map(sources.map((s) => [s.id, s]));
   const answer = await answerMatterQuestion(query.text, sources, () => Promise.resolve(c.replies));

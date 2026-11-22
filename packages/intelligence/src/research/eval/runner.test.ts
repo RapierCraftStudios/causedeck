@@ -221,7 +221,7 @@ describe('copilot quality report and gate', () => {
     writeFileSync(path.join(dir, 'baseline.json'), '{}\n');
     const answers = read(dir, 'answers.json') as { cases: unknown[] };
     writeFileSync(path.join(dir, 'answers.json'), JSON.stringify({ cases: answers.cases.slice(1) }));
-    expect(() => loadPinnedSet(dir)).not.toThrow(); // answers.json is pinned but loaded separately
+    expect(() => loadPinnedSet(dir)).toThrow(/answers.json/); // answers.json is pinned with the set
     expect(manifestDrift(dir, read(dir, 'manifest.json') as Record<string, string>)).toHaveLength(1);
     writeFileSync(path.join(dir, 'manifest.json'), `${JSON.stringify(buildManifest(dir))}\n`);
     const report = await buildQualityReport({ ...options, syntheticDir: dir });
@@ -235,8 +235,9 @@ describe('copilot quality report and gate', () => {
     const dir = copy();
     writeFileSync(path.join(dir, 'baseline.json'), JSON.stringify({ ...committedBaseline, ndcg10Hybrid: 1.5 }));
     const out = mkdtempSync(path.join(tmpdir(), 'research-quality-out-'));
-    const env = { ...process.env, GITHUB_STEP_SUMMARY: path.join(out, 'summary.md') };
-    delete env.RESEARCH_EVAL_PRIVATE_DIR;
+    // eslint-disable-next-line no-process-env -- the CLI child needs PATH; the private dir is removed.
+    const env: Record<string, string | undefined> = { ...process.env, GITHUB_STEP_SUMMARY: path.join(out, 'summary.md') };
+    delete env['RESEARCH_EVAL_PRIVATE_DIR'];
     const run = spawnSync(path.join(PKG, 'node_modules', '.bin', 'tsx'), ['src/research/eval/cli.ts', '--fixtures', dir, '--out', out], { cwd: PKG, env, encoding: 'utf8' });
     expect(run.status).toBe(1);
     expect(run.stderr).toMatch(/research-eval: ndcg10Hybrid regressed/);

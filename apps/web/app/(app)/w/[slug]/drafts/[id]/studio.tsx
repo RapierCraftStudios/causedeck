@@ -487,9 +487,7 @@ export function DraftStudio(props: StudioProps) {
   const checks = props.checks;
   const citations = live?.citations ?? checks?.citations ?? [];
   const checkFindings = live?.findings ?? checks?.findings ?? [];
-  const unacknowledged = citations.filter(
-    (c) => c.status !== 'verified' && !c.acknowledged,
-  ).length;
+  const unacknowledged = citations.filter((c) => c.status !== 'verified' && !c.acknowledged).length;
   const scope = { workspaceId: props.workspaceId, draftVersionId: checks?.versionId ?? '' };
 
   async function runChecks() {

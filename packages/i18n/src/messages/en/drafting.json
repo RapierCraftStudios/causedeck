@@ -177,8 +177,22 @@
         "checkFailed": "The citations could not be checked. Try again.",
         "acknowledged": "Acknowledged",
         "jump": "Go to {citation}",
-        "blocked": "{count, plural, one {# citation was not found and is not acknowledged.} other {# citations were not found and are not acknowledged.}} Export is blocked until you acknowledge them.",
-        "acknowledge": "Acknowledge not-found citations"
+        "blocked": "{count, plural, one {# citation is not verified and is not acknowledged.} other {# citations are not verified and are not acknowledged.}} Export is blocked until you acknowledge them.",
+        "acknowledge": "Acknowledge unverified citations",
+        "reason": {
+          "unresolved": "Not found in the corpus or any source.",
+          "unknown": "Could not be verified.",
+          "resolver_unavailable": "The citation source was unavailable. Check again later.",
+          "throttled": "The check limit was reached. Check again later.",
+          "ambiguous": "More than one judgment matches this citation.",
+          "title_mismatch": "The case title does not match the cited judgment.",
+          "title_missing": "There is no case title to compare with the cited judgment.",
+          "unsupported": "This kind of citation cannot be checked automatically.",
+          "quote_not_found": "The quote is not in the cited judgment.",
+          "pinpoint_not_found": "The cited paragraph or page is not in the judgment.",
+          "section_not_found": "The cited section was not found in the Act."
+        },
+        "openSource": "Open source"
       },
       "consistency": {
         "notRun": "Run the checks to see findings.",
@@ -204,7 +218,7 @@
       },
       "ack": {
         "title": "Acknowledge unverified citations",
-        "description": "{count, plural, one {# citation was not found.} other {# citations were not found.}} Confirm you have checked them yourself.",
+        "description": "{count, plural, one {# citation is not verified.} other {# citations are not verified.}} Confirm you have checked them yourself.",
         "checkbox": "I have verified these authorities myself",
         "confirm": "Confirm",
         "cancel": "Cancel",

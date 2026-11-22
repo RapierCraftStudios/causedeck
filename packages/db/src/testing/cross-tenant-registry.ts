@@ -1082,6 +1082,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   checkDraft: denies,
   getCitationReport: denies,
   acknowledgeUnverified: denies,
+  // authority insertion (#1142): B on A's draft is denied; A's versions, copilot usage and audit are unchanged.
+  proposeAuthorities: denies,
+  insertAuthority: denies,
   // consistency (#78): B running, reading or applying a fix on A's version is denied; A's rows are unchanged.
   runConsistencyCheck: denies,
   getConsistencyReport: denies,

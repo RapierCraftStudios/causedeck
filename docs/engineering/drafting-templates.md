@@ -46,3 +46,30 @@ practising advocate signed the wording off.
 - Court nomenclature from the adapters catalogue; snapshot renders with the court preset.
 - Tamil and Kannada content switches the complex-script font (DOCX) and embeds glyphs (PDF).
 - Labels exist in `en` with `ta` and `kn` entries.
+
+## Authority insertion
+
+Two services in `packages/core/src/drafting/authorities.ts` (#1142) put a verified corpus authority
+into a draft. Neither sends or shares anything (ADR 0045); the lawyer chooses and confirms.
+
+- **Propose** (`proposeAuthorities`, `draft.read` and a readable matter): the text of one block is
+  the question to `askCopilot`, with the draft's matter, so it is metered as one `copilot.questions`
+  unit (idempotent on `requestId`), stopped at the Junior cap, and a sensitive matter returns
+  `aiBlocked` with no model call and nothing counted. Only corpus claims (`seg`, with a judgment) are
+  kept, and each must also pass `verifyPinpoint` against `judgment.redacted_text`, the text insert
+  checks. Each candidate carries its paragraph or page and the corpus link; none gives `noAuthority`.
+  Propose writes nothing to the draft.
+- **Insert** (`insertAuthority`, `draft.write`): the client sends the judgment id, the quote and the
+  paragraph or page only. Insert re-runs `verifyPinpoint`; a changed quote, judgment id or pinpoint
+  gives `VALIDATION` and nothing is saved. A base version that is no longer the latest gives
+  `CONFLICT`. The title (the masked one) and citation (neutral citation, else the first case number)
+  come from the stored judgment. The paragraph `"<quote>" — <masked title>, <citation>, para N`
+  (`paras N-M`, or `at p. N` for a page; `formatAuthorityParagraph` in `@causedeck/drafting`) is
+  added after the chosen block and saved as the next immutable version through `insertVersion`, with
+  `draft.authority.inserted` (ids and the text's sha256 only) in the same transaction; the citation
+  check is queued like `saveVersion`.
+- **Round trip**: `extractCitations` reads the paragraph back with the same citation, pinpoint and
+  quote (a quote set off by a dash before the title or citation; a trailing quote still wins), so
+  `checkDraft` verifies it against the corpus. If the stored text later stops matching, the export
+  gate holds the draft until a lawyer acknowledges the citation with a reason
+  (`draft.citations.acknowledged`).

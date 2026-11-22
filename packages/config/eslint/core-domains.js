@@ -166,7 +166,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Drafting (#768): roles through workspaces, facts through the matter-graph index, `draft.exported`
   // through audit and the narrative gateway through ai's index.
   // The corpus citation resolver through citations (pre-staged for #1136).
-  drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai', 'citations']),
+  // proposeAuthorities asks through the copilot index (#1142); copilot never imports drafting.
+  drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai', 'citations', 'copilot']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // The business dashboard (#519): the IST month through usage's `periodStart`, FORBIDDEN through workspaces.

@@ -680,6 +680,42 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
         reason: 'B on A',
       }),
     ),
+    // Authority insertion (#1142): B on A's draft proposes and inserts nothing; A's versions, copilot
+    // usage and audit are unchanged.
+    proposeAuthorities: async (f) => {
+      const asked = () =>
+        inWorkspace(f.tx, f.a.id, (s) =>
+          s
+            .select({ id: schema.auditEvent.id })
+            .from(schema.auditEvent)
+            .where(eq(schema.auditEvent.action, 'copilot.asked')),
+        );
+      const before = await asked();
+      await denied((g, s) =>
+        core.proposeAuthorities({ db: s }, inA(g), { draftId: ids(g).draftId, blockId: 'p1' }),
+      )(f);
+      expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'copilot.questions')).toBe(0);
+      expect(await asked()).toEqual(before);
+    },
+    insertAuthority: async (f) => {
+      const inserted = () =>
+        inWorkspace(f.tx, f.a.id, (s) =>
+          s
+            .select({ id: schema.auditEvent.id })
+            .from(schema.auditEvent)
+            .where(eq(schema.auditEvent.action, 'draft.authority.inserted')),
+        );
+      const before = await inserted();
+      await denied((g, s) =>
+        core.insertAuthority({ db: s }, inA(g), {
+          draftId: ids(g).draftId,
+          versionId: ids(g).versionId,
+          afterBlockId: 'p1',
+          candidateRef: { judgmentId: randomUUID(), quote: 'x', para: 1 },
+        }),
+      )(f);
+      expect(await inserted()).toEqual(before);
+    },
     // Consistency (#78): B on A's version sees nothing, stores nothing and writes no version.
     runConsistencyCheck: denied((f, s) =>
       core.runConsistencyCheck({ db: s }, inA(f), { draftVersionId: ids(f).reportVersionId }),

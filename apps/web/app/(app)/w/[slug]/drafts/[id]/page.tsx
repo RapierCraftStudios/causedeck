@@ -27,6 +27,7 @@ import {
   ignoreFactAction,
   markAssertionAction,
 } from './factcheck-actions.ts';
+import { insertAuthorityAction, proposeAuthoritiesAction } from './authority-actions.ts';
 import { proposePrecedentAction, searchPrecedentsForBlockAction } from './precedent-actions.ts';
 import { DraftStudio } from './studio.tsx';
 
@@ -77,6 +78,16 @@ async function precedentsEnabled(actor: { workspaceId: string; userId: string })
   try {
     const { isEnabled } = await import('@causedeck/flags/server');
     return await isEnabled('m5_playbooks', actor);
+  } catch {
+    return false;
+  }
+}
+
+/** The authority drawer (#1144) is behind `copilot.enabled`: off unless the flag reads on. */
+async function copilotEnabled(actor: { workspaceId: string; userId: string }) {
+  try {
+    const { isEnabled } = await import('@causedeck/flags/server');
+    return await isEnabled('copilot.enabled', actor);
   } catch {
     return false;
   }
@@ -136,6 +147,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
 
   const { detail, rendered, older, authorities, report, gate, factGate, found } = loaded;
   const precedentsOn = await precedentsEnabled(actor);
+  const copilotOn = await copilotEnabled(actor);
   const slotValues = Object.fromEntries(
     Object.entries(rendered.slots).map(([key, resolution]) => [key, resolution.value]),
   );
@@ -217,6 +229,15 @@ export default async function DraftPage({ params }: DraftPageProps) {
               versionId: detail.version.id,
               language: 'en',
               courtId: null,
+            },
+          }
+        : {})}
+      {...(copilotOn
+        ? {
+            authorityDrawer: {
+              propose: proposeAuthoritiesAction,
+              insert: insertAuthorityAction,
+              versionId: detail.version.id,
             },
           }
         : {})}

@@ -73,3 +73,33 @@ export const NotVerified: Story = {
 
 export const NoAuthority: Story = { args: { initialAnswer: { ...base, noAuthority: true } } };
 export const AiOff: Story = { args: { initialAnswer: { ...base, aiBlocked: true } } };
+
+/** #1144: a verified judgment claim with "Insert into draft" (the matter's drafts as targets). */
+export const InsertIntoDraft: Story = {
+  args: {
+    ...Verified.args,
+    drafts: [
+      {
+        id: 'd1',
+        title: 'Written statement (fictional)',
+        versionId: 'v3',
+        href: '#',
+        blocks: [
+          { key: 'b.0', label: 'Preliminary submissions' },
+          {
+            key: 'b.1',
+            label: 'The plaintiff did not obtain written consent before the procedure.',
+          },
+        ],
+      },
+      {
+        id: 'd2',
+        title: 'Rejoinder (fictional)',
+        versionId: 'v1',
+        href: '#',
+        blocks: [{ key: 'b.0', label: 'Grounds' }],
+      },
+    ],
+    insert: () => Promise.resolve({ ok: true as const, data: {} }),
+  },
+};

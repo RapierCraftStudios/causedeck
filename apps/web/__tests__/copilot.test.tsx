@@ -44,6 +44,16 @@ vi.mock('../lib/flags.ts', () => ({
 vi.mock('../app/(app)/w/[slug]/matters/[id]/copilot/actions.ts', () => ({
   askCopilotAction: vi.fn(),
 }));
+vi.mock('../app/(app)/w/[slug]/drafts/[id]/authority-actions.ts', () => ({
+  insertAuthorityAction: vi.fn(),
+}));
+// #1144: the matter page loads the matter's drafts as insert targets in one workspace transaction.
+const drafting = vi.hoisted(() => ({ listDrafts: vi.fn(), getDraft: vi.fn() }));
+vi.mock('@causedeck/core/runtime', () => ({
+  inWorkspace: (_actor: unknown, fn: (tx: unknown) => Promise<unknown>) => fn({}),
+}));
+vi.mock('@causedeck/core/drafting', () => drafting);
+vi.mock('../src/health.ts', () => ({ logger: { warn: vi.fn(), error: vi.fn() } }));
 
 const { default: CopilotPage } = await import('../app/(app)/w/[slug]/copilot/page.tsx');
 const { default: MatterCopilotPage } =
@@ -107,6 +117,7 @@ const panel = (answer?: CopilotAnswer, ask = vi.fn()) =>
 beforeEach(() => {
   state.context = testWorkspaceContext('demo', 'advocate');
   state.flagOn = true;
+  drafting.listDrafts.mockResolvedValue([]);
 });
 afterEach(() => {
   cleanup();
@@ -238,5 +249,83 @@ describe('copilot panel', () => {
     });
     expect(ask).toHaveBeenCalledWith(expect.objectContaining({ matterId: MATTER }));
     expect(container.querySelector('[data-slot="copilot-claim"]')).toBeNull();
+  });
+});
+
+describe('insert into draft (#1144)', () => {
+  const ten = catalogs.en.drafting.copilotInsert;
+  const DRAFTS = [
+    {
+      id: 'd1',
+      title: 'Written statement',
+      versionId: 'v1',
+      href: '/w/demo/drafts/d1',
+      blocks: [
+        { key: 'b.0', label: 'Submissions' },
+        { key: 'b.1', label: 'Consent was never obtained.' },
+      ],
+    },
+  ];
+
+  it('is absent without drafts or an insert action', () => {
+    panel(ANSWER);
+    expect(screen.queryByRole('button', { name: ten.insert })).toBeNull();
+  });
+
+  it('is absent for a claim that is not a judgment', () => {
+    withIntl(
+      <CopilotPanel
+        workspaceId="ws"
+        matterId={MATTER}
+        ask={vi.fn()}
+        initialAnswer={{
+          ...ANSWER,
+          claims: ANSWER.claims.map((c) => ({ ...c, kind: 'fact' as const, judgmentId: null })),
+        }}
+        drafts={DRAFTS}
+        insert={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: ten.insert })).toBeNull();
+  });
+
+  it('sends the claim’s judgment, quote and pinpoint unaltered after the chosen block', async () => {
+    const insert = vi.fn().mockResolvedValue({ ok: true, data: { versionId: 'v2' } });
+    withIntl(
+      <CopilotPanel
+        workspaceId="ws"
+        matterId={MATTER}
+        ask={vi.fn()}
+        initialAnswer={ANSWER}
+        drafts={DRAFTS}
+        insert={insert}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: ten.insert }));
+    fireEvent.change(screen.getByLabelText(ten.after), { target: { value: 'b.0' } });
+    fireEvent.click(screen.getByRole('button', { name: ten.confirm }));
+    await waitFor(() => {
+      expect(screen.getByRole('status').textContent).toContain(ten.inserted);
+    });
+    expect(insert).toHaveBeenCalledWith({
+      workspaceId: 'ws',
+      draftId: 'd1',
+      versionId: 'v1',
+      afterBlockId: 'b.0',
+      candidateRef: { judgmentId: 'j1', quote: 'no written consent was taken', para: 12 },
+    });
+  });
+
+  it('the matter page offers the matter’s drafts to a member who may write them', async () => {
+    drafting.listDrafts.mockResolvedValue([{ id: 'd1', title: 'Written statement' }]);
+    drafting.getDraft.mockResolvedValue({
+      version: { id: 'v1', blocks: [{ type: 'paragraph', text: 'Consent was never obtained.' }] },
+    });
+    const page = await MatterCopilotPage({ params: Promise.resolve({ slug: 'demo', id: MATTER }) });
+    expect(drafting.listDrafts).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+      matterId: MATTER,
+    });
+    const { container } = withIntl(page);
+    expect(container.querySelector('[data-route="matter-copilot"]')).not.toBeNull();
   });
 });

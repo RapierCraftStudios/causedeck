@@ -6,8 +6,12 @@
 // is "no authority found"; a sensitive matter says AI is off; a failed call is an error, never an
 // invented answer. A retry after a failure reuses the request id, so it counts once. A claim whose
 // statement is its quote (the extractive demo answer) prints the sentence once, as the quote (#1132).
+// #1144: with `drafts` and `insert` (matter copilot, a member who may write drafts), a verified
+// judgment claim has "Insert into draft": the member picks a draft and the block to insert after; the
+// claim's judgment, quote and pinpoint go to the server unaltered, which verifies them again.
 import type { CopilotAnswer } from '@causedeck/core/copilot';
 import { Button } from '@causedeck/ui/button';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRef, useState, useTransition, type SyntheticEvent } from 'react';
 
@@ -16,6 +20,167 @@ const normalise = (text: string): string => text.replace(/\s+/g, ' ').trim().toL
 
 type ActionResult = { ok: true; data: CopilotAnswer } | { ok: false; error: { message: string } };
 
+/** A draft of this matter a claim can be inserted into: its latest version and its blocks. */
+export interface CopilotDraftTarget {
+  id: string;
+  title: string;
+  versionId: string;
+  href: string;
+  blocks: { key: string; label: string }[];
+}
+
+export interface CopilotInsertRef {
+  judgmentId: string;
+  quote: string;
+  para?: number;
+  page?: number;
+}
+
+type InsertResult = { ok: true; data: unknown } | { ok: false; error: { code?: string } };
+
+type Claim = CopilotAnswer['claims'][number];
+
+/** The pinpoint a verified judgment claim carries (paragraph first), or null when it is not one. */
+function insertRef(claim: Claim): CopilotInsertRef | null {
+  if (claim.kind !== 'seg' || claim.judgmentId === null) return null;
+  const { paragraph, page } = claim.pinpoint;
+  if (paragraph !== null)
+    return { judgmentId: claim.judgmentId, quote: claim.quote, para: paragraph };
+  if (page !== null) return { judgmentId: claim.judgmentId, quote: claim.quote, page };
+  return null;
+}
+
+function InsertIntoDraft({
+  workspaceId,
+  drafts,
+  refOf,
+  insert,
+}: {
+  workspaceId: string;
+  drafts: readonly CopilotDraftTarget[];
+  refOf: CopilotInsertRef;
+  insert: (raw: unknown) => Promise<InsertResult>;
+}) {
+  const t = useTranslations('drafting.copilotInsert');
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [draftId, setDraftId] = useState(drafts[0]?.id ?? '');
+  const target = drafts.find((d) => d.id === draftId) ?? drafts[0];
+  const [after, setAfter] = useState<string | null>(null);
+  const afterKey = after ?? target?.blocks.at(-1)?.key ?? '';
+  const [outcome, setOutcome] = useState<'inserted' | 'conflict' | 'failed' | null>(null);
+  const [pending, start] = useTransition();
+
+  if (target === undefined) return null;
+  if (!open) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="min-h-11 self-start"
+          onClick={() => {
+            setOpen(true);
+            setOutcome(null);
+          }}
+        >
+          {t('insert')}
+        </Button>
+        {outcome === 'inserted' ? (
+          <p role="status" data-slot="copilot-inserted" className="text-xs">
+            {t('inserted')}{' '}
+            <a href={target.href} className="underline">
+              {t('openDraft')}
+            </a>
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <div data-slot="copilot-insert" className="flex flex-col gap-2 rounded border p-2">
+      <label className="flex flex-col gap-1 text-xs font-medium">
+        {t('draft')}
+        <select
+          value={target.id}
+          onChange={(event) => {
+            setDraftId(event.target.value);
+            setAfter(null);
+          }}
+          className="min-h-11 rounded border px-2 font-normal"
+        >
+          {drafts.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.title}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-medium">
+        {t('after')}
+        <select
+          value={afterKey}
+          onChange={(event) => {
+            setAfter(event.target.value);
+          }}
+          className="min-h-11 rounded border px-2 font-normal"
+        >
+          {target.blocks.map((b) => (
+            <option key={b.key} value={b.key}>
+              {b.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          size="sm"
+          className="min-h-11"
+          disabled={pending || afterKey === ''}
+          onClick={() => {
+            start(async () => {
+              const result = await insert({
+                workspaceId,
+                draftId: target.id,
+                versionId: target.versionId,
+                afterBlockId: afterKey,
+                candidateRef: refOf,
+              });
+              if (result.ok) {
+                setOutcome('inserted');
+                setOpen(false);
+                setAfter(null);
+                // The draft has a new version: reload the targets so the next insert lands on it.
+                router.refresh();
+              } else setOutcome(result.error.code === 'CONFLICT' ? 'conflict' : 'failed');
+            });
+          }}
+        >
+          {pending ? t('inserting') : t('confirm')}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="min-h-11"
+          onClick={() => {
+            setOpen(false);
+          }}
+        >
+          {t('cancel')}
+        </Button>
+      </div>
+      {outcome === 'conflict' || outcome === 'failed' ? (
+        <p role="alert" className="text-xs text-red-600">
+          {t(outcome)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 export interface CopilotPanelProps {
   workspaceId: string;
   /** Omitted for the workspace-level copilot. */
@@ -23,9 +188,20 @@ export interface CopilotPanelProps {
   ask: (raw: unknown) => Promise<ActionResult>;
   /** Renders a stored result (stories, tests). */
   initialAnswer?: CopilotAnswer;
+  /** #1144: the matter's drafts a verified judgment claim can be inserted into. */
+  drafts?: readonly CopilotDraftTarget[];
+  /** #1144: `insertAuthorityAction`; without it (or without drafts) there is no insert control. */
+  insert?: (raw: unknown) => Promise<InsertResult>;
 }
 
-export function CopilotPanel({ workspaceId, matterId, ask, initialAnswer }: CopilotPanelProps) {
+export function CopilotPanel({
+  workspaceId,
+  matterId,
+  ask,
+  initialAnswer,
+  drafts,
+  insert,
+}: CopilotPanelProps) {
   const t = useTranslations('research.copilot');
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<CopilotAnswer | null>(initialAnswer ?? null);
@@ -125,6 +301,7 @@ export function CopilotPanel({ workspaceId, matterId, ask, initialAnswer }: Copi
                     claim.judgmentId === null ? undefined : answer.judgments[claim.judgmentId];
                   const where = pinpoint(claim.pinpoint.page, claim.pinpoint.paragraph);
                   const sameText = normalise(claim.statement) === normalise(claim.quote);
+                  const ref = insertRef(claim);
                   return (
                     <li
                       key={`${claim.sourceId}:${claim.quote}`}
@@ -158,6 +335,17 @@ export function CopilotPanel({ workspaceId, matterId, ask, initialAnswer }: Copi
                           </>
                         )}
                       </p>
+                      {ref === null ||
+                      insert === undefined ||
+                      drafts === undefined ||
+                      drafts.length === 0 ? null : (
+                        <InsertIntoDraft
+                          workspaceId={workspaceId}
+                          drafts={drafts}
+                          refOf={ref}
+                          insert={insert}
+                        />
+                      )}
                     </li>
                   );
                 })}

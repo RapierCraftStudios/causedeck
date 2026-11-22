@@ -137,6 +137,7 @@ const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts')
 const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actions.ts');
 const draftPrecedents = await import('../app/(app)/w/[slug]/drafts/[id]/precedent-actions.ts');
 const draftFactcheck = await import('../app/(app)/w/[slug]/drafts/[id]/factcheck-actions.ts');
+const draftAuthorities = await import('../app/(app)/w/[slug]/drafts/[id]/authority-actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
@@ -290,6 +291,8 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   downloadDraftExportAction: draftChecks,
   searchPrecedentsForBlockAction: draftPrecedents,
   proposePrecedentAction: draftPrecedents,
+  proposeAuthoritiesAction: draftAuthorities,
+  insertAuthorityAction: draftAuthorities,
   addTagAction: research,
   findAuthoritiesAction: research,
   searchAuthoritiesAction: researchSearch,
@@ -1150,6 +1153,20 @@ function inputs(workspaceId: string): Record<string, unknown> {
       language: 'en',
       draftVersionId: t.a.rows.draft_version?.id,
       anchorId: 'b.0',
+    },
+    // Drafting authorities (#1144): ub may not ask about or insert into A's draft.
+    proposeAuthoritiesAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      blockId: 'b.0',
+      requestId: XT_ID,
+    },
+    insertAuthorityAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      versionId: t.a.rows.draft_version?.id,
+      afterBlockId: 'b.0',
+      candidateRef: { judgmentId: XT_ID, quote: 'Cross-tenant probe', para: 1 },
     },
     // Drafting checks (#828): ub may not check, acknowledge, fix or export A's draft.
     runChecksAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
@@ -2062,7 +2079,13 @@ describe('cross-tenant server actions', () => {
         tx.select({ id: schema.draftVersion.id }).from(schema.draftVersion),
       );
     const before = await versions();
-    for (const name of ['saveDraftAction', 'restoreDraftVersionAction']) {
+    for (const name of [
+      'saveDraftAction',
+      'restoreDraftVersionAction',
+      // #1144: the authority drawer may neither ask about nor insert into A's draft.
+      'proposeAuthoritiesAction',
+      'insertAuthorityAction',
+    ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
       expect(result, name).not.toHaveProperty('data');

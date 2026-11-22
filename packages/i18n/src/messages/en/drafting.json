@@ -162,14 +162,16 @@
       "editor": "Editor",
       "facts": "Facts",
       "versions": "Versions",
-      "precedents": "Precedents"
+      "precedents": "Precedents",
+      "authorities": "Authorities"
     },
     "actions": {
       "title": "Draft actions",
       "save": "Save draft",
       "showFacts": "Show facts",
       "showVersions": "Show versions",
-      "showPrecedents": "Show precedents"
+      "showPrecedents": "Show precedents",
+      "showAuthorities": "Show authorities"
     },
     "checks": {
       "citations": {
@@ -298,6 +300,44 @@
           "ambiguous": "Ambiguous in the record"
         }
       }
+    },
+    "authorityDrawer": {
+      "title": "Authorities",
+      "hint": "Verified against the judgment corpus for the selected block. Nothing is inserted until you choose it.",
+      "noBlock": "Select a paragraph or heading to find authorities for it.",
+      "find": "Find authorities",
+      "findAgain": "Ask again",
+      "loading": "Finding verified authorities",
+      "empty": "No authority found. No passage in the corpus could be verified for this block.",
+      "aiBlocked": "This matter is marked sensitive, so no AI search was made.",
+      "error": "Authorities could not be loaded.",
+      "limit": "The monthly copilot limit is reached.",
+      "retry": "Try again",
+      "denied": "Your role cannot search authorities for this draft.",
+      "offline": "Offline. Authorities load when you are back online.",
+      "untitled": "Untitled judgment",
+      "source": "Judgment",
+      "openSource": "Open judgment",
+      "para": "para {n}",
+      "page": "page {n}",
+      "insert": "Insert",
+      "inserting": "Inserting",
+      "inserted": "Inserted",
+      "saveFirst": "Save your changes before inserting an authority.",
+      "insertConflict": "The draft changed since it was loaded. Reload and try again.",
+      "insertFailed": "This authority could not be inserted."
+    },
+    "copilotInsert": {
+      "insert": "Insert into draft",
+      "draft": "Draft",
+      "after": "After",
+      "confirm": "Insert",
+      "cancel": "Cancel",
+      "inserting": "Inserting",
+      "inserted": "Inserted into the draft.",
+      "openDraft": "Open draft",
+      "conflict": "The draft changed. Reload and try again.",
+      "failed": "This authority could not be inserted."
     }
   }
 }

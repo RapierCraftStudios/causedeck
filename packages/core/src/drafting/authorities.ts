@@ -173,12 +173,9 @@ export async function proposeAuthorities(
   for (const claim of answer.claims) {
     if (claim.kind !== 'seg' || claim.judgmentId === null) continue;
     const { paragraph, page } = claim.pinpoint;
-    if (paragraph === null && page === null) continue;
-    const ref: AuthorityCandidateRef = {
-      judgmentId: claim.judgmentId,
-      quote: claim.quote,
-      ...(paragraph === null ? { page: page ?? undefined } : { para: paragraph }),
-    };
+    const pin = paragraph !== null ? { para: paragraph } : page !== null ? { page } : null;
+    if (pin === null) continue;
+    const ref: AuthorityCandidateRef = { judgmentId: claim.judgmentId, quote: claim.quote, ...pin };
     const key = `${ref.judgmentId}|${String(ref.para ?? '')}|${String(ref.page ?? '')}|${quoteKey(ref.quote)}`;
     if (seen.has(key)) continue;
     seen.add(key);

@@ -4666,6 +4666,7 @@ export type Messages = {
       facts: string;
       versions: string;
       precedents: string;
+      authorities: string;
     };
     actions: {
       title: string;
@@ -4673,6 +4674,7 @@ export type Messages = {
       showFacts: string;
       showVersions: string;
       showPrecedents: string;
+      showAuthorities: string;
     };
     checks: {
       citations: {
@@ -4801,6 +4803,44 @@ export type Messages = {
           ambiguous: string;
         };
       };
+    };
+    authorityDrawer: {
+      title: string;
+      hint: string;
+      noBlock: string;
+      find: string;
+      findAgain: string;
+      loading: string;
+      empty: string;
+      aiBlocked: string;
+      error: string;
+      limit: string;
+      retry: string;
+      denied: string;
+      offline: string;
+      untitled: string;
+      source: string;
+      openSource: string;
+      para: string;
+      page: string;
+      insert: string;
+      inserting: string;
+      inserted: string;
+      saveFirst: string;
+      insertConflict: string;
+      insertFailed: string;
+    };
+    copilotInsert: {
+      insert: string;
+      draft: string;
+      after: string;
+      confirm: string;
+      cancel: string;
+      inserting: string;
+      inserted: string;
+      openDraft: string;
+      conflict: string;
+      failed: string;
     };
   };
   calendar: {

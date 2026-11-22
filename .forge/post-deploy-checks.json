@@ -18,5 +18,10 @@
     "run": "pnpm --filter @causedeck/e2e test tests/drafting/citations.spec.ts",
     "pass": "exit 0",
     "timeout": 600
+  },
+  "drafting-authority-insert-journey": {
+    "run": "pnpm --filter @causedeck/e2e test tests/drafting/authority-insert.spec.ts",
+    "pass": "exit 0",
+    "timeout": 600
   }
 }

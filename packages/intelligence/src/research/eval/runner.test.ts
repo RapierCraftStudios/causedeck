@@ -1,17 +1,34 @@
-import { mkdtempSync, readFileSync, writeFileSync, cpSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  createMockEmbedProvider,
+  createMockRerankProvider,
+  createRerankGateway,
+} from '@causedeck/ai';
 import { describe, expect, it, assert } from 'vitest';
 
 import { bm25Ranker } from './baseline-ranker.ts';
 import { checkAnswer } from './faithfulness.ts';
-import { manifestDrift } from './manifest.ts';
+import { buildManifest, manifestDrift } from './manifest.ts';
 import { ndcgAtK, recallAtK } from './metrics.ts';
-import { renderJson, renderMarkdown } from './report.ts';
-import { compareToBaseline, loadEvalSet, loadPinnedSet, runEval, runSet } from './runner.ts';
-import type { Ranker } from './types.ts';
+import { renderJson, renderMarkdown, renderQualityJson, renderQualityMarkdown } from './report.ts';
+import {
+  buildQualityReport,
+  compareQuality,
+  compareToBaseline,
+  gateQuality,
+  loadEvalSet,
+  loadPinnedSet,
+  QUALITY_SCHEMA_VERSION,
+  runEval,
+  runSet,
+  updateBaseline,
+} from './runner.ts';
+import { baselineSchema, QUALITY_METRICS, thresholdsSchema, type Ranker } from './types.ts';
 
 const FIXTURES = fileURLToPath(new URL('../../../../../fixtures/research-eval', import.meta.url));
 const baseline = JSON.parse(readFileSync(path.join(FIXTURES, 'baseline.json'), 'utf8')) as {
@@ -118,5 +135,123 @@ describe('runner and reports', () => {
     const at = (ndcg10: number) => compareToBaseline({ ndcg10 } as never, { ndcg10: 0.9 });
     expect(at(0.88).regressed).toBe(false);
     expect(at(0.879).regressed).toBe(true);
+  });
+});
+
+// #1119: the copilot quality report and gate.
+describe('copilot quality report and gate', () => {
+  const ROOT = fileURLToPath(new URL('../../../../../', import.meta.url));
+  const PKG = fileURLToPath(new URL('../../../', import.meta.url));
+  const mock = createMockEmbedProvider();
+  const options = {
+    embed: async (texts: readonly string[]) => (await mock.embed(texts)).vectors,
+    reranker: createRerankGateway({ providers: [createMockRerankProvider()] }),
+  };
+  const read = (dir: string, file: string): unknown =>
+    JSON.parse(readFileSync(path.join(dir, file), 'utf8'));
+  const committedBaseline = baselineSchema.parse(read(FIXTURES, 'baseline.json'));
+  const thresholds = thresholdsSchema.parse(read(FIXTURES, 'thresholds.json'));
+  const copy = (): string => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'research-quality-'));
+    cpSync(FIXTURES, dir, { recursive: true });
+    return dir;
+  };
+
+  it('lists every metric for the synthetic and the private set and passes the committed baseline', async () => {
+    const report = await buildQualityReport({ ...options, syntheticDir: FIXTURES, privateDir: FIXTURES });
+    for (const set of [report.synthetic, report.private]) {
+      for (const metric of QUALITY_METRICS) expect(set?.metrics[metric]).toEqual(expect.any(Number));
+    }
+    expect(report.synthetic.metrics.falseVerified).toBe(0);
+    expect(report.schemaVersion).toBe(QUALITY_SCHEMA_VERSION);
+    expect(gateQuality(report, committedBaseline, thresholds)).toEqual([]);
+    const comparisons = compareQuality(report.synthetic.metrics, committedBaseline, thresholds);
+    const json = JSON.parse(renderQualityJson(report, comparisons, [])) as Record<string, unknown>;
+    expect(Object.keys(json)[0]).toBe('schemaVersion');
+    const md = renderQualityMarkdown(report, comparisons, []);
+    for (const label of ['recall@50', 'nDCG@10 (baseline)', 'nDCG@10 (hybrid)', 'Citation accuracy', 'Quote verification rate', 'Pinpoint accuracy', 'False-verified claims', 'Private set (not gated)']) {
+      expect(md).toContain(label);
+    }
+  });
+
+  it('is deterministic on the pinned fixtures', async () => {
+    const run = async () => {
+      const report = await buildQualityReport({ ...options, syntheticDir: FIXTURES });
+      const comparisons = compareQuality(report.synthetic.metrics, committedBaseline, thresholds);
+      return renderQualityJson(report, comparisons, gateQuality(report, committedBaseline, thresholds));
+    };
+    expect(await run()).toBe(await run());
+  });
+
+  it('accepts a private gold set without answers.json and never gates on it', async () => {
+    const dir = copy();
+    rmSync(path.join(dir, 'answers.json'));
+    const report = await buildQualityReport({ ...options, syntheticDir: FIXTURES, privateDir: dir });
+    expect(report.private?.answers).toBeNull();
+    expect(report.private?.metrics.falseVerified).toBeNull();
+    // A private set far below the baseline still adds no failure.
+    const broken = { ...report, private: { ...report.synthetic, metrics: { ...report.synthetic.metrics, ndcg10: 0, falseVerified: 9 } } };
+    expect(gateQuality(broken, committedBaseline, thresholds)).toEqual([]);
+  });
+
+  it('fails a regression beyond tolerance naming the metric and passes one within it', () => {
+    const m = { ...committedBaseline };
+    const at = (patch: Partial<typeof m>) =>
+      gateQuality({ synthetic: { metrics: { ...m, ...patch } } } as never, committedBaseline, thresholds);
+    expect(at({ ndcg10Hybrid: m.ndcg10Hybrid - 0.019 })).toEqual([]);
+    expect(at({ ndcg10Hybrid: m.ndcg10Hybrid - 0.021 })).toEqual([expect.stringMatching(/^ndcg10Hybrid regressed/)]);
+    expect(at({ citationAccuracy: 0.99 })).toEqual([expect.stringMatching(/^citationAccuracy regressed/)]);
+    expect(at({ pinpointAccuracy: 0.5, recall50: 0.9 })).toEqual([
+      expect.stringMatching(/^recall50 regressed/),
+      expect.stringMatching(/^pinpointAccuracy regressed/),
+    ]);
+    expect(at({ quoteVerificationRate: null } as never)).toEqual([expect.stringMatching(/^quoteVerificationRate regressed/)]);
+  });
+
+  it('fails any false-verified claim regardless of tolerance', () => {
+    const loose = thresholdsSchema.parse(
+      Object.fromEntries(QUALITY_METRICS.map((k) => [k, { tolerance: 1e9, direction: 'higher-is-better' }])),
+    );
+    const report = { synthetic: { metrics: { ...committedBaseline, falseVerified: 1 } } } as never;
+    expect(gateQuality(report, committedBaseline, loose)).toEqual([expect.stringMatching(/^falseVerified is 1/)]);
+  });
+
+  it('--update-baseline rewrites the baseline and the manifest together', async () => {
+    const dir = copy();
+    writeFileSync(path.join(dir, 'baseline.json'), '{}\n');
+    const answers = read(dir, 'answers.json') as { cases: unknown[] };
+    writeFileSync(path.join(dir, 'answers.json'), JSON.stringify({ cases: answers.cases.slice(1) }));
+    expect(() => loadPinnedSet(dir)).not.toThrow(); // answers.json is pinned but loaded separately
+    expect(manifestDrift(dir, read(dir, 'manifest.json') as Record<string, string>)).toHaveLength(1);
+    writeFileSync(path.join(dir, 'manifest.json'), `${JSON.stringify(buildManifest(dir))}\n`);
+    const report = await buildQualityReport({ ...options, syntheticDir: dir });
+    const written = updateBaseline(dir, report);
+    expect(baselineSchema.parse(read(dir, 'baseline.json'))).toEqual(written);
+    expect(Object.keys(read(dir, 'manifest.json') as object)).toEqual(['corpus.json', 'queries.json', 'answers.json']);
+    expect(manifestDrift(dir, read(dir, 'manifest.json') as Record<string, string>)).toEqual([]);
+  });
+
+  it('the CLI exits 1 naming the regressed metric', () => {
+    const dir = copy();
+    writeFileSync(path.join(dir, 'baseline.json'), JSON.stringify({ ...committedBaseline, ndcg10Hybrid: 1.5 }));
+    const out = mkdtempSync(path.join(tmpdir(), 'research-quality-out-'));
+    const env = { ...process.env, GITHUB_STEP_SUMMARY: path.join(out, 'summary.md') };
+    delete env.RESEARCH_EVAL_PRIVATE_DIR;
+    const run = spawnSync(path.join(PKG, 'node_modules', '.bin', 'tsx'), ['src/research/eval/cli.ts', '--fixtures', dir, '--out', out], { cwd: PKG, env, encoding: 'utf8' });
+    expect(run.status).toBe(1);
+    expect(run.stderr).toMatch(/research-eval: ndcg10Hybrid regressed/);
+    expect(readFileSync(path.join(out, 'summary.md'), 'utf8')).toContain('Gate: **FAILED**');
+    expect((JSON.parse(readFileSync(path.join(out, 'report.json'), 'utf8')) as { schemaVersion: number }).schemaVersion).toBe(QUALITY_SCHEMA_VERSION);
+  }, 120_000);
+
+  it('the workflow watches the copilot paths, publishes the summary and the artifact, and sets no private dir', () => {
+    const workflow = readFileSync(path.join(ROOT, '.github/workflows/research-eval.yml'), 'utf8');
+    for (const p of ['packages/core/src/copilot/**', 'packages/ai/src/tasks/answer-*.ts', 'packages/drafting/src/citations/**', 'packages/core/src/citations/**']) {
+      expect(workflow).toContain(`- '${p}'`);
+    }
+    expect(workflow).toContain('actions/upload-artifact');
+    expect(workflow).toContain('timeout-minutes: 10');
+    expect(workflow).not.toMatch(/RESEARCH_EVAL_PRIVATE_DIR\s*:/);
+    expect(readFileSync(path.join(PKG, 'src/research/eval/cli.ts'), 'utf8')).toContain('GITHUB_STEP_SUMMARY');
   });
 });

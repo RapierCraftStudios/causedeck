@@ -1,0 +1,30 @@
+{
+  "recall50": {
+    "tolerance": 0,
+    "direction": "higher-is-better"
+  },
+  "ndcg10": {
+    "tolerance": 0.02,
+    "direction": "higher-is-better"
+  },
+  "ndcg10Hybrid": {
+    "tolerance": 0.02,
+    "direction": "higher-is-better"
+  },
+  "citationAccuracy": {
+    "tolerance": 0,
+    "direction": "higher-is-better"
+  },
+  "quoteVerificationRate": {
+    "tolerance": 0,
+    "direction": "higher-is-better"
+  },
+  "pinpointAccuracy": {
+    "tolerance": 0,
+    "direction": "higher-is-better"
+  },
+  "falseVerified": {
+    "tolerance": 0,
+    "direction": "lower-is-better"
+  }
+}

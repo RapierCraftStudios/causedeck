@@ -95,7 +95,8 @@ async function copilotEnabled(actor: { workspaceId: string; userId: string }) {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('drafting.list');
-  return { title: t('title') };
+  // A workspace draft is private and behind sign-in: never indexed, like the copilot pages.
+  return { title: t('title'), robots: { index: false, follow: false } };
 }
 
 export default async function DraftPage({ params }: DraftPageProps) {

@@ -96,14 +96,14 @@ test.describe('drafting studio', () => {
         citationPanel(page).getByText('Not found', { exact: true }).first(),
       ).toBeVisible();
       await expect(
-        citationPanel(page).getByRole('button', { name: 'Acknowledge not-found citations' }),
+        citationPanel(page).getByRole('button', { name: 'Acknowledge unverified citations' }),
       ).toBeVisible();
     });
 
     test('acknowledges not-found citations; Confirm waits for the checkbox', async ({ page }) => {
       await checkCitations(page);
       await citationPanel(page)
-        .getByRole('button', { name: 'Acknowledge not-found citations' })
+        .getByRole('button', { name: 'Acknowledge unverified citations' })
         .click();
       const dialog = page.locator('[data-slot="ack-dialog"]');
       await expect(dialog).toBeVisible();
@@ -121,7 +121,7 @@ test.describe('drafting studio', () => {
     test('Escape cancels the acknowledgement without recording it', async ({ page }) => {
       await checkCitations(page);
       await citationPanel(page)
-        .getByRole('button', { name: 'Acknowledge not-found citations' })
+        .getByRole('button', { name: 'Acknowledge unverified citations' })
         .click();
       const dialog = page.locator('[data-slot="ack-dialog"]');
       await expect(dialog).toBeVisible();

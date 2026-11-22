@@ -114,6 +114,23 @@ async function loadVersion(
   };
 }
 
+/** The pinpoint as stored: only the parts the citation names. */
+function storedPinpoint(p: {
+  para?: number | undefined;
+  paraEnd?: number | undefined;
+  page?: number | undefined;
+}): {
+  para?: number;
+  paraEnd?: number;
+  page?: number;
+} {
+  return {
+    ...(p.para === undefined ? {} : { para: p.para }),
+    ...(p.paraEnd === undefined ? {} : { paraEnd: p.paraEnd }),
+    ...(p.page === undefined ? {} : { page: p.page }),
+  };
+}
+
 export function reportFromRows(
   draftVersionId: string,
   rows: readonly AuthorityRow[],
@@ -139,6 +156,8 @@ export function reportFromRows(
         ...(row.resolution.reason === undefined
           ? {}
           : { reason: row.resolution.reason as CitationReason }),
+        ...(row.resolution.pinpoint === undefined ? {} : { pinpoint: row.resolution.pinpoint }),
+        ...(row.resolution.quote === undefined ? {} : { quoteChecked: row.resolution.quote }),
       };
     });
   return { draftVersionId, items, counts, throttled };
@@ -208,6 +227,9 @@ export async function checkDraft(
         ...(verdict.title === undefined ? {} : { title: verdict.title }),
         ...(verdict.similarity === undefined ? {} : { similarity: verdict.similarity }),
         ...(item.resolved ? { source: resolver.name } : {}),
+        // Where the citation points and whether its quote was found; never the quote text.
+        ...(item.pinpoint === undefined ? {} : { pinpoint: storedPinpoint(item.pinpoint) }),
+        ...(verdict.quoteChecked === undefined ? {} : { quote: verdict.quoteChecked }),
       };
       const values = {
         workspaceId,

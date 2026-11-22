@@ -189,6 +189,7 @@ graph LR
   jobs --> news
   jobs --> sources
   jobs --> webhooks
+  jobs --> citations
   research --> workspaces
   research --> citations
   research --> audit
@@ -387,7 +388,7 @@ graph LR
 | `free-alerts`  | `billing`, `usage`, `case-watch`, `matter-graph` |
 | `import`       | `matter-graph`, `usage`, `automation`                                                                                                                                                                                                                                         |
 | `migration`    | `import`, `workspaces`                                                                                                                                                                                                                                                        |
-| `jobs`         | `obligations`, `attention`, `memory`, `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `whatsapp-link`, `email-intake`, `voice`, `extraction`, `import`, `court`, `court-day`, `briefs`, `sources`, `research`, `drafting`, `portfolio`, `business`, `case-watch`, `free-alerts`, `webhooks`, `notices`, `data-ops`, `news`, `intake`, `status`, `status-links`, `demo` |
+| `jobs`         | `obligations`, `attention`, `memory`, `ai`, `audit`, `billing`, `usage`, `lifecycle`, `support`, `capture`, `automation`, `calendar`, `whatsapp`, `whatsapp-link`, `email-intake`, `voice`, `extraction`, `import`, `court`, `court-day`, `briefs`, `sources`, `research`, `drafting`, `portfolio`, `business`, `case-watch`, `free-alerts`, `webhooks`, `notices`, `data-ops`, `news`, `intake`, `status`, `status-links`, `demo`, `citations` |
 | `runtime`      | `audit`, `billing`, `usage`, `workspaces`, `jobs`, `lifecycle`, `support`, `court`, `capture`, `email-intake`, `automation`                                                                                                                                                   |
 
 The issue's example had `billing → usage`; the code needs the reverse: usage limits, budget,

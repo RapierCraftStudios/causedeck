@@ -3,5 +3,10 @@
     "run": "test -n \"$(find e2e/__screenshots__ -path '*inbox*' -name 'inbox-*.png' 2>/dev/null | head -n 1)\"",
     "pass": "exit 0",
     "timeout": 30
+  },
+  "copilot-demo-journey": {
+    "run": "pnpm --filter @causedeck/e2e test tests/matters/copilot.spec.ts",
+    "pass": "exit 0",
+    "timeout": 600
   }
 }

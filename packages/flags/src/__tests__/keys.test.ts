@@ -45,6 +45,7 @@ describe('flag registry', () => {
         'pwa.offline',
         'billing.razorpay',
         'insights.enabled',
+        'copilot.enabled',
         'workspace.export',
         'm5_playbooks',
         'adapters.workbench-fetch',

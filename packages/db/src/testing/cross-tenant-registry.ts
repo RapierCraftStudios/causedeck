@@ -1056,6 +1056,8 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // fact-pattern search (#896): B naming A's workspace is denied; A's research usage is unchanged.
   searchAuthorities: denies,
   rerunAuthoritySearch: denies,
+  // grounded matter copilot (#1115): B naming A's workspace or matter is denied; A's copilot usage and audit rows are unchanged.
+  askCopilot: denies,
   // drafts (#768): B on A's draft, version or export is denied; A's rows are unchanged.
   createDraft: denies,
   renderDraft: denies,
@@ -1221,6 +1223,9 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   BUILT_IN_PROVIDERS: 'constant',
   QUERY_PLACEHOLDER: 'constant',
   // fact-pattern search (#896): constants of the search service
+  COPILOT_QUESTION_CAPS: 'constant',
+  COPILOT_QUESTION_KEY: 'constant',
+  COPILOT_QUESTION_MAX_CHARS: 'constant',
   RESEARCH_QUERY_MAX_CHARS: 'constant',
   RESEARCH_SEARCH_CAPS: 'constant',
   RESEARCH_SEARCH_KEY: 'constant',

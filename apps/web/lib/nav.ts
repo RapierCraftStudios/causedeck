@@ -14,6 +14,7 @@ import {
   Hourglass,
   Inbox,
   MessageSquarePlus,
+  MessageSquareQuote,
   Landmark,
   Search,
   ReceiptIndianRupee,
@@ -53,7 +54,7 @@ export const WORKSPACE_ROUTES = [
 export type WorkspaceRoute = (typeof WORKSPACE_ROUTES)[number];
 
 /** A nav destination below a workspace route: its own item, flag-gated, under `path`. */
-export type NavSubRoute = 'enquiries' | 'import' | 'research';
+export type NavSubRoute = 'enquiries' | 'import' | 'research' | 'copilot';
 export type NavItemId = WorkspaceRoute | NavSubRoute;
 
 export type NavGroup = 'work' | 'followup' | 'practice' | 'settings';
@@ -104,6 +105,8 @@ export const NAV_ITEMS: readonly NavItem[] = [
   item('briefs', BookOpen, 'work'),
   // `/research` (#896): the page checks `matter.read` itself; the search is metered per workspace.
   item('research', Search, 'work', { requires: 'matter.read' }),
+  // `/copilot` (#1115): the grounded copilot; hidden while `copilot.enabled` is off.
+  item('copilot', MessageSquareQuote, 'work', { requires: 'matter.read', flag: 'copilot.enabled' }),
   item('obligations', ClipboardCheck, 'followup', { badge: noCount }),
   item('drafts', FilePen, 'followup'),
   item('memory', Brain, 'followup'),

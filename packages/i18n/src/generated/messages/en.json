@@ -47,7 +47,8 @@
     },
     "enquiries": "Enquiries",
     "import": "Import",
-    "research": "Research"
+    "research": "Research",
+    "copilot": "Copilot"
   },
   "palette": {
     "title": "Command palette",
@@ -5685,6 +5686,35 @@
         "company": "Company",
         "intellectual_property": "Intellectual property",
         "environment": "Environment"
+      }
+    },
+    "copilot": {
+      "metaTitle": "Ask the copilot",
+      "title": "Ask the copilot",
+      "intro": "Ask a question about the judgment corpus. Every claim shows a quote and a pinpoint we checked against the stored text.",
+      "matterIntro": "Ask about this matter. Answers come from its facts, its documents and the judgment corpus, and every claim shows a quote we checked against the stored text.",
+      "denied": "You do not have access to the copilot.",
+      "questionLabel": "Your question",
+      "questionPlaceholder": "Did the surgeon need written consent before the operation?",
+      "submit": "Ask",
+      "asking": "Asking…",
+      "error": "The copilot could not answer. Try again.",
+      "usage": "{used} of {limit} questions used this month",
+      "usageUnlimited": "{used} questions this month",
+      "aiOff": "AI is off for this matter. The copilot does not read it.",
+      "noAuthority": "No authority found.",
+      "claimsTitle": "Verified claims",
+      "unsupportedTitle": "Not verified",
+      "notVerified": "Not verified: the quote was not found in the source.",
+      "record": "Corpus record",
+      "kind": {
+        "fact": "Matter fact",
+        "doc": "Matter document",
+        "seg": "Judgment"
+      },
+      "pinpoint": {
+        "page": "page {page}",
+        "paragraph": "paragraph {paragraph}"
       }
     }
   },

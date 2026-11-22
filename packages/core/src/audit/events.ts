@@ -54,6 +54,12 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A member searched the judgment corpus: plan and retrieval set recorded as ids',
   },
+  // A grounded matter copilot question (#1115). Metadata holds hashes of the question and answer and source ids, never text.
+  'copilot.asked': {
+    security: false,
+    description:
+      'A member asked the matter copilot a question: hashes of question and answer, source ids recorded',
+  },
   // The public status page's incident log (#770). Metadata holds the change and the old and new state.
   'incident.changed': {
     security: true,

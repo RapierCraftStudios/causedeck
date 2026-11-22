@@ -291,6 +291,11 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A lawyer applied a consistency fix, which saved a new draft version',
   },
+  // Authority insertion (#1142). Metadata holds ids, the version and the inserted text's sha256 only, never the quote or draft text.
+  'draft.authority.inserted': {
+    security: false,
+    description: 'A lawyer inserted a verified corpus authority, which saved a new draft version',
+  },
   // Fact-check (#914). Metadata holds claim kinds, counts, the version id and the typed reason, never draft text.
   'draft.factcheck.checked': {
     security: false,

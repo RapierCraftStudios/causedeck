@@ -21,7 +21,11 @@ export interface ExtractedCitation {
   titleHint?: string;
   /** `para 12`, `paras 12-14` or `at p. 7` written right after a structured citation. */
   pinpoint?: CitationPinpoint;
-  /** The quoted span right after the citation (or its pinpoint). Used to verify, never stored. */
+  /**
+   * The quoted span right after the citation (or its pinpoint), else one written just before it (or
+   * its title hint) and set off by a dash: `"…" — X v. State, 2026:MHC:12, para 3`. Used to verify,
+   * never stored.
+   */
   quote?: string;
   /** For a statute section citation: the statute and the section. */
   section?: { statute: string; section: string };
@@ -43,6 +47,15 @@ function pinpointAt(text: string, from: number): { pinpoint?: CitationPinpoint; 
 
 function quoteAt(text: string, from: number): string | undefined {
   const m = QUOTE.exec(text.slice(from));
+  const quote = (m?.groups?.straight ?? m?.groups?.curly)?.replace(/\s+/g, ' ').trim();
+  return quote === '' ? undefined : quote;
+}
+
+/** A quote that ends right before a citation (or its title hint), set off by a dash. */
+const LEADING_QUOTE = /(?:"(?<straight>[^"]+)"|“(?<curly>[^”]+)”)\s*[—–-]\s*$/;
+
+function quoteBefore(text: string, to: number): string | undefined {
+  const m = LEADING_QUOTE.exec(text.slice(0, to));
   const quote = (m?.groups?.straight ?? m?.groups?.curly)?.replace(/\s+/g, ' ').trim();
   return quote === '' ? undefined : quote;
 }
@@ -103,6 +116,11 @@ export function extractFromText(text: string, blockId: string): ExtractedCitatio
     if (name !== undefined) {
       item.titleHint = name.raw;
       absorbed.add(idx);
+    }
+    // A trailing quote keeps precedence; else a dash-separated quote right before the name or citation.
+    if (item.quote === undefined) {
+      const quote = quoteBefore(text, name?.start ?? item.span[0]);
+      if (quote !== undefined) item.quote = quote;
     }
   }
   names.forEach((name, idx) => {

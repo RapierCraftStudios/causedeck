@@ -1030,6 +1030,13 @@
       "when": 1795315456554,
       "tag": "20261031181218_statutes",
       "breakpoints": true
+    },
+    {
+      "idx": 147,
+      "version": "7",
+      "when": 1795327995816,
+      "tag": "20261031181219_authority_kinds",
+      "breakpoints": true
     }
   ]
 }

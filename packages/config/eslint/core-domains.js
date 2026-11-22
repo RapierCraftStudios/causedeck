@@ -158,6 +158,10 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'usage',
     'ai',
   ]),
+  // Statutes (#1125): statute text, history, search and top authorities; membership through
+  // workspaces; global tables and @causedeck/intelligence (CODE_MAP) only. The `audit` edge is declared
+  // as the issue specifies, but no audit records are written.
+  statutes: Object.freeze(['workspaces', 'audit']),
   // Drafting (#768): roles through workspaces, facts through the matter-graph index, `draft.exported`
   // through audit and the narrative gateway through ai's index.
   drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai']),

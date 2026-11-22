@@ -76,6 +76,8 @@ export interface SectionView {
 }
 
 export interface SectionHistoryView {
+  /** The act key (`indian penal code`). */
+  statute: string;
   act: StatuteActView;
   section: string;
   heading: string;
@@ -255,6 +257,7 @@ export async function listSectionHistory(
     const loaded = await loadSection(db, keysOf(input));
     if (loaded === null) return null;
     return {
+      statute: loaded.act.key,
       act: loaded.act,
       section: loaded.section,
       heading: loaded.heading,
@@ -272,7 +275,7 @@ export async function searchSections(
   return asMember(db, actor, async () => {
     const query = typeof input.query === 'string' ? input.query.trim() : '';
     if (query.length === 0 || query.length > STATUTE_QUERY_MAX_CHARS) {
-      throw invalid(`Search with 1 to ${STATUTE_QUERY_MAX_CHARS} characters`);
+      throw invalid(`Search with 1 to ${String(STATUTE_QUERY_MAX_CHARS)} characters`);
     }
     const limit = clampLimit(input.limit, DEFAULT_SEARCH_LIMIT);
     const asSection = sectionKey(query);

@@ -60,6 +60,7 @@
     "./public-api": "./src/public-api/index.ts",
     "./research": "./src/research/index.ts",
     "./copilot": "./src/copilot/index.ts",
+    "./statutes": "./src/statutes/index.ts",
     "./review": "./src/review/index.ts",
     "./runtime": "./src/runtime/index.ts",
     "./voice": "./src/voice/index.ts",

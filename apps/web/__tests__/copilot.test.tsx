@@ -153,7 +153,13 @@ describe('copilot panel', () => {
     const sentence = 'No written consent was taken for the surgery.';
     const { container } = panel({
       ...ANSWER,
-      claims: [{ ...(ANSWER.claims[0] as CopilotAnswer['claims'][number]), statement: sentence, quote: ` ${sentence.toLowerCase()} ` }],
+      claims: [
+        {
+          ...(ANSWER.claims[0] as CopilotAnswer['claims'][number]),
+          statement: sentence,
+          quote: ` ${sentence.toLowerCase()} `,
+        },
+      ],
       unsupported: [],
     });
     const claim = container.querySelector('[data-slot="copilot-claim"]');

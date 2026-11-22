@@ -63,8 +63,7 @@ export function Breadcrumbs({ workspace }: { workspace: Workspace }) {
     for (const segment of deeper) {
       href = `${href}/${segment}`;
       const decoded = decode(segment);
-      const label =
-        labels.get(decoded) ?? decoded.charAt(0).toLocaleUpperCase() + decoded.slice(1);
+      const label = labels.get(decoded) ?? decoded.charAt(0).toLocaleUpperCase() + decoded.slice(1);
       crumbs.push({ label, href });
     }
   }

@@ -97,8 +97,9 @@ vi.mock('../lib/workspace-loader.ts', () => ({
 }));
 vi.mock('../lib/env.ts', () => ({ isDev: () => page.dev }));
 vi.mock('../lib/flags.ts', () => ({
-  workspaceFlagCheck: () => Promise.resolve((key: string) => key === 'copilot.enabled' && flags.copilot),
-}),);
+  workspaceFlagCheck: () =>
+    Promise.resolve((key: string) => key === 'copilot.enabled' && flags.copilot),
+}));
 vi.mock('../src/health.ts', () => ({ logger }));
 vi.mock('../lib/report-error.ts', () => ({ reportError }));
 vi.mock('@causedeck/core/runtime', () => runtime);

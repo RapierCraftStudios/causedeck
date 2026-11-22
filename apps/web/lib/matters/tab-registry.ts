@@ -42,10 +42,7 @@ export function registerMatterTab(tab: MatterTab): () => void {
 }
 
 /** The tabs `role` may see (with the workspace's flags, all off by default), by `order` then `id`. */
-export function matterTabs(
-  role: Role,
-  flag: (key: FlagKey) => boolean = () => false,
-): MatterTab[] {
+export function matterTabs(role: Role, flag: (key: FlagKey) => boolean = () => false): MatterTab[] {
   const ctx: MatterTabContext = { role, can: (permission) => roleCan(role, permission), flag };
   return [...tabs.values()]
     .filter((tab) => tab.visible === undefined || tab.visible(ctx))

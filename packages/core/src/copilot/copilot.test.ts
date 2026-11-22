@@ -115,7 +115,10 @@ describe('askCopilot', () => {
   it('pinpoints the numbered paragraph of a judgment segment that holds the quote', async () => {
     await withTestDb(async (tx) => {
       await seedPlans(tx);
-      await seedJudgment(tx, `11. The patient was admitted for surgery.\n12. ${TEXT}\n13. Costs follow.`);
+      await seedJudgment(
+        tx,
+        `11. The patient was admitted for surgery.\n12. ${TEXT}\n13. Costs follow.`,
+      );
       const { ownerId, workspaceId } = await newWorkspace(tx);
       const answer = await askCopilot(
         tx,

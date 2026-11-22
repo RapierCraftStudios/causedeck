@@ -131,8 +131,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The legal news digest (#481): global items and the member's own prefs, no other domain.
   news: Object.freeze([]),
   // Citation verification (#484, D-004): resolves a neutral citation against the global `judgment`
-  // corpus; reads tables and `@causedeck/intelligence` only, no other domain.
-  citations: Object.freeze([]),
+  // corpus; reads tables and `@causedeck/intelligence` only. The corpus resolver (#1135) resolves
+  // section citations through the statutes index (`resolveSectionRef`).
+  citations: Object.freeze(['statutes']),
   // The judgment corpus masking service (#892, D-053): applying a mask request records
   // `corpus.mask_applied` through audit; the redaction itself lives in `@causedeck/intelligence`.
   // Contributed order copies are read through network when no cleared fetch exists (#594).
@@ -164,7 +165,8 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   statutes: Object.freeze(['workspaces', 'audit']),
   // Drafting (#768): roles through workspaces, facts through the matter-graph index, `draft.exported`
   // through audit and the narrative gateway through ai's index.
-  drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai']),
+  // The corpus citation resolver through citations (pre-staged for #1136).
+  drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai', 'citations']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // The business dashboard (#519): the IST month through usage's `periodStart`, FORBIDDEN through workspaces.

@@ -14,11 +14,19 @@ import {
   demoDocumentPdfs,
   demoMember,
   demoMemory,
+  demoStatuteRows,
   seedDemo,
   seedInstant,
 } from '@causedeck/db/seed/demo';
 import {
+  BNS,
+  BNSS,
+  CODE_MAP,
+  CRPC,
   ENRICH_VERSION,
+  IPC,
+  normaliseSection,
+  normaliseStatute,
   REDACTION_VERSION,
   SEGMENT_VERSION,
   type ResearchPlan,
@@ -112,6 +120,26 @@ describe('demo content: the research corpus (#1070)', () => {
       segment: SEGMENT_VERSION,
       enrich: ENRICH_VERSION,
     });
+  });
+
+  it('stores the demo statute keys as normaliseStatute/normaliseSection write them, CODE_MAP pairs only (#1123)', () => {
+    const { acts, sections } = demoStatuteRows();
+    const keyOf = new Map(acts.map((a) => [a.id, a.key]));
+    for (const act of acts) {
+      expect(normaliseStatute(act.key)).toBe(act.key);
+      expect([IPC, BNS, CRPC, BNSS]).toContain(act.key);
+    }
+    for (const s of sections) expect(normaliseSection(s.section)).toBe(s.section);
+    const seeded = sections.map((s) => [keyOf.get(s.actId), s.section]);
+    const pairs = [
+      [IPC, '304a', BNS, '106'],
+      [CRPC, '439', BNSS, '483'],
+    ] as const;
+    for (const [oldAct, oldSection, newAct, newSection] of pairs) {
+      expect(seeded).toContainEqual([oldAct, oldSection]);
+      expect(seeded).toContainEqual([newAct, newSection]);
+      expect(CODE_MAP).toContainEqual([oldAct, oldSection, newAct, newSection]);
+    }
   });
 
   it('embeds the demo segments once, with the mock model, and leaves other corpus rows alone', async () => {

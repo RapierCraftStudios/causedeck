@@ -918,6 +918,75 @@ describe('demo seed: corpus, news, notices and billing (#1070, #1071)', () => {
   );
 });
 
+describe('demo seed: statute sections (#1123)', () => {
+  const key = 'chennai-solo' as const;
+  const STATUTE_DUMP = `select (select coalesce(json_agg(a order by a.id), '[]') from statute_act a)::text
+       || (select coalesce(json_agg(s order by s.id), '[]') from (select id, act_id, section, heading from statute_section) s)::text
+       || (select coalesce(json_agg(v order by v.id), '[]') from statute_section_version v)::text as row`;
+
+  beforeAll(async () => {
+    await seedDemo(db, { today: TODAY });
+  });
+
+  it('seeds IPC 304A, BNS 106, CrPC 439 and BNSS 483, readable by the app role', async () => {
+    const sections = await rowsIn<{ act: string; section: string }>(
+      key,
+      `select a.key as act, s.section from statute_section s join statute_act a on a.id = s.act_id order by 1, 2`,
+    );
+    expect(await countIn(key, `select 1 from statute_act`)).toBe(4);
+    expect(sections).toEqual([
+      { act: 'bharatiya nagarik suraksha sanhita', section: '483' },
+      { act: 'bharatiya nyaya sanhita', section: '106' },
+      { act: 'code of criminal procedure', section: '439' },
+      { act: 'indian penal code', section: '304a' },
+    ]);
+  });
+
+  it('gives IPC 304A exactly two versions with non-overlapping ranges', async () => {
+    const versions = await rowsIn<{ valid_from: string; valid_to: string | null }>(
+      key,
+      `select v.valid_from::text, v.valid_to::text from statute_section_version v
+         join statute_section s on s.id = v.section_id join statute_act a on a.id = s.act_id
+        where a.key = 'indian penal code' and s.section = '304a' order by v.valid_from`,
+    );
+    expect(versions).toHaveLength(2);
+    const [first, second] = versions;
+    expect(first?.valid_to).not.toBeNull();
+    expect(String(first?.valid_to) <= String(second?.valid_from)).toBe(true);
+  });
+
+  it('marks every act and version synthetic or not, with a source note, and carries no editorial text', async () => {
+    const rows = await rowsIn<{
+      kind: string;
+      synthetic: boolean | null;
+      note: string;
+      text: string;
+    }>(
+      key,
+      `select 'act' as kind, synthetic, source_note as note, title as text from statute_act
+       union all select 'version', synthetic, source_note, text from statute_section_version
+       union all select 'section', true, 'n/a', heading from statute_section`,
+    );
+    expect(rows.filter((r) => r.kind === 'version').length).toBeGreaterThanOrEqual(5);
+    for (const r of rows) {
+      expect(typeof r.synthetic, r.text).toBe('boolean');
+      expect(r.note.trim(), r.text).not.toBe('');
+      expect(`${r.text} ${r.note}`).not.toMatch(/\bSCC\b|headnote|editor/i);
+    }
+    for (const r of rows.filter((x) => x.kind === 'version')) {
+      expect(r.synthetic).toBe(true);
+      expect(r.text).toMatch(/^SYNTHETIC/);
+    }
+  });
+
+  it('leaves the statute rows unchanged on a second seed', async () => {
+    const [before] = await rowsIn<{ row: string }>(key, STATUTE_DUMP);
+    await seedDemo(db, { today: addDays(TODAY, 2) });
+    const [after] = await rowsIn<{ row: string }>(key, STATUTE_DUMP);
+    expect(after?.row).toBe(before?.row);
+  });
+});
+
 describe('demo reset', () => {
   it('orders deletes children first and rejects a cycle', () => {
     expect(

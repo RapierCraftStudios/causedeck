@@ -52,6 +52,9 @@ cp "$ROOT/infra/docker/env/prod.env.example" "$ENV_FILE"
   echo "CLOCK_DRIFT_REFERENCE_URL="
   # No backup key in the smoke: the compose default (/dev/null) boots Postgres without WAL archiving.
   echo "WALG_KEY_FILE=/dev/null"
+  # The smoke boots on the mock/console providers from prod.env.example: allowed only with this flag.
+  echo "ALLOW_MOCK_PROVIDERS=true"
+  echo "STATUS_SIGNING_KEY=$(rand)$(rand)"
 } >>"$ENV_FILE"
 # Later assignments win when the file is sourced, but compose's env parser keeps the LAST value too.
 export CAUSEDECK_ENV_FILE="$ENV_FILE"

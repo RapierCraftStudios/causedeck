@@ -33,7 +33,7 @@ export function HallRail({
           replace={false}
           scroll={false}
           aria-current={hall.key === selected ? 'true' : undefined}
-          className="border-border aria-[current=true]:bg-primary aria-[current=true]:text-primary-foreground inline-flex min-h-11 min-w-11 shrink-0 items-center gap-1 rounded-full border px-3 text-sm"
+          className="border-line aria-[current=true]:bg-primary aria-[current=true]:text-primary-foreground inline-flex min-h-11 min-w-11 shrink-0 items-center gap-1 rounded-full border px-3 text-sm"
         >
           {hall.label}
           <span className="text-xs tabular-nums">{hall.count}</span>

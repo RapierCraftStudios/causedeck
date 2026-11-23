@@ -8,12 +8,13 @@ import { BookOpen } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getTranslations } from 'next-intl/server';
+import { getLocale, getTranslations } from 'next-intl/server';
 
 import { SurfaceHelp } from '../../../../../components/help/surface-help.tsx';
 import { PermissionDeniedPage } from '../../../../../components/shell/permission-denied-page.tsx';
 import { ShellOfflineBanner } from '../../../../../components/shell/offline-banner.tsx';
 import type { WorkspacePageProps } from '../../../../../components/shell/placeholder-page.tsx';
+import { formatDay } from '../../../../../lib/format-day.ts';
 import { can } from '../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 
@@ -45,6 +46,7 @@ export default async function BriefsPage({ params }: WorkspacePageProps) {
   const context = await getWorkspaceContext(slug);
   if (!context) notFound();
   const t = await getTranslations('brief.index');
+  const locale = await getLocale();
   if (!can(context.role, 'listing.read')) return <PermissionDeniedPage />;
 
   const { db } = await import('@causedeck/core/runtime');
@@ -92,14 +94,17 @@ export default async function BriefsPage({ params }: WorkspacePageProps) {
             className="flex flex-col gap-2"
           >
             <h2 id={`briefs-${day.key}`} className="text-sm font-medium">
-              {t(day.key)} <span className="text-ink-muted font-normal">{day.date}</span>
+              {t(day.key)}{' '}
+              <span className="text-ink-muted font-normal">
+                <time dateTime={day.date}>{formatDay(day.date, locale)}</time>
+              </span>
             </h2>
             {day.items.length === 0 ? (
               <p className="text-ink-muted text-sm">{t('noListings')}</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {day.items.map(({ forum, hallNo, item }) => (
-                  <li key={item.listingId} className="border-border rounded-md border">
+                  <li key={item.listingId} className="border-line rounded-md border">
                     <Link
                       href={`/w/${encodeURIComponent(slug)}/briefs/${item.listingId}`}
                       className="flex min-h-11 flex-col gap-0.5 p-3"

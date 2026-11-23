@@ -146,6 +146,7 @@ describe('calendar view (#66)', () => {
         to="2026-11-08"
       />,
     );
+    expect(screen.getByText('Mon, Nov 2 to Sun, Nov 8')).toBeTruthy();
     expect(screen.queryByRole('link', { name: 'Whole chamber' })).toBeNull();
     fireEvent.keyDown(window, { key: 'm' });
     expect(push).toHaveBeenLastCalledWith('/m');

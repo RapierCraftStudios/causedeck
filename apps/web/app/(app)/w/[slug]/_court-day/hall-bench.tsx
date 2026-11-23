@@ -7,7 +7,7 @@ export async function HallBench({ names }: { names: readonly string[] }) {
   if (names.length === 0) return null;
   const t = await getTranslations('courtDay.board');
   return (
-    <span data-hall-bench className="block [font-variant-caps:all-small-caps]">
+    <span data-hall-bench className="block text-xs">
       {t('hall.bench', { judges: names.join(', ') })}
     </span>
   );

@@ -24,7 +24,7 @@ export interface QueueFiltersProps {
 }
 
 const selectClass =
-  'border-line bg-surface text-ink focus-visible:ring-focus min-h-11 rounded-md border px-2 text-sm focus-visible:ring-2 focus-visible:outline-none';
+  'border-line bg-surface text-ink focus-visible:ring-focus min-h-11 w-full max-w-full min-w-0 rounded-md border px-2 text-sm focus-visible:ring-2 focus-visible:outline-none';
 
 export function QueueFilterBar({
   filters,
@@ -41,7 +41,7 @@ export function QueueFilterBar({
     key: Exclude<keyof QueueFilters, 'q'>,
     options: readonly { value: string; label: string }[],
   ) => (
-    <label className="flex flex-col gap-1 text-xs">
+    <label className="flex min-w-0 flex-col gap-1 text-xs">
       <span className="text-ink-muted">{t(`filters.${key}`)}</span>
       <select
         className={selectClass}
@@ -60,8 +60,12 @@ export function QueueFilterBar({
     </label>
   );
   return (
-    <div role="search" aria-label={t('filters.label')} className="flex flex-wrap items-end gap-2">
-      <label className="flex min-w-48 flex-1 flex-col gap-1 text-xs">
+    <div
+      role="search"
+      aria-label={t('filters.label')}
+      className="grid grid-cols-1 items-end gap-2 min-[480px]:grid-cols-2 md:flex md:flex-wrap"
+    >
+      <label className="flex min-w-0 flex-col gap-1 text-xs min-[480px]:col-span-2 md:min-w-48 md:flex-1">
         <span className="text-ink-muted">{t('filters.search')}</span>
         <Input
           ref={searchRef}

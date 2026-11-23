@@ -13,6 +13,7 @@ import { useTranslations } from 'next-intl';
 import { useState, type SyntheticEvent } from 'react';
 
 import { useOnline } from '../../../../../../components/settings/settings-offline-banner.tsx';
+import { stripTrailingPunctuation } from '../../../../../../lib/memory/memory-format.ts';
 import {
   MEMORY_TABS,
   cardsOfLayer,
@@ -134,7 +135,10 @@ export function MemoryScreen(props: MemoryScreenProps) {
         proposals={proposals.map((p) => ({
           id: p.id,
           title: p.title,
-          statement: t('tray.statement', { title: p.title, value: p.value }),
+          statement: t('tray.statement', {
+            title: p.title,
+            value: stripTrailingPunctuation(p.value),
+          }),
           evidence:
             p.seen === null ? t('tray.evidenceNone') : t('tray.evidence', { count: p.seen }),
           scopeChip: (

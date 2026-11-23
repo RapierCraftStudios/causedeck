@@ -12,8 +12,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import { PORTFOLIO_ALERT_CATEGORIES } from '../../../../../components/portfolio/alert-categories.ts';
 import {
-  PORTFOLIO_ALERT_CATEGORIES,
   PortfolioAlertSettings,
   PortfolioCaseTable,
   PortfolioCreateForm,

@@ -150,7 +150,7 @@ function ActionButton({
       aria-keyshortcuts={PROPOSAL_SHORTCUTS[name].aria}
       disabled={disabled}
       title={title}
-      className={cn('pointer-coarse:min-h-11', name === 'confirm' && 'w-full md:w-auto')}
+      className={cn('pointer-coarse:min-h-11', name === 'confirm' && 'w-full @xl:w-auto')}
       onClick={onClick}
     >
       {children}
@@ -158,7 +158,7 @@ function ActionButton({
         <Kbd
           aria-hidden="true"
           hotkey={PROPOSAL_SHORTCUTS[name].hint}
-          className="hidden md:pointer-fine:inline-flex"
+          className="hidden @xl:pointer-fine:inline-flex"
         />
       ) : null}
     </Button>
@@ -286,8 +286,10 @@ export function ProposalCard<T>({
       initial={false}
       animate={collapsed ? { height: 0, opacity: 0 } : { height: 'auto', opacity: 1 }}
       transition={reduced ? INSTANT_TRANSITION : COLLAPSE_TRANSITION}
-      // Clip only while collapsing, so the focus ring is never cut off.
-      className={cn(collapsed && 'overflow-hidden')}
+      // Clip only while collapsing, so the focus ring is never cut off. The card lays out by its
+      // own width (container queries), not the viewport's: in a narrow column (the inbox's middle
+      // pane on desktop) it stacks instead of squeezing the content beside the actions.
+      className={cn('@container', collapsed && 'overflow-hidden')}
     >
       <div
         ref={innerRef}
@@ -302,7 +304,7 @@ export function ProposalCard<T>({
         data-source-state={proposal.source.state}
         className={cn(
           'bg-surface-raised border-line relative rounded-xl border p-4',
-          'grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-4',
+          'grid gap-3 @xl:grid-cols-[minmax(0,1fr)_auto] @xl:items-start @xl:gap-4',
           'focus-visible:outline-ring outline-offset-2 focus-visible:outline-2',
           // L2 amber edge while proposed; a filled amber dot in forced colours.
           proposal.source.state === 'proposed' &&
@@ -379,7 +381,7 @@ export function ProposalCard<T>({
         {viewOnly ? null : busy ? (
           <div
             data-slot="proposal-confirmed"
-            className="text-ink flex h-9 items-center justify-center gap-2 text-sm font-medium md:justify-end"
+            className="text-ink flex h-9 items-center justify-center gap-2 text-sm font-medium @xl:justify-end"
           >
             <ConfirmCheck reduced={reduced} />
             {text.confirmed}
@@ -387,12 +389,12 @@ export function ProposalCard<T>({
         ) : (
           <div
             data-slot="proposal-actions"
-            className="flex flex-wrap items-center gap-2 md:flex-nowrap md:justify-end"
+            className="flex flex-wrap items-center gap-2 @xl:flex-nowrap @xl:justify-end"
           >
             <ActionButton name="confirm" {...shared} onClick={confirm}>
               {text.confirm}
             </ActionButton>
-            <div className="flex flex-1 gap-2 md:flex-none">
+            <div className="flex flex-1 gap-2 @xl:flex-none">
               <ActionButton name="edit" {...shared} onClick={() => onEdit?.(proposal)}>
                 {text.edit}
               </ActionButton>
@@ -412,13 +414,13 @@ export function ProposalCardSkeleton({ className, ...props }: ComponentProps<'di
   return (
     <div
       data-slot="proposal-card-skeleton"
-      className={cn('border-line flex flex-col gap-3 rounded-xl border p-4', className)}
+      className={cn('border-line @container flex flex-col gap-3 rounded-xl border p-4', className)}
       {...props}
     >
       <Skeleton className="h-6 w-1/2" />
       <Skeleton className="h-11 w-full rounded-lg" />
       <Skeleton className="h-6 w-40 rounded-full" />
-      <Skeleton className="h-9 w-full md:w-64" />
+      <Skeleton className="h-9 w-full @xl:w-64" />
     </div>
   );
 }

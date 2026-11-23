@@ -2901,6 +2901,7 @@ export type Messages = {
       };
       marker: {
         label: string;
+        placeholder: string;
         set: string;
         clear: string;
         invalid: string;

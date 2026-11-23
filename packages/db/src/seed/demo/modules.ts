@@ -1058,10 +1058,11 @@ export function demoModuleRows(
         kind: 'next_date',
         level: 'L2',
         status: 'proposed',
+        // The `next_date` handler's strict payload (packages/core automation/handlers/next-date.ts):
+        // the inbox card reads `date`, and Confirm stages it on the matter's main proceeding.
         payload: {
-          matterId: matterAt(k).id,
-          nextDate: addDays(today, 14 + k),
-          summary: 'Next date read from the forwarded order (synthetic).',
+          proceedingId: mainOf(matterAt(k).id as string)?.id,
+          date: addDays(today, 14 + k),
         },
         anchors: [],
         confidence: '0.640',

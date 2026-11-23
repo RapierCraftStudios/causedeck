@@ -2900,6 +2900,7 @@
       },
       "marker": {
         "label": "Court is at item",
+        "placeholder": "Item no.",
         "set": "Set",
         "clear": "Clear",
         "invalid": "Enter an item number.",

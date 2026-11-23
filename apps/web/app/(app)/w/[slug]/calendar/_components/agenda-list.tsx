@@ -4,16 +4,11 @@ import type { CalendarDay, CalendarEntry } from '@causedeck/validators';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
+import { formatDay } from '../../../../../../lib/format-day.ts';
+
 import { KindBadge } from './legend.tsx';
 
-const dayFormat = new Intl.DateTimeFormat('en-IN', {
-  timeZone: 'UTC',
-  weekday: 'short',
-  day: 'numeric',
-  month: 'short',
-});
-
-export const formatCalendarDay = (date: string) => dayFormat.format(new Date(`${date}T00:00:00Z`));
+export const formatCalendarDay = (date: string, locale?: string) => formatDay(date, locale);
 
 export function EntryLine({ entry }: { entry: CalendarEntry }) {
   const t = useTranslations('calendarView');
@@ -53,13 +48,13 @@ export function AgendaList({
   const t = useTranslations('calendarView');
   return (
     <div data-view="agenda" className="flex flex-col gap-3">
-      <ul aria-hidden="true" className="flex gap-1 overflow-x-auto">
+      <ul aria-hidden="true" className="flex max-w-full gap-1 overflow-x-auto pb-1">
         {days.map((d) => (
-          <li key={d.date}>
+          <li key={d.date} className="shrink-0">
             <a
               href={`#agenda-${d.date}`}
               tabIndex={-1}
-              className="border-line rounded-full border px-2 py-1 text-xs"
+              className="border-line block rounded-full border px-3 py-1 text-xs whitespace-nowrap"
             >
               {formatCalendarDay(d.date)}
             </a>

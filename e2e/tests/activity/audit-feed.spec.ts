@@ -10,7 +10,7 @@ import { existsSync } from 'node:fs';
 import type { Locator, Page, TestInfo } from '@playwright/test';
 
 import type { AsUser } from '../../fixtures/auth.ts';
-import { e2eUser, expect, test, type E2eRole } from '../../fixtures/index.ts';
+import { e2eUser, expect, pinText, settleFonts, test, type E2eRole } from '../../fixtures/index.ts';
 import { layoutOf, shellReady } from '../shell/helpers.ts';
 
 import { seedAudit } from './audit-data.ts';
@@ -240,12 +240,14 @@ function skipWithoutBaseline(testInfo: TestInfo, name: string) {
 }
 
 async function snap(page: Page, name: string) {
+  // Events carry their real insert time: give every `time` the same text (same width on any day)
+  // rather than only masking it.
+  await pinText(page.locator('[data-slot="audit-feed"] time'), '12 Mar 2026, 09:30');
+  await settleFonts(page);
   await expect(page).toHaveScreenshot(name, {
     animations: 'disabled',
     caret: 'hide',
     fullPage: true,
-    // Events carry their real insert time.
-    mask: [page.locator('[data-slot="audit-feed"] time')],
   });
 }
 

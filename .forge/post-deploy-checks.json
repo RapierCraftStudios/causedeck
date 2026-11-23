@@ -28,5 +28,10 @@
     "run": "pr=\"$(gh pr list --base staging --head milestone/restore-green-e2e --state all --json number --jq '.[0].number')\" && test -n \"$pr\" && gh pr checks \"$pr\" --json name,bucket --jq '.[] | select(.name == \"e2e\") | .bucket' | grep -qx pass",
     "pass": "exit 0",
     "timeout": 60
+  },
+  "e2e-visual-green": {
+    "run": "pnpm --filter @causedeck/e2e test --grep @visual",
+    "pass": "exit 0",
+    "timeout": 1800
   }
 }

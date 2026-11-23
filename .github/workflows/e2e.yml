@@ -40,6 +40,7 @@ env:
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
 jobs:
+  # FORGE:CI_BUDGET trigger=ship-pr,push-main,full-ci,nightly minutes=4000/month why=replaces the existing 2-shard e2e matrix (about 6x19 vs 2x27 runner-min per ship run, about 30 runs/month); one Next server, Chromium and per-test DB reset per runner needs its own runner, which a shared job cannot hold (#1155)
   e2e-shard:
     name: e2e (${{ matrix.shard }}/6)
     if: ${{ !inputs.update_snapshots && (github.event_name != 'pull_request' || github.base_ref == 'staging' || github.base_ref == 'main' || contains(github.event.pull_request.labels.*.name, 'full-ci')) && (github.event.action != 'labeled' || github.event.label.name == 'full-ci') }}
@@ -138,6 +139,7 @@ jobs:
 
   # The required ship check (#1155): one stable context that fails unless every `e2e (N/6)` shard
   # passed, so branch protection and the e2e-ship-gate ruleset do not name each shard.
+  # FORGE:CI_BUDGET trigger=ship-pr,push-main,full-ci,nightly minutes=30/month why=a one-step aggregate (under 1 min per run) that gives branch protection one stable required context; it must depend on e2e-shard, so a shared job cannot hold it (#1155)
   e2e:
     name: e2e
     needs: e2e-shard

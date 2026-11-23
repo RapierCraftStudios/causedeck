@@ -46,7 +46,7 @@ cp "$ROOT/infra/docker/env/prod.env.example" "$ENV_FILE"
   echo "S3_SECRET_KEY=$S3_SEC"
   echo "BETTER_AUTH_SECRET=$(rand)$(rand)"
   echo "KEK_BASE64=$(head -c 32 /dev/urandom | base64)"
-  echo "BILLING_SUPPLIER_LEGAL_NAME=Smoke Test LLP"
+  echo "BILLING_SUPPLIER_LEGAL_NAME='Smoke Test LLP'"  # quoted: the file is also sourced by bash
   echo "BILLING_SUPPLIER_GSTIN=29ABCDE1234F1Z5"
   echo "SARVAM_NO_TRAINING_CONFIRMED=true"
   echo "CLOCK_DRIFT_REFERENCE_URL="

@@ -17,7 +17,8 @@ ENV_FILE="$WORK/smoke.env"
 PROJECT="causedeck-smoke-$$"
 export COMPOSE_PROJECT_NAME="$PROJECT"  # migrate.sh and compose calls below share one project
 
-compose() { docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"; }
+# compose.smoke-worker.yml: smoke-only worker override until #1161 is decided (see that file).
+compose() { docker compose -f "$COMPOSE_FILE" -f "$ROOT/infra/docker/test/compose.smoke-worker.yml" --env-file "$ENV_FILE" "$@"; }
 cleanup() { compose --profile init --profile migrate down -v --remove-orphans >/dev/null 2>&1 || true; rm -rf "$WORK"; }
 trap cleanup EXIT
 fail() { echo "SMOKE FAIL: $*" >&2; compose ps >&2 || true; exit 1; }

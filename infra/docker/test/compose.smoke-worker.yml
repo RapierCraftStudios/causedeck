@@ -1,0 +1,8 @@
+# Smoke-only override (#1161): the worker exits without DATABASE_URL_OWNER (it owns the pgboss
+# schema), and compose.prod.yml withholds it from app services. Until #1161 decides between owner
+# credentials for the worker and pg-boss via migrate, the smoke gives its throwaway worker the owner
+# URL so the rest of the stack is still verified. Never use this file outside the compose smoke.
+services:
+  worker:
+    environment:
+      DATABASE_URL_OWNER: postgres://causedeck_owner:${OWNER_DB_PASSWORD:?set OWNER_DB_PASSWORD}@postgres:5432/causedeck?sslmode=require

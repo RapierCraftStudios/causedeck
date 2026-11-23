@@ -52,7 +52,7 @@ export function QuickActionsPanel({
         <div className="flex flex-col gap-2 p-4">
           <Link
             href={matterHref}
-            className="border-border flex min-h-11 items-center rounded-md border px-3 text-sm"
+            className="border-line flex min-h-11 items-center rounded-md border px-3 text-sm"
           >
             {t('openMatter')}
           </Link>

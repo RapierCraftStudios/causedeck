@@ -1,6 +1,7 @@
-// Citation checker against Postgres (#77): statuses from the offline mock, idempotent reruns, a new
-// version without statuses, the acknowledgement and export gate with its audit row, an outage and
-// the daily budget as `unknown`, and no draft text in logs or rows.
+// Citation checker against Postgres (#77): statuses from the offline mock (passed explicitly: the
+// default is the corpus resolver since #1136), idempotent reruns, a new version without statuses, the
+// acknowledgement and export gate with its audit row, an outage and the daily budget as `unknown`,
+// and no draft text in logs or rows.
 import { randomUUID } from 'node:crypto';
 
 import { schema } from '@causedeck/db';
@@ -85,7 +86,7 @@ describe('citation checker', () => {
   it('gives a new version no statuses until it is checked', async () => {
     await withTestDb(async (tx) => {
       const { actor, version, created } = await setup(tx);
-      await checkDraft({ db: tx, now }, actor, version.id);
+      await checkDraft({ db: tx, now, resolver: createMockResolver() }, actor, version.id);
       const enqueueCitationCheck = vi.fn(() => Promise.resolve(undefined));
       const next = await saveVersion({ db: tx, enqueueCitationCheck }, actor, {
         draftId: created.draft.id,
@@ -100,28 +101,34 @@ describe('citation checker', () => {
     });
   });
 
-  it('requires an acknowledgement of a not_found citation before the export, and audits it', async () => {
+  it('requires an acknowledgement of every unverified citation before the export, and audits it', async () => {
     await withTestDb(async (tx) => {
       const { actor, version, created, workspaceId } = await setup(tx);
       const enqueue = vi.fn(() => Promise.resolve(undefined));
       const input = { draftId: created.draft.id, format: 'docx' as const };
-      await expect(exportDraft({ db: tx, enqueue, now }, actor, input)).rejects.toMatchObject({
+      const citations = { resolver: createMockResolver() };
+      await expect(
+        exportDraft({ db: tx, enqueue, now, citations }, actor, input),
+      ).rejects.toMatchObject({
         code: 'CONFLICT',
       });
       expect(enqueue).not.toHaveBeenCalled();
 
       const report = await getCitationReport({ db: tx }, actor, { draftVersionId: version.id });
       const missing = report.items.find((i) => i.status === 'not_found');
+      const unknown = report.items.find((i) => i.status === 'unknown');
+      const ids = [missing?.id ?? '', unknown?.id ?? ''];
       await expect(
         acknowledgeUnverified({ db: tx, now }, actor, {
           draftVersionId: version.id,
-          citationIds: [missing?.id ?? ''],
+          citationIds: ids,
           reason: 'x',
         }),
       ).rejects.toBeInstanceOf(WorkspaceError);
+      // The not_found and the `unknown` (title_missing) rows both hold the export.
       await acknowledgeUnverified({ db: tx, now }, actor, {
         draftVersionId: version.id,
-        citationIds: [missing?.id ?? ''],
+        citationIds: ids,
         reason: 'Authority is unreported; cited from the paper book',
       });
       await expect(exportDraft({ db: tx, enqueue }, actor, input)).resolves.toMatchObject({
@@ -143,7 +150,8 @@ describe('citation checker', () => {
       expect(audit[0]?.actorUserId).toBe(actor.userId);
       expect(audit[0]?.metadata).toMatchObject({
         reason: 'Authority is unreported; cited from the paper book',
-        citationIds: missing?.id,
+        citationIds: ids.join(','),
+        count: 2,
       });
       const [row] = await inWorkspace(tx, workspaceId, (s) =>
         s

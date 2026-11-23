@@ -24,6 +24,8 @@ import type {
 } from '../../app/(app)/w/[slug]/portfolio/actions.ts';
 import type { Result } from '../../lib/safe-action.ts';
 
+import { PORTFOLIO_ALERT_CATEGORIES, type PortfolioAlertCategory } from './alert-categories.ts';
+
 export type { PortfolioImportResult };
 
 export interface PortfolioCaseView {
@@ -382,11 +384,6 @@ export function PortfolioExportButton({
   );
 }
 
-export const PORTFOLIO_ALERT_CATEGORIES = [
-  'portfolio.adverse_order',
-  'portfolio.missed_date',
-] as const;
-export type PortfolioAlertCategory = (typeof PORTFOLIO_ALERT_CATEGORIES)[number];
 const CATEGORY_MESSAGE = {
   'portfolio.adverse_order': 'adverseOrder',
   'portfolio.missed_date': 'missedDate',

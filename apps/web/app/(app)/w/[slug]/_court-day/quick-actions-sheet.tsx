@@ -68,7 +68,7 @@ export function QuickActionsSheet({
       data-dimmed={dimmed ? '' : undefined}
       aria-label={label}
       tabIndex={tabIndex}
-      className="border-border bg-surface focus-visible:ring-ring relative flex gap-3 rounded-md border p-3 focus-visible:ring-2 focus-visible:outline-none data-dimmed:opacity-60"
+      className="border-line bg-surface focus-visible:ring-ring relative flex gap-3 rounded-md border p-3 focus-visible:ring-2 focus-visible:outline-none data-dimmed:opacity-60"
       onPointerDown={(event) => {
         cancel();
         origin.current = { x: event.clientX, y: event.clientY };

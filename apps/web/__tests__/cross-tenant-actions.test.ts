@@ -131,10 +131,13 @@ const feeActions = await import('../app/(app)/w/[slug]/invoices/actions.ts');
 const research = await import('../app/(app)/w/[slug]/matters/[id]/research/actions.ts');
 const researchSettings = await import('../app/(app)/w/[slug]/settings/research/actions.ts');
 const researchSearch = await import('../app/(app)/w/[slug]/research/actions.ts');
+const researchStatutes = await import('../app/(app)/w/[slug]/research/statutes/actions.ts');
+const copilotAsk = await import('../app/(app)/w/[slug]/matters/[id]/copilot/actions.ts');
 const draftStudio = await import('../app/(app)/w/[slug]/drafts/[id]/actions.ts');
 const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actions.ts');
 const draftPrecedents = await import('../app/(app)/w/[slug]/drafts/[id]/precedent-actions.ts');
 const draftFactcheck = await import('../app/(app)/w/[slug]/drafts/[id]/factcheck-actions.ts');
+const draftAuthorities = await import('../app/(app)/w/[slug]/drafts/[id]/authority-actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
@@ -288,10 +291,14 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   downloadDraftExportAction: draftChecks,
   searchPrecedentsForBlockAction: draftPrecedents,
   proposePrecedentAction: draftPrecedents,
+  proposeAuthoritiesAction: draftAuthorities,
+  insertAuthorityAction: draftAuthorities,
   addTagAction: research,
   findAuthoritiesAction: research,
   searchAuthoritiesAction: researchSearch,
   rerunAuthoritySearchAction: researchSearch,
+  getSectionAction: researchStatutes,
+  askCopilotAction: copilotAsk,
   confirmOutcomeAction: hearingOutcome,
   markPreparedAction: briefSheet,
   generateHandoverAction: continuityActions,
@@ -1147,6 +1154,20 @@ function inputs(workspaceId: string): Record<string, unknown> {
       draftVersionId: t.a.rows.draft_version?.id,
       anchorId: 'b.0',
     },
+    // Drafting authorities (#1144): ub may not ask about or insert into A's draft.
+    proposeAuthoritiesAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      blockId: 'b.0',
+      requestId: XT_ID,
+    },
+    insertAuthorityAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      versionId: t.a.rows.draft_version?.id,
+      afterBlockId: 'b.0',
+      candidateRef: { judgmentId: XT_ID, quote: 'Cross-tenant probe', para: 1 },
+    },
     // Drafting checks (#828): ub may not check, acknowledge, fix or export A's draft.
     runChecksAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
     acknowledgeUnverifiedAction: {
@@ -1260,6 +1281,12 @@ function inputs(workspaceId: string): Record<string, unknown> {
     // Fact-pattern search (#896): ub may not search, re-run or seed a search in A's workspace, and
     // A's research usage is unchanged.
     searchAuthoritiesAction: { workspaceId, query: 'surgery without written consent' },
+    // Grounded copilot (#1115): ub may not ask in A's workspace or matter; A's copilot usage is unchanged.
+    askCopilotAction: {
+      workspaceId,
+      matterId: t.a.rows.matter_issue_tag?.matterId,
+      question: 'surgery without written consent',
+    },
     rerunAuthoritySearchAction: {
       workspaceId,
       plan: {
@@ -1278,6 +1305,8 @@ function inputs(workspaceId: string): Record<string, unknown> {
       },
     },
     findAuthoritiesAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId },
+    // Statute section (#1126): ub may not read a section in A's workspace.
+    getSectionAction: { workspaceId, act: 'bnss', section: '483' },
     // Research notes and provider templates (#80): ub may not write A's notes or A's templates.
     createNoteAction: { workspaceId, matterId: t.a.rows.research_note?.matterId, title: 'x' },
     updateNoteAction: {
@@ -2050,7 +2079,13 @@ describe('cross-tenant server actions', () => {
         tx.select({ id: schema.draftVersion.id }).from(schema.draftVersion),
       );
     const before = await versions();
-    for (const name of ['saveDraftAction', 'restoreDraftVersionAction']) {
+    for (const name of [
+      'saveDraftAction',
+      'restoreDraftVersionAction',
+      // #1144: the authority drawer may neither ask about nor insert into A's draft.
+      'proposeAuthoritiesAction',
+      'insertAuthorityAction',
+    ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));
       expect(result, name).not.toHaveProperty('data');

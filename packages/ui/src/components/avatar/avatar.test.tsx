@@ -10,6 +10,8 @@ describe('initials', () => {
     expect(initials(PEOPLE.advocate)).toBe('MR');
     expect(initials(PEOPLE.long)).toBe('VS');
     expect(initials('  farhan  ')).toBe('F');
+    expect(initials('Nila Arivazhagan (fictional)')).toBe('NA');
+    expect(initials('(fictional)')).toBe('');
     expect(initials('')).toBe('');
   });
 

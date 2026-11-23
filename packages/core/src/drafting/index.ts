@@ -33,6 +33,15 @@ export {
 } from './export.ts';
 export type { DraftActor } from './policy.ts';
 export {
+  insertAuthority,
+  proposeAuthorities,
+  type AuthorityCandidate,
+  type AuthorityCandidateRef,
+  type InsertAuthorityResult,
+  type ProposeAuthoritiesDeps,
+  type ProposeAuthoritiesResult,
+} from './authorities.ts';
+export {
   checkDraft,
   getCitationReport,
   reportFromRows,

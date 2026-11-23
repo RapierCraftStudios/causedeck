@@ -28,7 +28,13 @@ async function world(tx: Transaction) {
   const { ownerId, workspaceId } = await newWorkspace(tx);
   const forum = await inWorkspace(tx, workspaceId, (s) => buildForum(s, workspaceId));
   const matter = await inWorkspace(tx, workspaceId, (s) =>
-    buildMatter(s, workspaceId, { updatedAt: new Date('2026-11-01T00:00:00Z') }),
+    // `openedAt` defaults to the DB's real now(), and `lastEventDay` takes the later of it and the last
+    // event, so pin it with `updatedAt` or the matter looks freshly opened once real time passes the
+    // spec clocks.
+    buildMatter(s, workspaceId, {
+      openedAt: new Date('2026-11-01T00:00:00Z'),
+      updatedAt: new Date('2026-11-01T00:00:00Z'),
+    }),
   );
   await inWorkspace(tx, workspaceId, (s) =>
     buildProceeding(s, workspaceId, { matterId: matter.id, forumId: forum.id, state: 'sr_fr' }),
@@ -103,7 +109,8 @@ describe('attention', () => {
       const junior = await addMember(tx, w.workspaceId, 'junior');
       await setStaleDays(deps(tx), w.owner, { days: 7 });
       const stale = await detectAttention(
-        { db: tx, now: () => new Date('2026-11-20T06:00:00Z') },
+        // Well past every fixture row, including those stamped by the database clock.
+        { db: tx, now: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
         w.owner,
       );
       expect(stale.some((f) => f.rule === 'no_recent_update')).toBe(true);

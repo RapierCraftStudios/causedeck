@@ -18,7 +18,9 @@ import {
 
 const NUMBER = '+919812345678';
 const CODE = '424242';
-const T0 = new Date('2026-11-01T10:00:00Z');
+// Ahead of the wall clock: the two-tenant seed stamps its challenge rows with the database clock,
+// and a fixed past T0 would count them as future sends inside the per-number window.
+const T0 = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -39,10 +41,15 @@ async function setup(
 ) {
   await withTestDb(async (tx) => {
     const seeded = await seedTwoTenants(tx);
-    await inWorkspace(tx, seeded.a.id, async (s) => {
-      await s.delete(schema.whatsappLink);
-      await s.delete(schema.whatsappOtpChallenge);
-    });
+    // The seeders link both owners and leave a pending challenge stamped with the DB's real now() in
+    // BOTH workspaces. The spec drives both on an injected clock, so a challenge created "after" it
+    // trips the resend cooldown for the member of workspace B. Start both from a clean slate.
+    for (const workspaceId of [seeded.a.id, seeded.b.id]) {
+      await inWorkspace(tx, workspaceId, async (s) => {
+        await s.delete(schema.whatsappLink);
+        await s.delete(schema.whatsappOtpChallenge);
+      });
+    }
     const mock = mockWhatsAppOtpSender();
     let clock = T0;
     await fn({

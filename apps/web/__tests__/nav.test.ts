@@ -34,7 +34,7 @@ const SPIKE_ROUTES = [
 ];
 
 /** Nav destinations below a route or outside the spike route map. */
-const EXTRA_ITEMS = ['enquiries', 'import', 'research'];
+const EXTRA_ITEMS = ['copilot', 'enquiries', 'import', 'research'];
 
 const ids = (items: readonly { id: string }[]) => items.map((entry) => entry.id).sort();
 
@@ -86,7 +86,9 @@ describe('flag-gated items', () => {
     expect(getNavItem('limitation').flag).toBe('limitation.enabled');
     expect(getNavItem('insights').flag).toBe('insights.enabled');
     expect(getNavItem('enquiries').flag).toBe('intake.enquiry_log');
+    expect(getNavItem('copilot').flag).toBe('copilot.enabled');
     expect(NAV_ITEMS.filter((entry) => entry.flag).map((entry) => entry.id)).toEqual([
+      'copilot',
       'enquiries',
       'invoices',
       'limitation',
@@ -113,6 +115,7 @@ describe('flag-gated items', () => {
     expect(visible).toContain('invoices');
     expect(visible).not.toContain('limitation');
     expect(asked.sort()).toEqual([
+      'copilot.enabled',
       'insights.enabled',
       'intake.enquiry_log',
       'invoices.enabled',

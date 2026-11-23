@@ -29,7 +29,7 @@ export function CourtDayLoading() {
             {[0, 1, 2, 3].map((row) => (
               <div
                 key={row}
-                className="border-border flex min-h-24 items-start gap-3 rounded-md border p-3"
+                className="border-line flex min-h-24 items-start gap-3 rounded-md border p-3"
               >
                 <Skeleton className="h-7 w-8 shrink-0" />
                 <div className="flex min-w-0 flex-1 flex-col gap-2">

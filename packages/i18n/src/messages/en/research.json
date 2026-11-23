@@ -144,6 +144,83 @@
         "intellectual_property": "Intellectual property",
         "environment": "Environment"
       }
+    },
+    "copilot": {
+      "metaTitle": "Ask the copilot",
+      "title": "Ask the copilot",
+      "intro": "Ask a question about the judgment corpus. Every claim shows a quote and a pinpoint we checked against the stored text.",
+      "matterIntro": "Ask about this matter. Answers come from its facts, its documents and the judgment corpus, and every claim shows a quote we checked against the stored text.",
+      "denied": "You do not have access to the copilot.",
+      "questionLabel": "Your question",
+      "questionPlaceholder": "Did the surgeon need written consent before the operation?",
+      "submit": "Ask",
+      "asking": "Asking…",
+      "error": "The copilot could not answer. Try again.",
+      "usage": "{used, plural, one {# of {limit} question used this month} other {# of {limit} questions used this month}}",
+      "usageUnlimited": "{used, plural, one {# question this month} other {# questions this month}}",
+      "aiOff": "AI is off for this matter. The copilot does not read it.",
+      "noAuthority": "No authority found.",
+      "claimsTitle": "Verified claims",
+      "unsupportedTitle": "Not verified",
+      "notVerified": "Not verified: the quote was not found in the source.",
+      "record": "Corpus record",
+      "kind": {
+        "fact": "Matter fact",
+        "doc": "Matter document",
+        "seg": "Judgment"
+      },
+      "pinpoint": {
+        "page": "page {page}",
+        "paragraph": "para {paragraph}"
+      }
+    },
+    "statutes": {
+      "metaTitle": "Statutes",
+      "title": "Statutes",
+      "intro": "Read a section of an Act, its history, its counterpart in the old or new criminal code and the judgments that cite it.",
+      "navLink": "Look up a statute section",
+      "back": "Back to Find authorities",
+      "backToSearch": "Back to statutes",
+      "denied": "You do not have access to statutes.",
+      "queryLabel": "Section number or heading",
+      "queryPlaceholder": "For example 483 or bail",
+      "submit": "Search",
+      "prompt": "Search by a section number or a word from its heading.",
+      "error": "The statutes could not be loaded. Try again.",
+      "empty": "No section matches. Try the section number alone or another word from the heading.",
+      "resultsHeading": "Sections",
+      "resultsCount": "{count, plural, one {# section} other {# sections}}",
+      "hit": "{act} s. {section}",
+      "section": {
+        "metaTitle": "{act} s. {section}",
+        "title": "{act} s. {section}: {heading}",
+        "textHeading": "Text",
+        "inForce": "In force from {from}",
+        "notInForceSince": "Not in force since {date}. The last text in force is shown.",
+        "noText": "No text is stored for this section.",
+        "syntheticLabel": "Synthetic paraphrase, not the bare-act wording",
+        "publicDomainLabel": "Public-domain bare act text"
+      },
+      "history": {
+        "heading": "History",
+        "range": "{from} to {to}",
+        "current": "{from} to date",
+        "amendedBy": "Amended by {act}",
+        "empty": "No version of this section is stored."
+      },
+      "counterpart": {
+        "heading": "Counterpart in the other code",
+        "link": "{act} s. {section}",
+        "none": "No counterpart recorded."
+      },
+      "authorities": {
+        "heading": "Top authorities",
+        "empty": "No judgment in the corpus cites this section yet.",
+        "maskedTitle": "Title withheld",
+        "page": "p. {page}",
+        "decided": "Decided {date}",
+        "openPdf": "Open court PDF at p. {page}"
+      }
     }
   },
   "settingsResearch": {

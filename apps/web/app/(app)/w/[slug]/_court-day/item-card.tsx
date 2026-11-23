@@ -101,7 +101,7 @@ export async function ItemCard(props: ItemCardProps) {
           {change === null ? null : (
             <span
               data-change={change.kind}
-              className="border-border inline-flex items-center gap-1 rounded-full border px-2 text-xs"
+              className="border-line inline-flex items-center gap-1 rounded-full border px-2 text-xs"
             >
               <ChangeIcon aria-hidden="true" className="size-3" />
               {t(`change.${change.kind}`, { hall: change.fromHall ?? '—' })}
@@ -110,20 +110,20 @@ export async function ItemCard(props: ItemCardProps) {
           {clash ? (
             <span
               data-clash-marker
-              className="border-border inline-flex items-center gap-1 rounded-full border px-2 text-xs"
+              className="border-line inline-flex items-center gap-1 rounded-full border px-2 text-xs"
             >
               <TriangleAlert aria-hidden="true" className="size-3" />
               {t('item.clash')}
             </span>
           ) : null}
           {item.carryCount > 0 ? (
-            <span className="border-border inline-flex items-center gap-1 rounded-full border px-2 text-xs">
+            <span className="border-line inline-flex items-center gap-1 rounded-full border px-2 text-xs">
               <Link2 aria-hidden="true" className="size-3" />
               {t('item.carried', { count: item.carryCount })}
             </span>
           ) : null}
           {item.assigneeMemberId === null ? null : (
-            <span className="border-border inline-flex items-center gap-1 rounded-full border px-2 text-xs">
+            <span className="border-line inline-flex items-center gap-1 rounded-full border px-2 text-xs">
               <UserRound aria-hidden="true" className="size-3" />
               {t('item.delegated')}
             </span>

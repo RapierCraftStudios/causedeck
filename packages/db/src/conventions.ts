@@ -46,6 +46,7 @@ import { getTableConfig, PgTable, type AnyPgColumn } from 'drizzle-orm/pg-core';
  * `learn_progress` (#703) is the per-user practice-school progress (user id, module slug, time); it has no workspace column and is under FORCE RLS on `app.user_id` (`withUser`).
  * `notice_holiday` (#628) holds the dates named by a holiday-list notice; the app role may SELECT and INSERT it.
  * `notice_vacation` (#650) holds the vacation ranges named by a notice; the app role may SELECT and INSERT it.
+ * `statute_act`, `statute_section` and `statute_section_version` (#1123) hold bare-act or synthetic statute text and its history; written by the owner role, the app role may only SELECT them.
  */
 export const GLOBAL_TABLES: readonly string[] = [
   'schema_info',
@@ -83,6 +84,9 @@ export const GLOBAL_TABLES: readonly string[] = [
   'judgment_statute_ref',
   'judgment_citation_ref',
   'judgment_tag',
+  'statute_act',
+  'statute_section',
+  'statute_section_version',
   'corpus_import_cursor',
   'corpus_ocr_call',
   'corpus_ocr_queue',

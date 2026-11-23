@@ -27,6 +27,7 @@ import {
   ignoreFactAction,
   markAssertionAction,
 } from './factcheck-actions.ts';
+import { insertAuthorityAction, proposeAuthoritiesAction } from './authority-actions.ts';
 import { proposePrecedentAction, searchPrecedentsForBlockAction } from './precedent-actions.ts';
 import { DraftStudio } from './studio.tsx';
 
@@ -82,9 +83,20 @@ async function precedentsEnabled(actor: { workspaceId: string; userId: string })
   }
 }
 
+/** The authority drawer (#1144) is behind `copilot.enabled`: off unless the flag reads on. */
+async function copilotEnabled(actor: { workspaceId: string; userId: string }) {
+  try {
+    const { isEnabled } = await import('@causedeck/flags/server');
+    return await isEnabled('copilot.enabled', actor);
+  } catch {
+    return false;
+  }
+}
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('drafting.list');
-  return { title: t('title') };
+  // A workspace draft is private and behind sign-in: never indexed, like the copilot pages.
+  return { title: t('title'), robots: { index: false, follow: false } };
 }
 
 export default async function DraftPage({ params }: DraftPageProps) {
@@ -136,6 +148,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
 
   const { detail, rendered, older, authorities, report, gate, factGate, found } = loaded;
   const precedentsOn = await precedentsEnabled(actor);
+  const copilotOn = await copilotEnabled(actor);
   const slotValues = Object.fromEntries(
     Object.entries(rendered.slots).map(([key, resolution]) => [key, resolution.value]),
   );
@@ -198,7 +211,10 @@ export default async function DraftPage({ params }: DraftPageProps) {
           raw: c.raw,
           status: c.status,
           title: c.title,
-          acknowledged: c.status === 'not_found' && !gate.unacknowledged.includes(c.id),
+          reason: c.reason,
+          sourceUrl: c.sourceUrl,
+          page: c.pinpoint?.page,
+          acknowledged: c.status !== 'verified' && !gate.unacknowledged.includes(c.id),
         })),
         findings: found,
         checked: report.items.length > 0 || found.length > 0,
@@ -214,6 +230,15 @@ export default async function DraftPage({ params }: DraftPageProps) {
               versionId: detail.version.id,
               language: 'en',
               courtId: null,
+            },
+          }
+        : {})}
+      {...(copilotOn
+        ? {
+            authorityDrawer: {
+              propose: proposeAuthoritiesAction,
+              insert: insertAuthorityAction,
+              versionId: detail.version.id,
             },
           }
         : {})}

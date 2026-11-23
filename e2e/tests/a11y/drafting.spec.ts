@@ -67,7 +67,7 @@ test.describe('drafting a11y', () => {
       await checkCitations(page);
       const trigger =
         kind === 'ack'
-          ? citationPanel(page).getByRole('button', { name: 'Acknowledge not-found citations' })
+          ? citationPanel(page).getByRole('button', { name: 'Acknowledge unverified citations' })
           : page.getByRole('button', { name: 'Export', exact: true });
       await trigger.focus();
       await page.keyboard.press('Enter');

@@ -1,0 +1,481 @@
+{
+  "cases": [
+    {
+      "id": "research-good",
+      "queryId": "Q01",
+      "task": "answer_research_query",
+      "replies": {
+        "claims": [
+          {
+            "statement": "No consent was taken.",
+            "segmentId": "J01-p1",
+            "quote": "No written consent was taken for the procedure"
+          },
+          {
+            "statement": "Rs 8 lakh was awarded.",
+            "segmentId": "J01-p3",
+            "quote": "Compensation of Rs 8 lakh is awarded for negligence"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": true,
+          "pinpoint": {
+            "page": 1,
+            "paragraph": null
+          }
+        },
+        {
+          "verified": true,
+          "pinpoint": {
+            "page": 3,
+            "paragraph": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "research-whitespace-case",
+      "queryId": "Q02",
+      "task": "answer_research_query",
+      "replies": {
+        "claims": [
+          {
+            "statement": "Consent was not obtained.",
+            "segmentId": "J02-p1",
+            "quote": "a SURGERY was done  on the patient\nwithout his informed consent"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": true,
+          "pinpoint": {
+            "page": 1,
+            "paragraph": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "research-altered-quote",
+      "queryId": "Q01",
+      "task": "answer_research_query",
+      "replies": {
+        "claims": [
+          {
+            "statement": "Consent was taken.",
+            "segmentId": "J01-p1",
+            "quote": "Written consent was obtained for the procedure"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "research-altered-number",
+      "queryId": "Q01",
+      "task": "answer_research_query",
+      "replies": {
+        "claims": [
+          {
+            "statement": "Rs 18 lakh was awarded.",
+            "segmentId": "J01-p3",
+            "quote": "Compensation of Rs 18 lakh is awarded for negligence"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "research-foreign-segment",
+      "queryId": "Q02",
+      "task": "answer_research_query",
+      "replies": {
+        "claims": [
+          {
+            "statement": "Section 37 bars bail.",
+            "segmentId": "J04-p1",
+            "quote": "Section 37 bars bail unless two conditions are met"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "research-unknown-segment",
+      "queryId": "Q03",
+      "task": "answer_research_query",
+      "replies": {
+        "claims": [
+          {
+            "statement": "The nurse erred.",
+            "segmentId": "J03-p9",
+            "quote": "The patient was administered the wrong drug"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "research-wrong-pinpoint",
+      "queryId": "Q04",
+      "task": "answer_research_query",
+      "replies": {
+        "claims": [
+          {
+            "statement": "Reasonable grounds are needed.",
+            "segmentId": "J04-p2",
+            "quote": "reasonable grounds for believing that the accused is not guilty",
+            "pinpoint": {
+              "page": 1,
+              "paragraph": 4
+            }
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": true,
+          "pinpoint": {
+            "page": 2,
+            "paragraph": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "research-empty-quote",
+      "queryId": "Q04",
+      "task": "answer_research_query",
+      "replies": {
+        "claims": [
+          {
+            "statement": "Bail is barred.",
+            "segmentId": "J04-p1",
+            "quote": ""
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": false
+        }
+      ]
+    },
+    {
+      "id": "matter-good",
+      "queryId": "Q01",
+      "task": "answer_matter_question",
+      "sources": [
+        {
+          "id": "doc:D1:4",
+          "text": "1. The patient was admitted on 3 March.\n2. Consent form was not signed by the patient.\n3. Infection was recorded on 6 March.",
+          "page": 4,
+          "documentId": "D1"
+        },
+        {
+          "id": "fact:admission_date",
+          "text": "Admitted on 3 March 2024",
+          "page": null
+        }
+      ],
+      "replies": {
+        "claims": [
+          {
+            "statement": "Antibiotics were delayed.",
+            "sourceId": "seg:J01-p2",
+            "quote": "The hospital delayed antibiotics"
+          },
+          {
+            "statement": "The consent form was unsigned.",
+            "sourceId": "doc:D1:4",
+            "quote": "Consent form was not signed by the patient"
+          },
+          {
+            "statement": "Admitted on 3 March.",
+            "sourceId": "fact:admission_date",
+            "quote": "Admitted on 3 March 2024"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": true,
+          "pinpoint": {
+            "page": 2,
+            "paragraph": null
+          }
+        },
+        {
+          "verified": true,
+          "pinpoint": {
+            "page": 4,
+            "paragraph": 2
+          }
+        },
+        {
+          "verified": true,
+          "pinpoint": {
+            "page": null,
+            "paragraph": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "matter-altered-quote",
+      "queryId": "Q01",
+      "task": "answer_matter_question",
+      "sources": [
+        {
+          "id": "doc:D1:4",
+          "text": "1. The patient was admitted on 3 March.\n2. Consent form was not signed by the patient.\n3. Infection was recorded on 6 March.",
+          "page": 4,
+          "documentId": "D1"
+        },
+        {
+          "id": "fact:admission_date",
+          "text": "Admitted on 3 March 2024",
+          "page": null
+        }
+      ],
+      "replies": {
+        "claims": [
+          {
+            "statement": "The form was signed.",
+            "sourceId": "doc:D1:4",
+            "quote": "Consent form was signed by the patient"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": false,
+          "reason": "quote_not_found"
+        }
+      ]
+    },
+    {
+      "id": "matter-unknown-fact",
+      "queryId": "Q01",
+      "task": "answer_matter_question",
+      "sources": [
+        {
+          "id": "doc:D1:4",
+          "text": "1. The patient was admitted on 3 March.\n2. Consent form was not signed by the patient.\n3. Infection was recorded on 6 March.",
+          "page": 4,
+          "documentId": "D1"
+        },
+        {
+          "id": "fact:admission_date",
+          "text": "Admitted on 3 March 2024",
+          "page": null
+        }
+      ],
+      "replies": {
+        "claims": [
+          {
+            "statement": "Discharged on 9 March.",
+            "sourceId": "fact:discharge_date",
+            "quote": "Discharged on 9 March 2024"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": false,
+          "reason": "unknown_source"
+        }
+      ]
+    },
+    {
+      "id": "matter-foreign-segment",
+      "queryId": "Q01",
+      "task": "answer_matter_question",
+      "sources": [
+        {
+          "id": "doc:D1:4",
+          "text": "1. The patient was admitted on 3 March.\n2. Consent form was not signed by the patient.\n3. Infection was recorded on 6 March.",
+          "page": 4,
+          "documentId": "D1"
+        },
+        {
+          "id": "fact:admission_date",
+          "text": "Admitted on 3 March 2024",
+          "page": null
+        }
+      ],
+      "replies": {
+        "claims": [
+          {
+            "statement": "Section 37 bars bail.",
+            "sourceId": "seg:J04-p1",
+            "quote": "Section 37 bars bail unless two conditions are met"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": false,
+          "reason": "unknown_source"
+        }
+      ]
+    },
+    {
+      "id": "matter-bad-prefix",
+      "queryId": "Q01",
+      "task": "answer_matter_question",
+      "sources": [
+        {
+          "id": "doc:D1:4",
+          "text": "1. The patient was admitted on 3 March.\n2. Consent form was not signed by the patient.\n3. Infection was recorded on 6 March.",
+          "page": 4,
+          "documentId": "D1"
+        },
+        {
+          "id": "fact:admission_date",
+          "text": "Admitted on 3 March 2024",
+          "page": null
+        }
+      ],
+      "replies": {
+        "claims": [
+          {
+            "statement": "Infection recorded.",
+            "sourceId": "case:D1",
+            "quote": "Infection was recorded on 6 March"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": false,
+          "reason": "unknown_source"
+        }
+      ]
+    },
+    {
+      "id": "matter-wrong-pinpoint",
+      "queryId": "Q01",
+      "task": "answer_matter_question",
+      "sources": [
+        {
+          "id": "doc:D1:4",
+          "text": "1. The patient was admitted on 3 March.\n2. Consent form was not signed by the patient.\n3. Infection was recorded on 6 March.",
+          "page": 4,
+          "documentId": "D1"
+        },
+        {
+          "id": "fact:admission_date",
+          "text": "Admitted on 3 March 2024",
+          "page": null
+        }
+      ],
+      "replies": {
+        "claims": [
+          {
+            "statement": "Infection on 6 March.",
+            "sourceId": "doc:D1:4",
+            "quote": "Infection was recorded on 6 March",
+            "pinpoint": {
+              "page": 1,
+              "paragraph": 1
+            }
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": true,
+          "pinpoint": {
+            "page": 4,
+            "paragraph": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "matter-empty-quote",
+      "queryId": "Q01",
+      "task": "answer_matter_question",
+      "sources": [
+        {
+          "id": "doc:D1:4",
+          "text": "1. The patient was admitted on 3 March.\n2. Consent form was not signed by the patient.\n3. Infection was recorded on 6 March.",
+          "page": 4,
+          "documentId": "D1"
+        },
+        {
+          "id": "fact:admission_date",
+          "text": "Admitted on 3 March 2024",
+          "page": null
+        }
+      ],
+      "replies": {
+        "claims": [
+          {
+            "statement": "Admitted.",
+            "sourceId": "fact:admission_date",
+            "quote": ""
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": false,
+          "reason": "quote_not_found"
+        }
+      ]
+    },
+    {
+      "id": "matter-mixed",
+      "queryId": "Q04",
+      "task": "answer_matter_question",
+      "replies": {
+        "claims": [
+          {
+            "statement": "Small quantity is outside section 37.",
+            "sourceId": "seg:J05-p1",
+            "quote": "Section 37 of the NDPS Act does not apply to a small quantity"
+          },
+          {
+            "statement": "Section 37 never applies.",
+            "sourceId": "seg:J04-p1",
+            "quote": "Section 37 never bars bail"
+          }
+        ]
+      },
+      "expect": [
+        {
+          "verified": true,
+          "pinpoint": {
+            "page": 1,
+            "paragraph": null
+          }
+        },
+        {
+          "verified": false,
+          "reason": "quote_not_found"
+        }
+      ]
+    }
+  ]
+}

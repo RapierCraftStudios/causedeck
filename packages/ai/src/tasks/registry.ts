@@ -8,6 +8,7 @@ import { extractIssueTags } from './extract-issue-tags.ts';
 import { extractOrder } from './extract-order.ts';
 import { ocr } from './ocr.ts';
 import { outwardUpdate } from './outward-update.ts';
+import { answerMatterQuestion } from './answer-matter-question.ts';
 import { answerResearchQuery } from './answer-research-query.ts';
 import { parseListA0 } from './parse-list-a0.ts';
 import { parseOrderA0 } from './parse-order-a0.ts';
@@ -39,6 +40,7 @@ export const TASKS: Readonly<Record<TaskId, TaskDef>> = {
   tag_judgment_subject: tagJudgmentSubject,
   plan_research_query: planResearchQuery,
   answer_research_query: answerResearchQuery,
+  answer_matter_question: answerMatterQuestion,
   extract_issue_tags: extractIssueTags,
   draft_narrative: draftNarrative,
   outward_update: outwardUpdate,

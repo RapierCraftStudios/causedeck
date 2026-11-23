@@ -28,6 +28,11 @@ export {
   type Resolution,
 } from './slots';
 export * from './citations/index';
+export {
+  canonicalAuthorityQuote,
+  formatAuthorityParagraph,
+  type AuthorityParagraphInput,
+} from './authority-format';
 export { SYSTEM_TEMPLATES, systemTemplate } from './system-templates/index';
 export * from './consistency/index';
 export * from './factcheck/index';

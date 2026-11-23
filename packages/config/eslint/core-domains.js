@@ -131,8 +131,9 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // The legal news digest (#481): global items and the member's own prefs, no other domain.
   news: Object.freeze([]),
   // Citation verification (#484, D-004): resolves a neutral citation against the global `judgment`
-  // corpus; reads tables and `@causedeck/intelligence` only, no other domain.
-  citations: Object.freeze([]),
+  // corpus; reads tables and `@causedeck/intelligence` only. The corpus resolver (#1135) resolves
+  // section citations through the statutes index (`resolveSectionRef`).
+  citations: Object.freeze(['statutes']),
   // The judgment corpus masking service (#892, D-053): applying a mask request records
   // `corpus.mask_applied` through audit; the redaction itself lives in `@causedeck/intelligence`.
   // Contributed order copies are read through network when no cleared fetch exists (#594).
@@ -145,9 +146,28 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // search (#896) audits each search through audit, reads the plan's entitlements through billing,
   // meters `research.searches` through usage and runs its platform-scope models through ai.
   research: Object.freeze(['workspaces', 'citations', 'audit', 'billing', 'usage', 'ai']),
+  // The grounded matter copilot (#1115): roles through workspaces, matter facts through the
+  // matter-graph index, the corpus arm through research, `copilot.asked` through audit, the Junior cap
+  // through billing and usage, and the workspace-scope gateway through ai.
+  copilot: Object.freeze([
+    'workspaces',
+    'matter-graph',
+    'research',
+    'citations',
+    'audit',
+    'billing',
+    'usage',
+    'ai',
+  ]),
+  // Statutes (#1125): statute text, history, search and top authorities; membership through
+  // workspaces; global tables and @causedeck/intelligence (CODE_MAP) only. The `audit` edge is declared
+  // as the issue specifies, but no audit records are written.
+  statutes: Object.freeze(['workspaces', 'audit']),
   // Drafting (#768): roles through workspaces, facts through the matter-graph index, `draft.exported`
   // through audit and the narrative gateway through ai's index.
-  drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai']),
+  // The corpus citation resolver through citations (pre-staged for #1136).
+  // proposeAuthorities asks through the copilot index (#1142); copilot never imports drafting.
+  drafting: Object.freeze(['workspaces', 'matter-graph', 'audit', 'ai', 'citations', 'copilot']),
   // Staff support sessions (#308): owner checks through workspaces, session events through audit.
   support: Object.freeze(['workspaces', 'audit']),
   // The business dashboard (#519): the IST month through usage's `periodStart`, FORBIDDEN through workspaces.
@@ -231,6 +251,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   matching: Object.freeze(['memory']),
   // The end-of-day digest (#49) counts activity through the automation domain's public index.
   // `capture.process` builds the AI gateway for the document pipeline (#45) through ai's index.
+  // `drafting.citations.check` builds the default corpus resolver through citations (#1136).
   jobs: Object.freeze([
     'obligations',
     'attention',
@@ -261,6 +282,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'sources',
     'notices',
     'research',
+    'copilot',
     'drafting',
     'portfolio',
     'business',
@@ -270,6 +292,7 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
     'status',
     'status-links',
     'demo',
+    'citations',
   ]),
   // The free court-day alerts tier (#506): its fetch budget reads entitlements through billing and the
   // `fetch.cost_micros` counter through usage; enrolment adds watches through case-watch and types the

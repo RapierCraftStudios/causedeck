@@ -25,7 +25,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `EMAIL_PROVIDER` | `console` | `ses`, `smtp` |
 | `SMS_PROVIDER` | `console` | `msg91` |
 | `AI_PROVIDER` | `mock` | `bedrock`, `sarvam` |
-| `CITATION_RESOLVER` | `mock` | `indian-kanoon` |
+| `CITATION_RESOLVER` | `corpus` | `mock`, `indian-kanoon` |
 | `STORAGE_PROVIDER` | `minio` | `minio`, `s3` |
 | `BILLING_PROVIDER` | `mock` | `razorpay` |
 | `AUTH_GOOGLE_ENABLED` | `false` | `true` |
@@ -140,7 +140,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `AI_MAX_CONCURRENCY_PER_WORKSPACE` | integer (1-32) | `4` | never (defaults to 4) | #44 | — |
 | `SARVAM_NO_TRAINING_CONFIRMED` | literal(true) | — | NODE_ENV=production and AI_PROVIDER=sarvam | #44 | #113 |
 | `SARVAM_API_KEY` | secret | — | AI_PROVIDER=sarvam | #44 | #113 |
-| `CITATION_RESOLVER` | enum(mock\|indian-kanoon) | `mock` | never (defaults to mock) | #77 | — |
+| `CITATION_RESOLVER` | enum(corpus\|mock\|indian-kanoon) | `corpus` | never (defaults to corpus) | #77 | — |
 | `INDIAN_KANOON_API_TOKEN` | secret | — | CITATION_RESOLVER=indian-kanoon | #77 | #114 |
 | `STORAGE_PROVIDER` | enum(minio\|s3) | `minio` | never (defaults to minio) | #21 | — |
 | `S3_ENDPOINT` | url | `http://localhost:9000` (non-prod only) | STORAGE_PROVIDER=minio | #21 | — |

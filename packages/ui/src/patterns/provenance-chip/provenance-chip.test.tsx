@@ -96,7 +96,9 @@ describe('ProvenanceChip', () => {
     device('pointer');
     const { container } = render(<ProvenanceChip source={SOURCES.manual} />);
     expect(screen.getByRole('button')).toHaveTextContent('Entered by you');
-    expect(container.querySelector('[data-slot="provenance-pencil"]')).not.toBeNull();
+    // The kind icon is the one pencil; the state mark must not add a second.
+    expect(container.querySelector('[data-slot="provenance-pencil"]')).toBeNull();
+    expect(container.querySelectorAll('[data-icon="manual"]')).toHaveLength(1);
   });
 
   it('requires a source', () => {

@@ -24,7 +24,7 @@ export async function LiveHalls({ halls }: { halls: readonly LiveHall[] }) {
           <li
             key={`${hall.forumCode}|${hall.hallNo}`}
             data-hall={hall.hallNo}
-            className="border-border flex flex-col gap-2 rounded-md border p-3"
+            className="border-line flex flex-col gap-2 rounded-md border p-3"
           >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <span className="font-medium">{t('hall', { hallNo: hall.hallNo })}</span>

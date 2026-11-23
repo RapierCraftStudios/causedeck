@@ -32,14 +32,18 @@ export function DemoBanner({ slug }: { slug: string }) {
             >
               {t('leave')}
             </button>
-            <button
-              type="submit"
-              name="to"
-              value="start"
-              className={`${buttonVariants({ variant: 'primary', size: 'sm' })} hidden md:inline-flex`}
-            >
-              {t('start')}
-            </button>
+            {/* `hidden` sits on a wrapper: on the button itself, the variant's `inline-flex` won over it
+                and the primary button showed (and squeezed the text) on phones. */}
+            <span className="hidden md:inline-flex">
+              <button
+                type="submit"
+                name="to"
+                value="start"
+                className={buttonVariants({ variant: 'primary', size: 'sm' })}
+              >
+                {t('start')}
+              </button>
+            </span>
           </form>
         }
       >

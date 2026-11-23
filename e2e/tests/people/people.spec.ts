@@ -57,6 +57,7 @@ test.describe('people contacts', () => {
     await expect(page.getByText('new.contact@example.e2e.test')).toBeVisible();
 
     await page.goto(url(peoplePath(undefined, 'q=new.contact')));
+    await streamSettled(page);
     const row = page.locator('a[data-contact-row]');
     await expect(row).toHaveCount(1);
     await row.click();
@@ -79,10 +80,12 @@ test.describe('people contacts', () => {
     await expect(page.locator('a[data-contact-row]')).toHaveCount(1);
 
     await page.goto(url(peoplePath(undefined, 'language=kn')));
+    await streamSettled(page);
     await expect(page.locator('a[data-contact-row]')).toHaveCount(1);
     await expect(contactRow(page, CONTACTS.kannada)).toBeVisible();
 
     await page.goto(url(peoplePath(undefined, 'kind=accounts&language=kn')));
+    await streamSettled(page);
     const empty = page.locator('[data-contacts-empty="filtered"]');
     await expect(empty).toBeVisible();
     await empty.getByRole('link', { name: 'Clear filters' }).click();

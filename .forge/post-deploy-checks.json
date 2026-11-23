@@ -23,5 +23,10 @@
     "run": "pnpm --filter @causedeck/e2e test tests/drafting/authority-insert.spec.ts",
     "pass": "exit 0",
     "timeout": 600
+  },
+  "e2e-staging-pr-green": {
+    "run": "pr=\"$(gh pr list --base staging --head milestone/restore-green-e2e --state all --json number --jq '.[0].number')\" && test -n \"$pr\" && gh pr checks \"$pr\" --json name,bucket --jq '.[] | select(.name == \"e2e\") | .bucket' | grep -qx pass",
+    "pass": "exit 0",
+    "timeout": 60
   }
 }

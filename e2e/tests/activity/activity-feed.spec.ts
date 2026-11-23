@@ -12,7 +12,7 @@ import { existsSync } from 'node:fs';
 import type { Locator, Page, TestInfo } from '@playwright/test';
 
 import type { AsUser } from '../../fixtures/auth.ts';
-import { expect, test, type E2eRole } from '../../fixtures/index.ts';
+import { expect, pinText, settleFonts, test, type E2eRole } from '../../fixtures/index.ts';
 import { shellReady } from '../shell/helpers.ts';
 
 import { activityState, CAPTURE_ID, confirmActivity, seedActivities } from './activity-data.ts';
@@ -287,15 +287,15 @@ function skipWithoutBaseline(testInfo: TestInfo, name: string) {
 }
 
 async function snap(page: Page, name: string) {
+  // Activities carry their real insert time and an undo countdown: pin their text so the layout
+  // is the same on any day, instead of only masking the pixels.
+  await pinText(page.locator('[data-slot="activity-item"] time'), '09:30');
+  await pinText(page.locator('[data-slot="undo-countdown"]'), '6 days left');
+  await settleFonts(page);
   await expect(page).toHaveScreenshot(name, {
     animations: 'disabled',
     caret: 'hide',
     fullPage: true,
-    // Activities carry their real insert time and countdown.
-    mask: [
-      page.locator('[data-slot="activity-item"] time'),
-      page.locator('[data-slot="undo-countdown"]'),
-    ],
   });
 }
 

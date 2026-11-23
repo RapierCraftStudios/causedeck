@@ -94,8 +94,16 @@ has one user per role: `owner`, `advocate`, `junior`, `clerk` and `viewer`. Thei
 - Only seeded, fictional data: fixed UUIDs and timestamps, `.e2e.test` emails, invented names. Never
   real people or parties.
 - Specs never depend on order or on another spec's writes; the database is reset before each test.
-- Time is frozen for `@visual` tests (automatic); call `clock.freeze()` before `page.goto` anywhere
-  else time shows up.
+- The browser clock is frozen for `@visual` tests and every `*.visual.spec.ts` file (automatic); call
+  `clock.freeze()` before `page.goto` anywhere else time shows up. It does not move the server's
+  clock, so text the server renders from it needs `fixtures/stable-time.ts`: `disablePrompts(db.name)`
+  switches the weekly check-in card off (it appears from Monday 06:00 IST), `pinText(locator, text)`
+  gives server-rendered times fixed text (a string, or `{ locale, options }` formatted from
+  `FROZEN_TIME`), and `settleFonts(page)` waits for `document.fonts.ready` for at most 5 s and never
+  throws, so a stuck font cannot hang a shot.
+- Baselines are regenerated only through the e2e workflow's `update_snapshots` dispatch, only where
+  the UI changed on purpose, with the reason in the PR. Never regenerate to absorb a date, weekday
+  or font diff: pin the cause instead.
 - Motion is off (`reducedMotion: 'reduce'`, `animations: 'disabled'`, caret hidden); fonts are
   self-hosted.
 - Mask anything still dynamic: `toHaveScreenshot({ mask: [page.getByTestId('…')] })`.

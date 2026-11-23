@@ -218,9 +218,12 @@ dispatch; until they exist the specs skip.
 
 `.github/workflows/e2e.yml`:
 
-- **Pull requests and pushes:** two shards on the host. The Compose stack comes from
-  `infra/scripts/dev-up.sh`, and Playwright runs inside the pinned image (`docker run --network
-  host`). It uploads the HTML report and the test results, which include traces.
+- **Pull requests and pushes:** six shards on the host (`e2e (N/6)`), one Playwright worker each,
+  behind an aggregate `e2e` job that is the required check. One worker per runner keeps one Next
+  server, one Chromium and one per-test database reset on each 4-vCPU runner: with two, the workers
+  stalled each other's Postgres connections (`write CONNECT_TIMEOUT`, #1155). The Compose stack
+  comes from `infra/scripts/dev-up.sh`, and Playwright runs inside the pinned image (`docker run
+  --network host`). It uploads the HTML report and the test results, which include traces.
 - **Lighthouse:** starts the Compose stack, migrates and seeds it (`e2e` profile), builds for
   production and runs `lhci` and `lhci:courts`.
 - **Nightly (`schedule`):** `@smoke` with `--repeat-each=5 --retries=0 --fail-on-flaky-tests`.

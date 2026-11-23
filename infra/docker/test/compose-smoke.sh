@@ -135,7 +135,8 @@ tables="$(psql_su -c "select c.relname from pg_class c join pg_namespace n on n.
 total=0; leaked=0
 for table in $tables; do
   all="$(psql_su -c "select count(*) from \"$table\"")"
-  other="$(compose exec -T postgres psql -v ON_ERROR_STOP=1 -U causedeck -d causedeck -tA <<SQL
+  # -q: no BEGIN/ROLLBACK command tags, so the last line is the count.
+  other="$(compose exec -T postgres psql -q -v ON_ERROR_STOP=1 -U causedeck -d causedeck -tA <<SQL
 begin;
 set local role causedeck_app;
 select set_config('app.workspace_id', '00000000-0000-4000-8000-000000000000', true);

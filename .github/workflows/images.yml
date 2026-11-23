@@ -104,7 +104,8 @@ jobs:
           IMAGE_ORG: acme
           GIT_SHA: ci
           DOMAIN: example.com
-          CAUSEDECK_ENV_FILE: infra/docker/env/prod.env.example
+          # Absolute: compose resolves a relative env_file against the compose file's directory.
+          CAUSEDECK_ENV_FILE: ${{ github.workspace }}/infra/docker/env/prod.env.example
           POSTGRES_PASSWORD: x
           OWNER_DB_PASSWORD: x
           APP_DB_PASSWORD: x

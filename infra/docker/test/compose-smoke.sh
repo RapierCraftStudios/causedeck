@@ -17,10 +17,20 @@ ENV_FILE="$WORK/smoke.env"
 PROJECT="causedeck-smoke-$$"
 export COMPOSE_PROJECT_NAME="$PROJECT"  # migrate.sh and compose calls below share one project
 
-compose() { docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"; }
+# compose.smoke-worker.yml: smoke-only worker override until #1161 is decided (see that file).
+compose() { docker compose -f "$COMPOSE_FILE" -f "$ROOT/infra/docker/test/compose.smoke-worker.yml" --env-file "$ENV_FILE" "$@"; }
 cleanup() { compose --profile init --profile migrate down -v --remove-orphans >/dev/null 2>&1 || true; rm -rf "$WORK"; }
 trap cleanup EXIT
-fail() { echo "SMOKE FAIL: $*" >&2; compose ps >&2 || true; exit 1; }
+fail() {
+  echo "SMOKE FAIL: $*" >&2
+  compose ps >&2 || true
+  # The last log lines of every service that is not healthy or running, so CI shows why.
+  for svc in $(compose ps -a --format '{{.Service}} {{.Status}}' 2>/dev/null | awk '!/healthy\)$/ && !/^[a-z-]+ Up [^(]*$/ {print $1}' | sort -u); do
+    echo "---- logs: $svc ----" >&2
+    compose logs --no-color --tail 40 "$svc" >&2 || true
+  done
+  exit 1
+}
 
 rand() { head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24; }
 OWNER_PW="$(rand)"; APP_PW="$(rand)"; PG_PW="$(rand)"; S3_KEY="smoke$(rand)"; S3_SEC="$(rand)$(rand)"
@@ -46,10 +56,15 @@ cp "$ROOT/infra/docker/env/prod.env.example" "$ENV_FILE"
   echo "S3_SECRET_KEY=$S3_SEC"
   echo "BETTER_AUTH_SECRET=$(rand)$(rand)"
   echo "KEK_BASE64=$(head -c 32 /dev/urandom | base64)"
-  echo "BILLING_SUPPLIER_LEGAL_NAME=Smoke Test LLP"
+  echo "BILLING_SUPPLIER_LEGAL_NAME='Smoke Test LLP'"  # quoted: the file is also sourced by bash
   echo "BILLING_SUPPLIER_GSTIN=29ABCDE1234F1Z5"
   echo "SARVAM_NO_TRAINING_CONFIRMED=true"
   echo "CLOCK_DRIFT_REFERENCE_URL="
+  # No backup key in the smoke: the compose default (/dev/null) boots Postgres without WAL archiving.
+  echo "WALG_KEY_FILE=/dev/null"
+  # The smoke boots on the mock/console providers from prod.env.example: allowed only with this flag.
+  echo "ALLOW_MOCK_PROVIDERS=true"
+  echo "STATUS_SIGNING_KEY=$(rand)$(rand)"
 } >>"$ENV_FILE"
 # Later assignments win when the file is sourced, but compose's env parser keeps the LAST value too.
 export CAUSEDECK_ENV_FILE="$ENV_FILE"
@@ -114,17 +129,19 @@ echo "smoke: seeding demo workspace as owner (non-production mode)"
 compose --profile migrate run --rm -e NODE_ENV=development migrate \
   node --import tsx node_modules/@causedeck/db/scripts/seed-demo.ts >/dev/null || fail "demo seed failed"
 # Count rows per forced-RLS table as the superuser (sees all), then as the app role under a random
-# workspace id (must see none). Seeded demo data guarantees the superuser count is above zero.
+# workspace id (must see none of another workspace's rows). Shared rows (workspace_id IS NULL: the
+# forum/bench/court_hall catalogue, limitation rules, system templates) are readable by design. Seeded demo data guarantees the superuser count is above zero.
 tables="$(psql_su -c "select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace and n.nspname='public' join pg_attribute a on a.attrelid=c.oid and a.attname='workspace_id' and not a.attisdropped where c.relkind='r' and c.relrowsecurity and c.relforcerowsecurity")"
 [ -n "$tables" ] || fail "no forced-RLS workspace tables found"
 total=0; leaked=0
 for table in $tables; do
   all="$(psql_su -c "select count(*) from \"$table\"")"
-  other="$(compose exec -T postgres psql -v ON_ERROR_STOP=1 -U causedeck -d causedeck -tA <<SQL
+  # -q: no BEGIN/ROLLBACK command tags, so the last line is the count.
+  other="$(compose exec -T postgres psql -q -v ON_ERROR_STOP=1 -U causedeck -d causedeck -tA <<SQL
 begin;
 set local role causedeck_app;
 select set_config('app.workspace_id', '00000000-0000-4000-8000-000000000000', true);
-select count(*) from "$table";
+select count(*) from "$table" where workspace_id is not null;
 rollback;
 SQL
   )"

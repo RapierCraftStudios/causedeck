@@ -21,7 +21,16 @@ export COMPOSE_PROJECT_NAME="$PROJECT"  # migrate.sh and compose calls below sha
 compose() { docker compose -f "$COMPOSE_FILE" -f "$ROOT/infra/docker/test/compose.smoke-worker.yml" --env-file "$ENV_FILE" "$@"; }
 cleanup() { compose --profile init --profile migrate down -v --remove-orphans >/dev/null 2>&1 || true; rm -rf "$WORK"; }
 trap cleanup EXIT
-fail() { echo "SMOKE FAIL: $*" >&2; compose ps >&2 || true; exit 1; }
+fail() {
+  echo "SMOKE FAIL: $*" >&2
+  compose ps >&2 || true
+  # The last log lines of every service that is not healthy or running, so CI shows why.
+  for svc in $(compose ps -a --format '{{.Service}} {{.Status}}' 2>/dev/null | awk '!/healthy\)$/ && !/^[a-z-]+ Up [^(]*$/ {print $1}' | sort -u); do
+    echo "---- logs: $svc ----" >&2
+    compose logs --no-color --tail 40 "$svc" >&2 || true
+  done
+  exit 1
+}
 
 rand() { head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24; }
 OWNER_PW="$(rand)"; APP_PW="$(rand)"; PG_PW="$(rand)"; S3_KEY="smoke$(rand)"; S3_SEC="$(rand)$(rand)"

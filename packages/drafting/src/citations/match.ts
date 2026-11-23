@@ -5,6 +5,7 @@
 // `verified`. Only the citation, status, canonical URL and a short title leave this function.
 import {
   CITATION_TITLE_MAX,
+  type CitationKind,
   type CitationReason,
   type CitationStatus,
 } from '@causedeck/validators/citation';
@@ -17,6 +18,10 @@ export interface ResolverHit {
   citation: string;
   title: string;
   sourceUrl: string;
+  /** The title is withheld (a masked judgment), so an exact structured match alone verifies. */
+  titleMasked?: boolean;
+  /** The resolver's pinpoint or quote check; `verified` or the reason it failed. */
+  check?: { quote: 'verified' | CitationReason };
 }
 
 export type ResolverOutcome =
@@ -28,6 +33,8 @@ export interface Verdict {
   sourceUrl?: string;
   title?: string;
   similarity?: number;
+  /** Set when a quote was checked: `verified`, or `not_found` for a quote not in its passage. */
+  quoteChecked?: 'verified' | 'not_found';
 }
 
 /** Default minimum title similarity for `verified`. */
@@ -36,6 +43,7 @@ export const TITLE_THRESHOLD = 0.7;
 export interface ClassifyInput {
   normalized: string;
   titleHint?: string;
+  kind?: CitationKind;
 }
 
 export function shortTitle(title: string): string {
@@ -54,17 +62,32 @@ export function classify(
   if (outcome.kind === 'unavailable') return { status: 'unknown', reason: 'resolver_unavailable' };
   if (outcome.kind === 'throttled') return { status: 'unknown', reason: 'throttled' };
   const exact = outcome.hits.filter((hit) => hit.citation === citation.normalized);
-  if (exact.length === 0) return { status: 'not_found' };
+  if (exact.length === 0) {
+    return citation.kind === 'section'
+      ? { status: 'not_found', reason: 'section_not_found' }
+      : { status: 'not_found' };
+  }
   const urls = new Set(exact.map((hit) => hit.sourceUrl));
   const hit = exact[0];
   if (urls.size > 1 || hit === undefined) return { status: 'unknown', reason: 'ambiguous' };
   const base = { sourceUrl: hit.sourceUrl, title: shortTitle(hit.title) };
+  const quote = hit.check?.quote;
+  if (quote !== undefined && quote !== 'verified') {
+    return {
+      status: 'unknown',
+      reason: quote,
+      ...(quote === 'quote_not_found' ? { quoteChecked: 'not_found' as const } : {}),
+      ...base,
+    };
+  }
+  const checked = quote === 'verified' ? { quoteChecked: 'verified' as const } : {};
+  if (hit.titleMasked === true) return { status: 'verified', ...checked, ...base };
   if (citation.titleHint === undefined) {
-    return { status: 'unknown', reason: 'title_missing', ...base };
+    return { status: 'unknown', reason: 'title_missing', ...checked, ...base };
   }
   const similarity = titleSimilarity(citation.titleHint, hit.title);
   if (similarity < titleThreshold) {
-    return { status: 'unknown', reason: 'title_mismatch', similarity, ...base };
+    return { status: 'unknown', reason: 'title_mismatch', similarity, ...checked, ...base };
   }
-  return { status: 'verified', similarity, ...base };
+  return { status: 'verified', similarity, ...checked, ...base };
 }

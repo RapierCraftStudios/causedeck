@@ -27,7 +27,8 @@
     },
     "enquiries": "Enquiries",
     "import": "Import",
-    "research": "Research"
+    "research": "Research",
+    "copilot": "Copilot"
   },
   "palette": {
     "title": "Command palette",

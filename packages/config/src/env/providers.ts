@@ -1,5 +1,6 @@
-// Integration provider switches (spike §9). Every switch defaults to a mock or console provider
-// so dev and CI boot without secrets; real credentials are required only on the selected branch.
+// Integration provider switches (spike §9). Every switch defaults to a provider that needs no
+// secret (a mock, console or, for citations, the in-process corpus) so dev and CI boot without
+// secrets; real credentials are required only on the selected branch.
 import { z } from 'zod';
 
 import type { KeyMetaRecord } from './registry.ts';
@@ -171,11 +172,11 @@ export const providerKeys = {
   },
   CITATION_RESOLVER: {
     domain: 'ai',
-    type: 'enum(mock|indian-kanoon)',
+    type: 'enum(corpus|mock|indian-kanoon)',
     description:
-      'Citation checker resolver (#77). `mock` is deterministic and offline; `indian-kanoon` calls the Indian Kanoon API.',
-    default: 'mock',
-    requiredWhen: 'never (defaults to mock)',
+      'Citation checker resolver (#77, #1136). `corpus` resolves against the stored judgment and statute corpus in-process; `mock` is deterministic and offline (CI); `indian-kanoon` calls the Indian Kanoon API.',
+    default: 'corpus',
+    requiredWhen: 'never (defaults to corpus)',
     ownerIssue: 77,
   },
   INDIAN_KANOON_API_TOKEN: {
@@ -379,6 +380,7 @@ export const aiProvider = z.discriminatedUnion('AI_PROVIDER', [
 ]);
 
 export const citationResolver = z.discriminatedUnion('CITATION_RESOLVER', [
+  z.object({ CITATION_RESOLVER: z.literal('corpus').describe(d('CITATION_RESOLVER')) }),
   z.object({ CITATION_RESOLVER: z.literal('mock').describe(d('CITATION_RESOLVER')) }),
   z.object({
     CITATION_RESOLVER: z.literal('indian-kanoon'),

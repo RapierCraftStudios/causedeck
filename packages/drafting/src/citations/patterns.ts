@@ -4,6 +4,8 @@
 // matching: nothing here reads a network or a database.
 import type { CitationKind } from '@causedeck/validators/citation';
 
+import { canonicalCaseType } from '../consistency/match-case-numbers';
+
 export interface CitationPattern {
   id: string;
   kind: CitationKind;
@@ -11,11 +13,22 @@ export interface CitationPattern {
   regex: RegExp;
   /** The canonical form of a match. */
   normalize(match: RegExpExecArray): string;
+  /** For a statute section: the statute and section it names. */
+  parts?(match: RegExpExecArray): { statute: string; section: string };
 }
 
 const g = (groups: RegExpExecArray['groups'], name: string): string => groups?.[name] ?? '';
 const court = (value: string): string =>
   value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+
+const SECTION_SOURCE = String.raw`(?<![\w])(?:u\/s\.?|sec(?:tion)?s?\.?|ss?\.)\s*(?<sec>\d{1,4}[A-Za-z]{0,2}(?:\([A-Za-z0-9]{1,4}\))*)\s+(?:of\s+(?:the\s+)?)?(?<statute>BNSS|BNS|BSA|IPC|I\.P\.C\.?|CrPC|Cr\.P\.C\.?|CPC|C\.P\.C\.?)(?![\w])`;
+
+function sectionParts(m: RegExpExecArray): { statute: string; section: string } {
+  return {
+    statute: g(m.groups, 'statute').replace(/\./g, '').toUpperCase(),
+    section: g(m.groups, 'sec').toUpperCase(),
+  };
+}
 
 export const STRUCTURED_PATTERNS: readonly CitationPattern[] = [
   {
@@ -74,6 +87,30 @@ export const STRUCTURED_PATTERNS: readonly CitationPattern[] = [
       const vol = g(m.groups, 'vol');
       return `ILR ${g(m.groups, 'year')} ${vol === '' ? '' : `${vol} `}${court(g(m.groups, 'court'))} ${g(m.groups, 'page')}`;
     },
+  },
+  {
+    // `W.P. No. 1234 of 2024`, `Crl.A. 56/2023`: written as `<TYPE> <number>/<year>` with the
+    // catalogue type code and no leading zeros. An unknown case type is not a citation (empty).
+    id: 'case-number',
+    kind: 'case_number',
+    regex:
+      /(?<![\w.])(?<type>[A-Za-z]{1,6}(?:\.[A-Za-z]{1,6})*\.(?:\([A-Za-z]{1,4}\))?)\s*(?:Nos?\.?\s*)?(?<no>\d{1,7})\s*(?:\/|\bof\b)\s*(?<year>(?:19|20)\d{2})(?!\d)/gi,
+    normalize: (m) => {
+      const code = canonicalCaseType(g(m.groups, 'type'));
+      if (code === undefined) return '';
+      return `${code} ${g(m.groups, 'no').replace(/^0+(?=\d)/, '')}/${g(m.groups, 'year')}`;
+    },
+  },
+  {
+    // `s. 106 BNS`, `Section 304A IPC`, `u/s 420 IPC`: written as `<STATUTE> s <section>`.
+    id: 'section',
+    kind: 'section',
+    regex: new RegExp(SECTION_SOURCE, 'gi'),
+    normalize: (m) => {
+      const { statute, section } = sectionParts(m);
+      return `${statute} s ${section}`;
+    },
+    parts: sectionParts,
   },
 ];
 

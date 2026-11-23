@@ -1,5 +1,8 @@
-# Retrieval evaluation gate (#891, ADR 0051 §Evaluation): the baseline ranker on the pinned synthetic
-# set. Fails when nDCG@10 drops more than 2 points below fixtures/research-eval/baseline.json.
+# Copilot quality gate (#891, #1119, ADR 0051 §Evaluation): retrieval (recall@50, nDCG@10 for BM25 and the
+# hybrid on the mock embedder and reranker) and the answer verifiers (citation accuracy, quote verification,
+# pinpoint accuracy, false-verified) on the pinned synthetic set. Fails when a gated metric regresses beyond
+# fixtures/research-eval/thresholds.json or any claim is false-verified. The CLI writes the Markdown report
+# to $GITHUB_STEP_SUMMARY. No network, provider or database. See docs/engineering/copilot-quality.md.
 # CI never sets RESEARCH_EVAL_PRIVATE_DIR; the advocate-written set is reported separately.
 name: Research eval
 
@@ -9,6 +12,10 @@ on:
       - 'packages/intelligence/src/research/**'
       - 'packages/intelligence/src/corpus/**'
       - 'fixtures/research-eval/**'
+      - 'packages/core/src/copilot/**'
+      - 'packages/core/src/citations/**'
+      - 'packages/ai/src/tasks/answer-*.ts'
+      - 'packages/drafting/src/citations/**'
       - '.github/workflows/research-eval.yml'
 
 permissions:
@@ -30,7 +37,7 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           turbo-cache: none
-      - name: Evaluate retrieval
+      - name: Evaluate retrieval and answers
         run: pnpm --filter @causedeck/intelligence research-eval --out "$RUNNER_TEMP/research-eval"
       - name: Upload reports
         if: ${{ !cancelled() }}

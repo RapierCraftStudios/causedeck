@@ -121,6 +121,7 @@
         "people": "People",
         "documents": "Documents",
         "research": "Research",
+        "copilot": "Copilot",
         "memory": "Memory"
       },
       "status": {

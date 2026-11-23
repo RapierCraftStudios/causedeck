@@ -41,6 +41,17 @@ export function registerResearchTab(): void {
   });
 }
 
+/** Copilot (#1115, #1132): after Research (40), only while `copilot.enabled` is on. */
+export function registerCopilotTab(): void {
+  registerMatterTab({
+    id: 'copilot',
+    order: 45,
+    labelKey: 'copilot',
+    segment: 'copilot',
+    visible: ({ can, flag }) => can('matter.read') && flag('copilot.enabled'),
+  });
+}
+
 /** Memory (#73): what is remembered for this matter, for members who may read memory. */
 export function registerMemoryTab(): void {
   registerMatterTab({
@@ -60,6 +71,7 @@ export function registerMatterTabs(): void {
   registerPeopleTab();
   registerDocumentsTab();
   registerResearchTab();
+  registerCopilotTab();
   registerMemoryTab();
 }
 

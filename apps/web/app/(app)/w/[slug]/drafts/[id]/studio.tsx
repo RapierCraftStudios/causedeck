@@ -16,10 +16,17 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import type { CitationView } from '../../../../../../components/drafting/citation-panel.tsx';
+import {
+  openCitationIds,
+  type CitationView,
+} from '../../../../../../components/drafting/citation-panel.tsx';
 import type { ExportLink } from '../../../../../../components/drafting/export-dialog.tsx';
 import type { PinnedAuthority } from '../../../../../../components/drafting/authorities-panel.tsx';
 import type { DraftFact } from '../../../../../../components/drafting/facts-panel.tsx';
+import type {
+  AuthorityInsert,
+  AuthorityPropose,
+} from '../../../../../../components/drafting/authority-drawer.tsx';
 import type { PrecedentSearch } from '../../../../../../components/drafting/precedent-picker.tsx';
 import type { DraftVersionView } from '../../../../../../components/drafting/version-drawer.tsx';
 import { registerCommands } from '../../../../../../lib/commands/registry.ts';
@@ -82,6 +89,13 @@ const AuthoritiesPanel = dynamic(
   () =>
     import('../../../../../../components/drafting/authorities-panel.tsx').then(
       (m) => m.AuthoritiesPanel,
+    ),
+  { ssr: false, loading: panelLoading },
+);
+const AuthorityDrawerPanel = dynamic(
+  () =>
+    import('../../../../../../components/drafting/authority-drawer.tsx').then(
+      (m) => m.AuthorityDrawerPanel,
     ),
   { ssr: false, loading: panelLoading },
 );
@@ -157,6 +171,15 @@ export interface StudioProps {
   factCheck?: StudioFactCheck;
   /** #904: the precedent picker, present only when the `m5_playbooks` flag is on. */
   precedents?: StudioPrecedents;
+  /** #1144: the corpus authority drawer, present only when the `copilot.enabled` flag is on. */
+  authorityDrawer?: StudioAuthorityDrawer;
+}
+
+export interface StudioAuthorityDrawer {
+  propose: AuthorityPropose;
+  insert: AuthorityInsert;
+  /** The saved version being edited: an insert lands in the version after it. */
+  versionId: string;
 }
 
 export interface StudioFactCheck {
@@ -200,7 +223,7 @@ export interface StudioChecks {
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'queued' | 'conflict' | 'failed';
-type Panel = 'facts' | 'precedents' | 'versions';
+type Panel = 'facts' | 'precedents' | 'authorities' | 'versions';
 
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName);
@@ -233,8 +256,13 @@ export function DraftStudio(props: StudioProps) {
   const factCheck = props.factCheck;
 
   const readOnly = !online && cached;
-  const panelTabs: readonly Panel[] =
-    props.precedents === undefined ? ['facts', 'versions'] : ['facts', 'precedents', 'versions'];
+  const authorityDrawer = props.authorityDrawer;
+  const panelTabs: readonly Panel[] = [
+    'facts',
+    ...(props.precedents === undefined ? [] : (['precedents'] as const)),
+    ...(authorityDrawer === undefined ? [] : (['authorities'] as const)),
+    'versions',
+  ];
 
   // Live fact-check of the text as it stands (#916): headings and paragraphs, as the editor shows them.
   const checkBlocks = useMemo(
@@ -487,9 +515,7 @@ export function DraftStudio(props: StudioProps) {
   const checks = props.checks;
   const citations = live?.citations ?? checks?.citations ?? [];
   const checkFindings = live?.findings ?? checks?.findings ?? [];
-  const unacknowledged = citations.filter(
-    (c) => c.status === 'not_found' && !c.acknowledged,
-  ).length;
+  const unacknowledged = openCitationIds(citations).length;
   const scope = { workspaceId: props.workspaceId, draftVersionId: checks?.versionId ?? '' };
 
   async function runChecks() {
@@ -509,6 +535,9 @@ export function DraftStudio(props: StudioProps) {
         raw: c.raw,
         status: c.status,
         title: c.title,
+        reason: c.reason,
+        sourceUrl: c.sourceUrl,
+        page: c.pinpoint?.page,
         acknowledged: false,
       })),
       findings: result.data.findings,
@@ -517,9 +546,7 @@ export function DraftStudio(props: StudioProps) {
 
   async function acknowledge(statement: string) {
     if (checks === undefined) return false;
-    const ids = citations
-      .filter((c) => c.status === 'not_found' && !c.acknowledged)
-      .map((c) => c.id);
+    const ids = openCitationIds(citations);
     const result = await checks.actions.acknowledge({
       ...scope,
       citationIds: ids,
@@ -776,6 +803,24 @@ export function DraftStudio(props: StudioProps) {
           saveNext.current = true;
         }}
       />
+    ) : which === 'authorities' && authorityDrawer !== undefined ? (
+      <AuthorityDrawerPanel
+        workspaceId={props.workspaceId}
+        draftId={props.draftId}
+        versionId={authorityDrawer.versionId}
+        blocks={blocks}
+        selectedBlock={selectedSlot}
+        online={online}
+        disabled={readOnly}
+        unsaved={dirty}
+        propose={authorityDrawer.propose}
+        insert={authorityDrawer.insert}
+        onInserted={() => {
+          // The server saved the authority as the next version; reload adopts it into the editor.
+          setAnnouncement(t('authorityDrawer.inserted'));
+          router.refresh();
+        }}
+      />
     ) : (
       <VersionDrawer
         versions={props.versions}
@@ -852,6 +897,9 @@ export function DraftStudio(props: StudioProps) {
         <aside aria-label={t('panels.facts.title')} className="hidden xl:block xl:overflow-y-auto">
           {panelBody('facts')}
           {precedentsOn ? <div className="mt-6">{panelBody('precedents')}</div> : null}
+          {authorityDrawer === undefined ? null : (
+            <div className="mt-6">{panelBody('authorities')}</div>
+          )}
         </aside>
 
         <main ref={editorRef} className="mx-auto w-full max-w-3xl" aria-label={t('editor.label')}>
@@ -1011,7 +1059,9 @@ export function DraftStudio(props: StudioProps) {
                 ? t('actions.showFacts')
                 : which === 'precedents'
                   ? t('actions.showPrecedents')
-                  : t('actions.showVersions')}
+                  : which === 'authorities'
+                    ? t('actions.showAuthorities')
+                    : t('actions.showVersions')}
             </button>
           ))}
           {precedentsOn ? (

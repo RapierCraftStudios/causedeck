@@ -49,6 +49,7 @@ export type Messages = {
     enquiries: string;
     import: string;
     research: string;
+    copilot: string;
   };
   palette: {
     title: string;
@@ -3206,6 +3207,7 @@ export type Messages = {
         people: string;
         documents: string;
         research: string;
+        copilot: string;
         memory: string;
       };
       status: {
@@ -4665,6 +4667,7 @@ export type Messages = {
       facts: string;
       versions: string;
       precedents: string;
+      authorities: string;
     };
     actions: {
       title: string;
@@ -4672,6 +4675,7 @@ export type Messages = {
       showFacts: string;
       showVersions: string;
       showPrecedents: string;
+      showAuthorities: string;
     };
     checks: {
       citations: {
@@ -4681,6 +4685,20 @@ export type Messages = {
         jump: string;
         blocked: string;
         acknowledge: string;
+        reason: {
+          unresolved: string;
+          unknown: string;
+          resolver_unavailable: string;
+          throttled: string;
+          ambiguous: string;
+          title_mismatch: string;
+          title_missing: string;
+          unsupported: string;
+          quote_not_found: string;
+          pinpoint_not_found: string;
+          section_not_found: string;
+        };
+        openSource: string;
       };
       consistency: {
         notRun: string;
@@ -4786,6 +4804,44 @@ export type Messages = {
           ambiguous: string;
         };
       };
+    };
+    authorityDrawer: {
+      title: string;
+      hint: string;
+      noBlock: string;
+      find: string;
+      findAgain: string;
+      loading: string;
+      empty: string;
+      aiBlocked: string;
+      error: string;
+      limit: string;
+      retry: string;
+      denied: string;
+      offline: string;
+      untitled: string;
+      source: string;
+      openSource: string;
+      para: string;
+      page: string;
+      insert: string;
+      inserting: string;
+      inserted: string;
+      saveFirst: string;
+      insertConflict: string;
+      insertFailed: string;
+    };
+    copilotInsert: {
+      insert: string;
+      draft: string;
+      after: string;
+      confirm: string;
+      cancel: string;
+      inserting: string;
+      inserted: string;
+      openDraft: string;
+      conflict: string;
+      failed: string;
     };
   };
   calendar: {
@@ -5687,6 +5743,83 @@ export type Messages = {
         company: string;
         intellectual_property: string;
         environment: string;
+      };
+    };
+    copilot: {
+      metaTitle: string;
+      title: string;
+      intro: string;
+      matterIntro: string;
+      denied: string;
+      questionLabel: string;
+      questionPlaceholder: string;
+      submit: string;
+      asking: string;
+      error: string;
+      usage: string;
+      usageUnlimited: string;
+      aiOff: string;
+      noAuthority: string;
+      claimsTitle: string;
+      unsupportedTitle: string;
+      notVerified: string;
+      record: string;
+      kind: {
+        fact: string;
+        doc: string;
+        seg: string;
+      };
+      pinpoint: {
+        page: string;
+        paragraph: string;
+      };
+    };
+    statutes: {
+      metaTitle: string;
+      title: string;
+      intro: string;
+      navLink: string;
+      back: string;
+      backToSearch: string;
+      denied: string;
+      queryLabel: string;
+      queryPlaceholder: string;
+      submit: string;
+      prompt: string;
+      error: string;
+      empty: string;
+      resultsHeading: string;
+      resultsCount: string;
+      hit: string;
+      section: {
+        metaTitle: string;
+        title: string;
+        textHeading: string;
+        inForce: string;
+        notInForceSince: string;
+        noText: string;
+        syntheticLabel: string;
+        publicDomainLabel: string;
+      };
+      history: {
+        heading: string;
+        range: string;
+        current: string;
+        amendedBy: string;
+        empty: string;
+      };
+      counterpart: {
+        heading: string;
+        link: string;
+        none: string;
+      };
+      authorities: {
+        heading: string;
+        empty: string;
+        maskedTitle: string;
+        page: string;
+        decided: string;
+        openPdf: string;
       };
     };
   };

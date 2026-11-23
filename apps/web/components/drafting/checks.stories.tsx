@@ -13,6 +13,8 @@ const citations: CitationView[] = [
     blockId: 'b1',
     raw: '2021 SCC OnLine Mad 100',
     status: 'verified',
+    title: 'Selvi v. Kumar',
+    sourceUrl: 'https://example.org/judgments/2021-mad-100.pdf',
     acknowledged: false,
   },
   {
@@ -22,7 +24,25 @@ const citations: CitationView[] = [
     status: 'not_found',
     acknowledged: false,
   },
-  { id: 'c3', blockId: 'b3', raw: 'Rao v. Traders', status: 'unknown', acknowledged: false },
+  {
+    id: 'c3',
+    blockId: 'b3',
+    raw: 'Rao v. Traders, 2022 INSC 40, para 31',
+    status: 'unknown',
+    reason: 'pinpoint_not_found',
+    sourceUrl: 'https://example.org/judgments/2022-insc-40.pdf',
+    page: 12,
+    acknowledged: false,
+  },
+  {
+    id: 'c4',
+    blockId: 'b4',
+    raw: 'Mehta v. Union of India, 2020 INSC 7',
+    status: 'unknown',
+    reason: 'quote_not_found',
+    sourceUrl: 'https://example.org/judgments/2020-insc-7.pdf',
+    acknowledged: true,
+  },
 ];
 
 const meta = { title: 'Drafting/Checks' } satisfies Meta;

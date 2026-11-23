@@ -49,6 +49,8 @@ import {
   saveEdit,
 } from '../../outward/index.ts';
 
+import { seedCorpusJudgment, seedStatute } from './corpus-citations.fixture.ts';
+
 const THIS_FILE = 'packages/core/src/__tests__/cross-tenant/services.test.ts';
 const mailer: Mailer = { send: () => Promise.resolve() };
 const APP_URL = 'http://localhost:3000';
@@ -678,6 +680,42 @@ function draftingCases(): Record<string, (f: Fixture) => Promise<void>> {
         reason: 'B on A',
       }),
     ),
+    // Authority insertion (#1142): B on A's draft proposes and inserts nothing; A's versions, copilot
+    // usage and audit are unchanged.
+    proposeAuthorities: async (f) => {
+      const asked = () =>
+        inWorkspace(f.tx, f.a.id, (s) =>
+          s
+            .select({ id: schema.auditEvent.id })
+            .from(schema.auditEvent)
+            .where(eq(schema.auditEvent.action, 'copilot.asked')),
+        );
+      const before = await asked();
+      await denied((g, s) =>
+        core.proposeAuthorities({ db: s }, inA(g), { draftId: ids(g).draftId, blockId: 'p1' }),
+      )(f);
+      expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'copilot.questions')).toBe(0);
+      expect(await asked()).toEqual(before);
+    },
+    insertAuthority: async (f) => {
+      const inserted = () =>
+        inWorkspace(f.tx, f.a.id, (s) =>
+          s
+            .select({ id: schema.auditEvent.id })
+            .from(schema.auditEvent)
+            .where(eq(schema.auditEvent.action, 'draft.authority.inserted')),
+        );
+      const before = await inserted();
+      await denied((g, s) =>
+        core.insertAuthority({ db: s }, inA(g), {
+          draftId: ids(g).draftId,
+          versionId: ids(g).versionId,
+          afterBlockId: 'p1',
+          candidateRef: { judgmentId: randomUUID(), quote: 'x', para: 1 },
+        }),
+      )(f);
+      expect(await inserted()).toEqual(before);
+    },
     // Consistency (#78): B on A's version sees nothing, stores nothing and writes no version.
     runConsistencyCheck: denied((f, s) =>
       core.runConsistencyCheck({ db: s }, inA(f), { draftVersionId: ids(f).reportVersionId }),
@@ -1956,6 +1994,43 @@ const CASES: Record<string, Case> = {
       reason: 'not_in_corpus',
     });
     expect(await aWorkspace(f)).toEqual(before);
+  },
+  // The corpus citation resolver (#1135): global reads, the same answer for A and B.
+  createCorpusResolver: async (f) => {
+    const j = await seedCorpusJudgment(f.tx);
+    const before = await aWorkspace(f);
+    const request = { normalized: j.normalizedCaseNumber, kind: 'case_number' as const };
+    const asA = await inWorkspace(f.tx, f.a.id, (s) =>
+      core.createCorpusResolver({ db: s }).resolve(request),
+    );
+    const asB = await f.asB((s) => core.createCorpusResolver({ db: s }).resolve(request));
+    expect(asA).toMatchObject({ kind: 'hits', hits: [{ sourceUrl: j.sourceUrl }] });
+    expect(asB).toEqual(asA);
+    expect(await aWorkspace(f)).toEqual(before);
+  },
+  verifyPinpoint: async (f) => {
+    const j = await seedCorpusJudgment(f.tx);
+    const before = await aWorkspace(f);
+    const query = { para: 2, quote: j.quote };
+    const asA = await inWorkspace(f.tx, f.a.id, (s) => core.verifyPinpoint(j.id, query, { db: s }));
+    const asB = await f.asB((s) => core.verifyPinpoint(j.id, query, { db: s }));
+    expect(asA).toEqual({ status: 'verified' });
+    expect(asB).toEqual(asA);
+    expect(await aWorkspace(f)).toEqual(before);
+  },
+  resolveSectionRef: async (f) => {
+    const seeded = await seedStatute(owner);
+    try {
+      const before = await aWorkspace(f);
+      const ref = { statute: seeded.statute, section: seeded.section };
+      const asA = await inWorkspace(f.tx, f.a.id, (s) => core.resolveSectionRef(ref, { db: s }));
+      const asB = await f.asB((s) => core.resolveSectionRef(ref, { db: s }));
+      expect(asA).toMatchObject({ section: '106', heading: seeded.heading });
+      expect(asB).toEqual(asA);
+      expect(await aWorkspace(f)).toEqual(before);
+    } finally {
+      await seeded.cleanup();
+    }
   },
   createWorkspace: async (f) => {
     const before = await aMembers(f);
@@ -4272,6 +4347,28 @@ const CASES: Record<string, Case> = {
       f.asB((s) => core.searchAuthorities(s, bActsOnA(f), { query: 'surgery without consent' })),
     );
     expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'research.searches')).toBe(0);
+  },
+  // grounded matter copilot (#1115): B naming A's workspace or matter is denied; A's usage and audit rows are unchanged.
+  askCopilot: async (f) => {
+    const matterId = f.a.rows.judgment_alert?.matterId ?? undefined;
+    const asked = () =>
+      inWorkspace(f.tx, f.a.id, (s) =>
+        s
+          .select({ id: schema.auditEvent.id })
+          .from(schema.auditEvent)
+          .where(eq(schema.auditEvent.action, 'copilot.asked')),
+      );
+    const before = await asked();
+    await expectDenied(
+      f.asB((s) =>
+        core.askCopilot(s, bActsOnA(f), {
+          question: 'surgery without consent',
+          ...(matterId === undefined ? {} : { matterId }),
+        }),
+      ),
+    );
+    expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'copilot.questions')).toBe(0);
+    expect(await asked()).toEqual(before);
   },
   rerunAuthoritySearch: async (f) => {
     await expectDenied(

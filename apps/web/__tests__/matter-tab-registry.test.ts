@@ -3,9 +3,11 @@
 // predicates decide per role (a tab needing `strategy.read` is hidden from clerks and viewers), the
 // manifest registers Overview, Proceedings (#392), People and Documents (#393) idempotently for every role that may
 // read matters, and hrefs are the
-// matter path plus the tab's segment.
+// matter path plus the tab's segment. Copilot (#1132) shows after Research only while
+// `copilot.enabled` is on, and is the selected tab on its route.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { activeTabId } from '../components/matters/matter-tab-bar.tsx';
 import {
   matterTabHref,
   matterTabs,
@@ -79,6 +81,42 @@ describe('matter tab registry (#390)', () => {
       labelKey: 'proceedings',
       segment: 'proceedings',
     });
+  });
+
+  it('shows Copilot after Research, only while copilot.enabled is on (#1132)', () => {
+    registerMatterTabs();
+    const on = (key: string) => key === 'copilot.enabled';
+    for (const role of ['owner', 'advocate', 'junior', 'clerk', 'viewer'] as const) {
+      expect(ids(role)).not.toContain('copilot');
+      expect(matterTabs(role, () => false).map((tab) => tab.id)).not.toContain('copilot');
+      const withFlag = matterTabs(role, on).map((tab) => tab.id);
+      expect(withFlag.indexOf('copilot')).toBe(withFlag.indexOf('research') + 1);
+    }
+    expect(matterTabs('advocate', on).map((tab) => tab.id)).toEqual([
+      'overview',
+      'proceedings',
+      'timeline',
+      'people',
+      'documents',
+      'research',
+      'copilot',
+      'memory',
+    ]);
+    expect(matterTabs('owner', on).find((tab) => tab.id === 'copilot')).toMatchObject({
+      labelKey: 'copilot',
+      segment: 'copilot',
+    });
+  });
+
+  it('selects the Copilot tab on its route', () => {
+    registerMatterTabs();
+    const entries = matterTabs('advocate', (key) => key === 'copilot.enabled').map((tab) => ({
+      id: tab.id,
+      label: tab.labelKey,
+      href: matterTabHref('demo', 'm-1', tab),
+    }));
+    expect(activeTabId(entries, '/w/demo/matters/m-1/copilot')).toBe('copilot');
+    expect(activeTabId(entries, '/w/demo/matters/m-1')).toBe('overview');
   });
 
   it('builds hrefs from the matter path and the segment', () => {

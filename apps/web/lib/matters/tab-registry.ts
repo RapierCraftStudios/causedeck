@@ -6,12 +6,17 @@
 // #73, drafts #79) call `registerMatterTab` from their own module, listed in `lib/matters/tabs.ts`,
 // never by editing this file. Pure: no core, db or React imports, so the server layout and tests
 // share it. `can` is role-only (lib/workspace-context.ts); the matter-graph services re-check per
-// matter.
+// matter. `flag` reads the request's evaluated feature flags (lib/flags.ts `workspaceFlagCheck`), so a
+// dark feature's tab (copilot, #1132) stays hidden; omitted, every flag reads as off.
+import type { FlagKey } from '@causedeck/flags/keys';
+
 import { can as roleCan, type Permission, type Role } from '../workspace-context.ts';
 
 export interface MatterTabContext {
   role: Role;
   can: (permission: Permission) => boolean;
+  /** Whether a feature flag is on for the workspace; every flag is off when the caller passes none. */
+  flag: (key: FlagKey) => boolean;
 }
 
 export interface MatterTab {
@@ -36,9 +41,9 @@ export function registerMatterTab(tab: MatterTab): () => void {
   };
 }
 
-/** The tabs `role` may see, by `order` then `id`. */
-export function matterTabs(role: Role): MatterTab[] {
-  const ctx: MatterTabContext = { role, can: (permission) => roleCan(role, permission) };
+/** The tabs `role` may see (with the workspace's flags, all off by default), by `order` then `id`. */
+export function matterTabs(role: Role, flag: (key: FlagKey) => boolean = () => false): MatterTab[] {
+  const ctx: MatterTabContext = { role, can: (permission) => roleCan(role, permission), flag };
   return [...tabs.values()]
     .filter((tab) => tab.visible === undefined || tab.visible(ctx))
     .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));

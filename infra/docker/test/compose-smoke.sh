@@ -129,7 +129,8 @@ echo "smoke: seeding demo workspace as owner (non-production mode)"
 compose --profile migrate run --rm -e NODE_ENV=development migrate \
   node --import tsx node_modules/@causedeck/db/scripts/seed-demo.ts >/dev/null || fail "demo seed failed"
 # Count rows per forced-RLS table as the superuser (sees all), then as the app role under a random
-# workspace id (must see none). Seeded demo data guarantees the superuser count is above zero.
+# workspace id (must see none of another workspace's rows). Shared rows (workspace_id IS NULL: the
+# forum/bench/court_hall catalogue, limitation rules, system templates) are readable by design. Seeded demo data guarantees the superuser count is above zero.
 tables="$(psql_su -c "select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace and n.nspname='public' join pg_attribute a on a.attrelid=c.oid and a.attname='workspace_id' and not a.attisdropped where c.relkind='r' and c.relrowsecurity and c.relforcerowsecurity")"
 [ -n "$tables" ] || fail "no forced-RLS workspace tables found"
 total=0; leaked=0
@@ -140,7 +141,7 @@ for table in $tables; do
 begin;
 set local role causedeck_app;
 select set_config('app.workspace_id', '00000000-0000-4000-8000-000000000000', true);
-select count(*) from "$table";
+select count(*) from "$table" where workspace_id is not null;
 rollback;
 SQL
   )"

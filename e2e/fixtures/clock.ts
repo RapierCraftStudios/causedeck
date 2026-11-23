@@ -1,6 +1,8 @@
-// Frozen time (#16): `clock.freeze()` pins `Date` and timers to 2026-03-12 09:30 IST via
-// `page.clock`, so dates and relative times render identically on every run. Tests tagged
-// `@visual` are frozen automatically before the first navigation (fixtures/index.ts).
+// Frozen browser time (#16): `clock.freeze()` pins `Date` and timers in the page to 2026-03-12 09:30
+// IST via `page.clock`. It does not touch the server: text the server renders from its own clock
+// (the weekly pulse card, audit and activity times) is pinned with fixtures/stable-time.ts. Tests
+// tagged `@visual`, and every `*.visual.spec.ts` file, are frozen automatically before the first
+// navigation (fixtures/index.ts).
 import { test as base } from '@playwright/test';
 
 export const FROZEN_TIME = '2026-03-12T09:30:00+05:30';

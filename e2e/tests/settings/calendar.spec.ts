@@ -11,7 +11,7 @@ import { existsSync } from 'node:fs';
 import type { Page } from '@playwright/test';
 import postgres from 'postgres';
 
-import { expect, test, type E2eRole } from '../../fixtures/index.ts';
+import { expect, pinText, settleFonts, test, type E2eRole } from '../../fixtures/index.ts';
 import type { AsUser } from '../../fixtures/auth.ts';
 import { databaseUrl } from '../../support/db-reset.ts';
 import { SHELL_WORKSPACE, shellReady } from '../shell/helpers.ts';
@@ -234,6 +234,9 @@ test.describe('settings calendar', () => {
       );
       await enableCalendar(db.name);
       await openCalendar(page, asUser);
+      // The empty page renders no date today; pin any server-rendered `time` so one cannot shift it.
+      await pinText(page.locator('main time'), '12 Mar 2026');
+      await settleFonts(page);
       await expect(page).toHaveScreenshot('settings-calendar.png', { fullPage: true });
     },
   );

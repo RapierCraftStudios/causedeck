@@ -13,7 +13,14 @@ import { existsSync } from 'node:fs';
 import type { Page, TestInfo } from '@playwright/test';
 import postgres from 'postgres';
 
-import { e2eUser, expect, test } from '../../fixtures/index.ts';
+import {
+  disablePrompts,
+  e2eUser,
+  expect,
+  pinText,
+  settleFonts,
+  test,
+} from '../../fixtures/index.ts';
 import { databaseUrl } from '../../support/db-reset.ts';
 import { openShell } from '../shell/helpers.ts';
 
@@ -342,6 +349,7 @@ for (const locale of INDIC) {
 
     test('shell', async ({ page, asUser, db }) => {
       await setOwnerLocale(db.name, locale);
+      await disablePrompts(db.name);
       await openShell(page, asUser);
       await expect(page.locator('html')).toHaveAttribute('lang', locale);
       await indicFontReady(page, locale);
@@ -380,8 +388,16 @@ for (const locale of INDIC) {
       const name = `shell-${locale}.png`;
       skipWithoutBaseline(testInfo, name);
       await setOwnerLocale(db.name, locale);
+      // The weekly check-in card shows on Mondays-from-06:00-IST by the server clock: switch it off.
+      await disablePrompts(db.name);
       await openShell(page, asUser);
       await indicFontReady(page, locale);
+      // Any server-rendered `time` (none today; a no-op then) is pinned in the page language.
+      await pinText(page.locator('main time'), {
+        locale,
+        options: { dateStyle: 'full' },
+      });
+      await settleFonts(page);
       await expect(page).toHaveScreenshot(name);
     });
   });

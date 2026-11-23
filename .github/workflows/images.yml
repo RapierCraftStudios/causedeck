@@ -40,7 +40,7 @@ env:
   WALG_VERSION: v3.0.5
   TRIVY_IMAGE: aquasec/trivy:0.58.1@sha256:ab70a02200597efa04748f210f793936eb647cbcdb0ea69cc30b226d6f5a22c7
   COSIGN_IMAGE: gcr.io/projectsigstore/cosign:v2.4.1
-  BINFMT_IMAGE: tonistiiv/binfmt:qemu-v9.2.0
+  BINFMT_IMAGE: tonistiigi/binfmt:qemu-v9.2.0
 
 jobs:
   # Build every image for amd64, enforce the size budgets, then boot the stack and probe it.

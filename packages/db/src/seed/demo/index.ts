@@ -15,8 +15,8 @@
 //   and AI in it.
 // - Never in production: `seedDemo` refuses when `NODE_ENV=production`. The nightly reset restores
 //   demo workspaces that already exist, in any environment (`seedDemoWorkspace`).
-// - The synthetic judgment corpus, news items and notices are global rows (catalogue.ts, corpus.ts): `seedDemo`
-//   writes them with the owner role; the embeddings come from the content step (see below).
+// - The synthetic judgment corpus, news items, notices and statute sections are global rows (catalogue.ts,
+//   corpus.ts, statutes.ts): `seedDemo` writes them with the owner role; the embeddings come from the content step (see below).
 // - Every product module has rows (modules.ts, #985): conflict card, list diff, unreconciled
 //   direction, junior handover, fees, limitation, drafts, inbox and more. Memory and the sample PDFs
 //   need `@causedeck/storage`, which `@causedeck/db` cannot import: `pnpm db:seed:demo:content`
@@ -51,6 +51,14 @@ export {
   demoJudgmentsCiting,
 } from './corpus.ts';
 export { demoCourtRows } from './courts.ts';
+export {
+  DEMO_STATUTE_KEYS,
+  demoStatuteRows,
+  type DemoStatuteActRow,
+  type DemoStatuteRows,
+  type DemoStatuteSectionRow,
+  type DemoStatuteVersionRow,
+} from './statutes.ts';
 export { DEMO_FORUM_KEYS, forumId as demoForumId, type DemoForumKey } from './courts.ts';
 export {
   DEMO_MATTERS_PER_WORKSPACE,

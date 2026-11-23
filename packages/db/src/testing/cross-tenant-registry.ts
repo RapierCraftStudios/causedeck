@@ -26,6 +26,7 @@ const CORE_ROSTERS_TEST = 'packages/core/src/__tests__/cross-tenant/rosters.test
 const CORE_NEXT_DATE_CHOICE_TEST =
   'packages/core/src/__tests__/cross-tenant/next-date-choice.test.ts';
 const CORE_MOVE_PREVIEW_TEST = 'packages/core/src/__tests__/cross-tenant/move-preview.test.ts';
+const CORE_STATUTES_TEST = 'packages/core/src/__tests__/cross-tenant/statutes.test.ts';
 const CORE_DOCUMENT_PREVIEW_TEST =
   'packages/core/src/__tests__/cross-tenant/document-preview.test.ts';
 const CORE_AUTOMATION_TEST = 'packages/core/src/__tests__/cross-tenant/automation.test.ts';
@@ -286,6 +287,7 @@ const rosterSelfScoped = {
 } as const;
 const nextDateChoiceDenies = { test: CORE_NEXT_DATE_CHOICE_TEST, kind: 'denies' } as const;
 const movePreviewDenies = { test: CORE_MOVE_PREVIEW_TEST, kind: 'denies' } as const;
+const statutesDenies = { test: CORE_STATUTES_TEST, kind: 'denies' } as const;
 const documentPreviewDenies = { test: CORE_DOCUMENT_PREVIEW_TEST, kind: 'denies' } as const;
 const memoryDenies = { test: CORE_MEMORY_TEST, kind: 'denies' } as const;
 const automationDenies = { test: CORE_AUTOMATION_TEST, kind: 'denies' } as const;
@@ -1056,6 +1058,13 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // fact-pattern search (#896): B naming A's workspace is denied; A's research usage is unchanged.
   searchAuthorities: denies,
   rerunAuthoritySearch: denies,
+  // grounded matter copilot (#1115): B naming A's workspace or matter is denied; A's copilot usage and audit rows are unchanged.
+  askCopilot: denies,
+  // statutes (#1125): B naming A's workspace is denied; global statute tables, nothing of A's written
+  getSection: statutesDenies,
+  listSectionHistory: statutesDenies,
+  searchSections: statutesDenies,
+  topAuthoritiesForSection: statutesDenies,
   // drafts (#768): B on A's draft, version or export is denied; A's rows are unchanged.
   createDraft: denies,
   renderDraft: denies,
@@ -1073,6 +1082,9 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   checkDraft: denies,
   getCitationReport: denies,
   acknowledgeUnverified: denies,
+  // authority insertion (#1142): B on A's draft is denied; A's versions, copilot usage and audit are unchanged.
+  proposeAuthorities: denies,
+  insertAuthority: denies,
   // consistency (#78): B running, reading or applying a fix on A's version is denied; A's rows are unchanged.
   runConsistencyCheck: denies,
   getConsistencyReport: denies,
@@ -1174,6 +1186,22 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
     kind: 'self-scoped',
     note: 'global table `judgment` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments, the same answer in every workspace; reads nothing tenant-scoped',
   },
+  // The corpus citation resolver (#1135): global corpus and statute reads, one answer everywhere
+  createCorpusResolver: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global tables `judgment` and `statute_*` (no workspace_id, no RLS): the same hits in every workspace; reads nothing tenant-scoped',
+  },
+  verifyPinpoint: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global table `judgment` (redacted_text only): returns a status, the same in every workspace; reads nothing tenant-scoped',
+  },
+  resolveSectionRef: {
+    test: CORE_SERVICES_TEST,
+    kind: 'self-scoped',
+    note: 'global tables `statute_act`/`statute_section` (no workspace_id): public law, the same answer in every workspace; no actor needed',
+  },
 };
 
 /** Every other runtime export of `@causedeck/core`, with why it needs no cross-tenant test. */
@@ -1221,7 +1249,12 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
   BUILT_IN_PROVIDERS: 'constant',
   QUERY_PLACEHOLDER: 'constant',
   // fact-pattern search (#896): constants of the search service
+  COPILOT_QUESTION_CAPS: 'constant',
+  COPILOT_QUESTION_KEY: 'constant',
+  COPILOT_QUESTION_MAX_CHARS: 'constant',
   RESEARCH_QUERY_MAX_CHARS: 'constant',
+  STATUTE_QUERY_MAX_CHARS: 'constant',
+  STATUTE_RESULT_MAX: 'constant',
   RESEARCH_SEARCH_CAPS: 'constant',
   RESEARCH_SEARCH_KEY: 'constant',
   RESEARCH_SUBJECT_AREAS: 'constant',

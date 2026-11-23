@@ -30,7 +30,7 @@ pnpm --filter @causedeck/core exec vitest run src/usage
 `matters.active`, `api.calls` and `research.searches` (one counter unit per fact-pattern search over
 the judgment corpus, #896; Junior is capped at 30 a month by `RESEARCH_SEARCH_CAPS` in
 `@causedeck/core/research`, paid plans are not; re-running a search with an edited plan is not
-counted), and `fetch.cost_micros` (delegated fetch spend in micro-dollars, #506; the free
+counted), `copilot.questions` (one counter unit per new grounded matter copilot question, #1115; Junior is capped at 30 a month by `COPILOT_QUESTION_CAPS` in `@causedeck/core/copilot`, paid plans are not; a retry with the same `requestId` is not counted twice; a demo workspace answers extractively from its sources with no AI call or spend), and `fetch.cost_micros` (delegated fetch spend in micro-dollars, #506; the free
 alerts tier's cap `FREE_ALERTS_LIMITS` in `@causedeck/billing` reads it, paid plans are not capped).
 `increment` rejects any other key.
 

@@ -14,7 +14,9 @@ import { MatterAnnouncer } from '../../../../../../components/matters/matter-ann
 import { MatterHeader } from '../../../../../../components/matters/matter-header.tsx';
 import { MatterTabs } from '../../../../../../components/matters/matter-tab-bar.tsx';
 import { MattersPermissionDenied } from '../../../../../../components/matters/matters-list.tsx';
+import { BreadcrumbLabel } from '../../../../../../components/shell/breadcrumb-label.tsx';
 import { MattersOfflineBanner } from '../../../../../../components/matters/matters-offline-banner.tsx';
+import { workspaceFlagCheck } from '../../../../../../lib/flags.ts';
 import { mattersHref } from '../../../../../../lib/matters/list-params.ts';
 import { matterTabHref, matterTabs } from '../../../../../../lib/matters/tab-registry.ts';
 import { registerMatterTabs } from '../../../../../../lib/matters/tabs.ts';
@@ -42,8 +44,9 @@ export default async function MatterLayout({ children, params }: MatterLayoutPro
 
   registerMatterTabs();
   const t = await getTranslations('matters.workspace');
+  const flag = await workspaceFlagCheck(context);
   const { header } = loaded.overview;
-  const entries = matterTabs(context.role).map((tab) => ({
+  const entries = matterTabs(context.role, flag).map((tab) => ({
     id: tab.id,
     href: matterTabHref(slug, header.id, tab),
     label: t(`tabs.${tab.labelKey}` as 'tabs.overview'),
@@ -52,6 +55,8 @@ export default async function MatterLayout({ children, params }: MatterLayoutPro
   return (
     <div data-route="matter" className="flex min-w-0 flex-col gap-2">
       <MattersOfflineBanner />
+      {/* The topbar breadcrumb shows the matter's title instead of its id (#1132). */}
+      <BreadcrumbLabel segment={header.id} label={header.title} />
       <MatterAnnouncer>
         <MatterHeader
           matter={{

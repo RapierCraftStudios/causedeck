@@ -18,7 +18,9 @@ import {
 
 const NUMBER = '+919812345678';
 const CODE = '424242';
-const T0 = new Date('2026-11-01T10:00:00Z');
+// Ahead of the wall clock: the two-tenant seed stamps its challenge rows with the database clock,
+// and a fixed past T0 would count them as future sends inside the per-number window.
+const T0 = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
 afterEach(() => vi.restoreAllMocks());
 

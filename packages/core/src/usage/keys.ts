@@ -11,6 +11,7 @@ export const USAGE_KEYS = [
   'matters.active',
   'api.calls',
   'research.searches',
+  'copilot.questions',
   'fetch.cost_micros',
 ] as const;
 
@@ -30,6 +31,8 @@ export const USAGE_KEY_KINDS: Readonly<Record<UsageKey, 'counter' | 'gauge'>> = 
   'matters.active': 'gauge',
   'api.calls': 'counter',
   'research.searches': 'counter',
+  // One grounded matter copilot question (#1115): Junior is capped by `COPILOT_QUESTION_CAPS`.
+  'copilot.questions': 'counter',
   // Delegated fetch spend in micro-dollars (#506): the free alerts tier's cost cap reads it.
   'fetch.cost_micros': 'counter',
 };

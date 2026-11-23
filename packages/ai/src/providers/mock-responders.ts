@@ -61,10 +61,35 @@ function answer(input: { query: string; segments: { id: string; text: string }[]
 
 /** A deterministic reply for `task`, or undefined when the mock has none (it then synthesises). */
 export function mockResponse(task: TaskDef, input: unknown): unknown {
-  if (task.id !== 'plan_research_query' && task.id !== 'answer_research_query') return undefined;
+  if (
+    task.id !== 'plan_research_query' &&
+    task.id !== 'answer_research_query' &&
+    task.id !== 'answer_matter_question'
+  ) {
+    return undefined;
+  }
   const parsed = task.input.safeParse(input);
   if (!parsed.success) return undefined;
-  return task.id === 'plan_research_query'
-    ? plan(parsed.data as { query: string })
-    : answer(parsed.data as { query: string; segments: { id: string; text: string }[] });
+  if (task.id === 'plan_research_query') return plan(parsed.data as { query: string });
+  if (task.id === 'answer_matter_question') {
+    const { question, sources } = parsed.data as {
+      question: string;
+      sources: { id: string; text: string }[];
+    };
+    // Only sources sharing a word with the question, so the facts listed first do not crowd out the
+    // matching document pages and passages.
+    const terms = new Set(wordsOf(question).filter((w) => w.length > 3 && !STOP.has(w)));
+    const matching = sources.filter((s) => wordsOf(s.text).some((w) => terms.has(w)));
+    const reply = answer({ query: question, segments: matching }) as {
+      claims: { statement: string; segmentId: string; quote: string }[];
+    };
+    return {
+      claims: reply.claims.map((c) => ({
+        statement: c.statement,
+        sourceId: c.segmentId,
+        quote: c.quote,
+      })),
+    };
+  }
+  return answer(parsed.data as { query: string; segments: { id: string; text: string }[] });
 }

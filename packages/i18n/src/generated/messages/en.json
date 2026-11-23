@@ -47,7 +47,8 @@
     },
     "enquiries": "Enquiries",
     "import": "Import",
-    "research": "Research"
+    "research": "Research",
+    "copilot": "Copilot"
   },
   "palette": {
     "title": "Command palette",
@@ -3204,6 +3205,7 @@
         "people": "People",
         "documents": "Documents",
         "research": "Research",
+        "copilot": "Copilot",
         "memory": "Memory"
       },
       "status": {
@@ -4662,14 +4664,16 @@
       "editor": "Editor",
       "facts": "Facts",
       "versions": "Versions",
-      "precedents": "Precedents"
+      "precedents": "Precedents",
+      "authorities": "Authorities"
     },
     "actions": {
       "title": "Draft actions",
       "save": "Save draft",
       "showFacts": "Show facts",
       "showVersions": "Show versions",
-      "showPrecedents": "Show precedents"
+      "showPrecedents": "Show precedents",
+      "showAuthorities": "Show authorities"
     },
     "checks": {
       "citations": {
@@ -4677,8 +4681,22 @@
         "checkFailed": "The citations could not be checked. Try again.",
         "acknowledged": "Acknowledged",
         "jump": "Go to {citation}",
-        "blocked": "{count, plural, one {# citation was not found and is not acknowledged.} other {# citations were not found and are not acknowledged.}} Export is blocked until you acknowledge them.",
-        "acknowledge": "Acknowledge not-found citations"
+        "blocked": "{count, plural, one {# citation is not verified and is not acknowledged.} other {# citations are not verified and are not acknowledged.}} Export is blocked until you acknowledge them.",
+        "acknowledge": "Acknowledge unverified citations",
+        "reason": {
+          "unresolved": "Not found in the corpus or any source.",
+          "unknown": "Could not be verified.",
+          "resolver_unavailable": "The citation source was unavailable. Check again later.",
+          "throttled": "The check limit was reached. Check again later.",
+          "ambiguous": "More than one judgment matches this citation.",
+          "title_mismatch": "The case title does not match the cited judgment.",
+          "title_missing": "There is no case title to compare with the cited judgment.",
+          "unsupported": "This kind of citation cannot be checked automatically.",
+          "quote_not_found": "The quote is not in the cited judgment.",
+          "pinpoint_not_found": "The cited paragraph or page is not in the judgment.",
+          "section_not_found": "The cited section was not found in the Act."
+        },
+        "openSource": "Open source"
       },
       "consistency": {
         "notRun": "Run the checks to see findings.",
@@ -4704,7 +4722,7 @@
       },
       "ack": {
         "title": "Acknowledge unverified citations",
-        "description": "{count, plural, one {# citation was not found.} other {# citations were not found.}} Confirm you have checked them yourself.",
+        "description": "{count, plural, one {# citation is not verified.} other {# citations are not verified.}} Confirm you have checked them yourself.",
         "checkbox": "I have verified these authorities myself",
         "confirm": "Confirm",
         "cancel": "Cancel",
@@ -4784,6 +4802,44 @@
           "ambiguous": "Ambiguous in the record"
         }
       }
+    },
+    "authorityDrawer": {
+      "title": "Authorities",
+      "hint": "Verified against the judgment corpus for the selected block. Nothing is inserted until you choose it.",
+      "noBlock": "Select a paragraph or heading to find authorities for it.",
+      "find": "Find authorities",
+      "findAgain": "Ask again",
+      "loading": "Finding verified authorities",
+      "empty": "No authority found. No passage in the corpus could be verified for this block.",
+      "aiBlocked": "This matter is marked sensitive, so no AI search was made.",
+      "error": "Authorities could not be loaded.",
+      "limit": "The monthly copilot limit is reached.",
+      "retry": "Try again",
+      "denied": "Your role cannot search authorities for this draft.",
+      "offline": "Offline. Authorities load when you are back online.",
+      "untitled": "Untitled judgment",
+      "source": "Judgment",
+      "openSource": "Open judgment",
+      "para": "para {n}",
+      "page": "page {n}",
+      "insert": "Insert",
+      "inserting": "Inserting",
+      "inserted": "Inserted",
+      "saveFirst": "Save your changes before inserting an authority.",
+      "insertConflict": "The draft changed since it was loaded. Reload and try again.",
+      "insertFailed": "This authority could not be inserted."
+    },
+    "copilotInsert": {
+      "insert": "Insert into draft",
+      "draft": "Draft",
+      "after": "After",
+      "confirm": "Insert",
+      "cancel": "Cancel",
+      "inserting": "Inserting",
+      "inserted": "Inserted into the draft.",
+      "openDraft": "Open draft",
+      "conflict": "The draft changed. Reload and try again.",
+      "failed": "This authority could not be inserted."
     }
   },
   "calendar": {
@@ -5685,6 +5741,83 @@
         "company": "Company",
         "intellectual_property": "Intellectual property",
         "environment": "Environment"
+      }
+    },
+    "copilot": {
+      "metaTitle": "Ask the copilot",
+      "title": "Ask the copilot",
+      "intro": "Ask a question about the judgment corpus. Every claim shows a quote and a pinpoint we checked against the stored text.",
+      "matterIntro": "Ask about this matter. Answers come from its facts, its documents and the judgment corpus, and every claim shows a quote we checked against the stored text.",
+      "denied": "You do not have access to the copilot.",
+      "questionLabel": "Your question",
+      "questionPlaceholder": "Did the surgeon need written consent before the operation?",
+      "submit": "Ask",
+      "asking": "Asking…",
+      "error": "The copilot could not answer. Try again.",
+      "usage": "{used, plural, one {# of {limit} question used this month} other {# of {limit} questions used this month}}",
+      "usageUnlimited": "{used, plural, one {# question this month} other {# questions this month}}",
+      "aiOff": "AI is off for this matter. The copilot does not read it.",
+      "noAuthority": "No authority found.",
+      "claimsTitle": "Verified claims",
+      "unsupportedTitle": "Not verified",
+      "notVerified": "Not verified: the quote was not found in the source.",
+      "record": "Corpus record",
+      "kind": {
+        "fact": "Matter fact",
+        "doc": "Matter document",
+        "seg": "Judgment"
+      },
+      "pinpoint": {
+        "page": "page {page}",
+        "paragraph": "para {paragraph}"
+      }
+    },
+    "statutes": {
+      "metaTitle": "Statutes",
+      "title": "Statutes",
+      "intro": "Read a section of an Act, its history, its counterpart in the old or new criminal code and the judgments that cite it.",
+      "navLink": "Look up a statute section",
+      "back": "Back to Find authorities",
+      "backToSearch": "Back to statutes",
+      "denied": "You do not have access to statutes.",
+      "queryLabel": "Section number or heading",
+      "queryPlaceholder": "For example 483 or bail",
+      "submit": "Search",
+      "prompt": "Search by a section number or a word from its heading.",
+      "error": "The statutes could not be loaded. Try again.",
+      "empty": "No section matches. Try the section number alone or another word from the heading.",
+      "resultsHeading": "Sections",
+      "resultsCount": "{count, plural, one {# section} other {# sections}}",
+      "hit": "{act} s. {section}",
+      "section": {
+        "metaTitle": "{act} s. {section}",
+        "title": "{act} s. {section}: {heading}",
+        "textHeading": "Text",
+        "inForce": "In force from {from}",
+        "notInForceSince": "Not in force since {date}. The last text in force is shown.",
+        "noText": "No text is stored for this section.",
+        "syntheticLabel": "Synthetic paraphrase, not the bare-act wording",
+        "publicDomainLabel": "Public-domain bare act text"
+      },
+      "history": {
+        "heading": "History",
+        "range": "{from} to {to}",
+        "current": "{from} to date",
+        "amendedBy": "Amended by {act}",
+        "empty": "No version of this section is stored."
+      },
+      "counterpart": {
+        "heading": "Counterpart in the other code",
+        "link": "{act} s. {section}",
+        "none": "No counterpart recorded."
+      },
+      "authorities": {
+        "heading": "Top authorities",
+        "empty": "No judgment in the corpus cites this section yet.",
+        "maskedTitle": "Title withheld",
+        "page": "p. {page}",
+        "decided": "Decided {date}",
+        "openPdf": "Open court PDF at p. {page}"
       }
     }
   },

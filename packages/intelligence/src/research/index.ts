@@ -10,6 +10,21 @@ export {
   type ResearchAnswer,
 } from './answer.ts';
 export {
+  answerMatterQuestion,
+  createGatewayMatterAnswerResolver,
+  createExtractiveMatterAnswerResolver,
+  pinpointOf,
+  sourceKind,
+  type CopilotSource,
+  type MatterAnswer,
+  type MatterAnswerInput,
+  type MatterAnswerResolver,
+  type Pinpoint,
+  type SourceKind,
+  type UnsupportedClaim,
+  type VerifiedClaim,
+} from './answer-sources.ts';
+export {
   candidateBoost,
   CITED_BY_WEIGHT,
   COURT_LEVEL_BOOST,

@@ -170,7 +170,7 @@ export class DemoSeedInProductionError extends Error {
 }
 
 /** Flags the demo workspaces have on (`m5_playbooks`: default off everywhere else, #901). */
-export const DEMO_FLAG_OVERRIDES = ['m5_playbooks', 'insights.enabled'] as const;
+export const DEMO_FLAG_OVERRIDES = ['m5_playbooks', 'insights.enabled', 'copilot.enabled'] as const;
 
 /**
  * Legal-gated flags (counsel sign-off) the demo modules need: fees and invoices, limitation, the

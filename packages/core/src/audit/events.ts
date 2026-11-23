@@ -54,6 +54,12 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'A member searched the judgment corpus: plan and retrieval set recorded as ids',
   },
+  // A grounded matter copilot question (#1115). Metadata holds hashes of the question and answer and source ids, never text.
+  'copilot.asked': {
+    security: false,
+    description:
+      'A member asked the matter copilot a question: hashes of question and answer, source ids recorded',
+  },
   // The public status page's incident log (#770). Metadata holds the change and the old and new state.
   'incident.changed': {
     security: true,
@@ -284,6 +290,11 @@ export const AUDIT_ACTIONS = {
   'draft.fix_applied': {
     security: false,
     description: 'A lawyer applied a consistency fix, which saved a new draft version',
+  },
+  // Authority insertion (#1142). Metadata holds ids, the version and the inserted text's sha256 only, never the quote or draft text.
+  'draft.authority.inserted': {
+    security: false,
+    description: 'A lawyer inserted a verified corpus authority, which saved a new draft version',
   },
   // Fact-check (#914). Metadata holds claim kinds, counts, the version id and the typed reason, never draft text.
   'draft.factcheck.checked': {

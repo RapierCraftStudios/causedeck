@@ -109,7 +109,8 @@ describe('attention', () => {
       const junior = await addMember(tx, w.workspaceId, 'junior');
       await setStaleDays(deps(tx), w.owner, { days: 7 });
       const stale = await detectAttention(
-        { db: tx, now: () => new Date('2026-11-20T06:00:00Z') },
+        // Well past every fixture row, including those stamped by the database clock.
+        { db: tx, now: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
         w.owner,
       );
       expect(stale.some((f) => f.rule === 'no_recent_update')).toBe(true);

@@ -23,6 +23,7 @@ Every flag is off by default and ships dark. ⚖ marks a legal-gated flag. A leg
 | `pwa.offline` | no | `KILL_PWA_OFFLINE` | #50 offline outbox, #65 offline cache |
 | `billing.razorpay` | no | `KILL_BILLING_RAZORPAY` | #28 Razorpay subscriptions, #111 Razorpay account |
 | `insights.enabled` | no | `KILL_INSIGHTS_ENABLED` | #85 insights dashboard, #966 gating; hides the `insights` route (404) and its nav entry; on for the demo workspaces (#985) |
+| `copilot.enabled` | no | `KILL_COPILOT_ENABLED` | #1115 grounded matter copilot; hides the matter and workspace `copilot` routes (404) and their nav entry; on for the demo workspaces |
 | `workspace.export` | no | `KILL_WORKSPACE_EXPORT` | #31 export service, #288 export settings page (enables `Export workspace`) |
 | `conflicts.check` | ⚖ yes | `KILL_CONFLICTS_CHECK` | #500 conflict-of-interest check on new-matter intake, counsel sign-off through #486 |
 | `intake.enquiry_log` | ⚖ yes | `KILL_INTAKE_ENQUIRY_LOG` | #87 inbound enquiry log with conflict check and no auto-reply (ADR 0047), off until counsel clears it, #117 counsel deliverables |

@@ -1,5 +1,5 @@
 // Research tab guards (#80): no iframe anywhere in the research components, and no AI import in the
-// research route or components (no summary, answer or suggested authority; PX-6, PX-8).
+// research routes (matter, settings, statutes) or components (no summary, answer or suggested authority; PX-6, PX-8).
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -12,6 +12,12 @@ const MATTER_ROUTE = fileURLToPath(
 const SETTINGS_ROUTE = fileURLToPath(
   new URL('../../app/(app)/w/[slug]/settings/research/', import.meta.url),
 );
+const STATUTES_ROUTE = fileURLToPath(
+  new URL('../../app/(app)/w/[slug]/research/statutes/', import.meta.url),
+);
+const STATUTE_SECTION_ROUTE = fileURLToPath(
+  new URL('../../app/(app)/w/[slug]/research/statutes/[act]/[section]/', import.meta.url),
+);
 
 function sources(dir: string): { file: string; text: string }[] {
   return readdirSync(dir)
@@ -20,7 +26,13 @@ function sources(dir: string): { file: string; text: string }[] {
 }
 
 describe('research surfaces', () => {
-  const all = [COMPONENTS, MATTER_ROUTE, SETTINGS_ROUTE].flatMap(sources);
+  const all = [
+    COMPONENTS,
+    MATTER_ROUTE,
+    SETTINGS_ROUTE,
+    STATUTES_ROUTE,
+    STATUTE_SECTION_ROUTE,
+  ].flatMap(sources);
 
   it('finds the files it guards', () => {
     expect(all.length).toBeGreaterThan(8);

@@ -1,10 +1,13 @@
-import type { CitationKind } from '@causedeck/validators/citation';
+import type { CitationKind, CitationPinpoint } from '@causedeck/validators/citation';
 
 import type { ResolverOutcome } from '../match';
 
 export interface ResolveRequest {
   normalized: string;
   kind: CitationKind;
+  pinpoint?: CitationPinpoint;
+  /** Only used to look the passage up; a resolver must not keep it. */
+  quote?: string;
 }
 
 export interface CitationResolver {

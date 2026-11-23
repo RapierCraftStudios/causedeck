@@ -93,6 +93,7 @@ Each action is either **security** or **informational**:
 | `workspace.deletion_requested` | security | `requestWorkspaceDeletion` (#302); metadata: job id, cool-off end |
 | `workspace.deletion_cancelled` | security | `cancelWorkspaceDeletion` (#302); metadata: job id |
 | `workspace.deletion_started` | security | `runWorkspaceErase`, before step 1 (system actor, #302) |
+| `draft.authority.inserted` | informational | `insertAuthority` (#1142): a lawyer inserted a verified corpus authority as a new draft version; metadata ids (draft, base and new version, judgment) and the inserted text's sha256 only, never the quote or draft text |
 | `demo.reset` | informational | `resetDemo` and the nightly `system.demo.reset` job (system actor, #93): seed version, counts and elapsed milliseconds only |
 | `workspace.settings_viewed`           | informational | reserved                                                                                                                   |
 | `account.profile_updated`             | informational | `/account` `updateAccountProfileAction` via `recordAccountProfileUpdatedFor` (account-level; metadata `fields` only, #289) |

@@ -1,46 +1,67 @@
-// pnpm --filter @causedeck/intelligence research-eval [--out <dir>] [--update-baseline]
-// Runs the baseline ranker on the committed synthetic set, writes report.json and report.md, and
-// exits 1 when nDCG@10 regressed by more than 2 points against fixtures/research-eval/baseline.json.
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+// pnpm --filter @causedeck/intelligence research-eval [--out <dir>] [--update-baseline] [--fixtures <dir>]
+// The copilot quality gate (#891, #1119, ADR 0051 §Evaluation): retrieval (BM25 and the hybrid on the
+// mock embedder and reranker) and the answer verifiers on the committed synthetic set. Writes report.json
+// and report.md, prints the Markdown (and appends it to $GITHUB_STEP_SUMMARY), and exits 1 when a gated
+// metric regressed beyond fixtures/research-eval/thresholds.json or any claim was false-verified.
+// No network, provider or database is used.
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { bm25Ranker } from './baseline-ranker.ts';
+import {
+  createMockEmbedProvider,
+  createMockRerankProvider,
+  createRerankGateway,
+} from '@causedeck/ai';
+
 import { buildManifest } from './manifest.ts';
-import { renderJson, renderMarkdown } from './report.ts';
-import { compareToBaseline, runEval } from './runner.ts';
+import { renderQualityJson, renderQualityMarkdown } from './report.ts';
+import { buildQualityReport, compareQuality, gateQuality, updateBaseline } from './runner.ts';
+import { baselineSchema, thresholdsSchema } from './types.ts';
 
-const FIXTURES = fileURLToPath(new URL('../../../../../fixtures/research-eval', import.meta.url));
 const args = process.argv.slice(2);
-const outIndex = args.indexOf('--out');
-const outDir = path.resolve(
-  outIndex >= 0 ? (args[outIndex + 1] ?? 'research-eval-report') : 'research-eval-report',
+const option = (name: string): string | undefined => {
+  const i = args.indexOf(name);
+  return i >= 0 ? args[i + 1] : undefined;
+};
+const FIXTURES = path.resolve(
+  option('--fixtures') ??
+    fileURLToPath(new URL('../../../../../fixtures/research-eval', import.meta.url)),
 );
-const baselinePath = path.join(FIXTURES, 'baseline.json');
+const outDir = path.resolve(option('--out') ?? 'research-eval-report');
+const update = args.includes('--update-baseline');
 
-if (args.includes('--update-baseline')) {
+// A changed fixture is pinned first, so the pinned set loads; the baseline is written with it below.
+if (update) {
   writeFileSync(
     path.join(FIXTURES, 'manifest.json'),
     `${JSON.stringify(buildManifest(FIXTURES), null, 2)}\n`,
   );
 }
 
+const embedder = createMockEmbedProvider();
 // eslint-disable-next-line no-process-env -- the private set path is one optional env var, as documented.
-const privateDir = process.env.RESEARCH_EVAL_PRIVATE_DIR;
-const report = runEval(bm25Ranker(), FIXTURES, privateDir);
+const { RESEARCH_EVAL_PRIVATE_DIR: privateDir, GITHUB_STEP_SUMMARY: summary } = process.env;
+const report = await buildQualityReport({
+  syntheticDir: FIXTURES,
+  privateDir,
+  embed: async (texts) => (await embedder.embed(texts)).vectors,
+  reranker: createRerankGateway({ providers: [createMockRerankProvider()] }),
+});
 
-if (args.includes('--update-baseline')) {
-  const { ndcg10, recall50 } = report.synthetic;
-  writeFileSync(baselinePath, `${JSON.stringify({ ndcg10, recall50 }, null, 2)}\n`);
-}
+if (update) updateBaseline(FIXTURES, report);
 
-const baseline = JSON.parse(readFileSync(baselinePath, 'utf8')) as { ndcg10: number };
-const comparison = compareToBaseline(report.synthetic, baseline);
+const read = (file: string): unknown => JSON.parse(readFileSync(path.join(FIXTURES, file), 'utf8'));
+const baseline = baselineSchema.parse(read('baseline.json'));
+const thresholds = thresholdsSchema.parse(read('thresholds.json'));
+const comparisons = compareQuality(report.synthetic.metrics, baseline, thresholds);
+const failures = gateQuality(report, baseline, thresholds);
+const markdown = renderQualityMarkdown(report, comparisons, failures);
+
 mkdirSync(outDir, { recursive: true });
-writeFileSync(path.join(outDir, 'report.json'), renderJson(report, comparison));
-writeFileSync(path.join(outDir, 'report.md'), renderMarkdown(report, comparison));
-process.stdout.write(renderMarkdown(report, comparison));
-if (comparison.regressed) {
-  process.stderr.write('research-eval: nDCG@10 regressed by more than 2 points\n');
-  process.exitCode = 1;
-}
+writeFileSync(path.join(outDir, 'report.json'), renderQualityJson(report, comparisons, failures));
+writeFileSync(path.join(outDir, 'report.md'), markdown);
+process.stdout.write(markdown);
+if (summary !== undefined && summary !== '') appendFileSync(summary, markdown);
+for (const failure of failures) process.stderr.write(`research-eval: ${failure}\n`);
+if (failures.length > 0) process.exitCode = 1;

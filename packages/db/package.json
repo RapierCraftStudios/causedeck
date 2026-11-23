@@ -18,6 +18,7 @@
     "./seed/forum-catalogue": "./src/seed/forum-catalogue/index.ts",
     "./seed/plans": "./src/seed/plans.ts",
     "./seed/demo": "./src/seed/demo/index.ts",
+    "./seed/demo/statutes": "./src/seed/demo/statutes.ts",
     "./seed/system-templates": "./src/seed/system-templates.ts",
     "./seed/synthetic": "./src/seed/synthetic/index.ts",
     "./testing": "./src/testing/index.ts",

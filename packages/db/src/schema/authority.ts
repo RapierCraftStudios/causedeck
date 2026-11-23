@@ -2,7 +2,8 @@
 // `draft_version`, unique on `(draft_version_id, block_id, span)` so a re-check updates in place.
 // A new version has no rows until it is checked, which is how a stale status is never current.
 // Only the citation string, status, canonical URL and a short title are stored (`resolution` holds
-// `{reason, title, similarity, source}`): there is no column for judgment text. `ack_by`/`ack_at`
+// `{reason, title, similarity, source}`, plus a `pinpoint` and the quote check status since #1133,
+// never the quote text): there is no column for judgment text. `ack_by`/`ack_at`
 // record the member who acknowledged a `not_found` citation before an export.
 import { sql } from 'drizzle-orm';
 import { check, foreignKey, jsonb, text, timestamp, unique, uuid } from 'drizzle-orm/pg-core';
@@ -14,7 +15,13 @@ import { inList, organization, user } from './auth.ts';
 import { draftVersion } from './drafting.ts';
 
 export const AUTHORITY_STATUSES = ['verified', 'not_found', 'unknown'] as const;
-export const AUTHORITY_KINDS = ['neutral', 'reporter', 'case_name'] as const;
+export const AUTHORITY_KINDS = [
+  'neutral',
+  'reporter',
+  'case_name',
+  'case_number',
+  'section',
+] as const;
 
 export const authority = tenantTable(
   'authority',
@@ -28,7 +35,16 @@ export const authority = tenantTable(
     normalized: text('normalized').notNull(),
     kind: text('kind').notNull(),
     resolution: jsonb('resolution')
-      .$type<{ reason?: string; title?: string; similarity?: number; source?: string }>()
+      .$type<{
+        reason?: string;
+        title?: string;
+        similarity?: number;
+        source?: string;
+        /** Paragraph(s) or page the citation points at. */
+        pinpoint?: { para?: number; paraEnd?: number; page?: number };
+        /** Status of the quote check only: the quoted text is never stored. */
+        quote?: 'verified' | 'not_found';
+      }>()
       .notNull()
       .default({}),
     status: text('status').notNull(),

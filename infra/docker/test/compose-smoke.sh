@@ -50,6 +50,8 @@ cp "$ROOT/infra/docker/env/prod.env.example" "$ENV_FILE"
   echo "BILLING_SUPPLIER_GSTIN=29ABCDE1234F1Z5"
   echo "SARVAM_NO_TRAINING_CONFIRMED=true"
   echo "CLOCK_DRIFT_REFERENCE_URL="
+  # No backup key in the smoke: the compose default (/dev/null) boots Postgres without WAL archiving.
+  echo "WALG_KEY_FILE=/dev/null"
 } >>"$ENV_FILE"
 # Later assignments win when the file is sourced, but compose's env parser keeps the LAST value too.
 export CAUSEDECK_ENV_FILE="$ENV_FILE"

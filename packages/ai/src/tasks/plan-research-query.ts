@@ -33,7 +33,9 @@ export const planResearchQuery: TaskDef<z.infer<typeof input>, z.infer<typeof ou
   id: 'plan_research_query',
   input,
   output,
-  providers: ['bedrock'],
+  // Bedrock plans for real workspaces; `chatgpt-plan` only survives residency for a preview-plan demo
+  // workspace (policy.previewPlanProvider), like the answer tasks (#1182).
+  providers: ['bedrock', 'chatgpt-plan'],
   maxOutputTokens: 700,
   promptId: 'plan_research_query.v1',
   defaultLevel: 1,

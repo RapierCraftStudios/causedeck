@@ -86,6 +86,20 @@ const STOP = new Set([
   'give',
   'need',
   'looking',
+  // Question and function words (#1182): they carry no legal meaning and only add noise to a search.
+  'what',
+  'how',
+  'why',
+  'say',
+  'said',
+  'says',
+  'should',
+  'would',
+  'could',
+  'there',
+  'their',
+  'they',
+  'them',
 ]);
 
 /** The words of `text` worth searching for: no short or function words, once each, in order. */

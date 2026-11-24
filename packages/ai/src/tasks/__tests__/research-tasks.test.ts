@@ -8,8 +8,9 @@ const mock = createMockProvider({ fixturesDir: '/nonexistent' });
 describe('plan_research_query', () => {
   const task = getTask('plan_research_query');
 
-  it('is a platform-callable bedrock task with a validated schema', () => {
-    expect(task.providers).toEqual(['bedrock']);
+  it('is a platform-callable bedrock task (chatgpt-plan for preview demos) with a validated schema', () => {
+    // Bedrock stays primary; chatgpt-plan follows it for preview-plan demo workspaces (#1182).
+    expect(task.providers).toEqual(['bedrock', 'chatgpt-plan']);
     expect(task.input.safeParse({ query: '' }).success).toBe(false);
     expect(task.input.safeParse({ query: 'post-operative infection' }).success).toBe(true);
   });

@@ -87,6 +87,61 @@ async function seedJudgment(tx: Transaction, text = TEXT): Promise<void> {
   });
 }
 
+/**
+ * A Supreme Court judgment as bulk-loaded on the preview (#1182): segmented, but never tagged with a
+ * subject (no `judgment_tag`) and never embedded (`embedding` null). Returns the judgment id.
+ */
+async function seedUntaggedScJudgment(tx: Transaction, text: string): Promise<string> {
+  const sha256 = randomUUID().replaceAll('-', '');
+  const [row] = await tx
+    .insert(schema.judgment)
+    .values({
+      sourceId: 'in.sc.judgments',
+      court: 'SC',
+      sha256,
+      neutralCitation: `2021:INSC:${sha256.slice(0, 5)}`,
+      judgmentDate: '2021-08-10',
+      provenance: {
+        url: `https://court.example/${sha256}.pdf`,
+        fetchedAt: '2026-10-23T00:00:00.000Z',
+        sha256,
+        sourceId: 'in.sc.judgments',
+        sourceVersion: 'v1',
+        tierUsed: 'http',
+        costDollars: 0,
+      },
+      pageText: [{ pageNo: 1, text: 'Raw text.' }],
+      redactedText: [{ pageNo: 1, text }],
+      redactionVersion: 1,
+      segmentVersion: 1,
+      segmentedRedactionVersion: 1,
+      caseTitle: 'State v. Accused',
+      titleMasked: false,
+      courtLevel: 'supreme_court',
+      outcome: 'allowed',
+    })
+    .returning({ id: schema.judgment.id });
+  await tx.insert(schema.judgmentSegment).values({
+    judgmentId: row?.id ?? '',
+    ordinal: 1,
+    role: 'reasoning',
+    pageFrom: 1,
+    pageTo: 1,
+    text,
+    court: 'SC',
+    courtLevel: 'supreme_court',
+    judgmentYear: 2021,
+  });
+  return row?.id ?? '';
+}
+
+const BAIL_QUESTION =
+  'What does a court weigh when granting regular bail, and what did the Supreme Court say about delay in trial?';
+const BAIL_TEXT =
+  'While granting regular bail the court weighs the gravity of the accusation, and an inordinate delay in trial is a ground for bail.';
+const DELAY_TEXT =
+  'Prolonged incarceration of an undertrial on account of delay in trial violates Article 21, and regular bail must follow.';
+
 /** A matter with one document page carrying `text`, in `workspaceId`. */
 async function matterWithPage(
   tx: Transaction,
@@ -645,11 +700,33 @@ describe('askCopilot with the preview plan provider', () => {
         },
       },
     ]);
-  /** Replies with one claim on the request's `doc:` source, quoting `quote` (or a fabricated id). */
-  function planWith(reply: (body: string) => Response) {
-    const fetch = vi.fn<typeof globalThis.fetch>((_url, init) =>
-      Promise.resolve(reply(init?.body as string)),
-    );
+  /** A valid `plan_research_query` reply (#1182): the planner runs on the plan too. */
+  const PLANNED = {
+    factDescription: 'Surgery without written consent.',
+    keywords: ['surgery', 'consent'],
+    subjectAreas: [],
+    statutes: [],
+    courts: [],
+    courtLevel: null,
+    dateFrom: null,
+    dateTo: null,
+    outcome: null,
+    offenceDate: null,
+  };
+  const isPlannerRequest = (body: string): boolean =>
+    (JSON.parse(body) as { text?: { format?: { name?: string } } }).text?.format?.name ===
+    'plan_research_query';
+  /**
+   * Replies to the planner with `planned` and to the answer request with `reply` (one claim on the
+   * request's `doc:` source, quoting `quote`, or a fabricated id).
+   */
+  function planWith(reply: (body: string) => Response, planned: unknown = PLANNED) {
+    const fetch = vi.fn<typeof globalThis.fetch>((_url, init) => {
+      const body = init?.body as string;
+      return Promise.resolve(
+        isPlannerRequest(body) ? completed(JSON.stringify(planned)) : reply(body),
+      );
+    });
     const provider: Provider = createChatgptPlanProvider({
       model: 'gpt-plan-test',
       tokens: { accessToken: () => Promise.resolve(ACCESS), invalidate: () => undefined },
@@ -698,8 +775,9 @@ describe('askCopilot with the preview plan provider', () => {
         { question: QUESTION, matterId },
         { now: () => NOW, previewPlanProvider: provider },
       );
-      expect(fetch).toHaveBeenCalledTimes(1);
-      const body = JSON.parse(fetch.mock.calls[0]?.[1]?.body as string) as Record<string, unknown>;
+      // The planner (#1182) and the answer, both on the plan.
+      expect(fetch).toHaveBeenCalledTimes(2);
+      const body = JSON.parse(fetch.mock.calls[1]?.[1]?.body as string) as Record<string, unknown>;
       expect(body).toMatchObject({ store: false, stream: true });
       expect(answer.unsupported).toEqual([]);
       expect(answer.claims).toHaveLength(1);
@@ -710,13 +788,18 @@ describe('askCopilot with the preview plan provider', () => {
         pinpoint: { page: 2 },
       });
       const calls = await aiCalls(tx, workspaceId);
-      expect(calls).toHaveLength(1);
-      expect(calls[0]).toMatchObject({
-        provider: 'chatgpt-plan',
-        model: 'gpt-plan-test',
-        status: 'ok',
-        costPaise: 0,
-      });
+      expect(calls.map((c) => c.task).sort()).toEqual([
+        'answer_matter_question',
+        'plan_research_query',
+      ]);
+      for (const call of calls) {
+        expect(call).toMatchObject({
+          provider: 'chatgpt-plan',
+          model: 'gpt-plan-test',
+          status: 'ok',
+          costPaise: 0,
+        });
+      }
       const row = JSON.stringify(calls);
       expect(row).not.toContain('never obtained');
       expect(row).not.toContain(ACCESS);
@@ -800,6 +883,97 @@ describe('askCopilot with the preview plan provider', () => {
       expect(fetch).not.toHaveBeenCalled();
       expect(answer.answerText).toContain('never obtained');
       expect(await aiCalls(tx, workspaceId)).toEqual([]);
+    });
+  });
+  it('answers the bail question from an untagged, unembedded Supreme Court corpus (#1182)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const scIds = [
+        await seedUntaggedScJudgment(tx, BAIL_TEXT),
+        await seedUntaggedScJudgment(tx, DELAY_TEXT),
+      ];
+      const ws = await newWorkspace(tx);
+      await inWorkspace(tx, ws.workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ isDemo: true, slug: `demo-${ws.workspaceId.slice(0, 8)}` })
+          .where(eq(schema.organization.id, ws.workspaceId)),
+      );
+      // The planner adds the facets the rules would (bail, Supreme Court): none of them may veto the
+      // untagged corpus.
+      const planned = {
+        ...PLANNED,
+        factDescription: 'Regular bail and delay in trial.',
+        keywords: ['regular', 'bail', 'delay', 'trial'],
+        subjectAreas: ['bail'],
+        courtLevel: 'supreme_court',
+      };
+      const { fetch, provider } = planWith((body) => {
+        const id = /seg:[0-9a-f-]+/.exec(body)?.[0] ?? 'missing';
+        return completed(
+          JSON.stringify({
+            claims: [
+              {
+                statement: 'Delay in trial is a ground for regular bail.',
+                sourceId: id,
+                quote: body.includes(id) ? 'delay in trial' : 'missing',
+              },
+            ],
+          }),
+        );
+      }, planned);
+      const answer = await askCopilot(
+        tx,
+        { workspaceId: ws.workspaceId, userId: ws.ownerId },
+        { question: BAIL_QUESTION },
+        { now: () => NOW, previewPlanProvider: provider },
+      );
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(answer.noAuthority).toBe(false);
+      expect(answer.unsupported).toEqual([]);
+      const seg = answer.claims.find((c) => c.kind === 'seg');
+      expect(seg).toBeDefined();
+      expect(scIds).toContain(seg?.judgmentId);
+      expect(answer.judgments[seg?.judgmentId ?? '']?.court).toBe('SC');
+      expect(answer.retrieval).toMatchObject({ mode: 'lexical-only', vector: 0 });
+      expect(answer.retrieval?.lexical).toBeGreaterThan(0);
+      const calls = await aiCalls(tx, ws.workspaceId);
+      expect(calls.map((c) => c.task).sort()).toEqual([
+        'answer_matter_question',
+        'plan_research_query',
+      ]);
+      for (const call of calls) {
+        expect(call).toMatchObject({ provider: 'chatgpt-plan', status: 'ok' });
+      }
+    });
+  });
+
+  it('the extractive demo path answers the bail question from the same corpus with no model call (#1182)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const scIds = [
+        await seedUntaggedScJudgment(tx, BAIL_TEXT),
+        await seedUntaggedScJudgment(tx, DELAY_TEXT),
+      ];
+      const ws = await newWorkspace(tx);
+      await inWorkspace(tx, ws.workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ isDemo: true })
+          .where(eq(schema.organization.id, ws.workspaceId)),
+      );
+      const answer = await askCopilot(
+        tx,
+        { workspaceId: ws.workspaceId, userId: ws.ownerId },
+        { question: BAIL_QUESTION },
+        { now: () => NOW, previewPlanProvider: null },
+      );
+      expect(answer.noAuthority).toBe(false);
+      const seg = answer.claims.find((c) => c.kind === 'seg');
+      expect(scIds).toContain(seg?.judgmentId);
+      expect(answer.judgments[seg?.judgmentId ?? '']?.court).toBe('SC');
+      expect(answer.retrieval?.mode).toBe('lexical-only');
+      expect(await aiCalls(tx, ws.workspaceId)).toEqual([]);
     });
   });
 });

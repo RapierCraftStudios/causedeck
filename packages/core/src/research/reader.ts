@@ -1,7 +1,7 @@
 // The judgment reader (#1174, part 1 of #1170; D-053): one judgment's redacted pages for the research
 // reader, with the anchor of a paragraph or page pinpoint, the source attribution (URL and licence)
 // and the stored title (already masked when `title_masked`). Only `redacted_text` is read, never
-// `page_text`; a judgment that is not redacted yet is not served (null, like a missing one). Each page
+// the raw page text; a judgment that is not redacted yet is not served (null, like a missing one). Each page
 // says whether its page number is `verified` (PDF text layer or OCR) or `page_pending` (plain-text
 // import). Member-checked like the search; unmetered and unaudited: global public corpus, no tenant row.
 import { isUuid, schema, type Queryable } from '@causedeck/db';
@@ -107,7 +107,7 @@ export async function getJudgmentForReader(
   if (input.page !== undefined && !positiveInt(input.page)) throw invalid('Invalid page');
   return asMember(db, actor, async () => {
     if (!isUuid(input.judgmentId)) return null;
-    // `page_text` is never selected (D-053).
+    // The raw page text is never selected (D-053).
     const [row] = await db
       .select({
         id: judgment.id,

@@ -60,8 +60,54 @@ export {
   priceFor,
 } from './pricing.ts';
 export { detectInjection, wrapAsData } from './policy/injection.ts';
-export { allowedChain, INDIA_REGIONS, isIndiaRegion } from './policy/residency.ts';
+export {
+  allowedChain,
+  INDIA_REGIONS,
+  isIndiaRegion,
+  PREVIEW_PLAN_PROVIDER_ID,
+  type AllowedChainOptions,
+} from './policy/residency.ts';
 export { createBedrockProvider, type BedrockConfig } from './providers/bedrock.ts';
+export {
+  buildResponsesRequest,
+  CHATGPT_PLAN_RESPONSES_URL,
+  CHATGPT_PLAN_TASKS,
+  createChatgptPlanProvider,
+  type ChatgptPlanConfig,
+  type ChatgptPlanTokenSource,
+  type ResponsesRequest,
+} from './providers/chatgpt-plan.ts';
+export {
+  CHATGPT_PLAN_RESOURCE,
+  CHATGPT_PLAN_TOKEN_URL,
+  createChatgptPlanTokenStore,
+  readTokenFile as readChatgptPlanTokenFile,
+  writeTokenFileAtomic as writeChatgptPlanTokenFileAtomic,
+  type ChatgptPlanTokenFile,
+  type ChatgptPlanTokenStoreConfig,
+} from './providers/chatgpt-plan-token.ts';
+export {
+  buildAuthorizeUrl,
+  CHATGPT_PLAN_AUTHORIZE_URL,
+  CHATGPT_PLAN_OPENID_CONFIGURATION,
+  CHATGPT_PLAN_REDIRECT_URI,
+  CHATGPT_PLAN_SCOPES,
+  createPkce,
+  DYNAMIC_CLIENT_ID,
+  exchangeCode,
+  LoginError as ChatgptPlanLoginError,
+  newHostId,
+  parseCallback,
+  PLAN_USAGE_SCOPE,
+  randomToken,
+  verifyIdToken,
+  writeTokenFile as writeChatgptPlanTokenFile,
+  type AuthorizeUrlInput,
+  type Callback as ChatgptPlanCallback,
+  type IdTokenClaims,
+  type Pkce,
+  type TokenReply as ChatgptPlanTokenReply,
+} from './providers/chatgpt-plan-login.ts';
 export { createMockProvider, withRecording } from './providers/mock.ts';
 export { createSarvamProvider, type SarvamConfig } from './providers/sarvam.ts';
 export { CircuitBreaker, withRetry } from './retry.ts';

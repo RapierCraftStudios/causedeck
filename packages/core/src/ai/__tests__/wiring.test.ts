@@ -2,7 +2,14 @@
 // results and per-capture cost, against a real database.
 import { randomUUID } from 'node:crypto';
 
-import { BudgetExceededError, SensitiveMatterBlockedError, type Provider } from '@causedeck/ai';
+import {
+  BudgetExceededError,
+  getTask,
+  ResidencyViolationError,
+  SensitiveMatterBlockedError,
+  type Provider,
+} from '@causedeck/ai';
+import { createEnv } from '@causedeck/config/env';
 import { schema } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
@@ -11,7 +18,12 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { newWorkspace } from '../../__tests__/fixtures.ts';
 import { getUsage, reconcileAiCalls } from '../../usage/index.ts';
-import { createAiPorts, createCoreAiGateway, getCaptureCostPaise } from '../wiring.ts';
+import {
+  createAiPorts,
+  createCoreAiGateway,
+  getCaptureCostPaise,
+  previewPlanProviderFromEnv,
+} from '../wiring.ts';
 
 // The real clock: `ai_call.created_at` is the database's now(), and reconciliation matches calls and
 // ledger rows by period, so a fixed clock would put them in different months.
@@ -209,5 +221,113 @@ describe('cross-tenant isolation', () => {
       });
       expect(other.callId).not.toBe((await calls(tx, a.workspaceId))[0]?.id);
     });
+  });
+});
+
+// #1165: the preview-only chatgpt-plan provider answers demo workspaces only, at zero cost.
+describe('preview plan provider', () => {
+  const SOURCE = 'The surgery was done without informed consent.';
+  const question = {
+    question: 'surgery without informed consent',
+    sources: [{ id: 'doc:d1:2', text: SOURCE }],
+  };
+  const plan: Provider = {
+    id: 'chatgpt-plan',
+    region: 'openai',
+    dataResidency: 'other',
+    supports: ['answer_matter_question', 'answer_research_query'],
+    modelFor: () => 'gpt-plan-test',
+    call: () =>
+      Promise.resolve({
+        output: {
+          claims: [{ statement: 'No consent was taken.', sourceId: 'doc:d1:2', quote: SOURCE }],
+        },
+        usage: { inputTokens: 900, outputTokens: 80 },
+        model: 'gpt-plan-test',
+      }),
+  };
+  const ctxFor = (workspaceId: string) => ({ workspaceId, purpose: 'copilot.answer' });
+
+  it('a demo workspace writes an ok ai_call row for chatgpt-plan at cost 0, with no text or reservation', async () => {
+    await withTestDb(async (tx) => {
+      const { workspaceId } = await setup(tx);
+      await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ isDemo: true, slug: `demo-${workspaceId.slice(0, 8)}` })
+          .where(eq(schema.organization.id, workspaceId)),
+      );
+      const gateway = createCoreAiGateway(tx, { now, providers: [plan] });
+      const result = await gateway.run('answer_matter_question', question, ctxFor(workspaceId));
+      expect((result.output as { claims: unknown[] }).claims).toHaveLength(1);
+      const rows = await calls(tx, workspaceId);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        provider: 'chatgpt-plan',
+        model: 'gpt-plan-test',
+        status: 'ok',
+        costPaise: 0,
+      });
+      const text = JSON.stringify(rows);
+      expect(text).not.toContain('informed consent');
+      expect(text).not.toContain('surgery');
+      const reservations = await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .select()
+          .from(schema.usageReservation)
+          .where(eq(schema.usageReservation.workspaceId, workspaceId)),
+      );
+      expect(reservations).toEqual([]);
+      expect(await getUsage({ db: tx, workspaceId, now }, 'ai.spend_paise')).toBe(0);
+    });
+  });
+
+  it('a non-demo workspace raises ResidencyViolationError and audits provider none', async () => {
+    await withTestDb(async (tx) => {
+      const { workspaceId } = await setup(tx);
+      const call = vi.spyOn(plan, 'call');
+      const gateway = createCoreAiGateway(tx, { now, providers: [plan] });
+      await expect(
+        gateway.run('answer_matter_question', question, ctxFor(workspaceId)),
+      ).rejects.toBeInstanceOf(ResidencyViolationError);
+      expect(call).not.toHaveBeenCalled();
+      call.mockRestore();
+      const rows = await calls(tx, workspaceId);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ status: 'residency_violation', provider: 'none' });
+    });
+  });
+
+  it('a demo workspace without a demo slug is not a preview-plan workspace', async () => {
+    await withTestDb(async (tx) => {
+      const { workspaceId } = await setup(tx);
+      await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ isDemo: true })
+          .where(eq(schema.organization.id, workspaceId)),
+      );
+      const gateway = createCoreAiGateway(tx, { now, providers: [plan] });
+      await expect(
+        gateway.run('answer_matter_question', question, ctxFor(workspaceId)),
+      ).rejects.toBeInstanceOf(ResidencyViolationError);
+    });
+  });
+
+  it('builds the provider only for AI_PROVIDER=chatgpt-plan with the allow flag', () => {
+    const base = { NODE_ENV: 'test', SKIP_ENV_VALIDATION: undefined };
+    const planEnv = {
+      ...base,
+      AI_PROVIDER: 'chatgpt-plan',
+      CHATGPT_PLAN_TOKEN_FILE: '/tmp/plan-tokens.json',
+      CHATGPT_PLAN_MODEL: 'gpt-plan-test',
+    };
+    expect(previewPlanProviderFromEnv(createEnv({ ...base, AI_PROVIDER: 'mock' }))).toBeNull();
+    expect(previewPlanProviderFromEnv(createEnv(planEnv))).toBeNull();
+    const env = createEnv({ ...planEnv, ALLOW_PREVIEW_PLAN_PROVIDER: 'true' });
+    const provider = previewPlanProviderFromEnv(env);
+    expect(provider).toMatchObject({ id: 'chatgpt-plan', dataResidency: 'other' });
+    expect(provider?.modelFor(getTask('answer_matter_question'))).toBe('gpt-plan-test');
+    expect(previewPlanProviderFromEnv(env)).toBe(provider);
   });
 });

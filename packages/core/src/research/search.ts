@@ -13,6 +13,10 @@
 // - Audit: one `research.searched` event per search with the hash of the query, the hash of the plan
 //   and the ids of the retrieval set; the query text and the passages are never written to it. The plan
 //   call itself leaves its `corpus_ocr_call` row.
+// - Preview plan provider (#1165): when the preview-only `chatgpt-plan` provider is configured and the
+//   actor's workspace is a demo workspace (`is_demo` and a demo slug), the answer model runs on it
+//   (a platform gateway carrying only that provider); the planner keeps the default gateway. A plan
+//   failure (usage limit included) leaves `answer` null and `answerFailed` true: nothing is invented.
 // - Redaction (D-053): results carry `judgment_segment.text` only; titles are the stored masked form.
 // - Pinpoints (#1174): each segment says whether its pages are `verified` (every page is in the
 //   redacted text from the PDF text layer or OCR) or `page_pending` (a page is missing or came from a
@@ -26,6 +30,7 @@ import {
   createRerankGateway,
   type AiGateway,
   type EmbedGateway,
+  type Provider,
   type RerankGateway,
 } from '@causedeck/ai';
 import { isRole } from '@causedeck/auth';
@@ -47,7 +52,13 @@ import {
 } from '@causedeck/intelligence';
 import { sql } from 'drizzle-orm';
 
-import { createPlatformAiGateway, PLATFORM_AI_SCOPE } from '../ai/index.ts';
+import {
+  createPlatformAiGateway,
+  isPreviewPlanWorkspace,
+  PLATFORM_AI_SCOPE,
+  previewPlanProviderFromEnv,
+} from '../ai/index.ts';
+import { isDemoWorkspace } from '../shared/demo-guard.ts';
 import { record } from '../audit/index.ts';
 import { getWorkspaceEntitlements } from '../billing/index.ts';
 import { forbidden, invalid, rateLimited } from '../shared/errors.ts';
@@ -80,6 +91,11 @@ export interface ResearchSearchDeps {
   plan?: PlanResolver;
   answer?: AnswerResolver;
   now?: () => Date;
+  /**
+   * The preview-only `chatgpt-plan` provider (#1165); defaults to `previewPlanProviderFromEnv()`,
+   * read only for a demo workspace.
+   */
+  previewPlanProvider?: Provider | null;
 }
 
 export interface ResearchSearchInput {
@@ -111,18 +127,42 @@ export interface AuthoritySearchResult extends SearchResult {
 
 const sha256 = (text: string): string => createHash('sha256').update(text, 'utf8').digest('hex');
 
+/**
+ * The preview plan provider for `actor`'s answers (#1165), or null: only for a demo workspace with a
+ * demo slug while the provider is configured, and never when a gateway or answer is injected.
+ */
+async function previewPlanFor(
+  db: Queryable,
+  actor: ResearchSearchActor,
+  deps: ResearchSearchDeps,
+): Promise<Provider | null> {
+  if (deps.gateway !== undefined || deps.answer !== undefined) return null;
+  const demo = await withWorkspace(db, { workspaceId: actor.workspaceId }, (tx) =>
+    isDemoWorkspace(tx, actor.workspaceId),
+  );
+  if (!demo) return null;
+  const plan =
+    deps.previewPlanProvider === undefined ? previewPlanProviderFromEnv() : deps.previewPlanProvider;
+  if (plan === null) return null;
+  return (await isPreviewPlanWorkspace(db, actor.workspaceId)) ? plan : null;
+}
+
 /** The deterministic mock embedder and reranker, like `system.corpus.embed` until a real model is configured. */
-function wire(db: Queryable, deps: ResearchSearchDeps) {
+function wire(db: Queryable, deps: ResearchSearchDeps, previewPlan: Provider | null = null) {
   const embed = deps.embed ?? createEmbedGateway({ providers: [createMockEmbedProvider()] });
   const rerank = deps.rerank ?? createRerankGateway({ providers: [createMockRerankProvider()] });
   const gateway = deps.gateway ?? createPlatformAiGateway(db);
+  const answerGateway =
+    previewPlan === null
+      ? gateway
+      : createPlatformAiGateway(db, { providers: [previewPlan], previewPlanProvider: true });
   const scope = { workspaceId: PLATFORM_AI_SCOPE };
   return {
     retriever: drizzleRetriever(db, { embeddingModel: embed.active().modelVersion }),
     embed,
     rerank,
     plan: deps.plan ?? createGatewayPlanResolver({ gateway, scope }),
-    answer: deps.answer ?? createGatewayAnswerResolver({ gateway, scope }),
+    answer: deps.answer ?? createGatewayAnswerResolver({ gateway: answerGateway, scope }),
   };
 }
 
@@ -271,9 +311,12 @@ export async function searchAuthorities(
       );
     }
     const requestId = input.requestId ?? randomUUID();
+    const previewPlan = input.answer === true ? await previewPlanFor(db, actor, deps) : null;
     const result = await withPinpoints(
       db,
-      await searchCorpus(wire(db, deps), query, { answer: input.answer === true }),
+      await searchCorpus(wire(db, deps, previewPlan), query, {
+        answer: input.answer === true,
+      }),
     );
     await increment(ctx, RESEARCH_SEARCH_KEY, 1, {
       idempotencyKey: `research-search:${requestId}`,
@@ -313,9 +356,12 @@ export async function rerunAuthoritySearch(
         `You have reached this month's limit of ${String(before.limit)} authority searches on your plan.`,
       );
     }
+    const previewPlan = input.answer === true ? await previewPlanFor(db, actor, deps) : null;
     const result = await withPinpoints(
       db,
-      await searchCorpusWithPlan(wire(db, deps), plan, { answer: input.answer === true }),
+      await searchCorpusWithPlan(wire(db, deps, previewPlan), plan, {
+        answer: input.answer === true,
+      }),
     );
     await audit(db, actor, result, { mode: 'rerun', requestId });
     return { ...result, usage: before, chips: statuteChips(result.plan) };

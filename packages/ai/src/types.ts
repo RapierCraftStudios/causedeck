@@ -27,7 +27,11 @@ export const TASK_IDS = [
 
 export type TaskId = (typeof TASK_IDS)[number];
 
-export type ProviderId = 'bedrock' | 'sarvam' | 'mock';
+/**
+ * `chatgpt-plan` is the preview-only Sign in with ChatGPT plan provider (#1165): demo workspaces
+ * only, never real client data (see `policy/residency.ts`).
+ */
+export type ProviderId = 'bedrock' | 'sarvam' | 'mock' | 'chatgpt-plan';
 
 export interface TaskDef<I = unknown, O = unknown> {
   id: TaskId;

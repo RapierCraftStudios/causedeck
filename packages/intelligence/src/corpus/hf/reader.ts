@@ -123,7 +123,7 @@ export function createHfHttpSource(
         body = body.slice(start, last + 1);
       }
       bytes += body.byteLength;
-      return body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength) as ArrayBuffer;
+      return body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength);
     },
   });
 
@@ -134,11 +134,15 @@ export function createHfHttpSource(
         `https://huggingface.co/api/datasets/${repo}/tree/main/${encodePath(config)}?recursive=true`;
       while (next !== null) {
         const response = await get(next);
-        const entries = (await response.json()) as { type?: string; path?: string; size?: number }[];
+        const entries = (await response.json()) as {
+          type?: string;
+          path?: string;
+          size?: number;
+        }[];
         for (const e of entries) {
           if (e.type !== 'file' || typeof e.path !== 'string' || !e.path.endsWith('.parquet'))
             continue;
-          files.push({ path: e.path, size: Number(e.size ?? 0) });
+          files.push({ path: e.path, size: e.size ?? 0 });
         }
         const link = /<([^>]+)>;\s*rel="next"/.exec(response.headers.get('link') ?? '');
         next = link?.[1] ?? null;

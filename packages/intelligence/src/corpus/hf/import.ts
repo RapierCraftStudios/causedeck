@@ -74,7 +74,12 @@ export interface HfCursor {
 
 /** The persistence the importer needs; `drizzleHfImportStore` is the database implementation. */
 export interface HfImportStore {
-  cursor(input: { sourceId: string; court: string | null; year: number; archiveKey: string }): Promise<HfCursor>;
+  cursor(input: {
+    sourceId: string;
+    court: string | null;
+    year: number;
+    archiveKey: string;
+  }): Promise<HfCursor>;
   advance(
     cursorId: string,
     position: number,
@@ -209,7 +214,11 @@ export function hfJudgmentValues(
   provenance: { url: string; fetchedAt: string },
 ): typeof judgment.$inferInsert {
   const extraNames = partyNames(row);
-  const redacted = redactJudgment({ pages: [{ pageNo: 1, text: row.text }], bench: row.bench, extraNames });
+  const redacted = redactJudgment({
+    pages: [{ pageNo: 1, text: row.text }],
+    bench: row.bench,
+    extraNames,
+  });
   // The title printed in the text wins (the PDF path); else the dataset's title, masked alike.
   let caseTitle = redacted.caseTitle;
   if (caseTitle === null && row.title !== null) {
@@ -242,7 +251,11 @@ export function hfJudgmentValues(
     },
     // K1: the raw text is never stored; anchors wait for the PDF (#1173).
     pageText: [],
-    redactedText: redacted.pages.map((p) => ({ pageNo: p.pageNo, text: p.text, source: 'text' as const })),
+    redactedText: redacted.pages.map((p) => ({
+      pageNo: p.pageNo,
+      text: p.text,
+      source: 'text' as const,
+    })),
     caseTitle,
     titleMasked: redacted.titleMasked,
     redactionVersion: redacted.redactionVersion,
@@ -279,7 +292,11 @@ export async function runHfImport(
   const readBytes = (): number => deps.source.bytesRead() - startBytes;
   const exhausted = (): boolean =>
     report.rows >= budget.maxRows || readBytes() >= budget.maxBytes || signal?.aborted === true;
-  const filter: HfSliceFilter = { court: request.court, yearFrom: request.yearFrom, yearTo: request.yearTo };
+  const filter: HfSliceFilter = {
+    court: request.court,
+    yearFrom: request.yearFrom,
+    yearTo: request.yearTo,
+  };
   const config = HF_CONFIGS[request.dataset];
 
   files: for (const file of await deps.source.list(config)) {
@@ -336,8 +353,16 @@ export async function runHfImport(
             const existing = await deps.store.findByTextHash(hash);
             if (existing !== null) {
               delta.dupes += 1;
-              if (mapped.cnr !== null && mapped.cnr !== existing.cnr && !(await deps.store.cnrKnown(mapped.cnr))) {
-                await deps.store.addAlias({ cnr: mapped.cnr, judgmentId: existing.id, sourceId: HF_SOURCE_ID });
+              if (
+                mapped.cnr !== null &&
+                mapped.cnr !== existing.cnr &&
+                !(await deps.store.cnrKnown(mapped.cnr))
+              ) {
+                await deps.store.addAlias({
+                  cnr: mapped.cnr,
+                  judgmentId: existing.id,
+                  sourceId: HF_SOURCE_ID,
+                });
                 report.aliases += 1;
               }
               continue;

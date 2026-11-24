@@ -42,14 +42,21 @@ function memoryStore() {
     cursor: ({ archiveKey }) => {
       let c = cursors.get(archiveKey);
       if (c === undefined) {
-        c = { id: `c${String(cursors.size + 1)}`, position: 0, status: 'pending', archiveKey, rowsAdded: 0 };
+        c = {
+          id: `c${String(cursors.size + 1)}`,
+          position: 0,
+          status: 'pending',
+          archiveKey,
+          rowsAdded: 0,
+        };
         cursors.set(archiveKey, c);
       }
       return Promise.resolve({ id: c.id, position: c.position, status: c.status });
     },
     advance: (id, position, delta) => {
       const c = [...cursors.values()].find((x) => x.id === id);
-      if (c !== undefined) Object.assign(c, { position, status: 'running', rowsAdded: c.rowsAdded + delta.added });
+      if (c !== undefined)
+        Object.assign(c, { position, status: 'running', rowsAdded: c.rowsAdded + delta.added });
       return Promise.resolve();
     },
     complete: (id) => {
@@ -127,7 +134,13 @@ describe('runHfImport', () => {
     const db = memoryStore();
     const { source } = memorySource([[row(1)]]);
     const report = await runHfImport({ store: db.store, source, now }, request);
-    expect(report).toMatchObject({ files: 1, rows: 1, inserted: 1, duplicates: 0, budgetReached: false });
+    expect(report).toMatchObject({
+      files: 1,
+      rows: 1,
+      inserted: 1,
+      duplicates: 0,
+      budgetReached: false,
+    });
     const [j] = db.judgments;
     const hash = textHash(body(1));
     expect(j).toMatchObject({
@@ -190,7 +203,10 @@ describe('runHfImport', () => {
     const { source } = memorySource([
       [
         row(8, {
-          full_text: body(8, 'This is a case under the POCSO Act, 2012 concerning the victim girl.\n'),
+          full_text: body(
+            8,
+            'This is a case under the POCSO Act, 2012 concerning the victim girl.\n',
+          ),
           title: 'State vs Mohan Lal',
           respondent: 'Mohan Lal',
         }),
@@ -209,7 +225,10 @@ describe('runHfImport', () => {
       [
         row(2, { cnr: 'kahc010000022021' }),
         // Same text, other case, spacing and punctuation, other CNR.
-        row(3, { cnr: 'KAHC010000032021', full_text: `  ${text.toUpperCase().replace(/\./g, ' ')}  ` }),
+        row(3, {
+          cnr: 'KAHC010000032021',
+          full_text: `  ${text.toUpperCase().replace(/\./g, ' ')}  `,
+        }),
         row(4, { cnr: 'KAHC010000032021', full_text: text }),
       ],
     ]);
@@ -231,7 +250,10 @@ describe('runHfImport', () => {
         row(11, { full_text: 'IN THE HIGH COURT. Appeal dismissed.' }),
         row(12, { full_text: 'IN IN IN THE THE HIGH HIGH COURT COURT '.repeat(20) }),
         row(13, {
-          full_text: Array.from({ length: 120 }, (_, i) => `#${String(i)}@ %${String((i * 7) % 13)}^ ¤`).join(' '),
+          full_text: Array.from(
+            { length: 120 },
+            (_, i) => `#${String(i)}@ %${String((i * 7) % 13)}^ ¤`,
+          ).join(' '),
         }),
         row(14),
       ],
@@ -292,7 +314,12 @@ describe('runHfImport', () => {
     const { source } = memorySource([[row(33)]]);
     const controller = new AbortController();
     controller.abort();
-    const report = await runHfImport({ store: db.store, source, now }, request, undefined, controller.signal);
+    const report = await runHfImport(
+      { store: db.store, source, now },
+      request,
+      undefined,
+      controller.signal,
+    );
     expect(report).toMatchObject({ budgetReached: true, inserted: 0, files: 0 });
   });
 
@@ -306,16 +333,21 @@ describe('runHfImport', () => {
       ],
       reads,
     );
-    const report = await runHfImport({ store: db.store, source, now }, {
-      ...request,
-      court: 'kahc',
-      yearFrom: 2020,
-      yearTo: 2022,
-    });
+    const report = await runHfImport(
+      { store: db.store, source, now },
+      {
+        ...request,
+        court: 'kahc',
+        yearFrom: 2020,
+        yearTo: 2022,
+      },
+    );
     expect(report).toMatchObject({ rows: 1, inserted: 1 });
     expect(db.judgments.map((j) => j.cnr)).toEqual(['KAHC010000432021']);
     // The first group's texts were never read.
-    expect(reads.filter(([s]) => s === 0).map(([, , c]) => c.includes('full_text'))).toEqual([false]);
+    expect(reads.filter(([s]) => s === 0).map(([, , c]) => c.includes('full_text'))).toEqual([
+      false,
+    ]);
     expect([...db.cursors.keys()][0]).toContain('#court=kahc;years=2020-2022');
   });
 });

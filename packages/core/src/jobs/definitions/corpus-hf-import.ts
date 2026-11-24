@@ -81,7 +81,10 @@ export async function runCorpusHfImport(
     baseUrl = (await policyFor(HF_SOURCE_ID, { db })).baseUrl;
   } catch (error) {
     if (!(error instanceof SourceNotCleared)) throw error;
-    ctx.log.warn({ sourceId: HF_SOURCE_ID, reason: error.reason }, 'corpus.hf_import: source not cleared');
+    ctx.log.warn(
+      { sourceId: HF_SOURCE_ID, reason: error.reason },
+      'corpus.hf_import: source not cleared',
+    );
     return skipped();
   }
   const report = await runHfImport(

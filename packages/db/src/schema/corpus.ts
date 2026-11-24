@@ -125,7 +125,10 @@ export const judgment = pgTable(
     /** sha256 hex of the normalised source text (`normaliseText`), the text dedupe key of text-only imports (#1171); null for PDF rows. */
     textHash: text('text_hash'),
     /** `verified` when `page_text` holds the original pages; `pending-pdf` for a text-only import whose page anchors wait for the PDF (#1171, #1173). */
-    pinpointState: text('pinpoint_state').$type<JudgmentPinpointState>().notNull().default('verified'),
+    pinpointState: text('pinpoint_state')
+      .$type<JudgmentPinpointState>()
+      .notNull()
+      .default('verified'),
     /** The licence of the dataset the row came from, e.g. `CC-BY-4.0`; null for court sites. */
     licence: text('licence'),
     /** The attribution the licence requires, shown wherever the text appears (#1172). */

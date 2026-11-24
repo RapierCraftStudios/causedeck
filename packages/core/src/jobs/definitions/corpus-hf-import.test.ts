@@ -83,9 +83,7 @@ describe('system.corpus.hf-import', () => {
 
   it('opens the dataset at the source base URL once cleared and reports counts', async () => {
     const list = vi.fn(() => Promise.resolve([]));
-    const openSource = vi.fn(
-      (): HfDatasetSource => ({ list, open: vi.fn(), bytesRead: () => 0 }),
-    );
+    const openSource = vi.fn((): HfDatasetSource => ({ list, open: vi.fn(), bytesRead: () => 0 }));
     const report = await runCorpusHfImport(
       { log },
       { dataset: 'sc', yearFrom: 2020, yearTo: 2020 },

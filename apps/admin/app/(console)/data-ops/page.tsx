@@ -169,8 +169,8 @@ export default async function DataOpsPage() {
         <h3 className="font-medium">Hugging Face text import</h3>
         <p className="text-ink-muted text-sm">
           Off by default. Imports extracted texts (overthelex/indian-court-decisions, CC-BY-4.0) as
-          judgments waiting for their PDF; the hf-overthelex source must be cleared on Sources first.
-          Repeated and garbled texts are skipped and counted.
+          judgments waiting for their PDF; the hf-overthelex source must be cleared on Sources
+          first. Repeated and garbled texts are skipped and counted.
         </p>
         <form action={startHfImportAction} className="flex flex-wrap items-end gap-2 text-sm">
           <label className="grid gap-1">

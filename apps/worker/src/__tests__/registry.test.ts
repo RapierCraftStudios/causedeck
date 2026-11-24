@@ -175,6 +175,7 @@ describe('enqueue', () => {
       'system.data-ops.evaluate',
       'system.corpus.poll',
       'system.corpus.bulk-import',
+      'system.corpus.hf-import',
       'system.corpus.redact',
       'system.corpus.segment',
       'system.corpus.enrich',

@@ -43,6 +43,11 @@ export const AUDIT_ACTIONS = {
     security: false,
     description: 'Staff started the bulk import of an open judgment dataset',
   },
+  // The Hugging Face text import (#1171, D-053). Metadata holds the config, court code, year range and budget only.
+  'corpus.hf_import_started': {
+    security: false,
+    description: 'Staff started the import of the Hugging Face judgment text dataset',
+  },
   // A court order or request to mask a judgment was applied (#892). Metadata holds ids, status and the legal basis, never text.
   'corpus.mask_applied': {
     security: true,

@@ -412,6 +412,12 @@ const ACTIONS: Record<string, () => Promise<unknown>> = {
       form({ dataset: 'hc', court: '33_10', yearFrom: '2020', yearTo: '2021' }),
     );
   },
+  'app/(console)/data-ops/actions.ts#startHfImportAction': async () => {
+    const { startHfImportAction } = await import('../app/(console)/data-ops/actions.ts');
+    return startHfImportAction(
+      form({ dataset: 'hc', court: 'KAHC', yearFrom: '2020', yearTo: '2021', maxRows: '500' }),
+    );
+  },
   'app/(console)/limitation-rules/actions.ts#importRuleTableAction': async () => {
     const { importRuleTableAction } = await import('../app/(console)/limitation-rules/actions.ts');
     return importRuleTableAction(

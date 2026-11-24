@@ -107,7 +107,7 @@ export function splitJudges(v: unknown): string[] {
     .split(/\s*(?:[,;&]|\band\b)\s*/i)
     .map((n) =>
       n
-        .replace(/^(?:hon'?ble\s+)?(?:(?:the\s+)?(?:chief\s+)?justice|mr\.?|mrs\.?|ms\.?|dr\.?)\s+/i, '')
+        .replace(/^(?:(?:hon'?ble|the|chief|justice|mr\.?|mrs\.?|ms\.?|dr\.?)\s+)+/i, '')
         .trim(),
     )
     .filter((n) => /\p{L}{2,}/u.test(n));

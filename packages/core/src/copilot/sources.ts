@@ -9,15 +9,20 @@ import {
   createMockEmbedProvider,
   createMockRerankProvider,
   createRerankGateway,
+  MOCK_EMBED_MODEL,
   type EmbedGateway,
   type RerankGateway,
 } from '@causedeck/ai';
 import { withWorkspace, type Queryable } from '@causedeck/db';
 import {
   drizzleRetriever,
-  heuristicPlan,
+  planQuery,
   searchCorpusWithPlan,
+  searchTerms,
   type CopilotSource,
+  type PlanResolver,
+  type ResearchPlan,
+  type SearchCounts,
 } from '@causedeck/intelligence';
 import { sql } from 'drizzle-orm';
 
@@ -53,12 +58,12 @@ export interface GatheredSources {
   aiBlocked: boolean;
 }
 
-/** The distinct word tokens of `text` (3+ characters) as an OR full-text query. */
+/**
+ * The search terms of `text` (no short, question or function words, #1182) as an OR of prefixes, so a
+ * page matching some words of the question still ranks; null when nothing is left to search for.
+ */
 export function tsQueryOf(text: string): string | null {
-  const terms = [...new Set(text.toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) ?? [])].slice(
-    0,
-    MAX_TERMS,
-  );
+  const terms = searchTerms(text, MAX_TERMS);
   return terms.length === 0 ? null : terms.map((t) => `${t}:*`).join(' | ');
 }
 
@@ -221,25 +226,59 @@ export async function documentSources(
 export interface CorpusDeps {
   embed?: EmbedGateway;
   rerank?: RerankGateway;
+  /** The planner model (`plan_research_query`); without one the rules plan the question. */
+  plan?: PlanResolver;
 }
 
-/** Passages of the anonymised corpus for the question: the retrieval of `searchAuthorities`, without its planner, meter or audit. */
+const hasFacets = (plan: ResearchPlan): boolean =>
+  plan.subjectAreas.length > 0 ||
+  plan.statutes.length > 0 ||
+  plan.courts.length > 0 ||
+  plan.courtLevel !== null ||
+  plan.dateFrom !== null ||
+  plan.dateTo !== null ||
+  plan.outcome !== null;
+
+/** `plan` searching its query and keywords only. */
+const withoutFacets = (plan: ResearchPlan): ResearchPlan => ({
+  ...plan,
+  subjectAreas: [],
+  statutes: [],
+  courts: [],
+  courtLevel: null,
+  dateFrom: null,
+  dateTo: null,
+  outcome: null,
+});
+
+/**
+ * Passages of the anonymised corpus for the question: the retrieval of `searchAuthorities`, without its
+ * meter or audit. While only mock vectors exist the lexical arm runs alone (#1182). A question is not
+ * vetoed by a facet: when the faceted search finds nothing, it searches once more without facets.
+ */
 export async function corpusSources(
   db: Queryable,
   question: string,
   deps: CorpusDeps = {},
-): Promise<{ sources: CopilotSource[]; judgments: Record<string, JudgmentRef> }> {
+): Promise<{
+  sources: CopilotSource[];
+  judgments: Record<string, JudgmentRef>;
+  counts: SearchCounts;
+}> {
   const embed = deps.embed ?? createEmbedGateway({ providers: [createMockEmbedProvider()] });
   const rerank = deps.rerank ?? createRerankGateway({ providers: [createMockRerankProvider()] });
-  const result = await searchCorpusWithPlan(
-    {
-      retriever: drizzleRetriever(db, { embeddingModel: embed.active().modelVersion }),
-      embed,
-      rerank,
-    },
-    heuristicPlan(question),
-    { answer: false },
-  );
+  const active = embed.active();
+  const search = {
+    retriever: drizzleRetriever(db, { embeddingModel: active.modelVersion }),
+    embed,
+    rerank,
+    lexicalOnly: active.model === MOCK_EMBED_MODEL,
+  };
+  const plan = await planQuery(question, deps.plan);
+  let result = await searchCorpusWithPlan(search, plan, { answer: false });
+  if (result.hits.length === 0 && hasFacets(plan)) {
+    result = await searchCorpusWithPlan(search, withoutFacets(plan), { answer: false });
+  }
   const judgments: Record<string, JudgmentRef> = {};
   const sources: CopilotSource[] = [];
   for (const hit of result.hits) {
@@ -260,5 +299,5 @@ export async function corpusSources(
       });
     }
   }
-  return { sources, judgments };
+  return { sources, judgments, counts: result.counts };
 }

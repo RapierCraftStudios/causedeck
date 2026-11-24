@@ -201,6 +201,39 @@ describe('India-only AI guardrail', () => {
   });
 });
 
+describe('preview chatgpt-plan provider guardrail (#1165)', () => {
+  const plan = {
+    ...productionEnv,
+    AI_PROVIDER: 'chatgpt-plan',
+    SARVAM_API_KEY: undefined,
+    SARVAM_NO_TRAINING_CONFIRMED: undefined,
+    CHATGPT_PLAN_TOKEN_FILE: '/run/secrets/chatgpt-plan.json',
+    CHATGPT_PLAN_MODEL: 'gpt-test',
+  };
+
+  it('production refuses AI_PROVIDER=chatgpt-plan without ALLOW_PREVIEW_PLAN_PROVIDER=true', () => {
+    const error = envError(plan);
+    expect((error as EnvValidationError).keys).toEqual(['ALLOW_PREVIEW_PLAN_PROVIDER']);
+    expect(error.message).toContain('preview only');
+    expect(envError({ ...plan, ALLOW_PREVIEW_PLAN_PROVIDER: 'false' }).message).toContain(
+      'ALLOW_PREVIEW_PLAN_PROVIDER',
+    );
+  });
+
+  it('production accepts it with ALLOW_PREVIEW_PLAN_PROVIDER=true', () => {
+    const env = createEnv({ ...plan, ALLOW_PREVIEW_PLAN_PROVIDER: 'true' });
+    expect(env.AI_PROVIDER).toBe('chatgpt-plan');
+    expect(env.ALLOW_PREVIEW_PLAN_PROVIDER).toBe(true);
+  });
+
+  it('development parses without the flag, which defaults to false', () => {
+    const env = createEnv({ ...plan, NODE_ENV: 'development' });
+    expect(env.AI_PROVIDER).toBe('chatgpt-plan');
+    expect(env.ALLOW_PREVIEW_PLAN_PROVIDER).toBe(false);
+    expect(createEnv({ NODE_ENV: 'test' }).ALLOW_PREVIEW_PLAN_PROVIDER).toBe(false);
+  });
+});
+
 describe('data residency', () => {
   it('defaults AWS_REGION to ap-south-1 and DATA_REGION to in', () => {
     const env = createEnv({ NODE_ENV: 'test' });

@@ -28,6 +28,11 @@ export interface PlatformAiOptions {
   /** Paise the platform scope may spend per UTC day on OCR. */
   dailyPaise?: number;
   providers?: readonly Provider[];
+  /**
+   * The caller checked that the request is a preview-plan demo call (#1165): the policy then allows
+   * the preview-only `chatgpt-plan` provider. Defaults to false.
+   */
+  previewPlanProvider?: boolean;
 }
 
 const startOfUtcDay = (d: Date): Date =>
@@ -72,7 +77,12 @@ export function createPlatformAiPorts(
     },
     settings: {
       getPolicy: () =>
-        Promise.resolve({ indiaOnly: true, matterSensitive: false, captureAiBlocked: false }),
+        Promise.resolve({
+          indiaOnly: true,
+          matterSensitive: false,
+          captureAiBlocked: false,
+          previewPlanProvider: options.previewPlanProvider === true,
+        }),
     },
     audit: {
       async record(_scope, record) {

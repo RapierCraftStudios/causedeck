@@ -24,7 +24,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 |---|---|---|
 | `EMAIL_PROVIDER` | `console` | `ses`, `smtp` |
 | `SMS_PROVIDER` | `console` | `msg91` |
-| `AI_PROVIDER` | `mock` | `bedrock`, `sarvam` |
+| `AI_PROVIDER` | `mock` | `bedrock`, `sarvam`, `chatgpt-plan` (preview only) |
 | `CITATION_RESOLVER` | `corpus` | `mock`, `indian-kanoon` |
 | `STORAGE_PROVIDER` | `minio` | `minio`, `s3` |
 | `BILLING_PROVIDER` | `mock` | `razorpay` |
@@ -42,6 +42,15 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 - **India-only AI**: `AI_INDIA_ONLY` defaults to `true`. Turning it off in production needs
   `AI_INDIA_ONLY_OVERRIDE_ACK=I_UNDERSTAND`. While it is on, `BEDROCK_REGION` must be an India region. Production refuses to boot with a real
   `SARVAM_API_KEY` unless `SARVAM_NO_TRAINING_CONFIRMED=true` (the contract's no-training term).
+- **Preview ChatGPT plan provider (#1165)**: `AI_PROVIDER=chatgpt-plan` uses the founder's ChatGPT
+  plan through OpenAI's official Sign in with ChatGPT plan usage, for the self-hosted review preview
+  only. Production refuses it unless `ALLOW_PREVIEW_PLAN_PROVIDER=true`. Even then it answers only in
+  demo workspaces (`is_demo` and an `isDemoWorkspaceSlug` slug); any real workspace raises
+  `ResidencyViolationError`, so real client data never reaches it. It is not for production with
+  real client data: production stays on Bedrock India (#112), and a paid or remotely hosted
+  multi-user deployment needs OpenAI's interest-form approval first. Sign in once with
+  `pnpm --filter @causedeck/ai chatgpt-plan:login --token-file <path>`, then set
+  `CHATGPT_PLAN_TOKEN_FILE` to that path and `CHATGPT_PLAN_MODEL`.
 - **Data residency**: `AWS_REGION` defaults to `ap-south-1` and `DATA_REGION` to `in`. A non-India
   value (anything except `ap-south-1`/`ap-south-2`, or a `DATA_REGION` other than `in`) is rejected
   unless `AWS_REGION_OVERRIDE_ACK=I_UNDERSTAND`.
@@ -77,6 +86,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `AI_INDIA_ONLY` | boolean | `true` | never (defaults to true) | #44 | — |
 | `AI_INDIA_ONLY_OVERRIDE_ACK` | literal(I_UNDERSTAND) | — | NODE_ENV=production and AI_INDIA_ONLY=false | #44 | — |
 | `ALLOW_MOCK_PROVIDERS` | boolean | `false` | never | #4 | — |
+| `ALLOW_PREVIEW_PLAN_PROVIDER` | boolean | `false` | NODE_ENV=production and AI_PROVIDER=chatgpt-plan | #1165 | — |
 | `SKIP_ENV_VALIDATION` | literal(1) | — | never | #4 | — |
 | `DATABASE_URL` | secret url | dev placeholder (non-prod only) | NODE_ENV=production | #6 | #116 |
 | `DATABASE_URL_OWNER` | secret url | dev placeholder (non-prod only) | running migrations | #6 | #116 |
@@ -131,7 +141,7 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `SMS_SENDER_ID` | string | — | SMS_PROVIDER=msg91 | #503 | — |
 | `SMS_DLT_ENTITY_ID` | string | — | SMS_PROVIDER=msg91 | #503 | — |
 | `SMS_OTP_TEMPLATE_ID` | string | — | SMS_PROVIDER=msg91 | #503 | — |
-| `AI_PROVIDER` | enum(mock\|bedrock\|sarvam) | `mock` | never (defaults to mock) | #44 | — |
+| `AI_PROVIDER` | enum(mock\|bedrock\|sarvam\|chatgpt-plan) | `mock` | never (defaults to mock) | #44 | — |
 | `BEDROCK_REGION` | string | `ap-south-1` | AI_PROVIDER=bedrock | #44 | #112 |
 | `BEDROCK_ACCESS_KEY_ID` | string | — | AI_PROVIDER=bedrock | #44 | #112 |
 | `BEDROCK_SECRET_ACCESS_KEY` | secret | — | AI_PROVIDER=bedrock | #44 | #112 |
@@ -140,6 +150,9 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `AI_MAX_CONCURRENCY_PER_WORKSPACE` | integer (1-32) | `4` | never (defaults to 4) | #44 | — |
 | `SARVAM_NO_TRAINING_CONFIRMED` | literal(true) | — | NODE_ENV=production and AI_PROVIDER=sarvam | #44 | #113 |
 | `SARVAM_API_KEY` | secret | — | AI_PROVIDER=sarvam | #44 | #113 |
+| `CHATGPT_PLAN_TOKEN_FILE` | string | — | AI_PROVIDER=chatgpt-plan | #1165 | — |
+| `CHATGPT_PLAN_MODEL` | string | — | AI_PROVIDER=chatgpt-plan | #1165 | — |
+| `CHATGPT_PLAN_CLIENT_ID` | string | — | never (optional with AI_PROVIDER=chatgpt-plan) | #1165 | — |
 | `CITATION_RESOLVER` | enum(corpus\|mock\|indian-kanoon) | `corpus` | never (defaults to corpus) | #77 | — |
 | `INDIAN_KANOON_API_TOKEN` | secret | — | CITATION_RESOLVER=indian-kanoon | #77 | #114 |
 | `STORAGE_PROVIDER` | enum(minio\|s3) | `minio` | never (defaults to minio) | #21 | — |

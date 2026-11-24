@@ -4,7 +4,7 @@
 // (ids and hashes, never the query), re-running with an edited plan, and the verified answer.
 import { randomUUID } from 'node:crypto';
 
-import { createMockEmbedProvider } from '@causedeck/ai';
+import { createChatgptPlanProvider, createMockEmbedProvider } from '@causedeck/ai';
 import { schema, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
@@ -378,6 +378,119 @@ describe('searchAuthorities', () => {
       );
       expect(none.hits).toEqual([]);
       expect(none.answer).toEqual({ claims: [], noAuthority: true });
+    });
+  });
+});
+
+// #1165: a demo workspace's answer runs on the preview-only chatgpt-plan provider (mocked HTTP).
+describe('searchAuthorities with the preview plan provider', () => {
+  const QUOTE = 'the hospital delayed antibiotics';
+  const sse = (text: string): Response =>
+    new Response(
+      [
+        { type: 'response.output_text.delta', delta: text },
+        {
+          type: 'response.completed',
+          response: {
+            model: 'gpt-plan-test',
+            output: [{ type: 'message', content: [{ type: 'output_text', text }] }],
+            usage: { input_tokens: 300, output_tokens: 30 },
+          },
+        },
+      ]
+        .map((e) => `data: ${JSON.stringify(e)}\n\n`)
+        .join(''),
+    );
+  /** One claim quoting the request's antibiotics segment. */
+  const claim = (body: string): Response => {
+    const prompt = (JSON.parse(body) as { input: { content: { text: string }[] }[] }).input[0]
+      ?.content[0]?.text;
+    const segmentId = /"id":"([^"]+)","text":"A post-operative/.exec(prompt ?? '')?.[1] ?? 'none';
+    return sse(
+      JSON.stringify({ claims: [{ statement: 'Antibiotics were delayed.', segmentId, quote: QUOTE }] }),
+    );
+  };
+  function plan(reply: (body: string) => Response) {
+    const fetch = vi.fn<typeof globalThis.fetch>((_url, init) =>
+      Promise.resolve(reply((init?.body as string))),
+    );
+    const provider = createChatgptPlanProvider({
+      model: 'gpt-plan-test',
+      tokens: { accessToken: () => Promise.resolve('plan-access'), invalidate: () => undefined },
+      fetch,
+      retry: { maxAttempts: 1, sleep: () => Promise.resolve() },
+    });
+    return { fetch, provider };
+  }
+  async function demoActor(tx: Transaction, demo = true) {
+    await seed(tx);
+    const { ownerId, workspaceId } = await newWorkspace(tx);
+    if (demo) {
+      await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ isDemo: true, slug: `demo-${workspaceId.slice(0, 8)}` })
+          .where(eq(schema.organization.id, workspaceId)),
+      );
+    }
+    return { workspaceId, userId: ownerId };
+  }
+  const QUERY = 'hospital delayed antibiotics post-operative infection';
+
+  it('gives a demo workspace a model-written answer, verified against the hits', async () => {
+    await withTestDb(async (tx) => {
+      const actor = await demoActor(tx);
+      const { fetch, provider } = plan(claim);
+      const result = await searchAuthorities(
+        tx,
+        actor,
+        { query: QUERY, answer: true },
+        deps({ previewPlanProvider: provider }),
+      );
+      expect(fetch).toHaveBeenCalledTimes(1);
+      expect(result.answerFailed).toBe(false);
+      expect(result.answer?.claims).toHaveLength(1);
+      expect(result.answer?.claims[0]).toMatchObject({
+        statement: 'Antibiotics were delayed.',
+        verified: true,
+      });
+    });
+  });
+
+  it('a usage-limit reply yields no answer and answerFailed, never an invented answer', async () => {
+    await withTestDb(async (tx) => {
+      const actor = await demoActor(tx);
+      const { provider } = plan(
+        () =>
+          new Response(
+            JSON.stringify({ error: { code: 'subscription_sharing_usage_limit_exceeded' } }),
+            { status: 429 },
+          ),
+      );
+      const result = await searchAuthorities(
+        tx,
+        actor,
+        { query: QUERY, answer: true },
+        deps({ previewPlanProvider: provider }),
+      );
+      expect(result.answer).toBeNull();
+      expect(result.answerFailed).toBe(true);
+      expect(result.hits.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('a non-demo workspace never calls the plan provider', async () => {
+    await withTestDb(async (tx) => {
+      const actor = await demoActor(tx, false);
+      const { fetch, provider } = plan(claim);
+      const result = await searchAuthorities(
+        tx,
+        actor,
+        { query: QUERY, answer: true },
+        deps({ previewPlanProvider: provider }),
+      );
+      expect(fetch).not.toHaveBeenCalled();
+      expect(result.answer?.claims.every((c) => c.verified)).toBe(true);
     });
   });
 });

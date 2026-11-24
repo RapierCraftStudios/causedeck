@@ -159,6 +159,24 @@ describe('provider switches', () => {
     expect(() => createEnv({ ...without, NODE_ENV: 'test' })).not.toThrow();
   });
 
+  it('AI_PROVIDER=chatgpt-plan (#1165) needs its token file and model; the client id is oaiapp_', () => {
+    const error = envError({ NODE_ENV: 'test', AI_PROVIDER: 'chatgpt-plan' });
+    expect((error as EnvValidationError).keys).toEqual([
+      'CHATGPT_PLAN_TOKEN_FILE',
+      'CHATGPT_PLAN_MODEL',
+    ]);
+    const plan = {
+      NODE_ENV: 'test',
+      AI_PROVIDER: 'chatgpt-plan',
+      CHATGPT_PLAN_TOKEN_FILE: '/tmp/plan.json',
+      CHATGPT_PLAN_MODEL: 'gpt-test',
+    };
+    expect(() => createEnv(plan)).not.toThrow();
+    expect(() => createEnv({ ...plan, CHATGPT_PLAN_CLIENT_ID: 'oaiapp_abc' })).not.toThrow();
+    const bad = envError({ ...plan, CHATGPT_PLAN_CLIENT_ID: 'dynamic_agent_client' });
+    expect((bad as EnvValidationError).keys).toEqual(['CHATGPT_PLAN_CLIENT_ID']);
+  });
+
   it('CITATION_RESOLVER (#1136): defaults to the in-process corpus; mock and indian-kanoon stay', () => {
     expect(createEnv({ NODE_ENV: 'test' }).CITATION_RESOLVER).toBe('corpus');
     expect(createEnv({ NODE_ENV: 'test', CITATION_RESOLVER: 'corpus' }).CITATION_RESOLVER).toBe(

@@ -7,9 +7,20 @@
 // per new question against the plan's cap (idempotent on `requestId`); audited as `copilot.asked`
 // with hashes and source ids only. A failing model call throws: no answer is invented. A demo
 // workspace calls no model: its answer is extractive (the best-matching sentences of the sources).
+// Preview exception (#1165): when the preview-only `chatgpt-plan` provider is configured, a demo
+// workspace (`is_demo` and a demo slug) asks it instead, through a gateway that carries only that
+// provider; its claims are verified the same way (D-004). The plan's usage limit becomes
+// RATE_LIMITED and an unavailable plan a client-safe CONFLICT; nothing is counted then. A real
+// workspace never reaches the plan provider.
 import { createHash, randomUUID } from 'node:crypto';
 
-import type { AiGateway, EmbedGateway, RerankGateway } from '@causedeck/ai';
+import {
+  AiGatewayError,
+  type AiGateway,
+  type EmbedGateway,
+  type Provider,
+  type RerankGateway,
+} from '@causedeck/ai';
 import { isRole } from '@causedeck/auth';
 import { currentScope, isUuid, withWorkspace, type Queryable } from '@causedeck/db';
 import {
@@ -21,12 +32,16 @@ import {
   type MatterAnswerResolver,
 } from '@causedeck/intelligence';
 
-import { createCoreAiGateway } from '../ai/index.ts';
+import {
+  createCoreAiGateway,
+  isPreviewPlanWorkspace,
+  previewPlanProviderFromEnv,
+} from '../ai/index.ts';
 import { record } from '../audit/index.ts';
 import { getWorkspaceEntitlements } from '../billing/index.ts';
 import type { GraphEvents } from '../matter-graph/index.ts';
 import { isDemoWorkspace } from '../shared/demo-guard.ts';
-import { forbidden, invalid, rateLimited } from '../shared/errors.ts';
+import { conflict, forbidden, invalid, rateLimited } from '../shared/errors.ts';
 import { getUsage, increment, usagePeriod, type UsageContext } from '../usage/index.ts';
 import { memberRole } from '../workspaces/index.ts';
 
@@ -63,6 +78,25 @@ export interface CopilotDeps {
   rerank?: RerankGateway;
   events?: GraphEvents;
   now?: () => Date;
+  /**
+   * The preview-only `chatgpt-plan` provider (#1165); defaults to `previewPlanProviderFromEnv()`,
+   * read only for a demo workspace. Null: demo workspaces answer extractively.
+   */
+  previewPlanProvider?: Provider | null;
+}
+
+/** Shown when the preview plan's usage limit is reached (#1165). */
+export const PLAN_LIMIT_MESSAGE = 'The preview AI plan limit is reached. Try again later.';
+/** Shown when the preview plan cannot answer right now (#1165). */
+export const PLAN_UNAVAILABLE_MESSAGE = 'The preview AI is unavailable right now. Try again later.';
+
+/** Client-safe errors for the preview plan's limit and availability; anything else is rethrown. */
+function planError(error: unknown): unknown {
+  if (error instanceof AiGatewayError) {
+    if (error.code === 'PLAN_LIMIT_REACHED') return rateLimited(PLAN_LIMIT_MESSAGE);
+    if (error.code === 'PLAN_UNAVAILABLE') return conflict(PLAN_UNAVAILABLE_MESSAGE);
+  }
+  return error;
 }
 
 export interface CopilotUsage {
@@ -167,15 +201,24 @@ export async function askCopilot(
 
     // A demo workspace makes no AI call and spends nothing (#93, the gateway refuses it): it answers
     // extractively from the same sources, verified the same way, so the demo journey still works.
+    // With the preview plan provider configured (#1165), a preview-plan demo workspace asks it.
     const demo = await withWorkspace(db, { workspaceId: actor.workspaceId }, (tx) =>
       isDemoWorkspace(tx, actor.workspaceId),
     );
+    const plan =
+      demo && deps.answer === undefined
+        ? deps.previewPlanProvider === undefined
+          ? previewPlanProviderFromEnv()
+          : deps.previewPlanProvider
+        : null;
+    const viaPlan = plan !== null && (await isPreviewPlanWorkspace(db, actor.workspaceId));
+    const now = deps.now === undefined ? {} : { now: deps.now };
     const resolve =
       deps.answer ??
-      (demo ? createExtractiveMatterAnswerResolver() : undefined) ??
+      (demo && !viaPlan ? createExtractiveMatterAnswerResolver() : undefined) ??
       createGatewayMatterAnswerResolver({
         gateway:
-          deps.gateway ?? createCoreAiGateway(db, deps.now === undefined ? {} : { now: deps.now }),
+          deps.gateway ?? createCoreAiGateway(db, viaPlan ? { ...now, providers: [plan] } : now),
         scope: {
           workspaceId: actor.workspaceId,
           userId: actor.userId,
@@ -184,7 +227,11 @@ export async function askCopilot(
           idempotencyKey: `copilot:${requestId}`,
         },
       });
-    const answer = await answerMatterQuestion(question, sources, resolve);
+    const answer = await answerMatterQuestion(question, sources, resolve).catch(
+      (error: unknown) => {
+        throw planError(error);
+      },
+    );
 
     await increment(ctx, COPILOT_QUESTION_KEY, 1, {
       idempotencyKey: `copilot-question:${requestId}`,

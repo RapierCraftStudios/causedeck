@@ -1,14 +1,28 @@
 // India-only enforcement (ADR 0007, docs/product/09 §8). With India-only on, a task whose primary
 // provider is outside India raises, and failover only ever lands on in-region providers: the
 // gateway never routes outside India silently.
+//
+// Preview-only exception (#1165): the `chatgpt-plan` provider is never in-region. It is allowed only
+// when the caller's policy sets `previewPlanProvider` (core sets it for a demo workspace while
+// AI_PROVIDER=chatgpt-plan and ALLOW_PREVIEW_PLAN_PROVIDER=true). Any other workspace raises
+// `ResidencyViolationError` on a plan primary, whatever India-only says: real client data never
+// reaches it.
 import { ResidencyViolationError } from '../errors.ts';
-import type { Provider, TaskDef } from '../types.ts';
+import type { Provider, ProviderId, TaskDef } from '../types.ts';
 
 /** The AWS regions in India (Mumbai, Hyderabad). */
 export const INDIA_REGIONS: readonly string[] = ['ap-south-1', 'ap-south-2'];
 
+/** The preview-only Sign in with ChatGPT plan provider (demo workspaces only). */
+export const PREVIEW_PLAN_PROVIDER_ID: ProviderId = 'chatgpt-plan';
+
 export function isIndiaRegion(region: string): boolean {
   return INDIA_REGIONS.includes(region);
+}
+
+export interface AllowedChainOptions {
+  /** True only for a demo workspace with the preview plan provider configured. */
+  previewPlanProvider?: boolean;
 }
 
 /**
@@ -19,7 +33,35 @@ export function allowedChain(
   task: TaskDef,
   chain: readonly Provider[],
   indiaOnly: boolean,
+  opts: AllowedChainOptions = {},
 ): Provider[] {
+  const isPlan = (p: Provider): boolean => p.id === PREVIEW_PLAN_PROVIDER_ID;
+  const primary = chain[0];
+  if (opts.previewPlanProvider !== true) {
+    if (primary !== undefined && isPlan(primary)) {
+      throw new ResidencyViolationError(task.id, primary.id);
+    }
+    return indiaOnlyChain(
+      task,
+      chain.filter((p) => !isPlan(p)),
+      indiaOnly,
+    );
+  }
+  if (primary !== undefined && isPlan(primary)) {
+    // The plan provider leads: keep it, then whatever the India-only rule keeps of the rest.
+    const rest = chain.slice(1).filter((p) => !isPlan(p));
+    return [primary, ...(indiaOnly ? rest.filter((p) => p.dataResidency === 'in') : rest)];
+  }
+  const kept = indiaOnlyChain(
+    task,
+    chain.filter((p) => !isPlan(p)),
+    indiaOnly,
+  );
+  const plan = chain.filter(isPlan);
+  return [...kept, ...plan];
+}
+
+function indiaOnlyChain(task: TaskDef, chain: readonly Provider[], indiaOnly: boolean): Provider[] {
   if (!indiaOnly) return [...chain];
   const primary = chain[0];
   if (primary !== undefined && primary.dataResidency !== 'in') {

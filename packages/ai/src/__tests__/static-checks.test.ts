@@ -20,7 +20,14 @@ const stripComments = (source: string): string =>
 describe('provider adapters', () => {
   it('finds the adapters', () => {
     expect(files).toEqual(
-      expect.arrayContaining(['bedrock.ts', 'chatgpt-plan.ts', 'mock.ts', 'sarvam.ts']),
+      expect.arrayContaining([
+        'bedrock.ts',
+        'chatgpt-plan.ts',
+        'chatgpt-plan-login.ts',
+        'chatgpt-plan-token.ts',
+        'mock.ts',
+        'sarvam.ts',
+      ]),
     );
   });
 

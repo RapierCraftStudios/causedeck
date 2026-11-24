@@ -301,3 +301,64 @@ describe('performance', () => {
     expect(performance.now() - t).toBeLessThan(5);
   });
 });
+
+describe('preview plan provider (#1165)', () => {
+  const question = {
+    question: 'surgery without informed consent',
+    sources: [{ id: 'doc:d1:2', text: 'The surgery was done without informed consent.' }],
+  };
+  const reply = {
+    claims: [
+      {
+        statement: 'No consent was taken.',
+        sourceId: 'doc:d1:2',
+        quote: 'The surgery was done without informed consent.',
+      },
+    ],
+  };
+  const plan = (): Provider =>
+    fake({
+      id: 'chatgpt-plan',
+      region: 'openai',
+      dataResidency: 'other',
+      supports: ['answer_matter_question'],
+      modelFor: () => 'gpt-plan-test',
+      call: () =>
+        Promise.resolve({
+          output: reply,
+          usage: { inputTokens: 900, outputTokens: 80 },
+          model: 'gpt-plan-test',
+        }),
+    });
+
+  it.each([true, false])(
+    'a non-demo workspace raises ResidencyViolationError and never calls the plan (indiaOnly %s)',
+    async (indiaOnly) => {
+      const h = harness({ indiaOnly });
+      const provider = plan();
+      const spy = vi.spyOn(provider, 'call');
+      const gateway = createGateway({ providers: [provider], ports: h.ports });
+      await expect(gateway.run('answer_matter_question', question, ctx)).rejects.toBeInstanceOf(
+        ResidencyViolationError,
+      );
+      expect(spy).not.toHaveBeenCalled();
+      expect(h.audit[0]).toMatchObject({ status: 'residency_violation', provider: 'none' });
+    },
+  );
+
+  it('a demo workspace with the flag audits provider chatgpt-plan and the model, no input text', async () => {
+    const h = harness({ previewPlanProvider: true });
+    const gateway = createGateway({ providers: [plan()], ports: h.ports });
+    const result = await gateway.run('answer_matter_question', question, ctx);
+    expect(result.output).toEqual(reply);
+    expect(h.audit[0]).toMatchObject({
+      provider: 'chatgpt-plan',
+      model: 'gpt-plan-test',
+      status: 'ok',
+      costPaise: 0,
+    });
+    const row = JSON.stringify(h.audit[0]);
+    expect(row).not.toContain('informed consent');
+    expect(row).not.toContain('surgery');
+  });
+});

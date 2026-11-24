@@ -49,6 +49,14 @@ describe('pricing (paise)', () => {
     expect(costPaise('bedrock', 'haiku', { inputTokens: 1, outputTokens: 0 })).toBe(1);
   });
 
+  it('prices the preview chatgpt-plan provider at zero for any model (#1165)', () => {
+    for (const model of ['gpt-5', 'gpt-test', 'sonnet']) {
+      expect(costPaise('chatgpt-plan', model, { inputTokens: 50_000, outputTokens: 9_000 })).toBe(
+        0,
+      );
+    }
+  });
+
   it('always yields an estimate: output cap plus input size, pages and seconds', () => {
     const usage = estimateUsage(getTask('ocr'), {
       contentBase64: 'AAAA',

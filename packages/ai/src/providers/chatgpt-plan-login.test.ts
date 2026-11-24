@@ -65,7 +65,7 @@ describe('authorize URL', () => {
 
 describe('PKCE', () => {
   it('matches the RFC 7636 appendix B vector', () => {
-    expect(createPkce('dBjftJeZ4CVP-mB92K27uhbUJU1p1r-wW1gFWFOEjXk').challenge).toBe(
+    expect(createPkce('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk').challenge).toBe(
       'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
     );
   });
@@ -111,7 +111,7 @@ describe('callback', () => {
 
 describe('code exchange', () => {
   it('posts the authorization_code form body', async () => {
-    const f = vi.fn((_u: string | URL | Request, _i?: RequestInit) =>
+    const f = vi.fn<typeof fetch>(() =>
       Promise.resolve(
         new Response(
           JSON.stringify({
@@ -139,7 +139,7 @@ describe('code exchange', () => {
     });
     const [url, init] = f.mock.calls[0] ?? [];
     expect(url).toBe('https://auth.openai.com/api/accounts/oauth/token');
-    expect(Object.fromEntries(new URLSearchParams(String(init?.body)))).toEqual({
+    expect(Object.fromEntries(new URLSearchParams(init?.body as string))).toEqual({
       grant_type: 'authorization_code',
       client_id: 'oaiapp_x',
       code: 'the-code',
@@ -183,8 +183,8 @@ describe('id token verification', () => {
     const sig = sign('RSA-SHA256', Buffer.from(`${head}.${body}`), key).toString('base64url');
     return `${head}.${body}.${sig}`;
   }
-  const f = vi.fn((url: string | URL | Request) => {
-    const u = String(url);
+  const f = vi.fn<typeof fetch>((url) => {
+    const u = url instanceof Request ? url.url : url.toString();
     if (u === CHATGPT_PLAN_OPENID_CONFIGURATION) {
       return Promise.resolve(
         new Response(JSON.stringify({ issuer: ISSUER, jwks_uri: `${ISSUER}/jwks.json` })),

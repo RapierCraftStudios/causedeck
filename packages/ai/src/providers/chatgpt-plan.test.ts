@@ -80,7 +80,7 @@ function tokens(): ChatgptPlanTokenSource & { refreshed: number } {
 type Reply = Response | (() => Response);
 
 function fetchMock(...replies: Reply[]) {
-  return vi.fn((_url: string | URL | Request, _init?: RequestInit): Promise<Response> => {
+  return vi.fn<typeof fetch>((): Promise<Response> => {
     const next = replies.shift();
     if (next === undefined) return Promise.reject(new Error('unexpected fetch'));
     return Promise.resolve(typeof next === 'function' ? next() : next);
@@ -113,7 +113,7 @@ describe('chatgpt-plan request', () => {
     const f = fetchMock(ok(completed('{}')));
     const provider = createChatgptPlanProvider({ model: 'gpt-test', tokens: tokens(), fetch: f });
     await provider.call(getTask('answer_research_query'), researchInput, { suspicious: false });
-    const body = JSON.parse(String(f.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
+    const body = JSON.parse(f.mock.calls[0]?.[1]?.body as string) as Record<string, unknown>;
     expect(Object.keys(body).sort()).toEqual(
       ['input', 'instructions', 'model', 'store', 'stream', 'text'].sort(),
     );
@@ -221,7 +221,9 @@ describe('chatgpt-plan errors', () => {
       json(429, { error: { code: 'subscription_sharing_usage_limit_exceeded', message: 'x' } }),
     );
     const provider = createChatgptPlanProvider({ model: 'm', tokens: tokens(), fetch: f });
-    const error = await provider.call(task, matterInput, { suspicious: false }).catch((e) => e);
+    const error = await provider
+      .call(task, matterInput, { suspicious: false })
+      .catch((e: unknown) => e);
     expect(error).toBeInstanceOf(PlanLimitReachedError);
     expect((error as PlanLimitReachedError).code).toBe('PLAN_LIMIT_REACHED');
     expect(f).toHaveBeenCalledTimes(1);
@@ -298,7 +300,6 @@ describe('chatgpt-plan errors', () => {
 describe('chatgpt-plan through the gateway', () => {
   it('returns the parsed model answer for answer_matter_question', async () => {
     const answer = {
-      answer: 'The surgery was done without informed consent.',
       claims: [
         {
           statement: 'No informed consent was taken.',
@@ -324,7 +325,6 @@ describe('chatgpt-plan through the gateway', () => {
 
   it('returns the parsed model answer for answer_research_query', async () => {
     const answer = {
-      answer: 'Surgery without informed consent was held negligent.',
       claims: [
         {
           statement: 'Consent was not taken.',
@@ -345,15 +345,17 @@ describe('chatgpt-plan through the gateway', () => {
   });
 
   it('surfaces the plan limit as PlanLimitReachedError, never an answer', async () => {
-    const f = fetchMock(json(429, { error: { code: 'subscription_sharing_usage_limit_exceeded' } }));
+    const f = fetchMock(
+      json(429, { error: { code: 'subscription_sharing_usage_limit_exceeded' } }),
+    );
     const h = harness({ previewPlanProvider: true });
     const gateway = createGateway({
       providers: [createChatgptPlanProvider({ model: 'gpt-test', tokens: tokens(), fetch: f })],
       ports: h.ports,
     });
-    await expect(
-      gateway.run('answer_matter_question', matterInput, ctx),
-    ).rejects.toBeInstanceOf(PlanLimitReachedError);
+    await expect(gateway.run('answer_matter_question', matterInput, ctx)).rejects.toBeInstanceOf(
+      PlanLimitReachedError,
+    );
     expect(h.audit[0]).toMatchObject({ status: 'error', errorCode: 'PLAN_LIMIT_REACHED' });
   });
 });

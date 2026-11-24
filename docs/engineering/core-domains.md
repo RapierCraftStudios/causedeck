@@ -372,7 +372,7 @@ graph LR
 | `review` | `audit` |
 | `data-ops` | `review` |
 | `citations`    | `statutes`                                                                                                                                                                                                                                                                    |
-| `research`     | `workspaces`, `citations`, `audit`, `billing`, `usage`, `ai`                                                                                                                                                                                                                  |
+| `research`     | `workspaces`, `citations`, `audit`, `billing`, `usage`, `ai`, `statutes`                                                                                                                                                                                                                |
 | `statutes`     | `workspaces`, `audit` |
 | `drafting`     | `workspaces`, `matter-graph`, `audit`, `ai`, `citations`, `copilot` |
 | `corpus`       | `audit`, `network` |

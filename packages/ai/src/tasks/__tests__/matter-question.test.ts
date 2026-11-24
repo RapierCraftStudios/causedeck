@@ -47,4 +47,58 @@ describe('answer_matter_question', () => {
     expect(input.sources[0]?.text).toContain(claims[0]?.quote ?? '#');
     expect((await mock.call(task, input, { suspicious: false })).output).toEqual(output);
   });
+
+  it('v2 output takes an optional written answer of at most 2000 characters (#1167)', () => {
+    expect(task.promptId).toBe('answer_matter_question.v2');
+    const claims = [{ statement: 'S', sourceId: 'fact:next_date', quote: 'Next date' }];
+    expect(task.output.safeParse({ claims }).success).toBe(true);
+    expect(task.output.safeParse({ claims, answer: 'The next date is set [1].' }).success).toBe(
+      true,
+    );
+    expect(task.output.safeParse({ claims, answer: 'x'.repeat(2001) }).success).toBe(false);
+    expect(task.output.safeParse({ claims, answer: 3 }).success).toBe(false);
+  });
+
+  it('the mock answers a next-date question from the matter facts with [n] markers', async () => {
+    const facts = {
+      question: 'What is the next date and what should I prepare?',
+      sources: [
+        { id: 'fact:matter', text: 'Matter: Rao v State. Status: open.' },
+        { id: 'fact:next_date', text: 'Next date: 2026-11-10. Stage: Arguments.' },
+        { id: 'fact:obligations', text: 'Open obligations: 1.' },
+        {
+          id: 'fact:obligation:o1',
+          text: 'Open obligation (due later, 2026-11-09): File the reply.',
+        },
+        { id: 'fact:stage', text: 'Stage: Arguments.' },
+      ],
+    };
+    const { output } = await mock.call(task, facts, { suspicious: false });
+    expect(task.output.safeParse(output).success).toBe(true);
+    const reply = output as { claims: { sourceId: string; quote: string }[]; answer: string };
+    expect(reply.claims.map((c) => c.sourceId)).toEqual([
+      'fact:next_date',
+      'fact:stage',
+      'fact:obligations',
+      'fact:obligation:o1',
+    ]);
+    for (const c of reply.claims) {
+      expect(facts.sources.find((s) => s.id === c.sourceId)?.text).toContain(c.quote);
+    }
+    expect(reply.answer).toContain('Next date: 2026-11-10. Stage: Arguments. [1]');
+    expect(reply.answer).toContain('[4]');
+    expect(reply.answer).not.toContain('[5]');
+  });
+
+  it('the mock does not claim matter facts for a question without matter intent', async () => {
+    const { output } = await mock.call(
+      task,
+      {
+        question: 'Is the dueling clause valid?',
+        sources: [{ id: 'fact:next_date', text: 'Next date: 2026-11-10.' }],
+      },
+      { suspicious: false },
+    );
+    expect(output).toEqual({ claims: [] });
+  });
 });

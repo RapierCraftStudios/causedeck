@@ -157,10 +157,12 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   ]),
   // The grounded matter copilot (#1115): roles through workspaces, matter facts through the
   // matter-graph index, the corpus arm through research, `copilot.asked` through audit, the Junior cap
-  // through billing and usage, and the workspace-scope gateway through ai.
+  // through billing and usage, and the workspace-scope gateway through ai. Per-obligation facts
+  // (#1167) through the obligations index (`queryQueue`, as the actor).
   copilot: Object.freeze([
     'workspaces',
     'matter-graph',
+    'obligations',
     'research',
     'citations',
     'audit',

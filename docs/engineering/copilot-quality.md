@@ -17,7 +17,7 @@ no cross-tenant, flag or i18n registry changes with it.
 |---|---|
 | `corpus.json` | Synthetic judgments and their segments (page and text). |
 | `queries.json` | Queries with graded relevant judgments (0-3). |
-| `answers.json` | Scripted replies of `answer_research_query` (`/research`, `answerQuery`) and `answer_matter_question` (the matter copilot, `answerMatterQuestion`), with one expected outcome per claim: `verified`, optional `reason` (`unknown_source` or `quote_not_found`) and optional computed `pinpoint` (`page`, `paragraph`). Good claims sit next to adversarial ones: altered quotes, altered numbers, foreign or unknown source ids, empty quotes and wrong model-claimed pinpoints. |
+| `answers.json` | Scripted replies of `answer_research_query` (`/research`, `answerQuery`) and `answer_matter_question` (the matter copilot, `answerMatterQuestion`), with one expected outcome per claim: `verified`, optional `reason` (`unknown_source` or `quote_not_found`) and optional computed `pinpoint` (`page`, `paragraph`). Good claims sit next to adversarial ones: altered quotes, altered numbers, foreign or unknown source ids, empty quotes and wrong model-claimed pinpoints. A copilot reply may also carry an optional written `answer` with `[n]` markers (#1167); the gate scores the claims only. |
 | `manifest.json` | sha256 of `corpus.json`, `queries.json` and `answers.json`. A drifted file fails the run. |
 | `baseline.json` | The committed value of every gated metric. |
 | `thresholds.json` | Per-metric tolerance and direction (`higher-is-better` or `lower-is-better`). |

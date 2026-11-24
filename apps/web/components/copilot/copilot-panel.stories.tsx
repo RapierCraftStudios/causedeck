@@ -8,6 +8,7 @@ const base = {
   claims: [],
   unsupported: [],
   answerText: '',
+  answer: '',
   noAuthority: false,
   judgments: {},
   aiBlocked: false,
@@ -31,6 +32,7 @@ export const Verified: Story = {
     initialAnswer: {
       ...base,
       answerText: 'Consent must be informed.',
+      answer: 'Consent must be informed. [1]',
       claims: [
         {
           statement: 'Consent must be informed.',

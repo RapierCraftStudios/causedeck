@@ -59,6 +59,65 @@ function answer(input: { query: string; segments: { id: string; text: string }[]
   return { claims };
 }
 
+/**
+ * A question about the matter's own calendar and work (next date, hearing, what to prepare, what is
+ * pending or due, the stage, obligations). `createExtractiveMatterAnswerResolver` in
+ * `@causedeck/intelligence` uses the same pattern (#1167).
+ */
+const MATTER_INTENT =
+  /\b(?:next\s+dates?|hearings?|prepare|preparation|obligations?|pending|stages?|due)\b/i;
+
+/** The matter facts a matter-intent question is answered from, in the order they are claimed. */
+const intentRank = (id: string): number => {
+  if (id === 'fact:next_date') return 0;
+  if (id === 'fact:stage') return 1;
+  if (id === 'fact:obligations') return 2;
+  return id.startsWith('fact:obligation:') ? 3 : -1;
+};
+
+/**
+ * The copilot reply (#1115, #1167): on a matter-intent question the next-date, stage and obligation
+ * facts first, each quoted whole; then the best sentence of the first sources sharing a word with
+ * the question; and a written answer citing each claim by its `[n]` marker.
+ */
+function answerMatter(input: {
+  question: string;
+  sources: { id: string; text: string }[];
+}): unknown {
+  const facts = MATTER_INTENT.test(input.question)
+    ? input.sources
+        .filter((s) => intentRank(s.id) >= 0 && s.text.trim() !== '')
+        .sort((a, b) => intentRank(a.id) - intentRank(b.id))
+        .map((s) => {
+          const quote = s.text.trim().slice(0, 500);
+          return { statement: quote, sourceId: s.id, quote };
+        })
+    : [];
+  const claimed = new Set(facts.map((f) => f.sourceId));
+  // Only sources sharing a word with the question, so the facts listed first do not crowd out the
+  // matching document pages and passages.
+  const terms = new Set(wordsOf(input.question).filter((w) => w.length > 3 && !STOP.has(w)));
+  const matching = input.sources.filter(
+    (s) => !claimed.has(s.id) && wordsOf(s.text).some((w) => terms.has(w)),
+  );
+  const reply = answer({ query: input.question, segments: matching }) as {
+    claims: { statement: string; segmentId: string; quote: string }[];
+  };
+  const claims = [
+    ...facts,
+    ...reply.claims.map((c) => ({ statement: c.statement, sourceId: c.segmentId, quote: c.quote })),
+  ].slice(0, 12);
+  if (claims.length === 0) return { claims };
+  // Whole cited statements only, within the task's 2000-character answer.
+  let written = '';
+  for (const [i, c] of claims.entries()) {
+    const part = `${written === '' ? '' : ' '}${c.statement} [${String(i + 1)}]`;
+    if (written.length + part.length > 2000) break;
+    written += part;
+  }
+  return { claims, answer: written };
+}
+
 /** A deterministic reply for `task`, or undefined when the mock has none (it then synthesises). */
 export function mockResponse(task: TaskDef, input: unknown): unknown {
   if (
@@ -72,24 +131,9 @@ export function mockResponse(task: TaskDef, input: unknown): unknown {
   if (!parsed.success) return undefined;
   if (task.id === 'plan_research_query') return plan(parsed.data as { query: string });
   if (task.id === 'answer_matter_question') {
-    const { question, sources } = parsed.data as {
-      question: string;
-      sources: { id: string; text: string }[];
-    };
-    // Only sources sharing a word with the question, so the facts listed first do not crowd out the
-    // matching document pages and passages.
-    const terms = new Set(wordsOf(question).filter((w) => w.length > 3 && !STOP.has(w)));
-    const matching = sources.filter((s) => wordsOf(s.text).some((w) => terms.has(w)));
-    const reply = answer({ query: question, segments: matching }) as {
-      claims: { statement: string; segmentId: string; quote: string }[];
-    };
-    return {
-      claims: reply.claims.map((c) => ({
-        statement: c.statement,
-        sourceId: c.segmentId,
-        quote: c.quote,
-      })),
-    };
+    return answerMatter(
+      parsed.data as { question: string; sources: { id: string; text: string }[] },
+    );
   }
   return answer(parsed.data as { query: string; segments: { id: string; text: string }[] });
 }

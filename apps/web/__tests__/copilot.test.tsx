@@ -90,6 +90,7 @@ const ANSWER: CopilotAnswer = {
     },
   ],
   answerText: 'Consent was never obtained.',
+  answer: 'Consent was never obtained. [1]',
   noAuthority: false,
   judgments: {
     j1: {

@@ -115,6 +115,7 @@ export function groupByJudgment(
         outcome: c.outcome,
         citedByCount: c.citedByCount,
         sourceUrl: c.sourceUrl,
+        benchStrength: c.benchStrength ?? null,
         score,
         segments: [],
       };

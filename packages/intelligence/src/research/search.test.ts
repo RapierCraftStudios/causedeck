@@ -4,6 +4,8 @@ import {
   createMockRerankProvider,
   createRerankGateway,
 } from '@causedeck/ai';
+import { sql } from 'drizzle-orm';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { answerQuery } from './answer.ts';
@@ -141,6 +143,21 @@ describe('plan', () => {
     expect(planFilters(plan)).toHaveLength(2 + 1 + 1 + 4 + 1 + 1 + 1);
     expect(planFilters(heuristicPlan('x'))).toHaveLength(2);
   });
+
+  it('a bench range narrows by the number of justices; no bench fields add no filter (#1174)', () => {
+    const render = (filters: ReturnType<typeof planFilters>) =>
+      new PgDialect().sqlToQuery(sql.join(filters, sql` and `));
+    const base = heuristicPlan('x');
+    expect(base).toMatchObject({ benchMin: null, benchMax: null });
+    const { benchMin: _min, benchMax: _max, ...legacy } = base;
+    expect(planFilters(legacy)).toHaveLength(2);
+    const ranged = render(planFilters({ ...base, benchMin: 3, benchMax: 5 }));
+    expect(ranged.sql).toContain('cardinality(j.bench) >= $1');
+    expect(ranged.sql).toContain('cardinality(j.bench) between 1 and $2');
+    expect(ranged.params).toEqual([3, 5]);
+    expect(planFilters({ ...base, benchMin: 2 })).toHaveLength(3);
+    expect(planFilters({ ...base, benchMax: 1 })).toHaveLength(3);
+  });
 });
 
 describe('fusion', () => {
@@ -201,6 +218,14 @@ describe('fusion', () => {
     expect(hits).toHaveLength(RESULT_JUDGMENTS);
     expect(hits.every((h) => h.segments.length === 3)).toBe(true);
     expect(hits[0]?.judgmentId).toBe('J0');
+  });
+
+  it('carries bench strength onto the hit, null when the retriever had none (#1174)', () => {
+    const hits = groupByJudgment([
+      { ...candidate('a', 'J1', 'x', { benchStrength: 3 }), fusedScore: 1, rerankScore: null },
+      { ...candidate('b', 'J2'), fusedScore: 0.5, rerankScore: null },
+    ]);
+    expect(hits.map((h) => h.benchStrength)).toEqual([3, null]);
   });
 });
 
@@ -338,6 +363,20 @@ describe('validatePlan', () => {
     expect(validatePlan({ ...plan, dateFrom: '2024-01-01', dateTo: '2020-01-01' })).toBeNull();
     expect(validatePlan({ ...plan, query: '' })).toBeNull();
     expect(validatePlan('x')).toBeNull();
+  });
+
+  it('accepts a stored plan without bench fields and checks a bench range (#1174)', () => {
+    const { benchMin: _min, benchMax: _max, ...legacy } = heuristicPlan('bail');
+    expect(validatePlan(legacy)).toMatchObject({ benchMin: null, benchMax: null });
+    const plan = heuristicPlan('bail');
+    expect(validatePlan({ ...plan, benchMin: 3, benchMax: 5 })).toMatchObject({
+      benchMin: 3,
+      benchMax: 5,
+    });
+    expect(validatePlan({ ...plan, benchMin: 5, benchMax: 3 })).toBeNull();
+    expect(validatePlan({ ...plan, benchMin: 0 })).toBeNull();
+    expect(validatePlan({ ...plan, benchMax: 16 })).toBeNull();
+    expect(validatePlan({ ...plan, benchMin: 2.5 })).toBeNull();
   });
 
   it('canonicalises statutes the advocate typed', () => {

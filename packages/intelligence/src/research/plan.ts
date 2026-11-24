@@ -174,6 +174,8 @@ export function heuristicPlan(query: string): ResearchPlan {
     dateTo: null,
     outcome: null,
     offenceDate: null,
+    benchMin: null,
+    benchMax: null,
     planner: 'heuristic',
   };
 }
@@ -313,6 +315,9 @@ export function expandedStatutes(plan: ResearchPlan): StatuteSection[] {
   );
 }
 
+/** The largest bench the filter accepts (the Supreme Court's full strength fits well within it). */
+export const MAX_BENCH = 15;
+
 const editedPlanSchema = z.object({
   query: z.string().trim().min(1).max(MAX_QUERY_CHARS),
   factDescription: z.string().trim().max(1500),
@@ -327,6 +332,9 @@ const editedPlanSchema = z.object({
   dateTo: z.string().regex(ISO_DATE).nullable(),
   outcome: z.enum(OUTCOMES).nullable(),
   offenceDate: z.string().regex(ISO_DATE).nullable(),
+  // Optional so plans and shared URLs from before the bench filter keep validating (#1174).
+  benchMin: z.number().int().min(1).max(MAX_BENCH).nullable().default(null),
+  benchMax: z.number().int().min(1).max(MAX_BENCH).nullable().default(null),
   planner: z.enum(['gateway', 'heuristic']),
 });
 
@@ -342,6 +350,7 @@ export function validatePlan(raw: unknown): ResearchPlan | null {
   const dates = [p.dateFrom, p.dateTo, p.offenceDate];
   if (dates.some((d) => d !== null && validDate(d) === null)) return null;
   if (p.dateFrom !== null && p.dateTo !== null && p.dateFrom > p.dateTo) return null;
+  if (p.benchMin !== null && p.benchMax !== null && p.benchMin > p.benchMax) return null;
   return {
     ...p,
     factDescription: p.factDescription === '' ? p.query : p.factDescription,

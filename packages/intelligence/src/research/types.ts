@@ -22,6 +22,12 @@ export interface ResearchPlan {
   outcome: Exclude<OutcomeValue, 'unknown'> | null;
   /** Picks which code of a statute pair governs; shown on the statute chips. */
   offenceDate: string | null;
+  /**
+   * Bench strength range (number of judges on the bench, from the judgment header). Null or absent
+   * means no bench filter; plans stored before the field existed have neither (#1174).
+   */
+  benchMin?: number | null;
+  benchMax?: number | null;
   /** Who produced it: the gateway planner merged over the rules, or the rules alone. */
   planner: 'gateway' | 'heuristic';
 }
@@ -47,6 +53,8 @@ export interface SegmentCandidate {
   outcome: OutcomeValue;
   citedByCount: number;
   sourceUrl: string | null;
+  /** Judges on the bench (`cardinality(judgment.bench)`); null when the header named none (#1174). */
+  benchStrength?: number | null;
 }
 
 /** Candidates of one arm, best first. */
@@ -76,6 +84,12 @@ export interface SearchSegment {
   pageTo: number;
   text: string;
   score: number;
+  /**
+   * `verified` when every page of the segment has text-layer or OCR text in `redacted_text` with a known
+   * source; `page_pending` when a page is missing or came from the plain-text import (`source: 'text'`),
+   * so the page pinpoint is not yet confirmed against the PDF (#1174). Set by the core search service.
+   */
+  pinpoint?: 'verified' | 'page_pending';
 }
 
 export interface SearchHit {
@@ -89,6 +103,8 @@ export interface SearchHit {
   outcome: OutcomeValue;
   citedByCount: number;
   sourceUrl: string | null;
+  /** Judges on the bench; null when unknown (#1174). */
+  benchStrength?: number | null;
   score: number;
   /** The best segments of this judgment (at most three), best first. */
   segments: SearchSegment[];

@@ -43,6 +43,12 @@ export function planFilters(plan: ResearchPlan): SQL[] {
     filters.push(sql`j.judgment_date <= ${plan.dateTo}::date`);
   }
   if (plan.outcome !== null) filters.push(sql`j.outcome = ${plan.outcome}`);
+  // Bench strength is the number of justices the header named; a judgment with none is unknown and
+  // only drops out when a bench filter is set (#1174).
+  if (plan.benchMin != null) filters.push(sql`cardinality(j.bench) >= ${plan.benchMin}`);
+  if (plan.benchMax != null) {
+    filters.push(sql`cardinality(j.bench) between 1 and ${plan.benchMax}`);
+  }
   if (plan.subjectAreas.length > 0) {
     filters.push(sql`exists (
       select 1 from judgment_tag t
@@ -70,6 +76,7 @@ const SELECT = sql`
     j.case_title as title, j.title_masked as "titleMasked",
     j.neutral_citation as "neutralCitation", j.judgment_date::text as "judgmentDate",
     j.outcome as outcome, j.provenance->>'url' as "sourceUrl",
+    nullif(cardinality(j.bench), 0) as "benchStrength",
     (select count(distinct cr.judgment_id)::int from judgment_citation_ref cr
       where cr.cited_judgment_id = j.id) as "citedByCount"
   from judgment_segment s

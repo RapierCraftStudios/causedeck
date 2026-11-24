@@ -83,10 +83,8 @@ describe('getJudgmentForReader', () => {
       const page1 = para2?.pages[0]?.text ?? '';
       expect(para2?.anchor).toMatchObject({ page: 1, para: 2 });
       expect(page1.slice(para2?.anchor?.offset ?? 0)).toMatch(/^2\. The facts/);
-      expect(view?.attribution).toEqual({
-        sourceUrl: expect.stringMatching(/^https:\/\/court\.example\//) as unknown as string,
-        licence: 'CC-BY-4.0',
-      });
+      expect(view?.attribution.sourceUrl).toMatch(/^https:\/\/court\.example\//);
+      expect(view?.attribution.licence).toBe('CC-BY-4.0');
       expect(view?.benchStrength).toBe(2);
       expect(view?.title).toBe('State v. Ravi');
       expect(JSON.stringify(view)).not.toContain(SENTINEL);

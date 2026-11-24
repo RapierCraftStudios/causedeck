@@ -59,7 +59,7 @@ export async function getCorpusCoverage(
       .map((r) => ({
         court: r.court,
         courtLevel: r.courtLevel,
-        judgments: Number(r.judgments),
+        judgments: r.judgments,
         yearFrom: toYear(r.yearFrom),
         yearTo: toYear(r.yearTo),
       }))

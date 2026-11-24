@@ -149,7 +149,9 @@ describe('plan', () => {
       new PgDialect().sqlToQuery(sql.join(filters, sql` and `));
     const base = heuristicPlan('x');
     expect(base).toMatchObject({ benchMin: null, benchMax: null });
-    const { benchMin: _min, benchMax: _max, ...legacy } = base;
+    const legacy: typeof base = { ...base };
+    delete legacy.benchMin;
+    delete legacy.benchMax;
     expect(planFilters(legacy)).toHaveLength(2);
     const ranged = render(planFilters({ ...base, benchMin: 3, benchMax: 5 }));
     expect(ranged.sql).toContain('cardinality(j.bench) >= $1');
@@ -366,7 +368,9 @@ describe('validatePlan', () => {
   });
 
   it('accepts a stored plan without bench fields and checks a bench range (#1174)', () => {
-    const { benchMin: _min, benchMax: _max, ...legacy } = heuristicPlan('bail');
+    const legacy: ReturnType<typeof heuristicPlan> = heuristicPlan('bail');
+    delete legacy.benchMin;
+    delete legacy.benchMax;
     expect(validatePlan(legacy)).toMatchObject({ benchMin: null, benchMax: null });
     const plan = heuristicPlan('bail');
     expect(validatePlan({ ...plan, benchMin: 3, benchMax: 5 })).toMatchObject({

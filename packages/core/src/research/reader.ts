@@ -135,7 +135,7 @@ export async function getJudgmentForReader(
         text: p.text,
         pinpoint: p.source === 'text' ? 'page_pending' : 'verified',
       }));
-    const bench = Number(row.bench);
+    const bench = row.bench;
     return {
       judgmentId: row.id,
       title: row.caseTitle,

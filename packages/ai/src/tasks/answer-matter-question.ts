@@ -7,7 +7,10 @@ import type { TaskDef } from '../types.ts';
 // document) and `seg:` (a passage of an anonymised public judgment). It returns short claims, each
 // pointing at one source id with a verbatim quote from it. No tools. The caller verifies every claim
 // against the stored source text and computes the pinpoint itself (D-004); an empty list is a valid
-// answer ("no authority found").
+// answer ("no authority found"). v2 (#1167) adds an optional written `answer`: plain-language prose
+// citing the claims by 1-based position as `[n]` (or `[n, m]`) markers. The caller keeps only the
+// markers of verified claims and renumbers them; a reply without `answer` (older fixtures and cached
+// results) still parses and gets an answer composed from the verified claims.
 const input = z.object({
   question: z.string().min(1).max(4000),
   sources: z
@@ -26,6 +29,13 @@ const output = z.object({
       }),
     )
     .max(12),
+  answer: z
+    .string()
+    .max(2000)
+    .describe(
+      'A short plain-language answer to the question that cites the claims by their 1-based position as [n] or [n, m] markers.',
+    )
+    .optional(),
 });
 
 export const answerMatterQuestion: TaskDef<z.infer<typeof input>, z.infer<typeof output>> = {
@@ -34,7 +44,7 @@ export const answerMatterQuestion: TaskDef<z.infer<typeof input>, z.infer<typeof
   output,
   providers: ['bedrock'],
   maxOutputTokens: 1400,
-  promptId: 'answer_matter_question.v1',
+  promptId: 'answer_matter_question.v2',
   defaultLevel: 1,
   tier: 'drafting',
 };

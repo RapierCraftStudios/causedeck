@@ -120,7 +120,125 @@ describe('answerMatterQuestion', () => {
   });
 });
 
+describe('answerMatterQuestion: the written answer (#1167)', () => {
+  const written = (answer: string | undefined, claims: unknown[]) => () =>
+    Promise.resolve(answer === undefined ? { claims } : { claims, answer });
+  const ok = (statement: string) => ({ statement, sourceId: 'seg:s1', quote: 'Surgery was done' });
+  const bad = (statement: string) => ({
+    statement,
+    sourceId: 'seg:s1',
+    quote: 'surgery was never done',
+  });
+
+  it('drops the marker of an unverified claim and renumbers the rest to the verified order', async () => {
+    const out = await answerMatterQuestion(
+      'q',
+      sources,
+      written('Surgery happened [1]. Consent was taken [2]. Notice was missing [3].', [
+        ok('A'),
+        bad('B'),
+        { statement: 'C', sourceId: 'doc:d1:3', quote: 'not given notice' },
+      ]),
+    );
+    expect(out.claims.map((c) => c.statement)).toEqual(['A', 'C']);
+    expect(out.answer).toBe('Surgery happened [1]. Consent was taken. Notice was missing [2].');
+    expect(out.answerText).toBe('A C');
+  });
+
+  it('never shows an out-of-range, zero or orphan marker, and keeps verified ones of a list', async () => {
+    const out = await answerMatterQuestion(
+      'q',
+      sources,
+      written('One [1, 2, 9]. Two [0]. Three [7] , four [2,1].', [ok('A'), bad('B')]),
+    );
+    expect(out.answer).toBe('One [1]. Two. Three, four [1].');
+    expect(out.answer).not.toMatch(/\[(?:0|2|7|9)\]/);
+  });
+
+  it('renumbers a comma list and removes duplicates', async () => {
+    const out = await answerMatterQuestion(
+      'q',
+      sources,
+      written('Both [2, 3] and again [3,3].', [bad('A'), ok('B'), ok('C')]),
+    );
+    expect(out.answer).toBe('Both [1, 2] and again [2].');
+  });
+
+  it('composes the answer from the verified statements when none is given or no marker survives', async () => {
+    const none = await answerMatterQuestion('q', sources, written(undefined, [ok('A'), bad('B')]));
+    expect(none.answer).toBe('A [1]');
+    const orphaned = await answerMatterQuestion(
+      'q',
+      sources,
+      written('Only [2] is cited.', [ok('A'), bad('B')]),
+    );
+    expect(orphaned.answer).toBe('A [1]');
+    const blank = await answerMatterQuestion('q', sources, written('   ', [ok('A'), ok('B')]));
+    expect(blank.answer).toBe('A [1] B [2]');
+  });
+
+  it('is an empty answer when no claim verified, whatever the model wrote', async () => {
+    const out = await answerMatterQuestion(
+      'q',
+      sources,
+      written('Consent was taken [1].', [bad('B')]),
+    );
+    expect(out.claims).toEqual([]);
+    expect(out.answer).toBe('');
+    expect(out.answerText).toBe('');
+    const empty = await answerMatterQuestion('q', sources, written('Nothing [1].', []));
+    expect(empty).toMatchObject({ noAuthority: true, answer: '' });
+    expect((await answerMatterQuestion('q', [], written('x', []))).answer).toBe('');
+  });
+});
+
 describe('createExtractiveMatterAnswerResolver', () => {
+  const matterFacts: CopilotSource[] = [
+    { id: 'fact:matter', text: 'Matter: Rao v State. Status: open.', page: null },
+    { id: 'fact:obligation:o1', text: 'Open obligation (overdue, 2026-10-20): File the counter.', page: null },
+    { id: 'fact:obligations', text: 'Open obligations: 1.', page: null },
+    { id: 'fact:stage', text: 'Stage: Arguments.', page: null },
+    { id: 'fact:next_date', text: 'Next date: 2026-11-10. Stage: Arguments.', page: null },
+    ...sources.slice(1),
+  ];
+
+  it('answers a next-date question from the date, stage and obligation facts first, with markers', async () => {
+    const answer = await answerMatterQuestion(
+      'What is the next date and what should I prepare?',
+      matterFacts,
+      createExtractiveMatterAnswerResolver(),
+    );
+    expect(answer.unsupported).toEqual([]);
+    expect(answer.claims.map((c) => c.sourceId)).toEqual([
+      'fact:next_date',
+      'fact:stage',
+      'fact:obligations',
+      'fact:obligation:o1',
+    ]);
+    expect(answer.answer).toBe(
+      'Next date: 2026-11-10. Stage: Arguments. [1] Stage: Arguments. [2] Open obligations: 1. [3] ' +
+        'Open obligation (overdue, 2026-10-20): File the counter. [4]',
+    );
+  });
+
+  it('does not treat a question without matter intent as one (negative examples)', async () => {
+    for (const question of [
+      'Was notice given to the appellant before the order?',
+      'Is the dueling clause valid?',
+      'What did the staged accident show?',
+      'Preparedness of the hospital',
+    ]) {
+      const answer = await answerMatterQuestion(
+        question,
+        matterFacts,
+        createExtractiveMatterAnswerResolver(),
+      );
+      expect(answer.claims.map((c) => c.sourceId).filter((id) => id !== 'fact:matter')).not.toContain(
+        'fact:next_date',
+      );
+    }
+  });
+
   it('quotes the best-matching sentences, all verified, with server pinpoints', async () => {
     const answer = await answerMatterQuestion(
       'Was notice given to the appellant before the order?',
@@ -134,6 +252,7 @@ describe('createExtractiveMatterAnswerResolver', () => {
       pinpoint: { page: 3, paragraph: 12 },
     });
     expect(answer.claims.map((c) => c.sourceId)).not.toContain('seg:s1');
+    expect(answer.answer).toMatch(/^The appellant was not given notice before the order\. \[1\]/);
   });
 
   it('claims nothing when no sentence shares a word with the question', async () => {

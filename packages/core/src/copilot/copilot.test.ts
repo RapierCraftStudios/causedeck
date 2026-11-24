@@ -8,7 +8,14 @@ import { createMockEmbedProvider, type AiGateway } from '@causedeck/ai';
 import { schema, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
-import { buildDocument, buildMatter } from '@causedeck/db/testing/matter-graph-fixtures';
+import {
+  buildDocument,
+  buildForum,
+  buildListing,
+  buildMatter,
+  buildObligation,
+  buildProceeding,
+} from '@causedeck/db/testing/matter-graph-fixtures';
 import { eq } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
@@ -99,6 +106,48 @@ async function matterWithPage(
     return { matterId: matter.id, documentId: doc.id };
   });
 }
+
+/** A matter with a canonical future listing and one open obligation (#1167). */
+async function matterWithCalendar(
+  tx: Transaction,
+  workspaceId: string,
+): Promise<{ matterId: string; obligationId: string }> {
+  return inWorkspace(tx, workspaceId, async (s) => {
+    const matter = await buildMatter(s, workspaceId, { title: 'Calendar matter (fictional)' });
+    const forum = await buildForum(s, workspaceId);
+    const proceeding = await buildProceeding(s, workspaceId, {
+      matterId: matter.id,
+      forumId: forum.id,
+      kind: 'main',
+      number: '4521',
+      year: 2026,
+      state: 'numbered',
+    });
+    await buildListing(s, workspaceId, {
+      proceedingId: proceeding.id,
+      listDate: '2099-03-15',
+      stageRaw: 'FOR ARGUMENTS',
+      canonical: true,
+      confirmationState: 'confirmed',
+    });
+    const obligation = await buildObligation(s, workspaceId, {
+      matterId: matter.id,
+      description: 'File the written arguments',
+      dueDate: '2099-03-10',
+    });
+    return { matterId: matter.id, obligationId: obligation.id };
+  });
+}
+
+const NEXT_DATE_QUESTION = 'What is the next date and what should I prepare?';
+const AUDIT_KEYS = [
+  'answer_sha256',
+  'claims',
+  'matter_id',
+  'question_sha256',
+  'source_ids',
+  'unsupported',
+];
 
 const QUESTION = 'surgery without written consent';
 const quoting = (quote: string, sourceId?: string) => (input: { sources: { id: string }[] }) =>
@@ -291,6 +340,7 @@ describe('askCopilot', () => {
         },
       );
       expect(answer.aiBlocked).toBe(true);
+      expect(answer.answer).toBe('');
       expect(called).toBe(false);
       expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(0);
       const calls = await inWorkspace(tx, workspaceId, (s) =>
@@ -467,6 +517,106 @@ describe('askCopilot', () => {
       );
       expect(shown).toContain('was recorded');
       expect(shown).not.toContain('BLOCKEDCAPTURE');
+    });
+  });
+
+  it('answers the next-date question from matter facts on the mock gateway, metered once, audit unchanged (#1167)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const { matterId, obligationId } = await matterWithCalendar(tx, workspaceId);
+      const actor = { workspaceId, userId: ownerId };
+      const requestId = randomUUID();
+      const input = { question: NEXT_DATE_QUESTION, matterId, requestId };
+      const answer = await askCopilot(tx, actor, input, { now: () => NOW });
+      expect(answer.unsupported).toEqual([]);
+      const cited = answer.claims.map((c) => c.sourceId);
+      expect(cited).toContain('fact:next_date');
+      expect(cited).toContain(`fact:obligation:${obligationId}`);
+      expect(answer.claims.find((c) => c.sourceId === 'fact:next_date')?.quote).toContain(
+        '2099-03-15',
+      );
+      expect(answer.answer).toMatch(/^Next date: 2099-03-15\. Stage: FOR ARGUMENTS\. \[1\]/);
+      expect(answer.answer).toContain('File the written arguments');
+      const markers = [...answer.answer.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1]));
+      expect(markers.every((n) => n >= 1 && n <= answer.claims.length)).toBe(true);
+      expect(answer.answerText).toBe(answer.claims.map((c) => c.statement).join(' '));
+
+      await askCopilot(tx, actor, input, { now: () => NOW });
+      expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(1);
+      const calls = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.aiCall).where(eq(schema.aiCall.workspaceId, workspaceId)),
+      );
+      expect(calls.map((c) => c.task)).toContain('answer_matter_question');
+      const events = await inWorkspace(tx, workspaceId, (s) =>
+        s.select().from(schema.auditEvent).where(eq(schema.auditEvent.action, 'copilot.asked')),
+      );
+      expect(events.length).toBeGreaterThan(0);
+      for (const e of events) {
+        expect(Object.keys(e.metadata).sort()).toEqual(AUDIT_KEYS);
+        expect(JSON.stringify(e.metadata)).not.toContain('written arguments');
+      }
+    });
+  });
+
+  it('keeps only the markers of verified claims of a gateway reply and renumbers them (#1167)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const { matterId, obligationId } = await matterWithCalendar(tx, workspaceId);
+      let shown: string[] = [];
+      const gateway = {
+        run: (_task: string, input: { sources: { id: string }[] }) => {
+          shown = input.sources.map((s) => s.id);
+          return Promise.resolve({
+            output: {
+              claims: [
+                {
+                  statement: 'Listed on 15 March 2099.',
+                  sourceId: 'fact:next_date',
+                  quote: 'Next date: 2099-03-15',
+                },
+                {
+                  statement: 'Judgment reserved.',
+                  sourceId: 'fact:next_date',
+                  quote: 'judgment reserved',
+                },
+                {
+                  statement: 'Written arguments are due first.',
+                  sourceId: `fact:obligation:${obligationId}`,
+                  quote: 'File the written arguments',
+                },
+              ],
+              answer:
+                'The matter is next listed on 15 March 2099 [1, 2]. Before that, file the written arguments [3] [4].',
+            },
+          });
+        },
+      } as unknown as AiGateway;
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: NEXT_DATE_QUESTION, matterId },
+        { now: () => NOW, gateway },
+      );
+      expect(shown).toEqual(
+        expect.arrayContaining([
+          'fact:next_date',
+          'fact:stage',
+          'fact:obligations',
+          `fact:obligation:${obligationId}`,
+        ]),
+      );
+      expect(answer.claims.map((c) => c.sourceId)).toEqual([
+        'fact:next_date',
+        `fact:obligation:${obligationId}`,
+      ]);
+      expect(answer.unsupported.map((u) => u.reason)).toEqual(['quote_not_found']);
+      expect(answer.answer).toBe(
+        'The matter is next listed on 15 March 2099 [1]. Before that, file the written arguments [2].',
+      );
+      expect(answer.answerText).toBe('Listed on 15 March 2099. Written arguments are due first.');
+      expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(1);
     });
   });
 });

@@ -122,7 +122,7 @@ export const judgment = pgTable(
     embedding: embedding(),
     /** The eCourts CNR, when the source gives one (the HF dataset, #1171); other CNRs of the same text are in `judgment_cnr_alias`. */
     cnr: text('cnr'),
-    /** sha256 hex of the normalised source text (`normaliseText`), the text dedupe key of text-only imports (#1171); null for PDF rows. */
+    /** sha256 hex of the normalised source text (`normaliseHashText`), the text dedupe key of text-only imports (#1171); null for PDF rows. */
     textHash: text('text_hash'),
     /** `verified` when `page_text` holds the original pages; `pending-pdf` for a text-only import whose page anchors wait for the PDF (#1171, #1173). */
     pinpointState: text('pinpoint_state')

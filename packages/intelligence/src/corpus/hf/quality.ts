@@ -17,7 +17,7 @@ const DISTINCT_CHECK_TOKENS = 400;
 export type HfQualityDrop = 'short' | 'repeated' | 'garbled';
 
 /** Unicode-normalised, lower-cased, punctuation-free, whitespace-collapsed text. */
-export function normaliseText(text: string): string {
+export function normaliseHashText(text: string): string {
   return text
     .normalize('NFKC')
     .toLowerCase()
@@ -26,9 +26,9 @@ export function normaliseText(text: string): string {
     .trim();
 }
 
-/** sha256 hex of `normaliseText(text)`: equal for texts that differ only in case, spacing or punctuation. */
+/** sha256 hex of `normaliseHashText(text)`: equal for texts that differ only in case, spacing or punctuation. */
 export function textHash(text: string): string {
-  return createHash('sha256').update(normaliseText(text)).digest('hex');
+  return createHash('sha256').update(normaliseHashText(text)).digest('hex');
 }
 
 // A word: letters (any script, with combining marks), optionally joined by an apostrophe or hyphen,
@@ -39,7 +39,7 @@ const WORD_RE = /^(?:[\p{L}\p{M}]{2,}(?:['’-][\p{L}\p{M}]+)*|\p{N}+|[aio])$/iu
 export function qualityDrop(text: string): HfQualityDrop | null {
   const collapsed = text.replace(/\s+/g, ' ').trim();
   if (collapsed.length < HF_MIN_TEXT_CHARS) return 'short';
-  const tokens = normaliseText(text).split(' ').filter(Boolean);
+  const tokens = normaliseHashText(text).split(' ').filter(Boolean);
   if (tokens.length === 0) return 'garbled';
   let repeats = 0;
   for (let i = 1; i < tokens.length; i += 1) if (tokens[i] === tokens[i - 1]) repeats += 1;

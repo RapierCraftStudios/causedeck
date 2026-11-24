@@ -36,7 +36,7 @@ export {
   HF_MIN_DISTINCT_RATIO,
   HF_MIN_TEXT_CHARS,
   HF_MIN_WORD_RATIO,
-  normaliseText,
+  normaliseHashText,
   qualityDrop,
   textHash,
   type HfQualityDrop,

@@ -12,7 +12,7 @@ import {
   type HfImportStore,
 } from './import.ts';
 import { inSlice, mapHfRow } from './map.ts';
-import { normaliseText, qualityDrop, textHash } from './quality.ts';
+import { normaliseHashText, qualityDrop, textHash } from './quality.ts';
 import {
   createHfHttpSource,
   HfHttpError,
@@ -233,7 +233,7 @@ describe('runHfImport', () => {
       ],
     ]);
     const report = await runHfImport({ store: db.store, source, now }, request);
-    expect(normaliseText(text.toUpperCase())).toBe(normaliseText(text));
+    expect(normaliseHashText(text.toUpperCase())).toBe(normaliseHashText(text));
     expect(report).toMatchObject({ inserted: 1, duplicates: 2, aliases: 1 });
     expect(db.judgments).toHaveLength(1);
     expect(db.judgments[0]?.cnr).toBe('KAHC010000022021');

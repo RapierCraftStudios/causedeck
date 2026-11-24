@@ -140,6 +140,7 @@ describe('@causedeck/db root entry point', () => {
       'judgment',
       'judgment_alert',
       'judgment_citation_ref',
+      'judgment_cnr_alias',
       'judgment_segment',
       'judgment_statute_ref',
       'judgment_tag',

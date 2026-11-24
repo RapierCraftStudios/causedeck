@@ -32,7 +32,7 @@ export const answerMatterQuestion: TaskDef<z.infer<typeof input>, z.infer<typeof
   id: 'answer_matter_question',
   input,
   output,
-  providers: ['bedrock'],
+  providers: ['bedrock', 'chatgpt-plan'],
   maxOutputTokens: 1400,
   promptId: 'answer_matter_question.v1',
   defaultLevel: 1,

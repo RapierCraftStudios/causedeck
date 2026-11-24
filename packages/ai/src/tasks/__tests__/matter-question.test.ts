@@ -31,8 +31,8 @@ describe('answer_matter_question', () => {
     expect(bedrock).toContain("'answer_matter_question'");
   });
 
-  it('is a tool-less drafting-tier bedrock task', () => {
-    expect(task.providers).toEqual(['bedrock']);
+  it('is a tool-less drafting-tier bedrock task, with the preview plan provider after it', () => {
+    expect(task.providers).toEqual(['bedrock', 'chatgpt-plan']);
     expect(task.tier).toBe('drafting');
     expect(task.input.safeParse({ question: '', sources: [] }).success).toBe(false);
     expect(task.input.safeParse(input).success).toBe(true);

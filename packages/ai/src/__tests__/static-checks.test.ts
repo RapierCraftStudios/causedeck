@@ -19,7 +19,7 @@ const stripComments = (source: string): string =>
 
 describe('provider adapters', () => {
   it('finds the adapters', () => {
-    expect(files).toEqual(expect.arrayContaining(['bedrock.ts', 'mock.ts', 'sarvam.ts']));
+    expect(files).toEqual(expect.arrayContaining(['bedrock.ts', 'chatgpt-plan.ts', 'mock.ts', 'sarvam.ts']));
   });
 
   it.each(files)('%s passes no tool, function, web or retrieval parameters', (file) => {

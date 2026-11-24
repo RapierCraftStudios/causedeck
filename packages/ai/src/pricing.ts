@@ -33,6 +33,9 @@ export function priceFor(provider: ProviderId, model: string): PriceEntry {
   if (provider === 'bedrock') {
     return PRICES[/sonnet/i.test(model) ? 'bedrock:sonnet' : 'bedrock:haiku'] ?? {};
   }
+  // The preview-only ChatGPT plan provider (#1165) is billed to the signed-in user's ChatGPT
+  // subscription, not to CauseDeck: every model costs 0 paise.
+  if (provider === 'chatgpt-plan') return {};
   return PRICES[`${provider}:${model}`] ?? PRICES[`${provider}:mock`] ?? {};
 }
 

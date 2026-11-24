@@ -2,7 +2,8 @@
 // or filed). `askCopilot` gathers sources the actor may read (matter facts, the matter's document
 // pages, the anonymised corpus), asks the workspace-scope gateway with the matter id in the run
 // context (so a sensitive matter never reaches a provider), verifies every claim against the stored
-// text and returns verified claims, unsupported claims and `noAuthority`. One `copilot.questions` unit
+// text and returns verified claims, unsupported claims, the written answer citing only verified
+// claims (#1167) and `noAuthority`. One `copilot.questions` unit
 // per new question against the plan's cap (idempotent on `requestId`); audited as `copilot.asked`
 // with hashes and source ids only. A failing model call throws: no answer is invented. A demo
 // workspace calls no model: its answer is extractive (the best-matching sentences of the sources).
@@ -138,12 +139,17 @@ export async function askCopilot(
 
     const sources: CopilotSource[] = [];
     if (input.matterId !== undefined) {
-      const { facts, sensitive } = await factSources(graph, actor, input.matterId);
+      // Obligations are read as the actor on the request's clock (overdue is relative to today).
+      const { facts, sensitive } = await factSources(graph, actor, input.matterId, {
+        ...graph,
+        ...(deps.now === undefined ? {} : { now: deps.now }),
+      });
       if (sensitive) {
         return {
           claims: [],
           unsupported: [],
           answerText: '',
+          answer: '',
           noAuthority: false,
           judgments: {},
           aiBlocked: true,

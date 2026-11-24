@@ -1,5 +1,6 @@
 // The sources the copilot shows the model (#1115, ADR 0051): matter-graph facts read as the actor
-// (restrictions honoured by the matter-graph services), pages of the matter's own documents by full
+// (restrictions honoured by the matter-graph services), including the next date, the stage and the
+// open obligations (#1167, each obligation read through the obligations queue as the actor), pages of the matter's own documents by full
 // text over `document_page.search_tsv`, and passages of the anonymised judgment corpus. Each source
 // carries the exact text the model sees, so a quote is verified against what was stored, and nothing
 // outside the actor's workspace and the one matter is ever selected.
@@ -26,11 +27,14 @@ import {
   type GraphActor,
   type MatterGraphDeps,
 } from '../matter-graph/index.ts';
+import { queryQueue, type ObligationDeps } from '../obligations/index.ts';
 
 /** The task caps a source's text at 6000 characters. */
 export const SOURCE_TEXT_MAX = 6000;
 export const DOCUMENT_PAGES_MAX = 5;
 export const CORPUS_SEGMENTS_MAX = 12;
+/** Open obligations shown one by one; the rest are only counted in `fact:obligations`. */
+export const OBLIGATION_FACTS_MAX = 5;
 const MAX_TERMS = 12;
 
 export interface JudgmentRef {
@@ -60,14 +64,55 @@ export function tsQueryOf(text: string): string | null {
 
 const cut = (text: string): string => text.slice(0, SOURCE_TEXT_MAX);
 
+const QUEUE_LABEL = {
+  overdue: 'overdue',
+  today: 'due today',
+  this_week: 'due this week',
+  later: 'due later',
+  undated: 'no due date',
+} as const;
+
+/**
+ * Up to `OBLIGATION_FACTS_MAX` open obligations of the matter, overdue first, as the obligations
+ * queue gives them to the actor (`obligation.read`, the matter's restriction, a clerk's masked
+ * strategy description). A refusal is "no obligation facts".
+ */
+async function obligationFacts(
+  deps: ObligationDeps,
+  actor: GraphActor,
+  matterId: string,
+): Promise<CopilotSource[]> {
+  let queue: Awaited<ReturnType<typeof queryQueue>>;
+  try {
+    queue = await queryQueue(deps, actor, { matterId, limit: OBLIGATION_FACTS_MAX });
+  } catch {
+    return [];
+  }
+  const groups = Object.keys(QUEUE_LABEL) as (keyof typeof QUEUE_LABEL)[];
+  return groups
+    .flatMap((group) => queue[group].map((row) => ({ group, row })))
+    .slice(0, OBLIGATION_FACTS_MAX)
+    .map(({ group, row }) => {
+      const when =
+        row.dueDate === null ? QUEUE_LABEL[group] : `${QUEUE_LABEL[group]}, ${row.dueDate}`;
+      const what = row.description.trim();
+      return {
+        id: `fact:obligation:${row.id}`,
+        page: null,
+        text: cut(`Open obligation (${when})${what === '' ? '.' : `: ${what}`}`),
+      };
+    });
+}
+
 /** The matter's facts the actor may read, one short sentence each. */
 export async function factSources(
   deps: MatterGraphDeps,
   actor: GraphActor,
   matterId: string,
+  obligationDeps: ObligationDeps = deps,
 ): Promise<{ facts: CopilotSource[]; sensitive: boolean }> {
   const overview = await getMatterOverview(deps, actor, { matterId });
-  const { header, proceedings, synopsis } = overview;
+  const { header, proceedings, synopsis, nextDate } = overview;
   const facts: CopilotSource[] = [
     {
       id: 'fact:matter',
@@ -91,7 +136,38 @@ export async function factSources(
       text: cut(`Lead proceeding: ${lead.caseType}${number} before ${lead.forum.court}.`),
     });
   }
+  if (nextDate !== null) {
+    const state = nextDate.confirmationState === 'proposed' ? ' (proposed, not confirmed)' : '';
+    facts.push({
+      id: 'fact:next_date',
+      page: null,
+      text: cut(
+        `Next date: ${nextDate.date}${state}.${nextDate.stage === null ? '' : ` Stage: ${nextDate.stage}.`}`,
+      ),
+    });
+  }
+  const byState = Object.entries(proceedings.byState)
+    .filter(([, n]) => n > 0)
+    .map(([state, n]) => `${state.replaceAll('_', ' ')} ${String(n)}`);
+  if (nextDate !== null && nextDate.stage !== null) {
+    facts.push({ id: 'fact:stage', page: null, text: cut(`Stage: ${nextDate.stage}.`) });
+  } else if (byState.length > 0) {
+    facts.push({
+      id: 'fact:stage',
+      page: null,
+      text: cut(`Proceedings by state: ${byState.join(', ')}.`),
+    });
+  }
+  facts.push({
+    id: 'fact:obligations',
+    page: null,
+    text: `Open obligations: ${String(overview.openObligations)}.`,
+  });
   if (synopsis !== null) facts.push({ id: 'fact:synopsis', page: null, text: cut(synopsis.text) });
+  // A sensitive matter is never shown to a provider, so its obligations are not read.
+  if (!header.sensitive && overview.openObligations > 0) {
+    facts.push(...(await obligationFacts(obligationDeps, actor, matterId)));
+  }
   return { facts, sensitive: header.sensitive };
 }
 

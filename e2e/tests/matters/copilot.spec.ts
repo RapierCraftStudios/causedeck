@@ -79,6 +79,12 @@ test.describe('matter copilot', { tag: '@a11y' }, () => {
     for (const row of await page.locator('[data-slot="copilot-unsupported"]').all()) {
       await expect(row).toContainText('Not verified');
     }
+    // Close the sheet (below lg) so the automatic axe pass checks the page, not an open modal.
+    const sheet = page.locator('[data-slot="copilot-sources-sheet"]');
+    if (await sheet.isVisible()) {
+      await page.keyboard.press('Escape');
+      await expect(sheet).toBeHidden();
+    }
   });
 
   test('at 390px the page does not scroll sideways and the sources open in a sheet', async ({

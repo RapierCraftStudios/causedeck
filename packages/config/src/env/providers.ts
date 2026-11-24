@@ -95,8 +95,9 @@ export const providerKeys = {
   },
   AI_PROVIDER: {
     domain: 'ai',
-    type: 'enum(mock|bedrock|sarvam)',
-    description: 'AI gateway provider. `mock` returns canned responses.',
+    type: 'enum(mock|bedrock|sarvam|chatgpt-plan)',
+    description:
+      'AI gateway provider. `mock` returns canned responses. `chatgpt-plan` is preview only (Sign in with ChatGPT plan usage, demo workspaces only, never real client data; production also needs ALLOW_PREVIEW_PLAN_PROVIDER=true).',
     default: 'mock',
     requiredWhen: 'never (defaults to mock)',
     ownerIssue: 44,
@@ -169,6 +170,29 @@ export const providerKeys = {
     ownerIssue: 44,
     credentialIssue: 113,
     secret: true,
+  },
+  CHATGPT_PLAN_TOKEN_FILE: {
+    domain: 'ai',
+    type: 'string',
+    description:
+      'Path of the owner-only (0600) token file written by `pnpm --filter @causedeck/ai chatgpt-plan:login` (preview only).',
+    requiredWhen: 'AI_PROVIDER=chatgpt-plan',
+    ownerIssue: 1165,
+  },
+  CHATGPT_PLAN_MODEL: {
+    domain: 'ai',
+    type: 'string',
+    description: 'Model the preview-only chatgpt-plan provider asks the Responses API for.',
+    requiredWhen: 'AI_PROVIDER=chatgpt-plan',
+    ownerIssue: 1165,
+  },
+  CHATGPT_PLAN_CLIENT_ID: {
+    domain: 'ai',
+    type: 'string',
+    description:
+      'The issued `oaiapp_…` client id of the preview chatgpt-plan login. Overrides the id saved in the token file.',
+    requiredWhen: 'never (optional with AI_PROVIDER=chatgpt-plan)',
+    ownerIssue: 1165,
   },
   CITATION_RESOLVER: {
     domain: 'ai',
@@ -376,6 +400,17 @@ export const aiProvider = z.discriminatedUnion('AI_PROVIDER', [
     AI_PROVIDER: z.literal('sarvam'),
     SARVAM_API_KEY: secret(required).describe(d('SARVAM_API_KEY')),
     SARVAM_NO_TRAINING_CONFIRMED: on.optional().describe(d('SARVAM_NO_TRAINING_CONFIRMED')),
+  }),
+  z.object({
+    ...aiCommon,
+    AI_PROVIDER: z.literal('chatgpt-plan'),
+    CHATGPT_PLAN_TOKEN_FILE: required.describe(d('CHATGPT_PLAN_TOKEN_FILE')),
+    CHATGPT_PLAN_MODEL: required.describe(d('CHATGPT_PLAN_MODEL')),
+    CHATGPT_PLAN_CLIENT_ID: z
+      .string()
+      .regex(/^oaiapp_/, 'must be the issued oaiapp_… client id')
+      .optional()
+      .describe(d('CHATGPT_PLAN_CLIENT_ID')),
   }),
 ]);
 

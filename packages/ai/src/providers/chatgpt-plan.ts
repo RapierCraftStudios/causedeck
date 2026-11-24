@@ -118,11 +118,11 @@ interface CompletedResponse {
 }
 
 /** Split an SSE body into parsed `data:` payloads. */
-async function* events(body: ReadableStream<Uint8Array>): AsyncGenerator<unknown> {
+async function* events(body: ReadableStream<Uint8Array>): AsyncGenerator {
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
-  const parse = function* (block: string): Generator<unknown> {
+  const parse = function* (block: string): Generator {
     const data = block
       .split(/\r?\n/)
       .filter((line) => line.startsWith('data:'))

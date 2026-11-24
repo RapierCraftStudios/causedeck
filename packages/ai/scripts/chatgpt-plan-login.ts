@@ -32,7 +32,7 @@ if (file === undefined || file === '') {
   process.stderr.write('usage: chatgpt-plan:login --token-file <path> [--app-name <name>]\n');
   process.exit(2);
 }
-const appName = values['app-name'] ?? 'CauseDeck preview';
+const appName = values['app-name'];
 
 const existing = await readTokenFile(file).catch(() => null);
 const extAgentHostId = existing?.extAgentHostId ?? newHostId();

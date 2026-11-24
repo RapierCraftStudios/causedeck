@@ -412,7 +412,7 @@ describe('searchAuthorities with the preview plan provider', () => {
   };
   function plan(reply: (body: string) => Response) {
     const fetch = vi.fn<typeof globalThis.fetch>((_url, init) =>
-      Promise.resolve(reply(String(init?.body))),
+      Promise.resolve(reply((init?.body as string))),
     );
     const provider = createChatgptPlanProvider({
       model: 'gpt-plan-test',

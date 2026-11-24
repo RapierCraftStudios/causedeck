@@ -49,7 +49,7 @@ const readFile = (): ChatgptPlanTokenFile =>
   JSON.parse(readFileSync(file, 'utf8')) as ChatgptPlanTokenFile;
 
 function refreshOk() {
-  return vi.fn((_url: string | URL | Request, _init?: RequestInit) =>
+  return vi.fn<typeof fetch>(() =>
     Promise.resolve(
       new Response(
         JSON.stringify({
@@ -101,7 +101,7 @@ describe('chatgpt-plan token store', () => {
     expect((init?.headers as Record<string, string>)['Content-Type']).toBe(
       'application/x-www-form-urlencoded',
     );
-    const form = new URLSearchParams(String(init?.body));
+    const form = new URLSearchParams(init?.body as string);
     expect(Object.fromEntries(form)).toEqual({
       grant_type: 'refresh_token',
       client_id: 'oaiapp_test',
@@ -115,7 +115,7 @@ describe('chatgpt-plan token store', () => {
     const f = refreshOk();
     const store = createChatgptPlanTokenStore({ file, clientId: 'oaiapp_env', fetch: f, now });
     await store.accessToken();
-    expect(new URLSearchParams(String(f.mock.calls[0]?.[1]?.body)).get('client_id')).toBe(
+    expect(new URLSearchParams(f.mock.calls[0]?.[1]?.body as string).get('client_id')).toBe(
       'oaiapp_env',
     );
     expect(readFile().clientId).toBe('oaiapp_env');

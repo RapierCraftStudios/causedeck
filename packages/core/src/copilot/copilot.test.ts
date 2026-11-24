@@ -498,7 +498,7 @@ describe('askCopilot with the preview plan provider', () => {
   /** Replies with one claim on the request's `doc:` source, quoting `quote` (or a fabricated id). */
   function planWith(reply: (body: string) => Response) {
     const fetch = vi.fn<typeof globalThis.fetch>((_url, init) =>
-      Promise.resolve(reply(String(init?.body))),
+      Promise.resolve(reply(init?.body as string)),
     );
     const provider: Provider = createChatgptPlanProvider({
       model: 'gpt-plan-test',
@@ -549,7 +549,7 @@ describe('askCopilot with the preview plan provider', () => {
         { now: () => NOW, previewPlanProvider: provider },
       );
       expect(fetch).toHaveBeenCalledTimes(1);
-      const body = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body)) as Record<string, unknown>;
+      const body = JSON.parse(fetch.mock.calls[0]?.[1]?.body as string) as Record<string, unknown>;
       expect(body).toMatchObject({ store: false, stream: true });
       expect(answer.unsupported).toEqual([]);
       expect(answer.claims).toHaveLength(1);
@@ -610,7 +610,7 @@ describe('askCopilot with the preview plan provider', () => {
         { now: () => NOW, previewPlanProvider: provider },
       ).catch((e: unknown) => e);
       expect(error).toMatchObject({ code: 'RATE_LIMITED', message: PLAN_LIMIT_MESSAGE });
-      expect(String((error as Error).message)).not.toContain(ACCESS);
+      expect((error as Error).message).not.toContain(ACCESS);
       expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(0);
     });
   });

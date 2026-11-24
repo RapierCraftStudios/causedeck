@@ -69,7 +69,7 @@ let previewPlanMemo: { env: ServerEnv; provider: Provider | null } | undefined;
 export function previewPlanProviderFromEnv(env: ServerEnv = serverEnv()): Provider | null {
   if (previewPlanMemo?.env === env) return previewPlanMemo.provider;
   const provider =
-    env.AI_PROVIDER === 'chatgpt-plan' && env.ALLOW_PREVIEW_PLAN_PROVIDER === true
+    env.AI_PROVIDER === 'chatgpt-plan' && env.ALLOW_PREVIEW_PLAN_PROVIDER
       ? createChatgptPlanProvider({
           model: env.CHATGPT_PLAN_MODEL,
           tokens: createChatgptPlanTokenStore({

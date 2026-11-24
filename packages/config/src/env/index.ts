@@ -87,10 +87,7 @@ let cached: ServerEnv | undefined;
 /** Lazily validated, cached server env. Throws `EnvValidationError` on the first call if invalid. */
 export function serverEnv(): ServerEnv {
   assertServer();
-  // Assign and return separately: a `??=` expression over the provider-switch union is too complex
-  // for the checker (TS2590) since AI_PROVIDER gained `chatgpt-plan` (#1165).
-  if (cached === undefined) cached = createEnv();
-  return cached;
+  return (cached ??= createEnv());
 }
 
 /** Test hook: drop the cached server env. */

@@ -29,6 +29,8 @@ WORKDIR /app
 # Standalone output: a traced server.js plus only the node_modules it needs; static assets beside it.
 COPY --from=build /repo/apps/web/.next/standalone ./
 COPY --from=build /repo/apps/web/.next/static ./apps/web/.next/static
+# Standalone output does not include public/: copy it, or /brand/*, the favicon and the manifest 404.
+COPY --from=build /repo/apps/web/public ./apps/web/public
 # 1000 is the image's `node` user; numeric so runtimes can enforce runAsNonRoot.
 USER 1000:1000
 EXPOSE 3000

@@ -114,15 +114,15 @@ describe('preview plan provider residency (#1165)', () => {
 
   it.each([true, false])('with the flag the plan provider is kept (indiaOnly %s)', (indiaOnly) => {
     expect(allowedChain(task, [plan], indiaOnly, { previewPlanProvider: true })).toEqual([plan]);
-    expect(
-      allowedChain(task, [plan, bedrockIn], indiaOnly, { previewPlanProvider: true }),
-    ).toEqual([plan, bedrockIn]);
+    expect(allowedChain(task, [plan, bedrockIn], indiaOnly, { previewPlanProvider: true })).toEqual(
+      [plan, bedrockIn],
+    );
   });
 
   it('with the flag a foreign non-plan fallback still follows India-only', () => {
-    expect(
-      allowedChain(task, [plan, bedrockAbroad], true, { previewPlanProvider: true }),
-    ).toEqual([plan]);
+    expect(allowedChain(task, [plan, bedrockAbroad], true, { previewPlanProvider: true })).toEqual([
+      plan,
+    ]);
     expect(allowedChain(task, [bedrockIn, plan], true, { previewPlanProvider: true })).toEqual([
       bedrockIn,
       plan,

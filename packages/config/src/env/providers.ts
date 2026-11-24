@@ -415,8 +415,9 @@ export const aiProvider = z.discriminatedUnion('AI_PROVIDER', [
 ]);
 
 export const citationResolver = z.discriminatedUnion('CITATION_RESOLVER', [
-  z.object({ CITATION_RESOLVER: z.literal('corpus').describe(d('CITATION_RESOLVER')) }),
-  z.object({ CITATION_RESOLVER: z.literal('mock').describe(d('CITATION_RESOLVER')) }),
+  // `corpus` and `mock` share one shape, so they share one variant: every variant multiplies the
+  // `ProviderEnv` intersection, and a fourth AI provider (#1165) pushed it past TS2590.
+  z.object({ CITATION_RESOLVER: z.enum(['corpus', 'mock']).describe(d('CITATION_RESOLVER')) }),
   z.object({
     CITATION_RESOLVER: z.literal('indian-kanoon'),
     INDIAN_KANOON_API_TOKEN: secret(required).describe(d('INDIAN_KANOON_API_TOKEN')),

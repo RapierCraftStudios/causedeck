@@ -212,8 +212,7 @@ export async function askCopilot(
       (demo && !viaPlan ? createExtractiveMatterAnswerResolver() : undefined) ??
       createGatewayMatterAnswerResolver({
         gateway:
-          deps.gateway ??
-          createCoreAiGateway(db, viaPlan && plan !== null ? { ...now, providers: [plan] } : now),
+          deps.gateway ?? createCoreAiGateway(db, viaPlan ? { ...now, providers: [plan] } : now),
         scope: {
           workspaceId: actor.workspaceId,
           userId: actor.userId,
@@ -222,9 +221,11 @@ export async function askCopilot(
           idempotencyKey: `copilot:${requestId}`,
         },
       });
-    const answer = await answerMatterQuestion(question, sources, resolve).catch((error: unknown) => {
-      throw planError(error);
-    });
+    const answer = await answerMatterQuestion(question, sources, resolve).catch(
+      (error: unknown) => {
+        throw planError(error);
+      },
+    );
 
     await increment(ctx, COPILOT_QUESTION_KEY, 1, {
       idempotencyKey: `copilot-question:${requestId}`,

@@ -148,9 +148,13 @@ export async function exchangeCode(input: {
     body: form.toString(),
   });
   if (!response.ok) {
-    throw new ProviderError('chatgpt-plan', `code exchange failed (HTTP ${String(response.status)})`, {
-      status: response.status,
-    });
+    throw new ProviderError(
+      'chatgpt-plan',
+      `code exchange failed (HTTP ${String(response.status)})`,
+      {
+        status: response.status,
+      },
+    );
   }
   const r = (await response.json()) as Record<string, unknown>;
   const str = (k: string): string => (typeof r[k] === 'string' ? r[k] : '');

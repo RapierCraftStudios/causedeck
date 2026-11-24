@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 
 import {
   BudgetExceededError,
+  getTask,
   ResidencyViolationError,
   SensitiveMatterBlockedError,
   type Provider,
@@ -258,7 +259,7 @@ describe('preview plan provider', () => {
       );
       const gateway = createCoreAiGateway(tx, { now, providers: [plan] });
       const result = await gateway.run('answer_matter_question', question, ctxFor(workspaceId));
-      expect(result.output.claims).toHaveLength(1);
+      expect((result.output as { claims: unknown[] }).claims).toHaveLength(1);
       const rows = await calls(tx, workspaceId);
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({
@@ -326,7 +327,7 @@ describe('preview plan provider', () => {
     const env = createEnv({ ...planEnv, ALLOW_PREVIEW_PLAN_PROVIDER: 'true' });
     const provider = previewPlanProviderFromEnv(env);
     expect(provider).toMatchObject({ id: 'chatgpt-plan', dataResidency: 'other' });
-    expect(provider?.modelFor('answer_matter_question')).toBe('gpt-plan-test');
+    expect(provider?.modelFor(getTask('answer_matter_question'))).toBe('gpt-plan-test');
     expect(previewPlanProviderFromEnv(env)).toBe(provider);
   });
 });

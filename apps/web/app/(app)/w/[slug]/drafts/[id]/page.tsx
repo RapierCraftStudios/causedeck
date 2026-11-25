@@ -213,6 +213,7 @@ export default async function DraftPage({ params }: DraftPageProps) {
           title: c.title,
           reason: c.reason,
           sourceUrl: c.sourceUrl,
+          judgmentId: c.judgmentId,
           page: c.pinpoint?.page,
           acknowledged: c.status !== 'verified' && !gate.unacknowledged.includes(c.id),
         })),

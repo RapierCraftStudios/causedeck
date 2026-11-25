@@ -142,6 +142,7 @@ export default async function MatterCopilotPage({ params }: CopilotPageProps) {
       </header>
       <CopilotPanel
         workspaceId={context.workspace.id}
+        workspaceSlug={slug}
         matterId={id}
         ask={askCopilotAction}
         {...(matterContext === undefined ? {} : { matterContext })}

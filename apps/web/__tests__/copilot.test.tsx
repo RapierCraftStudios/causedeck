@@ -16,7 +16,7 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { parseAnswer } from '../components/copilot/copilot-answer.tsx';
-import { CopilotPanel } from '../components/copilot/copilot-panel.tsx';
+import { CopilotPanel, type CopilotTurn } from '../components/copilot/copilot-panel.tsx';
 import type { WorkspaceContext } from '../lib/workspace-context.ts';
 
 import { catalogs, fakeGetTranslations } from './helpers/intl.ts';
@@ -99,6 +99,7 @@ const ANSWER: CopilotAnswer = {
   ],
   answerText: 'Consent was never obtained.',
   answer: 'Consent was never obtained. [1]',
+  bottomLine: '',
   noAuthority: false,
   judgments: {
     j1: {
@@ -117,6 +118,7 @@ const panel = (answer?: CopilotAnswer, ask = vi.fn()) =>
   withIntl(
     <CopilotPanel
       workspaceId="ws"
+      workspaceSlug="demo"
       matterId={MATTER}
       ask={ask}
       {...(answer === undefined ? {} : { initialAnswer: answer })}
@@ -296,7 +298,7 @@ describe('copilot conversation (#1168)', () => {
 
   it('highlights the source while its chip is focused or hovered', () => {
     const { container } = panel(CHIPS);
-    const chip = screen.getByRole('button', { name: 'Source 1' });
+    const chip = screen.getByRole('link', { name: 'Source 1' });
     const source = () => container.querySelector('[data-slot="copilot-claim"]');
     fireEvent.focus(chip);
     expect(source()?.getAttribute('data-active')).toBe('true');
@@ -339,6 +341,7 @@ describe('copilot conversation (#1168)', () => {
     const { container } = withIntl(
       <CopilotPanel
         workspaceId="ws"
+        workspaceSlug="demo"
         matterId={MATTER}
         ask={ask}
         matterContext={{ title: 'Rao v. Nursing Home', stage: 'Evidence', nextDate: '2026-12-03' }}
@@ -362,7 +365,9 @@ describe('copilot conversation (#1168)', () => {
   });
 
   it('suggests corpus questions on the workspace copilot', () => {
-    const { container } = withIntl(<CopilotPanel workspaceId="ws" ask={vi.fn()} />);
+    const { container } = withIntl(
+      <CopilotPanel workspaceId="ws" workspaceSlug="demo" ask={vi.fn()} />,
+    );
     expect(container.querySelectorAll('[data-slot="copilot-suggestion"]')).toHaveLength(3);
     expect(container.textContent).toContain(en.suggestions.corpusConsent);
   });
@@ -460,6 +465,156 @@ describe('copilot conversation (#1168)', () => {
   });
 });
 
+describe('copilot answer quality (#1192)', () => {
+  const turnOf = (answer: CopilotAnswer, question: string | null = 'Is consent needed?') =>
+    ({ id: 't1', question, requestId: 'r1', state: 'answered', answer }) satisfies CopilotTurn;
+  const thread = (answer: CopilotAnswer, matterId: string | null = MATTER) =>
+    withIntl(
+      <CopilotPanel
+        workspaceId="ws"
+        workspaceSlug="demo"
+        ask={vi.fn()}
+        initialTurns={[turnOf(answer)]}
+        {...(matterId === null ? {} : { matterId })}
+      />,
+    );
+  const TWO: CopilotAnswer = {
+    ...ANSWER,
+    claims: [
+      ...ANSWER.claims,
+      {
+        ...(ANSWER.claims[0] as CopilotAnswer['claims'][number]),
+        statement: 'Costs follow.',
+        quote: 'costs follow',
+      },
+    ],
+    answer: 'Consent was never obtained [1]. Costs follow [2].',
+  };
+
+  it('renders model markdown (bold, italic, code, lists) and never shows raw ** or "- "', () => {
+    const { container } = thread({
+      ...TWO,
+      answer:
+        '**Consent** was *never* obtained [1, 2].\n\n- First, the `form` is missing [1]\n- Second, costs follow [2, 9]\n\n1. One\n2. Two',
+    });
+    const prose = container.querySelector('[data-slot="copilot-answer"]');
+    expect(prose?.querySelector('strong')?.textContent).toBe('Consent');
+    expect(prose?.querySelector('em')?.textContent).toBe('never');
+    expect(prose?.querySelector('code')?.textContent).toBe('form');
+    expect(prose?.querySelectorAll('ul > li')).toHaveLength(2);
+    expect(prose?.querySelectorAll('ol > li')).toHaveLength(2);
+    const text = prose?.textContent ?? '';
+    expect(text).not.toContain('**');
+    expect(text).not.toContain('- ');
+    expect(text).not.toContain('[');
+    // [1, 2] is two chips; 9 has no verified claim and is dropped.
+    const chips = [...(prose?.querySelectorAll('[data-slot="copilot-cite"]') ?? [])];
+    expect(chips.map((c) => c.textContent)).toEqual(['1', '2', '1', '2']);
+  });
+
+  it('keeps HTML in the answer as inert text (sanitised by construction)', () => {
+    const { container } = thread({
+      ...ANSWER,
+      answer:
+        'Consent <script>alert(1)</script><img src=x onerror="alert(2)"> [1] <a href="javascript:x">here</a>',
+    });
+    const prose = container.querySelector('[data-slot="copilot-answer"]');
+    expect(prose?.querySelector('script, img, a:not([data-slot="copilot-cite"])')).toBeNull();
+    expect(prose?.textContent).toContain('<script>alert(1)</script>');
+    expect(prose?.innerHTML).not.toContain('<img');
+  });
+
+  it('leads with the verified bottom line, emphasised, with its chips', () => {
+    const { container } = thread({ ...ANSWER, bottomLine: 'Yes, unless it was informed [1].' });
+    const prose = container.querySelector('[data-slot="copilot-answer"]');
+    const lead = prose?.firstElementChild;
+    expect(lead?.getAttribute('data-slot')).toBe('copilot-bottom-line');
+    expect(lead?.textContent).toBe(`${en.bottomLine}: Yes, unless it was informed1.`);
+    expect(lead?.querySelector('[data-slot="copilot-cite"]')).not.toBeNull();
+    const none = thread({ ...ANSWER, bottomLine: '' });
+    expect(none.container.querySelector('[data-slot="copilot-bottom-line"]')).toBeNull();
+  });
+
+  it('makes every chip a link to its source that scrolls to it and keeps it highlighted', async () => {
+    const scrolled: string[] = [];
+    const scrollIntoView = vi.fn(function (this: HTMLElement) {
+      scrolled.push(this.id);
+    });
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    try {
+      const { container } = thread(TWO);
+      const [chip] = screen.getAllByRole('link', { name: 'Source 2' });
+      if (chip === undefined) throw new Error('no chip for source 2');
+      const href = chip.getAttribute('href') ?? '';
+      expect(href).toMatch(/^#copilot-[\w-]+-rail-source-2$/);
+      // The rail's source 2 carries the id the chip links to.
+      const rail = container.querySelector('[data-slot="copilot-rail"]');
+      expect(rail?.querySelector(href)?.getAttribute('data-n')).toBe('2');
+      fireEvent.click(chip);
+      fireEvent.mouseLeave(chip);
+      fireEvent.blur(chip);
+      // Below lg (jsdom has no matchMedia) the Sheet opens first, then its source 2 is scrolled to.
+      await waitFor(() => {
+        expect(scrollIntoView).toHaveBeenCalled();
+      });
+      expect(scrolled.at(-1)).toMatch(/-sheet-source-2$/);
+      const sheet = document.querySelector('[data-slot="copilot-sources-sheet"]');
+      expect(sheet?.querySelector('[data-n="2"]')?.getAttribute('data-active')).toBe('true');
+      expect(rail?.querySelector('[data-n="2"]')?.getAttribute('data-active')).toBe('true');
+      expect(rail?.querySelector('[data-n="1"]')?.getAttribute('data-active')).toBeNull();
+    } finally {
+      Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+    }
+  });
+
+  it('no authority: the reason and next steps, research prefilled; no "ask with a matter" in a matter', () => {
+    const { container } = thread({
+      ...ANSWER,
+      claims: [],
+      unsupported: [],
+      answer: '',
+      answerText: '',
+      noAuthority: true,
+    });
+    const state = container.querySelector('[data-slot="copilot-no-authority-state"]');
+    expect(state?.textContent).toContain(en.noAuthority);
+    expect(state?.textContent).toContain(en.noAuthorityReason);
+    const search = container.querySelector('[data-slot="copilot-search-research"]');
+    expect(search?.getAttribute('href')).toBe('/w/demo/research?q=Is%20consent%20needed%3F');
+    expect(search?.textContent).toBe('Search Research for “Is consent needed?”');
+    expect(container.querySelector('[data-slot="copilot-ask-with-matter"]')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: en.nextSteps.rephrase }));
+    const box = screen.getByLabelText(en.questionLabel);
+    expect((box as HTMLTextAreaElement).value).toBe('Is consent needed?');
+    expect(document.activeElement).toBe(box);
+  });
+
+  it('weak (nothing verified): says the sources do not settle it, with all three next steps', () => {
+    const { container } = thread({ ...ANSWER, claims: [], answer: '', answerText: '' }, null);
+    const state = container.querySelector('[data-slot="copilot-weak-state"]');
+    expect(state?.textContent).toContain(en.weak.title);
+    expect(state?.textContent).toContain(en.weak.reason);
+    expect(container.querySelector('[data-slot="copilot-no-authority"]')).toBeNull();
+    expect(
+      container.querySelector('[data-slot="copilot-ask-with-matter"]')?.getAttribute('href'),
+    ).toBe('/w/demo/matters');
+    expect(container.querySelector('[data-slot="copilot-search-research"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="copilot-rephrase"]')).not.toBeNull();
+    expect(container.querySelector('[data-slot="copilot-cite"]')).toBeNull();
+  });
+
+  it('shows no next steps for a verified answer or with AI off', () => {
+    const { container } = thread(ANSWER);
+    expect(container.querySelector('[data-slot="copilot-next-steps"]')).toBeNull();
+    cleanup();
+    const off = thread({ ...ANSWER, claims: [], unsupported: [], aiBlocked: true });
+    expect(off.container.querySelector('[data-slot="copilot-next-steps"]')).toBeNull();
+  });
+});
+
 describe('insert into draft (#1144)', () => {
   const ten = catalogs.en.drafting.copilotInsert;
   const DRAFTS = [
@@ -484,6 +639,7 @@ describe('insert into draft (#1144)', () => {
     withIntl(
       <CopilotPanel
         workspaceId="ws"
+        workspaceSlug="demo"
         matterId={MATTER}
         ask={vi.fn()}
         initialAnswer={{
@@ -502,6 +658,7 @@ describe('insert into draft (#1144)', () => {
     withIntl(
       <CopilotPanel
         workspaceId="ws"
+        workspaceSlug="demo"
         matterId={MATTER}
         ask={vi.fn()}
         initialAnswer={ANSWER}

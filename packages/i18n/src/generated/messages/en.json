@@ -5759,6 +5759,18 @@
       "usageUnlimited": "{used, plural, one {# question this month} other {# questions this month}}",
       "aiOff": "AI is off for this matter. The copilot does not read it.",
       "noAuthority": "No authority found.",
+      "bottomLine": "Bottom line",
+      "noAuthorityReason": "None of the sources searched address this question.",
+      "weak": {
+        "title": "The sources don't settle this.",
+        "reason": "Passages were found, but none could be verified as answering the question."
+      },
+      "nextSteps": {
+        "label": "Next steps",
+        "searchResearch": "Search Research for “{query}”",
+        "rephrase": "Rephrase",
+        "askWithMatter": "Ask with a matter"
+      },
       "claimsTitle": "Verified claims",
       "unsupportedTitle": "Not verified",
       "notVerified": "Not verified: the quote was not found in the source.",

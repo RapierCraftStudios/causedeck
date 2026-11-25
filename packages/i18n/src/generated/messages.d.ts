@@ -5760,6 +5760,18 @@ export type Messages = {
       usageUnlimited: string;
       aiOff: string;
       noAuthority: string;
+      bottomLine: string;
+      noAuthorityReason: string;
+      weak: {
+        title: string;
+        reason: string;
+      };
+      nextSteps: {
+        label: string;
+        searchResearch: string;
+        rephrase: string;
+        askWithMatter: string;
+      };
       claimsTitle: string;
       unsupportedTitle: string;
       notVerified: string;

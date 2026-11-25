@@ -49,7 +49,6 @@ describe('answer_matter_question', () => {
   });
 
   it('v2 output takes an optional written answer of at most 2000 characters (#1167)', () => {
-    expect(task.promptId).toBe('answer_matter_question.v2');
     const claims = [{ statement: 'S', sourceId: 'fact:next_date', quote: 'Next date' }];
     expect(task.output.safeParse({ claims }).success).toBe(true);
     expect(task.output.safeParse({ claims, answer: 'The next date is set [1].' }).success).toBe(
@@ -57,6 +56,22 @@ describe('answer_matter_question', () => {
     );
     expect(task.output.safeParse({ claims, answer: 'x'.repeat(2001) }).success).toBe(false);
     expect(task.output.safeParse({ claims, answer: 3 }).success).toBe(false);
+  });
+
+  it('v3 output takes an optional one-sentence bottom line of at most 300 characters (#1192)', () => {
+    expect(task.promptId).toBe('answer_matter_question.v3');
+    const claims = [{ statement: 'S', sourceId: 'fact:next_date', quote: 'Next date' }];
+    expect(task.output.safeParse({ claims, answer: 'A [1].' }).success).toBe(true);
+    expect(
+      task.output.safeParse({ claims, answer: 'A [1].', bottomLine: 'Yes, on 10 Nov [1].' })
+        .success,
+    ).toBe(true);
+    expect(task.output.safeParse({ claims, bottomLine: 'x'.repeat(301) }).success).toBe(false);
+    expect(task.output.safeParse({ claims, bottomLine: 1 }).success).toBe(false);
+    const { shape } = task.output as unknown as {
+      shape: { bottomLine: { unwrap: () => { description?: string } } };
+    };
+    expect(shape.bottomLine.unwrap().description).toMatch(/Yes or No/);
   });
 
   it('the mock answers a next-date question from the matter facts with [n] markers', async () => {

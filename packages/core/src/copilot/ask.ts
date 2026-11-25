@@ -27,9 +27,11 @@ import {
   answerMatterQuestion,
   createExtractiveMatterAnswerResolver,
   createGatewayMatterAnswerResolver,
+  createGatewayPlanResolver,
   type CopilotSource,
   type MatterAnswer,
   type MatterAnswerResolver,
+  type SearchCounts,
 } from '@causedeck/intelligence';
 
 import {
@@ -111,6 +113,8 @@ export interface CopilotAnswer extends MatterAnswer {
   /** The matter is sensitive: AI is off for it, no source was read by a provider and nothing was counted. */
   aiBlocked: boolean;
   usage: CopilotUsage;
+  /** How the corpus was searched (arm counts, `hybrid` or `lexical-only`, #1182); counts only, no text. */
+  retrieval?: SearchCounts;
 }
 
 const sha256 = (text: string): string => createHash('sha256').update(text, 'utf8').digest('hex');
@@ -193,15 +197,10 @@ export async function askCopilot(
       sources.push(...facts);
       sources.push(...(await documentSources(db, graph, actor, input.matterId, question)));
     }
-    const corpus = await corpusSources(db, question, {
-      ...(deps.embed === undefined ? {} : { embed: deps.embed }),
-      ...(deps.rerank === undefined ? {} : { rerank: deps.rerank }),
-    });
-    sources.push(...corpus.sources);
-
     // A demo workspace makes no AI call and spends nothing (#93, the gateway refuses it): it answers
     // extractively from the same sources, verified the same way, so the demo journey still works.
-    // With the preview plan provider configured (#1165), a preview-plan demo workspace asks it.
+    // With the preview plan provider configured (#1165), a preview-plan demo workspace asks it, and it
+    // also plans the corpus search (`plan_research_query`, #1182); every other path keeps the rules plan.
     const demo = await withWorkspace(db, { workspaceId: actor.workspaceId }, (tx) =>
       isDemoWorkspace(tx, actor.workspaceId),
     );
@@ -213,12 +212,30 @@ export async function askCopilot(
         : null;
     const viaPlan = plan !== null && (await isPreviewPlanWorkspace(db, actor.workspaceId));
     const now = deps.now === undefined ? {} : { now: deps.now };
+    const planGateway = viaPlan
+      ? (deps.gateway ?? createCoreAiGateway(db, { ...now, providers: [plan] }))
+      : undefined;
+
+    // A failing planner (the plan's usage limit included) leaves the rules plan: search still runs.
+    const corpus = await corpusSources(db, question, {
+      ...(deps.embed === undefined ? {} : { embed: deps.embed }),
+      ...(deps.rerank === undefined ? {} : { rerank: deps.rerank }),
+      ...(planGateway === undefined
+        ? {}
+        : {
+            plan: createGatewayPlanResolver({
+              gateway: planGateway,
+              scope: { workspaceId: actor.workspaceId },
+            }),
+          }),
+    });
+    sources.push(...corpus.sources);
+
     const resolve =
       deps.answer ??
       (demo && !viaPlan ? createExtractiveMatterAnswerResolver() : undefined) ??
       createGatewayMatterAnswerResolver({
-        gateway:
-          deps.gateway ?? createCoreAiGateway(db, viaPlan ? { ...now, providers: [plan] } : now),
+        gateway: planGateway ?? deps.gateway ?? createCoreAiGateway(db, now),
         scope: {
           workspaceId: actor.workspaceId,
           userId: actor.userId,
@@ -263,6 +280,7 @@ export async function askCopilot(
       judgments: corpus.judgments,
       aiBlocked: false,
       usage: { used: before.used + 1, limit: before.limit },
+      retrieval: corpus.counts,
     };
   });
 }

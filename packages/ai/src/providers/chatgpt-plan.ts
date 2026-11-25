@@ -19,6 +19,7 @@ export const CHATGPT_PLAN_RESPONSES_URL = 'https://api.openai.com/v1/responses';
 export const CHATGPT_PLAN_TASKS: readonly TaskId[] = [
   'answer_matter_question',
   'answer_research_query',
+  'plan_research_query',
 ];
 
 /** Where the adapter gets a bearer token; `createChatgptPlanTokenStore` is the file-backed one. */

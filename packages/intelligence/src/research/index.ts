@@ -55,6 +55,7 @@ export {
 export {
   ARM_LIMIT,
   drizzleRetriever,
+  lexicalQueryText,
   planFilters,
   type DrizzleRetrieverOptions,
 } from './retrieve.ts';

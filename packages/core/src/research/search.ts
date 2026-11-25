@@ -14,9 +14,12 @@
 //   and the ids of the retrieval set; the query text and the passages are never written to it. The plan
 //   call itself leaves its `corpus_ocr_call` row.
 // - Preview plan provider (#1165): when the preview-only `chatgpt-plan` provider is configured and the
-//   actor's workspace is a demo workspace (`is_demo` and a demo slug), the answer model runs on it
-//   (a platform gateway carrying only that provider); the planner keeps the default gateway. A plan
-//   failure (usage limit included) leaves `answer` null and `answerFailed` true: nothing is invented.
+//   actor's workspace is a demo workspace (`is_demo` and a demo slug), the planner and the answer model
+//   run on it (a platform gateway carrying only that provider, #1182). A plan failure (usage limit
+//   included) falls back to the rules' plan for the planner, and leaves `answer` null and `answerFailed`
+//   true for the answer: nothing is invented.
+// - Lexical-only (#1182): while the active embedder is the mock (hashed) one, the vector arm is skipped
+//   and the lexical arm is fused alone; the counts say `lexical-only`.
 // - Redaction (D-053): results carry `judgment_segment.text` only; titles are the stored masked form.
 // - Pinpoints (#1174): each segment says whether its pages are `verified` (every page is in the
 //   redacted text from the PDF text layer or OCR) or `page_pending` (a page is missing or came from a
@@ -28,6 +31,7 @@ import {
   createMockEmbedProvider,
   createMockRerankProvider,
   createRerankGateway,
+  MOCK_EMBED_MODEL,
   type AiGateway,
   type EmbedGateway,
   type Provider,
@@ -151,18 +155,21 @@ async function previewPlanFor(
 function wire(db: Queryable, deps: ResearchSearchDeps, previewPlan: Provider | null = null) {
   const embed = deps.embed ?? createEmbedGateway({ providers: [createMockEmbedProvider()] });
   const rerank = deps.rerank ?? createRerankGateway({ providers: [createMockRerankProvider()] });
-  const gateway = deps.gateway ?? createPlatformAiGateway(db);
-  const answerGateway =
+  // The preview plan provider (#1165) runs both the planner and the answer for a preview demo workspace.
+  const gateway =
     previewPlan === null
-      ? gateway
+      ? (deps.gateway ?? createPlatformAiGateway(db))
       : createPlatformAiGateway(db, { providers: [previewPlan], previewPlanProvider: true });
   const scope = { workspaceId: PLATFORM_AI_SCOPE };
+  const active = embed.active();
   return {
-    retriever: drizzleRetriever(db, { embeddingModel: embed.active().modelVersion }),
+    retriever: drizzleRetriever(db, { embeddingModel: active.modelVersion }),
     embed,
     rerank,
     plan: deps.plan ?? createGatewayPlanResolver({ gateway, scope }),
-    answer: deps.answer ?? createGatewayAnswerResolver({ gateway: answerGateway, scope }),
+    answer: deps.answer ?? createGatewayAnswerResolver({ gateway, scope }),
+    // Mock (hashed) vectors are noise: search the lexical arm alone (#1182).
+    lexicalOnly: active.model === MOCK_EMBED_MODEL,
   };
 }
 
@@ -276,6 +283,7 @@ async function audit(
           lexical: result.counts.lexical,
           vector: result.counts.vector,
           reranked: result.counts.reranked,
+          retrieval_mode: result.counts.mode,
           answered: result.answer !== null,
           cost_paise: result.costPaise,
         },
@@ -311,7 +319,8 @@ export async function searchAuthorities(
       );
     }
     const requestId = input.requestId ?? randomUUID();
-    const previewPlan = input.answer === true ? await previewPlanFor(db, actor, deps) : null;
+    // The planner runs on every search, so the preview plan provider applies with or without an answer.
+    const previewPlan = await previewPlanFor(db, actor, deps);
     const result = await withPinpoints(
       db,
       await searchCorpus(wire(db, deps, previewPlan), query, {

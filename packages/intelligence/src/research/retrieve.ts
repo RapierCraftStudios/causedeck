@@ -50,9 +50,12 @@ export function planFilters(plan: ResearchPlan): SQL[] {
     filters.push(sql`cardinality(j.bench) between 1 and ${plan.benchMax}`);
   }
   if (plan.subjectAreas.length > 0) {
-    filters.push(sql`exists (
+    // Subject tags come only from the model tagger (#1182): a judgment nobody has tagged yet is not
+    // excluded, a judgment tagged with another subject is.
+    filters.push(sql`(exists (
       select 1 from judgment_tag t
-      where t.judgment_id = j.id and t.subject_area in (${list(plan.subjectAreas)}))`);
+      where t.judgment_id = j.id and t.subject_area in (${list(plan.subjectAreas)}))
+      or not exists (select 1 from judgment_tag t2 where t2.judgment_id = j.id))`);
   }
   const statutes = expandedStatutes(plan);
   if (statutes.length > 0) {
@@ -67,6 +70,15 @@ export function planFilters(plan: ResearchPlan): SQL[] {
       select 1 from judgment_statute_ref r where r.judgment_id = j.id and (${any}))`);
   }
   return filters;
+}
+
+/**
+ * The full-text query of `plan`'s lexical arm: its search terms OR'd (`a | b | c`), never AND'd, so a
+ * passage matching some words of a sentence still ranks. The arm orders by how many distinct query
+ * lexemes (stems) a segment holds, then `ts_rank_cd`, then id (#1187). Empty when there are no terms.
+ */
+export function lexicalQueryText(plan: Pick<ResearchPlan, 'keywords' | 'query'>): string {
+  return searchTerms([plan.keywords.join(' '), plan.query].join(' ')).join(' | ');
 }
 
 const SELECT = sql`
@@ -111,15 +123,36 @@ export function drizzleRetriever(
 ): SegmentRetriever {
   return {
     async lexical(plan, limit): Promise<RankedCandidates> {
-      const terms = searchTerms([plan.keywords.join(' '), plan.query].join(' '));
-      if (terms.length === 0) return [];
+      const text = lexicalQueryText(plan);
+      if (text === '') return [];
       const filters = sql.join(planFilters(plan), sql` and `);
       // nosemgrep: infra.security.semgrep.causedeck.raw-sql-bypasses-with-workspace -- judgment_segment and judgment are global corpus tables (no workspace_id, no RLS); public anonymised judgments only
-      const rows = await db.execute(sql`${SELECT}
-        cross join (select to_tsquery('english', ${terms.join(' | ')}) as q) query
-        where s.search_tsv @@ query.q and ${filters}
-        order by ts_rank_cd(s.search_tsv, query.q) desc, s.id
-        limit ${limit}`);
+      // Index-first (#1187 follow-up): the GIN index finds the matching segments and ranks them in a
+      // materialized CTE before any join, so the planner never walks judgments one by one through every
+      // year partition (its estimate of the version filter is far too low). Coverage counts the distinct
+      // query lexemes a segment holds; segment text is read only for the final `limit` rows.
+      const rows = await db.execute(sql`with query as materialized (
+          select to_tsquery('english', ${text}) as q,
+            array(select distinct unnest(tsvector_to_array(to_tsvector('english', ${text})))) as lexemes
+        ),
+        hits as materialized (
+          select s.id, s.judgment_year, s.judgment_id, s.court, s.court_level,
+            (select count(*) from unnest(query.lexemes) l
+              where s.search_tsv @@ plainto_tsquery('simple', l))::int as coverage,
+            ts_rank_cd(s.search_tsv, query.q) as rank
+          from judgment_segment s, query
+          where s.search_tsv @@ query.q
+        ),
+        top as (
+          select s.id, s.judgment_year, s.coverage, s.rank
+          from hits s join judgment j on j.id = s.judgment_id
+          where ${filters}
+          order by s.coverage desc, s.rank desc, s.id
+          limit ${limit}
+        )
+        ${SELECT}
+        join top t on t.id = s.id and t.judgment_year = s.judgment_year
+        order by t.coverage desc, t.rank desc, s.id`);
       return Array.from(rows as unknown as Row[]).map(toCandidate);
     },
     async vector(embedding, plan, limit): Promise<RankedCandidates> {

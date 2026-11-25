@@ -7,6 +7,7 @@ import { getTask } from '../tasks/registry.ts';
 import {
   buildResponsesRequest,
   CHATGPT_PLAN_RESPONSES_URL,
+  CHATGPT_PLAN_TASKS,
   createChatgptPlanProvider,
   type ChatgptPlanTokenSource,
 } from './chatgpt-plan.ts';
@@ -298,6 +299,46 @@ describe('chatgpt-plan errors', () => {
 });
 
 describe('chatgpt-plan through the gateway', () => {
+  it('runs plan_research_query for a preview-plan workspace and audits it (#1182)', async () => {
+    expect(CHATGPT_PLAN_TASKS).toContain('plan_research_query');
+    const plan = {
+      factDescription: 'Regular bail and delay in trial.',
+      keywords: ['regular', 'bail', 'delay', 'trial'],
+      subjectAreas: ['bail'],
+      statutes: [],
+      courts: [],
+      courtLevel: 'supreme_court',
+      dateFrom: null,
+      dateTo: null,
+      outcome: null,
+      offenceDate: null,
+    };
+    const task = getTask('plan_research_query');
+    expect(task.output.safeParse(plan).success).toBe(true);
+    const f = fetchMock(ok(completed(JSON.stringify(plan))));
+    const h = harness({ previewPlanProvider: true });
+    const gateway = createGateway({
+      providers: [createChatgptPlanProvider({ model: 'gpt-test', tokens: tokens(), fetch: f })],
+      ports: h.ports,
+    });
+    const result = await gateway.run(
+      'plan_research_query',
+      { query: 'What did the Supreme Court say about delay in trial and regular bail?' },
+      ctx,
+    );
+    expect(result.output).toEqual(plan);
+    expect(result.provider).toBe('chatgpt-plan');
+    const body = JSON.parse(f.mock.calls[0]?.[1]?.body as string) as Record<string, unknown>;
+    expect(body.text).toMatchObject({
+      format: { type: 'json_schema', name: 'plan_research_query', strict: false },
+    });
+    expect(h.audit[0]).toMatchObject({
+      task: 'plan_research_query',
+      provider: 'chatgpt-plan',
+      status: 'ok',
+    });
+  });
+
   it('returns the parsed model answer for answer_matter_question', async () => {
     const answer = {
       claims: [

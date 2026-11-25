@@ -33,38 +33,77 @@ export function gunzipIfNeeded(
   return Readable.from(chunks).pipe(createGunzip());
 }
 
-/** Regular-file entries of a tar stream, in archive order. */
-export async function* readTar(chunks: AsyncIterable<Uint8Array>): AsyncGenerator<TarEntry> {
-  let buffer = Buffer.alloc(0);
-  const queue: Buffer[] = [];
+/**
+ * Regular-file entries of a tar stream, in archive order. The reader holds only the source chunks it
+ * has not consumed yet: each header and entry body is copied out into its own buffer and a source
+ * chunk is dropped as soon as it is fully read, so memory stays at about one chunk plus the current
+ * entry (#1185). `probe`, for tests, sees the pending byte count after every read.
+ */
+export async function* readTar(
+  chunks: AsyncIterable<Uint8Array>,
+  probe?: (pendingBytes: number) => void,
+): AsyncGenerator<TarEntry> {
+  const pending: Uint8Array[] = [];
+  /** Bytes of `pending[0]` already consumed. */
+  let offset = 0;
+  /** Unconsumed bytes across `pending`. */
+  let available = 0;
   const iterator = chunks[Symbol.asyncIterator]();
   let ended = false;
 
-  /** Exactly `n` bytes, or fewer when the stream ends first. */
-  async function take(n: number): Promise<Buffer> {
-    while (buffer.length < n && !ended) {
+  /** Pull one more chunk when nothing is pending; false once the stream has ended. */
+  async function pull(): Promise<boolean> {
+    while (available === 0 && !ended) {
       const next = await iterator.next();
       if (next.done === true) ended = true;
-      else queue.push(Buffer.from(next.value));
-      if (queue.length > 0) {
-        buffer = Buffer.concat([buffer, ...queue.splice(0)]);
+      else if (next.value.byteLength > 0) {
+        pending.push(next.value);
+        available += next.value.byteLength;
       }
     }
-    const out = buffer.subarray(0, n);
-    buffer = buffer.subarray(n);
-    return out;
+    return available > 0;
+  }
+
+  /**
+   * Consume `n` bytes, copying them into `into` when given, one source chunk at a time: a chunk is
+   * dropped once fully read, so at most one partly read chunk is pending. False when the stream ends
+   * first.
+   */
+  async function consume(n: number, into?: Uint8Array): Promise<boolean> {
+    let done = 0;
+    while (done < n) {
+      if (!(await pull())) return false;
+      const head = pending[0];
+      if (head === undefined) return false;
+      const count = Math.min(head.byteLength - offset, n - done);
+      into?.set(head.subarray(offset, offset + count), done);
+      done += count;
+      offset += count;
+      available -= count;
+      if (offset === head.byteLength) {
+        pending.shift();
+        offset = 0;
+      }
+    }
+    probe?.(available);
+    return true;
+  }
+
+  /** Exactly `n` bytes in a fresh buffer that owns its memory, or null when the stream ends first. */
+  async function take(n: number): Promise<Uint8Array | null> {
+    const out = new Uint8Array(n);
+    return (await consume(n, out)) ? out : null;
   }
 
   let longName: string | null = null;
   for (;;) {
     const header = await take(BLOCK);
-    if (header.length < BLOCK || header.every((b) => b === 0)) return;
+    if (header === null || header.every((b) => b === 0)) return;
     const size = entrySize(header);
     const type = String.fromCharCode(header[156] ?? 0x30);
-    const padded = Math.ceil(size / BLOCK) * BLOCK;
-    const body = await take(padded);
-    if (body.length < padded) return;
-    const data = body.subarray(0, size);
+    const data = await take(size);
+    if (data === null) return;
+    if (!(await consume(Math.ceil(size / BLOCK) * BLOCK - size))) return;
 
     if (type === 'L') {
       longName = text(data, 0, data.length);
@@ -82,6 +121,6 @@ export async function* readTar(chunks: AsyncIterable<Uint8Array>): AsyncGenerato
     const prefix = text(header, 345, 500);
     const name = longName ?? (prefix === '' ? '' : `${prefix}/`) + text(header, 0, 100);
     longName = null;
-    yield { name, data: new Uint8Array(data) };
+    yield { name, data };
   }
 }

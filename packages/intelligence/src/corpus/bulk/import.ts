@@ -3,7 +3,7 @@
 // `storeJudgment`, the same path as `corpus.poll`, so sha256 dedupe, blob upload and OCR queueing are
 // shared. Each archive has a cursor row (`corpus_import_cursor`): `position` counts the entries
 // already handled, so an interrupted run continues after them and a re-run adds nothing. Only ids,
-// counts and keys are ever reported.
+// counts, keys and entry file names are ever reported or logged: never page text or titles.
 import { createHash } from 'node:crypto';
 
 import { schema, type Queryable } from '@causedeck/db';
@@ -11,7 +11,7 @@ import { and, eq, sql } from 'drizzle-orm';
 
 import { storeJudgment, type JudgmentMetadata, type StoreDeps } from '../ingest.ts';
 
-import { indexMetadata, type BulkMetadata } from './metadata.ts';
+import { indexMetadata, METADATA_COLUMNS, type BulkMetadata } from './metadata.ts';
 import { readParquetRows } from './parquet.ts';
 import { AWS_SC_SOURCE_ID, parseScrCitation, SUPREME_COURT_CODE } from './scr.ts';
 import { gunzipIfNeeded, readTar } from './tar.ts';
@@ -27,6 +27,19 @@ export const BULK_ATTRIBUTION =
 /** PDFs processed at once within an archive. */
 export const BULK_DEFAULT_CONCURRENCY = 4;
 
+/** PDF entries between two progress lines (#1185). */
+export const BULK_PROGRESS_EVERY = 100;
+
+/** A pino-compatible logger (`obj, msg`); the job passes its own. */
+export interface BulkImportLog {
+  info(obj: object, msg: string): void;
+  warn(obj: object, msg: string): void;
+  error(obj: object, msg: string): void;
+}
+
+/** The class name of a thrown value, never its message (it may quote document content). */
+const errorClass = (error: unknown): string => (error instanceof Error ? error.name : typeof error);
+
 export interface BulkImportDeps extends StoreDeps {
   db: Queryable;
   objects: BulkObjectSource;
@@ -34,6 +47,8 @@ export interface BulkImportDeps extends StoreDeps {
   parquet?: typeof readParquetRows;
   concurrency?: number;
   now?: () => Date;
+  /** Progress every `BULK_PROGRESS_EVERY` entries, a warn per failed entry, the final report. */
+  log?: BulkImportLog;
 }
 
 export const DEFAULT_BULK_BUDGET: BulkBudget = { maxPages: 50_000, maxBytes: 2 * 1024 ** 3 };
@@ -87,7 +102,7 @@ async function loadMetadata(
 ): Promise<Map<string, BulkMetadata>> {
   try {
     const bytes = await deps.objects.read(metadataKey(archiveKey));
-    return indexMetadata(await (deps.parquet ?? readParquetRows)(bytes));
+    return indexMetadata(await (deps.parquet ?? readParquetRows)(bytes, METADATA_COLUMNS));
   } catch {
     // No readable metadata: the header extracted from the PDF text fills the fields.
     return new Map();
@@ -164,105 +179,151 @@ export async function runBulkImport(
   const concurrency = Math.max(1, deps.concurrency ?? BULK_DEFAULT_CONCURRENCY);
   const exhausted = (): boolean =>
     report.pages >= budget.maxPages || report.bytes >= budget.maxBytes;
+  const log = deps.log;
+  /** Where a fatal error happened: the archive and its absolute cursor position. */
+  const at: { archiveKey: string | null; position: number } = { archiveKey: null, position: 0 };
 
-  for (const archive of await listArchives(deps.objects, request)) {
-    if (exhausted() || signal?.aborted === true) {
-      report.budgetReached = true;
-      break;
-    }
-    const cursor = await cursorFor(deps.db, request, archive);
-    if (cursor.status === 'complete') continue;
-    report.archives += 1;
-    const metadata = await loadMetadata(deps, archive.key);
-    const stamp = (deps.now ?? (() => new Date()))().toISOString();
+  try {
+    for (const archive of await listArchives(deps.objects, request)) {
+      if (exhausted() || signal?.aborted === true) {
+        report.budgetReached = true;
+        break;
+      }
+      at.archiveKey = archive.key;
+      at.position = 0;
+      const cursor = await cursorFor(deps.db, request, archive);
+      if (cursor.status === 'complete') continue;
+      at.position = cursor.position;
+      report.archives += 1;
+      const metadata = await loadMetadata(deps, archive.key);
+      const stamp = (deps.now ?? (() => new Date()))().toISOString();
 
-    let position = 0;
-    let finished = true;
-    const batch: { name: string; data: Uint8Array }[] = [];
-    const delta = { added: 0, dupes: 0, failed: 0, bytes: 0 };
+      let position = 0;
+      let finished = true;
+      const batch: { name: string; data: Uint8Array }[] = [];
+      const delta = { added: 0, dupes: 0, failed: 0, bytes: 0 };
 
-    const flush = async (): Promise<void> => {
-      if (batch.length === 0) return;
-      const entries = batch.splice(0);
-      const outcomes = await Promise.all(
-        entries.map(async (entry) => {
-          const sha256 = createHash('sha256').update(entry.data).digest('hex');
-          try {
-            return await storeJudgment(deps, {
-              sourceId: request.sourceId,
-              bytes: entry.data,
-              metadata: entryMetadata(request.sourceId, entry.name, metadata.get(entry.name)),
-              provenance: {
-                url: new URL(`${archive.key}#${entry.name}`, request.baseUrl).toString(),
-                fetchedAt: stamp,
-                sha256,
+      const flush = async (): Promise<void> => {
+        if (batch.length === 0) return;
+        const entries = batch.splice(0);
+        const outcomes = await Promise.all(
+          entries.map(async (entry) => {
+            const sha256 = createHash('sha256').update(entry.data).digest('hex');
+            try {
+              return await storeJudgment(deps, {
                 sourceId: request.sourceId,
-                sourceVersion: 'aws-open-data',
-                tierUsed: 'http',
-                costDollars: 0,
-                licence: BULK_LICENCE,
-              },
-            });
-          } catch {
-            return null;
+                bytes: entry.data,
+                metadata: entryMetadata(request.sourceId, entry.name, metadata.get(entry.name)),
+                provenance: {
+                  url: new URL(`${archive.key}#${entry.name}`, request.baseUrl).toString(),
+                  fetchedAt: stamp,
+                  sha256,
+                  sourceId: request.sourceId,
+                  sourceVersion: 'aws-open-data',
+                  tierUsed: 'http',
+                  costDollars: 0,
+                  licence: BULK_LICENCE,
+                },
+              });
+            } catch (error) {
+              log?.warn(
+                {
+                  archiveKey: archive.key,
+                  entry: entry.name,
+                  reason: 'store_failed',
+                  error: errorClass(error),
+                },
+                'corpus.bulk_import entry failed',
+              );
+              return null;
+            }
+          }),
+        );
+        for (const [i, outcome] of outcomes.entries()) {
+          if (outcome?.status === 'unreadable') {
+            log?.warn(
+              { archiveKey: archive.key, entry: entries[i]?.name, reason: 'unreadable' },
+              'corpus.bulk_import entry failed',
+            );
           }
-        }),
-      );
-      for (const [i, outcome] of outcomes.entries()) {
-        if (outcome === null || outcome.status === 'unreadable') delta.failed += 1;
-        else if (outcome.status === 'duplicate') delta.dupes += 1;
-        else {
-          delta.added += 1;
-          delta.bytes += entries[i]?.data.length ?? 0;
-          report.pages += outcome.pages;
-          report.bytes += entries[i]?.data.length ?? 0;
+          if (outcome === null || outcome.status === 'unreadable') delta.failed += 1;
+          else if (outcome.status === 'duplicate') delta.dupes += 1;
+          else {
+            delta.added += 1;
+            delta.bytes += entries[i]?.data.length ?? 0;
+            report.pages += outcome.pages;
+            report.bytes += entries[i]?.data.length ?? 0;
+          }
         }
-      }
-      position += entries.length;
-      report.inserted += delta.added;
-      report.duplicates += delta.dupes;
-      report.failed += delta.failed;
-      await deps.db
-        .update(corpusImportCursor)
-        .set({
-          position: cursor.position + position,
-          status: 'running',
-          rowsAdded: sql`${corpusImportCursor.rowsAdded} + ${delta.added}`,
-          duplicatesSkipped: sql`${corpusImportCursor.duplicatesSkipped} + ${delta.dupes}`,
-          failures: sql`${corpusImportCursor.failures} + ${delta.failed}`,
-          bytesStored: sql`${corpusImportCursor.bytesStored} + ${delta.bytes}`,
-          updatedAt: new Date(),
-        })
-        .where(eq(corpusImportCursor.id, cursor.id));
-      delta.added = delta.dupes = delta.failed = delta.bytes = 0;
-    };
+        const before = position;
+        position += entries.length;
+        report.inserted += delta.added;
+        report.duplicates += delta.dupes;
+        report.failed += delta.failed;
+        await deps.db
+          .update(corpusImportCursor)
+          .set({
+            position: cursor.position + position,
+            status: 'running',
+            rowsAdded: sql`${corpusImportCursor.rowsAdded} + ${delta.added}`,
+            duplicatesSkipped: sql`${corpusImportCursor.duplicatesSkipped} + ${delta.dupes}`,
+            failures: sql`${corpusImportCursor.failures} + ${delta.failed}`,
+            bytesStored: sql`${corpusImportCursor.bytesStored} + ${delta.bytes}`,
+            updatedAt: new Date(),
+          })
+          .where(eq(corpusImportCursor.id, cursor.id));
+        delta.added = delta.dupes = delta.failed = delta.bytes = 0;
+        at.position = cursor.position + position;
+        if (Math.floor(position / BULK_PROGRESS_EVERY) > Math.floor(before / BULK_PROGRESS_EVERY)) {
+          log?.info(
+            {
+              archiveKey: archive.key,
+              handled: position,
+              position: at.position,
+              inserted: report.inserted,
+              duplicates: report.duplicates,
+              failed: report.failed,
+            },
+            'corpus.bulk_import progress',
+          );
+        }
+      };
 
-    let seen = 0;
-    for await (const entry of readTar(
-      gunzipIfNeeded(deps.objects.stream(archive.key), archive.key),
-    )) {
-      if (!/\.pdf$/i.test(entry.name)) continue;
-      seen += 1;
-      if (seen <= cursor.position) continue;
-      batch.push({ name: entry.name.split('/').pop() ?? entry.name, data: entry.data });
-      if (batch.length >= concurrency) {
-        await flush();
-        if (exhausted() || Boolean(signal?.aborted)) {
-          finished = false;
-          break;
+      let seen = 0;
+      for await (const entry of readTar(
+        gunzipIfNeeded(deps.objects.stream(archive.key), archive.key),
+      )) {
+        if (!/\.pdf$/i.test(entry.name)) continue;
+        seen += 1;
+        if (seen <= cursor.position) continue;
+        batch.push({ name: entry.name.split('/').pop() ?? entry.name, data: entry.data });
+        if (batch.length >= concurrency) {
+          await flush();
+          if (exhausted() || Boolean(signal?.aborted)) {
+            finished = false;
+            break;
+          }
         }
       }
+      if (finished) await flush();
+      if (finished) {
+        await deps.db
+          .update(corpusImportCursor)
+          .set({ status: 'complete', updatedAt: new Date() })
+          .where(eq(corpusImportCursor.id, cursor.id));
+      } else {
+        report.budgetReached = true;
+        break;
+      }
     }
-    if (finished) await flush();
-    if (finished) {
-      await deps.db
-        .update(corpusImportCursor)
-        .set({ status: 'complete', updatedAt: new Date() })
-        .where(eq(corpusImportCursor.id, cursor.id));
-    } else {
-      report.budgetReached = true;
-      break;
-    }
+  } catch (error) {
+    // A structured line instead of a silent death; no final report line follows (#1185).
+    log?.error(
+      { archiveKey: at.archiveKey, position: at.position, error: errorClass(error), ...report },
+      'corpus.bulk_import failed',
+    );
+    throw error;
   }
+  log?.info({ ...report }, 'corpus.bulk_import report');
   return report;
 }

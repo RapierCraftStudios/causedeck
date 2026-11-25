@@ -58,7 +58,7 @@ export function MatterTabs({ entries, label, children }: MatterTabsProps) {
         // On phones the row fades out at its right edge, so a tab past the edge reads as "scroll
         // for more" rather than a clipped label; the end padding lets the last tab scroll fully
         // out of the fade (#1194).
-        className="border-line flex snap-x scroll-px-4 gap-1 overflow-x-auto border-b max-md:pe-8 max-md:[mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)]"
+        className="border-line flex snap-x scroll-px-4 gap-1 overflow-x-auto border-b max-md:[mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] max-md:pe-8"
       >
         {entries.map((entry, index) => {
           const selected = entry.id === active;

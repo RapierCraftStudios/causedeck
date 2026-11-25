@@ -596,7 +596,7 @@ export function CopilotPanel({
           data-slot="copilot-composer"
           // Sticky from lg so the composer stays reachable after a long answer (#1194); on phones
           // it stays in the flow above the fixed bottom nav, where a sticky box would cover the answer.
-          className="border-line bg-surface-raised flex min-w-0 flex-col gap-2 rounded-lg border p-3 lg:z-sticky lg:sticky lg:bottom-4 lg:shadow-md"
+          className="border-line bg-surface-raised lg:z-sticky flex min-w-0 flex-col gap-2 rounded-lg border p-3 lg:sticky lg:bottom-4 lg:shadow-md"
         >
           {matterContext === undefined ? null : (
             <div data-slot="copilot-context" className="flex min-w-0 flex-wrap items-center gap-2">

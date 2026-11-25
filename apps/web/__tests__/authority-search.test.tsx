@@ -155,9 +155,7 @@ describe('AuthoritySearch', () => {
     await screen.findByText('Meera Rao v. Sunrise Nursing Home');
     expect(search).toHaveBeenCalledWith({ workspaceId: WS, query: 'surgery without consent' });
     expect(within(chipsList()).getByText('Medical negligence')).toBeTruthy();
-    expect(
-      screen.getByText(/BNS s\. 106 \(also IPC s\. 304A\)/),
-    ).toBeTruthy();
+    expect(screen.getByText(/BNS s\. 106 \(also IPC s\. 304A\)/)).toBeTruthy();
     expect(screen.getByText('Court level: High Court')).toBeTruthy();
     expect(screen.getByText(/2019:MHC:1234 · MHC · High Court · Decided/)).toBeTruthy();
     expect(screen.getByText(/Outcome: Allowed · Cited by 3 judgments in the corpus/)).toBeTruthy();

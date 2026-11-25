@@ -174,16 +174,20 @@ describe('SectionView (#1126)', () => {
       '2025:MHC:101 · MHC · High Court · Decided 2025-02-03 · p. 4',
     );
     const link = within(card).getByRole('link');
-    expect(link.getAttribute('href')).toBe('https://court.example/j1.pdf#page=4');
-    expect(link.getAttribute('target')).toBe('_blank');
-    expect(link.getAttribute('rel')).toBe('noreferrer noopener');
+    // #1191: the in-app reader at the cited page, same tab.
+    expect(link.getAttribute('href')).toBe(
+      '/w/chennai-solo/research/judgments/00000000-0000-4000-8000-0000000000j1?page=4#cited',
+    );
+    expect(link.getAttribute('target')).toBeNull();
   });
 
-  it('shows no link without a source URL and an empty state without authorities', () => {
+  it('links the reader even without a source URL, and an empty state without authorities', () => {
     const { container } = view({ authorities: [{ ...authority, sourceUrl: null }] });
     expect(
-      within(slot(container, 'section-authority') as HTMLElement).queryByRole('link'),
-    ).toBeNull();
+      within(slot(container, 'section-authority') as HTMLElement)
+        .getByRole('link')
+        .getAttribute('href'),
+    ).toMatch(/^\/w\/chennai-solo\/research\/judgments\//);
     cleanup();
     const empty = view({ authorities: [] });
     expect(slot(empty.container, 'section-authorities-empty')?.textContent).toBe(

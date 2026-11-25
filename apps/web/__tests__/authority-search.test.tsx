@@ -22,7 +22,10 @@ import { FindAuthoritiesButton } from '../components/research/find-authorities-b
 import { catalogs } from './helpers/intl.ts';
 
 const push = vi.hoisted(() => vi.fn());
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push, refresh: vi.fn() }) }));
+vi.mock('next/navigation', () => ({
+  useParams: () => ({ slug: 'demo' }),
+  useRouter: () => ({ push, refresh: vi.fn() }),
+}));
 
 // The host is shared by many lanes: give async UI updates room.
 configure({ asyncUtilTimeout: 8000 });
@@ -163,9 +166,10 @@ describe('AuthoritySearch', () => {
     expect(screen.getByText(/Outcome: Allowed · Cited by 3 judgments in the corpus/)).toBeTruthy();
     expect(screen.getByText('Facts · p. 2')).toBeTruthy();
     expect(screen.getByText('Reasoning · pp. 3 to 4')).toBeTruthy();
-    const link = screen.getByRole('link', { name: 'Open court PDF' });
-    expect(link.getAttribute('href')).toBe('https://court.example/j1.pdf#page=2');
-    expect(link.getAttribute('rel')).toBe('noreferrer noopener');
+    // #1191: every hit opens the in-app reader at its first passage page, same tab.
+    const [link] = screen.getAllByRole('link', { name: 'Open court PDF' });
+    expect(link?.getAttribute('href')).toBe('/w/demo/research/judgments/j1?page=2#cited');
+    expect(link?.getAttribute('target')).toBeNull();
     expect(screen.getByText('Title withheld')).toBeTruthy();
     expect(screen.getByText('1 of 30 searches used this month')).toBeTruthy();
   });

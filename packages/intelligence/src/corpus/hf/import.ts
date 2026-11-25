@@ -28,7 +28,7 @@ import type { HfDatasetSource, HfParquetFile } from './reader.ts';
 
 const { corpusImportCursor, judgment, judgmentCnrAlias } = schema;
 
-/** The registry source of the dataset (migration 20261031181220). */
+/** The registry source of the dataset (migration 20261031181222). */
 export const HF_SOURCE_ID = 'hf-overthelex';
 export const HF_LICENCE = 'CC-BY-4.0';
 export const HF_ATTRIBUTION =

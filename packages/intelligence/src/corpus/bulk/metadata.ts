@@ -13,6 +13,33 @@ export interface BulkMetadata {
 
 export type MetadataRow = Record<string, unknown>;
 
+/**
+ * Every column `rowEntryName` and `mapMetadataRow` read: the Parquet read is projected to these, so
+ * an archive's metadata never decodes columns the importer drops (#1185).
+ */
+export const METADATA_COLUMNS: readonly string[] = [
+  'path',
+  'pdf_path',
+  'pdf_link',
+  'filename',
+  'file_name',
+  'nc_display',
+  'neutral_citation',
+  'citation',
+  'case_no',
+  'case_number',
+  'case_id',
+  'cnr',
+  'court_code',
+  'court',
+  'judge',
+  'judges',
+  'bench',
+  'decision_date',
+  'judgment_date',
+  'date',
+];
+
 const str = (row: MetadataRow, ...names: string[]): string | null => {
   for (const name of names) {
     const value = row[name];

@@ -120,6 +120,8 @@ export async function runCorpusBulkImport(
       db,
       objects: (deps.openSource ?? createS3HttpSource)(baseUrl),
       blobs: deps.blobs === undefined ? (configuredBlobs ?? defaultBlobs()) : deps.blobs,
+      // Progress, per-entry failures and the final report; a thrown error is logged, then fails the job.
+      log: ctx.log,
     },
     {
       dataset: payload.dataset,
@@ -136,6 +138,11 @@ export async function runCorpusBulkImport(
     ctx.signal,
   );
   ctx.log.info({ sourceId, ...report }, 'corpus.bulk_import done');
+  // A budget or abort stop is the designed resume point: a warn, not a failed (and retried) job.
+  if (report.budgetReached || ctx.signal?.aborted === true) {
+    const reason = ctx.signal?.aborted === true ? 'aborted' : 'budget';
+    ctx.log.warn({ sourceId, reason, ...report }, 'corpus.bulk_import stopped');
+  }
   return { ...report, skipped: false };
 }
 

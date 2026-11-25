@@ -18,6 +18,7 @@ import {
 import { LoadPulseCard } from '../_pov/load-pulse-card.tsx';
 import { renderBoard } from '../_court-day/render-board.tsx';
 import type { WorkspaceContext } from '../../../../../lib/workspace-context.ts';
+import { createLoaderTimer } from '../../../../../lib/loader-timing.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../src/health.ts';
 
@@ -78,16 +79,7 @@ export default async function TodayPage(props: WorkspacePageProps) {
   const { slug } = await props.params;
   // #1193: one workspace context, the loaders in parallel, each one's duration on one timing line.
   const context = await getWorkspaceContext(slug);
-  const timings: Record<string, number> = {};
-  const started = performance.now();
-  const timed = async <T,>(name: string, run: () => Promise<T>): Promise<T> => {
-    const start = performance.now();
-    try {
-      return await run();
-    } finally {
-      timings[name] = Math.round(performance.now() - start);
-    }
-  };
+  const { timed, summary } = createLoaderTimer();
   const [halls, bench, pulse] =
     context === null
       ? [[], [], null]
@@ -101,8 +93,7 @@ export default async function TodayPage(props: WorkspacePageProps) {
     logger.info(
       {
         workspaceId: context.workspace.id,
-        loaders: timings,
-        totalMs: Math.round(performance.now() - started),
+        ...summary(),
       },
       'today.timing',
     );

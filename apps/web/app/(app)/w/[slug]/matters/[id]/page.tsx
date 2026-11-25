@@ -39,6 +39,7 @@ import {
   type MatterOverviewView,
 } from '../../../../../../lib/matters/workspace.ts';
 import { can, type WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
+import { createLoaderTimer } from '../../../../../../lib/loader-timing.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
 import { loadContacts } from '../../../../../../lib/people/people-deps.ts';
@@ -283,16 +284,7 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   if (loaded.kind === 'error') throw new Error('Matter could not be loaded');
 
   // #1193: the independent loaders run together; each one's duration goes to one timing line.
-  const timings: Record<string, number> = {};
-  const started = performance.now();
-  const timed = async <T,>(name: string, run: () => Promise<T>): Promise<T> => {
-    const start = performance.now();
-    try {
-      return await run();
-    } finally {
-      timings[name] = Math.round(performance.now() - start);
-    }
-  };
+  const { timed, summary } = createLoaderTimer();
   const empty = dev === 'empty';
   const [notices, locale, benchNotices, sharing, snoozes, timeline, continuity, statusLinks] =
     await Promise.all([
@@ -315,8 +307,7 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
     {
       workspaceId: context.workspace.id,
       matterId: id,
-      loaders: timings,
-      totalMs: Math.round(performance.now() - started),
+      ...summary(),
     },
     'matter-overview.timing',
   );

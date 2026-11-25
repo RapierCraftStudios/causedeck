@@ -7,6 +7,7 @@ import {
   DEMO_WORKSPACE_KEYS,
   DEMO_WORKSPACES,
   demoMatterRows,
+  demoModuleRows,
   FICTIONAL_SUFFIX,
   matterSpecs,
   demoOrderPdf,
@@ -32,6 +33,7 @@ function allIds(key: (typeof DEMO_WORKSPACE_KEYS)[number]): string[] {
     graph.proceedings,
     graph.proceedingLinks,
     graph.documents,
+    graph.documentPages,
     graph.anchors,
     graph.orders,
     graph.listings,
@@ -105,5 +107,38 @@ describe('demo seed content', () => {
     const text = Buffer.from(pdf.bytes).toString('latin1');
     expect(text.match(/SYNTHETIC/g)?.length).toBeGreaterThanOrEqual(2);
     expect(text).not.toMatch(/IN THE HIGH COURT/i);
+  });
+
+  it('gives every demo order document a text page with its directions, so the copilot can cite it (#1194)', () => {
+    for (const key of DEMO_WORKSPACE_KEYS) {
+      const ws = DEMO_WORKSPACES[key];
+      const graph = demoMatterRows(ws, DAY, at);
+      const mod = demoModuleRows(ws, DAY, at, graph, demoCourtRows(ws, at));
+      const documents = [...graph.documents, ...mod.documents];
+      const pages = [...graph.documentPages, ...mod.documentPages];
+      const orders = [...graph.orders, ...mod.orders];
+      expect(documents.length).toBeGreaterThan(0);
+      for (const doc of documents.filter((d) => d.kind === 'order')) {
+        expect(doc.textStatus, String(doc.id)).toBe('layer');
+        const own = pages.filter((p) => p.documentId === doc.id);
+        expect(own.length, String(doc.id)).toBeGreaterThan(0);
+        for (const page of own) {
+          expect(page.workspaceId).toBe(ws.id);
+          expect(page.text?.trim(), String(doc.id)).not.toBe('');
+        }
+        // Each operative direction is in the stored text, so a question about it finds the page.
+        const text = own.map((p) => p.text).join('\n');
+        for (const o of orders.filter((r) => r.documentId === doc.id)) {
+          for (const d of o.operativeDirections ?? []) expect(text).toContain(d.text);
+        }
+      }
+      // Every anchor's quote is on the page it cites.
+      for (const a of [...graph.anchors, ...mod.anchors]) {
+        const page = pages.find((p) => p.documentId === a.documentId && p.pageNo === a.pageNo);
+        if (page !== undefined) expect(page.text).toContain(a.quote);
+      }
+      const ids = pages.map((p) => p.id);
+      expect(new Set(ids).size).toBe(ids.length);
+    }
   });
 });

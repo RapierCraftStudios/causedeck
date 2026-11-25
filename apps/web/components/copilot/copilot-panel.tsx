@@ -358,9 +358,9 @@ export function CopilotPanel({
   const suggestions: string[] =
     matterId === undefined
       ? [
-          t('suggestions.corpusConsent'),
-          t('suggestions.corpusNegligence'),
-          t('suggestions.corpusLimitation'),
+          t('suggestions.corpusBail'),
+          t('suggestions.corpusAnticipatoryBail'),
+          t('suggestions.corpusWrit'),
         ]
       : [
           matterContext === undefined
@@ -372,7 +372,7 @@ export function CopilotPanel({
           ...(matterContext?.stage == null
             ? []
             : [t('suggestions.stage', { stage: matterContext.stage })]),
-          t('suggestions.matterDocuments'),
+          t('suggestions.matterOrders'),
           t('suggestions.matterAuthority'),
         ].slice(0, 4);
 
@@ -541,7 +541,13 @@ export function CopilotPanel({
                           }}
                         />
                         {hasSources ? (
-                          <div className="flex flex-wrap gap-2">
+                          // The scroll margins keep "View N sources" clear of the phone's bottom
+                          // nav and capture button (and of the sticky composer from lg) when it is
+                          // scrolled or tabbed into view (#1194).
+                          <div
+                            data-slot="copilot-sources-actions"
+                            className="flex scroll-mb-[calc(var(--space-6)+72px+env(safe-area-inset-bottom))] flex-wrap gap-2 lg:scroll-mb-48"
+                          >
                             <SourcesSheet
                               answer={answer}
                               active={activeIn(turn.id)}
@@ -588,7 +594,9 @@ export function CopilotPanel({
         <form
           onSubmit={onSubmit}
           data-slot="copilot-composer"
-          className="border-line bg-surface-raised flex min-w-0 flex-col gap-2 rounded-lg border p-3"
+          // Sticky from lg so the composer stays reachable after a long answer (#1194); on phones
+          // it stays in the flow above the fixed bottom nav, where a sticky box would cover the answer.
+          className="border-line bg-surface-raised flex min-w-0 flex-col gap-2 rounded-lg border p-3 lg:z-sticky lg:sticky lg:bottom-4 lg:shadow-md"
         >
           {matterContext === undefined ? null : (
             <div data-slot="copilot-context" className="flex min-w-0 flex-wrap items-center gap-2">

@@ -156,7 +156,7 @@ describe('AuthoritySearch', () => {
     expect(search).toHaveBeenCalledWith({ workspaceId: WS, query: 'surgery without consent' });
     expect(within(chipsList()).getByText('Medical negligence')).toBeTruthy();
     expect(
-      screen.getByText(/Bharatiya Nyaya Sanhita s\. 106 \(also Indian Penal Code s\. 304A\)/),
+      screen.getByText(/BNS s\. 106 \(also IPC s\. 304A\)/),
     ).toBeTruthy();
     expect(screen.getByText('Court level: High Court')).toBeTruthy();
     expect(screen.getByText(/2019:MHC:1234 · MHC · High Court · Decided/)).toBeTruthy();
@@ -241,6 +241,54 @@ describe('AuthoritySearch', () => {
     const scope = within(box.closest('[data-slot="authority-answer"]') as HTMLElement);
     expect(scope.getAllByText('Quote verified')).toHaveLength(1);
     expect(scope.getByText('Unsupported: the quote was not found in the passage')).toBeTruthy();
+  });
+
+  it('research usage uses singular and chips use short statute names', async () => {
+    const atrocities = 'scheduled castes and the scheduled tribes prevention of atrocities act';
+    const rent = 'tamil nadu buildings lease and rent control act';
+    const statutes = [
+      { statute: atrocities, section: '18a' },
+      { statute: rent, section: '10' },
+    ];
+    const { rerun } = setup(
+      result({
+        plan: { ...plan, statutes },
+        chips: statutes.map((s) => ({ ...s, counterparts: [] })),
+        usage: { used: 1, limit: null },
+      }),
+    );
+    submit();
+    await screen.findByText('Meera Rao v. Sunrise Nursing Home');
+    // One search is "1 search", never "1 searches" (#1194).
+    expect(screen.getByText('1 search this month')).toBeTruthy();
+    expect(within(chipsList()).getByText('SC/ST Act s. 18A')).toBeTruthy();
+    // An act without a short name keeps its written name.
+    expect(
+      within(chipsList()).getByText('Tamil Nadu Buildings Lease And Rent Control Act s. 10'),
+    ).toBeTruthy();
+    expect(within(chipsList()).queryByText(/Scheduled Castes/)).toBeNull();
+    // Only the label is short: removing a chip re-runs with the corpus names the plan filters on.
+    fireEvent.click(await enabled('Remove filter: SC/ST Act s. 18A'));
+    await waitFor(() => {
+      expect(rerun).toHaveBeenCalledWith({
+        workspaceId: WS,
+        plan: { ...plan, statutes: [{ statute: rent, section: '10' }] },
+      });
+    });
+  });
+
+  it('research usage shows the cap with a plural for many searches', async () => {
+    setup(result({ usage: { used: 2, limit: 30 } }));
+    submit();
+    await screen.findByText('Meera Rao v. Sunrise Nursing Home');
+    expect(screen.getByText('2 of 30 searches used this month')).toBeTruthy();
+  });
+
+  it('research usage with a cap of one search is singular', async () => {
+    setup(result({ usage: { used: 1, limit: 1 } }));
+    submit();
+    await screen.findByText('Meera Rao v. Sunrise Nursing Home');
+    expect(screen.getByText('1 of 1 search used this month')).toBeTruthy();
   });
 
   it('no hits is "no matching authority found", with no summary button', async () => {

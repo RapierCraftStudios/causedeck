@@ -5789,14 +5789,14 @@ export type Messages = {
       suggestions: {
         title: string;
         description: string;
-        corpusConsent: string;
-        corpusNegligence: string;
-        corpusLimitation: string;
+        corpusBail: string;
+        corpusAnticipatoryBail: string;
+        corpusWrit: string;
         matterFacts: string;
         matterFactsOf: string;
         nextDate: string;
         stage: string;
-        matterDocuments: string;
+        matterOrders: string;
         matterAuthority: string;
       };
       sources: {

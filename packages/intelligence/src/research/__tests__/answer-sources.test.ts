@@ -81,6 +81,28 @@ describe('answerMatterQuestion', () => {
     expect(out.noAuthority).toBe(false);
   });
 
+  it('passes each verified claim to onClaim in order, never an unsupported one, and times answer and verify (#1193)', async () => {
+    const seen: string[] = [];
+    const stages: string[] = [];
+    const out = await answerMatterQuestion(
+      'q',
+      sources,
+      reply([
+        { statement: 'first', sourceId: 'seg:s1', quote: 'without informed consent' },
+        { statement: 'invented', sourceId: 'seg:s1', quote: 'with informed consent given' },
+        { statement: 'second', sourceId: 'fact:header', quote: 'Status: open' },
+      ]),
+      {
+        onClaim: (claim) => seen.push(claim.statement),
+        onTiming: (stage) => stages.push(stage),
+      },
+    );
+    expect(seen).toEqual(['first', 'second']);
+    expect(out.claims.map((c) => c.statement)).toEqual(seen);
+    expect(out.unsupported.map((u) => u.statement)).toEqual(['invented']);
+    expect(stages).toEqual(['answer', 'verify']);
+  });
+
   it('ignores a pinpoint or title the model adds', async () => {
     const out = await answerMatterQuestion(
       'q',

@@ -612,7 +612,8 @@ export function CopilotPanel({
                             ))}
                           </ol>
                         )}
-                        {turn.progress === undefined || turn.progress.sources.length === 0 ? null : (
+                        {turn.progress === undefined ||
+                        turn.progress.sources.length === 0 ? null : (
                           <div
                             data-slot="copilot-pending-sources"
                             className="border-line flex flex-col gap-2 rounded-md border p-3"

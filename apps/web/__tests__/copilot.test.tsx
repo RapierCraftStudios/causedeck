@@ -10,13 +10,17 @@
 // questions from the matter, and loading, error/plan-limit with retry, no-authority, AI-off and
 // offline states.
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { CopilotAnswer } from '@causedeck/core/copilot';
+import type { CopilotAnswer, CopilotProgress } from '@causedeck/core/copilot';
 import { createTranslator, NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { parseAnswer } from '../components/copilot/copilot-answer.tsx';
-import { CopilotPanel } from '../components/copilot/copilot-panel.tsx';
+import {
+  CopilotPanel,
+  fetchCopilotStream,
+  type CopilotStream,
+} from '../components/copilot/copilot-panel.tsx';
 import type { WorkspaceContext } from '../lib/workspace-context.ts';
 
 import { catalogs, fakeGetTranslations } from './helpers/intl.ts';
@@ -535,5 +539,157 @@ describe('insert into draft (#1144)', () => {
     });
     const { container } = withIntl(page);
     expect(container.querySelector('[data-route="matter-copilot"]')).not.toBeNull();
+  });
+});
+
+describe('copilot progress stream (#1193)', () => {
+  const ask = (stream: CopilotStream | null, action = vi.fn()) => {
+    const view = withIntl(
+      <CopilotPanel workspaceId="ws" matterId={MATTER} ask={action} stream={stream} />,
+    );
+    fireEvent.change(screen.getByLabelText(en.questionLabel), {
+      target: { value: 'Is consent needed?' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: en.submit }));
+    return view;
+  };
+  const claim = ANSWER.claims[0];
+  if (claim === undefined) throw new Error('fixture');
+  const judgment = ANSWER.judgments.j1;
+  if (judgment === undefined) throw new Error('fixture');
+
+  it('shows the stages, the sources on retrieval and each verified claim, then the answer', async () => {
+    let emit: (event: CopilotProgress) => void = () => undefined;
+    let finish: (answer: CopilotAnswer) => void = () => undefined;
+    const stream = vi.fn<CopilotStream>(
+      (_input, onEvent) =>
+        new Promise((resolve) => {
+          emit = onEvent;
+          finish = (answer) => {
+            resolve({ ok: true, data: answer });
+          };
+        }),
+    );
+    const action = vi.fn();
+    const { container } = ask(stream, action);
+    const loading = () => container.querySelector('[data-slot="copilot-loading"]');
+    await waitFor(() => {
+      expect(stream).toHaveBeenCalledTimes(1);
+    });
+
+    emit({ type: 'planning' });
+    await waitFor(() => {
+      expect(loading()?.getAttribute('data-stage')).toBe('planning');
+    });
+    expect(screen.getByRole('status').textContent).toContain(en.stages.planning);
+
+    emit({ type: 'retrieved', passages: 3, judgments: 1 });
+    emit({ type: 'sources', judgments: [judgment] });
+    await waitFor(() => {
+      expect(screen.getByRole('status').textContent).toContain('Found 3 passages in 1 judgment');
+    });
+    const sources = container.querySelector('[data-slot="copilot-pending-sources"]');
+    expect(sources?.textContent).toContain('Rao v. Nursing Home');
+    expect(container.querySelector('[data-slot="copilot-pending-claim"]')).toBeNull();
+
+    emit({ type: 'checking' });
+    await waitFor(() => {
+      expect(loading()?.getAttribute('data-stage')).toBe('checking');
+    });
+    expect(screen.getByRole('status').textContent).toContain(en.stages.checking);
+
+    emit({ type: 'claim', claim });
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-slot="copilot-pending-claim"]')).toHaveLength(1);
+    });
+    expect(container.textContent).toContain('Consent was never obtained.');
+    // Only verified claims are streamed; the unsupported statement is never on screen while pending.
+    expect(container.textContent).not.toContain('The surgeon was struck off.');
+
+    finish(ANSWER);
+    await waitFor(() => {
+      expect(container.querySelector('[data-slot="copilot-answer"]')).not.toBeNull();
+    });
+    expect(container.querySelector('[data-slot="copilot-loading"]')).toBeNull();
+    expect(container.querySelector('[data-slot="copilot-pending-claims"]')).toBeNull();
+    expect(action).not.toHaveBeenCalled();
+    const [input] = stream.mock.calls[0] ?? [];
+    expect(input).toMatchObject({
+      workspaceId: 'ws',
+      matterId: MATTER,
+      question: 'Is consent needed?',
+    });
+  });
+
+  it('falls back to the action with the same request id when the stream is unavailable', async () => {
+    const stream = vi.fn<CopilotStream>(() => Promise.resolve(null));
+    const action = vi.fn().mockResolvedValue({ ok: true, data: ANSWER });
+    const { container } = ask(stream, action);
+    await waitFor(() => {
+      expect(container.querySelector('[data-slot="copilot-answer"]')).not.toBeNull();
+    });
+    const [streamed] = stream.mock.calls[0] ?? [];
+    const asked: unknown = action.mock.calls[0]?.[0];
+    expect((asked as { requestId: string }).requestId).toBe(
+      (streamed as { requestId: string }).requestId,
+    );
+  });
+
+  it('shows a streamed error as the failed state', async () => {
+    const stream = vi.fn<CopilotStream>(() =>
+      Promise.resolve({ ok: false, error: { code: 'CONFLICT', message: 'Plan cap reached.' } }),
+    );
+    const action = vi.fn();
+    const { container } = ask(stream, action);
+    await waitFor(() => {
+      expect(container.querySelector('[data-slot="copilot-plan-limit"]')).not.toBeNull();
+    });
+    expect(container.textContent).toContain('Plan cap reached.');
+    expect(screen.getByRole('button', { name: en.retry })).not.toBeNull();
+    expect(action).not.toHaveBeenCalled();
+  });
+
+  it('fetchCopilotStream reads NDJSON lines split across chunks, and a broken stream is null', async () => {
+    const lines = [
+      { type: 'planning' },
+      { type: 'retrieved', passages: 2, judgments: 1 },
+      { type: 'claim', claim },
+      { type: 'result', answer: ANSWER },
+    ]
+      .map((line) => `${JSON.stringify(line)}\n`)
+      .join('');
+    const body = (text: string) =>
+      new ReadableStream<Uint8Array>({
+        start(controller) {
+          const bytes = new TextEncoder().encode(text);
+          const middle = Math.floor(bytes.length / 2);
+          controller.enqueue(bytes.slice(0, middle));
+          controller.enqueue(bytes.slice(middle));
+          controller.close();
+        },
+      });
+    const fetchMock = vi.fn(() => Promise.resolve(new Response(body(lines), { status: 200 })));
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      const events: CopilotProgress[] = [];
+      const result = await fetchCopilotStream({ question: 'q' }, (event) => events.push(event));
+      expect(events.map((e) => e.type)).toEqual(['planning', 'retrieved', 'claim']);
+      expect(result).toEqual({ ok: true, data: ANSWER });
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/copilot/ask',
+        expect.objectContaining({ method: 'POST' }),
+      );
+
+      fetchMock.mockImplementationOnce(() =>
+        Promise.resolve(new Response(body(`${JSON.stringify({ type: 'planning' })}\n`))),
+      );
+      expect(await fetchCopilotStream({}, () => undefined)).toBeNull();
+      fetchMock.mockImplementationOnce(() =>
+        Promise.resolve(new Response('{"error":"not_found"}', { status: 404 })),
+      );
+      expect(await fetchCopilotStream({}, () => undefined)).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

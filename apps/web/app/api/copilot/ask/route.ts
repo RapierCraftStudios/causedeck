@@ -125,7 +125,11 @@ export async function POST(request: Request): Promise<Response> {
       } catch (error) {
         send({ type: 'error', error: streamError(error) });
       } finally {
-        if (open) controller.close();
+        try {
+          controller.close();
+        } catch {
+          // The client went away; the stream is already closed.
+        }
       }
     },
   });

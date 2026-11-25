@@ -28,7 +28,7 @@ import { newWorkspace } from '../__tests__/fixtures.ts';
 import { invalidateEntitlements } from '../billing/index.ts';
 import { getUsage, increment } from '../usage/index.ts';
 
-import { askCopilot, PLAN_LIMIT_MESSAGE } from './ask.ts';
+import { askCopilot, PLAN_LIMIT_MESSAGE, type CopilotProgress } from './ask.ts';
 
 const NOW = new Date('2026-10-31T06:30:00.000Z');
 const TEXT =
@@ -677,6 +677,102 @@ describe('askCopilot', () => {
       );
       expect(answer.answerText).toBe('Listed on 15 March 2099. Written arguments are due first.');
       expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(1);
+    });
+  });
+
+  it('streams ordered stages, the sources and only verified claims, and logs timings without the question (#1193)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      await seedJudgment(tx);
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const events: CopilotProgress[] = [];
+      const lines: { fields: Record<string, unknown>; message: string }[] = [];
+      const requestId = randomUUID();
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION, requestId },
+        {
+          now: () => NOW,
+          answer: (input) =>
+            Promise.resolve({
+              claims: [
+                {
+                  statement: 'Consent was not taken.',
+                  sourceId: input.sources[0]?.id,
+                  quote: 'no written consent was taken',
+                },
+                {
+                  statement: 'An invented holding never shown.',
+                  sourceId: input.sources[0]?.id,
+                  quote: 'written consent was obtained',
+                },
+              ],
+            }),
+          onProgress: (event) => {
+            events.push(event);
+            if (event.type === 'checking') throw new Error('a gone client');
+          },
+          log: { info: (fields, message) => lines.push({ fields, message }) },
+        },
+      );
+      expect(events.map((e) => e.type)).toEqual([
+        'planning',
+        'retrieved',
+        'sources',
+        'checking',
+        'claim',
+        'done',
+      ]);
+      const retrieved = events.find((e) => e.type === 'retrieved');
+      expect(retrieved?.type === 'retrieved' ? retrieved.judgments : null).toBe(1);
+      expect(retrieved?.type === 'retrieved' ? retrieved.passages : 0).toBeGreaterThan(0);
+      const sources = events.find((e) => e.type === 'sources');
+      expect(sources).toEqual({ type: 'sources', judgments: Object.values(answer.judgments) });
+      const claims = events.flatMap((e) => (e.type === 'claim' ? [e.claim] : []));
+      expect(claims).toEqual(answer.claims);
+      expect(answer.unsupported).toHaveLength(1);
+      expect(JSON.stringify(events)).not.toContain('invented holding');
+
+      expect(lines).toHaveLength(1);
+      const [line] = lines;
+      expect(line?.message).toBe('copilot.timing');
+      expect(line?.fields).toMatchObject({
+        requestId,
+        workspaceId,
+        outcome: 'answered',
+        claims: 1,
+        unsupported: 1,
+      });
+      expect(typeof line?.fields.totalMs).toBe('number');
+      expect(Object.keys(line?.fields.stages as object).sort()).toEqual(
+        ['answer', 'lexical', 'plan', 'rerank', 'vector', 'verify'].sort(),
+      );
+      expect(JSON.stringify(lines)).not.toContain(QUESTION);
+    });
+  });
+
+  it('logs a failed question once with its stages and no question text (#1193)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      await seedJudgment(tx);
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const lines: { fields: Record<string, unknown>; message: string }[] = [];
+      await expect(
+        askCopilot(
+          tx,
+          { workspaceId, userId: ownerId },
+          { question: QUESTION },
+          {
+            now: () => NOW,
+            answer: () => Promise.reject(new Error('model down')),
+            log: { info: (fields, message) => lines.push({ fields, message }) },
+          },
+        ),
+      ).rejects.toThrow();
+      expect(lines).toHaveLength(1);
+      expect(lines[0]?.fields).toMatchObject({ outcome: 'failed', workspaceId });
+      expect(JSON.stringify(lines)).not.toContain(QUESTION);
     });
   });
 });

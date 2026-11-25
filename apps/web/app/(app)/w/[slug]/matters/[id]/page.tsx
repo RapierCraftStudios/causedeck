@@ -263,20 +263,44 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   if (loaded.kind === 'denied') return <MattersPermissionDenied />;
   if (loaded.kind === 'error') throw new Error('Matter could not be loaded');
 
-  const notices = dev === 'empty' ? [] : await loadMatterNotices(context, id);
-  const locale = await pageLocale();
-  const benchNotices = dev === 'empty' ? [] : await loadBenchNotices(context, id);
-  const sharing = dev === 'empty' ? null : await loadBriefSharing(context, id);
-  const snoozes = dev === 'empty' ? null : await loadMatterSnoozes(context, id);
-  const timeline = dev === 'empty' ? null : await loadExpectedTimeline(context, id);
+  // #1193: the independent loaders run together; each one's duration goes to one timing line.
+  const timings: Record<string, number> = {};
+  const started = performance.now();
+  const timed = async <T,>(name: string, run: () => Promise<T>): Promise<T> => {
+    const start = performance.now();
+    try {
+      return await run();
+    } finally {
+      timings[name] = Math.round(performance.now() - start);
+    }
+  };
+  const empty = dev === 'empty';
+  const [notices, locale, benchNotices, sharing, snoozes, timeline, continuity, statusLinks] =
+    await Promise.all([
+      empty ? [] : timed('notices', () => loadMatterNotices(context, id)),
+      pageLocale(),
+      empty ? [] : timed('benchNotices', () => loadBenchNotices(context, id)),
+      empty ? null : timed('sharing', () => loadBriefSharing(context, id)),
+      empty ? null : timed('snoozes', () => loadMatterSnoozes(context, id)),
+      empty ? null : timed('timeline', () => loadExpectedTimeline(context, id)),
+      timed('continuity', () => loadContinuityMembers(context)),
+      empty ? null : timed('statusLinks', () => loadStatusLinkSetup(context)),
+    ]);
   const view = toOverviewView(loaded.overview, { locale, now: new Date() });
   const proceedingId = view.nextDate?.proceedingId;
   const corrections =
-    proceedingId === undefined || dev === 'empty'
+    proceedingId === undefined || empty
       ? []
-      : await loadReviewCorrections(context, proceedingId, locale);
-  const continuity = await loadContinuityMembers(context);
-  const statusLinks = dev === 'empty' ? null : await loadStatusLinkSetup(context);
+      : await timed('corrections', () => loadReviewCorrections(context, proceedingId, locale));
+  logger.info(
+    {
+      workspaceId: context.workspace.id,
+      matterId: id,
+      loaders: timings,
+      totalMs: Math.round(performance.now() - started),
+    },
+    'matter-overview.timing',
+  );
   return (
     <>
       <div className="grid gap-3">

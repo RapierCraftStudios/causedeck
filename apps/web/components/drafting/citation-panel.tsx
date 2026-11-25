@@ -3,13 +3,18 @@
 // The studio's Citations panel (#828, #1137): every citation found in the draft with its verified,
 // not found or unknown state (`CitationStatus`, glyph plus text), why a citation is not verified
 // (unresolved, quote not in the judgment, no such paragraph or page, no such section, …), a link to
-// the corpus source (`#page=` when the pinpoint page is known), a jump to its span, and `Check
-// citations`. Every non-verified citation nobody acknowledged blocks the export; the panel says so
-// and opens the acknowledgement dialog. The corpus link opens the public source in a new tab.
+// the corpus source, a jump to its span, and `Check citations`. Every non-verified citation nobody
+// acknowledged blocks the export; the panel says so and opens the acknowledgement dialog. A cited
+// judgment opens in the in-app reader at the pinpoint page (#1191); any other source opens in a new
+// tab (`#page=` when the pinpoint page is known), and a stored archive URL (`….tar#member.pdf`, which
+// no browser opens) is never linked.
 import { Button } from '@causedeck/ui/button';
 import { CitationStatus, type CitationStatusKind } from '@causedeck/ui/patterns';
 import type { CitationReason } from '@causedeck/validators/citation';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+
+import { isBrowsableSourceUrl, judgmentHref, slugOf } from '../../lib/judgment-href.ts';
 
 export interface CitationView {
   id: string;
@@ -22,6 +27,8 @@ export interface CitationView {
   reason?: CitationReason | undefined;
   /** The judgment or statute in the corpus. */
   sourceUrl?: string | undefined;
+  /** The stored judgment, when known: the link opens it in the in-app reader. */
+  judgmentId?: string | undefined;
   /** The pinpoint page, when known: the link opens the source at it. */
   page?: number | undefined;
   /** A non-verified citation the lawyer has acknowledged. */
@@ -40,11 +47,27 @@ function reasonKey(citation: CitationView): CitationReason | 'unresolved' | 'unk
   return citation.status === 'not_found' ? 'unresolved' : 'unknown';
 }
 
-function sourceHref(citation: CitationView): string | null {
-  if (citation.sourceUrl === undefined) return null;
-  return citation.page === undefined
-    ? citation.sourceUrl
-    : `${citation.sourceUrl}#page=${String(citation.page)}`;
+interface SourceLink {
+  href: string;
+  /** Leaves the app: opens in a new tab. */
+  external: boolean;
+}
+
+function sourceLink(citation: CitationView, slug: string | null): SourceLink | null {
+  if (citation.judgmentId !== undefined && slug !== null) {
+    return {
+      href: judgmentHref(slug, citation.judgmentId, { page: citation.page }),
+      external: false,
+    };
+  }
+  if (!isBrowsableSourceUrl(citation.sourceUrl)) return null;
+  return {
+    href:
+      citation.page === undefined
+        ? citation.sourceUrl
+        : `${citation.sourceUrl}#page=${String(citation.page)}`,
+    external: true,
+  };
 }
 
 export interface CitationPanelProps {
@@ -75,6 +98,7 @@ export function CitationPanel({
 }: CitationPanelProps) {
   const t = useTranslations('drafting.panels.citations');
   const tc = useTranslations('drafting.checks.citations');
+  const slug = slugOf(useParams());
   const open = openCitationIds(citations).length;
   return (
     <section
@@ -106,7 +130,7 @@ export function CitationPanel({
       <ul className="flex flex-col gap-2">
         {citations.map((citation) => {
           const reason = reasonKey(citation);
-          const href = sourceHref(citation);
+          const link = sourceLink(citation, slug);
           return (
             <li
               key={citation.id}
@@ -131,12 +155,11 @@ export function CitationPanel({
                   {tc(`reason.${reason}`)}
                 </span>
               )}
-              {href === null ? null : (
+              {link === null ? null : (
                 <a
                   className="self-start text-xs underline"
-                  href={href}
-                  rel="noreferrer noopener"
-                  target="_blank"
+                  href={link.href}
+                  {...(link.external ? { rel: 'noreferrer noopener', target: '_blank' } : {})}
                 >
                   {tc('openSource')}
                 </a>

@@ -1,6 +1,6 @@
 // `/w/[slug]/matters/[id]/research` (#497, D-048): the "relevant judgments" panel. The lawyer's issue
 // tags (statute, section) with confirm and dismiss for proposed ones, and the judgments that cite a
-// confirmed tag, each linked to the corpus record at the page of the citation. Alerts are listed
+// confirmed tag, each opening the in-app judgment reader at the page of the citation (#1191). Alerts are listed
 // through `listRelevantJudgments`, which keeps only judgments `verifyCitation` resolves (D-004).
 // Runs in the member's workspace scope and needs `matter.read`; another workspace's matter is
 // this segment's not-found screen.
@@ -9,6 +9,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { MattersPermissionDenied } from '../../../../../../../components/matters/matters-list.tsx';
+import { judgmentHref } from '../../../../../../../lib/judgment-href.ts';
 import { can } from '../../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../../lib/workspace-loader.ts';
 
@@ -145,9 +146,7 @@ export default async function MatterResearchPage({ params }: ResearchPageProps) 
                 </p>
                 <a
                   className="underline"
-                  href={`${j.sourceUrl}#page=${String(j.pageNo)}`}
-                  rel="noreferrer noopener"
-                  target="_blank"
+                  href={judgmentHref(slug, j.judgmentId, { page: j.pageNo })}
                 >
                   {t('open')}
                 </a>

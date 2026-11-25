@@ -234,6 +234,67 @@ describe('preview chatgpt-plan provider guardrail (#1165)', () => {
   });
 });
 
+describe('preview self-hosted embed guardrail (#1198)', () => {
+  const embed = {
+    ...productionEnv,
+    EMBED_PROVIDER: 'bge-m3',
+    BGE_M3_URL: 'http://embed:8080',
+    ALLOW_PREVIEW_SELF_HOSTED_EMBED: 'true',
+  };
+
+  it('production refuses ALLOW_PREVIEW_SELF_HOSTED_EMBED=true without a staging label', () => {
+    const unlabelled = envError(embed) as EnvValidationError;
+    expect(unlabelled.keys).toEqual(['ALLOW_PREVIEW_SELF_HOSTED_EMBED']);
+    expect(unlabelled.message).toContain('preview only');
+    const labelled = envError({ ...embed, ADMIN_ENV_LABEL: 'production' }) as EnvValidationError;
+    expect(labelled.keys).toEqual(['ALLOW_PREVIEW_SELF_HOSTED_EMBED']);
+  });
+
+  it('production accepts the flag on a staging deployment, and bge-m3 without it', () => {
+    const staging = createEnv({ ...embed, ADMIN_ENV_LABEL: 'staging' });
+    expect(staging.EMBED_PROVIDER).toBe('bge-m3');
+    expect(staging.ALLOW_PREVIEW_SELF_HOSTED_EMBED).toBe(true);
+    const withoutFlag = createEnv({ ...embed, ALLOW_PREVIEW_SELF_HOSTED_EMBED: undefined });
+    expect(withoutFlag.ALLOW_PREVIEW_SELF_HOSTED_EMBED).toBe(false);
+  });
+
+  it('NODE_ENV=test accepts the flag', () => {
+    const env = createEnv({
+      NODE_ENV: 'test',
+      EMBED_PROVIDER: 'bge-m3',
+      BGE_M3_URL: 'http://embed:8080',
+      BGE_M3_TOKEN: 'embed-token',
+      ALLOW_PREVIEW_SELF_HOSTED_EMBED: 'true',
+    });
+    expect(env.ALLOW_PREVIEW_SELF_HOSTED_EMBED).toBe(true);
+    expect(env.BGE_M3_URL).toBe('http://embed:8080');
+    expect(String(env.BGE_M3_TOKEN)).toBe('[REDACTED]');
+  });
+
+  it('EMBED_PROVIDER=bge-m3 requires BGE_M3_URL', () => {
+    const error = envError({ NODE_ENV: 'test', EMBED_PROVIDER: 'bge-m3' }) as EnvValidationError;
+    expect(error.keys).toEqual(['BGE_M3_URL']);
+    expect(error.message).toContain('BGE_M3_URL: is required when EMBED_PROVIDER=bge-m3');
+  });
+
+  it('defaults EMBED_PROVIDER to mock and EMBED_BATCH_SIZE to 32, which is configurable', () => {
+    const env = createEnv({ NODE_ENV: 'test' });
+    expect(env.EMBED_PROVIDER).toBe('mock');
+    expect(env.EMBED_BATCH_SIZE).toBe(32);
+    expect(env.ALLOW_PREVIEW_SELF_HOSTED_EMBED).toBe(false);
+    expect(createEnv({ NODE_ENV: 'test', EMBED_BATCH_SIZE: '8' }).EMBED_BATCH_SIZE).toBe(8);
+    expect(envError({ NODE_ENV: 'test', EMBED_BATCH_SIZE: '0' }).message).toContain(
+      'EMBED_BATCH_SIZE',
+    );
+    expect(envError({ NODE_ENV: 'test', EMBED_BATCH_SIZE: '2.5' }).message).toContain(
+      'EMBED_BATCH_SIZE',
+    );
+    expect(envError({ NODE_ENV: 'test', EMBED_PROVIDER: 'openai' }).message).toContain(
+      'EMBED_PROVIDER',
+    );
+  });
+});
+
 describe('data residency', () => {
   it('defaults AWS_REGION to ap-south-1 and DATA_REGION to in', () => {
     const env = createEnv({ NODE_ENV: 'test' });

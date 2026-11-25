@@ -3,7 +3,7 @@
 // next run resumes. Real database, the mock provider.
 import { randomUUID } from 'node:crypto';
 
-import { createMockEmbedProvider } from '@causedeck/ai';
+import { createBgem3Provider, createMockEmbedProvider, SELF_HOSTED_REGION } from '@causedeck/ai';
 import { schema, type Queryable } from '@causedeck/db';
 import { closeTestDb, withTestDb } from '@causedeck/db/testing';
 import { eq, isNotNull } from 'drizzle-orm';
@@ -98,6 +98,45 @@ describe('runCorpusEmbed', () => {
         .from(schema.judgmentSegment)
         .where(isNotNull(schema.judgmentSegment.embedding));
       expect(vectors.length).toBeGreaterThanOrEqual(4);
+    });
+  });
+
+  it('re-embeds mock-embed vectors with bge-m3 in batches of at most 32 at 0 paise', async () => {
+    await withTestDb(async (db) => {
+      const ids: string[] = [];
+      for (let i = 0; i < 10; i += 1) ids.push(await seed(db));
+      const mock = createMockEmbedProvider();
+      expect((await runCorpusEmbed(ctx, {}, { db, provider: mock, batchSize: 64 })).embedded).toBe(
+        40,
+      );
+
+      // A fake self-hosted server: deterministic 1024-dim unit vectors, recording each batch size.
+      const batches: number[] = [];
+      const fetch = vi.fn((_url: string | URL | Request, init?: RequestInit) => {
+        const { inputs } = JSON.parse(String(init?.body)) as { inputs: string[] };
+        batches.push(inputs.length);
+        const unit = (k: number) =>
+          Array.from({ length: 1024 }, (_, d) => (d === k % 1024 ? 1 : 0));
+        return Promise.resolve(new Response(JSON.stringify(inputs.map((_, k) => unit(k)))));
+      });
+      const bge = createBgem3Provider({
+        baseUrl: 'http://embed:8080',
+        region: SELF_HOSTED_REGION,
+        previewSelfHosted: true,
+        fetch: fetch as typeof globalThis.fetch,
+      });
+      const report = await runCorpusEmbed(ctx, {}, { db, provider: bge });
+      expect(report.embedded).toBe(40);
+      expect(report.costPaise).toBe(0);
+      expect(batches.length).toBeGreaterThanOrEqual(2);
+      expect(batches.every((n) => n > 0 && n <= 32)).toBe(true);
+      for (const id of ids) {
+        const rows = await embeddedRows(db, id);
+        expect(rows).toHaveLength(4);
+        expect(rows.every((r) => r.model === 'bge-m3')).toBe(true);
+      }
+
+      expect((await runCorpusEmbed(ctx, {}, { db, provider: bge })).embedded).toBe(0);
     });
   });
 

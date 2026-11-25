@@ -7,6 +7,7 @@
 // the page/paragraph pinpoint and the corpus record link. Claims the server could not verify sit in a
 // collapsed "Not verified" group with the reason, never among the sources.
 import type { CopilotAnswer } from '@causedeck/core/copilot';
+import { courtLabel } from '@causedeck/intelligence/citation-display';
 import { Badge } from '@causedeck/ui/badge';
 import { Button } from '@causedeck/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@causedeck/ui/collapsible';
@@ -156,6 +157,13 @@ function SourceItem({
   const sameText = normalise(claim.statement) === normalise(claim.quote);
   const name =
     judgment === undefined ? null : (judgment.title ?? judgment.neutralCitation ?? t('record'));
+  // The reference (neutral, else SCR citation, #1189) and the court name follow a titled record.
+  const detail =
+    judgment === undefined
+      ? ''
+      : [judgment.title === null ? null : judgment.neutralCitation, courtLabel(judgment.court)]
+          .filter((part) => part !== null && part !== '')
+          .join(' · ');
   return (
     <li
       data-slot="copilot-claim"
@@ -195,6 +203,7 @@ function SourceItem({
                 {name}
               </a>
             )}
+            {detail === '' ? null : ` · ${detail}`}
           </>
         )}
       </p>

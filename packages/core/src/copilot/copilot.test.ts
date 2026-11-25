@@ -259,6 +259,30 @@ describe('askCopilot', () => {
     });
   });
 
+  it('cites a judgment without a neutral citation by its SCR citation (#1189)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      await seedJudgment(tx);
+      await tx.update(schema.judgment).set({
+        neutralCitation: null,
+        court: 'INSC',
+        caseNumbers: ['C.A. 1 of 2008', '[2008] 9 SCR 821'],
+      });
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION },
+        { now: () => NOW, answer: quoting('no written consent was taken') },
+      );
+      expect(answer.claims).toHaveLength(1);
+      expect(Object.values(answer.judgments)[0]).toMatchObject({
+        court: 'INSC',
+        neutralCitation: '[2008] 9 SCR 821',
+      });
+    });
+  });
+
   it('flags a fabricated source id and an altered quote as unsupported', async () => {
     await withTestDb(async (tx) => {
       await seedPlans(tx);

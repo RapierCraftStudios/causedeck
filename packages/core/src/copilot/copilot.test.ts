@@ -685,12 +685,11 @@ describe('askCopilot', () => {
   });
 });
 
-// #1165: the preview-only chatgpt-plan provider, over a mocked Responses API stream.
 /** A preview bge-m3 provider (#1198) over a fake server that answers with the mock's vectors. */
 function bgeFromMock(): EmbedProvider {
   const mock = createMockEmbedProvider();
   const fetch = async (_url: string | URL | Request, init?: RequestInit) => {
-    const { inputs } = JSON.parse(String(init?.body)) as { inputs: string[] };
+    const { inputs } = JSON.parse(init?.body as string) as { inputs: string[] };
     const { vectors } = await mock.embed(inputs);
     return new Response(JSON.stringify(vectors));
   };
@@ -737,6 +736,7 @@ describe('askCopilot with a bge-m3 corpus (#1198)', () => {
   });
 });
 
+// #1165: the preview-only chatgpt-plan provider, over a mocked Responses API stream.
 describe('askCopilot with the preview plan provider', () => {
   const ACCESS = 'plan-access-token';
   const sse = (events: unknown[]): Response =>

@@ -194,10 +194,11 @@ export interface DemoCorpusEmbedDeps {
 /**
  * Embed the segments of the synthetic demo corpus (#1070) with the configured embedder, the model
  * `searchAuthorities` queries with (`embedProviderFromEnv`, #1198: bge-m3 when set, else the
- * deterministic 1024-dimension mock), so a seed run never resets demo vectors to another model. `@causedeck/db` writes the rows but cannot import the embedder, so
- * this is the second half of the corpus seed. It only touches the demo judgments (not a real corpus
- * row), embeds the same roles `system.corpus.embed` does, and is a no-op once every demo segment
- * carries the current model version. Returns how many segments it embedded.
+ * deterministic 1024-dimension mock), so a seed run never resets demo vectors to another model.
+ * `@causedeck/db` writes the rows but cannot import the embedder, so this is the second half of the
+ * corpus seed. It only touches the demo judgments (not a real corpus row), embeds the same roles
+ * `system.corpus.embed` does, and is a no-op once every demo segment carries the current model
+ * version. Returns how many segments it embedded.
  */
 export async function seedDemoCorpusEmbeddings(deps: DemoCorpusEmbedDeps): Promise<{
   embedded: number;

@@ -53,6 +53,7 @@ import {
 
 import {
   createPlatformAiGateway,
+  embedProviderFromEnv,
   isPreviewPlanWorkspace,
   PLATFORM_AI_SCOPE,
   previewPlanProviderFromEnv,

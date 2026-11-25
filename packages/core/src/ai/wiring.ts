@@ -105,7 +105,7 @@ export function embedProviderFromEnv(env: ServerEnv = serverEnv()): EmbedProvide
           baseUrl: env.BGE_M3_URL,
           region: SELF_HOSTED_REGION,
           ...(env.BGE_M3_TOKEN === undefined ? {} : { token: env.BGE_M3_TOKEN.reveal() }),
-          previewSelfHosted: env.ALLOW_PREVIEW_SELF_HOSTED_EMBED === true,
+          previewSelfHosted: env.ALLOW_PREVIEW_SELF_HOSTED_EMBED,
         })
       : createMockEmbedProvider();
   embedMemo = { env, provider };

@@ -113,7 +113,7 @@ describe('runCorpusEmbed', () => {
       // A fake self-hosted server: deterministic 1024-dim unit vectors, recording each batch size.
       const batches: number[] = [];
       const fetch = vi.fn((_url: string | URL | Request, init?: RequestInit) => {
-        const { inputs } = JSON.parse(String(init?.body)) as { inputs: string[] };
+        const { inputs } = JSON.parse(init?.body as string) as { inputs: string[] };
         batches.push(inputs.length);
         const unit = (k: number) =>
           Array.from({ length: 1024 }, (_, d) => (d === k % 1024 ? 1 : 0));
@@ -123,7 +123,7 @@ describe('runCorpusEmbed', () => {
         baseUrl: 'http://embed:8080',
         region: SELF_HOSTED_REGION,
         previewSelfHosted: true,
-        fetch: fetch as typeof globalThis.fetch,
+        fetch,
       });
       const report = await runCorpusEmbed(ctx, {}, { db, provider: bge });
       expect(report.embedded).toBe(40);

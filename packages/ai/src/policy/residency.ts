@@ -30,7 +30,7 @@ export const SELF_HOSTED_REGION = 'self-hosted';
 
 export interface EmbedDataResidencyOptions {
   /** True only on a preview with ALLOW_PREVIEW_SELF_HOSTED_EMBED=true. */
-  previewSelfHosted?: boolean;
+  previewSelfHosted?: boolean | undefined;
 }
 
 /**

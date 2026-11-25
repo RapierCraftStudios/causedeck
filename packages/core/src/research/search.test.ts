@@ -223,7 +223,7 @@ describe('searchAuthorities', () => {
         region: SELF_HOSTED_REGION,
         previewSelfHosted: true,
         fetch: async (_url, init) => {
-          const { inputs } = JSON.parse(String(init?.body)) as { inputs: string[] };
+          const { inputs } = JSON.parse(init?.body as string) as { inputs: string[] };
           return new Response(JSON.stringify((await mock.embed(inputs)).vectors));
         },
       });

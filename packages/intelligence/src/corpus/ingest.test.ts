@@ -1,7 +1,7 @@
 import type { Queryable } from '@causedeck/db';
 import { describe, expect, it, vi } from 'vitest';
 
-import { bodyBytes, ingestJudgment, type CorpusFetcher } from './ingest.ts';
+import { bodyBytes, ingestJudgment, storeJudgment, type CorpusFetcher } from './ingest.ts';
 
 /** A one-table in-memory stand-in for the `judgment` queries `ingestJudgment` makes. */
 function fakeDb() {
@@ -94,6 +94,45 @@ describe('ingestJudgment', () => {
     );
     expect(out).toEqual({ status: 'unreadable', sha256: 'cc' });
     expect(rows).toHaveLength(0);
+  });
+});
+
+describe('storeJudgment court and reporter citations (#1189)', () => {
+  const store = (sourceId: string, metadata = {}, text = 'plain text without a citation') => {
+    const { db, rows } = fakeDb();
+    return storeJudgment(
+      { db, readPdf: () => Promise.resolve([{ pageNo: 1, text }]) },
+      { sourceId, bytes: new Uint8Array([1]), provenance: provenance('dd'), metadata },
+    ).then(() => rows[0]?.values);
+  };
+
+  it('stores INSC, never the source id, for the AWS Supreme Court dataset', async () => {
+    expect(await store('aws-open-data-sc')).toMatchObject({ court: 'INSC' });
+    // A High Court citation quoted in the text does not make it a High Court row.
+    expect(await store('aws-open-data-sc', {}, 'relying on 2019:MHC:1234')).toMatchObject({
+      court: 'INSC',
+    });
+    expect(await store('aws-open-data-sc', { court: 'SC' })).toMatchObject({ court: 'INSC' });
+  });
+
+  it('keeps the header, then the metadata, then the source id for other sources', async () => {
+    expect(await store('in.mhc.judgments', { court: 'KHC' }, '2026:MHC:1234')).toMatchObject({
+      court: 'MHC',
+    });
+    expect(await store('aws-open-data-hc', { court: '33_10' })).toMatchObject({ court: '33_10' });
+    expect(await store('aws-open-data-hc')).toMatchObject({ court: 'aws-open-data-hc' });
+  });
+
+  it('keeps reporter citations in case_numbers, never in neutral_citation', async () => {
+    expect(
+      await store('aws-open-data-sc', {
+        caseNumbers: ['C.A. 1 of 2008'],
+        reporterCitations: ['[2008] 9 SCR 821'],
+      }),
+    ).toMatchObject({
+      caseNumbers: ['C.A. 1 of 2008', '[2008] 9 SCR 821'],
+      neutralCitation: null,
+    });
   });
 });
 

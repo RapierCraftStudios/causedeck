@@ -79,8 +79,8 @@ const SELECT = sql`
     s.ordinal as ordinal, s.role as role, s.page_from as "pageFrom", s.page_to as "pageTo",
     s.text as text, s.court as court, s.court_level as "courtLevel",
     j.case_title as title, j.title_masked as "titleMasked",
-    j.neutral_citation as "neutralCitation", j.judgment_date::text as "judgmentDate",
-    j.outcome as outcome, j.provenance->>'url' as "sourceUrl",
+    j.neutral_citation as "neutralCitation", j.case_numbers as "caseNumbers",
+    j.judgment_date::text as "judgmentDate", j.outcome as outcome, j.provenance->>'url' as "sourceUrl",
     (select count(distinct cr.judgment_id)::int from judgment_citation_ref cr
       where cr.cited_judgment_id = j.id) as "citedByCount"
   from judgment_segment s

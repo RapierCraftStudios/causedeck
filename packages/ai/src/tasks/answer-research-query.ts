@@ -31,7 +31,7 @@ export const answerResearchQuery: TaskDef<z.infer<typeof input>, z.infer<typeof 
   id: 'answer_research_query',
   input,
   output,
-  providers: ['bedrock'],
+  providers: ['bedrock', 'chatgpt-plan'],
   maxOutputTokens: 1200,
   promptId: 'answer_research_query.v1',
   defaultLevel: 1,

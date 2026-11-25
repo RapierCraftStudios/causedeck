@@ -5773,6 +5773,50 @@ export type Messages = {
         page: string;
         paragraph: string;
       };
+      followUpPlaceholder: string;
+      composerHint: string;
+      searching: string;
+      searchingCorpus: string;
+      planLimit: string;
+      retry: string;
+      offline: string;
+      cite: string;
+      thread: {
+        label: string;
+        you: string;
+        copilot: string;
+      };
+      suggestions: {
+        title: string;
+        description: string;
+        corpusConsent: string;
+        corpusNegligence: string;
+        corpusLimitation: string;
+        matterFacts: string;
+        matterFactsOf: string;
+        nextDate: string;
+        stage: string;
+        matterDocuments: string;
+        matterAuthority: string;
+      };
+      sources: {
+        title: string;
+        description: string;
+        empty: string;
+        open: string;
+        close: string;
+        show: string;
+        notVerified: string;
+      };
+      reason: {
+        unknown_source: string;
+        quote_not_found: string;
+      };
+      context: {
+        label: string;
+        stage: string;
+        nextDate: string;
+      };
     };
     statutes: {
       metaTitle: string;

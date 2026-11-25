@@ -4,6 +4,8 @@
 // workspace's matter is this segment's not-found screen. A sensitive matter shows that AI is off.
 // #1144: a member who may write drafts gets the matter's drafts (latest version, block keys) as
 // "Insert into draft" targets for verified judgment claims; loading them never fails the page.
+// #1168: the matter's title, the stage and the next date (from the overview the matter layout loads)
+// feed the composer's context chips and the suggested questions; without them the panel still works.
 import type { Block } from '@causedeck/validators/drafting';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -12,11 +14,13 @@ import { getTranslations } from 'next-intl/server';
 import {
   CopilotPanel,
   type CopilotDraftTarget,
+  type CopilotMatterContext,
 } from '../../../../../../../components/copilot/copilot-panel.tsx';
 import { MattersPermissionDenied } from '../../../../../../../components/matters/matters-list.tsx';
 import { requireWorkspaceFlag } from '../../../../../../../lib/flags.ts';
 import { can } from '../../../../../../../lib/workspace-context.ts';
 import { keyedBlocks } from '../../../../../../../lib/drafting/blocks-edit.ts';
+import { loadMatterOverview } from '../../../../../../../lib/matters/workspace.ts';
 import { getWorkspaceContext } from '../../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../../src/health.ts';
 import { insertAuthorityAction } from '../../../drafts/[id]/authority-actions.ts';
@@ -76,6 +80,26 @@ async function draftTargets(
   }
 }
 
+/** Title, stage and next date for the panel; undefined when the overview cannot be read. */
+async function matterContextOf(
+  context: NonNullable<Awaited<ReturnType<typeof getWorkspaceContext>>>,
+  matterId: string,
+): Promise<CopilotMatterContext | undefined> {
+  try {
+    const loaded = await loadMatterOverview(context, matterId);
+    if (loaded.kind !== 'overview') return undefined;
+    const { header, nextDate } = loaded.overview;
+    return {
+      title: header.title,
+      stage: nextDate?.stage ?? null,
+      nextDate: nextDate?.date ?? null,
+    };
+  } catch (error) {
+    logger.warn({ err: error }, 'matter copilot: could not load the matter context');
+    return undefined;
+  }
+}
+
 interface CopilotPageProps {
   params: Promise<{ slug: string; id: string }>;
 }
@@ -98,13 +122,16 @@ export default async function MatterCopilotPage({ params }: CopilotPageProps) {
   await requireWorkspaceFlag('copilot.enabled', context);
   if (!can(context.role, 'matter.read')) return <MattersPermissionDenied />;
   const t = await getTranslations('research.copilot');
-  const drafts = can(context.role, 'draft.write')
-    ? await draftTargets(slug, { workspaceId: context.workspace.id, userId: context.user.id }, id)
-    : [];
+  const [drafts, matterContext] = await Promise.all([
+    can(context.role, 'draft.write')
+      ? draftTargets(slug, { workspaceId: context.workspace.id, userId: context.user.id }, id)
+      : Promise.resolve([]),
+    matterContextOf(context, id),
+  ]);
   return (
     <section
       data-route="matter-copilot"
-      className="flex flex-col gap-6"
+      className="flex min-w-0 flex-col gap-6"
       aria-labelledby="copilot-title"
     >
       <header className="flex flex-col gap-1">
@@ -117,6 +144,7 @@ export default async function MatterCopilotPage({ params }: CopilotPageProps) {
         workspaceId={context.workspace.id}
         matterId={id}
         ask={askCopilotAction}
+        {...(matterContext === undefined ? {} : { matterContext })}
         {...(drafts.length === 0 ? {} : { drafts, insert: insertAuthorityAction })}
       />
     </section>

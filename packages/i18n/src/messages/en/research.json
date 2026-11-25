@@ -172,6 +172,50 @@
       "pinpoint": {
         "page": "page {page}",
         "paragraph": "para {paragraph}"
+      },
+      "followUpPlaceholder": "Ask a follow-up question",
+      "composerHint": "Enter to send, Shift+Enter for a new line",
+      "searching": "Searching facts, documents and the corpus…",
+      "searchingCorpus": "Searching the corpus…",
+      "planLimit": "Your plan's copilot limit is reached.",
+      "retry": "Try again",
+      "offline": "You are offline. Questions can be sent again once you reconnect.",
+      "cite": "Source {n}",
+      "thread": {
+        "label": "Conversation with the copilot",
+        "you": "You",
+        "copilot": "Copilot"
+      },
+      "suggestions": {
+        "title": "Start with a question",
+        "description": "Every claim in the answer links to a quote checked against the stored text.",
+        "corpusConsent": "Is written consent needed before surgery?",
+        "corpusNegligence": "When is a hospital vicariously liable for a doctor's negligence?",
+        "corpusLimitation": "When does limitation start for a medical negligence claim?",
+        "matterFacts": "What are the key facts of this matter?",
+        "matterFactsOf": "What are the key facts of {title}?",
+        "nextDate": "What should be ready for the hearing on {date}?",
+        "stage": "What must we show at the {stage} stage?",
+        "matterDocuments": "What do the matter's documents say about consent?",
+        "matterAuthority": "Which judgments support our position?"
+      },
+      "sources": {
+        "title": "Sources",
+        "description": "Each source shows the quote we checked and where it is.",
+        "empty": "No verified source for this answer.",
+        "open": "{count, plural, one {View # source} other {View # sources}}",
+        "close": "Close sources",
+        "show": "Show sources",
+        "notVerified": "{count, plural, one {Not verified (#)} other {Not verified (#)}}"
+      },
+      "reason": {
+        "unknown_source": "The source it cited is not one the copilot read.",
+        "quote_not_found": "The quote was not found in the source."
+      },
+      "context": {
+        "label": "Asking about",
+        "stage": "Stage: {stage}",
+        "nextDate": "Next date: {date}"
       }
     },
     "statutes": {

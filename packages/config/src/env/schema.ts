@@ -97,6 +97,15 @@ export const sharedKeys = {
     requiredWhen: 'never',
     ownerIssue: 4,
   },
+  ALLOW_PREVIEW_PLAN_PROVIDER: {
+    domain: 'shared',
+    type: 'boolean',
+    description:
+      'Allow the preview-only chatgpt-plan AI provider (demo workspaces only; never real client data)',
+    default: 'false',
+    requiredWhen: 'NODE_ENV=production and AI_PROVIDER=chatgpt-plan',
+    ownerIssue: 1165,
+  },
   SKIP_ENV_VALIDATION: {
     domain: 'shared',
     type: 'literal(1)',
@@ -519,6 +528,7 @@ export const sharedShape = {
   AI_INDIA_ONLY: z.stringbool().describe(d(sharedKeys.AI_INDIA_ONLY)),
   AI_INDIA_ONLY_OVERRIDE_ACK: ack.describe(d(sharedKeys.AI_INDIA_ONLY_OVERRIDE_ACK)),
   ALLOW_MOCK_PROVIDERS: z.stringbool().describe(d(sharedKeys.ALLOW_MOCK_PROVIDERS)),
+  ALLOW_PREVIEW_PLAN_PROVIDER: z.stringbool().describe(d(sharedKeys.ALLOW_PREVIEW_PLAN_PROVIDER)),
   SKIP_ENV_VALIDATION: z.literal('1').optional().describe(d(sharedKeys.SKIP_ENV_VALIDATION)),
 };
 
@@ -763,6 +773,12 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
     add(
       'SARVAM_NO_TRAINING_CONFIRMED',
       'must be true in production when a real Sarvam key is set (contract no-training term)',
+    );
+  }
+  if (env.AI_PROVIDER === 'chatgpt-plan' && parsed.ALLOW_PREVIEW_PLAN_PROVIDER !== true) {
+    add(
+      'ALLOW_PREVIEW_PLAN_PROVIDER',
+      'must be true to use AI_PROVIDER=chatgpt-plan in production (preview only, demo workspaces)',
     );
   }
   if (parsed.ALLOW_MOCK_PROVIDERS !== true) {

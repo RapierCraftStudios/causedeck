@@ -1,24 +1,38 @@
 'use client';
-// The grounded matter copilot (#1115, ADR 0051, D-004): one question, then verified claims. Each claim
-// shows its source kind, the quote and a pinpoint (page, paragraph when the text carries one) the
-// server computed from the stored text, with a link to the corpus record for a judgment. A claim the
-// server could not verify is listed apart under "not verified" and is not part of the answer. No hits
-// is "no authority found"; a sensitive matter says AI is off; a failed call is an error, never an
-// invented answer. A retry after a failure reuses the request id, so it counts once. A claim whose
-// statement is its quote (the extractive demo answer) prints the sentence once, as the quote (#1132).
+// The grounded matter copilot (#1115, ADR 0051, D-004), rebuilt as a conversation (#1168): a thread of
+// turns (the question, then the written answer; follow-ups append and earlier turns stay), each answer
+// with numbered citation chips into its verified sources (copilot-answer.tsx), the sources in a rail
+// from `lg` up and a Sheet below it, and a composer (auto-grow, Enter sends, Shift+Enter is a new line,
+// the usage line and the matter's context chips). Before the first question it suggests 3-4 questions
+// built from the matter. States: a loading skeleton while it searches, an error or the plan limit
+// with a retry (the retry reuses the turn's request id, so it counts once), no authority found, AI off
+// for a sensitive matter, and offline (nothing is sent). A claim the server could not verify is only
+// in the collapsed "Not verified" group, never in the answer; a failed call is never an answer.
 // #1144: with `drafts` and `insert` (matter copilot, a member who may write drafts), a verified
 // judgment claim has "Insert into draft": the member picks a draft and the block to insert after; the
 // claim's judgment, quote and pinpoint go to the server unaltered, which verifies them again.
 import type { CopilotAnswer } from '@causedeck/core/copilot';
+import { Badge } from '@causedeck/ui/badge';
 import { Button } from '@causedeck/ui/button';
+import { EmptyState } from '@causedeck/ui/empty-state';
+import { Skeleton, SkeletonGroup } from '@causedeck/ui/skeleton';
+import { Textarea } from '@causedeck/ui/textarea';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
-import { useRef, useState, useTransition, type SyntheticEvent } from 'react';
+import { useFormatter, useTranslations } from 'next-intl';
+import {
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+  type KeyboardEvent,
+  type SyntheticEvent,
+} from 'react';
 
-/** Whitespace-collapsed and lower-cased, as the server compares a quote with its source. */
-const normalise = (text: string): string => text.replace(/\s+/g, ' ').trim().toLowerCase();
+import { AnswerProse, SourcesList, SourcesSheet, type CopilotClaim } from './copilot-answer.tsx';
 
-type ActionResult = { ok: true; data: CopilotAnswer } | { ok: false; error: { message: string } };
+type ActionResult =
+  { ok: true; data: CopilotAnswer } | { ok: false; error: { code?: string; message: string } };
 
 /** A draft of this matter a claim can be inserted into: its latest version and its blocks. */
 export interface CopilotDraftTarget {
@@ -181,6 +195,49 @@ function InsertIntoDraft({
   );
 }
 
+/** What the matter page knows about the matter, for the context chips and the suggested questions. */
+export interface CopilotMatterContext {
+  title: string;
+  /** The stage of the next listing, if any. */
+  stage: string | null;
+  /** The next date (`YYYY-MM-DD`), if any. */
+  nextDate: string | null;
+}
+
+/** One question and what came of it. */
+export interface CopilotTurn {
+  id: string;
+  /** Null for a stored answer shown without its question (stories, tests). */
+  question: string | null;
+  /** Reused by a retry, so the question counts once. */
+  requestId: string;
+  state: 'pending' | 'answered' | 'failed';
+  answer?: CopilotAnswer;
+  /** `planLimit`: the plan's monthly cap or the preview plan is unavailable (the action's CONFLICT). */
+  failure?: { planLimit: boolean; message: string };
+}
+
+const subscribeOnline = (notify: () => void): (() => void) => {
+  window.addEventListener('online', notify);
+  window.addEventListener('offline', notify);
+  return () => {
+    window.removeEventListener('online', notify);
+    window.removeEventListener('offline', notify);
+  };
+};
+
+/** False while the browser is offline; true on the server. */
+function useOnline(): boolean {
+  return useSyncExternalStore(
+    subscribeOnline,
+    () => navigator.onLine,
+    () => true,
+  );
+}
+
+const isDesktop = (): boolean =>
+  typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 64rem)').matches;
+
 export interface CopilotPanelProps {
   workspaceId: string;
   /** Omitted for the workspace-level copilot. */
@@ -188,10 +245,25 @@ export interface CopilotPanelProps {
   ask: (raw: unknown) => Promise<ActionResult>;
   /** Renders a stored result (stories, tests). */
   initialAnswer?: CopilotAnswer;
+  /** Renders a stored thread (stories, tests); takes precedence over `initialAnswer`. */
+  initialTurns?: readonly CopilotTurn[];
+  /** The matter's title, stage and next date (matter copilot); fail-soft, may be absent. */
+  matterContext?: CopilotMatterContext;
+  /** Forces the offline state (stories); otherwise the browser's online status decides. */
+  offline?: boolean;
   /** #1144: the matter's drafts a verified judgment claim can be inserted into. */
   drafts?: readonly CopilotDraftTarget[];
   /** #1144: `insertAuthorityAction`; without it (or without drafts) there is no insert control. */
   insert?: (raw: unknown) => Promise<InsertResult>;
+}
+
+function initialThread(
+  turns: readonly CopilotTurn[] | undefined,
+  answer: CopilotAnswer | undefined,
+): CopilotTurn[] {
+  if (turns !== undefined) return [...turns];
+  if (answer === undefined) return [];
+  return [{ id: 'initial', question: null, requestId: '', state: 'answered', answer }];
 }
 
 export function CopilotPanel({
@@ -199,180 +271,401 @@ export function CopilotPanel({
   matterId,
   ask,
   initialAnswer,
+  initialTurns,
+  matterContext,
+  offline,
   drafts,
   insert,
 }: CopilotPanelProps) {
   const t = useTranslations('research.copilot');
+  const format = useFormatter();
+  const browserOnline = useOnline();
+  const isOffline = offline ?? !browserOnline;
   const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState<CopilotAnswer | null>(initialAnswer ?? null);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, start] = useTransition();
-  const requestId = useRef<string | null>(null);
+  const [turns, setTurns] = useState<CopilotTurn[]>(() =>
+    initialThread(initialTurns, initialAnswer),
+  );
+  const [active, setActive] = useState<{ turn: string; n: number } | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [sheetFor, setSheetFor] = useState<string | null>(null);
+  const [, start] = useTransition();
+  const inputId = useId();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const pending = turns.some((turn) => turn.state === 'pending');
 
-  function onAsk(event: SyntheticEvent<HTMLFormElement>): void {
-    event.preventDefault();
-    const text = question.trim();
-    if (text === '') return;
-    requestId.current ??= crypto.randomUUID();
-    const id = requestId.current;
+  const update = (id: string, patch: Partial<CopilotTurn>) => {
+    setTurns((all) => all.map((turn) => (turn.id === id ? { ...turn, ...patch } : turn)));
+  };
+
+  function run(turn: CopilotTurn): void {
+    if (turn.question === null) return;
+    const text = turn.question;
     start(async () => {
       const response = await ask({
         workspaceId,
         question: text,
-        requestId: id,
+        requestId: turn.requestId,
         ...(matterId === undefined ? {} : { matterId }),
       });
       if (response.ok) {
-        requestId.current = null;
-        setError(null);
-        setAnswer(response.data);
+        update(turn.id, { state: 'answered', answer: response.data });
+        setSelected(turn.id);
       } else {
-        setError(response.error.message);
+        update(turn.id, {
+          state: 'failed',
+          failure: {
+            planLimit: response.error.code === 'CONFLICT',
+            message: response.error.message,
+          },
+        });
       }
     });
   }
 
-  const pinpoint = (page: number | null, paragraph: number | null): string =>
-    [
-      page === null ? null : t('pinpoint.page', { page }),
-      paragraph === null ? null : t('pinpoint.paragraph', { paragraph }),
-    ]
-      .filter((part) => part !== null)
-      .join(' · ');
+  function send(raw: string): void {
+    const text = raw.trim();
+    if (text === '' || pending || isOffline) return;
+    const requestId = crypto.randomUUID();
+    const turn: CopilotTurn = { id: requestId, question: text, requestId, state: 'pending' };
+    setTurns((all) => [...all, turn]);
+    setQuestion('');
+    if (inputRef.current !== null) inputRef.current.style.height = '';
+    run(turn);
+  }
+
+  function retry(turn: CopilotTurn): void {
+    if (pending || isOffline) return;
+    update(turn.id, { state: 'pending' });
+    // Same request id: a retry after a failure is metered once.
+    run({ ...turn, state: 'pending' });
+  }
+
+  function onSubmit(event: SyntheticEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    send(question);
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>): void {
+    // Enter sends; Shift+Enter is a new line; Enter that confirms an IME composition (ta, kn) does not.
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return;
+    event.preventDefault();
+    send(question);
+  }
+
+  const dateOf = (iso: string): string =>
+    format.dateTime(new Date(iso), { dateStyle: 'medium', timeZone: 'UTC' });
+
+  const suggestions: string[] =
+    matterId === undefined
+      ? [
+          t('suggestions.corpusConsent'),
+          t('suggestions.corpusNegligence'),
+          t('suggestions.corpusLimitation'),
+        ]
+      : [
+          matterContext === undefined
+            ? t('suggestions.matterFacts')
+            : t('suggestions.matterFactsOf', { title: matterContext.title }),
+          ...(matterContext?.nextDate == null
+            ? []
+            : [t('suggestions.nextDate', { date: dateOf(matterContext.nextDate) })]),
+          ...(matterContext?.stage == null
+            ? []
+            : [t('suggestions.stage', { stage: matterContext.stage })]),
+          t('suggestions.matterDocuments'),
+          t('suggestions.matterAuthority'),
+        ].slice(0, 4);
+
+  const answered = turns.filter((turn) => turn.state === 'answered' && turn.answer !== undefined);
+  const railTurn =
+    answered.find((turn) => turn.id === selected && !turn.answer?.aiBlocked) ??
+    answered.findLast((turn) => !turn.answer?.aiBlocked);
+  const railAnswer = railTurn?.answer;
+  const showRail =
+    railAnswer !== undefined && (railAnswer.claims.length > 0 || railAnswer.unsupported.length > 0);
+  const latest = answered.at(-1)?.answer;
+  const usage = latest === undefined || latest.aiBlocked ? null : latest.usage;
+
+  const renderInsert =
+    insert === undefined || drafts === undefined || drafts.length === 0
+      ? undefined
+      : (claim: CopilotClaim) => {
+          const ref = insertRef(claim);
+          return ref === null ? null : (
+            <InsertIntoDraft
+              workspaceId={workspaceId}
+              drafts={drafts}
+              refOf={ref}
+              insert={insert}
+            />
+          );
+        };
+
+  const activeIn = (id: string): number | null => (active?.turn === id ? active.n : null);
+  const searching = matterId === undefined ? t('searchingCorpus') : t('searching');
 
   return (
-    <div className="flex flex-col gap-6" data-slot="copilot-panel">
-      <form onSubmit={onAsk} className="flex flex-col gap-2">
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          {t('questionLabel')}
-          <textarea
-            name="question"
-            rows={3}
-            maxLength={4000}
-            required
-            value={question}
-            placeholder={t('questionPlaceholder')}
-            onChange={(event) => {
-              setQuestion(event.target.value);
-              requestId.current = null;
-            }}
-            className="rounded border px-2 py-1 font-normal"
-          />
-        </label>
-        <div className="flex items-center gap-3">
-          <Button type="submit" disabled={pending || question.trim() === ''}>
-            {pending ? t('asking') : t('submit')}
-          </Button>
-          {answer === null || answer.aiBlocked ? null : (
-            <span className="text-muted-foreground text-xs" data-slot="copilot-usage">
-              {answer.usage.limit === null
-                ? t('usageUnlimited', { used: answer.usage.used })
-                : t('usage', { used: answer.usage.used, limit: answer.usage.limit })}
-            </span>
-          )}
-        </div>
-      </form>
-
-      {error === null ? null : (
-        <p role="alert" data-slot="copilot-error" className="text-sm text-red-600">
-          {error === '' ? t('error') : error}
-        </p>
-      )}
-
-      {answer === null ? null : answer.aiBlocked ? (
-        <p role="status" data-slot="copilot-ai-off" className="text-sm">
-          {t('aiOff')}
-        </p>
-      ) : (
-        <div className="flex flex-col gap-4" aria-live="polite">
-          {answer.noAuthority ? (
-            <p role="status" data-slot="copilot-no-authority" className="text-sm">
-              {t('noAuthority')}
-            </p>
-          ) : null}
-          {answer.claims.length === 0 ? null : (
-            <section aria-labelledby="copilot-claims" className="flex flex-col gap-3">
-              <h2 id="copilot-claims" className="text-sm font-medium">
-                {t('claimsTitle')}
-              </h2>
-              <ul className="flex flex-col gap-3">
-                {answer.claims.map((claim) => {
-                  const judgment =
-                    claim.judgmentId === null ? undefined : answer.judgments[claim.judgmentId];
-                  const where = pinpoint(claim.pinpoint.page, claim.pinpoint.paragraph);
-                  const sameText = normalise(claim.statement) === normalise(claim.quote);
-                  const ref = insertRef(claim);
-                  return (
-                    <li
-                      key={`${claim.sourceId}:${claim.quote}`}
-                      data-slot="copilot-claim"
-                      className="flex flex-col gap-1 rounded border p-3 text-sm"
+    <div
+      data-slot="copilot-panel"
+      className={
+        showRail
+          ? 'grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start'
+          : 'flex min-w-0 flex-col gap-6'
+      }
+    >
+      <div className="flex min-w-0 flex-col gap-6">
+        {turns.length === 0 ? (
+          <EmptyState
+            data-slot="copilot-empty"
+            className="border-line rounded-lg border border-dashed"
+            title={t('suggestions.title')}
+            description={t('suggestions.description')}
+            action={
+              <ul className="flex w-full flex-col gap-2 sm:items-center">
+                {suggestions.map((text) => (
+                  <li key={text} className="w-full sm:w-auto">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      data-slot="copilot-suggestion"
+                      disabled={isOffline}
+                      className="h-auto min-h-11 w-full justify-start py-2 text-start whitespace-normal"
+                      onClick={() => {
+                        send(text);
+                      }}
                     >
-                      {sameText ? null : <p>{claim.statement}</p>}
-                      <blockquote className="text-muted-foreground border-l-2 pl-2">
-                        {claim.quote}
-                      </blockquote>
-                      <p className="text-muted-foreground text-xs" data-slot="copilot-source">
-                        {t(`kind.${claim.kind}`)}
-                        {where === '' ? '' : ` · ${where}`}
-                        {judgment === undefined ? null : (
-                          <>
-                            {' · '}
-                            {judgment.sourceUrl === null ? (
-                              <span>
-                                {judgment.title ?? judgment.neutralCitation ?? t('record')}
-                              </span>
-                            ) : (
-                              <a
-                                href={`${judgment.sourceUrl}${claim.pinpoint.page === null ? '' : `#page=${String(claim.pinpoint.page)}`}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline"
-                              >
-                                {judgment.title ?? judgment.neutralCitation ?? t('record')}
-                              </a>
-                            )}
-                          </>
-                        )}
-                      </p>
-                      {ref === null ||
-                      insert === undefined ||
-                      drafts === undefined ||
-                      drafts.length === 0 ? null : (
-                        <InsertIntoDraft
-                          workspaceId={workspaceId}
-                          drafts={drafts}
-                          refOf={ref}
-                          insert={insert}
-                        />
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
-          {answer.unsupported.length === 0 ? null : (
-            <section aria-labelledby="copilot-unsupported" className="flex flex-col gap-2">
-              <h2 id="copilot-unsupported" className="text-sm font-medium">
-                {t('unsupportedTitle')}
-              </h2>
-              <ul className="flex flex-col gap-2">
-                {answer.unsupported.map((claim) => (
-                  <li
-                    key={`${claim.sourceId}:${claim.quote}`}
-                    data-slot="copilot-unsupported"
-                    className="text-muted-foreground flex flex-col gap-1 rounded border border-dashed p-3 text-sm"
-                  >
-                    <span className="text-xs font-medium">{t('notVerified')}</span>
-                    <span>{claim.statement}</span>
+                      {text}
+                    </Button>
                   </li>
                 ))}
               </ul>
-            </section>
+            }
+          />
+        ) : (
+          <ol
+            data-slot="copilot-thread"
+            aria-label={t('thread.label')}
+            aria-live="polite"
+            className="flex min-w-0 flex-col gap-8"
+          >
+            {turns.map((turn) => {
+              const answer = turn.answer;
+              const hasSources =
+                answer !== undefined &&
+                !answer.aiBlocked &&
+                (answer.claims.length > 0 || answer.unsupported.length > 0);
+              return (
+                <li key={turn.id} data-slot="copilot-turn" className="flex min-w-0 flex-col gap-3">
+                  {turn.question === null ? null : (
+                    <p
+                      data-slot="copilot-question"
+                      className="bg-surface-sunken text-ink ms-auto max-w-[85%] rounded-lg px-3 py-2 text-sm break-words whitespace-pre-wrap"
+                    >
+                      <span className="sr-only">{t('thread.you')}: </span>
+                      {turn.question}
+                    </p>
+                  )}
+                  <div data-slot="copilot-reply" className="flex min-w-0 flex-col gap-3">
+                    <span className="sr-only">{t('thread.copilot')}:</span>
+                    {turn.state === 'pending' ? (
+                      <SkeletonGroup data-slot="copilot-loading" labels={{ loading: searching }}>
+                        <p aria-hidden="true" className="text-ink-muted text-sm">
+                          {searching}
+                        </p>
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                        <Skeleton className="h-4 w-2/3" />
+                      </SkeletonGroup>
+                    ) : null}
+                    {turn.state === 'failed' && turn.failure !== undefined ? (
+                      <div className="border-line flex flex-col gap-2 rounded-md border p-3">
+                        {turn.failure.planLimit ? (
+                          <div
+                            role="alert"
+                            data-slot="copilot-plan-limit"
+                            className="flex flex-col gap-1 text-sm"
+                          >
+                            <p className="text-ink font-medium">{t('planLimit')}</p>
+                            {turn.failure.message === '' ? null : (
+                              <p className="text-ink-muted">{turn.failure.message}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <p role="alert" data-slot="copilot-error" className="text-danger text-sm">
+                            {turn.failure.message === '' ? t('error') : turn.failure.message}
+                          </p>
+                        )}
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          data-slot="copilot-retry"
+                          className="min-h-11 self-start"
+                          disabled={pending || isOffline}
+                          onClick={() => {
+                            retry(turn);
+                          }}
+                        >
+                          {t('retry')}
+                        </Button>
+                      </div>
+                    ) : null}
+                    {answer === undefined ? null : answer.aiBlocked ? (
+                      <p
+                        role="status"
+                        data-slot="copilot-ai-off"
+                        className="text-ink-muted text-sm"
+                      >
+                        {t('aiOff')}
+                      </p>
+                    ) : (
+                      <>
+                        {answer.noAuthority ? (
+                          <p
+                            role="status"
+                            data-slot="copilot-no-authority"
+                            className="text-ink-muted text-sm"
+                          >
+                            {t('noAuthority')}
+                          </p>
+                        ) : null}
+                        <AnswerProse
+                          answer={answer}
+                          active={activeIn(turn.id)}
+                          onActivate={(n) => {
+                            setActive(n === null ? null : { turn: turn.id, n });
+                            if (n !== null) setSelected(turn.id);
+                          }}
+                          onOpenSources={() => {
+                            if (!isDesktop()) setSheetFor(turn.id);
+                          }}
+                        />
+                        {hasSources ? (
+                          <div className="flex flex-wrap gap-2">
+                            <SourcesSheet
+                              answer={answer}
+                              active={activeIn(turn.id)}
+                              open={sheetFor === turn.id}
+                              onOpenChange={(open) => {
+                                setSheetFor(open ? turn.id : null);
+                              }}
+                              renderInsert={renderInsert}
+                            />
+                            {railTurn?.id === turn.id ? null : (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="hidden min-h-11 lg:inline-flex"
+                                onClick={() => {
+                                  setSelected(turn.id);
+                                }}
+                              >
+                                {t('sources.show')}
+                              </Button>
+                            )}
+                          </div>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+
+        {isOffline ? (
+          <p
+            role="status"
+            data-slot="copilot-offline"
+            className="border-line bg-warning-soft text-ink rounded-md border px-3 py-2 text-sm"
+          >
+            {t('offline')}
+          </p>
+        ) : null}
+
+        <form
+          onSubmit={onSubmit}
+          data-slot="copilot-composer"
+          className="border-line bg-surface-raised flex min-w-0 flex-col gap-2 rounded-lg border p-3"
+        >
+          {matterContext === undefined ? null : (
+            <div data-slot="copilot-context" className="flex min-w-0 flex-wrap items-center gap-2">
+              <span className="text-ink-subtle text-xs">{t('context.label')}</span>
+              <Badge tone="outline" className="max-w-full truncate">
+                {matterContext.title}
+              </Badge>
+              {matterContext.stage === null ? null : (
+                <Badge>{t('context.stage', { stage: matterContext.stage })}</Badge>
+              )}
+              {matterContext.nextDate === null ? null : (
+                <Badge>{t('context.nextDate', { date: dateOf(matterContext.nextDate) })}</Badge>
+              )}
+            </div>
           )}
-        </div>
-      )}
+          <label htmlFor={inputId} className="sr-only">
+            {t('questionLabel')}
+          </label>
+          <Textarea
+            id={inputId}
+            ref={inputRef}
+            name="question"
+            rows={2}
+            maxLength={4000}
+            value={question}
+            placeholder={turns.length === 0 ? t('questionPlaceholder') : t('followUpPlaceholder')}
+            onChange={(event) => {
+              setQuestion(event.target.value);
+              // Auto-grow where `field-sizing` is not supported; capped by max-h.
+              const el = event.target;
+              el.style.height = 'auto';
+              el.style.height = `${String(el.scrollHeight)}px`;
+            }}
+            onKeyDown={onKeyDown}
+            className="max-h-48 min-h-11 resize-none overflow-y-auto"
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-ink-subtle flex min-w-0 flex-col text-xs">
+              {usage === null ? null : (
+                <span data-slot="copilot-usage">
+                  {usage.limit === null
+                    ? t('usageUnlimited', { used: usage.used })
+                    : t('usage', { used: usage.used, limit: usage.limit })}
+                </span>
+              )}
+              <span className="hidden sm:inline">{t('composerHint')}</span>
+            </div>
+            <Button
+              type="submit"
+              className="min-h-11"
+              disabled={pending || isOffline || question.trim() === ''}
+            >
+              {pending ? t('asking') : t('submit')}
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      {showRail ? (
+        <aside
+          data-slot="copilot-rail"
+          aria-labelledby={`${inputId}-sources`}
+          className="hidden min-w-0 flex-col gap-3 lg:sticky lg:top-4 lg:flex lg:max-h-[calc(100dvh-2rem)] lg:overflow-y-auto"
+        >
+          <h2
+            id={`${inputId}-sources`}
+            className="text-ink-subtle text-xs font-medium tracking-wide uppercase"
+          >
+            {t('sources.title')}
+          </h2>
+          <SourcesList
+            answer={railAnswer}
+            active={railTurn === undefined ? null : activeIn(railTurn.id)}
+            renderInsert={renderInsert}
+          />
+        </aside>
+      ) : null}
     </div>
   );
 }

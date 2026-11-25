@@ -164,7 +164,9 @@ export function createGateway(config: GatewayConfig): AiGateway {
 
     let chain: Provider[];
     try {
-      chain = allowedChain(task, chainFor(task), policy.indiaOnly);
+      chain = allowedChain(task, chainFor(task), policy.indiaOnly, {
+        previewPlanProvider: policy.previewPlanProvider === true,
+      });
       if (chain.length === 0) throw new NoProviderError(task.id);
     } catch (error) {
       await ports.audit.record(ctx.workspaceId, failureRow(error, withInput));

@@ -4,7 +4,12 @@
 // database, the mock embedder and reranker, and a stubbed answer model.
 import { randomUUID } from 'node:crypto';
 
-import { createMockEmbedProvider, type AiGateway } from '@causedeck/ai';
+import {
+  createChatgptPlanProvider,
+  createMockEmbedProvider,
+  type AiGateway,
+  type Provider,
+} from '@causedeck/ai';
 import { schema, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
@@ -17,13 +22,13 @@ import {
   buildProceeding,
 } from '@causedeck/db/testing/matter-graph-fixtures';
 import { eq } from 'drizzle-orm';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { newWorkspace } from '../__tests__/fixtures.ts';
 import { invalidateEntitlements } from '../billing/index.ts';
 import { getUsage, increment } from '../usage/index.ts';
 
-import { askCopilot } from './ask.ts';
+import { askCopilot, PLAN_LIMIT_MESSAGE } from './ask.ts';
 
 const NOW = new Date('2026-10-31T06:30:00.000Z');
 const TEXT =
@@ -81,6 +86,61 @@ async function seedJudgment(tx: Transaction, text = TEXT): Promise<void> {
     modelVersion: 'test',
   });
 }
+
+/**
+ * A Supreme Court judgment as bulk-loaded on the preview (#1182): segmented, but never tagged with a
+ * subject (no `judgment_tag`) and never embedded (`embedding` null). Returns the judgment id.
+ */
+async function seedUntaggedScJudgment(tx: Transaction, text: string): Promise<string> {
+  const sha256 = randomUUID().replaceAll('-', '');
+  const [row] = await tx
+    .insert(schema.judgment)
+    .values({
+      sourceId: 'in.sc.judgments',
+      court: 'SC',
+      sha256,
+      neutralCitation: `2021:INSC:${sha256.slice(0, 5)}`,
+      judgmentDate: '2021-08-10',
+      provenance: {
+        url: `https://court.example/${sha256}.pdf`,
+        fetchedAt: '2026-10-23T00:00:00.000Z',
+        sha256,
+        sourceId: 'in.sc.judgments',
+        sourceVersion: 'v1',
+        tierUsed: 'http',
+        costDollars: 0,
+      },
+      pageText: [{ pageNo: 1, text: 'Raw text.' }],
+      redactedText: [{ pageNo: 1, text }],
+      redactionVersion: 1,
+      segmentVersion: 1,
+      segmentedRedactionVersion: 1,
+      caseTitle: 'State v. Accused',
+      titleMasked: false,
+      courtLevel: 'supreme_court',
+      outcome: 'allowed',
+    })
+    .returning({ id: schema.judgment.id });
+  await tx.insert(schema.judgmentSegment).values({
+    judgmentId: row?.id ?? '',
+    ordinal: 1,
+    role: 'reasoning',
+    pageFrom: 1,
+    pageTo: 1,
+    text,
+    court: 'SC',
+    courtLevel: 'supreme_court',
+    judgmentYear: 2021,
+  });
+  return row?.id ?? '';
+}
+
+const BAIL_QUESTION =
+  'What does a court weigh when granting regular bail, and what did the Supreme Court say about delay in trial?';
+const BAIL_TEXT =
+  'While granting regular bail the court weighs the gravity of the accusation, and an inordinate delay in trial is a ground for bail.';
+const DELAY_TEXT =
+  'Prolonged incarceration of an undertrial on account of delay in trial violates Article 21, and regular bail must follow.';
 
 /** A matter with one document page carrying `text`, in `workspaceId`. */
 async function matterWithPage(
@@ -617,6 +677,303 @@ describe('askCopilot', () => {
       );
       expect(answer.answerText).toBe('Listed on 15 March 2099. Written arguments are due first.');
       expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(1);
+    });
+  });
+});
+
+// #1165: the preview-only chatgpt-plan provider, over a mocked Responses API stream.
+describe('askCopilot with the preview plan provider', () => {
+  const ACCESS = 'plan-access-token';
+  const sse = (events: unknown[]): Response =>
+    new Response(events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join(''), {
+      headers: { 'Content-Type': 'text/event-stream' },
+    });
+  const completed = (text: string): Response =>
+    sse([
+      { type: 'response.output_text.delta', delta: text },
+      {
+        type: 'response.completed',
+        response: {
+          model: 'gpt-plan-test',
+          output: [{ type: 'message', content: [{ type: 'output_text', text }] }],
+          usage: { input_tokens: 400, output_tokens: 40 },
+        },
+      },
+    ]);
+  /** A valid `plan_research_query` reply (#1182): the planner runs on the plan too. */
+  const PLANNED = {
+    factDescription: 'Surgery without written consent.',
+    keywords: ['surgery', 'consent'],
+    subjectAreas: [],
+    statutes: [],
+    courts: [],
+    courtLevel: null,
+    dateFrom: null,
+    dateTo: null,
+    outcome: null,
+    offenceDate: null,
+  };
+  const isPlannerRequest = (body: string): boolean =>
+    (JSON.parse(body) as { text?: { format?: { name?: string } } }).text?.format?.name ===
+    'plan_research_query';
+  /**
+   * Replies to the planner with `planned` and to the answer request with `reply` (one claim on the
+   * request's `doc:` source, quoting `quote`, or a fabricated id).
+   */
+  function planWith(reply: (body: string) => Response, planned: unknown = PLANNED) {
+    const fetch = vi.fn<typeof globalThis.fetch>((_url, init) => {
+      const body = init?.body as string;
+      return Promise.resolve(
+        isPlannerRequest(body) ? completed(JSON.stringify(planned)) : reply(body),
+      );
+    });
+    const provider: Provider = createChatgptPlanProvider({
+      model: 'gpt-plan-test',
+      tokens: { accessToken: () => Promise.resolve(ACCESS), invalidate: () => undefined },
+      fetch,
+      retry: { maxAttempts: 1, sleep: () => Promise.resolve() },
+    });
+    return { fetch, provider };
+  }
+  const claiming = (quote: string, sourceId?: string) => (body: string) => {
+    const id = sourceId ?? /doc:[0-9a-f-]+:2/.exec(body)?.[0] ?? 'missing';
+    return completed(
+      JSON.stringify({ claims: [{ statement: 'Consent was not taken.', sourceId: id, quote }] }),
+    );
+  };
+
+  async function previewWorkspace(tx: Transaction, demo = true) {
+    await seedPlans(tx);
+    const ws = await newWorkspace(tx);
+    if (demo) {
+      await inWorkspace(tx, ws.workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ isDemo: true, slug: `demo-${ws.workspaceId.slice(0, 8)}` })
+          .where(eq(schema.organization.id, ws.workspaceId)),
+      );
+    }
+    const page = await matterWithPage(
+      tx,
+      ws.workspaceId,
+      'Written consent for surgery was never obtained.',
+    );
+    return { ...ws, ...page };
+  }
+  const aiCalls = (tx: Transaction, workspaceId: string) =>
+    inWorkspace(tx, workspaceId, (s) =>
+      s.select().from(schema.aiCall).where(eq(schema.aiCall.workspaceId, workspaceId)),
+    );
+
+  it('answers a demo workspace with model-written, verified claims and audits chatgpt-plan', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId, matterId, documentId } = await previewWorkspace(tx);
+      const { fetch, provider } = planWith(claiming('consent for surgery was never obtained'));
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION, matterId },
+        { now: () => NOW, previewPlanProvider: provider },
+      );
+      // The planner (#1182) and the answer, both on the plan.
+      expect(fetch).toHaveBeenCalledTimes(2);
+      const body = JSON.parse(fetch.mock.calls[1]?.[1]?.body as string) as Record<string, unknown>;
+      expect(body).toMatchObject({ store: false, stream: true });
+      expect(answer.unsupported).toEqual([]);
+      expect(answer.claims).toHaveLength(1);
+      expect(answer.claims[0]).toMatchObject({
+        kind: 'doc',
+        documentId,
+        statement: 'Consent was not taken.',
+        pinpoint: { page: 2 },
+      });
+      const calls = await aiCalls(tx, workspaceId);
+      expect(calls.map((c) => c.task).sort()).toEqual([
+        'answer_matter_question',
+        'plan_research_query',
+      ]);
+      for (const call of calls) {
+        expect(call).toMatchObject({
+          provider: 'chatgpt-plan',
+          model: 'gpt-plan-test',
+          status: 'ok',
+          costPaise: 0,
+        });
+      }
+      const row = JSON.stringify(calls);
+      expect(row).not.toContain('never obtained');
+      expect(row).not.toContain(ACCESS);
+    });
+  });
+
+  it.each([
+    ['a fabricated source id', 'consent for surgery was never obtained', 'doc:fabricated:9'],
+    ['an altered quote', 'consent for surgery was duly obtained', undefined],
+  ])('marks %s unsupported, never verified (D-004)', async (_name, quote, sourceId) => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId, matterId } = await previewWorkspace(tx);
+      const { provider } = planWith(claiming(quote, sourceId));
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION, matterId },
+        { now: () => NOW, previewPlanProvider: provider },
+      );
+      expect(answer.claims).toEqual([]);
+      expect(answer.unsupported).toHaveLength(1);
+    });
+  });
+
+  it('turns the plan usage limit into RATE_LIMITED with a client-safe message and counts nothing', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId, matterId } = await previewWorkspace(tx);
+      const { provider } = planWith(
+        () =>
+          new Response(
+            JSON.stringify({
+              error: { code: 'subscription_sharing_usage_limit_exceeded', message: ACCESS },
+            }),
+            { status: 429 },
+          ),
+      );
+      const error = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION, matterId },
+        { now: () => NOW, previewPlanProvider: provider },
+      ).catch((e: unknown) => e);
+      expect(error).toMatchObject({ code: 'RATE_LIMITED', message: PLAN_LIMIT_MESSAGE });
+      expect((error as Error).message).not.toContain(ACCESS);
+      expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(0);
+    });
+  });
+
+  it('never calls the plan for a non-demo workspace: the default gateway path is unchanged', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId, matterId } = await previewWorkspace(tx, false);
+      const { fetch, provider } = planWith(claiming('consent for surgery was never obtained'));
+      await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION, matterId },
+        { now: () => NOW, previewPlanProvider: provider },
+      );
+      expect(fetch).not.toHaveBeenCalled();
+      const calls = await aiCalls(tx, workspaceId);
+      expect(calls.map((c) => c.provider)).toEqual(['mock']);
+    });
+  });
+
+  it('a demo workspace without a demo slug still answers extractively', async () => {
+    await withTestDb(async (tx) => {
+      const { ownerId, workspaceId, matterId } = await previewWorkspace(tx, false);
+      await inWorkspace(tx, workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ isDemo: true })
+          .where(eq(schema.organization.id, workspaceId)),
+      );
+      const { fetch, provider } = planWith(claiming('consent for surgery was never obtained'));
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION, matterId },
+        { now: () => NOW, previewPlanProvider: provider },
+      );
+      expect(fetch).not.toHaveBeenCalled();
+      expect(answer.answerText).toContain('never obtained');
+      expect(await aiCalls(tx, workspaceId)).toEqual([]);
+    });
+  });
+  it('answers the bail question from an untagged, unembedded Supreme Court corpus (#1182)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const scIds = [
+        await seedUntaggedScJudgment(tx, BAIL_TEXT),
+        await seedUntaggedScJudgment(tx, DELAY_TEXT),
+      ];
+      const ws = await newWorkspace(tx);
+      await inWorkspace(tx, ws.workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ isDemo: true, slug: `demo-${ws.workspaceId.slice(0, 8)}` })
+          .where(eq(schema.organization.id, ws.workspaceId)),
+      );
+      // The planner adds the facets the rules would (bail, Supreme Court): none of them may veto the
+      // untagged corpus.
+      const planned = {
+        ...PLANNED,
+        factDescription: 'Regular bail and delay in trial.',
+        keywords: ['regular', 'bail', 'delay', 'trial'],
+        subjectAreas: ['bail'],
+        courtLevel: 'supreme_court',
+      };
+      const { fetch, provider } = planWith((body) => {
+        const id = /seg:[0-9a-f-]+/.exec(body)?.[0] ?? 'missing';
+        return completed(
+          JSON.stringify({
+            claims: [
+              {
+                statement: 'Delay in trial is a ground for regular bail.',
+                sourceId: id,
+                quote: body.includes(id) ? 'delay in trial' : 'missing',
+              },
+            ],
+          }),
+        );
+      }, planned);
+      const answer = await askCopilot(
+        tx,
+        { workspaceId: ws.workspaceId, userId: ws.ownerId },
+        { question: BAIL_QUESTION },
+        { now: () => NOW, previewPlanProvider: provider },
+      );
+      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(answer.noAuthority).toBe(false);
+      expect(answer.unsupported).toEqual([]);
+      const seg = answer.claims.find((c) => c.kind === 'seg');
+      expect(seg).toBeDefined();
+      expect(scIds).toContain(seg?.judgmentId);
+      expect(answer.judgments[seg?.judgmentId ?? '']?.court).toBe('SC');
+      expect(answer.retrieval).toMatchObject({ mode: 'lexical-only', vector: 0 });
+      expect(answer.retrieval?.lexical).toBeGreaterThan(0);
+      const calls = await aiCalls(tx, ws.workspaceId);
+      expect(calls.map((c) => c.task).sort()).toEqual([
+        'answer_matter_question',
+        'plan_research_query',
+      ]);
+      for (const call of calls) {
+        expect(call).toMatchObject({ provider: 'chatgpt-plan', status: 'ok' });
+      }
+    });
+  });
+
+  it('the extractive demo path answers the bail question from the same corpus with no model call (#1182)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      const scIds = [
+        await seedUntaggedScJudgment(tx, BAIL_TEXT),
+        await seedUntaggedScJudgment(tx, DELAY_TEXT),
+      ];
+      const ws = await newWorkspace(tx);
+      await inWorkspace(tx, ws.workspaceId, (s) =>
+        s
+          .update(schema.organization)
+          .set({ isDemo: true })
+          .where(eq(schema.organization.id, ws.workspaceId)),
+      );
+      const answer = await askCopilot(
+        tx,
+        { workspaceId: ws.workspaceId, userId: ws.ownerId },
+        { question: BAIL_QUESTION },
+        { now: () => NOW, previewPlanProvider: null },
+      );
+      expect(answer.noAuthority).toBe(false);
+      const seg = answer.claims.find((c) => c.kind === 'seg');
+      expect(scIds).toContain(seg?.judgmentId);
+      expect(answer.judgments[seg?.judgmentId ?? '']?.court).toBe('SC');
+      expect(answer.retrieval?.mode).toBe('lexical-only');
+      expect(await aiCalls(tx, ws.workspaceId)).toEqual([]);
     });
   });
 });

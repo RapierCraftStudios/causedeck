@@ -76,6 +76,33 @@ export class ProviderError extends AiGatewayError {
   }
 }
 
+/**
+ * The preview-only ChatGPT plan provider hit the plan's usage limit
+ * (`subscription_sharing_usage_limit_exceeded`). Not retried or failed over; callers surface it as
+ * a client-safe "plan limit reached" error, never an invented answer.
+ */
+export class PlanLimitReachedError extends AiGatewayError {
+  constructor() {
+    super('PLAN_LIMIT_REACHED', 'ChatGPT plan limit reached; try again later');
+  }
+}
+
+/**
+ * The preview-only ChatGPT plan provider cannot serve plan usage right now (usage unavailable, the
+ * account cannot use it, or the sign-in needs renewing). Not retried or failed over.
+ */
+export class PlanUnavailableError extends AiGatewayError {
+  /** `reason` is fixed copy from the adapter (e.g. 'sign-in needs renewing'), never a server body. */
+  constructor(reason?: string) {
+    super(
+      'PLAN_UNAVAILABLE',
+      reason === undefined
+        ? 'ChatGPT plan usage is unavailable right now'
+        : `ChatGPT plan usage is unavailable right now (${reason})`,
+    );
+  }
+}
+
 /** The provider's circuit breaker is open. Treated as retryable for failover. */
 export class CircuitOpenError extends ProviderError {
   constructor(provider: string) {

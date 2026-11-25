@@ -110,7 +110,7 @@ const result = (over: Partial<AuthoritySearchResult> = {}): AuthoritySearchResul
       ],
     },
   ],
-  counts: { lexical: 2, vector: 2, fused: 3, reranked: true },
+  counts: { lexical: 2, vector: 2, fused: 3, reranked: true, mode: 'hybrid' },
   costPaise: 0,
   answer: null,
   answerFailed: false,

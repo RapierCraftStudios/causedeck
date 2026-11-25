@@ -13,6 +13,13 @@
 // - Audit: one `research.searched` event per search with the hash of the query, the hash of the plan
 //   and the ids of the retrieval set; the query text and the passages are never written to it. The plan
 //   call itself leaves its `corpus_ocr_call` row.
+// - Preview plan provider (#1165): when the preview-only `chatgpt-plan` provider is configured and the
+//   actor's workspace is a demo workspace (`is_demo` and a demo slug), the planner and the answer model
+//   run on it (a platform gateway carrying only that provider, #1182). A plan failure (usage limit
+//   included) falls back to the rules' plan for the planner, and leaves `answer` null and `answerFailed`
+//   true for the answer: nothing is invented.
+// - Lexical-only (#1182): while the active embedder is the mock (hashed) one, the vector arm is skipped
+//   and the lexical arm is fused alone; the counts say `lexical-only`.
 // - Redaction (D-053): results carry `judgment_segment.text` only; titles are the stored masked form.
 import { createHash, randomUUID } from 'node:crypto';
 
@@ -21,8 +28,10 @@ import {
   createMockEmbedProvider,
   createMockRerankProvider,
   createRerankGateway,
+  MOCK_EMBED_MODEL,
   type AiGateway,
   type EmbedGateway,
+  type Provider,
   type RerankGateway,
 } from '@causedeck/ai';
 import { isRole } from '@causedeck/auth';
@@ -43,7 +52,13 @@ import {
   type StatuteChip,
 } from '@causedeck/intelligence';
 
-import { createPlatformAiGateway, PLATFORM_AI_SCOPE } from '../ai/index.ts';
+import {
+  createPlatformAiGateway,
+  isPreviewPlanWorkspace,
+  PLATFORM_AI_SCOPE,
+  previewPlanProviderFromEnv,
+} from '../ai/index.ts';
+import { isDemoWorkspace } from '../shared/demo-guard.ts';
 import { record } from '../audit/index.ts';
 import { getWorkspaceEntitlements } from '../billing/index.ts';
 import { forbidden, invalid, rateLimited } from '../shared/errors.ts';
@@ -76,6 +91,11 @@ export interface ResearchSearchDeps {
   plan?: PlanResolver;
   answer?: AnswerResolver;
   now?: () => Date;
+  /**
+   * The preview-only `chatgpt-plan` provider (#1165); defaults to `previewPlanProviderFromEnv()`,
+   * read only for a demo workspace.
+   */
+  previewPlanProvider?: Provider | null;
 }
 
 export interface ResearchSearchInput {
@@ -107,18 +127,45 @@ export interface AuthoritySearchResult extends SearchResult {
 
 const sha256 = (text: string): string => createHash('sha256').update(text, 'utf8').digest('hex');
 
+/**
+ * The preview plan provider for `actor`'s answers (#1165), or null: only for a demo workspace with a
+ * demo slug while the provider is configured, and never when a gateway or answer is injected.
+ */
+async function previewPlanFor(
+  db: Queryable,
+  actor: ResearchSearchActor,
+  deps: ResearchSearchDeps,
+): Promise<Provider | null> {
+  if (deps.gateway !== undefined || deps.answer !== undefined) return null;
+  const demo = await withWorkspace(db, { workspaceId: actor.workspaceId }, (tx) =>
+    isDemoWorkspace(tx, actor.workspaceId),
+  );
+  if (!demo) return null;
+  const plan =
+    deps.previewPlanProvider === undefined ? previewPlanProviderFromEnv() : deps.previewPlanProvider;
+  if (plan === null) return null;
+  return (await isPreviewPlanWorkspace(db, actor.workspaceId)) ? plan : null;
+}
+
 /** The deterministic mock embedder and reranker, like `system.corpus.embed` until a real model is configured. */
-function wire(db: Queryable, deps: ResearchSearchDeps) {
+function wire(db: Queryable, deps: ResearchSearchDeps, previewPlan: Provider | null = null) {
   const embed = deps.embed ?? createEmbedGateway({ providers: [createMockEmbedProvider()] });
   const rerank = deps.rerank ?? createRerankGateway({ providers: [createMockRerankProvider()] });
-  const gateway = deps.gateway ?? createPlatformAiGateway(db);
+  // The preview plan provider (#1165) runs both the planner and the answer for a preview demo workspace.
+  const gateway =
+    previewPlan === null
+      ? (deps.gateway ?? createPlatformAiGateway(db))
+      : createPlatformAiGateway(db, { providers: [previewPlan], previewPlanProvider: true });
   const scope = { workspaceId: PLATFORM_AI_SCOPE };
+  const active = embed.active();
   return {
-    retriever: drizzleRetriever(db, { embeddingModel: embed.active().modelVersion }),
+    retriever: drizzleRetriever(db, { embeddingModel: active.modelVersion }),
     embed,
     rerank,
     plan: deps.plan ?? createGatewayPlanResolver({ gateway, scope }),
     answer: deps.answer ?? createGatewayAnswerResolver({ gateway, scope }),
+    // Mock (hashed) vectors are noise: search the lexical arm alone (#1182).
+    lexicalOnly: active.model === MOCK_EMBED_MODEL,
   };
 }
 
@@ -185,6 +232,7 @@ async function audit(
           lexical: result.counts.lexical,
           vector: result.counts.vector,
           reranked: result.counts.reranked,
+          retrieval_mode: result.counts.mode,
           answered: result.answer !== null,
           cost_paise: result.costPaise,
         },
@@ -220,7 +268,11 @@ export async function searchAuthorities(
       );
     }
     const requestId = input.requestId ?? randomUUID();
-    const result = await searchCorpus(wire(db, deps), query, { answer: input.answer === true });
+    // The planner runs on every search, so the preview plan provider applies with or without an answer.
+    const previewPlan = await previewPlanFor(db, actor, deps);
+    const result = await searchCorpus(wire(db, deps, previewPlan), query, {
+      answer: input.answer === true,
+    });
     await increment(ctx, RESEARCH_SEARCH_KEY, 1, {
       idempotencyKey: `research-search:${requestId}`,
     });
@@ -259,7 +311,8 @@ export async function rerunAuthoritySearch(
         `You have reached this month's limit of ${String(before.limit)} authority searches on your plan.`,
       );
     }
-    const result = await searchCorpusWithPlan(wire(db, deps), plan, {
+    const previewPlan = input.answer === true ? await previewPlanFor(db, actor, deps) : null;
+    const result = await searchCorpusWithPlan(wire(db, deps, previewPlan), plan, {
       answer: input.answer === true,
     });
     await audit(db, actor, result, { mode: 'rerun', requestId });

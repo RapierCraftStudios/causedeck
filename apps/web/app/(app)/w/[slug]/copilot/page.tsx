@@ -1,6 +1,7 @@
 // `/w/[slug]/copilot` (#1115): the workspace-level copilot, answering from the anonymised judgment
 // corpus only (no matter facts or documents). Gated by `copilot.enabled` (off: plain 404) and
-// `matter.read`.
+// `matter.read`. #1168: the thread and composer take the main column; from `lg` up the sources of the
+// selected answer sit in a rail beside it (inside the panel).
 import { PermissionDenied } from '@causedeck/ui/patterns';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -36,7 +37,11 @@ export default async function CopilotPage({ params }: CopilotPageProps) {
   const t = await getTranslations('research.copilot');
   if (!can(context.role, 'matter.read')) return <PermissionDenied message={t('denied')} />;
   return (
-    <section data-route="copilot" className="flex flex-col gap-6" aria-labelledby="copilot-title">
+    <section
+      data-route="copilot"
+      className="flex min-w-0 flex-col gap-6"
+      aria-labelledby="copilot-title"
+    >
       <header className="flex flex-col gap-1">
         <h1 id="copilot-title" className="font-serif text-2xl font-medium">
           {t('title')}

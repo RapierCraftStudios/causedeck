@@ -31,6 +31,12 @@ export interface AiPolicyContext {
    * it for at most 24 hours from now, whatever the stored value says.
    */
   debugUntil?: Date | null;
+  /**
+   * True only for a demo workspace while the preview-only `chatgpt-plan` provider is configured
+   * (#1165). Core computes it; when absent or false, a `chatgpt-plan` route raises
+   * `ResidencyViolationError` whatever `indiaOnly` says.
+   */
+  previewPlanProvider?: boolean;
 }
 
 export interface SettingsPort {

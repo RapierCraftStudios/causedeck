@@ -4,6 +4,7 @@ import {
   createMockRerankProvider,
   createRerankGateway,
 } from '@causedeck/ai';
+import { PgDialect } from 'drizzle-orm/pg-core';
 import { describe, expect, it, vi } from 'vitest';
 
 import { answerQuery } from './answer.ts';
@@ -23,7 +24,7 @@ import {
   validatePlan,
   statuteChips,
 } from './plan.ts';
-import { planFilters } from './retrieve.ts';
+import { lexicalQueryText, planFilters } from './retrieve.ts';
 import { searchCorpus, searchCorpusWithPlan, type SearchDeps } from './search.ts';
 import type { FusedCandidate, SegmentCandidate, SegmentRetriever } from './types.ts';
 
@@ -141,9 +142,55 @@ describe('plan', () => {
     expect(planFilters(plan)).toHaveLength(2 + 1 + 1 + 4 + 1 + 1 + 1);
     expect(planFilters(heuristicPlan('x'))).toHaveLength(2);
   });
+
+  const BAIL =
+    'What does a court weigh when granting regular bail, and what did the Supreme Court say about delay in trial?';
+
+  it('drops question words from a natural-language question and keeps the legal words (#1182)', () => {
+    const terms = searchTerms(BAIL);
+    for (const word of ['what', 'does', 'did', 'say', 'court', 'about'])
+      expect(terms).not.toContain(word);
+    expect(terms).toEqual(
+      expect.arrayContaining(['weigh', 'granting', 'regular', 'bail', 'delay', 'trial']),
+    );
+    // Legal words are never stop words.
+    expect(searchTerms('should the regular bail be refused for delay in trial')).toEqual([
+      'regular',
+      'bail',
+      'refused',
+      'delay',
+      'trial',
+    ]);
+  });
+
+  it('ORs the lexical terms, never ANDs every word of the sentence (#1182)', () => {
+    const text = lexicalQueryText(heuristicPlan(BAIL));
+    expect(text).toContain(' | ');
+    expect(text).not.toContain('&');
+    for (const word of ['bail', 'delay', 'trial', 'regular']) expect(text.split(' | ')).toContain(word);
+    expect(text.split(' | ')).not.toContain('what');
+    expect(lexicalQueryText({ query: 'what does it say', keywords: [] })).toBe('');
+  });
+
+  it('a subject facet keeps untagged judgments and excludes ones tagged with another subject (#1182)', () => {
+    const plan = { ...heuristicPlan('x'), subjectAreas: ['bail' as const] };
+    const filters = planFilters(plan);
+    expect(filters).toHaveLength(3);
+    const [, , facet] = filters;
+    if (facet === undefined) throw new Error('no subject facet');
+    const subject = new PgDialect().sqlToQuery(facet).sql.replace(/\s+/g, ' ');
+    expect(subject).toContain('t.subject_area in ($1)');
+    expect(subject).toContain('or not exists (select 1 from judgment_tag t2 where t2.judgment_id = j.id)');
+  });
 });
 
 describe('fusion', () => {
+  it('needs no vector hit: a lexical arm with an empty vector arm keeps its rank order (#1182)', () => {
+    const lexical = [candidate('s1', 'J1'), candidate('s2', 'J2'), candidate('s3', 'J3')];
+    const fused = fuseArms([lexical, []]);
+    expect(fused.map((c) => c.segmentId)).toEqual(['s1', 's2', 's3']);
+  });
+
   it('merges the arms by reciprocal rank and a segment in both outranks one in a single arm', () => {
     const a = [candidate('s1', 'J1'), candidate('s2', 'J2')];
     const b = [candidate('s2', 'J2'), candidate('s3', 'J3')];
@@ -278,8 +325,26 @@ describe('search pipeline', () => {
     const result = await searchCorpus(deps(), 'surgery without consent infection');
     expect(result.hits[0]?.judgmentId).toBe('J1');
     expect(result.hits[0]?.segments.length).toBeGreaterThan(0);
-    expect(result.counts).toMatchObject({ vector: 3, reranked: true });
+    expect(result.counts).toMatchObject({ vector: 3, reranked: true, mode: 'hybrid' });
     expect(result.answer).toBeNull();
+  });
+
+  it('lexical-only skips the embed call and the vector arm and ranks the lexical arm alone (#1182)', async () => {
+    const vector = vi.fn(() => Promise.resolve([...corpus]));
+    const lexicalOnlyRetriever: SegmentRetriever = {
+      lexical: (plan, limit) => retriever.lexical(plan, limit),
+      vector,
+    };
+    const embed = { embed: vi.fn(() => Promise.reject(new Error('no embedding'))) };
+    const result = await searchCorpus(
+      deps({ retriever: lexicalOnlyRetriever, embed, lexicalOnly: true }),
+      'surgery consent infection',
+    );
+    expect(vector).not.toHaveBeenCalled();
+    expect(embed.embed).not.toHaveBeenCalled();
+    expect(result.counts).toMatchObject({ vector: 0, mode: 'lexical-only' });
+    expect(result.counts.lexical).toBeGreaterThan(0);
+    expect(result.hits.map((h) => h.judgmentId)).toEqual(['J1']);
   });
 
   it('re-running with an edited plan never calls the planner', async () => {

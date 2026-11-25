@@ -10,7 +10,8 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "chatgpt-plan:login": "node --experimental-strip-types scripts/chatgpt-plan-login.ts"
   },
   "dependencies": {
     "zod": "catalog:"

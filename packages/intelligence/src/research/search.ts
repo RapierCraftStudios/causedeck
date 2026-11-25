@@ -20,6 +20,11 @@ export interface SearchDeps {
   plan?: PlanResolver;
   /** Answer model; required only for `answer: true`. */
   answer?: AnswerResolver;
+  /**
+   * Only mock (hashed) vectors are available: skip the embed call and the vector arm and fuse the lexical
+   * arm alone, instead of fusing noise neighbours (#1182). Default false (both arms).
+   */
+  lexicalOnly?: boolean;
 }
 
 export interface SearchOptions {
@@ -33,6 +38,8 @@ export interface SearchCounts {
   vector: number;
   fused: number;
   reranked: boolean;
+  /** Whether the vector arm ran (`hybrid`) or was skipped for mock-only vectors (`lexical-only`). */
+  mode: 'hybrid' | 'lexical-only';
 }
 
 export interface SearchResult {
@@ -62,10 +69,13 @@ export async function searchCorpusWithPlan(
   options: SearchOptions = {},
 ): Promise<SearchResult> {
   const limit = options.armLimit ?? ARM_LIMIT;
-  const embedded = await deps.embed.embed([plan.factDescription || plan.query]);
+  const lexicalOnly = deps.lexicalOnly === true;
+  const embedded = lexicalOnly
+    ? { vectors: [] as number[][], costPaise: 0 }
+    : await deps.embed.embed([plan.factDescription || plan.query]);
   const [lexical, vector] = await Promise.all([
     deps.retriever.lexical(plan, limit),
-    deps.retriever.vector(embedded.vectors[0] ?? [], plan, limit),
+    lexicalOnly ? Promise.resolve([]) : deps.retriever.vector(embedded.vectors[0] ?? [], plan, limit),
   ]);
   const fused = fuseArms([lexical, vector]);
   const outcome = await rerankCandidates(plan.factDescription || plan.query, fused, deps.rerank);
@@ -89,6 +99,7 @@ export async function searchCorpusWithPlan(
       vector: vector.length,
       fused: fused.length,
       reranked: outcome.reranked,
+      mode: lexicalOnly ? 'lexical-only' : 'hybrid',
     },
     costPaise: embedded.costPaise + outcome.costPaise,
     answer,

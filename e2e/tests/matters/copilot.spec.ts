@@ -109,3 +109,78 @@ test.describe('matter copilot', { tag: '@a11y' }, () => {
     expect(await noSideScroll()).toBe(true);
   });
 });
+
+/** The box of the first visible element matching `selector`, or null when none is visible. */
+const boxOf = (page: Page, selector: string) =>
+  page.locator(selector).filter({ visible: true }).first().boundingBox();
+
+const overlaps = (
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number },
+): boolean =>
+  a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+test.describe('matter copilot layout (#1194)', () => {
+  test('at 390x844 nothing covers "View N sources" and the header is never over the answer', async ({
+    page,
+    asUser,
+    db,
+  }) => {
+    await seed(db);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMatters(page, asUser, { path });
+    await page.getByLabel(/Your question/).fill('Is written consent needed before surgery?');
+    await page.getByRole('button', { name: 'Ask' }).click();
+    const open = page.locator('[data-slot="copilot-sources-open"]').first();
+    await expect(open).toBeVisible();
+    await open.scrollIntoViewIfNeeded();
+    const button = await open.boundingBox();
+    const nav = await boxOf(page, '[data-mobile-nav]');
+    expect(button).not.toBeNull();
+    if (button !== null && nav !== null) expect(overlaps(button, nav)).toBe(false);
+    // The element at the button's centre is the button itself (no FAB, nav or sheet over it).
+    const onTop = await open.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return hit !== null && el.contains(hit);
+    });
+    expect(onTop).toBe(true);
+    // Scrolled to the answer, the matter header is not sticky on phones, so it never covers the text.
+    const answer = page.locator('[data-slot="copilot-answer"]').first();
+    await answer.scrollIntoViewIfNeeded();
+    const header = await boxOf(page, '[data-slot="matter-header"]');
+    const text = await answer.boundingBox();
+    if (header !== null && text !== null) expect(overlaps(header, text)).toBe(false);
+  });
+
+  test('at 390px the matter tabs are not clipped mid-label', async ({ page, asUser, db }) => {
+    await seed(db);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMatters(page, asUser, { path });
+    const tabs = page.locator('[data-matter-tabs] [role="tab"]');
+    for (const tab of await tabs.all()) {
+      // No tab wraps or truncates its own label: the full text fits the tab's box.
+      const fits = await tab.evaluate((el) => el.scrollWidth <= el.clientWidth);
+      expect(fits).toBe(true);
+    }
+  });
+
+  test('on desktop the composer stays reachable after a long answer', async ({
+    page,
+    asUser,
+    db,
+  }) => {
+    await seed(db);
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await openMatters(page, asUser, { path });
+    await ask(page);
+    // Scroll to the end of the thread, then back a little: the composer must still be in view.
+    await page.evaluate(() => {
+      window.scrollTo(0, document.body.scrollHeight);
+      window.scrollBy(0, -200);
+    });
+    const composer = page.locator('[data-slot="copilot-composer"]');
+    await expect(composer).toHaveCSS('position', 'sticky');
+    await expect(composer).toBeInViewport();
+  });
+});

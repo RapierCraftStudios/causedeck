@@ -1,0 +1,183 @@
+{
+ "status": "fixed",
+ "summary": "Every judgment source link in Research, the copilot and the studio opens a new in-app reader (redacted text, citable header, cited paragraph marked and anchored, Download PDF from our storage) instead of the stored .tar provenance URL",
+ "requirements": [
+  {
+   "id": "R1",
+   "status": "implemented",
+   "evidence": "apps/web/lib/judgment-href.ts:20; apps/web/components/copilot/copilot-answer.tsx:195; apps/web/components/research/authority-search.tsx:523; apps/web/components/research/section-view.tsx:173; apps/web/components/drafting/authority-drawer.tsx:73; apps/web/components/drafting/citation-panel.tsx:59-63; apps/web/app/(app)/w/[slug]/matters/[id]/research/page.tsx:149"
+  },
+  {
+   "id": "R2",
+   "status": "implemented",
+   "evidence": "apps/web/app/(app)/w/[slug]/research/judgments/[id]/page.tsx:150-185 (mark + id=cited, page anchor fallback)"
+  },
+  {
+   "id": "R3",
+   "status": "implemented",
+   "evidence": "packages/core/src/corpus/reader.ts:46; apps/web/app/(app)/w/[slug]/research/judgments/[id]/page.tsx:105-134"
+  },
+  {
+   "id": "R4",
+   "status": "implemented",
+   "evidence": "apps/web/app/(app)/w/[slug]/research/judgments/[id]/page.tsx:136; apps/web/app/api/judgments/[id]/pdf/route.ts:38-51"
+  },
+  {
+   "id": "R5",
+   "status": "implemented",
+   "evidence": "apps/web/__tests__/judgment-links.test.tsx:189"
+  }
+ ],
+ "validation": [
+  {
+   "id": "V1",
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/judgment-links.test.tsx __tests__/judgment-reader-page.test.tsx __tests__/authority-search.test.tsx __tests__/section-view.test.tsx __tests__/copilot.test.tsx components/drafting/__tests__/citation-panel.test.tsx components/drafting/__tests__/authority-drawer.test.tsx --maxWorkers=1",
+   "exit": 0
+  },
+  {
+   "id": "V2",
+   "command": "pnpm --filter @causedeck/core exec vitest run src/corpus/reader.test.ts --maxWorkers=1",
+   "exit": 0
+  },
+  {
+   "id": "V3",
+   "command": "pnpm --filter @causedeck/i18n exec vitest run src/__tests__/catalog.test.ts --maxWorkers=1",
+   "exit": 0
+  },
+  {
+   "id": "G1",
+   "command": "pnpm --filter @causedeck/db exec vitest run src/index.test.ts --maxWorkers=1",
+   "exit": 0
+  }
+ ],
+ "tests": [
+  {
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/judgment-links.test.tsx --maxWorkers=1",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/judgment-reader-page.test.tsx --maxWorkers=1",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm --filter @causedeck/web exec vitest run __tests__/judgment-reader-page.test.tsx --maxWorkers=1 (matter research page noindex case)",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm --filter @causedeck/core exec vitest run src/corpus/reader.test.ts --maxWorkers=1",
+   "result": "pass",
+   "fails_without_fix": true
+  },
+  {
+   "command": "pnpm turbo run typecheck --filter=...[origin/staging] --concurrency=1",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  },
+  {
+   "command": "eslint (changed files, cached)",
+   "result": "pass",
+   "fails_without_fix": "unknown"
+  }
+ ],
+ "self_review": [
+  {
+   "question": "1",
+   "answer": "yes",
+   "evidence": "R1-R5 mapped above; no rendered href contains .tar (judgment-links.test.tsx:88-155); the copilot href renders the reader with para 12 on page 4 marked (judgment-links.test.tsx:189); R6 deferred by the contract"
+  },
+  {
+   "question": "2",
+   "answer": "yes",
+   "evidence": "V1 (80 tests incl. the existing authority-search, section-view, copilot, citation-panel, authority-drawer suites) and G1 pass; typecheck 23/23 across dependents"
+  },
+  {
+   "question": "3",
+   "answer": "yes",
+   "evidence": "forgedock check PASS (V1,V2,V3,G1); git diff origin/staging...HEAD -- packages/core/src/citations/verify.ts apps/api packages/db/src/schema is empty (P1,P3); H1-H5 guard suites pass in V1"
+  },
+  {
+   "question": "4",
+   "answer": "yes",
+   "evidence": "git diff --name-only: deliverables D1-D19 plus tests, plus the generated i18n catalogs added by amendment below; f67a28b4 adds robots noindex to the matter research page (deliverable D12) and its test"
+  }
+ ],
+ "amendments": [
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages.d.ts",
+   "why": "Generated from research.json (D13-D15) by the i18n build; the new research.reader keys must appear in the generated types or the web typecheck fails"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/en.json",
+   "why": "Generated catalog for the D13 research.reader keys"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/kn.json",
+   "why": "Generated catalog for the D14 research.reader keys"
+  },
+  {
+   "kind": "add-deliverable",
+   "path": "packages/i18n/src/generated/messages/ta.json",
+   "why": "Generated catalog for the D15 research.reader keys"
+  },
+  {
+   "kind": "decision",
+   "decision": {
+    "choice": "CitationPanel accepts an optional judgmentId and links the in-app reader when given; the drafts page does not feed it because the stored draft citation report has no judgment id (authority.resolution), so until it does the panel links only browsable http(s) sources and never an archive URL",
+    "anchors": [
+     "packages/core/src/drafting/citations.ts",
+     "apps/web/app/(app)/w/[slug]/drafts/[id]/page.tsx"
+    ]
+   },
+   "why": "Feeding judgmentId needs a core drafting report and stored resolution change outside the contract; R1 (no .tar link) holds without it"
+  },
+  {
+   "kind": "decision",
+   "path": "apps/web/app/(app)/w/[slug]/matters/[id]/research/page.tsx",
+   "decision": {
+    "choice": "Treat the matter relevant-judgments page as a private, noindex page (robots index:false, follow:false, commit f67a28b4) rather than adding a design spec, screenshots, canonical URL, JSON-LD and a sitemap entry",
+    "anchors": [
+     "apps/web/app/(app)/w/[slug]/matters/[id]/research/page.tsx:35-39"
+    ]
+   },
+   "why": "It is an authenticated per-matter workspace page (needs matter.read, other workspaces get notFound); the only change under D12 is the link target. Public-page SEO gates (canonical, structured data, sitemap) do not apply and would leak private routes; noindex removes it from the public page set (forgedock pageFiles returns [] for the diff). Visual change is limited to one link href, so no 390/1440 capture is needed."
+  }
+ ],
+ "facts": {
+  "decisions": [
+   "Reader serves redacted_text only; unredacted judgments read as absent",
+   "PDF download only for stored, unmasked, non-sensitive originals and only corpus/ keys"
+  ],
+  "rejected": [
+   {
+    "approach": "Persist judgmentId in authority.resolution and thread it through the drafts page and studio",
+    "why": "Touches core drafting, stored data and two non-deliverable web files; out of contract scope"
+   },
+   {
+    "approach": "Embed the PDF in an iframe",
+    "why": "Original carries unmasked names (D-053) and most bulk judgments have no stored PDF"
+   },
+   {
+    "approach": "Add JSON-LD, canonical and a sitemap entry to the matter research page",
+    "why": "It is an authenticated per-matter page; indexing it or emitting structured data would leak nothing useful and contradict the sibling matter pages, which are noindex"
+   }
+  ],
+  "hotspots": [
+   {
+    "at": "apps/web/lib/judgment-href.ts:20",
+    "why": "Single builder for every in-app judgment link"
+   }
+  ],
+  "conventions": [
+   "Components read the workspace slug with useParams() + slugOf(); tests mock next/navigation useParams"
+  ]
+ },
+ "page_gate": {
+  "sitemap_justification": "No public page in this diff: the reader (research/judgments/[id]) and the matter relevant-judgments page (matters/[id]/research) are authenticated workspace pages that declare robots { index: false, follow: false } in generateMetadata, so they are deliberately not in the sitemap, llms.txt, JSON-LD or a canonical index; forgedock pageFiles() over the diff returns []."
+ }
+}

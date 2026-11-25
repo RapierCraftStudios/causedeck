@@ -6,8 +6,11 @@
 // Passages are anonymised text; a masked title is shown as withheld. Works on the mock providers.
 import type { AuthoritySearchResult } from '@causedeck/core/research';
 import { Button } from '@causedeck/ui/button';
+import { useParams } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useState, useTransition, type SyntheticEvent } from 'react';
+
+import { judgmentHref, slugOf } from '../../lib/judgment-href.ts';
 
 type Plan = AuthoritySearchResult['plan'];
 type ActionResult =
@@ -44,6 +47,8 @@ export function AuthoritySearch({
   actions,
 }: AuthoritySearchProps) {
   const t = useTranslations('research.search');
+  // The passage card opens the judgment in the in-app reader (#1191), never the stored archive URL.
+  const slug = slugOf(useParams());
   const format = useFormatter();
   const [query, setQuery] = useState(initialQuery);
   const [result, setResult] = useState<AuthoritySearchResult | null>(null);
@@ -512,12 +517,10 @@ export function AuthoritySearch({
                         </li>
                       ))}
                     </ul>
-                    {hit.sourceUrl === null || first === undefined ? null : (
+                    {slug === null ? null : (
                       <a
                         className="mt-2 inline-block underline"
-                        href={`${hit.sourceUrl}#page=${String(first.pageFrom)}`}
-                        rel="noreferrer noopener"
-                        target="_blank"
+                        href={judgmentHref(slug, hit.judgmentId, { page: first?.pageFrom })}
                       >
                         {t('results.openPdf')}
                       </a>

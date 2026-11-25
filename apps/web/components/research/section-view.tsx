@@ -166,16 +166,12 @@ export function SectionView({ slug, section, history, authorities }: SectionView
                       .filter((part): part is string => part !== null && part !== '')
                       .join(' · ')}
                   </p>
-                  {a.sourceUrl === null ? null : (
-                    <a
-                      className="mt-2 inline-block underline"
-                      href={`${a.sourceUrl}#page=${String(a.page)}`}
-                      rel="noreferrer noopener"
-                      target="_blank"
-                    >
-                      {t('statutes.authorities.openPdf', { page: a.page })}
-                    </a>
-                  )}
+                  <a
+                    className="mt-2 inline-block underline"
+                    href={judgmentHref(slug, a.judgmentId, { page: a.page })}
+                  >
+                    {t('statutes.authorities.openPdf', { page: a.page })}
+                  </a>
                 </li>
               );
             })}

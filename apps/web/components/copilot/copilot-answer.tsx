@@ -4,7 +4,8 @@
 // (n is 1-based into `claims`); any other marker is dropped, so the prose never cites something the
 // server did not verify (D-004). Hovering or focusing a chip highlights its source. The sources are a
 // rail beside the thread from `lg` up and a Sheet below it; each shows the kind, the verified quote,
-// the page/paragraph pinpoint and the corpus record link. Claims the server could not verify sit in a
+// the page/paragraph pinpoint and a link that opens the judgment in the in-app reader at that page and
+// paragraph (#1191; never the stored archive URL). Claims the server could not verify sit in a
 // collapsed "Not verified" group with the reason, never among the sources.
 import type { CopilotAnswer } from '@causedeck/core/copilot';
 import { Badge } from '@causedeck/ui/badge';
@@ -18,8 +19,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@causedeck/ui/sheet';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Fragment, type ReactNode } from 'react';
+
+import { judgmentHref, slugOf } from '../../lib/judgment-href.ts';
 
 export type CopilotClaim = CopilotAnswer['claims'][number];
 
@@ -144,6 +148,7 @@ function SourceItem({
   insertControl: ReactNode;
 }) {
   const t = useTranslations('research.copilot');
+  const slug = slugOf(useParams());
   const judgment = claim.judgmentId === null ? undefined : answer.judgments[claim.judgmentId];
   const where = [
     claim.pinpoint.page === null ? null : t('pinpoint.page', { page: claim.pinpoint.page }),
@@ -183,13 +188,14 @@ function SourceItem({
         {name === null || judgment === undefined ? null : (
           <>
             {' · '}
-            {judgment.sourceUrl === null ? (
+            {slug === null || claim.judgmentId === null ? (
               <span>{name}</span>
             ) : (
               <a
-                href={`${judgment.sourceUrl}${claim.pinpoint.page === null ? '' : `#page=${String(claim.pinpoint.page)}`}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={judgmentHref(slug, claim.judgmentId, {
+                  page: claim.pinpoint.page,
+                  para: claim.pinpoint.paragraph,
+                })}
                 className="text-accent underline underline-offset-2"
               >
                 {name}

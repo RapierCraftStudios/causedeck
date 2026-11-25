@@ -133,7 +133,9 @@ test.describe('matter copilot layout (#1194)', () => {
     await page.getByRole('button', { name: 'Ask' }).click();
     const open = page.locator('[data-slot="copilot-sources-open"]').first();
     await expect(open).toBeVisible();
-    await open.scrollIntoViewIfNeeded();
+    await open.evaluate((el) => {
+      el.scrollIntoView({ block: 'end' });
+    });
     const button = await open.boundingBox();
     const nav = await boxOf(page, '[data-mobile-nav]');
     expect(button).not.toBeNull();

@@ -541,13 +541,9 @@ export function CopilotPanel({
                           }}
                         />
                         {hasSources ? (
-                          // The scroll margins keep "View N sources" clear of the phone's bottom
-                          // nav and capture button (and of the sticky composer from lg) when it is
-                          // scrolled or tabbed into view (#1194).
-                          <div
-                            data-slot="copilot-sources-actions"
-                            className="flex scroll-mb-[calc(var(--space-6)+72px+env(safe-area-inset-bottom))] flex-wrap gap-2 lg:scroll-mb-48"
-                          >
+                          // "View N sources" carries the scroll margin that keeps it clear of the
+                          // phone's bottom nav and capture button when scrolled into view (#1194).
+                          <div data-slot="copilot-sources-actions" className="flex flex-wrap gap-2">
                             <SourcesSheet
                               answer={answer}
                               active={activeIn(turn.id)}

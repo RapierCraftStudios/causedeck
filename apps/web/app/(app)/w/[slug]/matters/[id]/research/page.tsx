@@ -34,7 +34,8 @@ interface ResearchPageProps {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('matters.workspace.research');
-  return { title: t('metaTitle') };
+  // Authenticated matter page: kept out of search indexes, like the matter copilot.
+  return { title: t('metaTitle'), robots: { index: false, follow: false } };
 }
 
 export default async function MatterResearchPage({ params }: ResearchPageProps) {

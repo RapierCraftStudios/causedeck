@@ -182,4 +182,10 @@ describe('judgment reader page', () => {
     expect(meta.robots).toEqual({ index: false, follow: false });
     expect(meta.title).toBe('X v. State');
   });
+
+  it("keeps the matter's relevant-judgments page out of search indexes too", async () => {
+    const { generateMetadata: matterMetadata } =
+      await import('../app/(app)/w/[slug]/matters/[id]/research/page.tsx');
+    expect((await matterMetadata()).robots).toEqual({ index: false, follow: false });
+  });
 });

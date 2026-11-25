@@ -3,6 +3,7 @@
 // It renders nothing while `court.live-tracking` is off or the member has no item listed today, and
 // a failed read never breaks the page.
 import type { LiveHall } from '@causedeck/core/court-day';
+import type { Metadata } from 'next';
 
 import {
   BenchNoticeAlerts,
@@ -21,6 +22,9 @@ import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../src/health.ts';
 
 const Placeholder = placeholderPage('today');
+
+/** Authenticated workspace route: kept out of search indexes (copilot/page.tsx precedent, K6). */
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 async function loadHalls(context: WorkspaceContext): Promise<LiveHall[]> {
   try {

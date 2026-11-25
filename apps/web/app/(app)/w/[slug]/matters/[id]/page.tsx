@@ -77,10 +77,15 @@ export async function generateMetadata({
 }: Pick<MatterPageProps, 'params'>): Promise<Metadata> {
   const { slug, id } = await params;
   const t = await getTranslations('matters.workspace');
+  // Authenticated workspace route: kept out of search indexes (copilot/page.tsx precedent, K6).
+  const robots = { index: false, follow: false };
   const context = await getWorkspaceContext(slug);
-  if (!context || !can(context.role, 'matter.read')) return { title: t('metaTitle') };
+  if (!context || !can(context.role, 'matter.read')) return { title: t('metaTitle'), robots };
   const loaded = await loadMatterOverview(context, id);
-  return { title: loaded.kind === 'overview' ? loaded.overview.header.title : t('metaTitle') };
+  return {
+    title: loaded.kind === 'overview' ? loaded.overview.header.title : t('metaTitle'),
+    robots,
+  };
 }
 
 async function pageLocale() {

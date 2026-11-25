@@ -149,11 +149,12 @@ export default async function JudgmentReaderPage({ params, searchParams }: Reade
       </header>
 
       {judgment.pages.map((page) => {
-        const pageCited = target?.pageNo === page.pageNo;
+        // The cited paragraph's index on this page, null for the page itself, undefined when not cited.
+        const citedIndex = target !== null && target.pageNo === page.pageNo ? target.index : undefined;
         return (
           <section
             key={page.pageNo}
-            id={pageCited && target?.index === null ? CITED_ANCHOR : `page-${String(page.pageNo)}`}
+            id={citedIndex === null ? CITED_ANCHOR : `page-${String(page.pageNo)}`}
             data-slot="reader-page"
             data-page={page.pageNo}
             className="flex scroll-mt-4 flex-col gap-2 rounded-md border p-3"
@@ -166,7 +167,7 @@ export default async function JudgmentReaderPage({ params, searchParams }: Reade
               {t('page', { page: page.pageNo })}
             </h2>
             {page.paragraphs.map((p, index) => {
-              const cited = pageCited && target?.index === index;
+              const cited = citedIndex === index;
               const key = `${String(page.pageNo)}:${String(index)}`;
               return cited ? (
                 <mark

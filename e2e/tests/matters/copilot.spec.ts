@@ -16,6 +16,8 @@ import { withSql } from '../lifecycle/helpers.ts';
 import { openMatters } from './helpers.ts';
 
 const path = `matters/${MATTERS.appeal.id}/copilot`;
+/** The first answer of a fresh server compiles the copilot route and warms retrieval (up to ~30s in CI). */
+const ANSWER_TIMEOUT = 45_000;
 
 /** Turns the copilot on and seeds page 3 of a document of the matter. */
 async function seed(db: { name: string }): Promise<void> {
@@ -44,13 +46,16 @@ async function seed(db: { name: string }): Promise<void> {
 async function ask(page: Page) {
   await page.getByLabel(/Your question/).fill('Is written consent needed before surgery?');
   await page.getByRole('button', { name: 'Ask' }).click();
-  await expect(page.locator('[data-slot="copilot-answer"]').first()).toBeVisible();
+  await expect(page.locator('[data-slot="copilot-answer"]').first()).toBeVisible({
+    timeout: ANSWER_TIMEOUT,
+  });
   const open = page.locator('[data-slot="copilot-sources-open"]').first();
   if (await open.isVisible()) await open.click();
   return page.locator('[data-slot="copilot-claim"]:visible');
 }
 
 test.describe('matter copilot', { tag: '@a11y' }, () => {
+  test.describe.configure({ timeout: 90_000 });
   test('asks a question and shows a verified claim with page and paragraph; axe is clean', async ({
     page,
     asUser,
@@ -121,6 +126,7 @@ const overlaps = (
   a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
 test.describe('matter copilot layout (#1194)', () => {
+  test.describe.configure({ timeout: 90_000 });
   test('at 390x844 nothing covers "View N sources" and the header is never over the answer', async ({
     page,
     asUser,
@@ -132,7 +138,7 @@ test.describe('matter copilot layout (#1194)', () => {
     await page.getByLabel(/Your question/).fill('Is written consent needed before surgery?');
     await page.getByRole('button', { name: 'Ask' }).click();
     const open = page.locator('[data-slot="copilot-sources-open"]').first();
-    await expect(open).toBeVisible();
+    await expect(open).toBeVisible({ timeout: ANSWER_TIMEOUT });
     await open.evaluate((el) => {
       el.scrollIntoView({ block: 'end' });
     });

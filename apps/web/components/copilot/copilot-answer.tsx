@@ -188,6 +188,7 @@ function SourceItem({
               <span>{name}</span>
             ) : (
               <a
+                data-slot="copilot-source-link"
                 href={`${judgment.sourceUrl}${claim.pinpoint.page === null ? '' : `#page=${String(claim.pinpoint.page)}`}`}
                 target="_blank"
                 rel="noopener noreferrer"

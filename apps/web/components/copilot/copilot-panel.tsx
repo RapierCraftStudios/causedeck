@@ -253,7 +253,10 @@ const reducedMotion = (): boolean =>
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** Scrolls to the element once it exists (the rail switches turn or the Sheet mounts first). */
+/**
+ * Scrolls to the element once it exists (the rail switches turn or the Sheet mounts first) and focuses
+ * its open-at-the-passage link when it has one.
+ */
 function scrollToWhenShown(id: string, tries = 10): void {
   const el = document.getElementById(id);
   if (el !== null) {
@@ -261,6 +264,10 @@ function scrollToWhenShown(id: string, tries = 10): void {
     if (typeof el.scrollIntoView === 'function') {
       el.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
     }
+    // #1192: focus the source's link that opens the judgment at the passage, one Enter away.
+    el.querySelector<HTMLElement>('[data-slot="copilot-source-link"]')?.focus({
+      preventScroll: true,
+    });
     return;
   }
   if (tries > 0) {

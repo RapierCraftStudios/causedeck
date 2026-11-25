@@ -78,7 +78,7 @@ async function seedJudgment(
     pageFrom: 1,
     pageTo: 1,
     text,
-    court: 'MHC',
+    court: over.court ?? 'MHC',
     courtLevel: 'high_court',
     judgmentYear: 2019,
     embedding: vectors[0] ?? [],

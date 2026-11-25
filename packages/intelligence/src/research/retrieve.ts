@@ -120,15 +120,32 @@ export function drizzleRetriever(
       if (text === '') return [];
       const filters = sql.join(planFilters(plan), sql` and `);
       // nosemgrep: infra.security.semgrep.causedeck.raw-sql-bypasses-with-workspace -- judgment_segment and judgment are global corpus tables (no workspace_id, no RLS); public anonymised judgments only
-      const rows = await db.execute(sql`${SELECT}
-        cross join (select to_tsquery('english', ${text}) as q,
-          array(select distinct unnest(tsvector_to_array(to_tsvector('english', ${text})))) as lexemes) query
-        where s.search_tsv @@ query.q and ${filters}
-        order by cardinality(array(
-            select unnest(query.lexemes) intersect select unnest(tsvector_to_array(s.search_tsv))
-          )) desc,
-          ts_rank_cd(s.search_tsv, query.q) desc, s.id
-        limit ${limit}`);
+      // Index-first (#1187 follow-up): the GIN index finds the matching segments and ranks them in a
+      // materialized CTE before any join, so the planner never walks judgments one by one through every
+      // year partition (its estimate of the version filter is far too low). Coverage counts the distinct
+      // query lexemes a segment holds; segment text is read only for the final `limit` rows.
+      const rows = await db.execute(sql`with query as materialized (
+          select to_tsquery('english', ${text}) as q,
+            array(select distinct unnest(tsvector_to_array(to_tsvector('english', ${text})))) as lexemes
+        ),
+        hits as materialized (
+          select s.id, s.judgment_year, s.judgment_id, s.court, s.court_level,
+            (select count(*) from unnest(query.lexemes) l
+              where s.search_tsv @@ plainto_tsquery('simple', l))::int as coverage,
+            ts_rank_cd(s.search_tsv, query.q) as rank
+          from judgment_segment s, query
+          where s.search_tsv @@ query.q
+        ),
+        top as (
+          select s.id, s.judgment_year, s.coverage, s.rank
+          from hits s join judgment j on j.id = s.judgment_id
+          where ${filters}
+          order by s.coverage desc, s.rank desc, s.id
+          limit ${limit}
+        )
+        ${SELECT}
+        join top t on t.id = s.id and t.judgment_year = s.judgment_year
+        order by t.coverage desc, t.rank desc, s.id`);
       return Array.from(rows as unknown as Row[]).map(toCandidate);
     },
     async vector(embedding, plan, limit): Promise<RankedCandidates> {

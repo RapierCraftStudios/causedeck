@@ -9,6 +9,7 @@ import { eq } from 'drizzle-orm';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import { runCorpusRedact } from './corpus-redact.ts';
+import type { CorpusDrainJob } from './corpus-segment.ts';
 
 afterAll(async () => {
   await closeTestDb();
@@ -54,7 +55,7 @@ describe('runCorpusRedact', () => {
       const db = tx as never as Queryable;
       const stale = await insert(db, REDACTION_VERSION - 1);
       const current = await insert(db, REDACTION_VERSION);
-      const report = await runCorpusRedact(ctx, { batch: 500 }, { db });
+      const report = await runCorpusRedact(ctx, { batch: 500 }, { db, enqueue: vi.fn() });
       expect(report.redacted).toBeGreaterThanOrEqual(1);
 
       const [s] = await tx.select().from(schema.judgment).where(eq(schema.judgment.id, stale.id));
@@ -65,6 +66,32 @@ describe('runCorpusRedact', () => {
 
       const [c] = await tx.select().from(schema.judgment).where(eq(schema.judgment.id, current.id));
       expect(c?.redactedText).toBeNull();
+    });
+  });
+
+  it('queues the next redact run at once while stale rows remain (#1197)', async () => {
+    await withTestDb(async (tx) => {
+      const db = tx as never as Queryable;
+      for (let i = 0; i < 3; i += 1) await insert(db, REDACTION_VERSION - 1);
+      const enqueue = vi.fn<(name: CorpusDrainJob) => Promise<unknown>>(() =>
+        Promise.resolve('job-id'),
+      );
+      const report = await runCorpusRedact(ctx, { batch: 2 }, { db, enqueue });
+      expect(report).toEqual({ redacted: 2, remaining: true });
+      expect(enqueue.mock.calls).toEqual([['system.corpus.redact']]);
+    });
+  });
+
+  it('queues segment once no stale rows remain (#1197)', async () => {
+    await withTestDb(async (tx) => {
+      const db = tx as never as Queryable;
+      await insert(db, REDACTION_VERSION - 1);
+      const enqueue = vi.fn<(name: CorpusDrainJob) => Promise<unknown>>(() =>
+        Promise.resolve('job-id'),
+      );
+      const report = await runCorpusRedact(ctx, { batch: 500 }, { db, enqueue });
+      expect(report.remaining).toBe(false);
+      expect(enqueue.mock.calls).toEqual([['system.corpus.segment']]);
     });
   });
 });

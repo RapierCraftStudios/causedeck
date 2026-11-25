@@ -263,6 +263,35 @@ describe('runBulkImport logging and resume (#1185)', () => {
     expect(judgments).toHaveLength(250);
   });
 
+  it('calls afterBatch after each committed batch that inserted, never on a duplicates-only re-run (#1197)', async () => {
+    const { db, cursors } = fakeDb();
+    const seen: { inserted: number; position: unknown }[] = [];
+    const afterBatch = vi.fn(({ inserted }: { inserted: number }) => {
+      // The batch's cursor is already committed when the hook runs.
+      seen.push({ inserted, position: cursors[0]?.position });
+      return Promise.resolve();
+    });
+    const report = await runBulkImport(
+      deps({ db, concurrency: 4, objects: objects(manyPdfs(10)), afterBatch }),
+      request,
+    );
+    expect(report.inserted).toBe(10);
+    expect(seen).toEqual([
+      { inserted: 4, position: 4 },
+      { inserted: 4, position: 8 },
+      { inserted: 2, position: 10 },
+    ]);
+
+    cursors[0] = { ...cursors[0], status: 'pending', position: 0 };
+    afterBatch.mockClear();
+    const again = await runBulkImport(
+      deps({ db, concurrency: 4, objects: objects(manyPdfs(10)), afterBatch }),
+      request,
+    );
+    expect(again).toMatchObject({ inserted: 0, duplicates: 10 });
+    expect(afterBatch).not.toHaveBeenCalled();
+  });
+
   it('reads only the metadata columns it maps', async () => {
     const { db } = fakeDb();
     const parquet = vi.fn<typeof readParquetRows>(() =>

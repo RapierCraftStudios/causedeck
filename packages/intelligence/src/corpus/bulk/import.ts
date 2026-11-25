@@ -48,6 +48,11 @@ export interface BulkImportDeps extends StoreDeps {
   now?: () => Date;
   /** Progress every `BULK_PROGRESS_EVERY` entries, a warn per failed entry, the final report. */
   log?: BulkImportLog;
+  /**
+   * Called after each batch whose cursor is committed and that inserted at least one judgment
+   * (#1197): the job uses it to start the redact and segment drain. A throw fails the import.
+   */
+  afterBatch?: (committed: { inserted: number }) => Promise<void>;
 }
 
 export const DEFAULT_BULK_BUDGET: BulkBudget = { maxPages: 50_000, maxBytes: 2 * 1024 ** 3 };
@@ -251,8 +256,10 @@ export async function runBulkImport(
             updatedAt: new Date(),
           })
           .where(eq(corpusImportCursor.id, cursor.id));
+        const inserted = delta.added;
         delta.added = delta.dupes = delta.failed = delta.bytes = 0;
         at.position = cursor.position + position;
+        if (inserted > 0 && deps.afterBatch) await deps.afterBatch({ inserted });
         if (Math.floor(position / BULK_PROGRESS_EVERY) > Math.floor(before / BULK_PROGRESS_EVERY)) {
           log?.info(
             {

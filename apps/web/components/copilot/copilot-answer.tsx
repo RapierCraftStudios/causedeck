@@ -85,7 +85,7 @@ function CiteChip({ n, active, onActivate, onShowSource, idPrefix }: CiteHandler
         onActivate(n);
         onShowSource(n);
       }}
-      className="border-line bg-surface-sunken text-ink-muted hover:border-accent hover:text-accent focus-visible:outline-ring data-[active=true]:border-accent data-[active=true]:bg-accent-soft data-[active=true]:text-accent mx-0.5 inline-flex min-w-6 items-center justify-center rounded-sm border px-1 align-baseline font-sans text-xs font-medium tabular-nums outline-offset-2 focus-visible:outline-2"
+      className="border-line bg-surface-sunken text-ink-muted hover:border-accent hover:text-accent focus-visible:outline-ring data-[active=true]:border-accent data-[active=true]:bg-accent-soft data-[active=true]:text-accent mx-0.5 inline-flex min-w-6 items-center justify-center rounded-sm border px-1 align-baseline font-sans text-xs font-medium tabular-nums underline decoration-1 underline-offset-2 outline-offset-2 focus-visible:outline-2"
     >
       {n}
     </a>

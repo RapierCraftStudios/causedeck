@@ -34,7 +34,11 @@ const NOW = new Date('2026-10-31T06:30:00.000Z');
 const TEXT =
   'The patient underwent a hysterectomy and no written consent was taken for the surgery.';
 
-async function seedJudgment(tx: Transaction, text = TEXT): Promise<void> {
+async function seedJudgment(
+  tx: Transaction,
+  text = TEXT,
+  over: Partial<typeof schema.judgment.$inferInsert> = {},
+): Promise<void> {
   const sha256 = randomUUID().replaceAll('-', '');
   const [row] = await tx
     .insert(schema.judgment)
@@ -62,6 +66,7 @@ async function seedJudgment(tx: Transaction, text = TEXT): Promise<void> {
       titleMasked: false,
       courtLevel: 'high_court',
       outcome: 'allowed',
+      ...over,
     })
     .returning({ id: schema.judgment.id });
   const embedder = createMockEmbedProvider();
@@ -262,8 +267,7 @@ describe('askCopilot', () => {
   it('cites a judgment without a neutral citation by its SCR citation (#1189)', async () => {
     await withTestDb(async (tx) => {
       await seedPlans(tx);
-      await seedJudgment(tx);
-      await tx.update(schema.judgment).set({
+      await seedJudgment(tx, TEXT, {
         neutralCitation: null,
         court: 'INSC',
         caseNumbers: ['C.A. 1 of 2008', '[2008] 9 SCR 821'],

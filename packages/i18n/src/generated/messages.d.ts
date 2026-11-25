@@ -5777,6 +5777,11 @@ export type Messages = {
       composerHint: string;
       searching: string;
       searchingCorpus: string;
+      stages: {
+        planning: string;
+        found: string;
+        checking: string;
+      };
       planLimit: string;
       retry: string;
       offline: string;

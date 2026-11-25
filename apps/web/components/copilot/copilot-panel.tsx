@@ -350,8 +350,8 @@ export interface CopilotPanelProps {
   workspaceId: string;
   /** #1192: links of the next steps (`/w/<slug>/research?q=`, `/w/<slug>/matters`). */
   workspaceSlug: string;
-  /** Omitted for the workspace-level copilot. */
-  matterId?: string;
+  /** Omitted (or undefined) for the workspace-level copilot. */
+  matterId?: string | undefined;
   ask: (raw: unknown) => Promise<ActionResult>;
   /** Renders a stored result (stories, tests). */
   initialAnswer?: CopilotAnswer;

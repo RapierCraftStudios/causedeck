@@ -57,7 +57,7 @@ test.describe('drafting authority insert', () => {
           provenance, page_text, redacted_text, redaction_version, segment_version,
           segmented_redaction_version, case_title, title_masked, court_level)
         values (${judgmentId}, 'demo.corpus', 'SC', ${CITATION}, '2024-03-04', ${sha256},
-          ${sql.json(provenance)}, ${sql.json(pages)}, ${sql.json(pages)}, 1, 1, 1,
+          ${sql.json(provenance)}, ${sql.json(pages)}, ${sql.json(pages)}, 2, 1, 2,
           'P (fictional) v. City Nursing Home', true, 'supreme_court')`;
       await sql`
         insert into judgment_segment (judgment_id, ordinal, role, page_from, page_to, text, court,

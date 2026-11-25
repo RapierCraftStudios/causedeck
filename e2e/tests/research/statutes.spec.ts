@@ -62,7 +62,7 @@ test.describe('statute section', { tag: '@a11y' }, () => {
         values (${judgmentId}, 'demo.corpus', 'MHC', ${`2025:MHC:${sha256.slice(0, 6)}`},
           '2025-02-03', ${sha256}, ${sql.json(provenance)},
           ${sql.json([{ pageNo: 1, text: 'Demo page.' }, { pageNo: 2, text: 'Section 439 CrPC.' }])},
-          1, 'A (fictional) v. State of Tamil Nadu', true, 'high_court')`;
+          2, 'A (fictional) v. State of Tamil Nadu', true, 'high_court')`;
       await sql`
         insert into judgment_statute_ref (judgment_id, statute, section, page, ruleset_version)
         values (${judgmentId}, 'code of criminal procedure', '439', ${CITED_PAGE}, 'e2e')`;

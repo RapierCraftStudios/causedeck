@@ -25,7 +25,9 @@ import { logger } from '../../../../../src/health.ts';
 const Placeholder = placeholderPage('today');
 
 /** Authenticated workspace route: kept out of search indexes (copilot/page.tsx precedent, K6). */
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+export function generateMetadata(): Metadata {
+  return { robots: { index: false, follow: false } };
+}
 
 async function loadHalls(context: WorkspaceContext): Promise<LiveHall[]> {
   try {

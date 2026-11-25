@@ -651,7 +651,7 @@ describe('matter workspace Overview (#390)', () => {
 
   it('keeps Today out of search indexes (authenticated workspace route)', async () => {
     const today = await import('../app/(app)/w/[slug]/today/page.tsx');
-    expect(today.metadata.robots).toEqual({ index: false, follow: false });
+    expect(today.generateMetadata().robots).toEqual({ index: false, follow: false });
   });
 });
 

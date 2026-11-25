@@ -94,6 +94,7 @@ describe('drizzleRetriever.lexical ordering', () => {
     );
     const tied = rows.filter((r) => r.judgmentId === judgmentId && [4, 5].includes(r.ordinal));
     expect(tied).toHaveLength(2);
-    expect(tied[0]?.segmentId < (tied[1]?.segmentId ?? '')).toBe(true);
+    const [first, second] = tied.map((r) => r.segmentId);
+    expect((first ?? '') < (second ?? '')).toBe(true);
   });
 });

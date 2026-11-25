@@ -68,7 +68,8 @@ export function planFilters(plan: ResearchPlan): SQL[] {
 
 /**
  * The full-text query of `plan`'s lexical arm: its search terms OR'd (`a | b | c`), never AND'd, so a
- * passage matching some words of a sentence still ranks (by `ts_rank_cd`). Empty when there are no terms.
+ * passage matching some words of a sentence still ranks. The arm orders by how many distinct query
+ * lexemes (stems) a segment holds, then `ts_rank_cd`, then id (#1187). Empty when there are no terms.
  */
 export function lexicalQueryText(plan: Pick<ResearchPlan, 'keywords' | 'query'>): string {
   return searchTerms([plan.keywords.join(' '), plan.query].join(' ')).join(' | ');
@@ -120,9 +121,13 @@ export function drizzleRetriever(
       const filters = sql.join(planFilters(plan), sql` and `);
       // nosemgrep: infra.security.semgrep.causedeck.raw-sql-bypasses-with-workspace -- judgment_segment and judgment are global corpus tables (no workspace_id, no RLS); public anonymised judgments only
       const rows = await db.execute(sql`${SELECT}
-        cross join (select to_tsquery('english', ${text}) as q) query
+        cross join (select to_tsquery('english', ${text}) as q,
+          array(select distinct unnest(tsvector_to_array(to_tsvector('english', ${text})))) as lexemes) query
         where s.search_tsv @@ query.q and ${filters}
-        order by ts_rank_cd(s.search_tsv, query.q) desc, s.id
+        order by cardinality(array(
+            select unnest(query.lexemes) intersect select unnest(tsvector_to_array(s.search_tsv))
+          )) desc,
+          ts_rank_cd(s.search_tsv, query.q) desc, s.id
         limit ${limit}`);
       return Array.from(rows as unknown as Row[]).map(toCandidate);
     },

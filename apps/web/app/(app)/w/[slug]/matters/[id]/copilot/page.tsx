@@ -135,9 +135,9 @@ export default async function MatterCopilotPage({ params }: CopilotPageProps) {
       aria-labelledby="copilot-title"
     >
       <header className="flex flex-col gap-1">
-        <h1 id="copilot-title" className="font-serif text-2xl font-medium">
+        <h2 id="copilot-title" className="font-serif text-2xl font-medium">
           {t('title')}
-        </h1>
+        </h2>
         <p className="text-muted-foreground text-sm">{t('matterIntro')}</p>
       </header>
       <CopilotPanel

@@ -1,15 +1,21 @@
 import { createHash } from 'node:crypto';
 
-import { schema, type Queryable } from '@causedeck/db';
-import { describe, expect, it } from 'vitest';
+import type { Queryable } from '@causedeck/db';
+import { describe, expect, it, vi } from 'vitest';
 
-import { mapMetadataRow } from './metadata.ts';
-import { listArchives, metadataKey, runBulkImport, type BulkImportDeps } from './import.ts';
+import { fakeDb } from './__tests__/fake-db.ts';
+import type { readParquetRows } from './parquet.ts';
+import { mapMetadataRow, METADATA_COLUMNS } from './metadata.ts';
+import {
+  BULK_PROGRESS_EVERY,
+  listArchives,
+  metadataKey,
+  runBulkImport,
+  type BulkImportDeps,
+} from './import.ts';
 import { BulkHttpError, createS3HttpSource } from './s3-http.ts';
 import { readTar } from './tar.ts';
 import type { BulkObjectSource } from './types.ts';
-
-const { judgment, corpusImportCursor, corpusOcrQueue } = schema;
 
 /** A ustar archive of `files`, as one chunk list of arbitrary sizes. */
 function tar(files: Record<string, string>): Uint8Array {
@@ -35,67 +41,6 @@ function* sliceChunks(bytes: Uint8Array, size: number): Generator<Uint8Array> {
 
 function chunks(bytes: Uint8Array, size = 700): AsyncIterable<Uint8Array> {
   return ReadableStream.from(sliceChunks(bytes, size));
-}
-
-/** In-memory stand-in for the three tables the importer touches. */
-function fakeDb() {
-  const judgments: { id: string; sha256: string; values: Record<string, unknown> }[] = [];
-  const cursors: Record<string, unknown>[] = [];
-  const queue: Record<string, unknown>[] = [];
-  const db = {
-    select: () => ({
-      from: (table: unknown) => {
-        return {
-          where: (cond: unknown) => ({
-            limit: () => {
-              if (table !== judgment) return Promise.resolve(cursors.slice(0, 1));
-              const sha = /[0-9a-f]{64}/.exec(
-                JSON.stringify(cond, (k, v: unknown) => (k === 'table' ? undefined : v)),
-              )?.[0];
-              return Promise.resolve(
-                judgments.filter((r) => r.sha256 === sha).map((r) => ({ id: r.id })),
-              );
-            },
-          }),
-        };
-      },
-    }),
-    insert: (table: unknown) => ({
-      values: (values: Record<string, unknown> & { sha256?: string }) => ({
-        onConflictDoNothing: () => {
-          if (table === corpusImportCursor) {
-            if (cursors.length === 0) {
-              cursors.push({ id: 'c1', position: 0, status: 'pending', ...values });
-            }
-            return Promise.resolve();
-          }
-          if (table === corpusOcrQueue) {
-            queue.push(...(values as unknown as Record<string, unknown>[]));
-            return Promise.resolve();
-          }
-          return {
-            returning: () => {
-              if (judgments.some((r) => r.sha256 === values.sha256)) return Promise.resolve([]);
-              const id = `j${String(judgments.length + 1)}`;
-              judgments.push({ id, sha256: values.sha256 ?? '', values });
-              return Promise.resolve([{ id }]);
-            },
-          };
-        },
-      }),
-    }),
-    update: () => ({
-      set: (values: Record<string, unknown>) => ({
-        where: () => {
-          const { position, status } = values;
-          if (position !== undefined) cursors[0] = { ...cursors[0], position };
-          if (status !== undefined) cursors[0] = { ...cursors[0], status };
-          return Promise.resolve();
-        },
-      }),
-    }),
-  };
-  return { db: db as unknown as Queryable, judgments, cursors, queue };
 }
 
 const ARCHIVE = 'data/tar/year=2023/english/english.tar';
@@ -135,6 +80,26 @@ function deps(over: Partial<BulkImportDeps> & { db: Queryable }): BulkImportDeps
 }
 
 const request = { dataset: 'sc' as const, sourceId: 'aws-open-data-sc', baseUrl: BASE };
+
+/** `n` distinct readable PDFs, `p001.pdf`… in archive order. */
+function manyPdfs(n: number): Record<string, string> {
+  const files: Record<string, string> = {};
+  for (let i = 1; i <= n; i += 1) {
+    files[`p${String(i).padStart(3, '0')}.pdf`] =
+      `judgment number ${String(i)} with a text layer long enough to count as readable`;
+  }
+  return files;
+}
+
+function spyLog() {
+  return { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+}
+
+const messages = (fn: ReturnType<typeof vi.fn>, msg: string): Record<string, unknown>[] =>
+  fn.mock.calls.filter((c) => c[1] === msg).map((c) => c[0] as Record<string, unknown>);
+
+const urls = (rows: { values: Record<string, unknown> }[]): string[] =>
+  rows.map((r) => (r.values as { provenance: { url: string } }).provenance.url);
 
 describe('runBulkImport', () => {
   it('stores judgments with dataset provenance and licence, and queues text-less pages for OCR', async () => {
@@ -203,6 +168,119 @@ describe('runBulkImport', () => {
       bench: ['A B', 'C D'],
       judgmentDate: '2023-05-04',
     });
+  });
+});
+
+describe('runBulkImport logging and resume (#1185)', () => {
+  it('logs progress every 100 entries and a final report line', async () => {
+    expect(BULK_PROGRESS_EVERY).toBe(100);
+    const { db } = fakeDb();
+    const log = spyLog();
+    const report = await runBulkImport(deps({ db, log, objects: objects(manyPdfs(250)) }), request);
+    expect(report).toMatchObject({ inserted: 250, failed: 0, budgetReached: false });
+    const progress = messages(log.info, 'corpus.bulk_import progress');
+    expect(progress.map((p) => p.handled)).toEqual([100, 200]);
+    expect(progress[1]).toMatchObject({ archiveKey: ARCHIVE, position: 200, inserted: 200 });
+    const final = messages(log.info, 'corpus.bulk_import report');
+    expect(final).toEqual([report]);
+    expect(log.error).not.toHaveBeenCalled();
+
+    // A stream that dies mid-archive: a structured error line, the error rethrown, no report line.
+    const broken = spyLog();
+    const archive = tar(manyPdfs(250));
+    const source: BulkObjectSource = {
+      ...objects({}),
+      stream: async function* () {
+        yield archive.subarray(0, Math.floor(archive.length / 2));
+        await Promise.resolve();
+        throw new TypeError('socket hang up');
+      },
+    };
+    await expect(
+      runBulkImport(deps({ db: fakeDb().db, log: broken, objects: source }), request),
+    ).rejects.toThrow('socket hang up');
+    expect(broken.error).toHaveBeenCalledTimes(1);
+    expect(broken.error.mock.calls[0]?.[0]).toMatchObject({
+      archiveKey: ARCHIVE,
+      error: 'TypeError',
+    });
+    expect((broken.error.mock.calls[0]?.[0] as { position: number }).position).toBeGreaterThan(0);
+    expect(messages(broken.info, 'corpus.bulk_import report')).toEqual([]);
+  });
+
+  it('warns with a structured line for a failed entry, without its content', async () => {
+    const { db } = fakeDb();
+    const log = spyLog();
+    const report = await runBulkImport(
+      deps({
+        db,
+        log,
+        readPdf: (data) => {
+          const text = Buffer.from(data).toString('utf8');
+          return text.startsWith('second')
+            ? Promise.reject(new Error('Invalid PDF structure'))
+            : Promise.resolve([{ pageNo: 1, text }]);
+        },
+        blobs: {
+          put: (key) =>
+            key.includes(createHash('sha256').update(pdfs['c.pdf']).digest('hex'))
+              ? Promise.reject(new RangeError('store down'))
+              : Promise.resolve(),
+        },
+      }),
+      request,
+    );
+    expect(report).toMatchObject({ inserted: 1, failed: 2 });
+    const failed = messages(log.warn, 'corpus.bulk_import entry failed');
+    expect(failed).toEqual([
+      { archiveKey: ARCHIVE, entry: 'b.pdf', reason: 'unreadable' },
+      { archiveKey: ARCHIVE, entry: 'c.pdf', reason: 'store_failed', error: 'RangeError' },
+    ]);
+    const logged = JSON.stringify([log.info.mock.calls, log.warn.mock.calls]);
+    expect(logged).not.toContain('second judgment');
+    expect(logged).not.toContain('store down');
+  });
+
+  it('resumes exactly after a mid-archive budget stop', async () => {
+    const files = manyPdfs(250);
+    const { db, judgments, cursors } = fakeDb();
+    const run = (budget?: { maxPages: number; maxBytes: number }) =>
+      runBulkImport(deps({ db, concurrency: 4, objects: objects(files) }), request, budget);
+    const first = await run({ maxPages: 137, maxBytes: 1e12 });
+    expect(first.budgetReached).toBe(true);
+    // The budget is checked after each batch of 4: the stop lands on the batch past 137.
+    expect(first.inserted).toBe(140);
+    expect(cursors[0]).toMatchObject({ status: 'running', position: 140 });
+    const second = await run();
+    expect(second).toMatchObject({ inserted: 110, duplicates: 0, budgetReached: false });
+    const expected = Object.keys(files).map((name) => `${BASE}${ARCHIVE}#${name}`);
+    expect(urls(judgments)).toEqual(expected);
+    expect(cursors[0]).toMatchObject({ status: 'complete', position: 250 });
+    // A full re-run from position 0 adds nothing.
+    cursors[0] = { ...cursors[0], status: 'pending', position: 0 };
+    const third = await run();
+    expect(third).toMatchObject({ inserted: 0, duplicates: 250 });
+    expect(judgments).toHaveLength(250);
+  });
+
+  it('reads only the metadata columns it maps', async () => {
+    const { db } = fakeDb();
+    const parquet = vi.fn<typeof readParquetRows>(() =>
+      Promise.resolve([{ path: 'a.pdf', decision_date: '2023-05-04' }]),
+    );
+    await runBulkImport(
+      deps({
+        db,
+        objects: { ...objects(pdfs), read: () => Promise.resolve(new Uint8Array()) },
+        parquet,
+      }),
+      request,
+    );
+    expect(parquet).toHaveBeenCalledTimes(1);
+    expect(parquet.mock.calls[0]?.[1]).toEqual(METADATA_COLUMNS);
+    for (const column of ['path', 'cnr', 'judge', 'decision_date', 'nc_display']) {
+      expect(METADATA_COLUMNS).toContain(column);
+    }
   });
 });
 

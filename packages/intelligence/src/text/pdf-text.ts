@@ -56,10 +56,12 @@ export async function readPdfText(data: Uint8Array): Promise<PdfPageText[]> {
       pages.push({ pageNo, text });
       page.cleanup();
     }
-    await task.destroy();
     return pages;
   } catch (error) {
     if (error instanceof PdfReadError) throw error;
     throw new PdfReadError(failureOf(error), error);
+  } finally {
+    // On every path, so an unreadable PDF also releases its document and transport (#1185).
+    await task.destroy().catch(() => undefined);
   }
 }

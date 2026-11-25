@@ -1,6 +1,13 @@
 import type { Queryable } from '@causedeck/db';
-import type { BulkObjectSource } from '@causedeck/intelligence';
+import { runBulkImport, type BulkObjectSource } from '@causedeck/intelligence';
+import type * as Intelligence from '@causedeck/intelligence';
 import { describe, expect, it, vi } from 'vitest';
+
+// The real importer by default; a case overrides one call to return a given report.
+vi.mock('@causedeck/intelligence', async (importOriginal) => {
+  const actual = await importOriginal<typeof Intelligence>();
+  return { ...actual, runBulkImport: vi.fn(actual.runBulkImport) };
+});
 
 import {
   corpusBulkImport,
@@ -91,5 +98,74 @@ describe('system.corpus.bulk-import', () => {
     expect(openSource).toHaveBeenCalledWith('https://bucket.example/');
     expect(list).toHaveBeenCalledWith('data/tar/year=2023/');
     expect(report).toMatchObject({ skipped: false, archives: 0 });
+  });
+
+  const finished = {
+    archives: 1,
+    inserted: 7,
+    duplicates: 2,
+    failed: 1,
+    pages: 30,
+    bytes: 4096,
+    budgetReached: false,
+  };
+  const openSource = (): BulkObjectSource => ({
+    list: () => Promise.resolve([]),
+    read: vi.fn(),
+    stream: vi.fn(),
+  });
+
+  it('hands its log to the importer and logs the final report at info (#1185)', async () => {
+    const spy = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    vi.mocked(runBulkImport).mockResolvedValueOnce(finished);
+    const report = await runCorpusBulkImport(
+      { log: spy as never },
+      { dataset: 'sc' },
+      { db: sourceDb(clearedRow), openSource },
+    );
+    expect(report).toMatchObject({ ...finished, skipped: false });
+    expect(vi.mocked(runBulkImport).mock.calls.at(-1)?.[0].log).toBe(spy);
+    expect(spy.info).toHaveBeenCalledWith(
+      { sourceId: 'aws-open-data-sc', ...finished },
+      'corpus.bulk_import done',
+    );
+    expect(spy.warn).not.toHaveBeenCalled();
+  });
+
+  it('logs a warn with the reason and the report when the budget stops the run (#1185)', async () => {
+    const spy = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const stopped = { ...finished, budgetReached: true };
+    vi.mocked(runBulkImport).mockResolvedValueOnce(stopped);
+    const report = await runCorpusBulkImport(
+      { log: spy as never },
+      { dataset: 'sc', maxPages: 30 },
+      { db: sourceDb(clearedRow), openSource },
+    );
+    // A budget stop is the resume point: the job returns normally instead of failing.
+    expect(report).toMatchObject({ budgetReached: true, skipped: false });
+    expect(spy.warn).toHaveBeenCalledWith(
+      { sourceId: 'aws-open-data-sc', reason: 'budget', ...stopped },
+      'corpus.bulk_import stopped',
+    );
+
+    const aborted = new AbortController();
+    aborted.abort();
+    vi.mocked(runBulkImport).mockResolvedValueOnce(stopped);
+    await runCorpusBulkImport(
+      { log: spy as never, signal: aborted.signal },
+      { dataset: 'sc' },
+      { db: sourceDb(clearedRow), openSource },
+    );
+    expect(spy.warn).toHaveBeenLastCalledWith(
+      expect.objectContaining({ reason: 'aborted' }),
+      'corpus.bulk_import stopped',
+    );
+  });
+
+  it('fails the job when the importer throws (#1185)', async () => {
+    vi.mocked(runBulkImport).mockRejectedValueOnce(new Error('stream reset'));
+    await expect(
+      runCorpusBulkImport({ log }, { dataset: 'sc' }, { db: sourceDb(clearedRow), openSource }),
+    ).rejects.toThrow('stream reset');
   });
 });

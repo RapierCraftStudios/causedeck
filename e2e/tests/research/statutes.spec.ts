@@ -86,9 +86,9 @@ test.describe('statute section', { tag: '@a11y' }, () => {
       );
       const authority = page
         .locator('[data-slot="section-authority"]')
-        .filter({ has: page.locator(`a[href="${sourceUrl}#page=${String(CITED_PAGE)}"]`) });
+        .filter({ has: page.locator(`a[href="/w/${MATTERS_WORKSPACE}/research/judgments/${judgmentId}?page=${String(CITED_PAGE)}#cited"]`) });
       await expect(authority).toHaveCount(1);
-      await expect(authority.locator('a')).toHaveAttribute('target', '_blank');
+      await expect(authority.locator('a')).not.toHaveAttribute('target', '_blank');
     } finally {
       await withSql(db.name, async (sql) => {
         await sql`delete from judgment_statute_ref where judgment_id = ${judgmentId}`;

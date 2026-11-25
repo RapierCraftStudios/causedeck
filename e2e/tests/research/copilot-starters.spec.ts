@@ -45,7 +45,11 @@ async function expectVerifiedAnswer(page: Page): Promise<void> {
   await expect(page.locator('[data-slot="copilot-claim"]:visible').first()).toBeVisible();
 }
 
+// R3b is a post-deploy check: it runs only when the check sets E2E_POST_DEPLOY=1, not in the PR shards.
 test.describe('copilot starter questions', () => {
+  // eslint-disable-next-line no-process-env -- the post-deploy switch is set by the registered check.
+  test.skip(process.env['E2E_POST_DEPLOY'] !== '1', 'post-deploy check (copilot-starter-answers)');
+
   test('each workspace and matter starter gets a verified answer', async ({
     page,
     asUser,

@@ -10,6 +10,7 @@
 // empty cards, offline (banner, mutations off), permission-denied, and not-found (another
 // workspace, a restricted matter or an unknown id). In development
 // `?__state=loading|error|denied|offline|empty` previews them.
+import type * as Runtime from '@causedeck/core/runtime';
 import type { MatterExpectedTimeline } from '@causedeck/intelligence';
 import type { SnoozeRecord } from '@causedeck/validators/attention';
 import type { Metadata } from 'next';
@@ -78,14 +79,27 @@ export async function generateMetadata({
   const { slug, id } = await params;
   const t = await getTranslations('matters.workspace');
   // Authenticated workspace route: kept out of search indexes (copilot/page.tsx precedent, K6).
-  const robots = { index: false, follow: false };
+  const noindex: Metadata = { robots: { index: false, follow: false } };
   const context = await getWorkspaceContext(slug);
-  if (!context || !can(context.role, 'matter.read')) return { title: t('metaTitle'), robots };
+  if (!context || !can(context.role, 'matter.read')) return { title: t('metaTitle'), ...noindex };
   const loaded = await loadMatterOverview(context, id);
   return {
     title: loaded.kind === 'overview' ? loaded.overview.header.title : t('metaTitle'),
-    robots,
+    ...noindex,
   };
+}
+
+/**
+ * #1193: the Overview loaders run concurrently and share one runtime import (one module promise, not
+ * one dynamic import per loader).
+ */
+let runtimeModule: Promise<typeof Runtime> | undefined;
+function loadRuntime(): Promise<typeof Runtime> {
+  runtimeModule ??= import('@causedeck/core/runtime').catch((error: unknown) => {
+    runtimeModule = undefined;
+    throw error;
+  });
+  return runtimeModule;
 }
 
 async function pageLocale() {
@@ -114,7 +128,7 @@ async function loadMatterNotices(
   matterId: string,
 ): Promise<NoticeView[]> {
   try {
-    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { inWorkspace } = await loadRuntime();
     const { listMatterNotices } = await import('@causedeck/core/notices');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
     const rows = await inWorkspace(actor, (tx) => listMatterNotices(tx, actor, matterId));
@@ -134,7 +148,7 @@ async function loadBenchNotices(
   matterId: string,
 ): Promise<BenchNoticeAlertView[]> {
   try {
-    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { inWorkspace } = await loadRuntime();
     const { listBenchNoticeAlerts } = await import('@causedeck/core/court');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
     return await inWorkspace(actor, (tx) => listBenchNoticeAlerts(tx, actor, { matterId }));
@@ -150,7 +164,7 @@ async function loadMatterSnoozes(
   matterId: string,
 ): Promise<SnoozeRecord[] | null> {
   try {
-    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { inWorkspace } = await loadRuntime();
     const { listSnoozes } = await import('@causedeck/core/attention');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
     return await inWorkspace(actor, (tx) => listSnoozes({ db: tx }, actor, matterId));
@@ -171,7 +185,7 @@ async function loadExpectedTimeline(
 ): Promise<MatterExpectedTimeline | null> {
   if (!can(context.role, 'insights.read') || context.role === 'junior') return null;
   try {
-    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { inWorkspace } = await loadRuntime();
     const { getMatterExpectedTimeline } = await import('@causedeck/intelligence');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
     return await inWorkspace(actor, (tx) => getMatterExpectedTimeline(tx, matterId));
@@ -188,7 +202,7 @@ async function loadBriefSharing(
 ): Promise<{ listingId: string | null; shares: ShareLinkView[] } | null> {
   if (!can(context.role, 'export.run')) return null;
   try {
-    const { db } = await import('@causedeck/core/runtime');
+    const { db } = await loadRuntime();
     const { listBriefShares, shareableListingId } = await import('@causedeck/core/shares');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
     const [listingId, rows] = await Promise.all([
@@ -216,7 +230,7 @@ async function loadContinuityMembers(
   context: WorkspaceContext,
 ): Promise<{ members: Record<string, string>; myMemberId: string | null }> {
   try {
-    const { listMembersIn } = await import('@causedeck/core/runtime');
+    const { listMembersIn } = await loadRuntime();
     const rows = await listMembersIn({
       workspaceId: context.workspace.id,
       userId: context.user.id,

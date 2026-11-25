@@ -296,7 +296,7 @@ export interface CopilotTurn {
   requestId: string;
   state: 'pending' | 'answered' | 'failed';
   /** #1193: the stages, sources and verified claims streamed while pending. */
-  progress?: CopilotTurnProgress;
+  progress?: CopilotTurnProgress | undefined;
   answer?: CopilotAnswer;
   /** `planLimit`: the plan's monthly cap or the preview plan is unavailable (the action's CONFLICT). */
   failure?: { planLimit: boolean; message: string };

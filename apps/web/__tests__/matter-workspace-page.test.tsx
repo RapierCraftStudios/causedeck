@@ -330,13 +330,14 @@ describe('matter workspace copilot tab (#1132)', () => {
 describe('matter workspace Overview (#390)', () => {
   it('logs one timing line with each loader duration and no matter text (#1193)', async () => {
     await renderRoute();
-    const lines = logger.info.mock.calls.filter(
+    const lines = (logger.info.mock.calls as unknown[][]).filter(
       ([, message]) => message === 'matter-overview.timing',
     );
     expect(lines).toHaveLength(1);
-    const [fields] = lines[0] ?? [];
-    expect(fields).toMatchObject({ matterId: MATTER_ID, totalMs: expect.any(Number) });
-    expect(Object.keys((fields as { loaders: object }).loaders)).toEqual(
+    const fields = lines[0]?.[0] as { matterId: string; totalMs: number; loaders: object };
+    expect(fields.matterId).toBe(MATTER_ID);
+    expect(typeof fields.totalMs).toBe('number');
+    expect(Object.keys(fields.loaders)).toEqual(
       expect.arrayContaining(['notices', 'benchNotices', 'continuity']),
     );
     expect(JSON.stringify(lines)).not.toContain('Rao');

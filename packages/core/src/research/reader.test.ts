@@ -142,5 +142,9 @@ describe('core barrel', () => {
   it('research and corpus export no name in common', () => {
     expect(Object.keys(research).filter((name) => name in corpus)).toEqual([]);
     expect(research.getJudgmentReaderView).toBe(getJudgmentReaderView);
+    for (const name of ['classifyResearchQuery', 'getCorpusCoverage']) {
+      expect(research).toHaveProperty(name);
+      expect(name in corpus).toBe(false);
+    }
   });
 });

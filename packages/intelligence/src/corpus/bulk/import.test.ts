@@ -8,6 +8,7 @@ import type { readParquetRows } from './parquet.ts';
 import { mapMetadataRow, METADATA_COLUMNS } from './metadata.ts';
 import {
   BULK_PROGRESS_EVERY,
+  entryMetadata,
   listArchives,
   metadataKey,
   runBulkImport,
@@ -171,6 +172,47 @@ describe('runBulkImport', () => {
   });
 });
 
+describe('runBulkImport on the Supreme Court dataset (#1189)', () => {
+  const scFiles = {
+    '2008_9_821_869_EN.pdf': 'english judgment text, long enough to be a readable text layer here',
+    '2008_9_821_869_HI.pdf': 'hindi translation text, long enough to be a readable text layer too',
+    'judgment-7.pdf': 'a member whose name carries no SCR citation, long enough to read ok',
+  };
+
+  it('stores the SCR citation of the member name in case_numbers and the court INSC', async () => {
+    const { db, judgments } = fakeDb();
+    await runBulkImport(deps({ db, objects: objects(scFiles) }), request);
+    const stored = judgments.map(
+      (r) => r.values as { court: string; caseNumbers: string[]; neutralCitation: string | null },
+    );
+    expect(stored).toHaveLength(3);
+    expect(stored[0]).toMatchObject({
+      court: 'INSC',
+      caseNumbers: ['[2008] 9 SCR 821'],
+      neutralCitation: null,
+    });
+    // The regional-language translation and the malformed name store no citation.
+    expect(stored[1]).toMatchObject({ court: 'INSC', caseNumbers: [] });
+    expect(stored[2]).toMatchObject({ court: 'INSC', caseNumbers: [] });
+    expect(stored.every((r) => r.court !== 'aws-open-data-sc')).toBe(true);
+  });
+
+  it('keeps the Parquet case number and adds the SCR citation after it', () => {
+    const row = mapMetadataRow({ case_no: 'C.A. 1 of 2008', court_code: 'SC' });
+    expect(entryMetadata('aws-open-data-sc', '2008_9_821_869_EN.pdf', row)).toMatchObject({
+      court: 'INSC',
+      caseNumbers: ['C.A. 1 of 2008'],
+      reporterCitations: ['[2008] 9 SCR 821'],
+    });
+  });
+
+  it('leaves High Court metadata as the Parquet gives it', () => {
+    const row = mapMetadataRow({ court_code: '33_10', case_no: 'W.P. 1 of 2023' });
+    expect(entryMetadata('aws-open-data-hc', '2008_9_821_869_EN.pdf', row)).toEqual(row);
+    expect(entryMetadata('aws-open-data-hc', 'a.pdf', undefined)).toEqual({});
+  });
+});
+
 describe('runBulkImport logging and resume (#1185)', () => {
   it('logs progress every 100 entries and a final report line', async () => {
     expect(BULK_PROGRESS_EVERY).toBe(100);
@@ -261,6 +303,35 @@ describe('runBulkImport logging and resume (#1185)', () => {
     const third = await run();
     expect(third).toMatchObject({ inserted: 0, duplicates: 250 });
     expect(judgments).toHaveLength(250);
+  });
+
+  it('calls afterBatch after each committed batch that inserted, never on a duplicates-only re-run (#1197)', async () => {
+    const { db, cursors } = fakeDb();
+    const seen: { inserted: number; position: unknown }[] = [];
+    const afterBatch = vi.fn(({ inserted }: { inserted: number }) => {
+      // The batch's cursor is already committed when the hook runs.
+      seen.push({ inserted, position: cursors[0]?.position });
+      return Promise.resolve();
+    });
+    const report = await runBulkImport(
+      deps({ db, concurrency: 4, objects: objects(manyPdfs(10)), afterBatch }),
+      request,
+    );
+    expect(report.inserted).toBe(10);
+    expect(seen).toEqual([
+      { inserted: 4, position: 4 },
+      { inserted: 4, position: 8 },
+      { inserted: 2, position: 10 },
+    ]);
+
+    cursors[0] = { ...cursors[0], status: 'pending', position: 0 };
+    afterBatch.mockClear();
+    const again = await runBulkImport(
+      deps({ db, concurrency: 4, objects: objects(manyPdfs(10)), afterBatch }),
+      request,
+    );
+    expect(again).toMatchObject({ inserted: 0, duplicates: 10 });
+    expect(afterBatch).not.toHaveBeenCalled();
   });
 
   it('reads only the metadata columns it maps', async () => {

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ProviderError, ResidencyViolationError } from '../errors.ts';
 import { embedCostPaise } from '../pricing.ts';
+import { SELF_HOSTED_REGION } from '../policy/residency.ts';
 import { createEmbedGateway } from './gateway.ts';
 import {
   createBgem3Provider,
@@ -87,6 +88,23 @@ describe('gateway', () => {
     const gw = createEmbedGateway({ providers: [p] });
     await expect(gw.embed(['secret text'])).rejects.toBeInstanceOf(ResidencyViolationError);
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('passes a self-hosted bge-m3 server in India-only mode only with the preview flag (#1198)', async () => {
+    const fetch = vi.fn(() => Promise.resolve(ok([vec(1024)])));
+    const base = { baseUrl: 'http://embed:8080', region: SELF_HOSTED_REGION, fetch };
+    const refused = createEmbedGateway({ providers: [createBgem3Provider(base)] });
+    expect(() => refused.active()).toThrow(ResidencyViolationError);
+    await expect(refused.embed(['secret text'])).rejects.toBeInstanceOf(ResidencyViolationError);
+    expect(fetch).not.toHaveBeenCalled();
+
+    const preview = createBgem3Provider({ ...base, previewSelfHosted: true });
+    const gw = createEmbedGateway({ providers: [preview] });
+    expect(gw.active()).toBe(preview);
+    expect(preview.dataResidency).toBe('in');
+    const out = await gw.embed(['a']);
+    expect(out.modelVersion).toBe('bge-m3');
+    expect(out.costPaise).toBe(0);
   });
 
   it('allows a non-India provider only when India-only is off', async () => {

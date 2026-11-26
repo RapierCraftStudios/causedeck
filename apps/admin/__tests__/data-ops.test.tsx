@@ -167,6 +167,41 @@ describe('Data Ops console', () => {
       expect(page).not.toContain('pdfs.tar');
     });
   });
+  it('shows the HF text import form and its cursor rows without the file key (#1171)', async () => {
+    await withTestDb(async (tx) => {
+      state.tx = tx;
+      await tx.insert(schema.corpusImportCursor).values({
+        sourceId: 'hf-overthelex',
+        dataset: 'hf',
+        court: 'KAHC',
+        year: 0,
+        archiveKey: 'high_courts/data/train-00000-of-00009.parquet#court=kahc',
+        position: 120,
+        status: 'running',
+        rowsAdded: 97,
+        duplicatesSkipped: 11,
+        failures: 0,
+        bytesStored: 0,
+      });
+      const page = await html(DataOpsPage());
+      for (const label of [
+        'Hugging Face text import',
+        'name="dataset"',
+        'name="court"',
+        'name="yearFrom"',
+        'name="yearTo"',
+        'name="maxRows"',
+        'Start HF import',
+        'Start import',
+      ]) {
+        expect(page).toContain(label);
+      }
+      expect(page).toMatch(
+        /<th scope="row">hf<\/th><td>KAHC<\/td><td>-<\/td><td>running<\/td><td>97<\/td><td>11<\/td>/,
+      );
+      expect(page).not.toContain('train-00000');
+    });
+  });
   it('shows the OCR queue depth and parked failures (#1030)', async () => {
     await withTestDb(async (tx) => {
       state.tx = tx;

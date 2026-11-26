@@ -4,6 +4,8 @@ import {
   createMockRerankProvider,
   createRerankGateway,
 } from '@causedeck/ai';
+import type { Queryable } from '@causedeck/db';
+import { sql, type SQL } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -24,9 +26,15 @@ import {
   validatePlan,
   statuteChips,
 } from './plan.ts';
-import { lexicalQueryText, planFilters } from './retrieve.ts';
+import { drizzleRetriever, lexicalQueryText, planFilters } from './retrieve.ts';
 import { searchCorpus, searchCorpusWithPlan, type SearchDeps } from './search.ts';
-import type { FusedCandidate, SegmentCandidate, SegmentRetriever } from './types.ts';
+import {
+  citableReference,
+  courtLabel,
+  type FusedCandidate,
+  type SegmentCandidate,
+  type SegmentRetriever,
+} from './types.ts';
 
 const candidate = (
   id: string,
@@ -143,6 +151,23 @@ describe('plan', () => {
     expect(planFilters(heuristicPlan('x'))).toHaveLength(2);
   });
 
+  it('a bench range narrows by the number of justices; no bench fields add no filter (#1174)', () => {
+    const render = (filters: ReturnType<typeof planFilters>) =>
+      new PgDialect().sqlToQuery(sql.join(filters, sql` and `));
+    const base = heuristicPlan('x');
+    expect(base).toMatchObject({ benchMin: null, benchMax: null });
+    const legacy: typeof base = { ...base };
+    delete legacy.benchMin;
+    delete legacy.benchMax;
+    expect(planFilters(legacy)).toHaveLength(2);
+    const ranged = render(planFilters({ ...base, benchMin: 3, benchMax: 5 }));
+    expect(ranged.sql).toContain('cardinality(j.bench) >= $1');
+    expect(ranged.sql).toContain('cardinality(j.bench) between 1 and $2');
+    expect(ranged.params).toEqual([3, 5]);
+    expect(planFilters({ ...base, benchMin: 2 })).toHaveLength(3);
+    expect(planFilters({ ...base, benchMax: 1 })).toHaveLength(3);
+  });
+
   const BAIL =
     'What does a court weigh when granting regular bail, and what did the Supreme Court say about delay in trial?';
 
@@ -248,6 +273,14 @@ describe('fusion', () => {
     expect(hits).toHaveLength(RESULT_JUDGMENTS);
     expect(hits.every((h) => h.segments.length === 3)).toBe(true);
     expect(hits[0]?.judgmentId).toBe('J0');
+  });
+
+  it('carries bench strength onto the hit, null when the retriever had none (#1174)', () => {
+    const hits = groupByJudgment([
+      { ...candidate('a', 'J1', 'x', { benchStrength: 3 }), fusedScore: 1, rerankScore: null },
+      { ...candidate('b', 'J2'), fusedScore: 0.5, rerankScore: null },
+    ]);
+    expect(hits.map((h) => h.benchStrength)).toEqual([3, null]);
   });
 });
 
@@ -405,10 +438,71 @@ describe('validatePlan', () => {
     expect(validatePlan('x')).toBeNull();
   });
 
+  it('accepts a stored plan without bench fields and checks a bench range (#1174)', () => {
+    const legacy: ReturnType<typeof heuristicPlan> = heuristicPlan('bail');
+    delete legacy.benchMin;
+    delete legacy.benchMax;
+    expect(validatePlan(legacy)).toMatchObject({ benchMin: null, benchMax: null });
+    const plan = heuristicPlan('bail');
+    expect(validatePlan({ ...plan, benchMin: 3, benchMax: 5 })).toMatchObject({
+      benchMin: 3,
+      benchMax: 5,
+    });
+    expect(validatePlan({ ...plan, benchMin: 5, benchMax: 3 })).toBeNull();
+    expect(validatePlan({ ...plan, benchMin: 0 })).toBeNull();
+    expect(validatePlan({ ...plan, benchMax: 16 })).toBeNull();
+    expect(validatePlan({ ...plan, benchMin: 2.5 })).toBeNull();
+  });
+
   it('canonicalises statutes the advocate typed', () => {
     const plan = { ...heuristicPlan('x'), statutes: [{ statute: 'IPC', section: '304A' }] };
     expect(validatePlan(plan)?.statutes).toEqual([
       { statute: 'indian penal code', section: '304a' },
     ]);
+  });
+});
+
+describe('citable reference (#1189)', () => {
+  it('selects case_numbers with the judgment fields', async () => {
+    const statements: SQL[] = [];
+    const db = {
+      execute: (statement: SQL) => {
+        statements.push(statement);
+        return Promise.resolve([]);
+      },
+    } as unknown as Queryable;
+    await drizzleRetriever(db, { embeddingModel: 'm' }).lexical(heuristicPlan('bail'), 5);
+    const text = new PgDialect().sqlToQuery(statements[0] as SQL).sql.replace(/\s+/g, ' ');
+    expect(text).toContain('j.case_numbers as "caseNumbers"');
+    expect(text).toContain('j.neutral_citation as "neutralCitation"');
+  });
+
+  it('carries case numbers from the candidates onto the hits', () => {
+    const hits = groupByJudgment(
+      fuseArms([
+        [
+          candidate('s1', 'j1', 'a', { caseNumbers: ['C.A. 1 of 2008', '[2008] 9 SCR 821'] }),
+          candidate('s2', 'j2', 'b'),
+        ],
+      ]),
+    );
+    expect(hits.map((h) => h.caseNumbers)).toEqual([['C.A. 1 of 2008', '[2008] 9 SCR 821'], []]);
+  });
+
+  it('prefers the neutral citation, then the SCR citation, then nothing', () => {
+    expect(citableReference('2023:INSC:12', ['[2023] 1 SCR 5'])).toBe('2023:INSC:12');
+    expect(citableReference(null, ['C.A. 1 of 2008', '[2008] 9 SCR 821'])).toBe('[2008] 9 SCR 821');
+    expect(citableReference('', ['[2008] 9 SCR 821'])).toBe('[2008] 9 SCR 821');
+    expect(citableReference(null, ['C.A. 1 of 2008'])).toBeNull();
+    expect(citableReference(null, ['[2008] 9 SCR'])).toBeNull();
+    expect(citableReference(null, [])).toBeNull();
+    expect(citableReference(null, undefined)).toBeNull();
+  });
+
+  it('labels the Supreme Court and shows other courts as stored', () => {
+    expect(courtLabel('INSC')).toBe('Supreme Court of India');
+    expect(courtLabel('MHC')).toBe('MHC');
+    expect(courtLabel('')).toBeNull();
+    expect(courtLabel(null)).toBeNull();
   });
 });

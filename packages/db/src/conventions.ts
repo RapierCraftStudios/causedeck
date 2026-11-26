@@ -83,6 +83,7 @@ export const GLOBAL_TABLES: readonly string[] = [
   'judgment_segment',
   'judgment_statute_ref',
   'judgment_citation_ref',
+  'judgment_cnr_alias',
   'judgment_tag',
   'statute_act',
   'statute_section',

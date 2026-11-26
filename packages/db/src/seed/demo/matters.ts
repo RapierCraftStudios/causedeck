@@ -18,7 +18,7 @@ import type {
   OperativeDirection,
   task,
 } from '../../schema/docket.ts';
-import type { anchor, document } from '../../schema/documents.ts';
+import type { anchor, document, documentPage } from '../../schema/documents.ts';
 import type { matter } from '../../schema/matter-graph.ts';
 import type { person, roleEdge } from '../../schema/people.ts';
 import type { proceeding, proceedingLink } from '../../schema/proceedings.ts';
@@ -336,6 +336,31 @@ export function demoCaseNumber(type: string, year: number, seq: number): string 
   return `${type}-DEMO/${String(year)}/${String(seq).padStart(4, '0')}`;
 }
 
+/** The id kind of a demo `document_page` row (next to `ID_KIND.document`/`anchor`/`order`). */
+export const DEMO_DOCUMENT_PAGE_KIND = 0x33;
+
+/**
+ * One page of a demo order's text layer (#1194): the lines its sample PDF prints, so the copilot's
+ * page search (`document_page.search_tsv`) finds and cites the order's directions.
+ */
+export function demoDocumentPage(
+  stamp: { workspaceId: string; createdAt: Date; updatedAt: Date },
+  id: string,
+  documentId: string,
+  pageNo: number,
+  lines: readonly string[],
+): InferInsertModel<typeof documentPage> {
+  return {
+    id,
+    ...stamp,
+    documentId,
+    pageNo,
+    text: lines.join('\n'),
+    textSource: 'layer',
+    lang: 'en',
+  };
+}
+
 export interface DemoMatterRows {
   matters: InferInsertModel<typeof matter>[];
   persons: InferInsertModel<typeof person>[];
@@ -344,6 +369,8 @@ export interface DemoMatterRows {
   proceedings: InferInsertModel<typeof proceeding>[];
   proceedingLinks: InferInsertModel<typeof proceedingLink>[];
   documents: InferInsertModel<typeof document>[];
+  /** The text layer of each order's PDF (#1194): the copilot cites matter documents from these pages. */
+  documentPages: InferInsertModel<typeof documentPage>[];
   /** The input of each order's sample PDF, by document id (the file step regenerates the bytes). */
   pdfs: { documentId: string; input: DemoPdfInput }[];
   anchors: InferInsertModel<typeof anchor>[];
@@ -365,6 +392,7 @@ export function demoMatterRows(ws: DemoWorkspaceSpec, today: string, at: Date): 
     proceedings: [],
     proceedingLinks: [],
     documents: [],
+    documentPages: [],
     pdfs: [],
     anchors: [],
     orders: [],
@@ -627,9 +655,16 @@ export function demoMatterRows(ws: DemoWorkspaceSpec, today: string, at: Date): 
         language: 'en',
         storageKey: `ws/${ws.id}/document/${String(at.getUTCFullYear())}/${documentId}`,
         sha256: pdf.sha256,
-        textStatus: 'skipped',
+        textStatus: 'layer',
         matterId,
       });
+      rows.documentPages.push(
+        demoDocumentPage(stamp, did(DEMO_DOCUMENT_PAGE_KIND, counter.document), documentId, 1, [
+          pdfInput.caseNumber,
+          pdfInput.title,
+          ...pdfInput.lines,
+        ]),
+      );
       rows.anchors.push({
         id: anchorId,
         ...stamp,

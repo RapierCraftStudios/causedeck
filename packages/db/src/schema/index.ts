@@ -112,6 +112,7 @@ export {
   CORPUS_IMPORT_STATUSES,
   CORPUS_MASK_REQUEST_STATUSES,
   JUDGMENT_OUTCOMES,
+  JUDGMENT_PINPOINT_STATES,
   JUDGMENT_SEGMENT_ROLES,
   corpusImportCursor,
   corpusMaskRequest,
@@ -119,6 +120,7 @@ export {
   corpusOcrQueue,
   judgment,
   judgmentCitationRef,
+  judgmentCnrAlias,
   judgmentSegment,
   judgmentStatuteRef,
   judgmentTag,
@@ -128,6 +130,7 @@ export {
   type JudgmentOutcome,
   type JudgmentOutcomeAnchor,
   type JudgmentPageText,
+  type JudgmentPinpointState,
   type JudgmentProvenance,
   type JudgmentSegmentRole,
 } from './corpus.ts';

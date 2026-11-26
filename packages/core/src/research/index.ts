@@ -59,3 +59,20 @@ export {
   type ResearchSearchInput,
   type ResearchUsage,
 } from './search.ts';
+// The research page's reads (#1174): what a query is (facts, citation or section), the corpus
+// coverage and one redacted judgment for the reader. Member-checked, unmetered and unaudited.
+export {
+  classifyResearchQuery,
+  type ClassifyResearchQueryInput,
+  type ResearchQueryRoute,
+  type RoutedJudgment,
+  type RoutedSection,
+} from './query-router.ts';
+export { getCorpusCoverage, type CorpusCoverage, type CourtCoverage } from './coverage.ts';
+export {
+  getJudgmentReaderView,
+  type JudgmentReaderAnchor,
+  type JudgmentReaderInput,
+  type JudgmentReaderView,
+  type JudgmentReaderPage,
+} from './reader.ts';

@@ -7,6 +7,11 @@
 // AI_PROVIDER=chatgpt-plan and ALLOW_PREVIEW_PLAN_PROVIDER=true). Any other workspace raises
 // `ResidencyViolationError` on a plan primary, whatever India-only says: real client data never
 // reaches it.
+//
+// Preview-only self-hosted embeddings (#1198): a self-hosted embed server (bge-m3) reports region
+// `SELF_HOSTED_REGION`. `embedDataResidency` treats it as in-India only when the caller passes
+// `previewSelfHosted` (core sets it from ALLOW_PREVIEW_SELF_HOSTED_EMBED, which config refuses in
+// production). Production residency is unchanged: only the AWS India regions are in-region.
 import { ResidencyViolationError } from '../errors.ts';
 import type { Provider, ProviderId, TaskDef } from '../types.ts';
 
@@ -18,6 +23,27 @@ export const PREVIEW_PLAN_PROVIDER_ID: ProviderId = 'chatgpt-plan';
 
 export function isIndiaRegion(region: string): boolean {
   return INDIA_REGIONS.includes(region);
+}
+
+/** Region reported by a self-hosted embed server (preview only, #1198). */
+export const SELF_HOSTED_REGION = 'self-hosted';
+
+export interface EmbedDataResidencyOptions {
+  /** True only on a preview with ALLOW_PREVIEW_SELF_HOSTED_EMBED=true. */
+  previewSelfHosted?: boolean | undefined;
+}
+
+/**
+ * Data residency of an embed provider in `region`: `'in'` for an AWS India region, or for
+ * `SELF_HOSTED_REGION` when `previewSelfHosted` is true; `'other'` otherwise.
+ */
+export function embedDataResidency(
+  region: string,
+  opts: EmbedDataResidencyOptions = {},
+): 'in' | 'other' {
+  if (isIndiaRegion(region)) return 'in';
+  if (region === SELF_HOSTED_REGION && opts.previewSelfHosted === true) return 'in';
+  return 'other';
 }
 
 export interface AllowedChainOptions {

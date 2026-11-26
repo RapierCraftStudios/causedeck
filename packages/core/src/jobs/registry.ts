@@ -44,6 +44,7 @@ import { captureProcess } from './definitions/capture-process.ts';
 import { captureRetention, systemCaptureRetention } from './definitions/capture-retention.ts';
 import { captureScan } from './definitions/capture-scan.ts';
 import { corpusBulkImport } from './definitions/corpus-bulk-import.ts';
+import { corpusHfImport } from './definitions/corpus-hf-import.ts';
 import { corpusEnrich } from './definitions/corpus-enrich.ts';
 import { corpusRedact } from './definitions/corpus-redact.ts';
 import { corpusEmbed } from './definitions/corpus-embed.ts';
@@ -250,6 +251,7 @@ export const registry = createRegistry([
   systemDataOpsEvaluate,
   corpusPoll,
   corpusBulkImport,
+  corpusHfImport,
   corpusRedact,
   corpusSegment,
   corpusEnrich,
@@ -340,6 +342,7 @@ export type JobMap = RegistryMap<
     typeof systemDataOpsEvaluate,
     typeof corpusPoll,
     typeof corpusBulkImport,
+    typeof corpusHfImport,
     typeof corpusRedact,
     typeof corpusSegment,
     typeof corpusEnrich,

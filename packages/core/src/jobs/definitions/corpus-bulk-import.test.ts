@@ -162,6 +162,49 @@ describe('system.corpus.bulk-import', () => {
     );
   });
 
+  it('queues the redact drain after each committed batch (#1197)', async () => {
+    const enqueue = vi.fn<(name: string) => Promise<unknown>>(() => Promise.resolve('job-id'));
+    vi.mocked(runBulkImport).mockImplementationOnce(async (deps) => {
+      await deps.afterBatch?.({ inserted: 4 });
+      await deps.afterBatch?.({ inserted: 3 });
+      return finished;
+    });
+    const report = await runCorpusBulkImport(
+      { log },
+      { dataset: 'sc' },
+      { db: sourceDb(clearedRow), openSource, enqueue },
+    );
+    expect(report).toMatchObject({ ...finished, skipped: false });
+    expect(enqueue.mock.calls).toEqual([['system.corpus.redact'], ['system.corpus.redact']]);
+  });
+
+  it('logs a warn and completes the import when the queue is down (#1197)', async () => {
+    const spy = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    vi.mocked(runBulkImport).mockImplementationOnce(async (deps) => {
+      await deps.afterBatch?.({ inserted: 4 });
+      return finished;
+    });
+    const report = await runCorpusBulkImport(
+      { log: spy as never },
+      { dataset: 'sc' },
+      {
+        db: sourceDb(clearedRow),
+        openSource,
+        enqueue: () => Promise.reject(new TypeError('connection refused')),
+      },
+    );
+    expect(report).toMatchObject({ ...finished, skipped: false });
+    expect(spy.warn).toHaveBeenCalledWith(
+      {
+        sourceId: 'aws-open-data-sc',
+        inserted: 4,
+        job: 'system.corpus.redact',
+        error: 'TypeError',
+      },
+      'corpus: enqueue failed',
+    );
+  });
+
   it('fails the job when the importer throws (#1185)', async () => {
     vi.mocked(runBulkImport).mockRejectedValueOnce(new Error('stream reset'));
     await expect(

@@ -70,6 +70,7 @@ const ANSWER: CopilotAnswer = {
   unsupported: [],
   answerText: 'Consent was never obtained.',
   answer: 'Consent was never obtained. [1]',
+  bottomLine: '',
   noAuthority: false,
   judgments: {
     [JUDGMENT]: {
@@ -86,7 +87,7 @@ const ANSWER: CopilotAnswer = {
 
 describe('no tar links', () => {
   it('copilot source links open the reader at the pinpoint page and paragraph', () => {
-    const { container } = withIntl(<SourcesList answer={ANSWER} active={null} />);
+    const { container } = withIntl(<SourcesList answer={ANSWER} active={null} idPrefix="t" />);
     expect(hrefs(container).some((h) => h.includes('.tar'))).toBe(false);
     const link = within(container).getByRole('link', { name: /2026:MHC:1|Rao v\. Nursing Home/ });
     expect(link.getAttribute('href')).toBe(
@@ -209,7 +210,7 @@ describe('copilot citation click lands on the cited page and paragraph', () => {
         },
       ],
     });
-    const copilot = withIntl(<SourcesList answer={ANSWER} active={null} />);
+    const copilot = withIntl(<SourcesList answer={ANSWER} active={null} idPrefix="t" />);
     const href =
       within(copilot.container)
         .getByRole('link', { name: /2026:MHC:1|Rao v\. Nursing Home/ })

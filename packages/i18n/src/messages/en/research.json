@@ -265,6 +265,25 @@
         "decided": "Decided {date}",
         "openPdf": "Open court PDF at p. {page}"
       }
+    },
+    "reader": {
+      "metaTitle": "{title}",
+      "untitled": "Judgment",
+      "maskedTitle": "Title withheld",
+      "back": "Back to research",
+      "citation": "Citation",
+      "caseNumbers": "Case numbers",
+      "court": "Court",
+      "decided": "Decided",
+      "bench": "Bench",
+      "anonymised": "Names in this text are anonymised.",
+      "page": "Page {page}",
+      "cited": "Cited paragraph",
+      "downloadPdf": "Download PDF",
+      "noPdf": "The original PDF is not stored.",
+      "notFound": "This judgment is not available",
+      "notFoundHint": "It is not in the corpus, or its anonymised text is not ready yet.",
+      "denied": "You do not have permission to read judgments."
     }
   },
   "settingsResearch": {

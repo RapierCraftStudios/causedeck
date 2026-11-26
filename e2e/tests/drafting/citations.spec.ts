@@ -91,7 +91,7 @@ test.describe('drafting citations', () => {
       await expect(good.locator('[data-slot="citation-reason"]')).toHaveCount(0);
       await expect(good.getByRole('link', { name: 'Open source' })).toHaveAttribute(
         'href',
-        `${sourceUrl}#page=${String(CITED_PAGE)}`,
+        `/w/${DRAFTING_WORKSPACE}/research/judgments/${judgmentId}?page=${String(CITED_PAGE)}#cited`,
       );
 
       const fabricated = item(/INSC 999/);

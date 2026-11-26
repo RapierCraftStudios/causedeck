@@ -5866,6 +5866,25 @@ export type Messages = {
         openPdf: string;
       };
     };
+    reader: {
+      metaTitle: string;
+      untitled: string;
+      maskedTitle: string;
+      back: string;
+      citation: string;
+      caseNumbers: string;
+      court: string;
+      decided: string;
+      bench: string;
+      anonymised: string;
+      page: string;
+      cited: string;
+      downloadPdf: string;
+      noPdf: string;
+      notFound: string;
+      notFoundHint: string;
+      denied: string;
+    };
   };
   settingsResearch: {
     title: string;

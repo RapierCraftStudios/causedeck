@@ -28,6 +28,7 @@ const state = vi.hoisted((): { context: WorkspaceContext | null; flagOn: boolean
 }));
 
 vi.mock('next/navigation', () => ({
+  useParams: () => ({ slug: 'demo' }),
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
   notFound: () => {
     throw new Error('NEXT_NOT_FOUND');
@@ -162,7 +163,10 @@ describe('copilot panel', () => {
     const claims = container.querySelectorAll('[data-slot="copilot-claim"]');
     expect(claims).toHaveLength(1);
     expect(claims[0]?.textContent).toContain('page 4 · para 12');
-    expect(claims[0]?.querySelector('a[href^="https://court.example/j1.pdf"]')).not.toBeNull();
+    // #1191: the in-app reader at the pinpoint, never the stored source URL.
+    expect(
+      Array.from(claims[0]?.querySelectorAll('a') ?? []).map((a) => a.getAttribute('href')),
+    ).toEqual(['/w/demo/research/judgments/j1?page=4&para=12#cited']);
     expect(claims[0]?.textContent).not.toContain('struck off');
     expect(container.querySelector('[data-slot="copilot-unsupported"]')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Not verified (1)' }));

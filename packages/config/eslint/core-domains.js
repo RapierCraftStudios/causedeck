@@ -145,8 +145,17 @@ export const CORE_DOMAIN_DEPENDENCIES = Object.freeze({
   // Judgment alerts (#497, D-048): member roles and role settings through workspaces; an alert is
   // shown only if `verifyCitation` resolves its judgment (D-004), through citations. The fact-pattern
   // search (#896) audits each search through audit, reads the plan's entitlements through billing,
-  // meters `research.searches` through usage and runs its platform-scope models through ai.
-  research: Object.freeze(['workspaces', 'citations', 'audit', 'billing', 'usage', 'ai']),
+  // meters `research.searches` through usage and runs its platform-scope models through ai. The
+  // query router (#1174) resolves a typed section through the statutes index (`resolveSectionRef`).
+  research: Object.freeze([
+    'workspaces',
+    'citations',
+    'audit',
+    'billing',
+    'usage',
+    'ai',
+    'statutes',
+  ]),
   // The grounded matter copilot (#1115): roles through workspaces, matter facts through the
   // matter-graph index, the corpus arm through research, `copilot.asked` through audit, the Junior cap
   // through billing and usage, and the workspace-scope gateway through ai. Per-obligation facts

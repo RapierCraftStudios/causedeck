@@ -14,7 +14,7 @@ import {
 import { schema, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
 import { newUser, newWorkspace } from '../__tests__/fixtures.ts';
@@ -43,6 +43,9 @@ async function seedJudgment(
     outcome?: 'allowed' | 'dismissed' | 'unknown';
     tag?: string;
     statute?: [string, string];
+    bench?: string[];
+    /** The redacted pages; default one PDF text-layer page. */
+    pages?: { pageNo: number; text: string; source?: 'text' | 'ocr' }[];
     segments: { role: 'facts' | 'reasoning' | 'decision'; text: string }[];
   },
 ): Promise<string> {
@@ -67,7 +70,8 @@ async function seedJudgment(
       },
       // The raw text carries a party name; only the redacted text and segments may be served.
       pageText: [{ pageNo: 1, text: `${SENTINEL} v. the patient. Raw text.` }],
-      redactedText: [{ pageNo: 1, text: '[PARTY] v. [PARTY]. Redacted text.' }],
+      redactedText: v.pages ?? [{ pageNo: 1, text: '[PARTY] v. [PARTY]. Redacted text.' }],
+      bench: v.bench ?? [],
       redactionVersion: 1,
       segmentVersion: 1,
       segmentedRedactionVersion: 1,
@@ -343,6 +347,69 @@ describe('searchAuthorities', () => {
         deps({ plan }),
       );
       expect(dismissed.hits).toEqual([]);
+    });
+  });
+
+  it('flags each segment verified or page_pending and filters by bench strength (#1174)', async () => {
+    await withTestDb(async (tx) => {
+      const ids = await seed(tx);
+      const imported = await seedJudgment(tx, {
+        title: 'Imported text judgment',
+        tag: 'medical_negligence',
+        bench: ['A. Judge', 'B. Judge', 'C. Judge'],
+        pages: [{ pageNo: 1, text: '[PARTY] imported.', source: 'text' }],
+        segments: [
+          { role: 'facts', text: 'Surgery without written consent, then a post-operative infection.' },
+        ],
+      });
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const actor = { workspaceId, userId: ownerId };
+      const result = await searchAuthorities(
+        tx,
+        actor,
+        { query: 'surgery without written consent and post-operative infection' },
+        deps(),
+      );
+      const byId = new Map(result.hits.map((h) => [h.judgmentId, h]));
+      const negligence = byId.get(ids.negligence);
+      const pending = byId.get(imported);
+      expect(negligence?.segments.map((s) => s.pinpoint)).toEqual(['verified', 'verified']);
+      expect(negligence?.benchStrength).toBeNull();
+      expect(pending?.segments.map((s) => s.pinpoint)).toEqual(['page_pending']);
+      expect(pending?.benchStrength).toBe(3);
+
+      const benched = await rerunAuthoritySearch(
+        tx,
+        actor,
+        { plan: { ...result.plan, subjectAreas: [], benchMin: 3, benchMax: 5 } },
+        deps(),
+      );
+      expect(benched.hits.map((h) => h.judgmentId)).toEqual([imported]);
+      expect(benched.hits[0]?.segments[0]?.pinpoint).toBe('page_pending');
+    });
+  });
+
+  it('a redacted_text that is not an array of pages makes segments page_pending, not an error (#1174)', async () => {
+    await withTestDb(async (tx) => {
+      const legacy = await seedJudgment(tx, {
+        title: 'Legacy scalar judgment',
+        tag: 'medical_negligence',
+        segments: [
+          { role: 'facts', text: 'Surgery without written consent, then a post-operative infection.' },
+        ],
+      });
+      await tx.execute(
+        sql`update judgment set redacted_text = to_jsonb('legacy text'::text) where id = ${legacy}::uuid`,
+      );
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const result = await searchAuthorities(
+        tx,
+        { workspaceId, userId: ownerId },
+        { query: 'surgery without written consent and post-operative infection' },
+        deps(),
+      );
+      const hit = result.hits.find((h) => h.judgmentId === legacy);
+      expect(hit?.segments.map((s) => s.pinpoint)).toEqual(['page_pending']);
     });
   });
 

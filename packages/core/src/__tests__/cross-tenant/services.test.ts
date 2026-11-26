@@ -4348,6 +4348,27 @@ const CASES: Record<string, Case> = {
     );
     expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'research.searches')).toBe(0);
   },
+  // research page reads (#1174): B naming A's workspace is denied and A's research usage is unchanged.
+  classifyResearchQuery: async (f) => {
+    await expectDenied(
+      f.asB((s) => core.classifyResearchQuery(s, bActsOnA(f), { query: '483 BNSS' })),
+    );
+    expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'research.searches')).toBe(0);
+  },
+  getCorpusCoverage: async (f) => {
+    await expectDenied(f.asB((s) => core.getCorpusCoverage(s, bActsOnA(f))));
+    expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'research.searches')).toBe(0);
+  },
+  getJudgmentReaderView: async (f) => {
+    await expectDenied(
+      f.asB((s) =>
+        core.getJudgmentReaderView(s, bActsOnA(f), {
+          judgmentId: '00000000-0000-4000-8000-000000000000',
+        }),
+      ),
+    );
+    expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'research.searches')).toBe(0);
+  },
   // grounded matter copilot (#1115): B naming A's workspace or matter is denied; A's usage and audit rows are unchanged.
   askCopilot: async (f) => {
     const matterId = f.a.rows.judgment_alert?.matterId ?? undefined;

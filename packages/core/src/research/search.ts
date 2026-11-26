@@ -21,6 +21,9 @@
 // - Lexical-only (#1182): while the active embedder is the mock (hashed) one, the vector arm is skipped
 //   and the lexical arm is fused alone; the counts say `lexical-only`.
 // - Redaction (D-053): results carry `judgment_segment.text` only; titles are the stored masked form.
+// - Pinpoints (#1174): each segment says whether its pages are `verified` (every page is in the
+//   redacted text from the PDF text layer or OCR) or `page_pending` (a page is missing or came from a
+//   plain-text import, so the page number is not yet confirmed). Only page numbers and sources are read.
 import { createHash, randomUUID } from 'node:crypto';
 
 import {
@@ -50,6 +53,7 @@ import {
   type SearchResult,
   type StatuteChip,
 } from '@causedeck/intelligence';
+import { sql } from 'drizzle-orm';
 
 import {
   createPlatformAiGateway,
@@ -172,7 +176,7 @@ function wire(db: Queryable, deps: ResearchSearchDeps, previewPlan: Provider | n
   };
 }
 
-async function asMember<T>(
+export async function asMember<T>(
   db: Queryable,
   actor: ResearchSearchActor,
   fn: () => Promise<T>,
@@ -203,6 +207,57 @@ async function usageOf(ctx: UsageContext): Promise<ResearchUsage> {
     ),
   ]);
   return { used, limit: RESEARCH_SEARCH_CAPS[entitlements.planId] ?? null };
+}
+
+interface PageSourceRow {
+  judgmentId: string;
+  pageNo: number | string;
+  source: string | null;
+}
+
+/**
+ * Marks each segment of `result` `verified` or `page_pending` from the page entries of the judgment's
+ * `redacted_text` (#1174). Reads page numbers and sources only, never page text. A `redacted_text`
+ * that is not an array of page objects (null, a legacy scalar) yields `page_pending`, never an error
+ * that would fail the whole search (and the copilot that runs it).
+ */
+async function withPinpoints<R extends SearchResult>(db: Queryable, result: R): Promise<R> {
+  const ids = [...new Set(result.hits.map((h) => h.judgmentId))].filter(isUuid);
+  if (ids.length === 0) return result;
+  // nosemgrep: infra.security.semgrep.causedeck.raw-sql-bypasses-with-workspace -- judgment is a global corpus table (no workspace_id, no RLS); only page numbers and sources are read
+  const rows = await db.execute(sql`
+    select j.id as "judgmentId", p->>'pageNo' as "pageNo", p->>'source' as source
+    from judgment j
+    cross join lateral jsonb_array_elements(
+      case when jsonb_typeof(j.redacted_text) = 'array' then j.redacted_text else '[]'::jsonb end
+    ) p
+    where jsonb_typeof(p) = 'object' and j.id in (${sql.join(
+      ids.map((id) => sql`${id}::uuid`),
+      sql`, `,
+    )})`);
+  const verifiedPages = new Map<string, Set<number>>();
+  for (const row of Array.from(rows as unknown as PageSourceRow[])) {
+    if (row.source === 'text') continue;
+    const pages = verifiedPages.get(row.judgmentId) ?? new Set<number>();
+    pages.add(Number(row.pageNo));
+    verifiedPages.set(row.judgmentId, pages);
+  }
+  return {
+    ...result,
+    hits: result.hits.map((hit) => {
+      const pages = verifiedPages.get(hit.judgmentId);
+      return {
+        ...hit,
+        segments: hit.segments.map((segment) => {
+          let verified = pages !== undefined && segment.pageFrom <= segment.pageTo;
+          for (let page = segment.pageFrom; verified && page <= segment.pageTo; page += 1) {
+            verified = pages?.has(page) === true;
+          }
+          return { ...segment, pinpoint: verified ? ('verified' as const) : ('page_pending' as const) };
+        }),
+      };
+    }),
+  };
 }
 
 const compact = (ids: readonly string[]): string => ids.join(',');
@@ -273,9 +328,12 @@ export async function searchAuthorities(
     const requestId = input.requestId ?? randomUUID();
     // The planner runs on every search, so the preview plan provider applies with or without an answer.
     const previewPlan = await previewPlanFor(db, actor, deps);
-    const result = await searchCorpus(wire(db, deps, previewPlan), query, {
-      answer: input.answer === true,
-    });
+    const result = await withPinpoints(
+      db,
+      await searchCorpus(wire(db, deps, previewPlan), query, {
+        answer: input.answer === true,
+      }),
+    );
     await increment(ctx, RESEARCH_SEARCH_KEY, 1, {
       idempotencyKey: `research-search:${requestId}`,
     });
@@ -315,9 +373,12 @@ export async function rerunAuthoritySearch(
       );
     }
     const previewPlan = input.answer === true ? await previewPlanFor(db, actor, deps) : null;
-    const result = await searchCorpusWithPlan(wire(db, deps, previewPlan), plan, {
-      answer: input.answer === true,
-    });
+    const result = await withPinpoints(
+      db,
+      await searchCorpusWithPlan(wire(db, deps, previewPlan), plan, {
+        answer: input.answer === true,
+      }),
+    );
     await audit(db, actor, result, { mode: 'rerun', requestId });
     return { ...result, usage: before, chips: statuteChips(result.plan) };
   });

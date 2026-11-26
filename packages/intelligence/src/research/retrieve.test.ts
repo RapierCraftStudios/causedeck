@@ -85,7 +85,9 @@ describe('drizzleRetriever.lexical ordering', () => {
 
   it('lexical arm ranks more distinct terms first, then the two-term segments', async () => {
     const got = await order('operation consent guardian');
-    expect(got.slice(0, 3)).toEqual([3, 4, 5]);
+    expect(got[0]).toBe(3);
+    // 4 and 5 tie on coverage and rank; the `s.id` tie-break is a random uuid, so either order is valid.
+    expect(got.slice(1, 3).sort((a, b) => a - b)).toEqual([4, 5]);
   });
 
   it('falls back to the plain OR when no segment holds two query terms', async () => {

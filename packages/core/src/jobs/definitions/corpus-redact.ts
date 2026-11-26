@@ -10,6 +10,8 @@ import { z } from 'zod';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 
+import { queueCorpusDrain, type CorpusDrainJob } from './corpus-segment.ts';
+
 const { judgment, corpusMaskRequest } = schema;
 
 /** Judgments re-redacted per run; the rest wait for the next run, which is queued while any remain. */
@@ -29,7 +31,11 @@ export interface CorpusRedactReport {
 export async function runCorpusRedact(
   ctx: Pick<JobContext, 'log'>,
   payload: { batch?: number | undefined },
-  deps: { db?: Queryable } = {},
+  deps: {
+    db?: Queryable;
+    /** Queues the next redact run, or segment once drained; defaults to the pg-boss producer. */
+    enqueue?: (name: CorpusDrainJob) => Promise<unknown>;
+  } = {},
 ): Promise<CorpusRedactReport> {
   const db = deps.db ?? rootDb;
   const limit = payload.batch ?? CORPUS_REDACT_BATCH;
@@ -82,7 +88,14 @@ export async function runCorpusRedact(
       .where(eq(judgment.id, row.id));
   }
   ctx.log.info({ redacted: rows.length, version: REDACTION_VERSION }, 'corpus.redact: batch done');
-  return { redacted: rows.length, remaining: rows.length === limit };
+  const remaining = rows.length === limit;
+  // While stale rows remain the next batch is queued at once; once drained, segment follows (#1197).
+  await queueCorpusDrain(
+    ctx,
+    remaining ? 'system.corpus.redact' : 'system.corpus.segment',
+    deps.enqueue,
+  );
+  return { redacted: rows.length, remaining };
 }
 
 export const corpusRedact = defineJob({

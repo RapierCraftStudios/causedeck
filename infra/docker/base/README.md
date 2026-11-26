@@ -19,7 +19,11 @@ passes `name@sha256:...` so what ships is immutable.
 3. For a manual build pass it explicitly:
    `docker build --build-arg NODE_IMAGE=node@sha256:<digest> -f infra/docker/api.Dockerfile .`
 4. WAL-G is not a base image: bump `WALG_VERSION` and both `WALG_SHA256_*` build args together
-   (checksums come from the release page; the build fails if they do not match).
+   (checksums come from the release page; the build fails if they do not match). The assets differ
+   per arch: `WALG_SHA256_AMD64` is for `wal-g-pg-ubuntu-22.04-amd64` and `WALG_SHA256_ARM64` is for
+   `wal-g-pg-ubuntu-20.04-aarch64` (v3.0.5 has no 22.04 aarch64 build). For v3.0.5 these are
+   `887fda96a1298c37ac26a9fbca47572b71a8426154f90b64993837e8cdf7af90` (amd64) and
+   `c07a3ed87a4d321765078b3de5f7c7d5fea2e22a5e2d5c3a080bf3173af586e3` (arm64).
 5. Trivy runs on every image in `images.yml`; a critical finding with a fix fails the build.
 
 `.dockerignore`: Docker only reads it from the context root (or beside a Dockerfile as

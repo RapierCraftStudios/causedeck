@@ -5644,8 +5644,8 @@
       "submit": "Search",
       "searching": "Searching…",
       "error": "The search could not be completed. Try again.",
-      "usage": "{used} of {limit} searches used this month",
-      "usageUnlimited": "{used} searches this month",
+      "usage": "{used} of {limit, plural, one {# search} other {# searches}} used this month",
+      "usageUnlimited": "{used, plural, one {# search this month} other {# searches this month}}",
       "filters": {
         "heading": "Filters",
         "hint": "Changing a filter searches again with exactly your change. The facts are not re-read.",
@@ -5788,14 +5788,14 @@
       "suggestions": {
         "title": "Start with a question",
         "description": "Every claim in the answer links to a quote checked against the stored text.",
-        "corpusConsent": "Is written consent needed before surgery?",
-        "corpusNegligence": "When is a hospital vicariously liable for a doctor's negligence?",
-        "corpusLimitation": "When does limitation start for a medical negligence claim?",
+        "corpusBail": "What do courts weigh when granting regular bail?",
+        "corpusAnticipatoryBail": "When is anticipatory bail refused?",
+        "corpusWrit": "When will a High Court hear a writ petition despite an alternative remedy?",
         "matterFacts": "What are the key facts of this matter?",
         "matterFactsOf": "What are the key facts of {title}?",
         "nextDate": "What should be ready for the hearing on {date}?",
         "stage": "What must we show at the {stage} stage?",
-        "matterDocuments": "What do the matter's documents say about consent?",
+        "matterOrders": "What directions do the orders in this matter give?",
         "matterAuthority": "Which judgments support our position?"
       },
       "sources": {
@@ -5864,6 +5864,25 @@
         "decided": "Decided {date}",
         "openPdf": "Open court PDF at p. {page}"
       }
+    },
+    "reader": {
+      "metaTitle": "{title}",
+      "untitled": "Judgment",
+      "maskedTitle": "Title withheld",
+      "back": "Back to research",
+      "citation": "Citation",
+      "caseNumbers": "Case numbers",
+      "court": "Court",
+      "decided": "Decided",
+      "bench": "Bench",
+      "anonymised": "Names in this text are anonymised.",
+      "page": "Page {page}",
+      "cited": "Cited paragraph",
+      "downloadPdf": "Download PDF",
+      "noPdf": "The original PDF is not stored.",
+      "notFound": "This judgment is not available",
+      "notFoundHint": "It is not in the corpus, or its anonymised text is not ready yet.",
+      "denied": "You do not have permission to read judgments."
     }
   },
   "settingsResearch": {

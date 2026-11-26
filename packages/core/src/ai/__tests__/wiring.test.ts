@@ -21,6 +21,8 @@ import { getUsage, reconcileAiCalls } from '../../usage/index.ts';
 import {
   createAiPorts,
   createCoreAiGateway,
+  embedBatchSizeFromEnv,
+  embedProviderFromEnv,
   getCaptureCostPaise,
   previewPlanProviderFromEnv,
 } from '../wiring.ts';
@@ -329,5 +331,28 @@ describe('preview plan provider', () => {
     expect(provider).toMatchObject({ id: 'chatgpt-plan', dataResidency: 'other' });
     expect(provider?.modelFor(getTask('answer_matter_question'))).toBe('gpt-plan-test');
     expect(previewPlanProviderFromEnv(env)).toBe(provider);
+  });
+
+  it('embedProviderFromEnv selects bge-m3 only when EMBED_PROVIDER=bge-m3 and BGE_M3_URL are set', () => {
+    const base = { NODE_ENV: 'test', SKIP_ENV_VALIDATION: undefined };
+    const defaults = createEnv(base);
+    const mock = embedProviderFromEnv(defaults);
+    expect(mock).toMatchObject({ id: 'mock-embed', model: 'mock-embed', dataResidency: 'in' });
+    expect(embedProviderFromEnv(defaults)).toBe(mock);
+    expect(embedBatchSizeFromEnv(defaults)).toBe(32);
+
+    const bgeEnv = { ...base, EMBED_PROVIDER: 'bge-m3', BGE_M3_URL: 'http://embed:8080' };
+    const bge = embedProviderFromEnv(createEnv(bgeEnv));
+    expect(bge).toMatchObject({
+      id: 'bge-m3',
+      model: 'bge-m3',
+      region: 'self-hosted',
+      dataResidency: 'other',
+    });
+    const preview = createEnv({ ...bgeEnv, ALLOW_PREVIEW_SELF_HOSTED_EMBED: 'true' });
+    expect(embedProviderFromEnv(preview)).toMatchObject({ id: 'bge-m3', dataResidency: 'in' });
+    expect(embedProviderFromEnv(preview)).toBe(embedProviderFromEnv(preview));
+    expect(() => createEnv({ ...base, EMBED_PROVIDER: 'bge-m3' })).toThrow(/BGE_M3_URL/);
+    expect(embedBatchSizeFromEnv(createEnv({ ...base, EMBED_BATCH_SIZE: '16' }))).toBe(16);
   });
 });

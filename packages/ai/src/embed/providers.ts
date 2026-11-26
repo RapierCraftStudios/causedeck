@@ -4,7 +4,7 @@
 import { createHash } from 'node:crypto';
 
 import { ProviderError } from '../errors.ts';
-import { isIndiaRegion } from '../policy/residency.ts';
+import { embedDataResidency, isIndiaRegion } from '../policy/residency.ts';
 import { signRequest } from '../providers/sigv4.ts';
 import type { EmbedBatch, EmbedProvider } from './types.ts';
 
@@ -128,10 +128,15 @@ export function createTitanEmbedProvider(config: BedrockEmbedConfig): EmbedProvi
 export interface Bgem3Config {
   /** Base URL of the self-hosted server (text-embeddings-inference `POST /embed`). */
   baseUrl: string;
-  /** The region the server runs in; only an India region passes India-only mode. */
+  /**
+   * The region the server runs in. An India region passes India-only mode; `SELF_HOSTED_REGION`
+   * passes only with `previewSelfHosted`.
+   */
   region: string;
   /** Bearer token, when the server needs one. */
   token?: string;
+  /** Preview only (#1198): a `SELF_HOSTED_REGION` server counts as in-India. */
+  previewSelfHosted?: boolean;
   fetch?: typeof fetch;
 }
 
@@ -140,7 +145,9 @@ export function createBgem3Provider(config: Bgem3Config): EmbedProvider {
   return {
     id: 'bge-m3',
     region: config.region,
-    dataResidency: isIndiaRegion(config.region) ? 'in' : 'other',
+    dataResidency: embedDataResidency(config.region, {
+      previewSelfHosted: config.previewSelfHosted,
+    }),
     model: BGE_M3_MODEL,
     modelVersion: BGE_M3_MODEL,
     dimensions: 1024,

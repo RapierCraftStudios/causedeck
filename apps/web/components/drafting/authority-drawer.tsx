@@ -3,16 +3,19 @@
 // The studio's authority drawer (#1144, slice 3 of #1118): verified corpus authorities for the
 // selected block, behind `copilot.enabled`. Asking is an explicit click (one metered copilot question
 // per click); each candidate shows its case, pinpoint and quote with where it came from (Provenance
-// Chip and the corpus link). Inserting is an explicit click too: the server re-verifies the quote
+// Chip and a link that opens the judgment in the in-app reader at its pinpoint, #1191). Inserting is an explicit click too: the server re-verifies the quote
 // against the stored judgment and saves it as a new paragraph in the next version
 // (`authority-actions.ts`). Nothing here edits or invents a citation.
+import { courtLabel } from '@causedeck/intelligence/citation-display';
 import { Button } from '@causedeck/ui/button';
 import { ProvenanceChip } from '@causedeck/ui/patterns';
 import type { Block } from '@causedeck/validators/drafting';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { keyedBlocks } from '../../lib/drafting/blocks-edit.ts';
+import { judgmentHref, slugOf } from '../../lib/judgment-href.ts';
 import type { Result } from '../../lib/safe-action.ts';
 
 /** What the server takes back to insert a candidate; sent unaltered. */
@@ -65,11 +68,13 @@ export type AuthorityDrawerStatus =
 
 export type AuthorityInsertState = 'inserting' | 'inserted' | 'conflict' | 'failed';
 
-function sourceHref(candidate: AuthorityCandidateView): string | null {
-  if (candidate.sourceUrl === null) return null;
-  return candidate.page === null
-    ? candidate.sourceUrl
-    : `${candidate.sourceUrl}#page=${String(candidate.page)}`;
+/** The in-app reader at the candidate's pinpoint; never the stored archive URL (#1191). */
+function sourceHref(candidate: AuthorityCandidateView, slug: string | null): string | null {
+  if (slug === null) return null;
+  return judgmentHref(slug, candidate.candidateRef.judgmentId, {
+    page: candidate.page,
+    para: candidate.paragraph,
+  });
 }
 
 const keyOf = (ref: AuthorityCandidateRef) =>
@@ -100,6 +105,7 @@ export function AuthorityDrawer({
   onInsert,
 }: AuthorityDrawerProps) {
   const t = useTranslations('drafting.authorityDrawer');
+  const slug = slugOf(useParams());
   const body = () => {
     if (!hasBlock) return <p className="text-ink-muted text-sm">{t('noBlock')}</p>;
     if (status === 'loading') {
@@ -148,7 +154,7 @@ export function AuthorityDrawer({
           {candidates.map((candidate) => {
             const key = keyOf(candidate.candidateRef);
             const state = inserts[key];
-            const href = sourceHref(candidate);
+            const href = sourceHref(candidate, slug);
             const pin =
               candidate.paragraph !== null
                 ? t('para', { n: candidate.paragraph })
@@ -163,7 +169,7 @@ export function AuthorityDrawer({
               >
                 <p className="text-sm font-semibold">{candidate.title ?? t('untitled')}</p>
                 <p className="text-ink-muted text-xs">
-                  {[candidate.neutralCitation, candidate.court, pin]
+                  {[candidate.neutralCitation, courtLabel(candidate.court), pin]
                     .filter((part) => part !== null)
                     .join(' · ')}
                 </p>
@@ -181,12 +187,7 @@ export function AuthorityDrawer({
                     }}
                   />
                   {href === null ? null : (
-                    <a
-                      className="text-xs underline"
-                      href={href}
-                      rel="noreferrer noopener"
-                      target="_blank"
-                    >
+                    <a className="text-xs underline" href={href}>
                       {t('openSource')}
                     </a>
                   )}

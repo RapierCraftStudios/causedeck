@@ -51,6 +51,15 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
   multi-user deployment needs OpenAI's interest-form approval first. Sign in once with
   `pnpm --filter @causedeck/ai chatgpt-plan:login --token-file <path>`, then set
   `CHATGPT_PLAN_TOKEN_FILE` to that path and `CHATGPT_PLAN_MODEL`.
+- **Preview self-hosted embeddings (#1198)**: `EMBED_PROVIDER=bge-m3` with `BGE_M3_URL` (and
+  `BGE_M3_TOKEN` when the server needs one) makes the corpus embed job, research search and the
+  copilot use a self-hosted bge-m3 server; otherwise they use the mock embedder. The self-hosted
+  server is preview-only: it reports region `self-hosted` and passes India-only mode only with
+  `ALLOW_PREVIEW_SELF_HOSTED_EMBED=true`. Under `NODE_ENV=production` that flag is refused unless
+  `ADMIN_ENV_LABEL=staging` or `development` (an unset label counts as production). Production
+  residency is unchanged: only the AWS India regions pass. The embed job sends
+  `EMBED_BATCH_SIZE` segments per request (default 32) and re-embeds vectors from another model
+  version.
 - **Data residency**: `AWS_REGION` defaults to `ap-south-1` and `DATA_REGION` to `in`. A non-India
   value (anything except `ap-south-1`/`ap-south-2`, or a `DATA_REGION` other than `in`) is rejected
   unless `AWS_REGION_OVERRIDE_ACK=I_UNDERSTAND`.
@@ -123,6 +132,11 @@ Google OAuth, #110 SES, #111 Razorpay, #112 Bedrock, #113 Sarvam, #115 Sentry, #
 | `RESEARCH_EVAL_PRIVATE_DIR` | path | — | never | #899 | — |
 | `CORPUS_OCR_ENABLED` | boolean | `false` | never (off unless set) | #1030 | — |
 | `CORPUS_OCR_DAILY_PAISE` | integer (1-100000000) | `500000` | never (defaults to 500000) | #1030 | — |
+| `EMBED_PROVIDER` | enum(mock\|bge-m3) | `mock` | never (defaults to mock) | #1198 | — |
+| `BGE_M3_URL` | url | — | EMBED_PROVIDER=bge-m3 | #1198 | — |
+| `BGE_M3_TOKEN` | secret | — | never | #1198 | — |
+| `ALLOW_PREVIEW_SELF_HOSTED_EMBED` | boolean | `false` | never (preview only) | #1198 | — |
+| `EMBED_BATCH_SIZE` | integer (1-256) | `32` | never (defaults to 32) | #1198 | — |
 | `ALTERLAB_API_KEY` | secret | — | never (the mock provider is used when unset) | #479 | — |
 | `DATA_OPS_SLACK_WEBHOOK_URL` | secret | — | never (alerts are logged when unset) | #515 | — |
 | `DATA_OPS_ALERT_EMAIL` | email | — | never (alerts are logged when unset) | #515 | — |

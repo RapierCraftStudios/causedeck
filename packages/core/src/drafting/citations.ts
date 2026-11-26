@@ -22,7 +22,7 @@ import type {
   CitationReport,
   CitationStatus,
 } from '@causedeck/validators/citation';
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and, eq, gte, inArray, sql } from 'drizzle-orm';
 
 import { record } from '../audit/index.ts';
 import { createCorpusResolver } from '../citations/index.ts';
@@ -30,7 +30,30 @@ import { invalid, notFound } from '../shared/errors.ts';
 
 import { asDraftMember, requireDraft, type DraftActor } from './policy.ts';
 
-const { authority, draftVersion } = schema;
+const { authority, draftVersion, judgment } = schema;
+
+/**
+ * The stored judgment behind each source URL (#1191), so the studio opens a cited judgment in the
+ * in-app reader instead of its provenance URL (often an archive member no browser opens). The
+ * `judgment` table is the global corpus (no workspace_id); a URL shared by more than one judgment
+ * is ambiguous and left out.
+ */
+export async function judgmentIdsBySourceUrl(
+  db: Queryable,
+  urls: readonly (string | null)[],
+): Promise<Map<string, string>> {
+  const wanted = [...new Set(urls.filter((u): u is string => u !== null && u !== ''))];
+  if (wanted.length === 0) return new Map();
+  const found = await db
+    .select({ id: judgment.id, url: sql<string>`${judgment.provenance}->>'url'` })
+    .from(judgment)
+    .where(inArray(sql`${judgment.provenance}->>'url'`, wanted));
+  const byUrl = new Map<string, string | null>();
+  for (const row of found) byUrl.set(row.url, byUrl.has(row.url) ? null : row.id);
+  const ids = new Map<string, string>();
+  for (const [url, id] of byUrl) if (id !== null) ids.set(url, id);
+  return ids;
+}
 
 function blocksOf(content: unknown): Block[] {
   const parsed = validateBlockTree(content);
@@ -134,6 +157,7 @@ function storedPinpoint(p: {
 export function reportFromRows(
   draftVersionId: string,
   rows: readonly AuthorityRow[],
+  judgmentIds: ReadonlyMap<string, string> = new Map(),
 ): CitationReport {
   const counts = { verified: 0, not_found: 0, unknown: 0 };
   let throttled = 0;
@@ -143,6 +167,7 @@ export function reportFromRows(
       const status = row.status as CitationStatus;
       counts[status] += 1;
       if (row.resolution.reason === 'throttled') throttled += 1;
+      const judgmentId = row.sourceUrl === null ? undefined : judgmentIds.get(row.sourceUrl);
       return {
         id: row.id,
         blockId: row.blockId,
@@ -152,6 +177,7 @@ export function reportFromRows(
         kind: row.kind as CitationKind,
         status,
         ...(row.sourceUrl === null ? {} : { sourceUrl: row.sourceUrl }),
+        ...(judgmentId === undefined ? {} : { judgmentId }),
         ...(row.resolution.title === undefined ? {} : { title: row.resolution.title }),
         ...(row.resolution.reason === undefined
           ? {}
@@ -282,7 +308,14 @@ export async function checkDraft(
     { workspaceId, draftVersionId, citations: rows.length },
     'draft citations checked',
   );
-  return reportFromRows(draftVersionId, rows);
+  return reportFromRows(
+    draftVersionId,
+    rows,
+    await judgmentIdsBySourceUrl(
+      deps.db,
+      rows.map((r) => r.sourceUrl),
+    ),
+  );
 }
 
 /** The stored statuses of one version (`draft.read`); nothing is resolved. */
@@ -305,9 +338,14 @@ export async function getCitationReport(
       .limit(1);
     if (version === undefined) throw notFound('Version not found');
     await requireDraft(tx, reader, settings, version.draftId, 'draft.read');
+    const rows = await readRows(tx, reader.workspaceId, input.draftVersionId);
     return reportFromRows(
       input.draftVersionId,
-      await readRows(tx, reader.workspaceId, input.draftVersionId),
+      rows,
+      await judgmentIdsBySourceUrl(
+        tx,
+        rows.map((r) => r.sourceUrl),
+      ),
     );
   });
 }

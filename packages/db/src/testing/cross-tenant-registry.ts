@@ -1349,6 +1349,11 @@ export const NOT_A_SERVICE: Readonly<Record<string, string>> = {
     'global tables `judgment` and `corpus_mask_request` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments and takedown requests, never tenant data; needs an enabled ops or admin staff_user',
   MaskRequestError: 'error class',
   MASK_PURGE_DEADLINE_HOURS: 'constant',
+  // judgment reader (#1191): the redacted text, citable header and stored-PDF key of a public judgment
+  getJudgmentForReader:
+    'global table `judgment` (GLOBAL_TABLES, no workspace_id, no RLS): public judgments, the same for every workspace, redacted_text only (D-053), never tenant data',
+  getJudgmentPdfKey:
+    'global table `judgment` (GLOBAL_TABLES, no workspace_id, no RLS): the object key of a public judgment PDF, the same for every workspace, never tenant data',
   // corpus OCR drain (#1030): queue depth and parked pages of the global `corpus_ocr_queue`
   ocrQueueStats:
     'global table `corpus_ocr_queue` (GLOBAL_TABLES, no workspace_id, no RLS): judgment page ids and error codes of the public corpus, never tenant data',

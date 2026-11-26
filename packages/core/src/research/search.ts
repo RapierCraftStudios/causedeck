@@ -28,7 +28,6 @@ import { createHash, randomUUID } from 'node:crypto';
 
 import {
   createEmbedGateway,
-  createMockEmbedProvider,
   createMockRerankProvider,
   createRerankGateway,
   MOCK_EMBED_MODEL,
@@ -58,6 +57,7 @@ import { sql } from 'drizzle-orm';
 
 import {
   createPlatformAiGateway,
+  embedProviderFromEnv,
   isPreviewPlanWorkspace,
   PLATFORM_AI_SCOPE,
   previewPlanProviderFromEnv,
@@ -151,9 +151,12 @@ async function previewPlanFor(
   return (await isPreviewPlanWorkspace(db, actor.workspaceId)) ? plan : null;
 }
 
-/** The deterministic mock embedder and reranker, like `system.corpus.embed` until a real model is configured. */
+/**
+ * The configured embedder (`embedProviderFromEnv`, #1198: bge-m3 when set, else the mock), the same one
+ * `system.corpus.embed` writes vectors with, and the deterministic mock reranker.
+ */
 function wire(db: Queryable, deps: ResearchSearchDeps, previewPlan: Provider | null = null) {
-  const embed = deps.embed ?? createEmbedGateway({ providers: [createMockEmbedProvider()] });
+  const embed = deps.embed ?? createEmbedGateway({ providers: [embedProviderFromEnv()] });
   const rerank = deps.rerank ?? createRerankGateway({ providers: [createMockRerankProvider()] });
   // The preview plan provider (#1165) runs both the planner and the answer for a preview demo workspace.
   const gateway =

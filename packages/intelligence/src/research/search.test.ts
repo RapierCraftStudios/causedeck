@@ -4,7 +4,8 @@ import {
   createMockRerankProvider,
   createRerankGateway,
 } from '@causedeck/ai';
-import { sql } from 'drizzle-orm';
+import type { Queryable } from '@causedeck/db';
+import { sql, type SQL } from 'drizzle-orm';
 import { PgDialect } from 'drizzle-orm/pg-core';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -25,9 +26,15 @@ import {
   validatePlan,
   statuteChips,
 } from './plan.ts';
-import { lexicalQueryText, planFilters } from './retrieve.ts';
+import { drizzleRetriever, lexicalQueryText, planFilters } from './retrieve.ts';
 import { searchCorpus, searchCorpusWithPlan, type SearchDeps } from './search.ts';
-import type { FusedCandidate, SegmentCandidate, SegmentRetriever } from './types.ts';
+import {
+  citableReference,
+  courtLabel,
+  type FusedCandidate,
+  type SegmentCandidate,
+  type SegmentRetriever,
+} from './types.ts';
 
 const candidate = (
   id: string,
@@ -452,5 +459,50 @@ describe('validatePlan', () => {
     expect(validatePlan(plan)?.statutes).toEqual([
       { statute: 'indian penal code', section: '304a' },
     ]);
+  });
+});
+
+describe('citable reference (#1189)', () => {
+  it('selects case_numbers with the judgment fields', async () => {
+    const statements: SQL[] = [];
+    const db = {
+      execute: (statement: SQL) => {
+        statements.push(statement);
+        return Promise.resolve([]);
+      },
+    } as unknown as Queryable;
+    await drizzleRetriever(db, { embeddingModel: 'm' }).lexical(heuristicPlan('bail'), 5);
+    const text = new PgDialect().sqlToQuery(statements[0] as SQL).sql.replace(/\s+/g, ' ');
+    expect(text).toContain('j.case_numbers as "caseNumbers"');
+    expect(text).toContain('j.neutral_citation as "neutralCitation"');
+  });
+
+  it('carries case numbers from the candidates onto the hits', () => {
+    const hits = groupByJudgment(
+      fuseArms([
+        [
+          candidate('s1', 'j1', 'a', { caseNumbers: ['C.A. 1 of 2008', '[2008] 9 SCR 821'] }),
+          candidate('s2', 'j2', 'b'),
+        ],
+      ]),
+    );
+    expect(hits.map((h) => h.caseNumbers)).toEqual([['C.A. 1 of 2008', '[2008] 9 SCR 821'], []]);
+  });
+
+  it('prefers the neutral citation, then the SCR citation, then nothing', () => {
+    expect(citableReference('2023:INSC:12', ['[2023] 1 SCR 5'])).toBe('2023:INSC:12');
+    expect(citableReference(null, ['C.A. 1 of 2008', '[2008] 9 SCR 821'])).toBe('[2008] 9 SCR 821');
+    expect(citableReference('', ['[2008] 9 SCR 821'])).toBe('[2008] 9 SCR 821');
+    expect(citableReference(null, ['C.A. 1 of 2008'])).toBeNull();
+    expect(citableReference(null, ['[2008] 9 SCR'])).toBeNull();
+    expect(citableReference(null, [])).toBeNull();
+    expect(citableReference(null, undefined)).toBeNull();
+  });
+
+  it('labels the Supreme Court and shows other courts as stored', () => {
+    expect(courtLabel('INSC')).toBe('Supreme Court of India');
+    expect(courtLabel('MHC')).toBe('MHC');
+    expect(courtLabel('')).toBeNull();
+    expect(courtLabel(null)).toBeNull();
   });
 });

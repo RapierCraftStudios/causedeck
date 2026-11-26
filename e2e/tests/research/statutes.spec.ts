@@ -62,7 +62,7 @@ test.describe('statute section', { tag: '@a11y' }, () => {
         values (${judgmentId}, 'demo.corpus', 'MHC', ${`2025:MHC:${sha256.slice(0, 6)}`},
           '2025-02-03', ${sha256}, ${sql.json(provenance)},
           ${sql.json([{ pageNo: 1, text: 'Demo page.' }, { pageNo: 2, text: 'Section 439 CrPC.' }])},
-          1, 'A (fictional) v. State of Tamil Nadu', true, 'high_court')`;
+          2, 'A (fictional) v. State of Tamil Nadu', true, 'high_court')`;
       await sql`
         insert into judgment_statute_ref (judgment_id, statute, section, page, ruleset_version)
         values (${judgmentId}, 'code of criminal procedure', '439', ${CITED_PAGE}, 'e2e')`;
@@ -86,9 +86,9 @@ test.describe('statute section', { tag: '@a11y' }, () => {
       );
       const authority = page
         .locator('[data-slot="section-authority"]')
-        .filter({ has: page.locator(`a[href="${sourceUrl}#page=${String(CITED_PAGE)}"]`) });
+        .filter({ has: page.locator(`a[href="/w/${MATTERS_WORKSPACE}/research/judgments/${judgmentId}?page=${String(CITED_PAGE)}#cited"]`) });
       await expect(authority).toHaveCount(1);
-      await expect(authority.locator('a')).toHaveAttribute('target', '_blank');
+      await expect(authority.locator('a')).not.toHaveAttribute('target', '_blank');
     } finally {
       await withSql(db.name, async (sql) => {
         await sql`delete from judgment_statute_ref where judgment_id = ${judgmentId}`;

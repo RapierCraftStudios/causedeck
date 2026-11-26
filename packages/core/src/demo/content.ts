@@ -6,7 +6,7 @@
 // ignored) and deterministic apart from the ciphertext nonce. Run by `pnpm db:seed:demo:content`
 // and by the nightly reset (`system.demo.reset`), which wipes memory with the rest of the workspace.
 // Not exported from the package index: it is seed tooling, not a service.
-import { createMockEmbedProvider } from '@causedeck/ai';
+import type { EmbedProvider } from '@causedeck/ai';
 import { schema, withWorkspace, type Queryable } from '@causedeck/db';
 import {
   drizzleSegmentStore,
@@ -34,6 +34,8 @@ import {
   type ObjectKey,
   type ObjectStore,
 } from '@causedeck/storage';
+
+import { embedProviderFromEnv } from '../ai/index.ts';
 
 const { memoryItem, memoryProposal, memoryUsage, blob, judgmentSegment } = schema;
 
@@ -185,20 +187,24 @@ export async function seedDemoFiles(
 
 export interface DemoCorpusEmbedDeps {
   db: Queryable;
+  /** Defaults to the configured embedder (`embedProviderFromEnv`, #1198). */
+  provider?: EmbedProvider;
 }
 
 /**
- * Embed the segments of the synthetic demo corpus (#1070) with the mock embedder, the model
- * `searchAuthorities` queries with when no provider is configured (`createMockEmbedProvider`:
- * deterministic, 1024 dimensions). `@causedeck/db` writes the rows but cannot import the embedder, so
- * this is the second half of the corpus seed. It only touches the demo judgments (not a real corpus
- * row), embeds the same roles `system.corpus.embed` does, and is a no-op once every demo segment
- * carries the current model version. Returns how many segments it embedded.
+ * Embed the segments of the synthetic demo corpus (#1070) with the configured embedder, the model
+ * `searchAuthorities` queries with (`embedProviderFromEnv`, #1198: bge-m3 when set, else the
+ * deterministic 1024-dimension mock), so a seed run never resets demo vectors to another model.
+ * `@causedeck/db` writes the rows but cannot import the embedder, so this is the second half of the
+ * corpus seed. It only touches the demo judgments (not a real corpus row), embeds the same roles
+ * `system.corpus.embed` does, and is a no-op once every demo segment carries the current model
+ * version. Returns how many segments it embedded.
  */
-export async function seedDemoCorpusEmbeddings({ db }: DemoCorpusEmbedDeps): Promise<{
+export async function seedDemoCorpusEmbeddings(deps: DemoCorpusEmbedDeps): Promise<{
   embedded: number;
 }> {
-  const provider = createMockEmbedProvider();
+  const { db } = deps;
+  const provider = deps.provider ?? embedProviderFromEnv();
   const demoIds = DEMO_JUDGMENTS.map((j) => j.id);
   const all = drizzleSegmentStore(db);
   // `save` is the shared store's; `due` is limited to the demo judgments (never a real corpus row).

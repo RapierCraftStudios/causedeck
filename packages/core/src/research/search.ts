@@ -217,7 +217,9 @@ interface PageSourceRow {
 
 /**
  * Marks each segment of `result` `verified` or `page_pending` from the page entries of the judgment's
- * `redacted_text` (#1174). Reads page numbers and sources only, never page text.
+ * `redacted_text` (#1174). Reads page numbers and sources only, never page text. A `redacted_text`
+ * that is not an array of page objects (null, a legacy scalar) yields `page_pending`, never an error
+ * that would fail the whole search (and the copilot that runs it).
  */
 async function withPinpoints<R extends SearchResult>(db: Queryable, result: R): Promise<R> {
   const ids = [...new Set(result.hits.map((h) => h.judgmentId))].filter(isUuid);
@@ -226,8 +228,10 @@ async function withPinpoints<R extends SearchResult>(db: Queryable, result: R): 
   const rows = await db.execute(sql`
     select j.id as "judgmentId", p->>'pageNo' as "pageNo", p->>'source' as source
     from judgment j
-    cross join lateral jsonb_array_elements(coalesce(j.redacted_text, '[]'::jsonb)) p
-    where j.id in (${sql.join(
+    cross join lateral jsonb_array_elements(
+      case when jsonb_typeof(j.redacted_text) = 'array' then j.redacted_text else '[]'::jsonb end
+    ) p
+    where jsonb_typeof(p) = 'object' and j.id in (${sql.join(
       ids.map((id) => sql`${id}::uuid`),
       sql`, `,
     )})`);

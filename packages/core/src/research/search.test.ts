@@ -14,7 +14,7 @@ import {
 import { schema, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
 import { newUser, newWorkspace } from '../__tests__/fixtures.ts';
@@ -386,6 +386,30 @@ describe('searchAuthorities', () => {
       );
       expect(benched.hits.map((h) => h.judgmentId)).toEqual([imported]);
       expect(benched.hits[0]?.segments[0]?.pinpoint).toBe('page_pending');
+    });
+  });
+
+  it('a redacted_text that is not an array of pages makes segments page_pending, not an error (#1174)', async () => {
+    await withTestDb(async (tx) => {
+      const legacy = await seedJudgment(tx, {
+        title: 'Legacy scalar judgment',
+        tag: 'medical_negligence',
+        segments: [
+          { role: 'facts', text: 'Surgery without written consent, then a post-operative infection.' },
+        ],
+      });
+      await tx.execute(
+        sql`update judgment set redacted_text = to_jsonb('legacy text'::text) where id = ${legacy}::uuid`,
+      );
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const result = await searchAuthorities(
+        tx,
+        { workspaceId, userId: ownerId },
+        { query: 'surgery without written consent and post-operative infection' },
+        deps(),
+      );
+      const hit = result.hits.find((h) => h.judgmentId === legacy);
+      expect(hit?.segments.map((s) => s.pinpoint)).toEqual(['page_pending']);
     });
   });
 

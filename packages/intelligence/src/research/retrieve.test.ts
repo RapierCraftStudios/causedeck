@@ -9,7 +9,7 @@ import { sql } from 'drizzle-orm';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { heuristicPlan } from './plan.ts';
-import { drizzleRetriever } from './retrieve.ts';
+import { drizzleRetriever, minMatchLevels, minMatchQuery } from './retrieve.ts';
 
 const owner = createDb({ url: new Secret(testDatabaseUrls().owner), role: 'owner', max: 1 });
 const TAG = randomUUID().slice(0, 8);
@@ -77,14 +77,23 @@ describe('drizzleRetriever.lexical ordering', () => {
   it('lexical arm ranks distinct-term coverage above single-term repetition', async () => {
     const got = await order('operation consent guardian');
     expect(got[0]).toBe(3);
-    expect(got.indexOf(3)).toBeLessThan(got.indexOf(1));
+    // Minimum match: segments holding a single query term (1: "consent" repeated, 2: the "operator"
+    // stem collision) are not candidates while segments holding two or more terms exist.
+    expect(got).not.toContain(1);
+    expect(got).not.toContain(2);
   });
 
-  it('lexical arm ranks a stem collision below more distinct terms', async () => {
+  it('lexical arm ranks more distinct terms first, then the two-term segments', async () => {
     const got = await order('operation consent guardian');
-    // "operator" shares the stem of "operation": one lexeme, so segment 2 trails the two-term ones.
-    expect(got.indexOf(2)).toBeGreaterThan(got.indexOf(4));
-    expect(got.indexOf(2)).toBeGreaterThan(got.indexOf(3));
+    expect(got[0]).toBe(3);
+    // 4 and 5 tie on coverage and rank; the `s.id` tie-break is a random uuid, so either order is valid.
+    expect(got.slice(1, 3).sort((a, b) => a - b)).toEqual([4, 5]);
+  });
+
+  it('falls back to the plain OR when no segment holds two query terms', async () => {
+    const got = await order('consent zebra yak');
+    expect(got).toEqual(expect.arrayContaining([1, 3, 4, 5]));
+    expect(got).not.toContain(2);
   });
 
   it('breaks full ties by segment id', async () => {
@@ -96,5 +105,29 @@ describe('drizzleRetriever.lexical ordering', () => {
     expect(tied).toHaveLength(2);
     const [first, second] = tied.map((r) => r.segmentId);
     expect((first ?? '') < (second ?? '')).toBe(true);
+  });
+});
+
+describe('minMatchQuery', () => {
+  it('ORs every k-term AND', () => {
+    expect(minMatchQuery(['a', 'b', 'c'], 2)).toBe('(a & b) | (a & c) | (b & c)');
+  });
+
+  it('is the plain OR at k = 1 and for a single term', () => {
+    expect(minMatchQuery(['a', 'b', 'c'], 1)).toBe('a | b | c');
+    expect(minMatchQuery(['a'], 3)).toBe('a');
+  });
+
+  it('caps the combination pool at MIN_MATCH_TERMS and dedupes terms', () => {
+    const terms = ['a', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+    const q = minMatchQuery(terms, 3);
+    expect(q).not.toContain('i');
+    expect(q.split(' | ')).toHaveLength(56); // C(8, 3)
+  });
+
+  it('tries the strictest level first and keeps the OR as the last resort', () => {
+    expect(minMatchLevels(1)).toEqual([1]);
+    expect(minMatchLevels(2)).toEqual([2, 1]);
+    expect(minMatchLevels(5)).toEqual([3, 2, 1]);
   });
 });

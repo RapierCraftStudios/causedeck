@@ -1,8 +1,9 @@
 // `system.corpus.segment` (#893, ADR 0051 §Segments): builds `judgment_segment` rows from the
 // anonymised `redacted_text` (never `page_text`) of judgments that are redacted but not segmented, or
-// whose segments were built from an older redaction or `SEGMENT_VERSION`. It runs on a schedule, so it
-// follows redaction (a re-redaction changes `redaction_version`, which makes the row due again) and
-// backfills existing rows; a mask request clears a judgment's segments and `segment_version` itself.
+// whose segments were built from an older redaction or `SEGMENT_VERSION`. The redact job and the bulk
+// import queue it (#1197), and while due rows remain a run queues its successor at once; the schedule
+// is the safety net. A re-redaction changes `redaction_version`, which makes the row due again, and a
+// mask request clears a judgment's segments and `segment_version` itself.
 // Rows are replaced judgment by judgment in one transaction. Roles come from rules, with the optional
 // resolver port for low-confidence paragraphs. Only ids and counts are logged.
 import { db as rootDb, schema, type Queryable } from '@causedeck/db';
@@ -16,11 +17,48 @@ import { z } from 'zod';
 
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
+import { getProducer } from '../producer.ts';
 
 const { judgment, judgmentSegment } = schema;
 
 /** Judgments segmented per run; the rest wait for the next run, which is queued while any remain. */
 export const CORPUS_SEGMENT_BATCH = 100;
+
+/** The corpus jobs that drain a backlog by queuing their successor (#1197). */
+export type CorpusDrainJob = 'system.corpus.segment' | 'system.corpus.redact';
+
+/** The definitions' singleton keys: with the `stately` policy a second send while one is queued is a no-op. */
+const DRAIN_KEYS: Record<CorpusDrainJob, string> = {
+  'system.corpus.segment': 'corpus-segment',
+  'system.corpus.redact': 'corpus-redact',
+};
+
+/**
+ * Queues a drain job with its default batch. Through the producer, not the registry: the registry
+ * imports every definition, so a definition importing it would be a cycle.
+ */
+export async function enqueueCorpusDrain(name: CorpusDrainJob): Promise<unknown> {
+  const sender = await getProducer();
+  return sender.send(name, {}, { singletonKey: DRAIN_KEYS[name] });
+}
+
+/** Queues `name`; a queue failure is a warn (the segment schedule picks the work up), never a failed run. */
+export async function queueCorpusDrain(
+  ctx: Pick<JobContext, 'log'>,
+  name: CorpusDrainJob,
+  enqueue: (name: CorpusDrainJob) => Promise<unknown> = enqueueCorpusDrain,
+  /** Ids and counts for the warn line. */
+  fields: Record<string, string | number> = {},
+): Promise<void> {
+  try {
+    await enqueue(name);
+  } catch (error) {
+    ctx.log.warn(
+      { ...fields, job: name, error: error instanceof Error ? error.name : typeof error },
+      'corpus: enqueue failed',
+    );
+  }
+}
 
 export const corpusSegmentSchema = z.object({
   workspaceId: z.null().optional(),
@@ -57,7 +95,12 @@ export function judgmentYearOf(row: {
 export async function runCorpusSegment(
   ctx: Pick<JobContext, 'log'>,
   payload: { batch?: number | undefined },
-  deps: { db?: Queryable; resolver?: RoleResolver } = {},
+  deps: {
+    db?: Queryable;
+    resolver?: RoleResolver;
+    /** Queues the next run while judgments remain; defaults to the pg-boss producer. */
+    enqueue?: (name: CorpusDrainJob) => Promise<unknown>;
+  } = {},
 ): Promise<CorpusSegmentReport> {
   const db = deps.db ?? rootDb;
   const limit = payload.batch ?? CORPUS_SEGMENT_BATCH;
@@ -115,7 +158,10 @@ export async function runCorpusSegment(
     total += segments.length;
   }
   ctx.log.info({ segmented: rows.length, segments: total }, 'corpus.segment: batch done');
-  return { segmented: rows.length, segments: total, remaining: rows.length === limit };
+  const remaining = rows.length === limit;
+  // One batch per run; the successor is queued at once instead of waiting for the schedule (#1197).
+  if (remaining) await queueCorpusDrain(ctx, 'system.corpus.segment', deps.enqueue);
+  return { segmented: rows.length, segments: total, remaining };
 }
 
 export const corpusSegment = defineJob({

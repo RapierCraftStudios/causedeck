@@ -4,13 +4,17 @@
 // package imports no domain package; everything it needs arrives through these ports.
 import { serverEnv, type ServerEnv } from '@causedeck/config/env';
 import {
+  createBgem3Provider,
   createChatgptPlanProvider,
   createChatgptPlanTokenStore,
   createGateway,
+  createMockEmbedProvider,
   createMockProvider,
   PREVIEW_PLAN_PROVIDER_ID,
+  SELF_HOSTED_REGION,
   type AiGateway,
   type AiPolicyContext,
+  type EmbedProvider,
   type GatewayPorts,
   type GatewayResult,
   type Provider,
@@ -82,6 +86,35 @@ export function previewPlanProviderFromEnv(env: ServerEnv = serverEnv()): Provid
       : null;
   previewPlanMemo = { env, provider };
   return provider;
+}
+
+let embedMemo: { env: ServerEnv; provider: EmbedProvider } | undefined;
+
+/**
+ * The corpus embed provider (#1198) for the embed job, research search and the copilot: the
+ * self-hosted bge-m3 server when `EMBED_PROVIDER=bge-m3` and `BGE_M3_URL` are set, else the mock.
+ * The server reports region `SELF_HOSTED_REGION` and passes the embed gateway's India-only check
+ * only with `ALLOW_PREVIEW_SELF_HOSTED_EMBED=true` (config refuses that flag in production).
+ * Memoised per process (per env object).
+ */
+export function embedProviderFromEnv(env: ServerEnv = serverEnv()): EmbedProvider {
+  if (embedMemo?.env === env) return embedMemo.provider;
+  const provider =
+    env.EMBED_PROVIDER === 'bge-m3' && env.BGE_M3_URL !== undefined
+      ? createBgem3Provider({
+          baseUrl: env.BGE_M3_URL,
+          region: SELF_HOSTED_REGION,
+          ...(env.BGE_M3_TOKEN === undefined ? {} : { token: env.BGE_M3_TOKEN.reveal() }),
+          previewSelfHosted: env.ALLOW_PREVIEW_SELF_HOSTED_EMBED,
+        })
+      : createMockEmbedProvider();
+  embedMemo = { env, provider };
+  return provider;
+}
+
+/** Segments per embedding request in the corpus embed job (`EMBED_BATCH_SIZE`, default 32). */
+export function embedBatchSizeFromEnv(env: ServerEnv = serverEnv()): number {
+  return env.EMBED_BATCH_SIZE;
 }
 
 /** The gateway ports for `db`, each call scoped to the workspace it is given. */

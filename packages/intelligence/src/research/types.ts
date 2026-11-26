@@ -22,6 +22,12 @@ export interface ResearchPlan {
   outcome: Exclude<OutcomeValue, 'unknown'> | null;
   /** Picks which code of a statute pair governs; shown on the statute chips. */
   offenceDate: string | null;
+  /**
+   * Bench strength range (number of judges on the bench, from the judgment header). Null or absent
+   * means no bench filter; plans stored before the field existed have neither (#1174).
+   */
+  benchMin?: number | null;
+  benchMax?: number | null;
   /** Who produced it: the gateway planner merged over the rules, or the rules alone. */
   planner: 'gateway' | 'heuristic';
 }
@@ -43,10 +49,14 @@ export interface SegmentCandidate {
   title: string | null;
   titleMasked: boolean;
   neutralCitation: string | null;
+  /** `judgment.case_numbers`: case numbers and reporter citations (`[2008] 9 SCR 821`, #1189). */
+  caseNumbers?: string[];
   judgmentDate: string | null;
   outcome: OutcomeValue;
   citedByCount: number;
   sourceUrl: string | null;
+  /** Judges on the bench (`cardinality(judgment.bench)`); null when the header named none (#1174). */
+  benchStrength?: number | null;
 }
 
 /** Candidates of one arm, best first. */
@@ -76,6 +86,12 @@ export interface SearchSegment {
   pageTo: number;
   text: string;
   score: number;
+  /**
+   * `verified` when every page of the segment has text-layer or OCR text in `redacted_text` with a known
+   * source; `page_pending` when a page is missing or came from the plain-text import (`source: 'text'`),
+   * so the page pinpoint is not yet confirmed against the PDF (#1174). Set by the core search service.
+   */
+  pinpoint?: 'verified' | 'page_pending';
 }
 
 export interface SearchHit {
@@ -84,12 +100,40 @@ export interface SearchHit {
   courtLevel: string;
   judgmentDate: string | null;
   neutralCitation: string | null;
+  /** `judgment.case_numbers`; `citableReference` picks the SCR citation from it when there is no neutral one. */
+  caseNumbers?: string[];
   title: string | null;
   titleMasked: boolean;
   outcome: OutcomeValue;
   citedByCount: number;
   sourceUrl: string | null;
+  /** Judges on the bench; null when unknown (#1174). */
+  benchStrength?: number | null;
   score: number;
   /** The best segments of this judgment (at most three), best first. */
   segments: SearchSegment[];
+}
+
+/** A Supreme Court Reports citation as stored in `case_numbers` (#1189): `[2008] 9 SCR 821`. */
+const SCR_CITATION = /^\[\d{4}\] \d+ SCR \d+$/;
+
+/**
+ * What a judgment is cited as (#1189): its neutral citation when it has one, otherwise its SCR citation
+ * from `case_numbers`, otherwise null. Display only: verification resolves the neutral citation alone.
+ */
+export function citableReference(
+  neutralCitation: string | null,
+  caseNumbers: readonly string[] | null | undefined,
+): string | null {
+  if (neutralCitation !== null && neutralCitation.trim() !== '') return neutralCitation;
+  return caseNumbers?.find((n) => SCR_CITATION.test(n)) ?? null;
+}
+
+/** Display names of court codes that are not self-explanatory. */
+const COURT_LABELS: Readonly<Record<string, string>> = { INSC: 'Supreme Court of India' };
+
+/** The name a court code is shown as (#1189): `INSC` is "Supreme Court of India"; other codes as stored. */
+export function courtLabel(court: string | null | undefined): string | null {
+  if (court === null || court === undefined || court === '') return null;
+  return COURT_LABELS[court] ?? court;
 }

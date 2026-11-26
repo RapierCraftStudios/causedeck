@@ -4,11 +4,17 @@
 // (ids and hashes, never the query), re-running with an edited plan, and the verified answer.
 import { randomUUID } from 'node:crypto';
 
-import { createChatgptPlanProvider, createMockEmbedProvider } from '@causedeck/ai';
+import {
+  createBgem3Provider,
+  createChatgptPlanProvider,
+  createEmbedGateway,
+  createMockEmbedProvider,
+  SELF_HOSTED_REGION,
+} from '@causedeck/ai';
 import { schema, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
-import { eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
 import { newUser, newWorkspace } from '../__tests__/fixtures.ts';
@@ -37,6 +43,9 @@ async function seedJudgment(
     outcome?: 'allowed' | 'dismissed' | 'unknown';
     tag?: string;
     statute?: [string, string];
+    bench?: string[];
+    /** The redacted pages; default one PDF text-layer page. */
+    pages?: { pageNo: number; text: string; source?: 'text' | 'ocr' }[];
     segments: { role: 'facts' | 'reasoning' | 'decision'; text: string }[];
   },
 ): Promise<string> {
@@ -61,7 +70,8 @@ async function seedJudgment(
       },
       // The raw text carries a party name; only the redacted text and segments may be served.
       pageText: [{ pageNo: 1, text: `${SENTINEL} v. the patient. Raw text.` }],
-      redactedText: [{ pageNo: 1, text: '[PARTY] v. [PARTY]. Redacted text.' }],
+      redactedText: v.pages ?? [{ pageNo: 1, text: '[PARTY] v. [PARTY]. Redacted text.' }],
+      bench: v.bench ?? [],
       redactionVersion: 1,
       segmentVersion: 1,
       segmentedRedactionVersion: 1,
@@ -188,6 +198,54 @@ describe('searchAuthorities', () => {
     });
   });
 
+  it('with a bge-m3 embedder runs hybrid and queries only bge-m3 vectors (#1198)', async () => {
+    await withTestDb(async (tx) => {
+      const ids = await seed(tx);
+      // The same facts, but only a mock-embed vector (not yet re-embedded by the job).
+      await seedJudgment(tx, {
+        title: 'Mock-only twin',
+        segments: [
+          {
+            role: 'facts',
+            text: 'The patient underwent a hysterectomy and no written consent was taken for the surgery.',
+          },
+        ],
+      });
+      // The negligence facts segment was re-embedded by bge-m3 (the fake server reuses the mock vectors).
+      await tx
+        .update(schema.judgmentSegment)
+        .set({ embeddingModel: 'bge-m3' })
+        .where(
+          and(
+            eq(schema.judgmentSegment.judgmentId, ids.negligence),
+            eq(schema.judgmentSegment.role, 'facts'),
+          ),
+        );
+      const mock = createMockEmbedProvider();
+      const bge = createBgem3Provider({
+        baseUrl: 'http://embed:8080',
+        region: SELF_HOSTED_REGION,
+        previewSelfHosted: true,
+        fetch: async (_url, init) => {
+          const { inputs } = JSON.parse(init?.body as string) as { inputs: string[] };
+          return new Response(JSON.stringify((await mock.embed(inputs)).vectors));
+        },
+      });
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const result = await searchAuthorities(
+        tx,
+        { workspaceId, userId: ownerId },
+        { query: 'hysterectomy surgery without written consent' },
+        deps({ embed: createEmbedGateway({ providers: [bge] }) }),
+      );
+      expect(result.counts.mode).toBe('hybrid');
+      // Only the negligence facts segment carries a bge-m3 vector; the twin's identical mock vector is
+      // never a vector candidate (without the model-version filter it would be a second hit).
+      expect(result.counts.vector).toBe(1);
+      expect(result.hits.map((h) => h.judgmentId)).toContain(ids.negligence);
+    });
+  });
+
   it('a subject facet keeps an untagged judgment and excludes one tagged with another subject (#1182)', async () => {
     await withTestDb(async (tx) => {
       const ids = await seed(tx);
@@ -289,6 +347,69 @@ describe('searchAuthorities', () => {
         deps({ plan }),
       );
       expect(dismissed.hits).toEqual([]);
+    });
+  });
+
+  it('flags each segment verified or page_pending and filters by bench strength (#1174)', async () => {
+    await withTestDb(async (tx) => {
+      const ids = await seed(tx);
+      const imported = await seedJudgment(tx, {
+        title: 'Imported text judgment',
+        tag: 'medical_negligence',
+        bench: ['A. Judge', 'B. Judge', 'C. Judge'],
+        pages: [{ pageNo: 1, text: '[PARTY] imported.', source: 'text' }],
+        segments: [
+          { role: 'facts', text: 'Surgery without written consent, then a post-operative infection.' },
+        ],
+      });
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const actor = { workspaceId, userId: ownerId };
+      const result = await searchAuthorities(
+        tx,
+        actor,
+        { query: 'surgery without written consent and post-operative infection' },
+        deps(),
+      );
+      const byId = new Map(result.hits.map((h) => [h.judgmentId, h]));
+      const negligence = byId.get(ids.negligence);
+      const pending = byId.get(imported);
+      expect(negligence?.segments.map((s) => s.pinpoint)).toEqual(['verified', 'verified']);
+      expect(negligence?.benchStrength).toBeNull();
+      expect(pending?.segments.map((s) => s.pinpoint)).toEqual(['page_pending']);
+      expect(pending?.benchStrength).toBe(3);
+
+      const benched = await rerunAuthoritySearch(
+        tx,
+        actor,
+        { plan: { ...result.plan, subjectAreas: [], benchMin: 3, benchMax: 5 } },
+        deps(),
+      );
+      expect(benched.hits.map((h) => h.judgmentId)).toEqual([imported]);
+      expect(benched.hits[0]?.segments[0]?.pinpoint).toBe('page_pending');
+    });
+  });
+
+  it('a redacted_text that is not an array of pages makes segments page_pending, not an error (#1174)', async () => {
+    await withTestDb(async (tx) => {
+      const legacy = await seedJudgment(tx, {
+        title: 'Legacy scalar judgment',
+        tag: 'medical_negligence',
+        segments: [
+          { role: 'facts', text: 'Surgery without written consent, then a post-operative infection.' },
+        ],
+      });
+      await tx.execute(
+        sql`update judgment set redacted_text = to_jsonb('legacy text'::text) where id = ${legacy}::uuid`,
+      );
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const result = await searchAuthorities(
+        tx,
+        { workspaceId, userId: ownerId },
+        { query: 'surgery without written consent and post-operative infection' },
+        deps(),
+      );
+      const hit = result.hits.find((h) => h.judgmentId === legacy);
+      expect(hit?.segments.map((s) => s.pinpoint)).toEqual(['page_pending']);
     });
   });
 

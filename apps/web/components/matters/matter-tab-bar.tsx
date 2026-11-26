@@ -55,7 +55,10 @@ export function MatterTabs({ entries, label, children }: MatterTabsProps) {
         role="tablist"
         aria-label={label}
         data-matter-tabs=""
-        className="border-line flex snap-x gap-1 overflow-x-auto border-b"
+        // On phones the row fades out at its right edge, so a tab past the edge reads as "scroll
+        // for more" rather than a clipped label; the end padding lets the last tab scroll fully
+        // out of the fade (#1194).
+        className="border-line flex snap-x scroll-px-4 gap-1 overflow-x-auto border-b max-md:[mask-image:linear-gradient(to_right,black_calc(100%-2rem),transparent)] max-md:pe-8"
       >
         {entries.map((entry, index) => {
           const selected = entry.id === active;
@@ -76,7 +79,7 @@ export function MatterTabs({ entries, label, children }: MatterTabsProps) {
                 onKeyDown(event, index);
               }}
               className={cn(
-                'focus-visible:outline-ring -mb-px flex min-h-11 shrink-0 snap-start items-center border-b-2 px-3 text-sm outline-none focus-visible:outline-2',
+                'focus-visible:outline-ring -mb-px flex min-h-11 shrink-0 snap-start items-center border-b-2 px-2.5 text-sm whitespace-nowrap outline-none focus-visible:outline-2 md:px-3',
                 selected
                   ? 'border-accent text-ink font-medium'
                   : 'text-ink-muted hover:text-ink border-transparent',

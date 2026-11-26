@@ -9,6 +9,7 @@ import { eq } from 'drizzle-orm';
 import { readPdfText, type PdfPageText } from '../text/pdf-text.ts';
 import { coverage, DEFAULT_MIN_PAGE_CHARS } from '../text/quality.ts';
 
+import { AWS_SC_SOURCE_ID, SUPREME_COURT_CODE } from './bulk/scr.ts';
 import { courtOfCitation, extractJudgmentHeader } from './header.ts';
 import { redactJudgment } from './redact/index.ts';
 
@@ -52,6 +53,32 @@ export interface JudgmentMetadata {
   caseNumbers?: string[];
   bench?: string[];
   judgmentDate?: string | null;
+  /**
+   * Reporter citations known from the dataset itself (the SCR citation in an AWS Supreme Court member
+   * name, #1189). Always kept in `case_numbers`, after the header's or the metadata's case numbers;
+   * never in `neutral_citation`.
+   */
+  reporterCitations?: string[];
+}
+
+/**
+ * The court of a stored judgment. Every row of the AWS Supreme Court dataset is a Supreme Court of India
+ * row (#1189), whatever court a citation in its text names. Elsewhere the header wins, then the court
+ * of the neutral citation, then the dataset metadata, then the source id.
+ */
+function courtOf(
+  sourceId: string,
+  headerCourt: string | null,
+  neutralCitation: string | null,
+  metaCourt: string | null | undefined,
+): string {
+  if (sourceId === AWS_SC_SOURCE_ID) return SUPREME_COURT_CODE;
+  return (
+    headerCourt ??
+    (neutralCitation === null ? null : courtOfCitation(neutralCitation)) ??
+    metaCourt ??
+    sourceId
+  );
 }
 
 export type IngestOutcome =
@@ -120,7 +147,12 @@ export async function storeJudgment(
   const header = extractJudgmentHeader(pages.map((p) => p.text));
   const meta = input.metadata ?? {};
   const neutralCitation = header.neutralCitation ?? meta.neutralCitation ?? null;
-  const caseNumbers = header.caseNumbers.length > 0 ? header.caseNumbers : (meta.caseNumbers ?? []);
+  const caseNumbers = [
+    ...new Set([
+      ...(header.caseNumbers.length > 0 ? header.caseNumbers : (meta.caseNumbers ?? [])),
+      ...(meta.reporterCitations ?? []),
+    ]),
+  ];
   const bench = header.bench.length > 0 ? header.bench : (meta.bench ?? []);
 
   // Anonymised before it is stored (#892): the placeholder mapping is dropped inside `redactJudgment`.
@@ -136,11 +168,7 @@ export async function storeJudgment(
     .insert(judgment)
     .values({
       sourceId: input.sourceId,
-      court:
-        header.court ??
-        (neutralCitation === null ? null : courtOfCitation(neutralCitation)) ??
-        meta.court ??
-        input.sourceId,
+      court: courtOf(input.sourceId, header.court, neutralCitation, meta.court),
       neutralCitation,
       caseNumbers,
       bench,

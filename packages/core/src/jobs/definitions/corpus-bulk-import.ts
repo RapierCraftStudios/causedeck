@@ -21,6 +21,8 @@ import { policyFor, SourceNotCleared } from '../../sources/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 
+import { queueCorpusDrain, type CorpusDrainJob } from './corpus-segment.ts';
+
 /** The registry source of each dataset. */
 export const CORPUS_BULK_SOURCES = {
   sc: 'aws-open-data-sc',
@@ -67,6 +69,8 @@ export interface CorpusBulkImportDeps {
   /** Opens the dataset bucket for a source base URL; defaults to anonymous HTTPS reads. */
   openSource?: (baseUrl: string) => BulkObjectSource;
   blobs?: CorpusBlobStore | null;
+  /** Queues the redact (then segment) drain after each committed batch; defaults to the pg-boss producer. */
+  enqueue?: (name: CorpusDrainJob) => Promise<unknown>;
 }
 
 let configuredBlobs: CorpusBlobStore | null | undefined;
@@ -122,6 +126,10 @@ export async function runCorpusBulkImport(
       blobs: deps.blobs === undefined ? (configuredBlobs ?? defaultBlobs()) : deps.blobs,
       // Progress, per-entry failures and the final report; a thrown error is logged, then fails the job.
       log: ctx.log,
+      // New judgments become searchable once segmented: start the drain after each committed batch
+      // (#1197). A queue failure is a warn; the import goes on and the segment schedule catches up.
+      afterBatch: ({ inserted }) =>
+        queueCorpusDrain(ctx, 'system.corpus.redact', deps.enqueue, { sourceId, inserted }),
     },
     {
       dataset: payload.dataset,

@@ -75,6 +75,8 @@ export const CitationSchema = z
     kind: CitationKind,
     status: CitationStatus,
     sourceUrl: z.url().optional(),
+    /** The stored judgment the source URL belongs to, when known: opens the in-app reader (#1191). */
+    judgmentId: z.uuid().optional(),
     title: z.string().max(CITATION_TITLE_MAX).optional(),
     reason: CitationReason.optional(),
     pinpoint: CitationPinpointSchema.optional(),

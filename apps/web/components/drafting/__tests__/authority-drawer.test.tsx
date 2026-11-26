@@ -17,6 +17,8 @@ import {
   type AuthorityPropose,
 } from '../authority-drawer.tsx';
 
+vi.mock('next/navigation', () => ({ useParams: () => ({ slug: 'demo' }) }));
+
 afterEach(cleanup);
 
 const en = catalogs.en.drafting.authorityDrawer;
@@ -79,7 +81,10 @@ describe('AuthorityDrawer', () => {
     expect(item?.textContent).toContain('Rao v. Nursing Home');
     expect(item?.textContent).toContain('para 12');
     expect(item?.textContent).toContain('no written consent was taken');
-    expect(item?.querySelector('a[href="https://court.example/j1.pdf#page=4"]')).not.toBeNull();
+    // #1191: the in-app reader at the pinpoint, never the stored source URL.
+    expect(
+      Array.from(item?.querySelectorAll('a') ?? []).map((a) => a.getAttribute('href')),
+    ).toEqual([`/w/demo/research/judgments/${JUDGMENT}?page=4&para=12#cited`]);
   });
 
   it('holds Insert while there are unsaved edits', () => {

@@ -28,7 +28,9 @@ export async function openMatters(
   { role = 'owner', path = mattersPath() }: { role?: E2eRole; path?: string } = {},
 ): Promise<void> {
   await asUser(role, { workspace: MATTERS_WORKSPACE, path });
-  await expect(page.locator('main').getByRole('heading', { level: 1 })).toBeVisible();
+  // `.first()`: a matter tab page such as the copilot renders its own h1 under the matter header's,
+  // and which one hydrates first is a race (strict mode would fail on two).
+  await expect(page.locator('main').getByRole('heading', { level: 1 }).first()).toBeVisible();
   await shellReady(page);
 }
 

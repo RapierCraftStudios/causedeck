@@ -98,7 +98,7 @@ describe('apps/web static guards', () => {
     expect(pkg.dependencies).toHaveProperty('pdfjs-dist');
   });
 
-  it('has no API routes besides Better Auth, Web Push, SCIM, the activity, audit and workspace exports, uploads, captures, the streamed copilot answer, document page images and the private calendar feed (webhooks live in apps/api)', () => {
+  it('has no API routes besides Better Auth, Web Push, SCIM, the activity, audit and workspace exports, uploads, captures, the streamed copilot answer, document page images, the judgment PDF redirect and the private calendar feed (webhooks live in apps/api)', () => {
     expect(readdirSync(path.join(appDir, 'app/api')).sort()).toEqual([
       'activity',
       'audit',
@@ -108,12 +108,15 @@ describe('apps/web static guards', () => {
       'documents',
       'exports',
       'ics',
+      'judgments',
       'push',
       'scim',
       'uploads',
     ]);
     // The streamed matter copilot answer (#1193), NDJSON because server actions cannot stream.
     expect(readdirSync(path.join(appDir, 'app/api/copilot'))).toEqual(['ask']);
+    // The stored judgment PDF redirect to a presigned GET (#1191).
+    expect(readdirSync(path.join(appDir, 'app/api/judgments'))).toEqual(['[id]']);
     // The activity feed CSV/JSON export download (#49).
     expect(readdirSync(path.join(appDir, 'app/api/activity'))).toEqual(['export']);
     // The workspace data export download (#301); tests sit beside it.

@@ -5,11 +5,17 @@ import { randomUUID } from 'node:crypto';
 
 import { schema, type Queryable } from '@causedeck/db';
 import { closeTestDb, withTestDb } from '@causedeck/db/testing';
-import { SEGMENT_VERSION } from '@causedeck/intelligence';
-import { asc, eq } from 'drizzle-orm';
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { REDACTION_VERSION, SEGMENT_VERSION } from '@causedeck/intelligence';
+import { and, asc, eq, inArray } from 'drizzle-orm';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
-import { courtLevelOf, judgmentYearOf, runCorpusSegment } from './corpus-segment.ts';
+import { runCorpusRedact } from './corpus-redact.ts';
+import {
+  courtLevelOf,
+  judgmentYearOf,
+  runCorpusSegment,
+  type CorpusDrainJob,
+} from './corpus-segment.ts';
 
 afterAll(async () => {
   await closeTestDb();
@@ -113,6 +119,127 @@ describe('runCorpusSegment', () => {
       expect(segs.map((s) => s.text)).toEqual(['In the result, the appeal is allowed.']);
       expect(segs[0]?.role).toBe('decision');
       expect(await segmentsOf(db, unredacted)).toEqual([]);
+    });
+  });
+});
+
+describe('runCorpusSegment drain (#1197)', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const segmentedOf = async (db: Queryable, ids: string[]): Promise<number> =>
+    (
+      await db
+        .select({ id: schema.judgment.id })
+        .from(schema.judgment)
+        .where(
+          and(
+            inArray(schema.judgment.id, ids),
+            eq(schema.judgment.segmentVersion, SEGMENT_VERSION),
+          ),
+        )
+    ).length;
+
+  it('re-enqueues itself at once while judgments remain (#1197)', async () => {
+    await withTestDb(async (tx) => {
+      const db = tx as never as Queryable;
+      for (let i = 0; i < 3; i += 1) await insert(db);
+      const enqueue = vi.fn<(name: CorpusDrainJob) => Promise<unknown>>(() =>
+        Promise.resolve('job-id'),
+      );
+      const report = await runCorpusSegment(ctx, { batch: 2 }, { db, enqueue });
+      expect(report).toMatchObject({ segmented: 2, remaining: true });
+      expect(enqueue.mock.calls).toEqual([['system.corpus.segment']]);
+    });
+  });
+
+  it('queues nothing once every judgment is segmented', async () => {
+    await withTestDb(async (tx) => {
+      const db = tx as never as Queryable;
+      await insert(db);
+      const enqueue = vi.fn<(name: CorpusDrainJob) => Promise<unknown>>(() =>
+        Promise.resolve('job-id'),
+      );
+      const report = await runCorpusSegment(ctx, { batch: 500 }, { db, enqueue });
+      expect(report.remaining).toBe(false);
+      expect(enqueue).not.toHaveBeenCalled();
+    });
+  });
+
+  it('is bounded: a run with batch 2 segments exactly 2 judgments and leaves the rest due', async () => {
+    await withTestDb(async (tx) => {
+      const db = tx as never as Queryable;
+      const ids: string[] = [];
+      for (let i = 0; i < 5; i += 1) ids.push(await insert(db));
+      const enqueue = vi.fn<(name: CorpusDrainJob) => Promise<unknown>>(() =>
+        Promise.resolve(null),
+      );
+      const report = await runCorpusSegment(ctx, { batch: 2 }, { db, enqueue });
+      expect(report.segmented).toBe(2);
+      expect(await segmentedOf(db, ids)).toBe(2);
+    });
+  });
+
+  it('warns and still returns when the queue is down', async () => {
+    await withTestDb(async (tx) => {
+      const db = tx as never as Queryable;
+      for (let i = 0; i < 2; i += 1) await insert(db);
+      const warn = vi.fn();
+      const report = await runCorpusSegment(
+        { log: { info: vi.fn(), warn, error: vi.fn() } } as never,
+        { batch: 1 },
+        { db, enqueue: () => Promise.reject(new TypeError('connection refused')) },
+      );
+      expect(report.remaining).toBe(true);
+      expect(warn).toHaveBeenCalledWith(
+        { job: 'system.corpus.segment', error: 'TypeError' },
+        'corpus: enqueue failed',
+      );
+    });
+  });
+
+  it('drains an import of 250 judgments through redact and segment without a schedule tick (#1197)', async () => {
+    // The clock is frozen: no cron tick (every 10 minutes) can happen, so only the chain drains.
+    const T0 = new Date('2026-11-25T09:00:00.000Z');
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'], now: T0 });
+    await withTestDb(async (tx) => {
+      const db = tx as never as Queryable;
+      // Bulk-imported judgments are redacted inline and not yet segmented.
+      const ids: string[] = [];
+      for (let i = 0; i < 250; i += 1)
+        ids.push(await insert(db, { redactionVersion: REDACTION_VERSION }));
+      expect(await segmentedOf(db, ids)).toBe(0);
+
+      // An in-memory pg-boss with the stately policy: at most one queued job per singleton key.
+      const queued: CorpusDrainJob[] = [];
+      const enqueue = (name: CorpusDrainJob): Promise<string | null> => {
+        if (queued.includes(name)) return Promise.resolve(null);
+        queued.push(name);
+        return Promise.resolve(name);
+      };
+      // The import's afterBatch after its committed batches.
+      await enqueue('system.corpus.redact');
+      await enqueue('system.corpus.redact');
+
+      const runs: CorpusDrainJob[] = [];
+      for (let next = queued.shift(); next !== undefined; next = queued.shift()) {
+        runs.push(next);
+        if (runs.length > 50) throw new Error('the drain did not converge');
+        if (next === 'system.corpus.redact') await runCorpusRedact(ctx, {}, { db, enqueue });
+        else await runCorpusSegment(ctx, {}, { db, enqueue });
+      }
+
+      expect(runs[0]).toBe('system.corpus.redact');
+      expect(runs.filter((r) => r === 'system.corpus.segment').length).toBeGreaterThanOrEqual(3);
+      expect(await segmentedOf(db, ids)).toBe(250);
+      const segmented = await db
+        .selectDistinct({ id: schema.judgmentSegment.judgmentId })
+        .from(schema.judgmentSegment)
+        .where(inArray(schema.judgmentSegment.judgmentId, ids));
+      expect(segmented).toHaveLength(250);
+      // Searchable well within 15 minutes of the import: no time passed at all.
+      expect(Date.now()).toBe(T0.getTime());
     });
   });
 });

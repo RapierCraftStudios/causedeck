@@ -2,7 +2,7 @@
 // A statute section (#1126, part 4 of #1116; D-053, D-001 amended / ADR 0051): the text in force with
 // its synthetic or public-domain label, the version history, the counterpart in the other code (from
 // `CODE_MAP` through the statutes service, never guessed) and the judgments that cite it, each
-// linking the court PDF at the cited page. Titles are the masked form the corpus serves; no
+// opening the in-app judgment reader at the cited page (#1191; never the stored archive URL). Titles are the masked form the corpus serves; no
 // editorial text, no AI and no iframe.
 import type {
   SectionAuthority,
@@ -10,7 +10,10 @@ import type {
   SectionVersionView,
   SectionView as SectionViewData,
 } from '@causedeck/core/statutes';
+import { citableReference, courtLabel } from '@causedeck/intelligence/citation-display';
 import { useTranslations } from 'next-intl';
+
+import { judgmentHref } from '../../lib/judgment-href.ts';
 
 export interface SectionViewProps {
   slug: string;
@@ -155,8 +158,8 @@ export function SectionView({ slug, section, history, authorities }: SectionView
                   </h3>
                   <p className="text-muted-foreground">
                     {[
-                      a.neutralCitation,
-                      a.court,
+                      citableReference(a.neutralCitation, a.caseNumbers),
+                      courtLabel(a.court),
                       level === null ? null : t(`search.levels.${level}`),
                       a.judgmentDate === null
                         ? null
@@ -166,16 +169,12 @@ export function SectionView({ slug, section, history, authorities }: SectionView
                       .filter((part): part is string => part !== null && part !== '')
                       .join(' · ')}
                   </p>
-                  {a.sourceUrl === null ? null : (
-                    <a
-                      className="mt-2 inline-block underline"
-                      href={`${a.sourceUrl}#page=${String(a.page)}`}
-                      rel="noreferrer noopener"
-                      target="_blank"
-                    >
-                      {t('statutes.authorities.openPdf', { page: a.page })}
-                    </a>
-                  )}
+                  <a
+                    className="mt-2 inline-block underline"
+                    href={judgmentHref(slug, a.judgmentId, { page: a.page })}
+                  >
+                    {t('statutes.authorities.openPdf', { page: a.page })}
+                  </a>
                 </li>
               );
             })}

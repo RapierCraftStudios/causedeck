@@ -35,7 +35,7 @@ export type DemoCitationRefRow = typeof judgmentCitationRef.$inferInsert;
 export const DEMO_CORPUS_SOURCE_ID = 'demo.synthetic.corpus';
 
 /** Mirrors `REDACTION_VERSION`, `SEGMENT_VERSION` and `ENRICH_VERSION` of `@causedeck/intelligence` (core's demo test pins them). */
-export const DEMO_CORPUS_VERSIONS = { redaction: 1, segment: 1, enrich: 1 } as const;
+export const DEMO_CORPUS_VERSIONS = { redaction: 2, segment: 1, enrich: 1 } as const;
 
 /** The model version of the demo subject tags (the gateway's tags carry the model that produced them). */
 export const DEMO_TAG_MODEL_VERSION = 'demo-synthetic-1';

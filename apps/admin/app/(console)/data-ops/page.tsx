@@ -10,7 +10,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { bulkImportOverview, dataOpsOverview, ocrQueueOverview } from '../../../lib/data/index.ts';
-import { startBulkImportAction } from './actions.ts';
+import { startBulkImportAction, startHfImportAction } from './actions.ts';
 import { requireStaff } from '../../../lib/staff.ts';
 
 export const metadata: Metadata = { title: 'Data Ops' };
@@ -166,6 +166,40 @@ export default async function DataOpsPage() {
             Start import
           </button>
         </form>
+        <h3 className="font-medium">Hugging Face text import</h3>
+        <p className="text-ink-muted text-sm">
+          Off by default. Imports extracted texts (overthelex/indian-court-decisions, CC-BY-4.0) as
+          judgments waiting for their PDF; the hf-overthelex source must be cleared on Sources
+          first. Repeated and garbled texts are skipped and counted.
+        </p>
+        <form action={startHfImportAction} className="flex flex-wrap items-end gap-2 text-sm">
+          <label className="grid gap-1">
+            Dataset
+            <select name="dataset" defaultValue="hc">
+              <option value="sc">Supreme Court</option>
+              <option value="hc">High Courts</option>
+            </select>
+          </label>
+          <label className="grid gap-1">
+            Court code
+            <input name="court" maxLength={40} placeholder="KAHC" />
+          </label>
+          <label className="grid gap-1">
+            From year
+            <input name="yearFrom" inputMode="numeric" maxLength={4} />
+          </label>
+          <label className="grid gap-1">
+            To year
+            <input name="yearTo" inputMode="numeric" maxLength={4} />
+          </label>
+          <label className="grid gap-1">
+            Row budget
+            <input name="maxRows" inputMode="numeric" maxLength={7} placeholder="5000" />
+          </label>
+          <button type="submit" className="underline">
+            Start HF import
+          </button>
+        </form>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Bulk import progress</caption>
@@ -182,11 +216,11 @@ export default async function DataOpsPage() {
               </tr>
             </thead>
             <tbody>
-              {imports.map((i) => (
-                <tr key={`${i.sourceId}:${i.court ?? ''}:${String(i.year)}`}>
+              {imports.map((i, n) => (
+                <tr key={`${i.sourceId}:${i.court ?? ''}:${String(i.year)}:${String(n)}`}>
                   <th scope="row">{i.dataset}</th>
                   <td>{i.court ?? '-'}</td>
-                  <td>{i.year}</td>
+                  <td>{i.year === 0 ? '-' : i.year}</td>
                   <td>{i.status}</td>
                   <td>{i.rowsAdded}</td>
                   <td>{i.duplicatesSkipped}</td>

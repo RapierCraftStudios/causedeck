@@ -3,9 +3,12 @@
 // batches through the embed gateway (India-only, cost metered in paise). A run stops at its paise
 // budget and queues itself again while work remains, so the backfill resumes on the next run; a
 // segment re-segmented by `system.corpus.segment` has a null embedding and is picked up the same way.
-// Without a configured provider the deterministic mock serves the calls (dev, CI, staging).
+// The provider is `embedProviderFromEnv` (#1198): the self-hosted bge-m3 server when EMBED_PROVIDER=bge-m3
+// and BGE_M3_URL are set (priced at 0 paise), else the deterministic mock (dev, CI). Switching model
+// re-embeds every segment whose vector came from another model version. Requests carry
+// EMBED_BATCH_SIZE segments (default 32, sized for a CPU server).
 // Only counts and paise are logged, never text.
-import { createEmbedGateway, createMockEmbedProvider, type EmbedProvider } from '@causedeck/ai';
+import { createEmbedGateway, type EmbedProvider } from '@causedeck/ai';
 import { db as rootDb, type Queryable } from '@causedeck/db';
 import {
   drizzleSegmentStore,
@@ -14,6 +17,7 @@ import {
 } from '@causedeck/intelligence';
 import { z } from 'zod';
 
+import { embedBatchSizeFromEnv, embedProviderFromEnv } from '../../ai/index.ts';
 import type { JobContext } from '../context.ts';
 import { defineJob } from '../define.ts';
 
@@ -43,7 +47,7 @@ export async function runCorpusEmbed(
   deps: CorpusEmbedDeps = {},
 ): Promise<EmbedRunReport> {
   const db = deps.db ?? rootDb;
-  const gateway = createEmbedGateway({ providers: [deps.provider ?? createMockEmbedProvider()] });
+  const gateway = createEmbedGateway({ providers: [deps.provider ?? embedProviderFromEnv()] });
   const report = await embedDueSegments(
     drizzleSegmentStore(db),
     {
@@ -56,7 +60,7 @@ export async function runCorpusEmbed(
     {
       budgetPaise: payload.budgetPaise ?? CORPUS_EMBED_RUN_BUDGET_PAISE,
       maxSegments: payload.maxSegments ?? CORPUS_EMBED_RUN_SEGMENTS,
-      ...(deps.batchSize === undefined ? {} : { batchSize: deps.batchSize }),
+      batchSize: deps.batchSize ?? embedBatchSizeFromEnv(),
     },
   );
   ctx.log.info({ ...report }, 'corpus.embed: run done');

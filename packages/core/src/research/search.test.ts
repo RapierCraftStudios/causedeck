@@ -4,11 +4,17 @@
 // (ids and hashes, never the query), re-running with an edited plan, and the verified answer.
 import { randomUUID } from 'node:crypto';
 
-import { createChatgptPlanProvider, createMockEmbedProvider } from '@causedeck/ai';
+import {
+  createBgem3Provider,
+  createChatgptPlanProvider,
+  createEmbedGateway,
+  createMockEmbedProvider,
+  SELF_HOSTED_REGION,
+} from '@causedeck/ai';
 import { schema, type Transaction } from '@causedeck/db';
 import { seedPlans } from '@causedeck/db/seed/plans';
 import { inWorkspace, withTestDb } from '@causedeck/db/testing';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
 import { newUser, newWorkspace } from '../__tests__/fixtures.ts';
@@ -185,6 +191,54 @@ describe('searchAuthorities', () => {
       // Mock vectors are noise: the lexical arm ranks alone (#1182).
       expect(result.counts).toMatchObject({ mode: 'lexical-only', vector: 0 });
       expect(result.counts.lexical).toBeGreaterThan(0);
+    });
+  });
+
+  it('with a bge-m3 embedder runs hybrid and queries only bge-m3 vectors (#1198)', async () => {
+    await withTestDb(async (tx) => {
+      const ids = await seed(tx);
+      // The same facts, but only a mock-embed vector (not yet re-embedded by the job).
+      await seedJudgment(tx, {
+        title: 'Mock-only twin',
+        segments: [
+          {
+            role: 'facts',
+            text: 'The patient underwent a hysterectomy and no written consent was taken for the surgery.',
+          },
+        ],
+      });
+      // The negligence facts segment was re-embedded by bge-m3 (the fake server reuses the mock vectors).
+      await tx
+        .update(schema.judgmentSegment)
+        .set({ embeddingModel: 'bge-m3' })
+        .where(
+          and(
+            eq(schema.judgmentSegment.judgmentId, ids.negligence),
+            eq(schema.judgmentSegment.role, 'facts'),
+          ),
+        );
+      const mock = createMockEmbedProvider();
+      const bge = createBgem3Provider({
+        baseUrl: 'http://embed:8080',
+        region: SELF_HOSTED_REGION,
+        previewSelfHosted: true,
+        fetch: async (_url, init) => {
+          const { inputs } = JSON.parse(init?.body as string) as { inputs: string[] };
+          return new Response(JSON.stringify((await mock.embed(inputs)).vectors));
+        },
+      });
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const result = await searchAuthorities(
+        tx,
+        { workspaceId, userId: ownerId },
+        { query: 'hysterectomy surgery without written consent' },
+        deps({ embed: createEmbedGateway({ providers: [bge] }) }),
+      );
+      expect(result.counts.mode).toBe('hybrid');
+      // Only the negligence facts segment carries a bge-m3 vector; the twin's identical mock vector is
+      // never a vector candidate (without the model-version filter it would be a second hit).
+      expect(result.counts.vector).toBe(1);
+      expect(result.hits.map((h) => h.judgmentId)).toContain(ids.negligence);
     });
   });
 

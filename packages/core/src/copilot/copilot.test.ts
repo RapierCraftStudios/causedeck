@@ -5,9 +5,13 @@
 import { randomUUID } from 'node:crypto';
 
 import {
+  createBgem3Provider,
   createChatgptPlanProvider,
+  createEmbedGateway,
   createMockEmbedProvider,
+  SELF_HOSTED_REGION,
   type AiGateway,
+  type EmbedProvider,
   type Provider,
 } from '@causedeck/ai';
 import { schema, type Transaction } from '@causedeck/db';
@@ -21,7 +25,7 @@ import {
   buildObligation,
   buildProceeding,
 } from '@causedeck/db/testing/matter-graph-fixtures';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
 import { newWorkspace } from '../__tests__/fixtures.ts';
@@ -705,6 +709,57 @@ describe('askCopilot', () => {
       );
       expect(answer.answerText).toBe('Listed on 15 March 2099. Written arguments are due first.');
       expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(1);
+    });
+  });
+});
+
+/** A preview bge-m3 provider (#1198) over a fake server that answers with the mock's vectors. */
+function bgeFromMock(): EmbedProvider {
+  const mock = createMockEmbedProvider();
+  const fetch = async (_url: string | URL | Request, init?: RequestInit) => {
+    const { inputs } = JSON.parse(init?.body as string) as { inputs: string[] };
+    const { vectors } = await mock.embed(inputs);
+    return new Response(JSON.stringify(vectors));
+  };
+  return createBgem3Provider({
+    baseUrl: 'http://embed:8080',
+    region: SELF_HOSTED_REGION,
+    previewSelfHosted: true,
+    fetch,
+  });
+}
+
+describe('askCopilot with a bge-m3 corpus (#1198)', () => {
+  it('a bge-m3 corpus answers in hybrid mode with vector hits from bge-m3 vectors only', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      await seedJudgment(tx);
+      await seedJudgment(tx);
+      // The first judgment is re-embedded by bge-m3 (same vector, new model version); the second keeps
+      // only its mock-embed vector, as before the job ran.
+      const segments = await tx
+        .select({ id: schema.judgmentSegment.id })
+        .from(schema.judgmentSegment)
+        .orderBy(asc(schema.judgmentSegment.id));
+      expect(segments).toHaveLength(2);
+      await tx
+        .update(schema.judgmentSegment)
+        .set({ embeddingModel: 'bge-m3' })
+        .where(eq(schema.judgmentSegment.id, segments[0]?.id ?? ''));
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION },
+        {
+          now: () => NOW,
+          answer: quoting('no written consent was taken'),
+          embed: createEmbedGateway({ providers: [bgeFromMock()] }),
+        },
+      );
+      expect(answer.retrieval).toMatchObject({ mode: 'hybrid', vector: 1 });
+      expect(answer.retrieval?.lexical).toBe(2);
+      expect(answer.claims).toHaveLength(1);
     });
   });
 });

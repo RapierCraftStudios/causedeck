@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { inputHash, normalise } from '../hash.ts';
 import { DATA_CLOSE, DATA_OPEN, detectInjection, wrapAsData } from '../policy/injection.ts';
 import { ResidencyViolationError } from '../errors.ts';
-import { allowedChain, PREVIEW_PLAN_PROVIDER_ID } from '../policy/residency.ts';
+import {
+  allowedChain,
+  embedDataResidency,
+  INDIA_REGIONS,
+  PREVIEW_PLAN_PROVIDER_ID,
+  SELF_HOSTED_REGION,
+} from '../policy/residency.ts';
 import { assertAiAllowed } from '../policy/sensitive.ts';
 import { getTask } from '../tasks/registry.ts';
 import { TASK_IDS } from '../types.ts';
@@ -145,5 +151,28 @@ describe('preview plan provider residency (#1165)', () => {
         bedrockIn,
       ]);
     }
+  });
+});
+
+describe('self-hosted embed residency (#1198)', () => {
+  it('an AWS India region is in-region with or without the flag', () => {
+    expect(embedDataResidency('ap-south-1')).toBe('in');
+    expect(embedDataResidency('ap-south-2', { previewSelfHosted: false })).toBe('in');
+  });
+
+  it('a self-hosted server is in-region only with the preview flag', () => {
+    expect(SELF_HOSTED_REGION).toBe('self-hosted');
+    expect(embedDataResidency(SELF_HOSTED_REGION)).toBe('other');
+    expect(embedDataResidency(SELF_HOSTED_REGION, { previewSelfHosted: false })).toBe('other');
+    expect(embedDataResidency(SELF_HOSTED_REGION, { previewSelfHosted: true })).toBe('in');
+  });
+
+  it('the flag never makes a region outside India in-region', () => {
+    expect(embedDataResidency('us-east-1', { previewSelfHosted: true })).toBe('other');
+    expect(embedDataResidency('openai', { previewSelfHosted: true })).toBe('other');
+  });
+
+  it('leaves the production India regions unchanged', () => {
+    expect(INDIA_REGIONS).toEqual(['ap-south-1', 'ap-south-2']);
   });
 });

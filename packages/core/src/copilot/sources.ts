@@ -6,7 +6,6 @@
 // outside the actor's workspace and the one matter is ever selected.
 import {
   createEmbedGateway,
-  createMockEmbedProvider,
   createMockRerankProvider,
   createRerankGateway,
   MOCK_EMBED_MODEL,
@@ -26,6 +25,8 @@ import {
   type SearchCounts,
 } from '@causedeck/intelligence';
 import { sql } from 'drizzle-orm';
+
+import { embedProviderFromEnv } from '../ai/index.ts';
 
 import {
   getMatterOverview,
@@ -258,7 +259,9 @@ const withoutFacets = (plan: ResearchPlan): ResearchPlan => ({
 
 /**
  * Passages of the anonymised corpus for the question: the retrieval of `searchAuthorities`, without its
- * meter or audit. While only mock vectors exist the lexical arm runs alone (#1182). A question is not
+ * meter or audit. The embedder is `deps.embed`, else the configured one (`embedProviderFromEnv`, #1198:
+ * bge-m3 when set, else the mock), and only vectors of its model version are queried. While the mock
+ * is active the lexical arm runs alone (#1182). A question is not
  * vetoed by a facet: when the faceted search finds nothing, it searches once more without facets.
  */
 export async function corpusSources(
@@ -270,7 +273,7 @@ export async function corpusSources(
   judgments: Record<string, JudgmentRef>;
   counts: SearchCounts;
 }> {
-  const embed = deps.embed ?? createEmbedGateway({ providers: [createMockEmbedProvider()] });
+  const embed = deps.embed ?? createEmbedGateway({ providers: [embedProviderFromEnv()] });
   const rerank = deps.rerank ?? createRerankGateway({ providers: [createMockRerankProvider()] });
   const active = embed.active();
   const search = {

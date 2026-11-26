@@ -415,6 +415,47 @@ export const serverKeys = {
     requiredWhen: 'never (defaults to 500000)',
     ownerIssue: 1030,
   },
+  EMBED_PROVIDER: {
+    domain: 'server',
+    type: 'enum(mock|bge-m3)',
+    description:
+      'Corpus embedding provider for the embed job, research search and the copilot. bge-m3 is a self-hosted embed server (preview only).',
+    default: 'mock',
+    requiredWhen: 'never (defaults to mock)',
+    ownerIssue: 1198,
+  },
+  BGE_M3_URL: {
+    domain: 'server',
+    type: 'url',
+    description: 'Base URL of the self-hosted bge-m3 embed server, e.g. http://embed:8080.',
+    requiredWhen: 'EMBED_PROVIDER=bge-m3',
+    ownerIssue: 1198,
+  },
+  BGE_M3_TOKEN: {
+    domain: 'server',
+    type: 'secret',
+    description: 'Optional bearer token for the self-hosted bge-m3 embed server.',
+    requiredWhen: 'never',
+    ownerIssue: 1198,
+    secret: true,
+  },
+  ALLOW_PREVIEW_SELF_HOSTED_EMBED: {
+    domain: 'server',
+    type: 'boolean',
+    description:
+      'Let the self-hosted bge-m3 embed server pass India-only mode (preview only). Refused under NODE_ENV=production unless ADMIN_ENV_LABEL is staging or development.',
+    default: 'false',
+    requiredWhen: 'never (preview only)',
+    ownerIssue: 1198,
+  },
+  EMBED_BATCH_SIZE: {
+    domain: 'server',
+    type: 'integer (1-256)',
+    description: 'Segments per embedding request in the corpus embed job.',
+    default: '32',
+    requiredWhen: 'never (defaults to 32)',
+    ownerIssue: 1198,
+  },
   ALTERLAB_API_KEY: {
     domain: 'server',
     type: 'secret',
@@ -651,6 +692,19 @@ export const serverShape = {
     .max(100_000_000)
     .optional()
     .describe(d(serverKeys.CORPUS_OCR_DAILY_PAISE)),
+  // Corpus embeddings (#1198): the mock unless EMBED_PROVIDER=bge-m3 with BGE_M3_URL.
+  EMBED_PROVIDER: z.enum(['mock', 'bge-m3']).describe(d(serverKeys.EMBED_PROVIDER)),
+  BGE_M3_URL: z.url().optional().describe(d(serverKeys.BGE_M3_URL)),
+  BGE_M3_TOKEN: secret(z.string().min(1)).optional().describe(d(serverKeys.BGE_M3_TOKEN)),
+  ALLOW_PREVIEW_SELF_HOSTED_EMBED: z
+    .stringbool()
+    .describe(d(serverKeys.ALLOW_PREVIEW_SELF_HOSTED_EMBED)),
+  EMBED_BATCH_SIZE: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(256)
+    .describe(d(serverKeys.EMBED_BATCH_SIZE)),
   // The governed fetch layer (#479, D-048): no key means the mock provider.
   ALTERLAB_API_KEY: secret(z.string().min(1)).optional().describe(d(serverKeys.ALTERLAB_API_KEY)),
   // Data-ops alert routing (#515, D-049): both unset means alerts are logged.
@@ -754,6 +808,22 @@ export function guardrailIssues(env: RawEnv, parsed: Partial<ServerEnv>): Issue[
 
   if (env.CF_ACCESS_AUD !== undefined && env.CF_ACCESS_TEAM_DOMAIN === undefined) {
     add('CF_ACCESS_TEAM_DOMAIN', 'is required when CF_ACCESS_AUD is set');
+  }
+  if (env.EMBED_PROVIDER === 'bge-m3' && (env.BGE_M3_URL === undefined || env.BGE_M3_URL === '')) {
+    add('BGE_M3_URL', 'is required when EMBED_PROVIDER=bge-m3');
+  }
+  // The self-hosted embed server is preview-only (#1198). Fail-closed: under NODE_ENV=production
+  // only an explicit staging or development ADMIN_ENV_LABEL may let it pass India-only mode.
+  if (
+    isProd &&
+    parsed.ALLOW_PREVIEW_SELF_HOSTED_EMBED === true &&
+    env.ADMIN_ENV_LABEL !== 'staging' &&
+    env.ADMIN_ENV_LABEL !== 'development'
+  ) {
+    add(
+      'ALLOW_PREVIEW_SELF_HOSTED_EMBED',
+      'must not be true in production unless ADMIN_ENV_LABEL is staging or development (preview only)',
+    );
   }
 
   if (!isProd) return issues;

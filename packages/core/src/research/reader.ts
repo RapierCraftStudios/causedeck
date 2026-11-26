@@ -14,14 +14,14 @@ import { asMember, type ResearchSearchActor } from './search.ts';
 
 const { judgment } = schema;
 
-export interface ReaderPage {
+export interface JudgmentReaderPage {
   pageNo: number;
   /** The redacted text of the page. */
   text: string;
   pinpoint: 'verified' | 'page_pending';
 }
 
-export interface ReaderAnchor {
+export interface JudgmentReaderAnchor {
   /** The page the pinpoint lands on. */
   page: number;
   /** The paragraph number asked for, when the judgment numbers its paragraphs and has it. */
@@ -31,7 +31,7 @@ export interface ReaderAnchor {
   pinpoint: 'verified' | 'page_pending';
 }
 
-export interface ReaderJudgment {
+export interface JudgmentReaderView {
   judgmentId: string;
   /** `judgment.case_title`: already the masked form when `titleMasked` (D-053). */
   title: string | null;
@@ -43,13 +43,13 @@ export interface ReaderJudgment {
   outcome: string;
   /** Judges on the bench; null when the header named none. */
   benchStrength: number | null;
-  pages: ReaderPage[];
+  pages: JudgmentReaderPage[];
   /** Where `para` or `page` lands; null when neither was asked for or it is not in the text. */
-  anchor: ReaderAnchor | null;
+  anchor: JudgmentReaderAnchor | null;
   attribution: { sourceUrl: string | null; licence: string | null };
 }
 
-export interface ReaderInput {
+export interface JudgmentReaderInput {
   judgmentId: string;
   /** A paragraph pinpoint (`para 12`). */
   para?: number;
@@ -59,7 +59,7 @@ export interface ReaderInput {
 
 const PAGE_SEPARATOR = '\n\n';
 
-function anchorOf(pages: readonly ReaderPage[], input: ReaderInput): ReaderAnchor | null {
+function anchorOf(pages: readonly JudgmentReaderPage[], input: JudgmentReaderInput): JudgmentReaderAnchor | null {
   if (input.para !== undefined) {
     // The same joined text and paragraph split as `verifyPinpoint`, so an anchor it verified lands here.
     const starts: number[] = [];
@@ -101,8 +101,8 @@ const positiveInt = (value: unknown): boolean =>
 export async function getJudgmentReaderView(
   db: Queryable,
   actor: ResearchSearchActor,
-  input: ReaderInput,
-): Promise<ReaderJudgment | null> {
+  input: JudgmentReaderInput,
+): Promise<JudgmentReaderView | null> {
   if (input.para !== undefined && !positiveInt(input.para)) throw invalid('Invalid paragraph');
   if (input.page !== undefined && !positiveInt(input.page)) throw invalid('Invalid page');
   return asMember(db, actor, async () => {
@@ -128,7 +128,7 @@ export async function getJudgmentReaderView(
       .where(eq(judgment.id, input.judgmentId))
       .limit(1);
     if (row === undefined || row.redactionVersion <= 0 || row.redactedText === null) return null;
-    const pages: ReaderPage[] = [...row.redactedText]
+    const pages: JudgmentReaderPage[] = [...row.redactedText]
       .sort((a, b) => a.pageNo - b.pageNo)
       .map((p) => ({
         pageNo: p.pageNo,

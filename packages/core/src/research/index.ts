@@ -71,8 +71,8 @@ export {
 export { getCorpusCoverage, type CorpusCoverage, type CourtCoverage } from './coverage.ts';
 export {
   getJudgmentReaderView,
-  type ReaderAnchor,
-  type ReaderInput,
-  type ReaderJudgment,
-  type ReaderPage,
+  type JudgmentReaderAnchor,
+  type JudgmentReaderInput,
+  type JudgmentReaderView,
+  type JudgmentReaderPage,
 } from './reader.ts';

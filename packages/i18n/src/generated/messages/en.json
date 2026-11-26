@@ -5776,6 +5776,11 @@
       "composerHint": "Enter to send, Shift+Enter for a new line",
       "searching": "Searching facts, documents and the corpus…",
       "searchingCorpus": "Searching the corpus…",
+      "stages": {
+        "planning": "Planning search…",
+        "found": "Found {passages, plural, one {# passage} other {# passages}} in {judgments, plural, one {# judgment} other {# judgments}}",
+        "checking": "Checking quotes…"
+      },
       "planLimit": "Your plan's copilot limit is reached.",
       "retry": "Try again",
       "offline": "You are offline. Questions can be sent again once you reconnect.",

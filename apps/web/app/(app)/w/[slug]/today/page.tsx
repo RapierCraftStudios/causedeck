@@ -3,6 +3,7 @@
 // It renders nothing while `court.live-tracking` is off or the member has no item listed today, and
 // a failed read never breaks the page.
 import type { LiveHall } from '@causedeck/core/court-day';
+import type { Metadata } from 'next';
 
 import {
   BenchNoticeAlerts,
@@ -16,15 +17,20 @@ import {
 } from '../../../../../components/shell/placeholder-page.tsx';
 import { LoadPulseCard } from '../_pov/load-pulse-card.tsx';
 import { renderBoard } from '../_court-day/render-board.tsx';
+import type { WorkspaceContext } from '../../../../../lib/workspace-context.ts';
+import { createLoaderTimer } from '../../../../../lib/loader-timing.ts';
 import { getWorkspaceContext } from '../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../src/health.ts';
 
 const Placeholder = placeholderPage('today');
 
-async function loadHalls(slug: string): Promise<LiveHall[]> {
+/** Authenticated workspace route: kept out of search indexes (copilot/page.tsx precedent, K6). */
+export function generateMetadata(): Metadata {
+  return { robots: { index: false, follow: false } };
+}
+
+async function loadHalls(context: WorkspaceContext): Promise<LiveHall[]> {
   try {
-    const context = await getWorkspaceContext(slug);
-    if (!context) return [];
     const { db } = await import('@causedeck/core/runtime');
     const { getLiveHalls } = await import('@causedeck/core/court-day');
     return await getLiveHalls(
@@ -40,10 +46,8 @@ async function loadHalls(slug: string): Promise<LiveHall[]> {
 const istDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' });
 
 /** Bench-notice alerts for today's and the upcoming court days (#496); a failed read shows none. */
-async function loadBenchNotices(slug: string): Promise<BenchNoticeAlertView[]> {
+async function loadBenchNotices(context: WorkspaceContext): Promise<BenchNoticeAlertView[]> {
   try {
-    const context = await getWorkspaceContext(slug);
-    if (!context) return [];
     const { db } = await import('@causedeck/core/runtime');
     const { listBenchNoticeAlerts } = await import('@causedeck/core/court');
     return await listBenchNoticeAlerts(
@@ -58,10 +62,8 @@ async function loadBenchNotices(slug: string): Promise<BenchNoticeAlertView[]> {
 }
 
 /** The weekly pulse is due for this member (#86); a failed read shows no card. */
-async function loadPulseDue(slug: string): Promise<string | null> {
+async function loadPulseDue(context: WorkspaceContext): Promise<string | null> {
   try {
-    const context = await getWorkspaceContext(slug);
-    if (!context) return null;
     const { inWorkspace } = await import('@causedeck/core/runtime');
     const { dueForPulse } = await import('@causedeck/core/pov');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
@@ -77,9 +79,27 @@ export default async function TodayPage(props: WorkspacePageProps) {
   // The placeholder renders first so its guards (membership, permission, dev states) run unchanged.
   const { base, board } = await renderBoard(props, 'today', Placeholder);
   const { slug } = await props.params;
-  const live = await LiveHalls({ halls: await loadHalls(slug) });
-  const bench = await loadBenchNotices(slug);
-  const pulse = await loadPulseDue(slug);
+  // #1193: one workspace context, the loaders in parallel, each one's duration on one timing line.
+  const context = await getWorkspaceContext(slug);
+  const { timed, summary } = createLoaderTimer();
+  const [halls, bench, pulse] =
+    context === null
+      ? [[], [], null]
+      : await Promise.all([
+          timed('halls', () => loadHalls(context)),
+          timed('benchNotices', () => loadBenchNotices(context)),
+          timed('pulse', () => loadPulseDue(context)),
+        ]);
+  const live = await LiveHalls({ halls });
+  if (context !== null) {
+    logger.info(
+      {
+        workspaceId: context.workspace.id,
+        ...summary(),
+      },
+      'today.timing',
+    );
+  }
   return (
     <div className="flex flex-col gap-6">
       <SurfaceHelp slug={slug} surface="today" />

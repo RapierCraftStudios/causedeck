@@ -77,7 +77,7 @@ const facts = vi.hoisted(() => {
     ),
   };
 });
-const logger = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn() }));
+const logger = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() }));
 const reportError = vi.hoisted(() => vi.fn());
 
 vi.mock('next/navigation', () => ({
@@ -107,6 +107,15 @@ vi.mock('@causedeck/core/matter-graph', () => graph);
 vi.mock('@causedeck/core/notices', () => notices);
 vi.mock('@causedeck/core/court', () => court);
 vi.mock('@causedeck/core/facts', () => facts);
+// #1193: the Overview loaders run in parallel; these reads are not under test here. Failing them keeps
+// their cards hidden (as before) and stops a real `@causedeck/core` load racing the mocked runtime.
+vi.mock('@causedeck/core/attention', () => ({
+  listSnoozes: vi.fn(() => Promise.reject(new Error('not under test'))),
+}));
+vi.mock('@causedeck/core/shares', () => ({
+  listBriefShares: vi.fn(() => Promise.reject(new Error('not under test'))),
+  shareableListingId: vi.fn(() => Promise.reject(new Error('not under test'))),
+}));
 vi.mock('../app/(app)/w/[slug]/matters/[id]/actions.ts', () => ({
   updateMatterAction: vi.fn(),
   setSensitiveAction: vi.fn(),
@@ -115,6 +124,17 @@ vi.mock('../app/(app)/w/[slug]/matters/[id]/actions.ts', () => ({
   reportRecordErrorAction: vi.fn(),
 }));
 
+// #1193: the Overview loaders import these in parallel; load the mocks once first, so concurrent dynamic
+// imports cannot race the mock registration and reach the real modules.
+for (const load of [
+  () => import('@causedeck/core/runtime'),
+  () => import('@causedeck/core/notices'),
+  () => import('@causedeck/core/court'),
+  () => import('@causedeck/core/facts'),
+  () => import('@causedeck/core/matter-graph'),
+]) {
+  await load();
+}
 const { default: MatterLayout } = await import('../app/(app)/w/[slug]/matters/[id]/layout.tsx');
 const { default: MatterPage, generateMetadata } =
   await import('../app/(app)/w/[slug]/matters/[id]/page.tsx');
@@ -308,6 +328,21 @@ describe('matter workspace copilot tab (#1132)', () => {
 });
 
 describe('matter workspace Overview (#390)', () => {
+  it('logs one timing line with each loader duration and no matter text (#1193)', async () => {
+    await renderRoute();
+    const lines = (logger.info.mock.calls as unknown[][]).filter(
+      ([, message]) => message === 'matter-overview.timing',
+    );
+    expect(lines).toHaveLength(1);
+    const fields = lines[0]?.[0] as { matterId: string; totalMs: number; loaders: object };
+    expect(fields.matterId).toBe(MATTER_ID);
+    expect(typeof fields.totalMs).toBe('number');
+    expect(Object.keys(fields.loaders)).toEqual(
+      expect.arrayContaining(['notices', 'benchNotices', 'continuity']),
+    );
+    expect(JSON.stringify(lines)).not.toContain('Rao');
+  });
+
   it('shows the header, the tab bar and every Overview card', async () => {
     await renderRoute();
     const header = document.querySelector('[data-slot="matter-header"]') as HTMLElement;
@@ -604,10 +639,19 @@ describe('matter workspace Overview (#390)', () => {
     expect(document.querySelector('[data-slot="matter-overview"]')).not.toBeNull();
   });
 
-  it('names the page after the matter', async () => {
-    expect(await generateMetadata({ params })).toEqual({ title: 'Rao v. State of Tamil Nadu' });
+  it('names the page after the matter and keeps it out of search indexes', async () => {
+    const robots = { index: false, follow: false };
+    expect(await generateMetadata({ params })).toEqual({
+      title: 'Rao v. State of Tamil Nadu',
+      robots,
+    });
     page.error = new WorkspaceError('NOT_FOUND');
-    expect(await generateMetadata({ params })).toEqual({ title: ws.metaTitle });
+    expect(await generateMetadata({ params })).toEqual({ title: ws.metaTitle, robots });
+  });
+
+  it('keeps Today out of search indexes (authenticated workspace route)', async () => {
+    const today = await import('../app/(app)/w/[slug]/today/page.tsx');
+    expect(today.generateMetadata().robots).toEqual({ index: false, follow: false });
   });
 });
 

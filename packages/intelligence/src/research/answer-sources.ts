@@ -215,18 +215,32 @@ export function pinpointOf(source: CopilotSource, quote: string): Pinpoint {
   return { page: source.page, paragraph: holder?.number ?? null };
 }
 
+/**
+ * Optional observers of `answerMatterQuestion` (#1193). `onClaim` is called once per claim that passed
+ * verification, in verified order, as the verify loop reaches it; an unsupported claim is never passed
+ * (D-004). `onTiming` gets the milliseconds of the model reply (`answer`) and of the verify loop
+ * (`verify`). Neither changes the result.
+ */
+export interface MatterAnswerHooks {
+  onClaim?: (claim: VerifiedClaim) => void;
+  onTiming?: (stage: 'answer' | 'verify', ms: number) => void;
+}
+
 export async function answerMatterQuestion(
   question: string,
   sources: readonly CopilotSource[],
   resolve: MatterAnswerResolver,
+  hooks: MatterAnswerHooks = {},
 ): Promise<MatterAnswer> {
   if (sources.length === 0) {
     return { claims: [], unsupported: [], answerText: '', answer: '', noAuthority: true };
   }
-  const reply = replySchema.safeParse(
-    await resolve({ question, sources: sources.map((s) => ({ id: s.id, text: s.text })) }),
-  );
+  const answerStart = performance.now();
+  const raw = await resolve({ question, sources: sources.map((s) => ({ id: s.id, text: s.text })) });
+  hooks.onTiming?.('answer', performance.now() - answerStart);
+  const reply = replySchema.safeParse(raw);
   if (!reply.success) throw new Error('copilot answer: the model reply did not match its schema');
+  const verifyStart = performance.now();
 
   const byId = new Map(sources.map((s) => [s.id, s]));
   const claims: VerifiedClaim[] = [];
@@ -242,7 +256,7 @@ export async function answerMatterQuestion(
     } else if (needle === '' || !normalise(source.text).includes(needle)) {
       unsupported.push({ ...c, reason: 'quote_not_found' });
     } else {
-      claims.push({
+      const claim: VerifiedClaim = {
         statement: c.statement,
         sourceId: c.sourceId,
         kind,
@@ -250,10 +264,13 @@ export async function answerMatterQuestion(
         pinpoint: pinpointOf(source, c.quote),
         documentId: source.documentId ?? null,
         judgmentId: source.judgmentId ?? null,
-      });
+      };
+      claims.push(claim);
       verifiedAt.set(index + 1, claims.length);
+      hooks.onClaim?.(claim);
     }
   }
+  hooks.onTiming?.('verify', performance.now() - verifyStart);
   const written =
     claims.length === 0 || reply.data.answer === undefined
       ? null

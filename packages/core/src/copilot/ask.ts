@@ -12,6 +12,10 @@
 // provider; its claims are verified the same way (D-004). The plan's usage limit becomes
 // RATE_LIMITED and an unavailable plan a client-safe CONFLICT; nothing is counted then. A real
 // workspace never reaches the plan provider.
+// Progress (#1193): `deps.onProgress` gets planning -> retrieved (counts) -> sources (the judgments,
+// from the stored record) -> checking -> one `claim` per verified claim as the verify loop passes it ->
+// done. Only verified claims are ever sent (D-004). Each question logs one `copilot.timing` line with
+// the stage durations (plan, lexical, vector, rerank, answer, verify), counts and ids; never its text.
 import { createHash, randomUUID } from 'node:crypto';
 
 import {
@@ -32,7 +36,9 @@ import {
   type MatterAnswer,
   type MatterAnswerResolver,
   type SearchCounts,
+  type VerifiedClaim,
 } from '@causedeck/intelligence';
+import { createLogger } from '@causedeck/observability';
 
 import {
   createCoreAiGateway,
@@ -85,7 +91,29 @@ export interface CopilotDeps {
    * read only for a demo workspace. Null: demo workspaces answer extractively.
    */
   previewPlanProvider?: Provider | null;
+  /** Called as the question moves through its stages (#1193); a throwing observer is ignored. */
+  onProgress?: (event: CopilotProgress) => void;
+  /** Receives the per-question `copilot.timing` line; defaults to the `copilot` service logger. */
+  log?: CopilotTimingLog;
 }
+
+/** A stage of a question in flight (#1193). Text only from the stored record or verified claims. */
+export type CopilotProgress =
+  | { type: 'planning' }
+  | { type: 'retrieved'; passages: number; judgments: number }
+  | { type: 'sources'; judgments: JudgmentRef[] }
+  | { type: 'checking' }
+  | { type: 'claim'; claim: VerifiedClaim }
+  | { type: 'done' };
+
+export type CopilotTimingStage = 'plan' | 'lexical' | 'vector' | 'rerank' | 'answer' | 'verify';
+
+export interface CopilotTimingLog {
+  info: (fields: Record<string, unknown>, message: string) => void;
+}
+
+let defaultLog: CopilotTimingLog | undefined;
+const timingLog = (): CopilotTimingLog => (defaultLog ??= createLogger({ service: 'copilot' }));
 
 /** Shown when the preview plan's usage limit is reached (#1165). */
 export const PLAN_LIMIT_MESSAGE = 'The preview AI plan limit is reached. Try again later.';
@@ -160,7 +188,59 @@ export async function askCopilot(
     throw invalid(`Ask in 1 to ${String(COPILOT_QUESTION_MAX_CHARS)} characters`);
   }
   if (input.matterId !== undefined && !isUuid(input.matterId)) throw invalid('Matter not found');
+  const emit = (event: CopilotProgress): void => {
+    try {
+      deps.onProgress?.(event);
+    } catch {
+      // A gone client must not change what is answered, metered or audited.
+    }
+  };
+  const started = performance.now();
+  const stages: Record<CopilotTimingStage, number> = {
+    plan: 0,
+    lexical: 0,
+    vector: 0,
+    rerank: 0,
+    answer: 0,
+    verify: 0,
+  };
+  const onTiming = (stage: CopilotTimingStage, ms: number): void => {
+    stages[stage] += Math.round(ms);
+  };
+  const facts: Record<string, string | number | null> = {
+    requestId: input.requestId ?? null,
+    workspaceId: actor.workspaceId,
+    matterId: input.matterId ?? null,
+  };
+  let outcome: 'answered' | 'ai_blocked' | 'failed' = 'failed';
+  try {
+    const result = await askAsMember(db, actor, input, deps, question, emit, onTiming, facts);
+    outcome = result.aiBlocked ? 'ai_blocked' : 'answered';
+    return result;
+  } finally {
+    try {
+      (deps.log ?? timingLog()).info(
+        { ...facts, outcome, stages, totalMs: Math.round(performance.now() - started) },
+        'copilot.timing',
+      );
+    } catch {
+      // Logging never fails a question.
+    }
+  }
+}
+
+async function askAsMember(
+  db: Queryable,
+  actor: CopilotActor,
+  input: CopilotInput,
+  deps: CopilotDeps,
+  question: string,
+  emit: (event: CopilotProgress) => void,
+  onTiming: (stage: CopilotTimingStage, ms: number) => void,
+  facts: Record<string, string | number | null>,
+): Promise<CopilotAnswer> {
   return asMember(db, actor, async () => {
+    emit({ type: 'planning' });
     const ctx: UsageContext = {
       db,
       workspaceId: actor.workspaceId,
@@ -173,6 +253,7 @@ export async function askCopilot(
       );
     }
     const requestId = input.requestId ?? randomUUID();
+    facts.requestId = requestId;
     const graph = { db, events: deps.events ?? NOOP_EVENTS };
 
     const sources: CopilotSource[] = [];
@@ -183,6 +264,7 @@ export async function askCopilot(
         ...(deps.now === undefined ? {} : { now: deps.now }),
       });
       if (sensitive) {
+        emit({ type: 'done' });
         return {
           claims: [],
           unsupported: [],
@@ -228,8 +310,14 @@ export async function askCopilot(
               scope: { workspaceId: actor.workspaceId },
             }),
           }),
+      onTiming,
     });
     sources.push(...corpus.sources);
+    const judgments = Object.values(corpus.judgments);
+    emit({ type: 'retrieved', passages: sources.length, judgments: judgments.length });
+    emit({ type: 'sources', judgments });
+    facts.sources = sources.length;
+    facts.judgments = judgments.length;
 
     const resolve =
       deps.answer ??
@@ -244,11 +332,17 @@ export async function askCopilot(
           idempotencyKey: `copilot:${requestId}`,
         },
       });
-    const answer = await answerMatterQuestion(question, sources, resolve).catch(
-      (error: unknown) => {
-        throw planError(error);
+    emit({ type: 'checking' });
+    const answer = await answerMatterQuestion(question, sources, resolve, {
+      onClaim: (claim) => {
+        emit({ type: 'claim', claim });
       },
-    );
+      onTiming,
+    }).catch((error: unknown) => {
+      throw planError(error);
+    });
+    facts.claims = answer.claims.length;
+    facts.unsupported = answer.unsupported.length;
 
     await increment(ctx, COPILOT_QUESTION_KEY, 1, {
       idempotencyKey: `copilot-question:${requestId}`,
@@ -275,6 +369,7 @@ export async function askCopilot(
         },
       ),
     );
+    emit({ type: 'done' });
     return {
       ...answer,
       judgments: corpus.judgments,

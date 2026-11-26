@@ -11,7 +11,7 @@
 // #1144: with `drafts` and `insert` (matter copilot, a member who may write drafts), a verified
 // judgment claim has "Insert into draft": the member picks a draft and the block to insert after; the
 // claim's judgment, quote and pinpoint go to the server unaltered, which verifies them again.
-import type { CopilotAnswer } from '@causedeck/core/copilot';
+import type { CopilotAnswer, CopilotProgress } from '@causedeck/core/copilot';
 import { Badge } from '@causedeck/ui/badge';
 import { Button } from '@causedeck/ui/button';
 import { EmptyState } from '@causedeck/ui/empty-state';
@@ -33,6 +33,89 @@ import { AnswerProse, SourcesList, SourcesSheet, type CopilotClaim } from './cop
 
 type ActionResult =
   { ok: true; data: CopilotAnswer } | { ok: false; error: { code?: string; message: string } };
+
+/** A line of `POST /api/copilot/ask` (#1193): a progress event, then the result or an error. */
+export type CopilotStreamEvent =
+  | CopilotProgress
+  | { type: 'result'; answer: CopilotAnswer }
+  | { type: 'error'; error: { code: string; message: string } };
+
+/**
+ * Asks with progress: calls `onEvent` per progress event and resolves to the final result, or to null
+ * when the stream is unavailable or breaks before its result (the panel then asks the action, with the
+ * same request id, so the question counts once).
+ */
+export type CopilotStream = (
+  input: Record<string, unknown>,
+  onEvent: (event: CopilotProgress) => void,
+) => Promise<ActionResult | null>;
+
+/** The default `CopilotStream`: the NDJSON route. */
+export const fetchCopilotStream: CopilotStream = async (input, onEvent) => {
+  try {
+    const response = await fetch('/api/copilot/ask', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    });
+    if (!response.ok || response.body === null) return null;
+    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) return null;
+      buffer += value;
+      let end = buffer.indexOf('\n');
+      while (end !== -1) {
+        const line = buffer.slice(0, end).trim();
+        buffer = buffer.slice(end + 1);
+        end = buffer.indexOf('\n');
+        if (line === '') continue;
+        const event = JSON.parse(line) as CopilotStreamEvent;
+        if (event.type === 'result') return { ok: true, data: event.answer };
+        if (event.type === 'error') return { ok: false, error: event.error };
+        onEvent(event);
+      }
+    }
+  } catch {
+    return null;
+  }
+};
+
+/** What a pending turn has heard so far (#1193). */
+export interface CopilotTurnProgress {
+  stage: 'planning' | 'found' | 'checking';
+  passages: number;
+  judgments: number;
+  sources: Extract<CopilotProgress, { type: 'sources' }>['judgments'];
+  /** Verified claims only, in verified order. */
+  claims: CopilotAnswer['claims'];
+}
+
+const NO_PROGRESS: CopilotTurnProgress = {
+  stage: 'planning',
+  passages: 0,
+  judgments: 0,
+  sources: [],
+  claims: [],
+};
+
+function progressed(progress: CopilotTurnProgress, event: CopilotProgress): CopilotTurnProgress {
+  switch (event.type) {
+    case 'planning':
+      return { ...progress, stage: 'planning' };
+    case 'retrieved':
+      return { ...progress, stage: 'found', passages: event.passages, judgments: event.judgments };
+    case 'sources':
+      return { ...progress, sources: event.judgments };
+    case 'checking':
+      return { ...progress, stage: 'checking' };
+    case 'claim':
+      return { ...progress, claims: [...progress.claims, event.claim] };
+    case 'done':
+      return progress;
+  }
+}
 
 /** A draft of this matter a claim can be inserted into: its latest version and its blocks. */
 export interface CopilotDraftTarget {
@@ -212,6 +295,8 @@ export interface CopilotTurn {
   /** Reused by a retry, so the question counts once. */
   requestId: string;
   state: 'pending' | 'answered' | 'failed';
+  /** #1193: the stages, sources and verified claims streamed while pending. */
+  progress?: CopilotTurnProgress | undefined;
   answer?: CopilotAnswer;
   /** `planLimit`: the plan's monthly cap or the preview plan is unavailable (the action's CONFLICT). */
   failure?: { planLimit: boolean; message: string };
@@ -243,6 +328,11 @@ export interface CopilotPanelProps {
   /** Omitted for the workspace-level copilot. */
   matterId?: string;
   ask: (raw: unknown) => Promise<ActionResult>;
+  /**
+   * #1193: asks with progress; defaults to the `/api/copilot/ask` stream. Null: the action only. When
+   * the stream is unavailable the action answers.
+   */
+  stream?: CopilotStream | null;
   /** Renders a stored result (stories, tests). */
   initialAnswer?: CopilotAnswer;
   /** Renders a stored thread (stories, tests); takes precedence over `initialAnswer`. */
@@ -270,6 +360,7 @@ export function CopilotPanel({
   workspaceId,
   matterId,
   ask,
+  stream = fetchCopilotStream,
   initialAnswer,
   initialTurns,
   matterContext,
@@ -301,18 +392,32 @@ export function CopilotPanel({
     if (turn.question === null) return;
     const text = turn.question;
     start(async () => {
-      const response = await ask({
+      const input = {
         workspaceId,
         question: text,
         requestId: turn.requestId,
         ...(matterId === undefined ? {} : { matterId }),
-      });
+      };
+      const streamed =
+        stream === null
+          ? null
+          : await stream(input, (event) => {
+              setTurns((all) =>
+                all.map((one) =>
+                  one.id === turn.id && one.state === 'pending'
+                    ? { ...one, progress: progressed(one.progress ?? NO_PROGRESS, event) }
+                    : one,
+                ),
+              );
+            });
+      const response = streamed ?? (await ask(input));
       if (response.ok) {
-        update(turn.id, { state: 'answered', answer: response.data });
+        update(turn.id, { state: 'answered', answer: response.data, progress: undefined });
         setSelected(turn.id);
       } else {
         update(turn.id, {
           state: 'failed',
+          progress: undefined,
           failure: {
             planLimit: response.error.code === 'CONFLICT',
             message: response.error.message,
@@ -335,7 +440,7 @@ export function CopilotPanel({
 
   function retry(turn: CopilotTurn): void {
     if (pending || isOffline) return;
-    update(turn.id, { state: 'pending' });
+    update(turn.id, { state: 'pending', progress: undefined });
     // Same request id: a retry after a failure is metered once.
     run({ ...turn, state: 'pending' });
   }
@@ -403,6 +508,12 @@ export function CopilotPanel({
 
   const activeIn = (id: string): number | null => (active?.turn === id ? active.n : null);
   const searching = matterId === undefined ? t('searchingCorpus') : t('searching');
+  const stageText = (progress: CopilotTurnProgress | undefined): string => {
+    if (progress === undefined) return searching;
+    if (progress.stage === 'planning') return t('stages.planning');
+    if (progress.stage === 'checking') return t('stages.checking');
+    return t('stages.found', { passages: progress.passages, judgments: progress.judgments });
+  };
 
   return (
     <div
@@ -468,14 +579,63 @@ export function CopilotPanel({
                   <div data-slot="copilot-reply" className="flex min-w-0 flex-col gap-3">
                     <span className="sr-only">{t('thread.copilot')}:</span>
                     {turn.state === 'pending' ? (
-                      <SkeletonGroup data-slot="copilot-loading" labels={{ loading: searching }}>
-                        <p aria-hidden="true" className="text-ink-muted text-sm">
-                          {searching}
-                        </p>
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-5/6" />
-                        <Skeleton className="h-4 w-2/3" />
-                      </SkeletonGroup>
+                      <>
+                        <SkeletonGroup
+                          data-slot="copilot-loading"
+                          data-stage={turn.progress?.stage}
+                          labels={{ loading: stageText(turn.progress) }}
+                        >
+                          <p aria-hidden="true" className="text-ink-muted text-sm">
+                            {stageText(turn.progress)}
+                          </p>
+                          {(turn.progress?.claims.length ?? 0) > 0 ? null : (
+                            <>
+                              <Skeleton className="h-4 w-full" />
+                              <Skeleton className="h-4 w-5/6" />
+                              <Skeleton className="h-4 w-2/3" />
+                            </>
+                          )}
+                        </SkeletonGroup>
+                        {turn.progress === undefined || turn.progress.claims.length === 0 ? null : (
+                          <ol
+                            data-slot="copilot-pending-claims"
+                            className="text-ink flex list-decimal flex-col gap-2 ps-5 text-sm"
+                          >
+                            {turn.progress.claims.map((claim, index) => (
+                              <li
+                                key={`${claim.sourceId}:${String(index)}`}
+                                data-slot="copilot-pending-claim"
+                                className="break-words"
+                              >
+                                {claim.statement}
+                              </li>
+                            ))}
+                          </ol>
+                        )}
+                        {turn.progress === undefined ||
+                        turn.progress.sources.length === 0 ? null : (
+                          <div
+                            data-slot="copilot-pending-sources"
+                            className="border-line flex flex-col gap-2 rounded-md border p-3"
+                          >
+                            <h3 className="text-ink-subtle text-xs font-medium tracking-wide uppercase">
+                              {t('sources.title')}
+                            </h3>
+                            <ul className="flex flex-col gap-1 text-sm">
+                              {turn.progress.sources.map((judgment) => (
+                                <li key={judgment.id} className="min-w-0 break-words">
+                                  <span className="text-ink">
+                                    {judgment.title ?? judgment.neutralCitation ?? judgment.court}
+                                  </span>
+                                  {judgment.title === null ? null : (
+                                    <span className="text-ink-muted"> · {judgment.court}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </>
                     ) : null}
                     {turn.state === 'failed' && turn.failure !== undefined ? (
                       <div className="border-line flex flex-col gap-2 rounded-md border p-3">

@@ -23,6 +23,7 @@ import {
   type PlanResolver,
   type ResearchPlan,
   type SearchCounts,
+  type SearchDeps,
 } from '@causedeck/intelligence';
 import { sql } from 'drizzle-orm';
 
@@ -234,6 +235,8 @@ export interface CorpusDeps {
   rerank?: RerankGateway;
   /** The planner model (`plan_research_query`); without one the rules plan the question. */
   plan?: PlanResolver;
+  /** Stage durations of the plan and of each search (#1193); a facet-less retry reports its stages again. */
+  onTiming?: SearchDeps['onTiming'];
 }
 
 const hasFacets = (plan: ResearchPlan): boolean =>
@@ -281,8 +284,11 @@ export async function corpusSources(
     embed,
     rerank,
     lexicalOnly: active.model === MOCK_EMBED_MODEL,
+    ...(deps.onTiming === undefined ? {} : { onTiming: deps.onTiming }),
   };
+  const planStart = performance.now();
   const plan = await planQuery(question, deps.plan);
+  deps.onTiming?.('plan', performance.now() - planStart);
   let result = await searchCorpusWithPlan(search, plan, { answer: false });
   if (result.hits.length === 0 && hasFacets(plan)) {
     result = await searchCorpusWithPlan(search, withoutFacets(plan), { answer: false });

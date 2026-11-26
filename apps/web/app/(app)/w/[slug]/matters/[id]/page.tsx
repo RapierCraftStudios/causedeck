@@ -10,6 +10,7 @@
 // empty cards, offline (banner, mutations off), permission-denied, and not-found (another
 // workspace, a restricted matter or an unknown id). In development
 // `?__state=loading|error|denied|offline|empty` previews them.
+import type * as Runtime from '@causedeck/core/runtime';
 import type { MatterExpectedTimeline } from '@causedeck/intelligence';
 import type { SnoozeRecord } from '@causedeck/validators/attention';
 import type { Metadata } from 'next';
@@ -38,6 +39,7 @@ import {
   type MatterOverviewView,
 } from '../../../../../../lib/matters/workspace.ts';
 import { can, type WorkspaceContext } from '../../../../../../lib/workspace-context.ts';
+import { createLoaderTimer } from '../../../../../../lib/loader-timing.ts';
 import { getWorkspaceContext } from '../../../../../../lib/workspace-loader.ts';
 import { logger } from '../../../../../../src/health.ts';
 import { loadContacts } from '../../../../../../lib/people/people-deps.ts';
@@ -77,10 +79,28 @@ export async function generateMetadata({
 }: Pick<MatterPageProps, 'params'>): Promise<Metadata> {
   const { slug, id } = await params;
   const t = await getTranslations('matters.workspace');
+  // Authenticated workspace route: kept out of search indexes (copilot/page.tsx precedent, K6).
+  const noindex: Metadata = { robots: { index: false, follow: false } };
   const context = await getWorkspaceContext(slug);
-  if (!context || !can(context.role, 'matter.read')) return { title: t('metaTitle') };
+  if (!context || !can(context.role, 'matter.read')) return { title: t('metaTitle'), ...noindex };
   const loaded = await loadMatterOverview(context, id);
-  return { title: loaded.kind === 'overview' ? loaded.overview.header.title : t('metaTitle') };
+  return {
+    title: loaded.kind === 'overview' ? loaded.overview.header.title : t('metaTitle'),
+    ...noindex,
+  };
+}
+
+/**
+ * #1193: the Overview loaders run concurrently and share one runtime import (one module promise, not
+ * one dynamic import per loader).
+ */
+let runtimeModule: Promise<typeof Runtime> | undefined;
+function loadRuntime(): Promise<typeof Runtime> {
+  runtimeModule ??= import('@causedeck/core/runtime').catch((error: unknown) => {
+    runtimeModule = undefined;
+    throw error;
+  });
+  return runtimeModule;
 }
 
 async function pageLocale() {
@@ -109,7 +129,7 @@ async function loadMatterNotices(
   matterId: string,
 ): Promise<NoticeView[]> {
   try {
-    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { inWorkspace } = await loadRuntime();
     const { listMatterNotices } = await import('@causedeck/core/notices');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
     const rows = await inWorkspace(actor, (tx) => listMatterNotices(tx, actor, matterId));
@@ -129,7 +149,7 @@ async function loadBenchNotices(
   matterId: string,
 ): Promise<BenchNoticeAlertView[]> {
   try {
-    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { inWorkspace } = await loadRuntime();
     const { listBenchNoticeAlerts } = await import('@causedeck/core/court');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
     return await inWorkspace(actor, (tx) => listBenchNoticeAlerts(tx, actor, { matterId }));
@@ -145,7 +165,7 @@ async function loadMatterSnoozes(
   matterId: string,
 ): Promise<SnoozeRecord[] | null> {
   try {
-    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { inWorkspace } = await loadRuntime();
     const { listSnoozes } = await import('@causedeck/core/attention');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
     return await inWorkspace(actor, (tx) => listSnoozes({ db: tx }, actor, matterId));
@@ -166,7 +186,7 @@ async function loadExpectedTimeline(
 ): Promise<MatterExpectedTimeline | null> {
   if (!can(context.role, 'insights.read') || context.role === 'junior') return null;
   try {
-    const { inWorkspace } = await import('@causedeck/core/runtime');
+    const { inWorkspace } = await loadRuntime();
     const { getMatterExpectedTimeline } = await import('@causedeck/intelligence');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
     return await inWorkspace(actor, (tx) => getMatterExpectedTimeline(tx, matterId));
@@ -183,7 +203,7 @@ async function loadBriefSharing(
 ): Promise<{ listingId: string | null; shares: ShareLinkView[] } | null> {
   if (!can(context.role, 'export.run')) return null;
   try {
-    const { db } = await import('@causedeck/core/runtime');
+    const { db } = await loadRuntime();
     const { listBriefShares, shareableListingId } = await import('@causedeck/core/shares');
     const actor = { workspaceId: context.workspace.id, userId: context.user.id };
     const [listingId, rows] = await Promise.all([
@@ -211,7 +231,7 @@ async function loadContinuityMembers(
   context: WorkspaceContext,
 ): Promise<{ members: Record<string, string>; myMemberId: string | null }> {
   try {
-    const { listMembersIn } = await import('@causedeck/core/runtime');
+    const { listMembersIn } = await loadRuntime();
     const rows = await listMembersIn({
       workspaceId: context.workspace.id,
       userId: context.user.id,
@@ -263,20 +283,34 @@ export default async function MatterOverviewPage({ params, searchParams }: Matte
   if (loaded.kind === 'denied') return <MattersPermissionDenied />;
   if (loaded.kind === 'error') throw new Error('Matter could not be loaded');
 
-  const notices = dev === 'empty' ? [] : await loadMatterNotices(context, id);
-  const locale = await pageLocale();
-  const benchNotices = dev === 'empty' ? [] : await loadBenchNotices(context, id);
-  const sharing = dev === 'empty' ? null : await loadBriefSharing(context, id);
-  const snoozes = dev === 'empty' ? null : await loadMatterSnoozes(context, id);
-  const timeline = dev === 'empty' ? null : await loadExpectedTimeline(context, id);
+  // #1193: the independent loaders run together; each one's duration goes to one timing line.
+  const { timed, summary } = createLoaderTimer();
+  const empty = dev === 'empty';
+  const [notices, locale, benchNotices, sharing, snoozes, timeline, continuity, statusLinks] =
+    await Promise.all([
+      empty ? [] : timed('notices', () => loadMatterNotices(context, id)),
+      pageLocale(),
+      empty ? [] : timed('benchNotices', () => loadBenchNotices(context, id)),
+      empty ? null : timed('sharing', () => loadBriefSharing(context, id)),
+      empty ? null : timed('snoozes', () => loadMatterSnoozes(context, id)),
+      empty ? null : timed('timeline', () => loadExpectedTimeline(context, id)),
+      timed('continuity', () => loadContinuityMembers(context)),
+      empty ? null : timed('statusLinks', () => loadStatusLinkSetup(context)),
+    ]);
   const view = toOverviewView(loaded.overview, { locale, now: new Date() });
   const proceedingId = view.nextDate?.proceedingId;
   const corrections =
-    proceedingId === undefined || dev === 'empty'
+    proceedingId === undefined || empty
       ? []
-      : await loadReviewCorrections(context, proceedingId, locale);
-  const continuity = await loadContinuityMembers(context);
-  const statusLinks = dev === 'empty' ? null : await loadStatusLinkSetup(context);
+      : await timed('corrections', () => loadReviewCorrections(context, proceedingId, locale));
+  logger.info(
+    {
+      workspaceId: context.workspace.id,
+      matterId: id,
+      ...summary(),
+    },
+    'matter-overview.timing',
+  );
   return (
     <>
       <div className="grid gap-3">

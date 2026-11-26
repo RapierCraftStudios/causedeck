@@ -416,6 +416,39 @@ describe('search pipeline', () => {
     expect(result.answer).toEqual({ claims: [], noAuthority: true });
   });
 
+  it('reports the plan, lexical, vector, rerank and answer durations to onTiming (#1193)', async () => {
+    const stages: [string, number][] = [];
+    const onTiming = (stage: string, ms: number) => stages.push([stage, ms]);
+    await searchCorpus(
+      deps({ onTiming, answer: () => Promise.resolve({ claims: [] }) }),
+      'surgery consent',
+      { answer: true },
+    );
+    expect(stages.map(([stage]) => stage).sort()).toEqual(
+      ['answer', 'lexical', 'plan', 'rerank', 'vector'].sort(),
+    );
+    expect(stages.every(([, ms]) => Number.isFinite(ms) && ms >= 0)).toBe(true);
+
+    const replanned: string[] = [];
+    const first = await searchCorpus(deps(), 'surgery consent');
+    await searchCorpusWithPlan(deps({ onTiming: (stage) => replanned.push(stage) }), first.plan);
+    expect(replanned.sort()).toEqual(['lexical', 'rerank', 'vector']);
+  });
+
+  it('times the vector arm even when it fails, and a search without onTiming is unchanged (#1193)', async () => {
+    const stages: string[] = [];
+    const broken = { embed: () => Promise.reject(new Error('embed down')) };
+    await expect(
+      searchCorpus(
+        deps({ embed: broken, onTiming: (stage) => stages.push(stage) }),
+        'surgery consent',
+      ),
+    ).rejects.toThrow('embed down');
+    expect(stages).toContain('vector');
+    const plain = await searchCorpus(deps(), 'surgery without consent infection');
+    expect(plain.hits[0]?.judgmentId).toBe('J1');
+  });
+
   it('runs well inside the 2.5 s budget on the fixture (the staging p95 is measured after deploy)', async () => {
     const started = performance.now();
     for (let i = 0; i < 20; i += 1) await searchCorpus(deps(), 'surgery without consent infection');

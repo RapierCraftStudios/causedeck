@@ -25,6 +25,27 @@ export interface SearchDeps {
    * arm alone, instead of fusing noise neighbours (#1182). Default false (both arms).
    */
   lexicalOnly?: boolean;
+  /**
+   * Observer of stage durations in milliseconds (#1193): `plan` (only `searchCorpus` plans), `lexical`,
+   * `vector` (the embed call plus the vector arm; 0 when skipped), `rerank` and `answer` (only for
+   * `answer: true`). Ids and counts only travel elsewhere; this never sees the query. Default none.
+   */
+  onTiming?: (stage: SearchStage, ms: number) => void;
+}
+
+export type SearchStage = 'plan' | 'lexical' | 'vector' | 'rerank' | 'answer';
+
+async function timed<T>(
+  deps: Pick<SearchDeps, 'onTiming'>,
+  stage: SearchStage,
+  run: () => Promise<T>,
+): Promise<T> {
+  const start = performance.now();
+  try {
+    return await run();
+  } finally {
+    deps.onTiming?.(stage, performance.now() - start);
+  }
 }
 
 export interface SearchOptions {
@@ -59,7 +80,8 @@ export async function searchCorpus(
   query: string,
   options: SearchOptions = {},
 ): Promise<SearchResult> {
-  return searchCorpusWithPlan(deps, await planQuery(query, deps.plan), options);
+  const plan = await timed(deps, 'plan', () => planQuery(query, deps.plan));
+  return searchCorpusWithPlan(deps, plan, options);
 }
 
 /** Searches with an already planned (possibly edited) plan; never calls the planner. */
@@ -70,22 +92,35 @@ export async function searchCorpusWithPlan(
 ): Promise<SearchResult> {
   const limit = options.armLimit ?? ARM_LIMIT;
   const lexicalOnly = deps.lexicalOnly === true;
-  const embedded = lexicalOnly
-    ? { vectors: [] as number[][], costPaise: 0 }
-    : await deps.embed.embed([plan.factDescription || plan.query]);
-  const [lexical, vector] = await Promise.all([
-    deps.retriever.lexical(plan, limit),
-    lexicalOnly ? Promise.resolve([]) : deps.retriever.vector(embedded.vectors[0] ?? [], plan, limit),
+  // The lexical arm needs no vector, so it runs alongside the embed call and the vector arm.
+  const [lexical, { embedded, vector }] = await Promise.all([
+    timed(deps, 'lexical', () => deps.retriever.lexical(plan, limit)),
+    timed(deps, 'vector', async () => {
+      if (lexicalOnly) {
+        return { embedded: { vectors: [] as number[][], costPaise: 0 }, vector: [] };
+      }
+      const embedded = await deps.embed.embed([plan.factDescription || plan.query]);
+      return {
+        embedded,
+        vector: await deps.retriever.vector(embedded.vectors[0] ?? [], plan, limit),
+      };
+    }),
   ]);
   const fused = fuseArms([lexical, vector]);
-  const outcome = await rerankCandidates(plan.factDescription || plan.query, fused, deps.rerank);
+  const outcome = await timed(deps, 'rerank', () =>
+    rerankCandidates(plan.factDescription || plan.query, fused, deps.rerank),
+  );
   const hits = groupByJudgment(outcome.candidates);
 
   let answer: ResearchAnswer | null = null;
   let answerFailed = false;
   if (options.answer === true) {
     try {
-      answer = deps.answer === undefined ? null : await answerQuery(plan.query, hits, deps.answer);
+      const resolver = deps.answer;
+      answer =
+        resolver === undefined
+          ? null
+          : await timed(deps, 'answer', () => answerQuery(plan.query, hits, resolver));
       answerFailed = deps.answer === undefined;
     } catch {
       answerFailed = true;

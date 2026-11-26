@@ -8,6 +8,9 @@ export {
   type CopilotAnswer,
   type CopilotDeps,
   type CopilotInput,
+  type CopilotProgress,
+  type CopilotTimingLog,
+  type CopilotTimingStage,
   type CopilotUsage,
 } from './ask.ts';
 export type { JudgmentRef } from './sources.ts';

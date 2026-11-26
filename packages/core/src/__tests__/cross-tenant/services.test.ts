@@ -4359,10 +4359,10 @@ const CASES: Record<string, Case> = {
     await expectDenied(f.asB((s) => core.getCorpusCoverage(s, bActsOnA(f))));
     expect(await core.getUsage({ db: f.tx, workspaceId: f.a.id }, 'research.searches')).toBe(0);
   },
-  getJudgmentForReader: async (f) => {
+  getJudgmentReaderView: async (f) => {
     await expectDenied(
       f.asB((s) =>
-        core.getJudgmentForReader(s, bActsOnA(f), {
+        core.getJudgmentReaderView(s, bActsOnA(f), {
           judgmentId: '00000000-0000-4000-8000-000000000000',
         }),
       ),

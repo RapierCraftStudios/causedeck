@@ -70,7 +70,7 @@ export {
 } from './query-router.ts';
 export { getCorpusCoverage, type CorpusCoverage, type CourtCoverage } from './coverage.ts';
 export {
-  getJudgmentForReader,
+  getJudgmentReaderView,
   type ReaderAnchor,
   type ReaderInput,
   type ReaderJudgment,

@@ -8,8 +8,10 @@ import { withTestDb } from '@causedeck/db/testing';
 import { describe, expect, it } from 'vitest';
 
 import { newUser, newWorkspace } from '../__tests__/fixtures.ts';
+import * as corpus from '../corpus/index.ts';
 
-import { getJudgmentForReader } from './reader.ts';
+import * as research from './index.ts';
+import { getJudgmentReaderView } from './reader.ts';
 
 const SENTINEL = 'Zorblax Industries';
 
@@ -64,7 +66,7 @@ async function seed(
   return row?.id ?? '';
 }
 
-describe('getJudgmentForReader', () => {
+describe('getJudgmentReaderView', () => {
   it('serves the redacted pages with a paragraph anchor, attribution and bench strength', async () => {
     await withTestDb(async (tx) => {
       const judgmentId = await seed(tx, {
@@ -73,13 +75,13 @@ describe('getJudgmentForReader', () => {
       });
       const { ownerId, workspaceId } = await newWorkspace(tx);
       const actor = { workspaceId, userId: ownerId };
-      const view = await getJudgmentForReader(tx, actor, { judgmentId, para: 3 });
+      const view = await getJudgmentReaderView(tx, actor, { judgmentId, para: 3 });
       expect(view?.pages.map((p) => [p.pageNo, p.pinpoint])).toEqual([
         [1, 'verified'],
         [2, 'verified'],
       ]);
       expect(view?.anchor).toEqual({ page: 2, para: 3, offset: 0, pinpoint: 'verified' });
-      const para2 = await getJudgmentForReader(tx, actor, { judgmentId, para: 2 });
+      const para2 = await getJudgmentReaderView(tx, actor, { judgmentId, para: 2 });
       const page1 = para2?.pages[0]?.text ?? '';
       expect(para2?.anchor).toMatchObject({ page: 1, para: 2 });
       expect(page1.slice(para2?.anchor?.offset ?? 0)).toMatch(/^2\. The facts/);
@@ -89,9 +91,9 @@ describe('getJudgmentForReader', () => {
       expect(view?.title).toBe('State v. Ravi');
       expect(JSON.stringify(view)).not.toContain(SENTINEL);
       // A paragraph that is not there falls back to the page; neither gives no anchor.
-      const byPage = await getJudgmentForReader(tx, actor, { judgmentId, para: 99, page: 2 });
+      const byPage = await getJudgmentReaderView(tx, actor, { judgmentId, para: 99, page: 2 });
       expect(byPage?.anchor).toEqual({ page: 2, para: null, offset: 0, pinpoint: 'verified' });
-      expect((await getJudgmentForReader(tx, actor, { judgmentId }))?.anchor).toBeNull();
+      expect((await getJudgmentReaderView(tx, actor, { judgmentId }))?.anchor).toBeNull();
     });
   });
 
@@ -103,7 +105,7 @@ describe('getJudgmentForReader', () => {
         redacted: [{ pageNo: 1, text: '1. [PARTY] appeals.', source: 'text' }],
       });
       const { ownerId, workspaceId } = await newWorkspace(tx);
-      const view = await getJudgmentForReader(
+      const view = await getJudgmentReaderView(
         tx,
         { workspaceId, userId: ownerId },
         { judgmentId, page: 1 },
@@ -119,16 +121,26 @@ describe('getJudgmentForReader', () => {
       const unredacted = await seed(tx, { redacted: null });
       const { ownerId, workspaceId } = await newWorkspace(tx);
       const actor = { workspaceId, userId: ownerId };
-      expect(await getJudgmentForReader(tx, actor, { judgmentId: unredacted })).toBeNull();
-      expect(await getJudgmentForReader(tx, actor, { judgmentId: randomUUID() })).toBeNull();
-      expect(await getJudgmentForReader(tx, actor, { judgmentId: 'nope' })).toBeNull();
+      expect(await getJudgmentReaderView(tx, actor, { judgmentId: unredacted })).toBeNull();
+      expect(await getJudgmentReaderView(tx, actor, { judgmentId: randomUUID() })).toBeNull();
+      expect(await getJudgmentReaderView(tx, actor, { judgmentId: 'nope' })).toBeNull();
       await expect(
-        getJudgmentForReader(tx, actor, { judgmentId: unredacted, para: 0 }),
+        getJudgmentReaderView(tx, actor, { judgmentId: unredacted, para: 0 }),
       ).rejects.toMatchObject({ code: 'VALIDATION' });
       const stranger = await newUser(tx);
       await expect(
-        getJudgmentForReader(tx, { workspaceId, userId: stranger }, { judgmentId: unredacted }),
+        getJudgmentReaderView(tx, { workspaceId, userId: stranger }, { judgmentId: unredacted }),
       ).rejects.toMatchObject({ code: 'FORBIDDEN' });
     });
+  });
+});
+
+describe('core barrel', () => {
+  // corpus (#1191) owns `getJudgmentForReader`; a second export of that name from research makes the
+  // `export *` in `@causedeck/core` ambiguous, so the name drops out (or resolves to the wrong domain)
+  // and the in-app reader page breaks (#1174).
+  it('research and corpus export no name in common', () => {
+    expect(Object.keys(research).filter((name) => name in corpus)).toEqual([]);
+    expect(research.getJudgmentReaderView).toBe(getJudgmentReaderView);
   });
 });

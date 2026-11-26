@@ -98,7 +98,7 @@ const positiveInt = (value: unknown): boolean =>
   typeof value === 'number' && Number.isInteger(value) && value > 0;
 
 /** One redacted judgment for the reader; null when it is not stored or not redacted yet. */
-export async function getJudgmentForReader(
+export async function getJudgmentReaderView(
   db: Queryable,
   actor: ResearchSearchActor,
   input: ReaderInput,

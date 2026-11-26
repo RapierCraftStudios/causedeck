@@ -1061,7 +1061,7 @@ export const SERVICE_TESTS: Readonly<Record<string, ServiceEntry>> = {
   // research page reads (#1174): B naming A's workspace is denied; A's research usage is unchanged.
   classifyResearchQuery: denies,
   getCorpusCoverage: denies,
-  getJudgmentForReader: denies,
+  getJudgmentReaderView: denies,
   // grounded matter copilot (#1115): B naming A's workspace or matter is denied; A's copilot usage and audit rows are unchanged.
   askCopilot: denies,
   // statutes (#1125): B naming A's workspace is denied; global statute tables, nothing of A's written

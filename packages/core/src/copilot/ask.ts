@@ -188,6 +188,7 @@ export async function askCopilot(
           unsupported: [],
           answerText: '',
           answer: '',
+          bottomLine: '',
           noAuthority: false,
           judgments: {},
           aiBlocked: true,

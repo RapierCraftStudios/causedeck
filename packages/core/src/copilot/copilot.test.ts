@@ -681,6 +681,7 @@ describe('askCopilot', () => {
               ],
               answer:
                 'The matter is next listed on 15 March 2099 [1, 2]. Before that, file the written arguments [3] [4].',
+              bottomLine: 'Yes, it is listed on 15 March 2099 [2, 1].',
             },
           });
         },
@@ -707,6 +708,8 @@ describe('askCopilot', () => {
       expect(answer.answer).toBe(
         'The matter is next listed on 15 March 2099 [1]. Before that, file the written arguments [2].',
       );
+      // #1192: the bottom line passes through, held to D-004 like the answer (only verified markers).
+      expect(answer.bottomLine).toBe('Yes, it is listed on 15 March 2099 [1].');
       expect(answer.answerText).toBe('Listed on 15 March 2099. Written arguments are due first.');
       expect(await getUsage({ db: tx, workspaceId, now: () => NOW }, 'copilot.questions')).toBe(1);
     });

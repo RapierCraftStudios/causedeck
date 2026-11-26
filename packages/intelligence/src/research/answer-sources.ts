@@ -64,6 +64,11 @@ export interface MatterAnswer {
    * claim verified.
    */
   answer: string;
+  /**
+   * One sentence leading with the answer ("Yes, if…"), `[n]` markers renumbered like `answer`. Held to
+   * D-004 like a claim: '' unless at least one of its markers points at a verified claim (#1192).
+   */
+  bottomLine: string;
   /** No sources, or nothing to claim: "no authority found". */
   noAuthority: boolean;
 }
@@ -167,6 +172,7 @@ export function createExtractiveMatterAnswerResolver(maxSources = 3): MatterAnsw
 const replySchema = z.object({
   claims: z.array(z.object({ statement: z.string(), sourceId: z.string(), quote: z.string() })),
   answer: z.string().optional(),
+  bottomLine: z.string().optional(),
 });
 
 const MARKER = /\[\s*(\d+(?:\s*,\s*\d+)*)\s*\]/g;
@@ -221,7 +227,14 @@ export async function answerMatterQuestion(
   resolve: MatterAnswerResolver,
 ): Promise<MatterAnswer> {
   if (sources.length === 0) {
-    return { claims: [], unsupported: [], answerText: '', answer: '', noAuthority: true };
+    return {
+      claims: [],
+      unsupported: [],
+      answerText: '',
+      answer: '',
+      bottomLine: '',
+      noAuthority: true,
+    };
   }
   const reply = replySchema.safeParse(
     await resolve({ question, sources: sources.map((s) => ({ id: s.id, text: s.text })) }),
@@ -258,12 +271,18 @@ export async function answerMatterQuestion(
     claims.length === 0 || reply.data.answer === undefined
       ? null
       : rewriteMarkers(reply.data.answer, (n) => verifiedAt.get(n));
+  // The bottom line is a claim too (D-004): it survives only with a marker of a verified claim.
+  const bottomLine =
+    claims.length === 0 || reply.data.bottomLine === undefined
+      ? null
+      : rewriteMarkers(reply.data.bottomLine, (n) => verifiedAt.get(n));
   return {
     claims,
     unsupported,
     answerText: claims.map((c) => c.statement).join(' '),
     answer:
       claims.length === 0 ? '' : (written ?? composeAnswer(claims.map((c) => c.statement))),
+    bottomLine: bottomLine ?? '',
     noAuthority: claims.length === 0 && unsupported.length === 0,
   };
 }

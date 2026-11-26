@@ -1,5 +1,6 @@
 // The matter copilot panel (#1115, #1168): empty with suggested questions, loading, an answer with
 // citation chips, not verified, error, plan limit, no authority, AI off, offline and a follow-up thread.
+// #1192: a bottom line and a markdown answer; no authority and weak with their next steps.
 import type { CopilotAnswer } from '@causedeck/core/copilot';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
@@ -11,6 +12,7 @@ const base = {
   unsupported: [],
   answerText: '',
   answer: '',
+  bottomLine: '',
   noAuthority: false,
   judgments: {},
   aiBlocked: false,
@@ -21,7 +23,7 @@ const ask = () => Promise.resolve({ ok: false as const, error: { message: '' } }
 const meta = {
   title: 'Copilot/CopilotPanel',
   component: CopilotPanel,
-  args: { workspaceId: 'w', matterId: 'm', ask },
+  args: { workspaceId: 'w', workspaceSlug: 'demo', matterId: 'm', ask },
 } satisfies Meta<typeof CopilotPanel>;
 
 export default meta;
@@ -74,6 +76,7 @@ const verifiedAnswer: CopilotAnswer = {
   ...base,
   answerText: 'Consent must be informed.',
   answer: 'Consent must be informed. [1]',
+  bottomLine: 'Yes, consent must be informed before surgery [1].',
   claims: [
     {
       statement: 'Consent must be informed.',
@@ -115,7 +118,50 @@ export const NotVerified: Story = {
   },
 };
 
-export const NoAuthority: Story = { args: { initialAnswer: { ...base, noAuthority: true } } };
+/** The model formatted its answer: rendered as bold and a list, never as raw `**` or `- `. */
+export const MarkdownAnswer: Story = {
+  args: {
+    initialTurns: [
+      turn({
+        answer: {
+          ...verifiedAnswer,
+          answer:
+            'Consent must be **informed** [1]. The patient must be told:\n\n- the *nature* of the procedure [1]\n- its material risks [1]',
+        },
+      }),
+    ],
+  },
+};
+
+/** No authority found: the reason and next steps (workspace copilot: also ask with a matter). */
+export const NoAuthority: Story = {
+  args: {
+    matterId: undefined,
+    initialTurns: [turn({ answer: { ...base, noAuthority: true } })],
+  },
+};
+
+/** The sources don't settle it (nothing verified): the reason and next steps. */
+export const Weak: Story = {
+  args: {
+    matterContext,
+    initialTurns: [
+      turn({
+        answer: {
+          ...base,
+          unsupported: [
+            {
+              statement: 'Consent must be in writing.',
+              sourceId: 'seg:9',
+              quote: 'consent in writing',
+              reason: 'quote_not_found',
+            },
+          ],
+        },
+      }),
+    ],
+  },
+};
 export const AiOff: Story = { args: { initialAnswer: { ...base, aiBlocked: true } } };
 
 /** #1144: a verified judgment claim with "Insert into draft" (the matter's drafts as targets). */

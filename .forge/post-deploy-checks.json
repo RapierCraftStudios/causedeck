@@ -24,6 +24,11 @@
     "pass": "exit 0",
     "timeout": 600
   },
+  "copilot-chip-opens-reader-at-passage": {
+    "run": "pnpm --filter @causedeck/e2e test tests/matters/copilot.spec.ts -g \"verified claim with page and paragraph\"",
+    "pass": "exit 0",
+    "timeout": 600
+  },
   "copilot-starter-answers": {
     "run": "E2E_POST_DEPLOY=1 pnpm --filter @causedeck/e2e test tests/research/copilot-starters.spec.ts",
     "pass": "exit 0",

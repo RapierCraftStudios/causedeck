@@ -48,7 +48,11 @@ export default async function CopilotPage({ params }: CopilotPageProps) {
         </h1>
         <p className="text-muted-foreground text-sm">{t('intro')}</p>
       </header>
-      <CopilotPanel workspaceId={context.workspace.id} ask={askCopilotAction} />
+      <CopilotPanel
+        workspaceId={context.workspace.id}
+        workspaceSlug={slug}
+        ask={askCopilotAction}
+      />
     </section>
   );
 }

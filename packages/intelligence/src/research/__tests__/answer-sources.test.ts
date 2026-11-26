@@ -192,6 +192,51 @@ describe('answerMatterQuestion: the written answer (#1167)', () => {
   });
 });
 
+describe('answerMatterQuestion: the bottom line (#1192, D-004)', () => {
+  const ok = (statement: string) => ({ statement, sourceId: 'seg:s1', quote: 'Surgery was done' });
+  const bad = (statement: string) => ({
+    statement,
+    sourceId: 'seg:s1',
+    quote: 'surgery was never done',
+  });
+  const led = (bottomLine: string | undefined, claims: unknown[]) => () =>
+    Promise.resolve({
+      claims,
+      answer: 'Details [1].',
+      ...(bottomLine === undefined ? {} : { bottomLine }),
+    });
+
+  it('keeps a bottom line citing a verified claim, renumbered to the verified order', async () => {
+    const out = await answerMatterQuestion(
+      'q',
+      sources,
+      led('Yes, if consent was not taken [1, 2].', [bad('A'), ok('B')]),
+    );
+    expect(out.bottomLine).toBe('Yes, if consent was not taken [1].');
+    expect(out.answerText).toBe('B');
+  });
+
+  it('drops a bottom line whose markers are all unverified or that cites nothing', async () => {
+    const unverified = await answerMatterQuestion(
+      'q',
+      sources,
+      led('No, unless notice was given [1].', [bad('A'), ok('B')]),
+    );
+    expect(unverified.bottomLine).toBe('');
+    const uncited = await answerMatterQuestion('q', sources, led('Yes, plainly.', [ok('A')]));
+    expect(uncited.bottomLine).toBe('');
+    const absent = await answerMatterQuestion('q', sources, led(undefined, [ok('A')]));
+    expect(absent.bottomLine).toBe('');
+    expect(absent.answer).toBe('Details [1].');
+  });
+
+  it('is empty when no claim verified or there are no sources', async () => {
+    const none = await answerMatterQuestion('q', sources, led('Yes [1].', [bad('A')]));
+    expect(none).toMatchObject({ claims: [], bottomLine: '', answer: '' });
+    expect((await answerMatterQuestion('q', [], led('Yes [1].', []))).bottomLine).toBe('');
+  });
+});
+
 describe('createExtractiveMatterAnswerResolver', () => {
   const matterFacts: CopilotSource[] = [
     { id: 'fact:matter', text: 'Matter: Rao v State. Status: open.', page: null },

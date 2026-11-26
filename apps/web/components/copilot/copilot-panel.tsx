@@ -11,12 +11,17 @@
 // #1144: with `drafts` and `insert` (matter copilot, a member who may write drafts), a verified
 // judgment claim has "Insert into draft": the member picks a draft and the block to insert after; the
 // claim's judgment, quote and pinpoint go to the server unaltered, which verifies them again.
+// #1192: a citation chip scrolls to its source (in the rail, or the Sheet below `lg`) and keeps it
+// highlighted. "No authority found" and "the sources don't settle this" (no claim verified, some
+// unverified) show the reason and next steps: search Research for the question (prefilled), rephrase
+// (the question goes back into the composer) and, in the workspace copilot, ask with a matter.
 import type { CopilotAnswer } from '@causedeck/core/copilot';
 import { Badge } from '@causedeck/ui/badge';
 import { Button } from '@causedeck/ui/button';
 import { EmptyState } from '@causedeck/ui/empty-state';
 import { Skeleton, SkeletonGroup } from '@causedeck/ui/skeleton';
 import { Textarea } from '@causedeck/ui/textarea';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import {
@@ -29,7 +34,13 @@ import {
   type SyntheticEvent,
 } from 'react';
 
-import { AnswerProse, SourcesList, SourcesSheet, type CopilotClaim } from './copilot-answer.tsx';
+import {
+  AnswerProse,
+  sourceElementId,
+  SourcesList,
+  SourcesSheet,
+  type CopilotClaim,
+} from './copilot-answer.tsx';
 
 type ActionResult =
   { ok: true; data: CopilotAnswer } | { ok: false; error: { code?: string; message: string } };
@@ -238,10 +249,116 @@ function useOnline(): boolean {
 const isDesktop = (): boolean =>
   typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 64rem)').matches;
 
+const reducedMotion = (): boolean =>
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Scrolls to the element once it exists (the rail switches turn or the Sheet mounts first) and focuses
+ * its open-at-the-passage link when it has one.
+ */
+function scrollToWhenShown(id: string, tries = 10): void {
+  const el = document.getElementById(id);
+  if (el !== null) {
+    // jsdom has no scrollIntoView.
+    if (typeof el.scrollIntoView === 'function') {
+      el.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
+    }
+    // #1192: focus the source's link that opens the judgment at the passage, one Enter away.
+    el.querySelector<HTMLElement>('[data-slot="copilot-source-link"]')?.focus({
+      preventScroll: true,
+    });
+    return;
+  }
+  if (tries > 0) {
+    requestAnimationFrame(() => {
+      scrollToWhenShown(id, tries - 1);
+    });
+  }
+}
+
+/** "No authority found" or "the sources don't settle this": the reason and the next steps. */
+function NextSteps({
+  slot,
+  title,
+  reason,
+  question,
+  researchHref,
+  matterHref,
+  onRephrase,
+}: {
+  slot: string;
+  title: string;
+  reason: string;
+  question: string | null;
+  researchHref: string;
+  matterHref: string | null;
+  onRephrase: (() => void) | null;
+}) {
+  const t = useTranslations('research.copilot');
+  return (
+    <div
+      data-slot={`${slot}-state`}
+      className="border-line bg-surface-raised flex flex-col gap-3 rounded-md border p-3"
+    >
+      <div role="status" className="flex flex-col gap-1 text-sm">
+        <p data-slot={slot} className="text-ink font-medium">
+          {title}
+        </p>
+        <p data-slot="copilot-state-reason" className="text-ink-muted">
+          {reason}
+        </p>
+      </div>
+      <ul
+        data-slot="copilot-next-steps"
+        aria-label={t('nextSteps.label')}
+        className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"
+      >
+        {question === null ? null : (
+          <li>
+            <Button asChild variant="secondary" size="sm" className="min-h-11 w-full sm:w-auto">
+              <Link href={researchHref} data-slot="copilot-search-research">
+                <span className="truncate">
+                  {t('nextSteps.searchResearch', { query: question })}
+                </span>
+              </Link>
+            </Button>
+          </li>
+        )}
+        {onRephrase === null ? null : (
+          <li>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              data-slot="copilot-rephrase"
+              className="min-h-11 w-full sm:w-auto"
+              onClick={onRephrase}
+            >
+              {t('nextSteps.rephrase')}
+            </Button>
+          </li>
+        )}
+        {matterHref === null ? null : (
+          <li>
+            <Button asChild variant="ghost" size="sm" className="min-h-11 w-full sm:w-auto">
+              <Link href={matterHref} data-slot="copilot-ask-with-matter">
+                {t('nextSteps.askWithMatter')}
+              </Link>
+            </Button>
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
 export interface CopilotPanelProps {
   workspaceId: string;
-  /** Omitted for the workspace-level copilot. */
-  matterId?: string;
+  /** #1192: links of the next steps (`/w/<slug>/research?q=`, `/w/<slug>/matters`). */
+  workspaceSlug: string;
+  /** Omitted (or undefined) for the workspace-level copilot. */
+  matterId?: string | undefined;
   ask: (raw: unknown) => Promise<ActionResult>;
   /** Renders a stored result (stories, tests). */
   initialAnswer?: CopilotAnswer;
@@ -268,6 +385,7 @@ function initialThread(
 
 export function CopilotPanel({
   workspaceId,
+  workspaceSlug,
   matterId,
   ask,
   initialAnswer,
@@ -286,6 +404,8 @@ export function CopilotPanel({
     initialThread(initialTurns, initialAnswer),
   );
   const [active, setActive] = useState<{ turn: string; n: number } | null>(null);
+  // The source a chip was clicked for: stays highlighted after the pointer leaves (#1192).
+  const [pinned, setPinned] = useState<{ turn: string; n: number } | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [sheetFor, setSheetFor] = useState<string | null>(null);
   const [, start] = useTransition();
@@ -401,7 +521,34 @@ export function CopilotPanel({
           );
         };
 
-  const activeIn = (id: string): number | null => (active?.turn === id ? active.n : null);
+  const activeIn = (id: string): number | null =>
+    active?.turn === id ? active.n : pinned?.turn === id ? pinned.n : null;
+  // Element ids of a turn's sources: the rail's and the Sheet's (both may be in the DOM).
+  const idPrefixOf = (id: string, where: 'rail' | 'sheet'): string =>
+    `copilot-${`${inputId}-${id}`.replace(/[^\w-]/g, '')}-${where}`;
+
+  function showSource(turnId: string, n: number): void {
+    setPinned({ turn: turnId, n });
+    setSelected(turnId);
+    const desktop = isDesktop();
+    if (!desktop) setSheetFor(turnId);
+    requestAnimationFrame(() => {
+      scrollToWhenShown(sourceElementId(idPrefixOf(turnId, desktop ? 'rail' : 'sheet'), n));
+    });
+  }
+
+  function rephrase(text: string): void {
+    setQuestion(text);
+    const el = inputRef.current;
+    if (el === null) return;
+    el.focus();
+    el.setSelectionRange(text.length, text.length);
+  }
+
+  const researchHref = (text: string): string =>
+    `/w/${encodeURIComponent(workspaceSlug)}/research?q=${encodeURIComponent(text)}`;
+  const matterHref =
+    matterId === undefined ? `/w/${encodeURIComponent(workspaceSlug)}/matters` : null;
   const searching = matterId === undefined ? t('searchingCorpus') : t('searching');
 
   return (
@@ -520,24 +667,33 @@ export function CopilotPanel({
                       </p>
                     ) : (
                       <>
-                        {answer.noAuthority ? (
-                          <p
-                            role="status"
-                            data-slot="copilot-no-authority"
-                            className="text-ink-muted text-sm"
-                          >
-                            {t('noAuthority')}
-                          </p>
+                        {answer.noAuthority || answer.claims.length === 0 ? (
+                          <NextSteps
+                            slot={answer.noAuthority ? 'copilot-no-authority' : 'copilot-weak'}
+                            title={answer.noAuthority ? t('noAuthority') : t('weak.title')}
+                            reason={answer.noAuthority ? t('noAuthorityReason') : t('weak.reason')}
+                            question={turn.question}
+                            researchHref={researchHref(turn.question ?? '')}
+                            matterHref={matterHref}
+                            onRephrase={
+                              turn.question === null
+                                ? null
+                                : () => {
+                                    rephrase(turn.question ?? '');
+                                  }
+                            }
+                          />
                         ) : null}
                         <AnswerProse
                           answer={answer}
                           active={activeIn(turn.id)}
+                          idPrefix={idPrefixOf(turn.id, 'rail')}
                           onActivate={(n) => {
                             setActive(n === null ? null : { turn: turn.id, n });
                             if (n !== null) setSelected(turn.id);
                           }}
-                          onOpenSources={() => {
-                            if (!isDesktop()) setSheetFor(turn.id);
+                          onShowSource={(n) => {
+                            showSource(turn.id, n);
                           }}
                         />
                         {hasSources ? (
@@ -552,6 +708,7 @@ export function CopilotPanel({
                                 setSheetFor(open ? turn.id : null);
                               }}
                               renderInsert={renderInsert}
+                              idPrefix={idPrefixOf(turn.id, 'sheet')}
                             />
                             {railTurn?.id === turn.id ? null : (
                               <Button
@@ -667,6 +824,7 @@ export function CopilotPanel({
             answer={railAnswer}
             active={railTurn === undefined ? null : activeIn(railTurn.id)}
             renderInsert={renderInsert}
+            idPrefix={idPrefixOf(railTurn?.id ?? '', 'rail')}
           />
         </aside>
       ) : null}

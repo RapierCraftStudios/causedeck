@@ -10,7 +10,11 @@ import type { TaskDef } from '../types.ts';
 // answer ("no authority found"). v2 (#1167) adds an optional written `answer`: plain-language prose
 // citing the claims by 1-based position as `[n]` (or `[n, m]`) markers. The caller keeps only the
 // markers of verified claims and renumbers them; a reply without `answer` (older fixtures and cached
-// results) still parses and gets an answer composed from the verified claims.
+// results) still parses and gets an answer composed from the verified claims. v3 (#1192) adds an
+// optional `bottomLine`: one sentence that leads with the answer ("Yes, if…" / "No, unless…") and
+// cites the claims by `[n]` like the answer. The caller holds it to D-004 like any claim: it is shown
+// only when at least one of its markers points at a verified claim, else it is dropped. A reply
+// without `bottomLine` still parses.
 const input = z.object({
   question: z.string().min(1).max(4000),
   sources: z
@@ -36,6 +40,13 @@ const output = z.object({
       'A short plain-language answer to the question that cites the claims by their 1-based position as [n] or [n, m] markers.',
     )
     .optional(),
+  bottomLine: z
+    .string()
+    .max(300)
+    .describe(
+      'One sentence that gives the bottom line first, starting with Yes or No where the question allows it (e.g. "Yes, if …" or "No, unless …"), and cites the supporting claims by their 1-based position as [n] or [n, m] markers. Omit it when the claims do not settle the question.',
+    )
+    .optional(),
 });
 
 export const answerMatterQuestion: TaskDef<z.infer<typeof input>, z.infer<typeof output>> = {
@@ -44,7 +55,7 @@ export const answerMatterQuestion: TaskDef<z.infer<typeof input>, z.infer<typeof
   output,
   providers: ['bedrock', 'chatgpt-plan'],
   maxOutputTokens: 1400,
-  promptId: 'answer_matter_question.v2',
+  promptId: 'answer_matter_question.v3',
   defaultLevel: 1,
   tier: 'drafting',
 };

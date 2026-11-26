@@ -599,7 +599,7 @@ describe('copilot answer quality (#1192)', () => {
       const sheet = document.querySelector('[data-slot="copilot-sources-sheet"]');
       // Focus lands on source 2's link that opens the judgment at the passage (R5).
       const open = sheet?.querySelector('[data-n="2"] [data-slot="copilot-source-link"]');
-      expect(open?.getAttribute('href')).toBe('https://court.example/j1.pdf#page=4');
+      expect(open?.getAttribute('href')).toMatch(/^\/w\/demo\/research\/judgments\/j1\?page=4/);
       expect(document.activeElement).toBe(open);
       expect(sheet?.querySelector('[data-n="2"]')?.getAttribute('data-active')).toBe('true');
       expect(rail?.querySelector('[data-n="2"]')?.getAttribute('data-active')).toBe('true');

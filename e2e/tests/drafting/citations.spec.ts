@@ -61,7 +61,7 @@ test.describe('drafting citations', () => {
             { pageNo: 1, text: '1. The appellant seeks bail.\n\n2. The facts are not in dispute.' },
             { pageNo: 2, text: '3. Bail is granted on conditions.\n\n4. Liberty is reserved.' },
           ])},
-          1, 'X (fictional) v. State', true, 'supreme_court')`;
+          2, 'X (fictional) v. State', true, 'supreme_court')`;
       const content = JSON.stringify(BLOCKS);
       await sql`
         insert into draft (id, workspace_id, template_id, title, status)

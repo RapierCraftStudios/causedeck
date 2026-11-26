@@ -298,7 +298,7 @@ export function SourcesSheet({
           variant="secondary"
           size="sm"
           data-slot="copilot-sources-open"
-          className="min-h-11 self-start lg:hidden"
+          className="min-h-11 scroll-mb-[calc(var(--space-6)+72px+env(safe-area-inset-bottom))] self-start lg:hidden"
         >
           {t('sources.open', { count: answer.claims.length })}
         </Button>

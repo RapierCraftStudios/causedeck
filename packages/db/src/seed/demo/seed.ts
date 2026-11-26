@@ -8,7 +8,7 @@ import { withWorkspace } from '../../rls.ts';
 import { member, organization, user } from '../../schema/auth.ts';
 import { bench, courtHall, forum } from '../../schema/court.ts';
 import { hearing, listing, obligation, order, task, appearance } from '../../schema/docket.ts';
-import { anchor, document } from '../../schema/documents.ts';
+import { anchor, document, documentPage } from '../../schema/documents.ts';
 import { featureFlag, workspaceFeatureFlag } from '../../schema/flags.ts';
 import { matter } from '../../schema/matter-graph.ts';
 import { person, roleEdge } from '../../schema/people.ts';
@@ -80,6 +80,7 @@ async function insertModules(
   await put(courtDayMarker, m.markers);
   await put(briefState, m.briefStates);
   await put(document, m.documents);
+  await put(documentPage, m.documentPages);
   await put(anchor, m.anchors);
   await put(order, m.orders);
   await put(obligation, m.obligations);
@@ -343,6 +344,9 @@ export async function seedDemoWorkspace(
       await tx.insert(proceedingLink).values(graph.proceedingLinks).onConflictDoNothing();
     }
     await tx.insert(document).values(graph.documents).onConflictDoNothing();
+    if (graph.documentPages.length > 0) {
+      await tx.insert(documentPage).values(graph.documentPages).onConflictDoNothing();
+    }
     await tx.insert(anchor).values(graph.anchors).onConflictDoNothing();
     await tx.insert(order).values(graph.orders).onConflictDoNothing();
     await tx.insert(listing).values(graph.listings).onConflictDoNothing();

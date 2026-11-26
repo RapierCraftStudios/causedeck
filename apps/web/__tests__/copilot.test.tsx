@@ -368,7 +368,37 @@ describe('copilot conversation (#1168)', () => {
   it('suggests corpus questions on the workspace copilot', () => {
     const { container } = withIntl(<CopilotPanel workspaceId="ws" ask={vi.fn()} />);
     expect(container.querySelectorAll('[data-slot="copilot-suggestion"]')).toHaveLength(3);
-    expect(container.textContent).toContain(en.suggestions.corpusConsent);
+    expect(container.textContent).toContain(en.suggestions.corpusBail);
+    expect(container.textContent).toContain(en.suggestions.corpusWrit);
+  });
+
+  it('starter questions fit bail and writ matters, not medical negligence (#1194)', () => {
+    const medical = /consent|surgery|surgeon|negligence|hospital|doctor|medical/i;
+    const texts = (node: ParentNode) =>
+      [...node.querySelectorAll('[data-slot="copilot-suggestion"]')].map((b) => b.textContent);
+    const corpus = withIntl(<CopilotPanel workspaceId="ws" ask={vi.fn()} />);
+    const corpusTexts = texts(corpus.container);
+    expect(corpusTexts.some((q) => /bail/i.test(q))).toBe(true);
+    expect(corpusTexts.some((q) => /writ/i.test(q))).toBe(true);
+    for (const q of corpusTexts) expect(q).not.toMatch(medical);
+    cleanup();
+    const matter = withIntl(
+      <CopilotPanel
+        workspaceId="ws"
+        matterId={MATTER}
+        ask={vi.fn()}
+        matterContext={{ title: 'Kumar v. State', stage: null, nextDate: null }}
+      />,
+    );
+    const matterTexts = texts(matter.container);
+    expect(matterTexts).toContain(en.suggestions.matterOrders);
+    for (const q of matterTexts) expect(q).not.toMatch(medical);
+    // No catalog keeps a medical-negligence starter (the placeholder text is not a starter).
+    for (const locale of ['en', 'kn', 'ta'] as const) {
+      const keys = Object.keys(catalogs[locale].research.copilot.suggestions);
+      expect(keys).not.toContain('corpusConsent');
+      expect(keys).not.toContain('matterDocuments');
+    }
   });
 
   it('shows the searching skeleton while it waits', async () => {

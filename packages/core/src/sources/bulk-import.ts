@@ -7,7 +7,7 @@ import { asc, desc, isNotNull, sql } from 'drizzle-orm';
 
 export interface BulkImportProgress {
   sourceId: string;
-  dataset: 'sc' | 'hc';
+  dataset: 'sc' | 'hc' | 'hf';
   court: string | null;
   year: number;
   status: 'pending' | 'running' | 'complete' | 'failed';

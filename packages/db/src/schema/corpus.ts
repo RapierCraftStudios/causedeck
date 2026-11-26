@@ -63,6 +63,10 @@ export interface JudgmentOutcomeAnchor {
   quote: string;
 }
 
+/** Whether a judgment's page anchors can be checked (#1171): text-only imports wait for their PDF. */
+export const JUDGMENT_PINPOINT_STATES = ['verified', 'pending-pdf'] as const;
+export type JudgmentPinpointState = (typeof JUDGMENT_PINPOINT_STATES)[number];
+
 export const judgment = pgTable(
   'judgment',
   {
@@ -116,11 +120,27 @@ export const judgment = pgTable(
     enrichedRedactionVersion: integer('enriched_redaction_version').notNull().default(0),
     /** Retrieval embedding; null until an ADR picks the model and a job fills it. */
     embedding: embedding(),
+    /** The eCourts CNR, when the source gives one (the HF dataset, #1171); other CNRs of the same text are in `judgment_cnr_alias`. */
+    cnr: text('cnr'),
+    /** sha256 hex of the normalised source text (`normaliseHashText`), the text dedupe key of text-only imports (#1171); null for PDF rows. */
+    textHash: text('text_hash'),
+    /** `verified` when `page_text` holds the original pages; `pending-pdf` for a text-only import whose page anchors wait for the PDF (#1171, #1173). */
+    pinpointState: text('pinpoint_state')
+      .$type<JudgmentPinpointState>()
+      .notNull()
+      .default('verified'),
+    /** The licence of the dataset the row came from, e.g. `CC-BY-4.0`; null for court sites. */
+    licence: text('licence'),
+    /** The attribution the licence requires, shown wherever the text appears (#1172). */
+    attribution: text('attribution'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex('judgment_sha256_uq').on(t.sha256),
     index('judgment_neutral_citation_idx').on(t.neutralCitation),
+    index('judgment_cnr_idx').on(t.cnr),
+    index('judgment_text_hash_idx').on(t.textHash),
+    check('judgment_pinpoint_state_check', sql`${t.pinpointState} in ('verified','pending-pdf')`),
     index('judgment_embedding_hnsw_idx').using('hnsw', t.embedding.op('vector_cosine_ops')),
     check(
       'judgment_outcome_check',
@@ -129,8 +149,34 @@ export const judgment = pgTable(
   ],
 );
 
-/** The open-data datasets `corpus.bulk_import` reads (#890): `sc` Supreme Court, `hc` High Courts. */
-export const CORPUS_BULK_DATASETS = ['sc', 'hc'] as const;
+/**
+ * Another CNR of a judgment whose text was already stored under a different CNR (#1171): the HF
+ * dataset repeats identical texts under several CNRs, so the text is stored once and every further
+ * CNR resolves here. Global table: identifiers only, no document content.
+ */
+export const judgmentCnrAlias = pgTable(
+  'judgment_cnr_alias',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    cnr: text('cnr').notNull(),
+    judgmentId: uuid('judgment_id')
+      .notNull()
+      .references(() => judgment.id),
+    /** The registry source the alias was read from (`hf-overthelex`). */
+    sourceId: text('source_id').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('judgment_cnr_alias_cnr_uq').on(t.cnr),
+    index('judgment_cnr_alias_judgment_idx').on(t.judgmentId),
+  ],
+);
+
+/**
+ * The open-data datasets the corpus importers read: `sc` Supreme Court and `hc` High Courts (AWS
+ * Open Data, #890), `hf` the Hugging Face text dataset (#1171).
+ */
+export const CORPUS_BULK_DATASETS = ['sc', 'hc', 'hf'] as const;
 export type CorpusBulkDataset = (typeof CORPUS_BULK_DATASETS)[number];
 
 /** Where a bulk archive stands: `pending` until a run reaches it, `complete` once every entry was read. */

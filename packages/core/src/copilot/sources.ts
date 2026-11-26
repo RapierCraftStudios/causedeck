@@ -15,6 +15,7 @@ import {
 } from '@causedeck/ai';
 import { withWorkspace, type Queryable } from '@causedeck/db';
 import {
+  citableReference,
   drizzleRetriever,
   planQuery,
   searchCorpusWithPlan,
@@ -46,6 +47,10 @@ export interface JudgmentRef {
   id: string;
   title: string | null;
   court: string;
+  /**
+   * What the judgment is cited as (#1189): its neutral citation, else the SCR citation from
+   * `case_numbers` (`citableReference`). Display only; verification never reads it.
+   */
   neutralCitation: string | null;
   /** The corpus record the claim links to, from the stored judgment. */
   sourceUrl: string | null;
@@ -288,7 +293,7 @@ export async function corpusSources(
         id: hit.judgmentId,
         title: hit.title,
         court: hit.court,
-        neutralCitation: hit.neutralCitation,
+        neutralCitation: citableReference(hit.neutralCitation, hit.caseNumbers),
         sourceUrl: hit.sourceUrl,
       };
       sources.push({

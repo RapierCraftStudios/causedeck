@@ -9,10 +9,11 @@ import { createHash } from 'node:crypto';
 import { schema, type Queryable } from '@causedeck/db';
 import { and, eq, sql } from 'drizzle-orm';
 
-import { storeJudgment, type StoreDeps } from '../ingest.ts';
+import { storeJudgment, type JudgmentMetadata, type StoreDeps } from '../ingest.ts';
 
 import { indexMetadata, METADATA_COLUMNS, type BulkMetadata } from './metadata.ts';
 import { readParquetRows } from './parquet.ts';
+import { AWS_SC_SOURCE_ID, parseScrCitation, SUPREME_COURT_CODE } from './scr.ts';
 import { gunzipIfNeeded, readTar } from './tar.ts';
 import type { BulkBudget, BulkImportReport, BulkImportRequest, BulkObjectSource } from './types.ts';
 
@@ -108,6 +109,26 @@ async function loadMetadata(
   }
 }
 
+/**
+ * The metadata stored with one archive entry. For the Supreme Court dataset (#1189) the court is always
+ * `INSC` and the SCR citation in the member name (`2008_9_821_869_EN.pdf`) is kept as a reporter
+ * citation; other datasets take the Parquet row as is.
+ */
+export function entryMetadata(
+  sourceId: string,
+  entryName: string,
+  row: BulkMetadata | undefined,
+): JudgmentMetadata {
+  const base: JudgmentMetadata = row ?? {};
+  if (sourceId !== AWS_SC_SOURCE_ID) return base;
+  const scr = parseScrCitation(entryName);
+  return {
+    ...base,
+    court: SUPREME_COURT_CODE,
+    ...(scr === null ? {} : { reporterCitations: [scr] }),
+  };
+}
+
 type CursorRow = typeof corpusImportCursor.$inferSelect;
 
 async function cursorFor(
@@ -192,7 +213,7 @@ export async function runBulkImport(
               return await storeJudgment(deps, {
                 sourceId: request.sourceId,
                 bytes: entry.data,
-                metadata: metadata.get(entry.name) ?? {},
+                metadata: entryMetadata(request.sourceId, entry.name, metadata.get(entry.name)),
                 provenance: {
                   url: new URL(`${archive.key}#${entry.name}`, request.baseUrl).toString(),
                   fetchedAt: stamp,

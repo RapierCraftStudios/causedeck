@@ -10,6 +10,7 @@ import type {
   SectionVersionView,
   SectionView as SectionViewData,
 } from '@causedeck/core/statutes';
+import { citableReference, courtLabel } from '@causedeck/intelligence/citation-display';
 import { useTranslations } from 'next-intl';
 
 export interface SectionViewProps {
@@ -155,8 +156,8 @@ export function SectionView({ slug, section, history, authorities }: SectionView
                   </h3>
                   <p className="text-muted-foreground">
                     {[
-                      a.neutralCitation,
-                      a.court,
+                      citableReference(a.neutralCitation, a.caseNumbers),
+                      courtLabel(a.court),
                       level === null ? null : t(`search.levels.${level}`),
                       a.judgmentDate === null
                         ? null

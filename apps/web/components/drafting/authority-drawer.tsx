@@ -6,6 +6,7 @@
 // Chip and the corpus link). Inserting is an explicit click too: the server re-verifies the quote
 // against the stored judgment and saves it as a new paragraph in the next version
 // (`authority-actions.ts`). Nothing here edits or invents a citation.
+import { courtLabel } from '@causedeck/intelligence/citation-display';
 import { Button } from '@causedeck/ui/button';
 import { ProvenanceChip } from '@causedeck/ui/patterns';
 import type { Block } from '@causedeck/validators/drafting';
@@ -163,7 +164,7 @@ export function AuthorityDrawer({
               >
                 <p className="text-sm font-semibold">{candidate.title ?? t('untitled')}</p>
                 <p className="text-ink-muted text-xs">
-                  {[candidate.neutralCitation, candidate.court, pin]
+                  {[candidate.neutralCitation, courtLabel(candidate.court), pin]
                     .filter((part) => part !== null)
                     .join(' · ')}
                 </p>

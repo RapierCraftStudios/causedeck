@@ -5,6 +5,7 @@
 // sources" asks for the optional answer, whose quotes the server has verified against the passages.
 // Passages are anonymised text; a masked title is shown as withheld. Works on the mock providers.
 import type { AuthoritySearchResult } from '@causedeck/core/research';
+import { citableReference, courtLabel } from '@causedeck/intelligence/citation-display';
 import { Button } from '@causedeck/ui/button';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useState, useTransition, type SyntheticEvent } from 'react';
@@ -481,8 +482,8 @@ export function AuthoritySearch({
                     </h3>
                     <p className="text-muted-foreground">
                       {[
-                        hit.neutralCitation,
-                        hit.court,
+                        citableReference(hit.neutralCitation, hit.caseNumbers),
+                        courtLabel(hit.court),
                         t(`levels.${levelOf(hit.courtLevel)}`),
                         hit.judgmentDate === null
                           ? null

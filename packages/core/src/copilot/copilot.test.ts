@@ -34,7 +34,11 @@ const NOW = new Date('2026-10-31T06:30:00.000Z');
 const TEXT =
   'The patient underwent a hysterectomy and no written consent was taken for the surgery.';
 
-async function seedJudgment(tx: Transaction, text = TEXT): Promise<void> {
+async function seedJudgment(
+  tx: Transaction,
+  text = TEXT,
+  over: Partial<typeof schema.judgment.$inferInsert> = {},
+): Promise<void> {
   const sha256 = randomUUID().replaceAll('-', '');
   const [row] = await tx
     .insert(schema.judgment)
@@ -62,6 +66,7 @@ async function seedJudgment(tx: Transaction, text = TEXT): Promise<void> {
       titleMasked: false,
       courtLevel: 'high_court',
       outcome: 'allowed',
+      ...over,
     })
     .returning({ id: schema.judgment.id });
   const embedder = createMockEmbedProvider();
@@ -73,7 +78,7 @@ async function seedJudgment(tx: Transaction, text = TEXT): Promise<void> {
     pageFrom: 1,
     pageTo: 1,
     text,
-    court: 'MHC',
+    court: over.court ?? 'MHC',
     courtLevel: 'high_court',
     judgmentYear: 2019,
     embedding: vectors[0] ?? [],
@@ -256,6 +261,29 @@ describe('askCopilot', () => {
       expect(answer.unsupported).toEqual([]);
       const judgment = Object.values(answer.judgments)[0];
       expect(judgment?.sourceUrl).toMatch(/^https:\/\/court\.example\//);
+    });
+  });
+
+  it('cites a judgment without a neutral citation by its SCR citation (#1189)', async () => {
+    await withTestDb(async (tx) => {
+      await seedPlans(tx);
+      await seedJudgment(tx, TEXT, {
+        neutralCitation: null,
+        court: 'INSC',
+        caseNumbers: ['C.A. 1 of 2008', '[2008] 9 SCR 821'],
+      });
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const answer = await askCopilot(
+        tx,
+        { workspaceId, userId: ownerId },
+        { question: QUESTION },
+        { now: () => NOW, answer: quoting('no written consent was taken') },
+      );
+      expect(answer.claims).toHaveLength(1);
+      expect(Object.values(answer.judgments)[0]).toMatchObject({
+        court: 'INSC',
+        neutralCitation: '[2008] 9 SCR 821',
+      });
     });
   });
 

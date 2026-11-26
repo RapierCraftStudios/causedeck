@@ -67,6 +67,7 @@ export {
   type SearchOptions,
   type SearchResult,
 } from './search.ts';
+export { citableReference, courtLabel } from './types.ts';
 export type {
   CourtLevel,
   FusedCandidate,

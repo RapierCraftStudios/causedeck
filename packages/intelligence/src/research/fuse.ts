@@ -110,6 +110,7 @@ export function groupByJudgment(
         courtLevel: c.courtLevel,
         judgmentDate: c.judgmentDate,
         neutralCitation: c.neutralCitation,
+        caseNumbers: c.caseNumbers ?? [],
         title: c.title,
         titleMasked: c.titleMasked,
         outcome: c.outcome,

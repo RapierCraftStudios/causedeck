@@ -8,6 +8,7 @@ import type { readParquetRows } from './parquet.ts';
 import { mapMetadataRow, METADATA_COLUMNS } from './metadata.ts';
 import {
   BULK_PROGRESS_EVERY,
+  entryMetadata,
   listArchives,
   metadataKey,
   runBulkImport,
@@ -168,6 +169,47 @@ describe('runBulkImport', () => {
       bench: ['A B', 'C D'],
       judgmentDate: '2023-05-04',
     });
+  });
+});
+
+describe('runBulkImport on the Supreme Court dataset (#1189)', () => {
+  const scFiles = {
+    '2008_9_821_869_EN.pdf': 'english judgment text, long enough to be a readable text layer here',
+    '2008_9_821_869_HI.pdf': 'hindi translation text, long enough to be a readable text layer too',
+    'judgment-7.pdf': 'a member whose name carries no SCR citation, long enough to read ok',
+  };
+
+  it('stores the SCR citation of the member name in case_numbers and the court INSC', async () => {
+    const { db, judgments } = fakeDb();
+    await runBulkImport(deps({ db, objects: objects(scFiles) }), request);
+    const stored = judgments.map(
+      (r) => r.values as { court: string; caseNumbers: string[]; neutralCitation: string | null },
+    );
+    expect(stored).toHaveLength(3);
+    expect(stored[0]).toMatchObject({
+      court: 'INSC',
+      caseNumbers: ['[2008] 9 SCR 821'],
+      neutralCitation: null,
+    });
+    // The regional-language translation and the malformed name store no citation.
+    expect(stored[1]).toMatchObject({ court: 'INSC', caseNumbers: [] });
+    expect(stored[2]).toMatchObject({ court: 'INSC', caseNumbers: [] });
+    expect(stored.every((r) => r.court !== 'aws-open-data-sc')).toBe(true);
+  });
+
+  it('keeps the Parquet case number and adds the SCR citation after it', () => {
+    const row = mapMetadataRow({ case_no: 'C.A. 1 of 2008', court_code: 'SC' });
+    expect(entryMetadata('aws-open-data-sc', '2008_9_821_869_EN.pdf', row)).toMatchObject({
+      court: 'INSC',
+      caseNumbers: ['C.A. 1 of 2008'],
+      reporterCitations: ['[2008] 9 SCR 821'],
+    });
+  });
+
+  it('leaves High Court metadata as the Parquet gives it', () => {
+    const row = mapMetadataRow({ court_code: '33_10', case_no: 'W.P. 1 of 2023' });
+    expect(entryMetadata('aws-open-data-hc', '2008_9_821_869_EN.pdf', row)).toEqual(row);
+    expect(entryMetadata('aws-open-data-hc', 'a.pdf', undefined)).toEqual({});
   });
 });
 

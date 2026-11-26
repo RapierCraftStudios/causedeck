@@ -149,6 +149,30 @@ const enabled = async (name: string): Promise<HTMLElement> => {
 const submit = () => fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
 describe('AuthoritySearch', () => {
+  it('shows the SCR citation and "Supreme Court of India" for an SC judgment without a neutral citation (#1189)', async () => {
+    const base = result();
+    const [first] = base.hits;
+    if (first === undefined) throw new Error('fixture has no hits');
+    setup({
+      ...base,
+      hits: [
+        {
+          ...first,
+          court: 'INSC',
+          courtLevel: 'supreme_court',
+          neutralCitation: null,
+          caseNumbers: ['C.A. 1 of 2008', '[2008] 9 SCR 821'],
+        },
+      ],
+    });
+    submit();
+    await screen.findByText('Meera Rao v. Sunrise Nursing Home');
+    expect(
+      screen.getByText(/\[2008\] 9 SCR 821 · Supreme Court of India · Supreme Court/),
+    ).toBeTruthy();
+    expect(screen.queryByText(/INSC/)).toBeNull();
+  });
+
   it('shows the plan as chips and the results with every field', async () => {
     const { search } = setup(result());
     submit();

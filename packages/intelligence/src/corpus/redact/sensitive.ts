@@ -25,6 +25,12 @@ const IN_CAMERA = /\bin[\s-]camera\b/i;
 const ACQUITTAL =
   /\b(?:is|are|stands?|shall\s+be|hereby)\s+acquitted\b|\bacquit(?:s)?\s+the\s+(?:accused|appellant)|\bacquittal\s+(?:of|recorded)\b/i;
 
+/**
+ * How much of the first page counts as the head for matrimonial detection (#1188): the cause title,
+ * case type and the statute the case arises under; recitals and cited precedents sit deeper.
+ */
+const MATRIMONIAL_HEAD_CHARS = 4000;
+
 /** The sensitive category of a judgment, or null. The most protective category wins. */
 export function detectSensitiveCategory(
   title: string | null,
@@ -35,7 +41,12 @@ export function detectSensitiveCategory(
   if (POCSO.test(head) || POCSO.test(all)) return 'pocso';
   if (BNS_SEXUAL.test(all) || IPC_SEXUAL.test(all)) return 'sexual_offence';
   if (JUVENILE.test(all)) return 'juvenile';
-  if (MATRIMONIAL.test(head) || MATRIMONIAL.test(all)) return 'matrimonial';
+  // Matrimonial is a property of the case (its type and statute), read from the title and the head
+  // of the first page only: a passing mention of divorce or s.498A in the body is not enough (#1188).
+  const matrimonialHead = [title ?? '', (pages[0] ?? '').slice(0, MATRIMONIAL_HEAD_CHARS)].join(
+    '\n',
+  );
+  if (MATRIMONIAL.test(matrimonialHead)) return 'matrimonial';
   if (IN_CAMERA.test(all)) return 'in_camera';
   // An acquittal is read from the operative end of the judgment, not from a recital of the trial.
   const tail = all.slice(Math.floor(all.length * 0.6));

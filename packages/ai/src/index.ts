@@ -62,10 +62,13 @@ export {
 export { detectInjection, wrapAsData } from './policy/injection.ts';
 export {
   allowedChain,
+  embedDataResidency,
   INDIA_REGIONS,
   isIndiaRegion,
   PREVIEW_PLAN_PROVIDER_ID,
+  SELF_HOSTED_REGION,
   type AllowedChainOptions,
+  type EmbedDataResidencyOptions,
 } from './policy/residency.ts';
 export { createBedrockProvider, type BedrockConfig } from './providers/bedrock.ts';
 export {

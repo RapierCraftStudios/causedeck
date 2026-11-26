@@ -75,13 +75,51 @@ export function lexicalQueryText(plan: Pick<ResearchPlan, 'keywords' | 'query'>)
   return searchTerms([plan.keywords.join(' '), plan.query].join(' ')).join(' | ');
 }
 
+/** Terms that take part in the minimum-match levels; the rest still count for coverage and rank. */
+export const MIN_MATCH_TERMS = 8;
+
+/**
+ * A full-text query matching segments that hold at least `k` of `terms` (the first `MIN_MATCH_TERMS`):
+ * the OR of every `k`-term AND. `k <= 1` is the plain OR of all terms.
+ */
+export function minMatchQuery(terms: readonly string[], k: number): string {
+  const unique = [...new Set(terms)];
+  if (k <= 1 || unique.length <= 1) return unique.join(' | ');
+  const pool = unique.slice(0, MIN_MATCH_TERMS);
+  const size = Math.min(k, pool.length);
+  const clauses: string[] = [];
+  const pick = (start: number, chosen: string[]): void => {
+    if (chosen.length === size) {
+      clauses.push(`(${chosen.join(' & ')})`);
+      return;
+    }
+    for (let i = start; i < pool.length; i += 1) pick(i + 1, [...chosen, pool[i] ?? '']);
+  };
+  pick(0, []);
+  return clauses.join(' | ');
+}
+
+/**
+ * The minimum-match levels the lexical arm tries, strictest first. The plain OR (level 1) is only a
+ * last resort for three or more terms: on a large corpus common words match tens of thousands of
+ * segments, and ranking all of them takes tens of seconds.
+ */
+export function minMatchLevels(termCount: number): number[] {
+  if (termCount <= 1) return [1];
+  if (termCount === 2) return [2, 1];
+  return [3, 2, 1];
+}
+
+/** Rows a level must return before the arm stops relaxing it. */
+export const MIN_MATCH_ENOUGH = 20;
+
 const SELECT = sql`
   select s.id as "segmentId", s.judgment_id as "judgmentId", s.judgment_year as "judgmentYear",
     s.ordinal as ordinal, s.role as role, s.page_from as "pageFrom", s.page_to as "pageTo",
     s.text as text, s.court as court, s.court_level as "courtLevel",
     j.case_title as title, j.title_masked as "titleMasked",
-    j.neutral_citation as "neutralCitation", j.judgment_date::text as "judgmentDate",
-    j.outcome as outcome, j.provenance->>'url' as "sourceUrl",
+    j.neutral_citation as "neutralCitation", j.case_numbers as "caseNumbers",
+    j.judgment_date::text as "judgmentDate", j.outcome as outcome, j.provenance->>'url' as "sourceUrl",
     (select count(distinct cr.judgment_id)::int from judgment_citation_ref cr
       where cr.cited_judgment_id = j.id) as "citedByCount"
   from judgment_segment s
@@ -118,35 +156,50 @@ export function drizzleRetriever(
     async lexical(plan, limit): Promise<RankedCandidates> {
       const text = lexicalQueryText(plan);
       if (text === '') return [];
+      const terms = text.split(' | ');
       const filters = sql.join(planFilters(plan), sql` and `);
-      // nosemgrep: infra.security.semgrep.causedeck.raw-sql-bypasses-with-workspace -- judgment_segment and judgment are global corpus tables (no workspace_id, no RLS); public anonymised judgments only
       // Index-first (#1187 follow-up): the GIN index finds the matching segments and ranks them in a
       // materialized CTE before any join, so the planner never walks judgments one by one through every
       // year partition (its estimate of the version filter is far too low). Coverage counts the distinct
       // query lexemes a segment holds; segment text is read only for the final `limit` rows.
-      const rows = await db.execute(sql`with query as materialized (
-          select to_tsquery('english', ${text}) as q,
-            array(select distinct unnest(tsvector_to_array(to_tsvector('english', ${text})))) as lexemes
-        ),
-        hits as materialized (
-          select s.id, s.judgment_year, s.judgment_id, s.court, s.court_level,
-            (select count(*) from unnest(query.lexemes) l
-              where s.search_tsv @@ plainto_tsquery('simple', l))::int as coverage,
-            ts_rank_cd(s.search_tsv, query.q) as rank
-          from judgment_segment s, query
-          where s.search_tsv @@ query.q
-        ),
-        top as (
-          select s.id, s.judgment_year, s.coverage, s.rank
-          from hits s join judgment j on j.id = s.judgment_id
-          where ${filters}
-          order by s.coverage desc, s.rank desc, s.id
-          limit ${limit}
-        )
-        ${SELECT}
-        join top t on t.id = s.id and t.judgment_year = s.judgment_year
-        order by t.coverage desc, t.rank desc, s.id`);
-      return Array.from(rows as unknown as Row[]).map(toCandidate);
+      // Minimum match: segments must hold at least k query terms, relaxed level by level only while a
+      // level returns too few rows. Coverage and rank always use every term.
+      const run = async (match: string): Promise<Row[]> => {
+        // nosemgrep: infra.security.semgrep.causedeck.raw-sql-bypasses-with-workspace -- judgment_segment and judgment are global corpus tables (no workspace_id, no RLS); public anonymised judgments only
+        const rows = await db.execute(sql`with query as materialized (
+            select to_tsquery('english', ${text}) as q, to_tsquery('english', ${match}) as m,
+              array(select distinct unnest(tsvector_to_array(to_tsvector('english', ${text})))) as lexemes
+          ),
+          hits as materialized (
+            select s.id, s.judgment_year, s.judgment_id, s.court, s.court_level,
+              (select count(*) from unnest(query.lexemes) l
+                where s.search_tsv @@ plainto_tsquery('simple', l))::int as coverage,
+              ts_rank_cd(s.search_tsv, query.q) as rank
+            from judgment_segment s, query
+            where s.search_tsv @@ query.m
+          ),
+          top as (
+            select s.id, s.judgment_year, s.coverage, s.rank
+            from hits s join judgment j on j.id = s.judgment_id
+            where ${filters}
+            order by s.coverage desc, s.rank desc, s.id
+            limit ${limit}
+          )
+          ${SELECT}
+          join top t on t.id = s.id and t.judgment_year = s.judgment_year
+          order by t.coverage desc, t.rank desc, s.id`);
+        return Array.from(rows as unknown as Row[]);
+      };
+      const levels = minMatchLevels(terms.length);
+      let rows: Row[] = [];
+      for (const [i, k] of levels.entries()) {
+        const last = i === levels.length - 1;
+        // The plain OR runs only when the stricter levels found nothing at all.
+        if (last && k === 1 && levels.length > 1 && rows.length > 0) break;
+        rows = await run(minMatchQuery(terms, k));
+        if (rows.length >= Math.min(limit, MIN_MATCH_ENOUGH)) break;
+      }
+      return rows.map(toCandidate);
     },
     async vector(embedding, plan, limit): Promise<RankedCandidates> {
       if (embedding.length === 0) return [];

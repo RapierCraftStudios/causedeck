@@ -1,7 +1,7 @@
 'use client';
 // The matter header (#390, #40 design spec): (1) the serif title, clamped to two lines on phones,
 // then the client chips, the status (a word, never colour alone), the owner and the `Sensitive`
-// lock badge. Sticky under the topbar, with a breadcrumb back to the list from 1280 px. The matter
+// lock badge. Sticky under the topbar from 768 px (in the flow on phones), with a breadcrumb back to the list from 1280 px. The matter
 // menu exists only when the role has an action in it: today the sensitive toggle for owners and
 // advocates (`matter.restrict`); viewers and clerks get no menu at all.
 import { Badge } from '@causedeck/ui/badge';
@@ -50,7 +50,9 @@ export function MatterHeader({
   return (
     <header
       data-slot="matter-header"
-      className="bg-surface z-sticky sticky top-0 flex flex-col gap-2 py-2"
+      // Sticky below the topbar (56 px from md) so the two never stack on each other; on phones the
+      // header scrolls away with the page, so it never sits over the copilot's answer (#1194).
+      className="bg-surface md:z-sticky flex flex-col gap-2 py-2 md:sticky md:top-14"
     >
       <nav aria-label={t('breadcrumb')} className="max-xl:hidden">
         <Link href={listHref} className="text-ink-muted text-sm underline-offset-4 hover:underline">

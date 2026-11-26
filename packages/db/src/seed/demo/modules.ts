@@ -13,7 +13,7 @@ import type { InferInsertModel, Table } from 'drizzle-orm';
 
 import type { courtHall } from '../../schema/court.ts';
 import type { appearance, obligation, order, OperativeDirection } from '../../schema/docket.ts';
-import type { anchor, document } from '../../schema/documents.ts';
+import type { anchor, document, documentPage } from '../../schema/documents.ts';
 import type { capture } from '../../schema/capture.ts';
 import type { clientContact } from '../../schema/client-contact.ts';
 import type { draft, draftVersion, template } from '../../schema/drafting.ts';
@@ -50,7 +50,7 @@ import {
 import { demoBillingRows, type DemoBillingRows } from './billing.ts';
 import { NOTICES } from './catalogue.ts';
 import { demoAreaStatute, demoJudgmentsCiting } from './corpus.ts';
-import { demoMatterRows } from './matters.ts';
+import { DEMO_DOCUMENT_PAGE_KIND, demoDocumentPage, demoMatterRows } from './matters.ts';
 import { demoOrderPdf, type DemoPdfInput } from './pdf.ts';
 import { demoMember, fictional } from './people.ts';
 import type { DemoMatterRows } from './matters.ts';
@@ -70,6 +70,8 @@ export interface DemoModuleRows {
   briefStates: Insert<typeof briefState>[];
   /** The order with an unreconciled direction, its document, anchors and obligations. */
   documents: Insert<typeof document>[];
+  /** The text layer of that order's PDF, one row per page its anchors cite (#1194). */
+  documentPages: Insert<typeof documentPage>[];
   anchors: Insert<typeof anchor>[];
   orders: Insert<typeof order>[];
   obligations: Insert<typeof obligation>[];
@@ -187,6 +189,7 @@ export function demoModuleRows(
     markers: [],
     briefStates: [],
     documents: [],
+    documentPages: [],
     anchors: [],
     orders: [],
     obligations: [],
@@ -550,9 +553,19 @@ export function demoModuleRows(
       language: 'en',
       storageKey: `ws/${ws.id}/document/${String(at.getUTCFullYear())}/${docId}`,
       sha256: demoOrderPdf(input).sha256,
-      textStatus: 'skipped',
+      textStatus: 'layer',
       matterId: um.id,
     });
+    // Page 1 carries the first direction and page 2 the other two, as the anchors below cite them.
+    rows.documentPages.push(
+      demoDocumentPage(stamp, did(DEMO_DOCUMENT_PAGE_KIND, 9000), docId, 1, [
+        caseNo,
+        input.title,
+        'Three operative directions follow.',
+        dirs[0] as string,
+      ]),
+      demoDocumentPage(stamp, did(DEMO_DOCUMENT_PAGE_KIND, 9001), docId, 2, dirs.slice(1)),
+    );
     anchors.forEach((a, k) =>
       rows.anchors.push({
         id: a,

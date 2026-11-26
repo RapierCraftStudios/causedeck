@@ -5,9 +5,13 @@
 // sources" asks for the optional answer, whose quotes the server has verified against the passages.
 // Passages are anonymised text; a masked title is shown as withheld. Works on the mock providers.
 import type { AuthoritySearchResult } from '@causedeck/core/research';
+import { citableReference, courtLabel } from '@causedeck/intelligence/citation-display';
 import { Button } from '@causedeck/ui/button';
+import { useParams } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
 import { useState, useTransition, type SyntheticEvent } from 'react';
+
+import { judgmentHref, slugOf } from '../../lib/judgment-href.ts';
 
 type Plan = AuthoritySearchResult['plan'];
 type ActionResult =
@@ -33,9 +37,54 @@ const OUTCOMES = ['allowed', 'partly_allowed', 'dismissed', 'remanded', 'dispose
 const levelOf = (value: string | null): (typeof LEVELS)[number] =>
   value === 'supreme_court' || value === 'high_court' ? value : 'other';
 
-/** `indian penal code` shown as written in the corpus; the abbreviations stay as the lawyer typed them. */
-const statuteLabel = (statute: string): string =>
-  statute.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+/**
+ * The short name a lawyer writes for a corpus statute (#1194), keyed by the corpus name in lower
+ * case without punctuation or the year. Labels only: the plan keeps the corpus name it filters on.
+ */
+const STATUTE_SHORT: Readonly<Record<string, string>> = {
+  'indian penal code': 'IPC',
+  'code of criminal procedure': 'CrPC',
+  'code of civil procedure': 'CPC',
+  'indian evidence act': 'Evidence Act',
+  'bharatiya nyaya sanhita': 'BNS',
+  'bharatiya nagarik suraksha sanhita': 'BNSS',
+  'bharatiya sakshya adhiniyam': 'BSA',
+  'constitution of india': 'Constitution',
+  'scheduled castes and the scheduled tribes prevention of atrocities act': 'SC/ST Act',
+  'scheduled castes and scheduled tribes prevention of atrocities act': 'SC/ST Act',
+  'narcotic drugs and psychotropic substances act': 'NDPS Act',
+  'protection of children from sexual offences act': 'POCSO Act',
+  'unlawful activities prevention act': 'UAPA',
+  'prevention of money laundering act': 'PMLA',
+  'prevention of corruption act': 'PC Act',
+  'negotiable instruments act': 'NI Act',
+  'arbitration and conciliation act': 'Arbitration Act',
+  'insolvency and bankruptcy code': 'IBC',
+  'consumer protection act': 'CP Act',
+  'motor vehicles act': 'MV Act',
+  'transfer of property act': 'TP Act',
+  'specific relief act': 'SR Act',
+  'industrial disputes act': 'ID Act',
+  'hindu marriage act': 'HMA',
+  'protection of women from domestic violence act': 'DV Act',
+  'right to information act': 'RTI Act',
+  'information technology act': 'IT Act',
+};
+
+const statuteKey = (statute: string): string =>
+  statute
+    .toLowerCase()
+    .replace(/[(),.]/g, ' ')
+    .replace(/\b(18|19|20)\d{2}\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+/**
+ * A chip's statute: the short name of a known act (`SC/ST Act`), else the name as written in the
+ * corpus with each word capitalised; abbreviations stay as the lawyer typed them.
+ */
+export const statuteLabel = (statute: string): string =>
+  STATUTE_SHORT[statuteKey(statute)] ?? statute.replace(/\b[a-z]/g, (c) => c.toUpperCase());
 
 export function AuthoritySearch({
   workspaceId,
@@ -44,6 +93,8 @@ export function AuthoritySearch({
   actions,
 }: AuthoritySearchProps) {
   const t = useTranslations('research.search');
+  // The passage card opens the judgment in the in-app reader (#1191), never the stored archive URL.
+  const slug = slugOf(useParams());
   const format = useFormatter();
   const [query, setQuery] = useState(initialQuery);
   const [result, setResult] = useState<AuthoritySearchResult | null>(null);
@@ -481,8 +532,8 @@ export function AuthoritySearch({
                     </h3>
                     <p className="text-muted-foreground">
                       {[
-                        hit.neutralCitation,
-                        hit.court,
+                        citableReference(hit.neutralCitation, hit.caseNumbers),
+                        courtLabel(hit.court),
                         t(`levels.${levelOf(hit.courtLevel)}`),
                         hit.judgmentDate === null
                           ? null
@@ -512,12 +563,10 @@ export function AuthoritySearch({
                         </li>
                       ))}
                     </ul>
-                    {hit.sourceUrl === null || first === undefined ? null : (
+                    {slug === null ? null : (
                       <a
                         className="mt-2 inline-block underline"
-                        href={`${hit.sourceUrl}#page=${String(first.pageFrom)}`}
-                        rel="noreferrer noopener"
-                        target="_blank"
+                        href={judgmentHref(slug, hit.judgmentId, { page: first?.pageFrom })}
                       >
                         {t('results.openPdf')}
                       </a>

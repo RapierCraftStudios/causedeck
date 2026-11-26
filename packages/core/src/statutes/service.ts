@@ -99,6 +99,8 @@ export interface SectionAuthority {
   title: string | null;
   titleMasked: boolean;
   neutralCitation: string | null;
+  /** `judgment.case_numbers`: case numbers and reporter citations (`[2008] 9 SCR 821`, #1189). */
+  caseNumbers?: string[];
   court: string;
   courtLevel: string | null;
   judgmentDate: string | null;
@@ -367,7 +369,8 @@ export async function topAuthoritiesForSection(
       select * from (
         select distinct on (j.id)
           j.id as "judgmentId", j.case_title as title, j.title_masked as "titleMasked",
-          j.neutral_citation as "neutralCitation", j.court as court, j.court_level as "courtLevel",
+          j.neutral_citation as "neutralCitation", j.case_numbers as "caseNumbers",
+          j.court as court, j.court_level as "courtLevel",
           j.judgment_date::text as "judgmentDate", r.page as page,
           j.provenance->>'url' as "sourceUrl",
           r.statute as "citedStatute", r.section as "citedSection",

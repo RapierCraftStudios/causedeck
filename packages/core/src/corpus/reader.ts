@@ -7,10 +7,12 @@
 // `judgment` table is the global public corpus (no workspace_id, no RLS), the same for every
 // workspace. `hasPdf` says whether the original PDF is in our blob store and may be served; the key
 // itself stays server-side. The original PDF carries the unmasked names, so a judgment whose title is
-// masked or that falls in a sensitive category never offers it (D-053).
+// masked or that falls in a sensitive category never offers it (D-053). `licence` and `attribution`
+// (#1176) are what an open dataset's licence requires the reader to show (CC-BY-4.0, Dattam Labs); the
+// source URL is never returned (a bulk row's URL is an archive member).
 import { db as appDb, schema, type Queryable } from '@causedeck/db';
 import { splitParagraphs } from '@causedeck/intelligence';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 const { judgment } = schema;
 
@@ -38,6 +40,10 @@ export interface JudgmentForReader {
   bench: string[];
   /** The original PDF is stored (`blob_key`); the download route signs it. */
   hasPdf: boolean;
+  /** The licence of the dataset the text came from (`CC-BY-4.0`); null for a court site. */
+  licence: string | null;
+  /** The attribution that licence requires, as stored by the import; null when none is stored. */
+  attribution: string | null;
   pages: ReaderPage[];
 }
 
@@ -60,6 +66,8 @@ export async function getJudgmentForReader(
       blobKey: judgment.blobKey,
       sensitiveCategory: judgment.sensitiveCategory,
       redactedText: judgment.redactedText,
+      licence: sql<string | null>`coalesce(${judgment.licence}, ${judgment.provenance}->>'licence')`,
+      attribution: judgment.attribution,
     })
     .from(judgment)
     .where(eq(judgment.id, id))
@@ -76,6 +84,8 @@ export async function getJudgmentForReader(
     judgmentDate: row.judgmentDate,
     bench: row.bench,
     hasPdf: servablePdf(row) !== null,
+    licence: blankToNull(row.licence),
+    attribution: blankToNull(row.attribution),
     pages: [...row.redactedText]
       .sort((a, b) => a.pageNo - b.pageNo)
       .map((page) => ({
@@ -86,6 +96,9 @@ export async function getJudgmentForReader(
       })),
   };
 }
+
+const blankToNull = (value: string | null): string | null =>
+  value === null || value.trim() === '' ? null : value.trim();
 
 interface PdfColumns {
   blobKey: string | null;
@@ -111,6 +124,8 @@ export async function getJudgmentPdfKey(
       titleMasked: judgment.titleMasked,
       sensitiveCategory: judgment.sensitiveCategory,
       redactedText: judgment.redactedText,
+      licence: sql<string | null>`coalesce(${judgment.licence}, ${judgment.provenance}->>'licence')`,
+      attribution: judgment.attribution,
     })
     .from(judgment)
     .where(eq(judgment.id, id))

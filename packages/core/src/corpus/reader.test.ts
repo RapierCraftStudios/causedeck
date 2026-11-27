@@ -81,6 +81,42 @@ describe('getJudgmentForReader', () => {
     });
   });
 
+  it('returns the licence and attribution an open dataset requires, nothing for a court site (#1176)', async () => {
+    await withTestDb(async (tx) => {
+      const court = await getJudgmentForReader(await seed(tx), { db: tx });
+      expect(court?.licence).toBeNull();
+      expect(court?.attribution).toBeNull();
+
+      const hf = await seed(tx, {
+        licence: 'CC-BY-4.0',
+        attribution: 'Dattam Labs via overthelex/indian-court-decisions (Hugging Face), CC-BY-4.0',
+      });
+      const fromHf = await getJudgmentForReader(hf, { db: tx });
+      expect(fromHf?.licence).toBe('CC-BY-4.0');
+      expect(fromHf?.attribution).toContain('Hugging Face');
+
+      // A bulk (AWS Open Data) row keeps its licence in the provenance only.
+      const bulkSha = randomUUID().replaceAll('-', '');
+      const bulk = await seed(tx, {
+        sha256: bulkSha,
+        provenance: {
+          url: 'https://open-data.example/sc/2024.tar#1.pdf',
+          fetchedAt: '2026-10-23T00:00:00.000Z',
+          sha256: bulkSha,
+          sourceId: 'in.sc.judgments',
+          sourceVersion: 'v1',
+          tierUsed: 'http',
+          costDollars: 0,
+          licence: 'CC-BY-4.0',
+        },
+      });
+      const fromBulk = await getJudgmentForReader(bulk, { db: tx });
+      expect(fromBulk?.licence).toBe('CC-BY-4.0');
+      expect(fromBulk?.attribution).toBeNull();
+      expect(JSON.stringify(fromBulk)).not.toContain('.tar');
+    });
+  });
+
   it('offers the stored PDF only when a blob key is set and the title is not masked', async () => {
     await withTestDb(async (tx) => {
       const none = await seed(tx, { titleMasked: false });

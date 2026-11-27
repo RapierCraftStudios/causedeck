@@ -5704,7 +5704,9 @@
         "pages": "pp. {from} to {to}",
         "openPdf": "Open court PDF",
         "decided": "Decided {date}",
-        "outcome": "Outcome: {outcome}"
+        "outcome": "Outcome: {outcome}",
+        "bestMatch": "Best match",
+        "moreSegments": "{count, plural, one {# more passage} other {# more passages}}"
       },
       "answer": {
         "button": "Summarise with sources",

@@ -9,7 +9,7 @@ import { citableReference, courtLabel } from '@causedeck/intelligence/citation-d
 import { Button } from '@causedeck/ui/button';
 import { useParams } from 'next/navigation';
 import { useFormatter, useTranslations } from 'next-intl';
-import { useState, useTransition, type SyntheticEvent } from 'react';
+import { useState, useTransition, type ReactNode, type SyntheticEvent } from 'react';
 
 import { judgmentHref, slugOf } from '../../lib/judgment-href.ts';
 
@@ -79,12 +79,78 @@ const statuteKey = (statute: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
+/** Words a statute name keeps in lower case after the first word ("Rent Control Act of Kerala"). */
+const MINOR_WORDS = new Set(['a', 'an', 'and', 'for', 'in', 'of', 'on', 'or', 'the', 'to', 'with']);
+
+/** The longest unknown-act label a chip shows; the full name stays in the chip's title (#1175). */
+export const STATUTE_LABEL_MAX = 48;
+
 /**
  * A chip's statute: the short name of a known act (`SC/ST Act`), else the name as written in the
- * corpus with each word capitalised; abbreviations stay as the lawyer typed them.
+ * corpus without a leading "The", capitalised like a title (minor words in lower case) and cut at a
+ * word boundary to `STATUTE_LABEL_MAX` characters; abbreviations stay as the lawyer typed them.
  */
-export const statuteLabel = (statute: string): string =>
-  STATUTE_SHORT[statuteKey(statute)] ?? statute.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+export const statuteLabel = (statute: string): string => {
+  const short = STATUTE_SHORT[statuteKey(statute)];
+  if (short !== undefined) return short;
+  const words = statute
+    .trim()
+    .replace(/^the\s+/i, '')
+    .split(/\s+/)
+    .map((word, index) =>
+      index > 0 && MINOR_WORDS.has(word.toLowerCase())
+        ? word.toLowerCase()
+        : word.replace(/^[a-z]/, (c) => c.toUpperCase()),
+    );
+  const label = words.join(' ');
+  if (label.length <= STATUTE_LABEL_MAX) return label;
+  const cut = label.slice(0, STATUTE_LABEL_MAX - 1);
+  const space = cut.lastIndexOf(' ');
+  return `${(space > STATUTE_LABEL_MAX / 2 ? cut.slice(0, space) : cut).trimEnd()}…`;
+};
+
+type Hit = AuthoritySearchResult['hits'][number];
+type Segment = Hit['segments'][number];
+
+/**
+ * The passage a result card shows (#1175): the highest-scoring passage that is not headnote
+ * furniture (the `header` role), else the first passage; the rest go behind "N more passages".
+ */
+export const bestSegment = (segments: readonly Segment[]): Segment | undefined =>
+  segments.reduce<Segment | undefined>((best, segment) => {
+    if (best === undefined) return segment;
+    const bestHeader = best.role === 'header';
+    const header = segment.role === 'header';
+    if (bestHeader !== header) return header ? best : segment;
+    return segment.score > best.score ? segment : best;
+  }, undefined);
+
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Passage text with the plan's keywords wrapped in `<mark>` (#1175). Built from React nodes, so the
+ * untrusted corpus text is never parsed as HTML. Hard-wrapped lines are joined into one paragraph.
+ */
+export function highlight(text: string, keywords: readonly string[]): ReactNode[] {
+  const flat = text.replace(/\s+/g, ' ').trim();
+  const terms = [...new Set(keywords.map((k) => k.trim().toLowerCase()))]
+    .filter((k) => k.length >= 2)
+    .sort((a, b) => b.length - a.length);
+  if (terms.length === 0) return [flat];
+  const pattern = new RegExp(`(${terms.map(escapeRegExp).join('|')})`, 'gi');
+  return flat
+    .split(pattern)
+    .map((part, index) =>
+      index % 2 === 1 ? (
+        <mark key={index} className="bg-accent text-accent-foreground rounded-sm px-0.5">
+          {part}
+        </mark>
+      ) : (
+        part
+      ),
+    )
+    .filter((part) => part !== '');
+}
 
 export function AuthoritySearch({
   workspaceId,
@@ -106,6 +172,15 @@ export function AuthoritySearch({
 
   const date = (iso: string): string =>
     format.dateTime(new Date(`${iso}T00:00:00Z`), { dateStyle: 'medium', timeZone: 'UTC' });
+
+  /** "Facts · p. 2"; headnote furniture (`header`) shows only its pages, never a "Header" label. */
+  const segmentLabel = (segment: Segment): string => {
+    const pages =
+      segment.pageFrom === segment.pageTo
+        ? t('results.page', { page: segment.pageFrom })
+        : t('results.pages', { from: segment.pageFrom, to: segment.pageTo });
+    return segment.role === 'header' ? pages : `${t(`roles.${segment.role}`)} · ${pages}`;
+  };
 
   function run(call: () => Promise<ActionResult>, nextPlan?: Plan): void {
     start(async () => {
@@ -140,7 +215,7 @@ export function AuthoritySearch({
     run(() => actions.rerun({ workspaceId, plan, answer: true }), plan);
   }
 
-  const chips: { key: string; label: string; remove: () => void }[] = [];
+  const chips: { key: string; label: string; title?: string; remove: () => void }[] = [];
   if (plan !== null) {
     for (const area of plan.subjectAreas) {
       chips.push({
@@ -155,6 +230,7 @@ export function AuthoritySearch({
       const counterpart = chip.counterparts[0];
       chips.push({
         key: `statute:${chip.statute}:${chip.section}`,
+        title: chip.statute,
         label:
           t('filters.statute', {
             statute: statuteLabel(chip.statute),
@@ -275,9 +351,11 @@ export function AuthoritySearch({
               {chips.map((chip) => (
                 <li
                   key={chip.key}
-                  className="flex items-center gap-1 rounded-full border px-3 py-1 text-sm"
+                  className="flex max-w-full items-center gap-1 rounded-full border px-3 py-1 text-sm"
                 >
-                  <span>{chip.label}</span>
+                  <span className="truncate" title={chip.title}>
+                    {chip.label}
+                  </span>
                   <button
                     type="button"
                     disabled={pending}
@@ -470,19 +548,12 @@ export function AuthoritySearch({
           className="flex flex-col gap-3"
           aria-busy={pending}
         >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="authority-results" className="font-medium">
-              {t('results.heading')}{' '}
-              <span className="text-muted-foreground text-sm font-normal">
-                {t('results.count', { count: result.hits.length })}
-              </span>
-            </h2>
-            {result.hits.length === 0 ? null : (
-              <Button type="button" variant="outline" disabled={pending} onClick={summarise}>
-                {pending ? t('answer.working') : t('answer.button')}
-              </Button>
-            )}
-          </div>
+          <h2 id="authority-results" className="font-medium">
+            {t('results.heading')}{' '}
+            <span className="text-muted-foreground text-sm font-normal">
+              {t('results.count', { count: result.hits.length })}
+            </span>
+          </h2>
 
           {answerFailed ? (
             <p role="status" data-slot="authority-answer-failed" className="text-sm">
@@ -520,61 +591,95 @@ export function AuthoritySearch({
               {t('results.empty')}
             </p>
           ) : (
-            <ol className="flex flex-col gap-3" data-slot="authority-results-list">
-              {result.hits.map((hit) => {
-                const first = hit.segments[0];
-                return (
-                  <li key={hit.judgmentId} className="rounded-md border p-3 text-sm">
-                    <h3 className="font-medium">
-                      {hit.title === null || hit.title === ''
-                        ? t('results.maskedTitle')
-                        : hit.title}
-                    </h3>
-                    <p className="text-muted-foreground">
-                      {[
-                        citableReference(hit.neutralCitation, hit.caseNumbers),
-                        courtLabel(hit.court),
-                        t(`levels.${levelOf(hit.courtLevel)}`),
-                        hit.judgmentDate === null
-                          ? null
-                          : t('results.decided', { date: date(hit.judgmentDate) }),
-                      ]
-                        .filter((part): part is string => part !== null && part !== '')
-                        .join(' · ')}
-                    </p>
-                    <p className="text-muted-foreground">
-                      {t('results.outcome', { outcome: t(`outcomes.${hit.outcome}`) })}
-                      {' · '}
-                      {hit.citedByCount === 0
-                        ? t('results.notCited')
-                        : t('results.citedBy', { count: hit.citedByCount })}
-                    </p>
-                    <ul className="mt-2 flex flex-col gap-2">
-                      {hit.segments.map((segment) => (
-                        <li key={segment.segmentId} className="border-l-2 pl-2">
-                          <p className="text-muted-foreground text-xs">
-                            {t(`roles.${segment.role}`)}
-                            {' · '}
-                            {segment.pageFrom === segment.pageTo
-                              ? t('results.page', { page: segment.pageFrom })
-                              : t('results.pages', { from: segment.pageFrom, to: segment.pageTo })}
-                          </p>
-                          <p className="whitespace-pre-wrap">{segment.text}</p>
-                        </li>
-                      ))}
-                    </ul>
-                    {slug === null ? null : (
-                      <a
-                        className="mt-2 inline-block underline"
-                        href={judgmentHref(slug, hit.judgmentId, { page: first?.pageFrom })}
-                      >
-                        {t('results.openPdf')}
-                      </a>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
+            <>
+              <ol className="flex flex-col gap-3" data-slot="authority-results-list">
+                {result.hits.map((hit, rank) => {
+                  const first = hit.segments[0];
+                  // One passage per card (#1175): the best non-header one, the rest collapsed.
+                  const best = bestSegment(hit.segments);
+                  const more = hit.segments.filter((segment) => segment !== best);
+                  return (
+                    <li
+                      key={hit.judgmentId}
+                      className="rounded-md border p-3 text-sm"
+                      data-slot="authority-hit"
+                    >
+                      <div className="flex flex-wrap items-baseline gap-2">
+                        <h3 className="font-medium">
+                          {hit.title === null || hit.title === ''
+                            ? t('results.maskedTitle')
+                            : hit.title}
+                        </h3>
+                        {rank === 0 ? (
+                          <span
+                            className="text-muted-foreground rounded-full border px-2 text-xs"
+                            data-slot="authority-best-match"
+                          >
+                            {t('results.bestMatch')}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="text-muted-foreground">
+                        {[
+                          citableReference(hit.neutralCitation, hit.caseNumbers),
+                          courtLabel(hit.court),
+                          t(`levels.${levelOf(hit.courtLevel)}`),
+                          hit.judgmentDate === null
+                            ? null
+                            : t('results.decided', { date: date(hit.judgmentDate) }),
+                        ]
+                          .filter((part): part is string => part !== null && part !== '')
+                          .join(' · ')}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {t('results.outcome', { outcome: t(`outcomes.${hit.outcome}`) })}
+                        {' · '}
+                        {hit.citedByCount === 0
+                          ? t('results.notCited')
+                          : t('results.citedBy', { count: hit.citedByCount })}
+                      </p>
+                      {best === undefined ? null : (
+                        <div className="mt-2 border-l-2 pl-2" data-slot="authority-snippet">
+                          <p className="text-muted-foreground text-xs">{segmentLabel(best)}</p>
+                          <p className="line-clamp-4">{highlight(best.text, plan?.keywords ?? [])}</p>
+                        </div>
+                      )}
+                      {more.length === 0 ? null : (
+                        <details className="mt-2" data-slot="authority-more">
+                          <summary className="text-muted-foreground cursor-pointer text-xs">
+                            {t('results.moreSegments', { count: more.length })}
+                          </summary>
+                          <ul className="mt-2 flex flex-col gap-2">
+                            {more.map((segment) => (
+                              <li key={segment.segmentId} className="border-l-2 pl-2">
+                                <p className="text-muted-foreground text-xs">
+                                  {segmentLabel(segment)}
+                                </p>
+                                <p>{highlight(segment.text, plan?.keywords ?? [])}</p>
+                              </li>
+                            ))}
+                          </ul>
+                        </details>
+                      )}
+                      {slug === null ? null : (
+                        <a
+                          className="mt-2 inline-block underline"
+                          href={judgmentHref(slug, hit.judgmentId, { page: first?.pageFrom })}
+                        >
+                          {t('results.openPdf')}
+                        </a>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+              {/* #1175: the summary is asked for after reading the results, so it sits below them. */}
+              <div>
+                <Button type="button" variant="outline" disabled={pending} onClick={summarise}>
+                  {pending ? t('answer.working') : t('answer.button')}
+                </Button>
+              </div>
+            </>
           )}
         </section>
       )}

@@ -5704,7 +5704,9 @@
         "pages": "பக். {from} முதல் {to}",
         "openPdf": "நீதிமன்ற PDF ஐத் திற",
         "decided": "தீர்ப்பு தேதி {date}",
-        "outcome": "முடிவு: {outcome}"
+        "outcome": "முடிவு: {outcome}",
+        "bestMatch": "மிகப் பொருத்தமானது",
+        "moreSegments": "{count, plural, one {மேலும் # பகுதி} other {மேலும் # பகுதிகள்}}"
       },
       "answer": {
         "button": "ஆதாரங்களுடன் சுருக்கு",

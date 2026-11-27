@@ -187,13 +187,116 @@ describe('AuthoritySearch', () => {
     expect(screen.getByText(/2019:MHC:1234 · MHC · High Court · Decided/)).toBeTruthy();
     expect(screen.getByText(/Outcome: Allowed · Cited by 3 judgments in the corpus/)).toBeTruthy();
     expect(screen.getByText('Facts · p. 2')).toBeTruthy();
-    expect(screen.getByText('Reasoning · pp. 3 to 4')).toBeTruthy();
+    // #1175: the other passage sits behind "1 more passage", collapsed.
+    const reasoning = screen.getByText('Reasoning · pp. 3 to 4');
+    expect(reasoning.closest('details')?.open).toBe(false);
+    expect(screen.getByText('1 more passage')).toBeTruthy();
     // #1191: every hit opens the in-app reader at its first passage page, same tab.
     const [link] = screen.getAllByRole('link', { name: 'Open court PDF' });
     expect(link?.getAttribute('href')).toBe('/w/demo/research/judgments/j1?page=2#cited');
     expect(link?.getAttribute('target')).toBeNull();
     expect(screen.getByText('Title withheld')).toBeTruthy();
     expect(screen.getByText('1 of 30 searches used this month')).toBeTruthy();
+  });
+
+  it('shows one highlighted passage per card, the rest collapsed, and no "Header" label (#1175)', async () => {
+    const base = result();
+    const [first, second] = base.hits;
+    if (first === undefined || second === undefined) throw new Error('fixture has no hits');
+    setup({
+      ...base,
+      hits: [
+        {
+          ...first,
+          segments: [
+            {
+              segmentId: 'h1',
+              role: 'header',
+              pageFrom: 1,
+              pageTo: 2,
+              text: 'IN THE HIGH COURT OF MADRAS\nSurgery appeal',
+              score: 0.95,
+            },
+            ...first.segments,
+          ],
+        },
+        second,
+      ],
+    });
+    submit();
+    await screen.findByText('Meera Rao v. Sunrise Nursing Home');
+    const cards = document.querySelectorAll('[data-slot="authority-hit"]');
+    const card = cards[0] as HTMLElement;
+    // The best non-header passage is the one shown; header and reasoning are behind the toggle.
+    const snippets = card.querySelectorAll('[data-slot="authority-snippet"]');
+    expect(snippets).toHaveLength(1);
+    expect(snippets[0]?.textContent).toContain('No written consent was taken.');
+    const more = card.querySelector('details') as HTMLDetailsElement;
+    expect(more.open).toBe(false);
+    expect(within(more).getByText('2 more passages')).toBeTruthy();
+    expect(more.textContent).toContain('This is medical negligence.');
+    // Headnote furniture keeps only its pages, never the "Header" label.
+    expect(screen.queryByText(/Header/)).toBeNull();
+    expect(within(more).getByText('pp. 1 to 2')).toBeTruthy();
+    // The plan's keywords are marked as text nodes; hard-wrapped lines join into one line.
+    const marks = [...card.querySelectorAll('mark')].map((m) => m.textContent);
+    expect(marks).toContain('consent');
+    expect(marks).toContain('Surgery');
+    expect(more.textContent).toContain('MADRAS Surgery appeal');
+    // Ranking cue: only the first card is the best match.
+    expect(within(card).getByText('Best match')).toBeTruthy();
+    expect(within(cards[1] as HTMLElement).queryByText('Best match')).toBeNull();
+    // A single-passage card has no toggle.
+    expect((cards[1] as HTMLElement).querySelector('details')).toBeNull();
+  });
+
+  it('never parses passage text as HTML when highlighting (#1175)', async () => {
+    const base = result();
+    const [first] = base.hits;
+    const segment = first?.segments[0];
+    if (first === undefined || segment === undefined) throw new Error('fixture has no hits');
+    const text = '<img src=x onerror="alert(1)"> consent (a+b) [surgery]';
+    setup({
+      ...base,
+      plan: { ...plan, keywords: ['consent', '(a+b)', '[surgery'] },
+      hits: [{ ...first, segments: [{ ...segment, text }] }],
+    });
+    submit();
+    await screen.findByText('Meera Rao v. Sunrise Nursing Home');
+    const snippet = document.querySelector('[data-slot="authority-snippet"]') as HTMLElement;
+    expect(snippet.querySelector('img')).toBeNull();
+    expect(snippet.textContent).toContain(text);
+    expect([...snippet.querySelectorAll('mark')].map((m) => m.textContent)).toEqual([
+      'consent',
+      '(a+b)',
+      '[surgery',
+    ]);
+  });
+
+  it('puts "Summarise with sources" below the results list (#1175)', async () => {
+    setup(result());
+    submit();
+    await screen.findByText('Meera Rao v. Sunrise Nursing Home');
+    const list = document.querySelector('[data-slot="authority-results-list"]') as HTMLElement;
+    const button = await enabled('Summarise with sources');
+    expect(list.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(list.contains(button)).toBe(false);
+  });
+
+  it('bounds a long unknown statute chip and keeps the full name in its title (#1175)', async () => {
+    const long =
+      'the karnataka state civil services regulation of transfer of teachers and other employees act';
+    setup(
+      result({
+        plan: { ...plan, statutes: [{ statute: long, section: '4' }] },
+        chips: [{ statute: long, section: '4', counterparts: [] }],
+      }),
+    );
+    submit();
+    await screen.findByText('Meera Rao v. Sunrise Nursing Home');
+    const label = within(chipsList()).getByText(/^Karnataka State Civil Services/);
+    expect(label.textContent).toBe('Karnataka State Civil Services Regulation of… s. 4');
+    expect(label.getAttribute('title')).toBe(long);
   });
 
   it('editing a chip searches again with the edited plan and does not plan again', async () => {
@@ -288,9 +391,9 @@ describe('AuthoritySearch', () => {
     // One search is "1 search", never "1 searches" (#1194).
     expect(screen.getByText('1 search this month')).toBeTruthy();
     expect(within(chipsList()).getByText('SC/ST Act s. 18A')).toBeTruthy();
-    // An act without a short name keeps its written name.
+    // An act without a short name keeps its written name, minor words in lower case (#1175).
     expect(
-      within(chipsList()).getByText('Tamil Nadu Buildings Lease And Rent Control Act s. 10'),
+      within(chipsList()).getByText('Tamil Nadu Buildings Lease and Rent Control Act s. 10'),
     ).toBeTruthy();
     expect(within(chipsList()).queryByText(/Scheduled Castes/)).toBeNull();
     // Only the label is short: removing a chip re-runs with the corpus names the plan filters on.

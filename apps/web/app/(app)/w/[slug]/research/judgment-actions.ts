@@ -27,7 +27,9 @@ import {
 } from '../../../../../lib/workspace-action.ts';
 import { can, type Role } from '../../../../../lib/workspace-context.ts';
 
-const MAX_MATTERS = 50;
+/** Matters offered in the picker: pages of 100 (the core maximum), at most this many. */
+const MAX_MATTERS = 1000;
+const MATTER_PAGE = 100;
 const MAX_DRAFTS = 10;
 const LABEL_CHARS = 80;
 
@@ -106,10 +108,17 @@ const loadTargets = workspaceAction(
     const actor = actorOf(ctx);
     try {
       const { listMatters } = await import('@causedeck/core/matter-graph');
-      const page = await listMatters({ db: ctx.tx, events: { emit: () => undefined } }, actor, {
-        limit: MAX_MATTERS,
-      });
-      const matters = page.items.map((m) => ({ id: m.id, title: m.title }));
+      const matters: { id: string; title: string }[] = [];
+      let cursor: string | undefined;
+      while (matters.length < MAX_MATTERS) {
+        const page = await listMatters({ db: ctx.tx, events: { emit: () => undefined } }, actor, {
+          limit: MATTER_PAGE,
+          ...(cursor === undefined ? {} : { cursor }),
+        });
+        matters.push(...page.items.map((m) => ({ id: m.id, title: m.title })));
+        if (!page.nextCursor) break;
+        cursor = page.nextCursor;
+      }
       if (input.matterId === undefined) return { matters, notes: [], drafts: [] };
 
       const { listNotes } = await import('@causedeck/core/research');

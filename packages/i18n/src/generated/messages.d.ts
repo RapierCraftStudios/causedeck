@@ -5817,6 +5817,8 @@ export type Messages = {
         stage: string;
         nextDate: string;
       };
+      judgmentContext: string;
+      judgmentQuestion: string;
     };
     statutes: {
       metaTitle: string;
@@ -5884,6 +5886,37 @@ export type Messages = {
       notFound: string;
       notFoundHint: string;
       denied: string;
+      attribution: string;
+      licence: string;
+    };
+    actions: {
+      label: string;
+      copy: string;
+      copied: string;
+      copyFailed: string;
+      save: string;
+      insert: string;
+      ask: string;
+      loading: string;
+      working: string;
+      matter: string;
+      choose: string;
+      note: string;
+      newNote: string;
+      untitledNote: string;
+      draft: string;
+      after: string;
+      noMatters: string;
+      noDrafts: string;
+      openCopilot: string;
+      saved: string;
+      openNotes: string;
+      inserted: string;
+      openDraft: string;
+      failed: string;
+      notVerified: string;
+      denied: string;
+      loadFailed: string;
     };
   };
   settingsResearch: {

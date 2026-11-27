@@ -8,7 +8,11 @@
 // the browser scrolls it into view (the cited page when the paragraph is unknown). "Download PDF"
 // appears only when the original is stored and may be served (`/api/judgments/[id]/pdf`). An
 // absent or not yet redacted judgment shows the not-available state. Needs `matter.read`.
+// #1176: the header names the open dataset and licence the text came from (CC-BY-4.0, Dattam Labs via
+// Hugging Face; nothing for a court site) and carries the judgment actions (copy citation, save to a
+// matter, insert into a draft, ask the copilot) with the cited paragraph as the quote.
 import { getJudgmentForReader, type JudgmentForReader } from '@causedeck/core';
+import { citableReference } from '@causedeck/intelligence/citation-display';
 import { buttonVariants } from '@causedeck/ui/button';
 import { EmptyState } from '@causedeck/ui/empty-state';
 import { PermissionDenied } from '@causedeck/ui/patterns';
@@ -17,6 +21,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import { JudgmentActions } from '../../../../../../../components/research/judgment-actions.tsx';
 import { CITED_ANCHOR } from '../../../../../../../lib/judgment-href.ts';
 import { can } from '../../../../../../../lib/workspace-context.ts';
 import { getWorkspaceContext } from '../../../../../../../lib/workspace-loader.ts';
@@ -101,6 +106,13 @@ export default async function JudgmentReaderPage({ params, searchParams }: Reade
   }
 
   const target = citedTarget(judgment, positive(query.page), positive(query.para));
+  const citedPage = target === null ? undefined : judgment.pages.find((p) => p.pageNo === target.pageNo);
+  const citedPara =
+    target === null || target.index === null ? undefined : citedPage?.paragraphs[target.index];
+  const source = [
+    judgment.attribution === null ? null : t('attribution', { attribution: judgment.attribution }),
+    judgment.licence === null ? null : t('licence', { licence: judgment.licence }),
+  ].filter((line): line is string => line !== null);
   const title =
     judgment.title ?? (judgment.titleMasked ? t('maskedTitle') : (judgment.neutralCitation ?? t('untitled')));
   const facts: [string, string][] = [
@@ -146,6 +158,25 @@ export default async function JudgmentReaderPage({ params, searchParams }: Reade
           )}
           <p className="text-muted-foreground text-xs">{t('anonymised')}</p>
         </div>
+        {source.length === 0 ? null : (
+          <p data-slot="reader-attribution" className="text-muted-foreground text-xs">
+            {source.join(' · ')}
+          </p>
+        )}
+        <JudgmentActions
+          workspaceId={context.workspace.id}
+          slug={slug}
+          judgmentId={judgment.id}
+          citation={
+            citableReference(judgment.neutralCitation, judgment.caseNumbers) ??
+            judgment.caseNumbers[0] ??
+            title
+          }
+          label={title}
+          quote={citedPara?.text ?? null}
+          page={target?.pageNo ?? null}
+          para={citedPara?.number ?? null}
+        />
       </header>
 
       {judgment.pages.map((page) => {

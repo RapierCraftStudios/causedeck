@@ -4,6 +4,8 @@
 // searches again with exactly the edited plan (the `rerun` action never plans again); "Summarise with
 // sources" asks for the optional answer, whose quotes the server has verified against the passages.
 // Passages are anonymised text; a masked title is shown as withheld. Works on the mock providers.
+// #1176: each card carries the judgment actions (copy, save to matter, insert, ask the copilot) with
+// its first passage as the quote.
 import type { AuthoritySearchResult } from '@causedeck/core/research';
 import { citableReference, courtLabel } from '@causedeck/intelligence/citation-display';
 import { Button } from '@causedeck/ui/button';
@@ -12,6 +14,8 @@ import { useFormatter, useTranslations } from 'next-intl';
 import { useState, useTransition, type SyntheticEvent } from 'react';
 
 import { judgmentHref, slugOf } from '../../lib/judgment-href.ts';
+
+import { JudgmentActions } from './judgment-actions.tsx';
 
 type Plan = AuthoritySearchResult['plan'];
 type ActionResult =
@@ -523,6 +527,8 @@ export function AuthoritySearch({
             <ol className="flex flex-col gap-3" data-slot="authority-results-list">
               {result.hits.map((hit) => {
                 const first = hit.segments[0];
+                const title =
+                  hit.title === null || hit.title === '' ? t('results.maskedTitle') : hit.title;
                 return (
                   <li key={hit.judgmentId} className="rounded-md border p-3 text-sm">
                     <h3 className="font-medium">
@@ -564,12 +570,29 @@ export function AuthoritySearch({
                       ))}
                     </ul>
                     {slug === null ? null : (
-                      <a
-                        className="mt-2 inline-block underline"
-                        href={judgmentHref(slug, hit.judgmentId, { page: first?.pageFrom })}
-                      >
-                        {t('results.openPdf')}
-                      </a>
+                      <>
+                        <a
+                          className="mt-2 inline-block underline"
+                          href={judgmentHref(slug, hit.judgmentId, { page: first?.pageFrom })}
+                        >
+                          {t('results.openPdf')}
+                        </a>
+                        <div className="mt-2">
+                          <JudgmentActions
+                            workspaceId={workspaceId}
+                            slug={slug}
+                            judgmentId={hit.judgmentId}
+                            citation={
+                              citableReference(hit.neutralCitation, hit.caseNumbers) ??
+                              hit.caseNumbers?.[0] ??
+                              title
+                            }
+                            label={title}
+                            quote={first?.text ?? null}
+                            page={first?.pageFrom ?? null}
+                          />
+                        </div>
+                      </>
                     )}
                   </li>
                 );

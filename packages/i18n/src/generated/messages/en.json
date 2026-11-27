@@ -5815,7 +5815,9 @@
         "label": "Asking about",
         "stage": "Stage: {stage}",
         "nextDate": "Next date: {date}"
-      }
+      },
+      "judgmentContext": "Judgment in context: {title}",
+      "judgmentQuestion": "How does {title} apply to this matter?"
     },
     "statutes": {
       "metaTitle": "Statutes",
@@ -5882,7 +5884,38 @@
       "noPdf": "The original PDF is not stored.",
       "notFound": "This judgment is not available",
       "notFoundHint": "It is not in the corpus, or its anonymised text is not ready yet.",
-      "denied": "You do not have permission to read judgments."
+      "denied": "You do not have permission to read judgments.",
+      "attribution": "Source: {attribution}",
+      "licence": "Licence: {licence}"
+    },
+    "actions": {
+      "label": "Judgment actions",
+      "copy": "Copy citation",
+      "copied": "Citation copied",
+      "copyFailed": "Could not copy. Select the citation and copy it.",
+      "save": "Save to matter",
+      "insert": "Insert into draft",
+      "ask": "Ask the copilot",
+      "loading": "Loading your matters…",
+      "working": "Working…",
+      "matter": "Matter",
+      "choose": "Choose a matter",
+      "note": "Note",
+      "newNote": "New note",
+      "untitledNote": "Untitled note",
+      "draft": "Draft",
+      "after": "After",
+      "noMatters": "No matters to choose from yet.",
+      "noDrafts": "This matter has no draft to insert into.",
+      "openCopilot": "Open the copilot",
+      "saved": "Saved to the matter’s research notes.",
+      "openNotes": "Open research tab",
+      "inserted": "Inserted into the draft (version {version}).",
+      "openDraft": "Open draft",
+      "failed": "That did not work. Try again.",
+      "notVerified": "The passage no longer matches the stored judgment text, so it was not inserted.",
+      "denied": "You do not have permission for this.",
+      "loadFailed": "Could not load your matters. Try again."
     }
   },
   "settingsResearch": {

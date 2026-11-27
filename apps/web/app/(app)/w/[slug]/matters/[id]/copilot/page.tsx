@@ -6,6 +6,11 @@
 // "Insert into draft" targets for verified judgment claims; loading them never fails the page.
 // #1168: the matter's title, the stage and the next date (from the overview the matter layout loads)
 // feed the composer's context chips and the suggested questions; without them the panel still works.
+// #1176: `?judgment=<uuid>` ("Ask the copilot" on a judgment) loads that judgment for the reader
+// (`getJudgmentForReader`, redacted, title masked per D-053), shows it as a context chip linking to the
+// reader and prefills the question; an unknown or invalid id is ignored.
+import { getJudgmentForReader } from '@causedeck/core';
+import { Badge } from '@causedeck/ui/badge';
 import type { Block } from '@causedeck/validators/drafting';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -18,6 +23,7 @@ import {
 } from '../../../../../../../components/copilot/copilot-panel.tsx';
 import { MattersPermissionDenied } from '../../../../../../../components/matters/matters-list.tsx';
 import { requireWorkspaceFlag } from '../../../../../../../lib/flags.ts';
+import { judgmentHref } from '../../../../../../../lib/judgment-href.ts';
 import { can } from '../../../../../../../lib/workspace-context.ts';
 import { keyedBlocks } from '../../../../../../../lib/drafting/blocks-edit.ts';
 import { loadMatterOverview } from '../../../../../../../lib/matters/workspace.ts';
@@ -102,6 +108,29 @@ async function matterContextOf(
 
 interface CopilotPageProps {
   params: Promise<{ slug: string; id: string }>;
+  searchParams?: Promise<{ judgment?: string | string[] }>;
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The judgment the copilot was opened with, as the chip shows it; null when absent or unknown. */
+async function judgmentInContext(
+  raw: string | string[] | undefined,
+  untitled: string,
+  masked: string,
+): Promise<{ id: string; title: string } | null> {
+  const id = Array.isArray(raw) ? raw[0] : raw;
+  if (id === undefined || !UUID.test(id)) return null;
+  try {
+    const judgment = await getJudgmentForReader(id);
+    if (judgment === null) return null;
+    const title =
+      judgment.title ?? (judgment.titleMasked ? masked : (judgment.neutralCitation ?? untitled));
+    return { id: judgment.id, title };
+  } catch (error) {
+    logger.warn({ err: error }, 'matter copilot: could not load the judgment in context');
+    return null;
+  }
 }
 
 export async function generateMetadata({ params }: CopilotPageProps): Promise<Metadata> {
@@ -115,18 +144,21 @@ export async function generateMetadata({ params }: CopilotPageProps): Promise<Me
   };
 }
 
-export default async function MatterCopilotPage({ params }: CopilotPageProps) {
+export default async function MatterCopilotPage({ params, searchParams }: CopilotPageProps) {
   const { slug, id } = await params;
+  const query = (await searchParams) ?? {};
   const context = await getWorkspaceContext(slug);
   if (!context) notFound();
   await requireWorkspaceFlag('copilot.enabled', context);
   if (!can(context.role, 'matter.read')) return <MattersPermissionDenied />;
   const t = await getTranslations('research.copilot');
-  const [drafts, matterContext] = await Promise.all([
+  const reader = await getTranslations('research.reader');
+  const [drafts, matterContext, judgment] = await Promise.all([
     can(context.role, 'draft.write')
       ? draftTargets(slug, { workspaceId: context.workspace.id, userId: context.user.id }, id)
       : Promise.resolve([]),
     matterContextOf(context, id),
+    judgmentInContext(query.judgment, reader('untitled'), reader('maskedTitle')),
   ]);
   return (
     <section
@@ -139,12 +171,26 @@ export default async function MatterCopilotPage({ params }: CopilotPageProps) {
           {t('title')}
         </h1>
         <p className="text-muted-foreground text-sm">{t('matterIntro')}</p>
+        {judgment === null ? null : (
+          <a
+            data-slot="copilot-judgment-context"
+            href={judgmentHref(slug, judgment.id)}
+            className="max-w-full self-start"
+          >
+            <Badge tone="outline" className="max-w-full truncate">
+              {t('judgmentContext', { title: judgment.title })}
+            </Badge>
+          </a>
+        )}
       </header>
       <CopilotPanel
         workspaceId={context.workspace.id}
         matterId={id}
         ask={askCopilotAction}
         {...(matterContext === undefined ? {} : { matterContext })}
+        {...(judgment === null
+          ? {}
+          : { initialQuestion: t('judgmentQuestion', { title: judgment.title }) })}
         {...(drafts.length === 0 ? {} : { drafts, insert: insertAuthorityAction })}
       />
     </section>

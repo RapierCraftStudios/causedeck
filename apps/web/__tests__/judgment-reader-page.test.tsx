@@ -31,6 +31,12 @@ vi.mock('../lib/workspace-loader.ts', () => ({
   getWorkspaceContext: () => Promise.resolve(state.context),
 }));
 vi.mock('@causedeck/core', () => ({ getJudgmentForReader: state.get }));
+// #1176: the header mounts the judgment actions; their server actions are not called on render.
+vi.mock('../app/(app)/w/[slug]/research/judgment-actions.ts', () => ({
+  loadActionTargetsAction: vi.fn(),
+  saveJudgmentToNoteAction: vi.fn(),
+  insertJudgmentIntoDraftAction: vi.fn(),
+}));
 
 const { default: ReaderPage, generateMetadata } =
   await import('../app/(app)/w/[slug]/research/judgments/[id]/page.tsx');
@@ -49,6 +55,8 @@ const JUDGMENT: JudgmentForReader = {
   judgmentDate: '2026-03-04',
   bench: ['Justice A', 'Justice B'],
   hasPdf: false,
+  licence: null,
+  attribution: null,
   pages: [
     { pageNo: 1, paragraphs: [{ number: 1, text: '1. Heard counsel.' }] },
     {
@@ -181,6 +189,40 @@ describe('judgment reader page', () => {
     });
     expect(meta.robots).toEqual({ index: false, follow: false });
     expect(meta.title).toBe('X v. State');
+  });
+
+  it('names the open dataset and its licence, nothing for a court site (#1176)', async () => {
+    const court = await open();
+    expect(court.querySelector('[data-slot="reader-attribution"]')).toBeNull();
+    cleanup();
+    state.get.mockResolvedValue({
+      ...JUDGMENT,
+      licence: 'CC-BY-4.0',
+      attribution: 'Dattam Labs via overthelex/indian-court-decisions (Hugging Face), CC-BY-4.0',
+    });
+    const container = await open();
+    const line = container.querySelector('[data-slot="reader-attribution"]')?.textContent ?? '';
+    expect(line).toContain('Dattam Labs');
+    expect(line).toContain('Hugging Face');
+    expect(line).toContain('Licence: CC-BY-4.0');
+  });
+
+  it('mounts the judgment actions in the header, insert only with a cited passage (#1176)', async () => {
+    const actions = catalogs.en.research.actions;
+    const container = await open({ page: '2', para: '5' });
+    const header = container.querySelector('[data-slot="reader-header"]');
+    const bar = header?.querySelector('[data-slot="judgment-actions"]');
+    expect(bar?.textContent).toContain(actions.copy);
+    expect(bar?.textContent).toContain(actions.save);
+    expect(bar?.textContent).toContain(actions.ask);
+    const insert = () =>
+      container.querySelector<HTMLButtonElement>('[data-slot="judgment-insert"]')?.disabled;
+    expect(insert()).toBe(false);
+    cleanup();
+    await open();
+    expect(document.querySelector<HTMLButtonElement>('[data-slot="judgment-insert"]')?.disabled).toBe(
+      true,
+    );
   });
 
   it("keeps the matter's relevant-judgments page out of search indexes too", async () => {

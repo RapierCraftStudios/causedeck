@@ -223,8 +223,12 @@ const insert = workspaceAction(
         candidateRef: {
           judgmentId: input.judgmentId,
           quote: input.quote,
-          ...(input.para === undefined ? {} : { para: input.para }),
-          ...(input.page === undefined ? {} : { page: input.page }),
+          // core accepts exactly one pinpoint: the paragraph when known, else the page.
+          ...(input.para === undefined
+            ? input.page === undefined
+              ? {}
+              : { page: input.page }
+            : { para: input.para }),
         },
       });
       return {

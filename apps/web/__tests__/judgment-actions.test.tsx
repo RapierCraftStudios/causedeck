@@ -223,7 +223,7 @@ describe('judgment server actions', () => {
       draftId: DRAFT,
       versionId: VERSION,
       afterBlockId: 'b.1',
-      candidateRef: { judgmentId: JUDGMENT, quote: QUOTE, para: 12, page: 3 },
+      candidateRef: { judgmentId: JUDGMENT, quote: QUOTE, para: 12 },
     });
   });
 
@@ -330,7 +330,7 @@ describe('JudgmentActions', () => {
       draftId: DRAFT,
       versionId: VERSION,
       afterBlockId: 'b.1',
-      candidateRef: { judgmentId: JUDGMENT, quote: QUOTE, para: 12, page: 3 },
+      candidateRef: { judgmentId: JUDGMENT, quote: QUOTE, para: 12 },
     });
     await submit();
     await waitFor(() => {

@@ -255,6 +255,8 @@ export interface CopilotPanelProps {
   drafts?: readonly CopilotDraftTarget[];
   /** #1144: `insertAuthorityAction`; without it (or without drafts) there is no insert control. */
   insert?: (raw: unknown) => Promise<InsertResult>;
+  /** #1176: the question the composer starts with (the copilot opened from a judgment). */
+  initialQuestion?: string;
 }
 
 function initialThread(
@@ -276,12 +278,13 @@ export function CopilotPanel({
   offline,
   drafts,
   insert,
+  initialQuestion,
 }: CopilotPanelProps) {
   const t = useTranslations('research.copilot');
   const format = useFormatter();
   const browserOnline = useOnline();
   const isOffline = offline ?? !browserOnline;
-  const [question, setQuestion] = useState('');
+  const [question, setQuestion] = useState(initialQuestion ?? '');
   const [turns, setTurns] = useState<CopilotTurn[]>(() =>
     initialThread(initialTurns, initialAnswer),
   );

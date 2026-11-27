@@ -84,6 +84,31 @@ describe('CitationPanel', () => {
     expect(document.querySelector('[data-citation-id="3"] a')).toBeNull();
   });
 
+  it('labels a cited pending-pdf judgment page pending with its attribution, a verified one with neither (#1172)', () => {
+    const attribution = 'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0';
+    renderPanel([
+      view({
+        id: 'hf',
+        status: 'verified',
+        judgmentId: 'j1',
+        page: 3,
+        pagePending: true,
+        attribution,
+      }),
+      view({ id: 'pdf', status: 'verified', judgmentId: 'j2', page: 3 }),
+    ]);
+    const hf = document.querySelector('[data-citation-id="hf"]');
+    expect(hf?.querySelector('[data-slot="citation-page-pending"]')?.textContent).toBe(
+      en.research.reader.pagePending,
+    );
+    expect(hf?.querySelector('[data-slot="citation-attribution"]')?.textContent).toBe(
+      `Source: ${attribution}`,
+    );
+    const pdf = document.querySelector('[data-citation-id="pdf"]');
+    expect(pdf?.querySelector('[data-slot="citation-page-pending"]')).toBeNull();
+    expect(pdf?.querySelector('[data-slot="citation-attribution"]')).toBeNull();
+  });
+
   it('counts unknown and not-found citations as blocking, not verified or acknowledged ones', () => {
     const onAcknowledge = vi.fn();
     renderPanel(

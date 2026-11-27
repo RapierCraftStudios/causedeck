@@ -77,6 +77,10 @@ export const CitationSchema = z
     sourceUrl: z.url().optional(),
     /** The stored judgment the source URL belongs to, when known: opens the in-app reader (#1191). */
     judgmentId: z.uuid().optional(),
+    /** The stored judgment's page numbers are not confirmed against the PDF (`pending-pdf`, #1172). */
+    pagePending: z.literal(true).optional(),
+    /** The dataset credit the stored judgment's licence requires (`judgment.attribution`, #1172). */
+    attribution: z.string().min(1).max(300).optional(),
     title: z.string().max(CITATION_TITLE_MAX).optional(),
     reason: CitationReason.optional(),
     pinpoint: CitationPinpointSchema.optional(),

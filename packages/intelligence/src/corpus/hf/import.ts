@@ -31,8 +31,7 @@ const { corpusImportCursor, judgment, judgmentCnrAlias } = schema;
 /** The registry source of the dataset (migration 20261031181222). */
 export const HF_SOURCE_ID = 'hf-overthelex';
 export const HF_LICENCE = 'CC-BY-4.0';
-export const HF_ATTRIBUTION =
-  'Dattam Labs via overthelex/indian-court-decisions (Hugging Face), CC-BY-4.0';
+export const HF_ATTRIBUTION = 'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0';
 
 export interface HfImportRequest extends HfSliceFilter {
   dataset: HfDataset;

@@ -117,6 +117,8 @@ export function groupByJudgment(
         citedByCount: c.citedByCount,
         sourceUrl: c.sourceUrl,
         benchStrength: c.benchStrength ?? null,
+        pinpointState: c.pinpointState ?? 'verified',
+        attribution: c.attribution ?? null,
         score,
         segments: [],
       };

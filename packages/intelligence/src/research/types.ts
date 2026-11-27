@@ -57,7 +57,14 @@ export interface SegmentCandidate {
   sourceUrl: string | null;
   /** Judges on the bench (`cardinality(judgment.bench)`); null when the header named none (#1174). */
   benchStrength?: number | null;
+  /** `judgment.pinpoint_state`: `pending-pdf` until the PDF backfill confirms the pages (#1172). */
+  pinpointState?: JudgmentPinpointState;
+  /** `judgment.attribution`: the dataset credit to show with the text; null for public-domain sources (#1172). */
+  attribution?: string | null;
 }
+
+/** Whether a judgment's page numbers are confirmed against the PDF (`judgment.pinpoint_state`). */
+export type JudgmentPinpointState = 'verified' | 'pending-pdf';
 
 /** Candidates of one arm, best first. */
 export type RankedCandidates = SegmentCandidate[];
@@ -109,6 +116,10 @@ export interface SearchHit {
   sourceUrl: string | null;
   /** Judges on the bench; null when unknown (#1174). */
   benchStrength?: number | null;
+  /** `pending-pdf`: every page pinpoint of this judgment is unconfirmed ("page pending", #1172). */
+  pinpointState?: JudgmentPinpointState;
+  /** The dataset credit to show wherever this judgment's text appears; null when none is required (#1172). */
+  attribution?: string | null;
   score: number;
   /** The best segments of this judgment (at most three), best first. */
   segments: SearchSegment[];

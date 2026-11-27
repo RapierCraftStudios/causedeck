@@ -127,6 +127,7 @@ const SELECT = sql`
     j.neutral_citation as "neutralCitation", j.case_numbers as "caseNumbers",
     j.judgment_date::text as "judgmentDate", j.outcome as outcome, j.provenance->>'url' as "sourceUrl",
     nullif(cardinality(j.bench), 0) as "benchStrength",
+    j.pinpoint_state as "pinpointState", j.attribution as attribution,
     (select count(distinct cr.judgment_id)::int from judgment_citation_ref cr
       where cr.cited_judgment_id = j.id) as "citedByCount"
   from judgment_segment s

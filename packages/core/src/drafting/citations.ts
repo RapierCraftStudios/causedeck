@@ -42,17 +42,51 @@ export async function judgmentIdsBySourceUrl(
   db: Queryable,
   urls: readonly (string | null)[],
 ): Promise<Map<string, string>> {
+  const cited = await citedJudgmentsBySourceUrl(db, urls);
+  return new Map([...cited].map(([url, j]) => [url, j.id]));
+}
+
+/** The stored judgment behind a cited source URL, with what the studio shows about its text (#1172). */
+export interface CitedJudgment {
+  id: string;
+  /** `judgment.pinpoint_state`: `pending-pdf` labels the citation "page pending". */
+  pinpointState: 'verified' | 'pending-pdf';
+  /** `judgment.attribution`: the dataset credit its licence requires; null when none. */
+  attribution: string | null;
+}
+
+/** `judgmentIdsBySourceUrl` with each judgment's pinpoint state and attribution (#1172). */
+export async function citedJudgmentsBySourceUrl(
+  db: Queryable,
+  urls: readonly (string | null)[],
+): Promise<Map<string, CitedJudgment>> {
   const wanted = [...new Set(urls.filter((u): u is string => u !== null && u !== ''))];
   if (wanted.length === 0) return new Map();
   const found = await db
-    .select({ id: judgment.id, url: sql<string>`${judgment.provenance}->>'url'` })
+    .select({
+      id: judgment.id,
+      url: sql<string>`${judgment.provenance}->>'url'`,
+      pinpointState: judgment.pinpointState,
+      attribution: judgment.attribution,
+    })
     .from(judgment)
     .where(inArray(sql`${judgment.provenance}->>'url'`, wanted));
-  const byUrl = new Map<string, string | null>();
-  for (const row of found) byUrl.set(row.url, byUrl.has(row.url) ? null : row.id);
-  const ids = new Map<string, string>();
-  for (const [url, id] of byUrl) if (id !== null) ids.set(url, id);
-  return ids;
+  const byUrl = new Map<string, CitedJudgment | null>();
+  for (const row of found) {
+    byUrl.set(
+      row.url,
+      byUrl.has(row.url)
+        ? null
+        : {
+            id: row.id,
+            pinpointState: row.pinpointState === 'pending-pdf' ? 'pending-pdf' : 'verified',
+            attribution: row.attribution ?? null,
+          },
+    );
+  }
+  const cited = new Map<string, CitedJudgment>();
+  for (const [url, j] of byUrl) if (j !== null) cited.set(url, j);
+  return cited;
 }
 
 function blocksOf(content: unknown): Block[] {
@@ -157,7 +191,7 @@ function storedPinpoint(p: {
 export function reportFromRows(
   draftVersionId: string,
   rows: readonly AuthorityRow[],
-  judgmentIds: ReadonlyMap<string, string> = new Map(),
+  judgmentIds: ReadonlyMap<string, string | CitedJudgment> = new Map(),
 ): CitationReport {
   const counts = { verified: 0, not_found: 0, unknown: 0 };
   let throttled = 0;
@@ -167,7 +201,18 @@ export function reportFromRows(
       const status = row.status as CitationStatus;
       counts[status] += 1;
       if (row.resolution.reason === 'throttled') throttled += 1;
-      const judgmentId = row.sourceUrl === null ? undefined : judgmentIds.get(row.sourceUrl);
+      const found = row.sourceUrl === null ? undefined : judgmentIds.get(row.sourceUrl);
+      const cited = typeof found === 'string' ? { id: found } : found;
+      const judgmentId = cited?.id;
+      const pagePending =
+        cited !== undefined && 'pinpointState' in cited && cited.pinpointState === 'pending-pdf';
+      const attribution =
+        cited !== undefined &&
+        'attribution' in cited &&
+        cited.attribution !== null &&
+        cited.attribution !== ''
+          ? cited.attribution
+          : undefined;
       return {
         id: row.id,
         blockId: row.blockId,
@@ -178,6 +223,8 @@ export function reportFromRows(
         status,
         ...(row.sourceUrl === null ? {} : { sourceUrl: row.sourceUrl }),
         ...(judgmentId === undefined ? {} : { judgmentId }),
+        ...(pagePending ? { pagePending: true as const } : {}),
+        ...(attribution === undefined ? {} : { attribution }),
         ...(row.resolution.title === undefined ? {} : { title: row.resolution.title }),
         ...(row.resolution.reason === undefined
           ? {}
@@ -311,7 +358,7 @@ export async function checkDraft(
   return reportFromRows(
     draftVersionId,
     rows,
-    await judgmentIdsBySourceUrl(
+    await citedJudgmentsBySourceUrl(
       deps.db,
       rows.map((r) => r.sourceUrl),
     ),
@@ -342,7 +389,7 @@ export async function getCitationReport(
     return reportFromRows(
       input.draftVersionId,
       rows,
-      await judgmentIdsBySourceUrl(
+      await citedJudgmentsBySourceUrl(
         tx,
         rows.map((r) => r.sourceUrl),
       ),

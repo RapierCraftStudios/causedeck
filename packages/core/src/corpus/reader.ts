@@ -38,6 +38,13 @@ export interface JudgmentForReader {
   bench: string[];
   /** The original PDF is stored (`blob_key`); the download route signs it. */
   hasPdf: boolean;
+  /**
+   * `judgment.pinpoint_state` (#1172): `pending-pdf` when the text came from a plain-text dataset and the
+   * page numbers are not yet confirmed against the PDF; the reader labels them "page pending".
+   */
+  pinpointState: 'verified' | 'pending-pdf';
+  /** `judgment.attribution`: the dataset credit shown with the text; null when none is required. */
+  attribution: string | null;
   pages: ReaderPage[];
 }
 
@@ -60,6 +67,8 @@ export async function getJudgmentForReader(
       blobKey: judgment.blobKey,
       sensitiveCategory: judgment.sensitiveCategory,
       redactedText: judgment.redactedText,
+      pinpointState: judgment.pinpointState,
+      attribution: judgment.attribution,
     })
     .from(judgment)
     .where(eq(judgment.id, id))
@@ -76,6 +85,8 @@ export async function getJudgmentForReader(
     judgmentDate: row.judgmentDate,
     bench: row.bench,
     hasPdf: servablePdf(row) !== null,
+    pinpointState: row.pinpointState === 'pending-pdf' ? 'pending-pdf' : 'verified',
+    attribution: row.attribution ?? null,
     pages: [...row.redactedText]
       .sort((a, b) => a.pageNo - b.pageNo)
       .map((page) => ({

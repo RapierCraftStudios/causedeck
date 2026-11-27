@@ -55,6 +55,14 @@ export interface JudgmentRef {
   neutralCitation: string | null;
   /** The corpus record the claim links to, from the stored judgment. */
   sourceUrl: string | null;
+  /**
+   * `judgment.pinpoint_state` (#1172): `pending-pdf` when the text came from a plain-text dataset and
+   * its page numbers are not yet confirmed against the PDF, so claims from it are labelled "page pending".
+   * Absent on answers stored before #1172, which read as `verified`.
+   */
+  pinpointState?: 'verified' | 'pending-pdf';
+  /** `judgment.attribution`: the dataset credit shown with the source; null or absent when none is required. */
+  attribution?: string | null;
 }
 
 export interface GatheredSources {
@@ -298,6 +306,8 @@ export async function corpusSources(
         court: hit.court,
         neutralCitation: citableReference(hit.neutralCitation, hit.caseNumbers),
         sourceUrl: hit.sourceUrl,
+        pinpointState: hit.pinpointState ?? 'verified',
+        attribution: hit.attribution ?? null,
       };
       sources.push({
         id: `seg:${s.segmentId}`,

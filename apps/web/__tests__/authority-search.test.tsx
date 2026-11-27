@@ -196,6 +196,35 @@ describe('AuthoritySearch', () => {
     expect(screen.getByText('1 of 30 searches used this month')).toBeTruthy();
   });
 
+  it('shows page pending on a pending-pdf hit segment and the hit attribution, neither on a verified hit (#1172)', async () => {
+    const attribution = 'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0';
+    const base = result();
+    const [first, second] = base.hits;
+    if (first === undefined || second === undefined) throw new Error('fixture');
+    setup({
+      ...base,
+      hits: [
+        {
+          ...first,
+          pinpointState: 'pending-pdf',
+          attribution,
+          segments: first.segments.map((s) => ({ ...s, pinpoint: 'page_pending' as const })),
+        },
+        { ...second, pinpointState: 'verified', attribution: null },
+      ],
+    });
+    submit();
+    await screen.findByText('Meera Rao v. Sunrise Nursing Home');
+    const pending = document.querySelectorAll('[data-slot="authority-page-pending"]');
+    expect(pending).toHaveLength(2);
+    expect(pending[0]?.textContent).toBe('page pending');
+    expect(pending[0]?.getAttribute('title')).toBe(
+      'The page number is not yet confirmed against the court PDF.',
+    );
+    const credits = document.querySelectorAll('[data-slot="authority-attribution"]');
+    expect(Array.from(credits).map((c) => c.textContent)).toEqual([`Source: ${attribution}`]);
+  });
+
   it('editing a chip searches again with the edited plan and does not plan again', async () => {
     const edited = result({ plan: { ...plan, subjectAreas: [] } });
     const { search, rerun } = setup(result(), edited);

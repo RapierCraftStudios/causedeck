@@ -5706,6 +5706,9 @@ export type Messages = {
         openPdf: string;
         decided: string;
         outcome: string;
+        pagePending: string;
+        pagePendingHint: string;
+        attribution: string;
       };
       answer: {
         button: string;
@@ -5772,6 +5775,7 @@ export type Messages = {
       pinpoint: {
         page: string;
         paragraph: string;
+        pagePending: string;
       };
       followUpPlaceholder: string;
       composerHint: string;
@@ -5817,6 +5821,8 @@ export type Messages = {
         stage: string;
         nextDate: string;
       };
+      pagePendingHint: string;
+      attribution: string;
     };
     statutes: {
       metaTitle: string;
@@ -5884,6 +5890,10 @@ export type Messages = {
       notFound: string;
       notFoundHint: string;
       denied: string;
+      pagePending: string;
+      pagePendingPage: string;
+      pagePendingNotice: string;
+      attribution: string;
     };
   };
   settingsResearch: {

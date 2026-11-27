@@ -539,6 +539,8 @@ export function DraftStudio(props: StudioProps) {
         sourceUrl: c.sourceUrl,
         judgmentId: c.judgmentId,
         page: c.pinpoint?.page,
+        pagePending: c.pagePending,
+        attribution: c.attribution,
         acknowledged: false,
       })),
       findings: result.data.findings,

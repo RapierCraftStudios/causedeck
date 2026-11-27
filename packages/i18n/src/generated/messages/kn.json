@@ -5704,7 +5704,10 @@
         "pages": "ಪು. {from} ರಿಂದ {to}",
         "openPdf": "ನ್ಯಾಯಾಲಯದ PDF ತೆರೆಯಿರಿ",
         "decided": "ತೀರ್ಪು ದಿನಾಂಕ {date}",
-        "outcome": "ಫಲಿತಾಂಶ: {outcome}"
+        "outcome": "ಫಲಿತಾಂಶ: {outcome}",
+        "pagePending": "ಪುಟ ಬಾಕಿ ಇದೆ",
+        "pagePendingHint": "ಪುಟ ಸಂಖ್ಯೆಯನ್ನು ನ್ಯಾಯಾಲಯದ PDF ಜೊತೆ ಇನ್ನೂ ದೃಢೀಕರಿಸಲಾಗಿಲ್ಲ.",
+        "attribution": "ಮೂಲ: {attribution}"
       },
       "answer": {
         "button": "ಮೂಲಗಳೊಂದಿಗೆ ಸಾರಾಂಶ ಮಾಡಿ",
@@ -5770,7 +5773,8 @@
       },
       "pinpoint": {
         "page": "ಪುಟ {page}",
-        "paragraph": "ಪ್ಯಾರಾ {paragraph}"
+        "paragraph": "ಪ್ಯಾರಾ {paragraph}",
+        "pagePending": "ಪುಟ ಬಾಕಿ ಇದೆ"
       },
       "followUpPlaceholder": "ಮುಂದಿನ ಪ್ರಶ್ನೆ ಕೇಳಿ",
       "composerHint": "ಕಳುಹಿಸಲು Enter, ಹೊಸ ಸಾಲಿಗೆ Shift+Enter",
@@ -5815,7 +5819,9 @@
         "label": "ಇದರ ಬಗ್ಗೆ ಕೇಳುತ್ತಿದ್ದೀರಿ",
         "stage": "ಹಂತ: {stage}",
         "nextDate": "ಮುಂದಿನ ದಿನಾಂಕ: {date}"
-      }
+      },
+      "pagePendingHint": "ಪುಟ ಸಂಖ್ಯೆಯನ್ನು ನ್ಯಾಯಾಲಯದ PDF ಜೊತೆ ಇನ್ನೂ ದೃಢೀಕರಿಸಲಾಗಿಲ್ಲ.",
+      "attribution": "ಮೂಲ: {attribution}"
     },
     "statutes": {
       "metaTitle": "ಶಾಸನಗಳು",
@@ -5882,7 +5888,11 @@
       "noPdf": "ಮೂಲ PDF ಸಂಗ್ರಹಿಸಲಾಗಿಲ್ಲ.",
       "notFound": "ಈ ತೀರ್ಪು ಲಭ್ಯವಿಲ್ಲ",
       "notFoundHint": "ಇದು ಸಂಗ್ರಹದಲ್ಲಿಲ್ಲ, ಅಥವಾ ಇದರ ಅನಾಮಧೇಯ ಪಠ್ಯ ಇನ್ನೂ ಸಿದ್ಧವಾಗಿಲ್ಲ.",
-      "denied": "ತೀರ್ಪುಗಳನ್ನು ಓದಲು ನಿಮಗೆ ಅನುಮತಿ ಇಲ್ಲ."
+      "denied": "ತೀರ್ಪುಗಳನ್ನು ಓದಲು ನಿಮಗೆ ಅನುಮತಿ ಇಲ್ಲ.",
+      "pagePending": "ಪುಟ ಬಾಕಿ ಇದೆ",
+      "pagePendingPage": "ಪುಟ {page} · ಪುಟ ಬಾಕಿ ಇದೆ",
+      "pagePendingNotice": "ಈ ಪಠ್ಯ ಸರಳ-ಪಠ್ಯ ಡೇಟಾಸೆಟ್‌ನಿಂದ ಬಂದಿದೆ. ಇದರ ಪುಟ ಸಂಖ್ಯೆಗಳನ್ನು ನ್ಯಾಯಾಲಯದ PDF ಜೊತೆ ಇನ್ನೂ ದೃಢೀಕರಿಸಲಾಗಿಲ್ಲ, ಆದ್ದರಿಂದ ಪುಟ ಉಲ್ಲೇಖಗಳನ್ನು ಪುಟ ಬಾಕಿ ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ.",
+      "attribution": "ಮೂಲ: {attribution}"
     }
   },
   "settingsResearch": {

@@ -177,6 +177,37 @@ describe('copilot panel', () => {
     expect(unsupported[0]?.textContent).toContain(en.reason.unknown_source);
   });
 
+  it('labels a pending-pdf judgment page pending with its attribution, and a verified one with neither (#1172)', () => {
+    const attribution = 'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0';
+    const pending = panel({
+      ...ANSWER,
+      unsupported: [],
+      judgments: {
+        j1: {
+          ...(ANSWER.judgments.j1 as CopilotAnswer['judgments'][string]),
+          pinpointState: 'pending-pdf',
+          attribution,
+        },
+      },
+    });
+    const claim = pending.container.querySelector('[data-slot="copilot-claim"]');
+    expect(claim?.textContent).toContain(`${en.pinpoint.pagePending} · para 12`);
+    expect(claim?.textContent).not.toContain('page 4');
+    expect(claim?.querySelector('[data-slot="copilot-page-pending"]')?.textContent).toContain(
+      en.pagePendingHint,
+    );
+    expect(claim?.querySelector('[data-slot="copilot-attribution"]')?.textContent).toBe(
+      `Source: ${attribution}`,
+    );
+    cleanup();
+    const verified = panel({ ...ANSWER, unsupported: [] });
+    const plain = verified.container.querySelector('[data-slot="copilot-claim"]');
+    expect(plain?.textContent).toContain('page 4 · para 12');
+    expect(plain?.textContent).not.toContain(en.pinpoint.pagePending);
+    expect(plain?.querySelector('[data-slot="copilot-page-pending"]')).toBeNull();
+    expect(plain?.querySelector('[data-slot="copilot-attribution"]')).toBeNull();
+  });
+
   it('prints a claim whose quote equals its statement once, with its source line', () => {
     const sentence = 'No written consent was taken for the surgery.';
     const { container } = panel({

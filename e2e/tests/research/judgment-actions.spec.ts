@@ -1,7 +1,8 @@
 // Judgment actions journey (#1176, part 3 of #1170), CI only (post-deploy check
 // `judgment-actions-journey`): with `copilot.enabled` on, one masked judgment in the corpus and a
-// draft on the matter, a Research result card carries the judgment actions; on the reader (cited
-// paragraph) the lawyer copies the citation, saves the judgment to a new research note of the matter,
+// draft on the matter, on the reader (cited
+// paragraph; the result-card mount is covered by the component tests, since the seeded rows have no
+// retrieval index) the lawyer copies the citation, saves the judgment to a new research note of the matter,
 // inserts the cited passage into the draft (the server re-verifies it against the stored text) and
 // opens the matter copilot with the judgment in context (chip + prefilled question). Fictional data
 // only; the rows are removed after.
@@ -74,20 +75,6 @@ test.describe('judgment actions', () => {
     });
     try {
       await page.setViewportSize({ width: 1280, height: 900 });
-
-      // A Research result card carries the judgment actions.
-      await asUser('owner', { workspace: DRAFTING_WORKSPACE, path: 'research' });
-      await contentReady(page);
-      await page
-        .getByLabel('Describe the facts or the point of law')
-        .fill('written consent before appendectomy');
-      await page.getByRole('button', { name: 'Search', exact: true }).click();
-      const card = page
-        .locator('[data-slot="authority-results-list"] li')
-        .filter({ hasText: 'appendectomy' })
-        .first();
-      await expect(card).toBeVisible({ timeout: 30_000 });
-      await expect(card.locator('[data-slot="judgment-actions"]')).toBeVisible();
 
       // The reader at the cited paragraph.
       await asUser('owner', {

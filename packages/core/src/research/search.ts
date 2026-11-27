@@ -246,10 +246,14 @@ async function withPinpoints<R extends SearchResult>(db: Queryable, result: R): 
     ...result,
     hits: result.hits.map((hit) => {
       const pages = verifiedPages.get(hit.judgmentId);
+      // A judgment whose pages are not yet confirmed against the PDF (#1172) is page pending throughout,
+      // whatever its page sources say.
+      const pendingPdf = hit.pinpointState === 'pending-pdf';
       return {
         ...hit,
+        attribution: hit.attribution ?? null,
         segments: hit.segments.map((segment) => {
-          let verified = pages !== undefined && segment.pageFrom <= segment.pageTo;
+          let verified = !pendingPdf && pages !== undefined && segment.pageFrom <= segment.pageTo;
           for (let page = segment.pageFrom; verified && page <= segment.pageTo; page += 1) {
             verified = pages?.has(page) === true;
           }

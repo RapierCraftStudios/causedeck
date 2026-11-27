@@ -151,8 +151,16 @@ function SourceItem({
   const t = useTranslations('research.copilot');
   const slug = slugOf(useParams());
   const judgment = claim.judgmentId === null ? undefined : answer.judgments[claim.judgmentId];
+  // A judgment from a plain-text dataset (`pinpoint_state` pending-pdf, #1172): its page numbers are
+  // not confirmed against the court PDF, so the page is labelled pending instead of shown as cited.
+  const pagePending = judgment?.pinpointState === 'pending-pdf';
+  const attribution = judgment?.attribution ?? null;
   const where = [
-    claim.pinpoint.page === null ? null : t('pinpoint.page', { page: claim.pinpoint.page }),
+    claim.pinpoint.page === null
+      ? null
+      : pagePending
+        ? t('pinpoint.pagePending')
+        : t('pinpoint.page', { page: claim.pinpoint.page }),
     claim.pinpoint.paragraph === null
       ? null
       : t('pinpoint.paragraph', { paragraph: claim.pinpoint.paragraph }),
@@ -213,6 +221,16 @@ function SourceItem({
           </>
         )}
       </p>
+      {pagePending ? (
+        <p className="text-ink-muted text-xs" data-slot="copilot-page-pending">
+          <Badge tone="warning">{t('pinpoint.pagePending')}</Badge> {t('pagePendingHint')}
+        </p>
+      ) : null}
+      {attribution === null || attribution === '' ? null : (
+        <p className="text-ink-muted text-xs break-words" data-slot="copilot-attribution">
+          {t('attribution', { attribution })}
+        </p>
+      )}
       {insertControl}
     </li>
   );

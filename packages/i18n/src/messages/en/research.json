@@ -105,7 +105,10 @@
         "pages": "pp. {from} to {to}",
         "openPdf": "Open court PDF",
         "decided": "Decided {date}",
-        "outcome": "Outcome: {outcome}"
+        "outcome": "Outcome: {outcome}",
+        "pagePending": "page pending",
+        "pagePendingHint": "The page number is not yet confirmed against the court PDF.",
+        "attribution": "Source: {attribution}"
       },
       "answer": {
         "button": "Summarise with sources",
@@ -171,7 +174,8 @@
       },
       "pinpoint": {
         "page": "page {page}",
-        "paragraph": "para {paragraph}"
+        "paragraph": "para {paragraph}",
+        "pagePending": "page pending"
       },
       "followUpPlaceholder": "Ask a follow-up question",
       "composerHint": "Enter to send, Shift+Enter for a new line",
@@ -216,7 +220,9 @@
         "label": "Asking about",
         "stage": "Stage: {stage}",
         "nextDate": "Next date: {date}"
-      }
+      },
+      "pagePendingHint": "The page number is not yet confirmed against the court PDF.",
+      "attribution": "Source: {attribution}"
     },
     "statutes": {
       "metaTitle": "Statutes",
@@ -283,7 +289,11 @@
       "noPdf": "The original PDF is not stored.",
       "notFound": "This judgment is not available",
       "notFoundHint": "It is not in the corpus, or its anonymised text is not ready yet.",
-      "denied": "You do not have permission to read judgments."
+      "denied": "You do not have permission to read judgments.",
+      "pagePending": "Page pending",
+      "pagePendingPage": "Page {page} · page pending",
+      "pagePendingNotice": "This text comes from a plain-text dataset. Its page numbers are not yet confirmed against the court PDF, so page pinpoints are marked page pending.",
+      "attribution": "Source: {attribution}"
     }
   },
   "settingsResearch": {

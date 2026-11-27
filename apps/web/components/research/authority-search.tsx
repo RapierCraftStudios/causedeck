@@ -549,6 +549,13 @@ export function AuthoritySearch({
                         ? t('results.notCited')
                         : t('results.citedBy', { count: hit.citedByCount })}
                     </p>
+                    {hit.attribution === undefined ||
+                    hit.attribution === null ||
+                    hit.attribution === '' ? null : (
+                      <p data-slot="authority-attribution" className="text-muted-foreground text-xs">
+                        {t('results.attribution', { attribution: hit.attribution })}
+                      </p>
+                    )}
                     <ul className="mt-2 flex flex-col gap-2">
                       {hit.segments.map((segment) => (
                         <li key={segment.segmentId} className="border-l-2 pl-2">
@@ -558,6 +565,17 @@ export function AuthoritySearch({
                             {segment.pageFrom === segment.pageTo
                               ? t('results.page', { page: segment.pageFrom })
                               : t('results.pages', { from: segment.pageFrom, to: segment.pageTo })}
+                            {segment.pinpoint === 'page_pending' ? (
+                              <>
+                                {' · '}
+                                <span
+                                  data-slot="authority-page-pending"
+                                  title={t('results.pagePendingHint')}
+                                >
+                                  {t('results.pagePending')}
+                                </span>
+                              </>
+                            ) : null}
                           </p>
                           <p className="whitespace-pre-wrap">{segment.text}</p>
                         </li>

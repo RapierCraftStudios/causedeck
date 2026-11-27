@@ -7,11 +7,13 @@ version: 0.0-draft
 history:
   - date: 2026-10-30
     summary: Page added; the API and the app no longer name sources per record (D-053). Legal text pending counsel (#117).
+  - date: 2026-11-27
+    summary: Added the overthelex/indian-court-decisions dataset; its judgments carry the attribution and a page pending label in the app (#1172).
 ---
 
 ## Why this page exists
 
-CauseDeck and its public API do not name the portal, aggregator, dataset or route a record came from. The attribution that a licence requires is given here instead. Records carry the date they were captured (`as_of`) and, where the court publishes its own copy, a link to it (`official_url`).
+CauseDeck and its public API do not name the portal, aggregator, dataset or route a record came from. The attribution that a licence requires is given here instead, and also next to the text itself where the licence asks for that (see the plain-text dataset below). Records carry the date they were captured (`as_of`) and, where the court publishes its own copy, a link to it (`official_url`).
 
 ## Attributions
 
@@ -22,7 +24,13 @@ CauseDeck and its public API do not name the portal, aggregator, dataset or rout
 - Attribution: "Indian Supreme Court and High Court judgments, compiled by Dattam Labs, licensed under CC-BY-4.0." We changed the data by extracting text, metadata and citations from it.
 - Attribution (as published): Dattam Labs, Indian Supreme Court and High Court Judgments, AWS Open Data, CC-BY-4.0.
 
-A judgment in CauseDeck shows only its court, case number, citation, date and a link to the official copy, never the dataset it came from.
+### Indian court decisions (plain-text dataset)
+
+- Publisher: Dattam Labs, published as overthelex/indian-court-decisions on Hugging Face.
+- Licence: [Creative Commons Attribution 4.0 International (CC-BY-4.0)](https://creativecommons.org/licenses/by/4.0/).
+- Attribution: "Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0". We changed the data by redacting names, removing duplicates and extracting metadata and citations from it.
+
+A judgment from the AWS Open Data datasets shows only its court, case number, citation, date and a link to the official copy. A judgment from the plain-text dataset also shows the attribution above wherever its text appears (the judgment reader, search results, copilot source cards and the citations panel), and its page numbers are marked "page pending" until they are confirmed against the court's PDF.
 
 ### Court and notice records
 

@@ -47,6 +47,9 @@ async function seedJudgment(
     /** The redacted pages; default one PDF text-layer page. */
     pages?: { pageNo: number; text: string; source?: 'text' | 'ocr' }[];
     segments: { role: 'facts' | 'reasoning' | 'decision'; text: string }[];
+    /** `judgment.pinpoint_state` and `attribution` of a plain-text dataset import (#1172). */
+    pinpointState?: 'verified' | 'pending-pdf';
+    attribution?: string;
   },
 ): Promise<string> {
   const sha256 = randomUUID().replaceAll('-', '');
@@ -79,6 +82,8 @@ async function seedJudgment(
       titleMasked: v.titleMasked ?? false,
       courtLevel: v.level ?? 'high_court',
       outcome: v.outcome ?? 'unknown',
+      ...(v.pinpointState === undefined ? {} : { pinpointState: v.pinpointState }),
+      ...(v.attribution === undefined ? {} : { attribution: v.attribution }),
     })
     .returning({ id: schema.judgment.id });
   const judgmentId = row?.id ?? '';
@@ -386,6 +391,38 @@ describe('searchAuthorities', () => {
       );
       expect(benched.hits.map((h) => h.judgmentId)).toEqual([imported]);
       expect(benched.hits[0]?.segments[0]?.pinpoint).toBe('page_pending');
+    });
+  });
+
+  it('a pending-pdf judgment is page_pending on every segment and carries its attribution (#1172)', async () => {
+    await withTestDb(async (tx) => {
+      const ids = await seed(tx);
+      // OCR pages would read as verified on their page source alone; the judgment state overrides them.
+      const hf = await seedJudgment(tx, {
+        title: 'Dataset text judgment',
+        pages: [{ pageNo: 1, text: '[PARTY] imported.', source: 'ocr' }],
+        pinpointState: 'pending-pdf',
+        attribution: 'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0',
+        segments: [
+          { role: 'facts', text: 'Surgery without written consent, then a post-operative infection.' },
+        ],
+      });
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const result = await searchAuthorities(
+        tx,
+        { workspaceId, userId: ownerId },
+        { query: 'surgery without written consent and post-operative infection' },
+        deps(),
+      );
+      const byId = new Map(result.hits.map((h) => [h.judgmentId, h]));
+      const pending = byId.get(hf);
+      expect(pending?.pinpointState).toBe('pending-pdf');
+      expect(pending?.attribution).toBe('Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0');
+      expect(pending?.segments.map((s) => s.pinpoint)).toEqual(['page_pending']);
+      const verified = byId.get(ids.negligence);
+      expect(verified?.pinpointState).toBe('verified');
+      expect(verified?.attribution).toBeNull();
+      expect(verified?.segments.every((s) => s.pinpoint === 'verified')).toBe(true);
     });
   });
 

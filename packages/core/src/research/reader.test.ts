@@ -23,6 +23,8 @@ async function seed(
     titleMasked?: boolean;
     bench?: string[];
     licence?: string;
+    pinpointState?: 'verified' | 'pending-pdf';
+    attribution?: string;
   } = {},
 ): Promise<string> {
   const sha256 = randomUUID().replaceAll('-', '');
@@ -61,6 +63,8 @@ async function seed(
       caseTitle: v.title ?? 'State v. Ravi',
       titleMasked: v.titleMasked ?? false,
       courtLevel: 'high_court',
+      ...(v.pinpointState === undefined ? {} : { pinpointState: v.pinpointState }),
+      ...(v.attribution === undefined ? {} : { attribution: v.attribution }),
     })
     .returning({ id: schema.judgment.id });
   return row?.id ?? '';
@@ -113,6 +117,29 @@ describe('getJudgmentReaderView', () => {
       expect(view).toMatchObject({ title: 'X v. State', titleMasked: true, benchStrength: null });
       expect(view?.attribution.licence).toBeNull();
       expect(view?.anchor).toEqual({ page: 1, para: null, offset: 0, pinpoint: 'page_pending' });
+    });
+  });
+
+  it('marks every page of a pending-pdf judgment page_pending and returns its attribution text (#1172)', async () => {
+    await withTestDb(async (tx) => {
+      const judgmentId = await seed(tx, {
+        licence: 'CC-BY-4.0',
+        pinpointState: 'pending-pdf',
+        attribution: 'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0',
+      });
+      const { ownerId, workspaceId } = await newWorkspace(tx);
+      const actor = { workspaceId, userId: ownerId };
+      const view = await getJudgmentReaderView(tx, actor, { judgmentId, page: 2 });
+      expect(view?.pinpointState).toBe('pending-pdf');
+      expect(view?.pages.map((p) => p.pinpoint)).toEqual(['page_pending', 'page_pending']);
+      expect(view?.anchor?.pinpoint).toBe('page_pending');
+      expect(view?.attribution.text).toBe(
+        'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0',
+      );
+      const verified = await getJudgmentReaderView(tx, actor, { judgmentId: await seed(tx) });
+      expect(verified?.pinpointState).toBe('verified');
+      expect(verified?.pages.map((p) => p.pinpoint)).toEqual(['verified', 'verified']);
+      expect(verified?.attribution.text).toBeNull();
     });
   });
 

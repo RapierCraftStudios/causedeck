@@ -31,6 +31,13 @@ export interface CitationView {
   judgmentId?: string | undefined;
   /** The pinpoint page, when known: the link opens the source at it. */
   page?: number | undefined;
+  /**
+   * The cited judgment's page numbers are not confirmed against the court PDF yet (`pinpoint_state`
+   * pending-pdf, #1172): the citation is labelled "page pending".
+   */
+  pagePending?: boolean | undefined;
+  /** The dataset credit the cited judgment's licence requires (#1172). */
+  attribution?: string | undefined;
   /** A non-verified citation the lawyer has acknowledged. */
   acknowledged: boolean;
 }
@@ -98,6 +105,7 @@ export function CitationPanel({
 }: CitationPanelProps) {
   const t = useTranslations('drafting.panels.citations');
   const tc = useTranslations('drafting.checks.citations');
+  const tr = useTranslations('research.reader');
   const slug = slugOf(useParams());
   const open = openCitationIds(citations).length;
   return (
@@ -149,6 +157,20 @@ export function CitationPanel({
               <span className="text-sm">{citation.raw}</span>
               {citation.title === undefined ? null : (
                 <span className="text-ink-muted text-xs">{citation.title}</span>
+              )}
+              {citation.pagePending === true ? (
+                <span
+                  data-slot="citation-page-pending"
+                  className="text-ink-muted text-xs"
+                  title={tr('pagePendingNotice')}
+                >
+                  {tr('pagePending')}
+                </span>
+              ) : null}
+              {citation.attribution === undefined || citation.attribution === '' ? null : (
+                <span data-slot="citation-attribution" className="text-ink-muted text-xs">
+                  {tr('attribution', { attribution: citation.attribution })}
+                </span>
               )}
               {reason === null ? null : (
                 <span data-slot="citation-reason" className="text-ink-muted text-xs">

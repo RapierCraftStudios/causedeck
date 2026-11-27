@@ -46,7 +46,10 @@ export interface JudgmentReaderView {
   pages: JudgmentReaderPage[];
   /** Where `para` or `page` lands; null when neither was asked for or it is not in the text. */
   anchor: JudgmentReaderAnchor | null;
-  attribution: { sourceUrl: string | null; licence: string | null };
+  /** `judgment.pinpoint_state`: `pending-pdf` marks every page `page_pending` (#1172). */
+  pinpointState: 'verified' | 'pending-pdf';
+  /** `text`: `judgment.attribution`, the dataset credit the licence requires; null when none (#1172). */
+  attribution: { sourceUrl: string | null; licence: string | null; text: string | null };
 }
 
 export interface JudgmentReaderInput {
@@ -123,17 +126,21 @@ export async function getJudgmentReaderView(
         redactionVersion: judgment.redactionVersion,
         url: sql<string | null>`${judgment.provenance}->>'url'`,
         licence: sql<string | null>`${judgment.provenance}->>'licence'`,
+        pinpointState: judgment.pinpointState,
+        attributionText: judgment.attribution,
       })
       .from(judgment)
       .where(eq(judgment.id, input.judgmentId))
       .limit(1);
     if (row === undefined || row.redactionVersion <= 0 || row.redactedText === null) return null;
+    // A pending-pdf judgment (#1172) has no confirmed page at all, whatever each page's source says.
+    const pendingPdf = row.pinpointState === 'pending-pdf';
     const pages: JudgmentReaderPage[] = [...row.redactedText]
       .sort((a, b) => a.pageNo - b.pageNo)
       .map((p) => ({
         pageNo: p.pageNo,
         text: p.text,
-        pinpoint: p.source === 'text' ? 'page_pending' : 'verified',
+        pinpoint: pendingPdf || p.source === 'text' ? 'page_pending' : 'verified',
       }));
     const bench = row.bench;
     return {
@@ -148,7 +155,8 @@ export async function getJudgmentReaderView(
       benchStrength: bench > 0 ? bench : null,
       pages,
       anchor: anchorOf(pages, input),
-      attribution: { sourceUrl: row.url, licence: row.licence },
+      pinpointState: pendingPdf ? 'pending-pdf' : 'verified',
+      attribution: { sourceUrl: row.url, licence: row.licence, text: row.attributionText ?? null },
     };
   });
 }

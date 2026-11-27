@@ -72,6 +72,21 @@ describe('getJudgmentForReader', () => {
     });
   });
 
+  it('returns the pinpoint state and attribution of a plain-text dataset judgment (#1172)', async () => {
+    await withTestDb(async (tx) => {
+      const hf = await seed(tx, {
+        pinpointState: 'pending-pdf',
+        attribution: 'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0',
+      });
+      const pending = await getJudgmentForReader(hf, { db: tx });
+      expect(pending?.pinpointState).toBe('pending-pdf');
+      expect(pending?.attribution).toBe('Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0');
+      const verified = await getJudgmentForReader(await seed(tx), { db: tx });
+      expect(verified?.pinpointState).toBe('verified');
+      expect(verified?.attribution).toBeNull();
+    });
+  });
+
   it('is null when the judgment is absent or not yet redacted', async () => {
     await withTestDb(async (tx) => {
       expect(await getJudgmentForReader(randomUUID(), { db: tx })).toBeNull();

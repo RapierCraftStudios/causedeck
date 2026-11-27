@@ -101,6 +101,8 @@ export default async function JudgmentReaderPage({ params, searchParams }: Reade
   }
 
   const target = citedTarget(judgment, positive(query.page), positive(query.para));
+  // Text from a plain-text dataset whose pages are not confirmed against the PDF yet (#1172).
+  const pagePending = judgment.pinpointState === 'pending-pdf';
   const title =
     judgment.title ?? (judgment.titleMasked ? t('maskedTitle') : (judgment.neutralCitation ?? t('untitled')));
   const facts: [string, string][] = [
@@ -146,6 +148,20 @@ export default async function JudgmentReaderPage({ params, searchParams }: Reade
           )}
           <p className="text-muted-foreground text-xs">{t('anonymised')}</p>
         </div>
+        {judgment.attribution === null || judgment.attribution === '' ? null : (
+          <p data-slot="reader-attribution" className="text-muted-foreground text-xs">
+            {t('attribution', { attribution: judgment.attribution })}
+          </p>
+        )}
+        {pagePending ? (
+          <p
+            data-slot="reader-page-pending"
+            role="note"
+            className="border-line rounded-md border p-2 text-sm"
+          >
+            {t('pagePendingNotice')}
+          </p>
+        ) : null}
       </header>
 
       {judgment.pages.map((page) => {
@@ -164,7 +180,9 @@ export default async function JudgmentReaderPage({ params, searchParams }: Reade
               id={`reader-page-${String(page.pageNo)}`}
               className="text-muted-foreground text-xs font-medium tabular-nums"
             >
-              {t('page', { page: page.pageNo })}
+              {pagePending
+                ? t('pagePendingPage', { page: page.pageNo })
+                : t('page', { page: page.pageNo })}
             </h2>
             {page.paragraphs.map((p, index) => {
               const cited = citedIndex === index;

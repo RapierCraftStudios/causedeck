@@ -274,7 +274,13 @@ export function JudgmentActions({
                   ))}
                 </select>
               </label>
-              <Button type="button" size="sm" className="min-h-11 self-start" onClick={save}>
+              <Button
+                type="button"
+                size="sm"
+                className="min-h-11 self-start"
+                data-slot="judgment-save-submit"
+                onClick={save}
+              >
                 {t('save')}
               </Button>
             </>
@@ -323,6 +329,7 @@ export function JudgmentActions({
                   type="button"
                   size="sm"
                   className="min-h-11 self-start"
+                  data-slot="judgment-insert-submit"
                   disabled={after === ''}
                   onClick={insert}
                 >

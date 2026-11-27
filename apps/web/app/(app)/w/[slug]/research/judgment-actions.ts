@@ -25,7 +25,7 @@ import {
   workspaceAction,
   type WorkspaceActionCtx,
 } from '../../../../../lib/workspace-action.ts';
-import { can } from '../../../../../lib/workspace-context.ts';
+import { can, type Role } from '../../../../../lib/workspace-context.ts';
 
 const MAX_MATTERS = 50;
 const MAX_DRAFTS = 10;
@@ -113,12 +113,12 @@ const loadTargets = workspaceAction(
       if (input.matterId === undefined) return { matters, notes: [], drafts: [] };
 
       const { listNotes } = await import('@causedeck/core/research');
-      const notes = (await listNotes(ctx.tx, actor, input.matterId)).map((n) => ({
-        id: n.id,
-        title: n.title,
-      }));
+      // A role without `memory.read` still gets the matter's drafts (it cannot save to a note anyway).
+      const notes = can(ctx.role as Role, 'memory.read')
+        ? (await listNotes(ctx.tx, actor, input.matterId)).map((n) => ({ id: n.id, title: n.title }))
+        : [];
       const drafts: ActionTargetDraft[] = [];
-      if (can(ctx.role, 'draft.write')) {
+      if (can(ctx.role as Role, 'draft.write')) {
         const { getDraft, listDrafts } = await import('@causedeck/core/drafting');
         const items = await listDrafts({ db: ctx.tx }, actor, { matterId: input.matterId });
         for (const item of items.slice(0, MAX_DRAFTS)) {

@@ -66,7 +66,9 @@ export async function getJudgmentForReader(
       blobKey: judgment.blobKey,
       sensitiveCategory: judgment.sensitiveCategory,
       redactedText: judgment.redactedText,
-      licence: sql<string | null>`coalesce(${judgment.licence}, ${judgment.provenance}->>'licence')`,
+      licence: sql<
+        string | null
+      >`coalesce(${judgment.licence}, ${judgment.provenance}->>'licence')`,
       attribution: judgment.attribution,
     })
     .from(judgment)
@@ -124,7 +126,9 @@ export async function getJudgmentPdfKey(
       titleMasked: judgment.titleMasked,
       sensitiveCategory: judgment.sensitiveCategory,
       redactedText: judgment.redactedText,
-      licence: sql<string | null>`coalesce(${judgment.licence}, ${judgment.provenance}->>'licence')`,
+      licence: sql<
+        string | null
+      >`coalesce(${judgment.licence}, ${judgment.provenance}->>'licence')`,
       attribution: judgment.attribution,
     })
     .from(judgment)

@@ -28,5 +28,10 @@
     "run": "E2E_POST_DEPLOY=1 pnpm --filter @causedeck/e2e test tests/research/copilot-starters.spec.ts",
     "pass": "exit 0",
     "timeout": 600
+  },
+  "judgment-actions-journey": {
+    "run": "pnpm --filter @causedeck/e2e test tests/research/judgment-actions.spec.ts",
+    "pass": "exit 0",
+    "timeout": 600
   }
 }

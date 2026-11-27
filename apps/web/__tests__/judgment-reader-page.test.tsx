@@ -220,9 +220,9 @@ describe('judgment reader page', () => {
     expect(insert()).toBe(false);
     cleanup();
     await open();
-    expect(document.querySelector<HTMLButtonElement>('[data-slot="judgment-insert"]')?.disabled).toBe(
-      true,
-    );
+    expect(
+      document.querySelector<HTMLButtonElement>('[data-slot="judgment-insert"]')?.disabled,
+    ).toBe(true);
   });
 
   it("keeps the matter's relevant-judgments page out of search indexes too", async () => {

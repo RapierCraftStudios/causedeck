@@ -138,6 +138,7 @@ const draftChecks = await import('../app/(app)/w/[slug]/drafts/[id]/checks-actio
 const draftPrecedents = await import('../app/(app)/w/[slug]/drafts/[id]/precedent-actions.ts');
 const draftFactcheck = await import('../app/(app)/w/[slug]/drafts/[id]/factcheck-actions.ts');
 const draftAuthorities = await import('../app/(app)/w/[slug]/drafts/[id]/authority-actions.ts');
+const judgmentActions = await import('../app/(app)/w/[slug]/research/judgment-actions.ts');
 const hearingOutcome =
   await import('../app/(app)/w/[slug]/hearings/[hearingId]/outcome/actions.ts');
 const briefSheet = await import('../app/(app)/w/[slug]/briefs/[listing-id]/actions.ts');
@@ -293,6 +294,9 @@ const ACTIONS: Record<string, Record<string, unknown>> = {
   proposePrecedentAction: draftPrecedents,
   proposeAuthoritiesAction: draftAuthorities,
   insertAuthorityAction: draftAuthorities,
+  loadActionTargetsAction: judgmentActions,
+  saveJudgmentToNoteAction: judgmentActions,
+  insertJudgmentIntoDraftAction: judgmentActions,
   addTagAction: research,
   findAuthoritiesAction: research,
   searchAuthoritiesAction: researchSearch,
@@ -1168,6 +1172,23 @@ function inputs(workspaceId: string): Record<string, unknown> {
       afterBlockId: 'b.0',
       candidateRef: { judgmentId: XT_ID, quote: 'Cross-tenant probe', para: 1 },
     },
+    // Judgment actions (#1176): ub may not list A's notes and drafts, save to A's matter or insert into A's draft.
+    loadActionTargetsAction: { workspaceId, matterId: t.a.rows.matter_issue_tag?.matterId },
+    saveJudgmentToNoteAction: {
+      workspaceId,
+      matterId: t.a.rows.matter_issue_tag?.matterId,
+      judgmentId: XT_ID,
+      label: 'Cross-tenant probe',
+    },
+    insertJudgmentIntoDraftAction: {
+      workspaceId,
+      draftId: t.a.rows.draft_version?.draftId,
+      versionId: t.a.rows.draft_version?.id,
+      afterBlockId: 'b.0',
+      judgmentId: XT_ID,
+      quote: 'Cross-tenant probe',
+      para: 1,
+    },
     // Drafting checks (#828): ub may not check, acknowledge, fix or export A's draft.
     runChecksAction: { workspaceId, draftVersionId: t.a.rows.draft_version?.id },
     acknowledgeUnverifiedAction: {
@@ -2038,6 +2059,8 @@ describe('cross-tenant server actions', () => {
       'addAuthorityAction',
       'removeAuthorityAction',
       'setAuthorityPinnedAction',
+      // #1176: saving a judgment to A's matter
+      'saveJudgmentToNoteAction',
       // People tab (#393): A's matter and person
       'upsertPersonAction',
       'setRoleEdgeAction',
@@ -2085,6 +2108,9 @@ describe('cross-tenant server actions', () => {
       // #1144: the authority drawer may neither ask about nor insert into A's draft.
       'proposeAuthoritiesAction',
       'insertAuthorityAction',
+      // #1176: the judgment actions may neither insert into A's draft nor list A's matter targets.
+      'insertJudgmentIntoDraftAction',
+      'loadActionTargetsAction',
     ]) {
       const result = await action(name)(own[name]);
       expect(['NOT_FOUND', 'FORBIDDEN'], name).toContain(code(result));

@@ -5704,7 +5704,9 @@
         "pages": "ಪು. {from} ರಿಂದ {to}",
         "openPdf": "ನ್ಯಾಯಾಲಯದ PDF ತೆರೆಯಿರಿ",
         "decided": "ತೀರ್ಪು ದಿನಾಂಕ {date}",
-        "outcome": "ಫಲಿತಾಂಶ: {outcome}"
+        "outcome": "ಫಲಿತಾಂಶ: {outcome}",
+        "bestMatch": "ಅತ್ಯುತ್ತಮ ಹೊಂದಾಣಿಕೆ",
+        "moreSegments": "{count, plural, one {ಇನ್ನೂ # ಭಾಗ} other {ಇನ್ನೂ # ಭಾಗಗಳು}}"
       },
       "answer": {
         "button": "ಮೂಲಗಳೊಂದಿಗೆ ಸಾರಾಂಶ ಮಾಡಿ",

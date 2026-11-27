@@ -5706,6 +5706,8 @@ export type Messages = {
         openPdf: string;
         decided: string;
         outcome: string;
+        bestMatch: string;
+        moreSegments: string;
       };
       answer: {
         button: string;

@@ -204,9 +204,13 @@ export function reportFromRows(
       const found = row.sourceUrl === null ? undefined : judgmentIds.get(row.sourceUrl);
       const cited = typeof found === 'string' ? { id: found } : found;
       const judgmentId = cited?.id;
-      const pagePending = cited !== undefined && 'pinpointState' in cited && cited.pinpointState === 'pending-pdf';
+      const pagePending =
+        cited !== undefined && 'pinpointState' in cited && cited.pinpointState === 'pending-pdf';
       const attribution =
-        cited !== undefined && 'attribution' in cited && cited.attribution !== null && cited.attribution !== ''
+        cited !== undefined &&
+        'attribution' in cited &&
+        cited.attribution !== null &&
+        cited.attribution !== ''
           ? cited.attribution
           : undefined;
       return {

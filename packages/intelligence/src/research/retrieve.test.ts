@@ -108,6 +108,38 @@ describe('drizzleRetriever.lexical ordering', () => {
   });
 });
 
+describe('drizzleRetriever candidates (#1172)', () => {
+  const candidates = async () =>
+    (
+      await drizzleRetriever(owner, { embeddingModel: 'none' }).lexical(
+        { ...heuristicPlan('guardian consent'), keywords: [] },
+        50,
+      )
+    ).filter((r) => r.judgmentId === judgmentId);
+
+  it('maps the judgment pinpoint state and attribution into every candidate', async () => {
+    const before = await candidates();
+    expect(before.length).toBeGreaterThan(0);
+    expect(before.every((r) => r.pinpointState === 'verified' && r.attribution === null)).toBe(true);
+    const attribution = 'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0';
+    await owner.execute(
+      sql`update judgment set pinpoint_state = 'pending-pdf', attribution = ${attribution} where id = ${judgmentId}`,
+    );
+    try {
+      const after = await candidates();
+      expect(after.length).toBeGreaterThan(0);
+      for (const r of after) {
+        expect(r.pinpointState).toBe('pending-pdf');
+        expect(r.attribution).toBe(attribution);
+      }
+    } finally {
+      await owner.execute(
+        sql`update judgment set pinpoint_state = 'verified', attribution = null where id = ${judgmentId}`,
+      );
+    }
+  });
+});
+
 describe('minMatchQuery', () => {
   it('ORs every k-term AND', () => {
     expect(minMatchQuery(['a', 'b', 'c'], 2)).toBe('(a & b) | (a & c) | (b & c)');

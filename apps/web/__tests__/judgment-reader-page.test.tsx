@@ -49,6 +49,8 @@ const JUDGMENT: JudgmentForReader = {
   judgmentDate: '2026-03-04',
   bench: ['Justice A', 'Justice B'],
   hasPdf: false,
+  pinpointState: 'verified',
+  attribution: null,
   pages: [
     { pageNo: 1, paragraphs: [{ number: 1, text: '1. Heard counsel.' }] },
     {
@@ -106,6 +108,28 @@ describe('judgment reader page', () => {
     expect(container.textContent).toContain('4. [A] met [B] at the market.');
     expect(container.querySelector('#cited')).toBeNull();
     expect(container.querySelector('a[href="/w/demo/research"]')?.textContent).toBe(en.back);
+  });
+
+  it('shows the page-pending notice, per-page labels and the attribution for a pending-pdf judgment, none for a verified one (#1172)', async () => {
+    const attribution = 'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0';
+    state.get.mockResolvedValue({ ...JUDGMENT, pinpointState: 'pending-pdf', attribution });
+    const pending = await open();
+    expect(pending.querySelector('[data-slot="reader-page-pending"]')?.textContent).toBe(
+      en.pagePendingNotice,
+    );
+    expect(pending.querySelector('[data-slot="reader-attribution"]')?.textContent).toBe(
+      `Source: ${attribution}`,
+    );
+    const headings = Array.from(pending.querySelectorAll('[data-slot="reader-page"] h2')).map(
+      (h) => h.textContent,
+    );
+    expect(headings).toEqual(['Page 1 · page pending', 'Page 2 · page pending']);
+    cleanup();
+    state.get.mockResolvedValue(JUDGMENT);
+    const verified = await open();
+    expect(verified.querySelector('[data-slot="reader-page-pending"]')).toBeNull();
+    expect(verified.querySelector('[data-slot="reader-attribution"]')).toBeNull();
+    expect(verified.textContent).not.toContain('page pending');
   });
 
   it('says the title is withheld when it is masked and none is stored', async () => {

@@ -80,7 +80,9 @@ describe('getJudgmentForReader', () => {
       });
       const pending = await getJudgmentForReader(hf, { db: tx });
       expect(pending?.pinpointState).toBe('pending-pdf');
-      expect(pending?.attribution).toBe('Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0');
+      expect(pending?.attribution).toBe(
+        'Dattam Labs via overthelex/indian-court-decisions, CC-BY-4.0',
+      );
       const verified = await getJudgmentForReader(await seed(tx), { db: tx });
       expect(verified?.pinpointState).toBe('verified');
       expect(verified?.attribution).toBeNull();
